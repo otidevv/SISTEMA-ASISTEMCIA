@@ -7,9 +7,17 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Artisan;
 
 class AsistenciaController extends Controller
 {
+
+    // En app/Http/Controllers/AsistenciaController.php
+    public function __construct()
+    {
+        // Procesar eventos pendientes cada vez que se carga la página
+        Artisan::call('asistencia:procesar-eventos');
+    }
     /**
      * Mostrar la lista de registros de asistencia.
      */

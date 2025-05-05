@@ -253,6 +253,9 @@
 @endsection
 
 @push('js')
+    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.0/dist/echo.iife.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Variables
@@ -375,7 +378,7 @@
                         </div>
                     </div>
                 </div>
-            `;
+                `;
 
                 // Check if "Esperando nuevos registros" message exists and remove it
                 const emptyMessage = registrosContainer.querySelector('.text-center.p-5');
@@ -412,85 +415,140 @@
                 }
             }
 
-            // WebSocket connection setup
-            function setupWebSocket() {
-                // Aquí implementarías la conexión a Laravel Echo/Pusher
-                /*
-                window.Echo.channel('asistencia-channel')
-                    .listen('NuevoRegistroAsistencia', (e) => {
-                        // Process and display the new record
-                        const data = {
-                            id: e.registro.id,
-                            name: e.registro.nombre_completo || `Documento: ${e.registro.nro_documento}`,
-                            time: e.registro.fecha_hora_formateada,
-                            photoHtml: createPhotoHtml(e.registro), // Función para crear el HTML de la foto
-                            smallPhotoHtml: createSmallPhotoHtml(e.registro), // Función para la lista
-                            type: e.registro.tipo_verificacion_texto
-                        };
-
-                        addNewAttendanceRecord(data);
-                    });
-                */
-
-                // Funciones auxiliares para crear HTML de fotos
-                function createPhotoHtml(registro) {
-                    if (registro.usuario && registro.usuario.foto_perfil) {
-                        return `<img src="${registro.usuario.foto_perfil}" alt="Foto" class="student-photo">`;
-                    } else {
-                        const inicial = registro.usuario ? registro.usuario.nombre.charAt(0).toUpperCase() : 'U';
-                        return `<div class="student-photo-initial">${inicial}</div>`;
-                    }
+            // Funciones auxiliares para crear HTML de fotos
+            function createPhotoHtml(registro) {
+                if (registro.foto_url) {
+                    return `<img src="${registro.foto_url}" alt="Foto" class="student-photo">`;
+                } else {
+                    const inicial = registro.iniciales || 'U';
+                    return `<div class="student-photo-initial">${inicial}</div>`;
                 }
-
-                function createSmallPhotoHtml(registro) {
-                    if (registro.usuario && registro.usuario.foto_perfil) {
-                        return `<img src="${registro.usuario.foto_perfil}" alt="Foto" width="40" height="40" class="rounded-circle">`;
-                    } else {
-                        const inicial = registro.usuario ? registro.usuario.nombre.charAt(0).toUpperCase() : 'U';
-                        return `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">${inicial}</div>`;
-                    }
-                }
-
-                // Para pruebas: simulamos nuevos registros
-                setInterval(() => {
-                    const nombres = ['Carlos Mendoza', 'Ana López', 'Luis García', 'María Torres',
-                        'Juan Pérez', 'Patricia Ramírez', 'Miguel Ángel', 'Sofía Castro'
-                    ];
-                    const tiposVerificacion = ['Huella digital', 'Tarjeta RFID', 'Facial', 'Código QR',
-                        'Manual'
-                    ];
-
-                    const randomNombre = nombres[Math.floor(Math.random() * nombres.length)];
-                    const randomTipo = tiposVerificacion[Math.floor(Math.random() * tiposVerificacion
-                        .length)];
-                    const randomInicial = randomNombre.charAt(0);
-
-                    // Crear HTML para la foto (versión grande para el modal)
-                    const photoHtml = `<div class="student-photo-initial">${randomInicial}</div>`;
-
-                    // Versión pequeña para la lista
-                    const smallPhotoHtml = `
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
-                             style="width: 40px; height: 40px;">
-                            ${randomInicial}
-                        </div>
-                    `;
-
-                    const testData = {
-                        id: Math.floor(Math.random() * 1000),
-                        name: randomNombre,
-                        time: new Date().toLocaleString(),
-                        photoHtml: photoHtml,
-                        smallPhotoHtml: smallPhotoHtml,
-                        type: randomTipo
-                    };
-
-                    addNewAttendanceRecord(testData);
-                }, 8000); // Cada 8 segundos para pruebas
             }
 
-            // Initialize
-            setupWebSocket();
+            function createSmallPhotoHtml(registro) {
+                if (registro.foto_url) {
+                    return `<img src="${registro.foto_url}" alt="Foto" width="40" height="40" class="rounded-circle">`;
+                } else {
+                    const inicial = registro.iniciales || 'U';
+                    return `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">${inicial}</div>`;
+                }
+            }
+
+            // Configuración directa de Echo (sin función separada)
+            // Reemplaza la sección de configuración de Echo con este código
+            try {
+                // Verificar si Echo y Pusher están definidos
+                if (typeof Echo === 'undefined' || typeof Pusher === 'undefined') {
+                    console.error('Echo o Pusher no están definidos correctamente');
+                    return;
+                }
+
+                // Configuración de Pusher directamente (enfoque alternativo)
+                window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
+                    wsHost: 'localhost',
+                    wsPort: 8080,
+                    enabledTransports: ['ws', 'wss'],
+                    forceTLS: false,
+                    disableStats: true,
+                    cluster: 'mt1' // Agregar un valor para cluster
+                });
+
+                // Escuchar eventos directamente con Pusher
+                window.pusher.subscribe('asistencia-channel')
+                    .bind('App\\Events\\NuevoRegistroAsistencia', function(data) {
+                        console.log('Nuevo registro recibido:', data);
+
+                        // Procesar y mostrar el nuevo registro
+                        const eventData = {
+                            id: data.registro.id,
+                            name: data.registro.nombre_completo ||
+                                `Documento: ${data.registro.nro_documento}`,
+                            time: data.registro.fecha_hora_formateada,
+                            photoHtml: createPhotoHtml(data.registro),
+                            smallPhotoHtml: createSmallPhotoHtml(data.registro),
+                            type: data.registro.tipo_verificacion_texto
+                        };
+
+                        addNewAttendanceRecord(eventData);
+                    });
+
+                // Manejar eventos de conexión
+                window.pusher.connection.bind('connected', function() {
+                    connectionStatus.textContent = 'Conectado';
+                    connectionStatus.className = 'badge bg-success';
+                    console.log('Conexión establecida con el servidor WebSocket');
+                });
+
+                window.pusher.connection.bind('connecting', function() {
+                    connectionStatus.textContent = 'Conectando...';
+                    connectionStatus.className = 'badge bg-warning';
+                });
+
+                window.pusher.connection.bind('disconnected', function() {
+                    connectionStatus.textContent = 'Desconectado';
+                    connectionStatus.className = 'badge bg-danger';
+                });
+
+                window.pusher.connection.bind('failed', function() {
+                    connectionStatus.textContent = 'Error de conexión';
+                    connectionStatus.className = 'badge bg-danger';
+                });
+
+                console.log('Pusher configurado correctamente - Esperando eventos en el canal asistencia-channel');
+            } catch (error) {
+                console.error('Error al configurar Pusher:', error);
+
+                // Implementar polling como respaldo si WebSockets fallan
+                console.log('Iniciando polling como respaldo...');
+                checkForNewRecords();
+            }
+
+            // Función de polling como respaldo si WebSockets no funcionan
+            function checkForNewRecords() {
+                let lastId = 0;
+
+                // Obtener el último ID de los registros actuales
+                const existingCards = document.querySelectorAll('.asistencia-card');
+                if (existingCards.length > 0) {
+                    lastId = Math.max(...Array.from(existingCards).map(card => parseInt(card.dataset.id) || 0));
+                }
+
+                setInterval(() => {
+                    fetch(`/api/ultimos-registros?ultimo_id=${lastId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                console.log('Nuevos registros encontrados mediante polling:', data);
+
+                                // Actualizar el último ID
+                                lastId = Math.max(...data.map(item => item.id));
+
+                                // Procesar cada registro
+                                data.forEach(registro => {
+                                    const eventData = {
+                                        id: registro.id,
+                                        name: registro.nombre_completo ||
+                                            `Documento: ${registro.nro_documento}`,
+                                        time: registro.fecha_hora_formateada,
+                                        photoHtml: createPhotoHtml(registro),
+                                        smallPhotoHtml: createSmallPhotoHtml(registro),
+                                        type: registro.tipo_verificacion_texto
+                                    };
+
+                                    addNewAttendanceRecord(eventData);
+                                });
+                            }
+                        })
+                        .catch(error => console.error('Error al consultar nuevos registros:', error));
+                }, 5000); // Consultar cada 5 segundos
+            }
+
+            // Datos de prueba (comentados)
+            /*
+            setInterval(() => {
+                // Código para simular datos...
+            }, 8000);
+            */
         });
     </script>
 @endpush

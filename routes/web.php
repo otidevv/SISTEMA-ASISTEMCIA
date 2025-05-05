@@ -16,6 +16,8 @@ use App\Http\Controllers\ParentescoController;
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+
+
 // Rutas de autenticación
 Route::middleware('guest')->group(function () {
     // Login
