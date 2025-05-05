@@ -446,7 +446,7 @@
                 // Configuración de Pusher directamente (enfoque alternativo)
                 window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
                     wsHost: 'localhost',
-                    wsPort: 8080,
+                    wsPort: 8081,
                     enabledTransports: ['ws', 'wss'],
                     forceTLS: false,
                     disableStats: true,
