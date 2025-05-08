@@ -443,33 +443,210 @@
                     return;
                 }
 
-                // Configuración de Pusher directamente (enfoque alternativo)
-                window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
-                    wsHost: 'localhost',
-                    wsPort: 8081,
-                    enabledTransports: ['ws', 'wss'],
-                    forceTLS: false,
-                    disableStats: true,
-                    cluster: 'mt1' // Agregar un valor para cluster
-                });
+               // REEMPLAZA toda la sección de configuración de Pusher con este código
+                    try {
+                        console.log('Inicializando WebSockets...');
+                        
+                        // Primer intento: Configuración con Echo (recomendado)
+                        try {
+                            window.Echo = new Echo({
+                                broadcaster: 'pusher',
+                                key: 'iv9wx1kfwnwactpwfzwn',
+                                wsHost: window.location.hostname,
+                                wsPort: 443,
+                                wssPort: 443,
+                                forceTLS: true,
+                                disableStats: true,
+                                enabledTransports: ['ws', 'wss'],
+                                cluster: 'mt1'
+                            });
+                            
+                            console.log('✅ Echo configurado correctamente');
+                            
+                            window.Echo.channel('asistencia-channel')
+                                .listen('.App\\Events\\NuevoRegistroAsistencia', function(data) {
+                                    console.log('✅ EVENTO RECIBIDO VIA ECHO:', data);
+                                    processAttendanceData(data);
+                                });
+                                
+                        } catch (echoError) {
+                            console.error('❌ Error al configurar Echo:', echoError);
+                        }
+                        
+                        // Configuración de respaldo con Pusher directo
+                        window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
+                            wsHost: window.location.hostname,
+                            wsPort: 443,
+                            wssPort: 443,
+                            enabledTransports: ['ws', 'wss'],
+                            forceTLS: true,
+                            disableStats: true,
+                            cluster: 'mt1'
+                        });
+                        
+                        // Canal principal
+                        const channel = window.pusher.subscribe('asistencia-channel');
+                        
+                        // Probar con diferentes formatos de evento (para cubrir todas las posibilidades)
+                        channel.bind('App\\Events\\NuevoRegistroAsistencia', function(data) {
+                            console.log('✅ EVENTO RECIBIDO (formato 1):', data);
+                            processAttendanceData(data);
+                        });
+                        
+                        channel.bind('.App\\Events\\NuevoRegistroAsistencia', function(data) {
+                            console.log('✅ EVENTO RECIBIDO (formato 2):', data);
+                            processAttendanceData(data);
+                        });
+                        
+                        channel.bind('NuevoRegistroAsistencia', function(data) {
+                            console.log('✅ EVENTO RECIBIDO (formato 3):', data);
+                            processAttendanceData(data);
+                        });
+                        
+                        // Función central para procesar datos recibidos
+                        function processAttendanceData(data) {
+                            try {
+                                if (!data) {
+                                    console.error('❌ Datos de evento vacíos');
+                                    return;
+                                }
+                                
+                                let registro = data.registro;
+                                
+                                // A veces Laravel envía el registro directamente, otras veces dentro de un objeto
+                                if (!registro && typeof data === 'object') {
+                                    registro = data;
+                                }
+                                
+                                if (!registro) {
+                                    console.error('❌ No se encontró el registro en los datos:', data);
+                                    return;
+                                }
+                                
+                                console.log('📋 Procesando registro:', registro);
+                                
+                                // Crear datos para el modal
+                                const eventData = {
+                                    id: registro.id || 0,
+                                    name: registro.nombre_completo || 
+                                        (registro.nro_documento ? `Documento: ${registro.nro_documento}` : 'Usuario desconocido'),
+                                    time: registro.fecha_hora_formateada || new Date().toLocaleString(),
+                                    photoHtml: createPhotoHtml(registro),
+                                    smallPhotoHtml: createSmallPhotoHtml(registro),
+                                    type: registro.tipo_verificacion_texto || 'Verificación'
+                                };
+                                
+                                console.log('🎯 Datos preparados para el modal:', eventData);
+                                
+                                // Añadir registro y mostrar modal
+                                addNewAttendanceRecord(eventData);
+                                
+                                // Forzar apertura del modal (como prueba)
+                                setTimeout(() => {
+                                    if (!isModalShowing && attendanceQueue.length === 0) {
+                                        console.log('⚠️ Forzando apertura del modal manualmente');
+                                        showAttendanceModal(eventData);
+                                    }
+                                }, 1000);
+                            } catch (error) {
+                                console.error('❌ Error al procesar datos:', error);
+                            }
+                        }
+                        
+                        // Manejar eventos de conexión y proporcionar feedback detallado
+                        window.pusher.connection.bind('state_change', function(states) {
+                            console.log(`Estado de WebSocket: ${states.previous} → ${states.current}`);
+                        });
+                        
+                        window.pusher.connection.bind('connected', function() {
+                            console.log('✅ CONECTADO al servidor WebSocket');
+                            connectionStatus.textContent = 'Conectado';
+                            connectionStatus.className = 'badge bg-success';
+                        });
+                        
+                        window.pusher.connection.bind('connecting', function() {
+                            console.log('⏳ Conectando al servidor WebSocket...');
+                            connectionStatus.textContent = 'Conectando...';
+                            connectionStatus.className = 'badge bg-warning';
+                        });
+                        
+                        window.pusher.connection.bind('disconnected', function() {
+                            console.log('❌ DESCONECTADO del servidor WebSocket');
+                            connectionStatus.textContent = 'Desconectado';
+                            connectionStatus.className = 'badge bg-danger';
+                        });
+                        
+                        window.pusher.connection.bind('failed', function(error) {
+                            console.error('❌ ERROR de conexión WebSocket:', error);
+                            connectionStatus.textContent = 'Error de conexión';
+                            connectionStatus.className = 'badge bg-danger';
+                        });
+                        
+                        // Prueba manual (activa en consola del navegador con window.testModal())
+                        window.testModal = function() {
+                            const testData = {
+                                id: 999,
+                                name: 'Usuario de Prueba',
+                                time: new Date().toLocaleString(),
+                                photoHtml: '<div class="student-photo-initial">TP</div>',
+                                smallPhotoHtml: '<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">TP</div>',
+                                type: 'Prueba Manual'
+                            };
+                            
+                            showAttendanceModal(testData);
+                            addNewAttendanceRecord(testData);
+                            return 'Test modal activado';
+                        };
+                    } catch (error) {
+                        console.error('❌ Error fatal al configurar WebSockets:', error);
+                        // Implementar polling como respaldo
+                        checkForNewRecords();
+                    }
 
                 // Escuchar eventos directamente con Pusher
+                // Añadir después de la configuración de Pusher
+                console.log('📡 Información de conexión WebSocket:', {
+                    host: window.location.hostname,
+                    pusherKey: 'iv9wx1kfwnwactpwfzwn',
+                    canal: 'asistencia-channel',
+                    evento: 'App\\Events\\NuevoRegistroAsistencia'
+                });
+
+                // Mejorar el logging de eventos
                 window.pusher.subscribe('asistencia-channel')
                     .bind('App\\Events\\NuevoRegistroAsistencia', function(data) {
-                        console.log('Nuevo registro recibido:', data);
-
-                        // Procesar y mostrar el nuevo registro
-                        const eventData = {
-                            id: data.registro.id,
-                            name: data.registro.nombre_completo ||
-                                `Documento: ${data.registro.nro_documento}`,
-                            time: data.registro.fecha_hora_formateada,
-                            photoHtml: createPhotoHtml(data.registro),
-                            smallPhotoHtml: createSmallPhotoHtml(data.registro),
-                            type: data.registro.tipo_verificacion_texto
-                        };
-
-                        addNewAttendanceRecord(eventData);
+                        console.log('✅ EVENTO RECIBIDO:', data);
+                        console.log('📊 Datos del registro:', data.registro);
+                        
+                        try {
+                            // Verificar data.registro
+                            if (!data.registro) {
+                                console.error('❌ ERROR: data.registro no existe en el evento', data);
+                                return;
+                            }
+                            
+                            // Procesamiento detallado
+                            console.log('Creando objeto eventData...');
+                            const eventData = {
+                                id: data.registro.id,
+                                name: data.registro.nombre_completo || 
+                                    `Documento: ${data.registro.nro_documento}`,
+                                time: data.registro.fecha_hora_formateada,
+                                photoHtml: createPhotoHtml(data.registro),
+                                smallPhotoHtml: createSmallPhotoHtml(data.registro),
+                                type: data.registro.tipo_verificacion_texto
+                            };
+                            
+                            console.log('📋 Datos procesados para modal:', eventData);
+                            
+                            // Añadir al registro y cola
+                            console.log('👉 Añadiendo a la cola de registros...');
+                            addNewAttendanceRecord(eventData);
+                            
+                            console.log('🎯 Modal debería mostrarse si no hay otros en cola');
+                        } catch (error) {
+                            console.error('❌ ERROR al procesar evento:', error);
+                        }
                     });
 
                 // Manejar eventos de conexión

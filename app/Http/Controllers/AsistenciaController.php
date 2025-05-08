@@ -211,4 +211,59 @@ class AsistenciaController extends Controller
 
         return view('asistencia.reportes', compact('totalHoy', 'totalSemana', 'totalMes', 'asistenciaSemana'));
     }
+
+    public function ultimosProcesados(Request $request)
+    {
+        // Obtener la marca de tiempo de la última consulta
+        $ultimaConsulta = $request->input('ultima_consulta', 0);
+        
+        // Buscar los eventos que han sido procesados desde la última consulta
+        $eventosRecientes = AsistenciaEvento::where('procesado', true)
+            ->where('updated_at', '>', Carbon::createFromTimestamp($ultimaConsulta))
+            ->orderBy('id', 'asc')
+            ->take(5)
+            ->get();
+            
+        // Si no hay eventos recién procesados, retornar una respuesta vacía
+        if ($eventosRecientes->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'tiene_nuevos' => false,
+                'hora_actual' => now()->timestamp,
+                'registros' => []
+            ]);
+        }
+        
+        // Obtener los registros de asistencia correspondientes
+        $registros = [];
+        foreach ($eventosRecientes as $evento) {
+            $registro = RegistroAsistencia::with('usuario')
+                ->find($evento->registros_asistencia_id);
+                
+            if ($registro) {
+                $registros[] = [
+                    'id' => $registro->id,
+                    'nro_documento' => $registro->nro_documento,
+                    'nombre_completo' => $registro->usuario ?
+                        $registro->usuario->nombre . ' ' . $registro->usuario->apellido_paterno :
+                        null,
+                    'fecha_hora_formateada' => $registro->fecha_hora->format('d/m/Y H:i:s'),
+                    'tipo_verificacion' => $registro->tipo_verificacion,
+                    'tipo_verificacion_texto' => $registro->tipo_verificacion_texto,
+                    'estado' => $registro->estado,
+                    'foto_url' => $registro->usuario && $registro->usuario->foto_perfil ?
+                        asset('storage/' . $registro->usuario->foto_perfil) : null,
+                    'iniciales' => $registro->usuario ?
+                        strtoupper(substr($registro->usuario->nombre, 0, 1)) : null,
+                ];
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'tiene_nuevos' => true,
+            'hora_actual' => now()->timestamp,
+            'registros' => $registros
+        ]);
+    }
 }
