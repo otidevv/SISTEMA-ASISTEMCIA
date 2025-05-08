@@ -56,7 +56,7 @@ class AsistenciaController extends Controller
         // Obtenemos los últimos 5 registros para mostrarlos inicialmente
         $ultimosRegistros = RegistroAsistencia::with('usuario')
             ->orderBy('fecha_hora', 'desc')
-            ->take(5)
+            ->take(10)
             ->get();
 
         return view('asistencia.monitor_realtime', compact('ultimosRegistros'));
@@ -216,14 +216,14 @@ class AsistenciaController extends Controller
     {
         // Obtener la marca de tiempo de la última consulta
         $ultimaConsulta = $request->input('ultima_consulta', 0);
-        
+
         // Buscar los eventos que han sido procesados desde la última consulta
         $eventosRecientes = AsistenciaEvento::where('procesado', true)
             ->where('updated_at', '>', Carbon::createFromTimestamp($ultimaConsulta))
             ->orderBy('id', 'asc')
             ->take(5)
             ->get();
-            
+
         // Si no hay eventos recién procesados, retornar una respuesta vacía
         if ($eventosRecientes->isEmpty()) {
             return response()->json([
@@ -233,13 +233,13 @@ class AsistenciaController extends Controller
                 'registros' => []
             ]);
         }
-        
+
         // Obtener los registros de asistencia correspondientes
         $registros = [];
         foreach ($eventosRecientes as $evento) {
             $registro = RegistroAsistencia::with('usuario')
                 ->find($evento->registros_asistencia_id);
-                
+
             if ($registro) {
                 $registros[] = [
                     'id' => $registro->id,
@@ -258,7 +258,7 @@ class AsistenciaController extends Controller
                 ];
             }
         }
-        
+
         return response()->json([
             'success' => true,
             'tiene_nuevos' => true,
