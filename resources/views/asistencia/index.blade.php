@@ -108,7 +108,7 @@
                                                     <span class="text-muted">No encontrado</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $registro->fecha_hora->format('d/m/Y H:i:s') }}</td>
+                                            <td>{{ $registro->fecha_registro->format('d/m/Y H:i:s') }}</td>
                                             <td>{{ $registro->tipo_verificacion_texto }}</td>
                                             <td>{{ $registro->sn_dispositivo ?: 'N/A' }}</td>
                                             <td>

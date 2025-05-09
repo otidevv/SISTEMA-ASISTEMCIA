@@ -32,7 +32,7 @@ class AsistenciaController extends Controller
 
         // Aplicar filtros
         if ($fecha) {
-            $query->whereDate('fecha_hora', $fecha);
+            $query->whereDate('fecha_registro', $fecha); // Cambiado de fecha_hora a fecha_registro
         }
 
         if ($documento) {
@@ -40,7 +40,7 @@ class AsistenciaController extends Controller
         }
 
         // Obtener registros paginados
-        $registros = $query->orderBy('fecha_hora', 'desc')->paginate(15);
+        $registros = $query->orderBy('fecha_registro', 'desc')->paginate(15); // Cambiado de fecha_hora a fecha_registro
 
         // Obtener usuarios para el filtro (opcional)
         $usuarios = User::select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
@@ -55,7 +55,7 @@ class AsistenciaController extends Controller
     {
         // Obtenemos los últimos 5 registros para mostrarlos inicialmente
         $ultimosRegistros = RegistroAsistencia::with('usuario')
-            ->orderBy('fecha_hora', 'desc')
+            ->orderBy('fecha_registro', 'desc')  // Cambiado de fecha_hora a fecha_registro
             ->take(10)
             ->get();
 
