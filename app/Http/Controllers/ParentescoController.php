@@ -17,8 +17,8 @@ class ParentescoController extends Controller
      */
     public function index()
     {
-        $parentescos = Parentesco::with(['estudiante', 'padre'])->paginate(10);
-        return view('parentescos.index', compact('parentescos'));
+        // Ya no pasamos datos a la vista, solo devolvemos la vista vacía
+        return view('parentescos.index');
     }
 
     /**

@@ -2,146 +2,328 @@
 
 @section('title', 'Gestión de Usuarios')
 
-@section('content')
-    <!-- Start Content-->
-    <div class="container-fluid">
+@push('css')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+@endpush
+@push('js')
+    <script>
+        // Define la URL base para las solicitudes AJAX
+        window.default_server = "{{ url('/') }}";
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/usuarios/index.js') }}"></script>
+@endpush
 
-        <!-- start page title -->
-        <div class="row">
-            <div class="col-12">
-                <div class="page-title-box">
-                    <div class="page-title-right">
-                        <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                            <li class="breadcrumb-item active">Usuarios</li>
-                        </ol>
-                    </div>
-                    <h4 class="page-title">Gestión de Usuarios</h4>
+@section('content')
+    <!-- start page title -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Gestión de Usuarios</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Usuarios</li>
+                    </ol>
                 </div>
             </div>
         </div>
-        <!-- end page title -->
+    </div>
+    <!-- end page title -->
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row mb-2">
-                            <div class="col-sm-4">
-                                <h4 class="card-title">Lista de Usuarios</h4>
-                            </div>
-                            <div class="col-sm-8">
-                                <div class="text-sm-end">
-                                    @if (Auth::user()->hasPermission('users.create'))
-                                        <a href="{{ route('usuarios.create') }}" class="btn btn-primary mb-2">
-                                            <i class="mdi mdi-plus-circle me-1"></i> Nuevo Usuario
-                                        </a>
-                                    @endif
-                                </div>
-                            </div><!-- end col-->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-4">
+                            <h4 class="header-title mt-0 mb-1">Lista de Usuarios</h4>
                         </div>
-
-                        @if (session('success'))
-                            <div class="alert alert-success">
-                                {{ session('success') }}
+                        <div class="col-sm-8">
+                            <div class="text-sm-end">
+                                @if (Auth::user()->hasPermission('users.create'))
+                                    <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal"
+                                        data-bs-target="#newUserModal">
+                                        <i class="mdi mdi-plus-circle me-1"></i> Nuevo Usuario
+                                    </button>
+                                @endif
                             </div>
-                        @endif
-
-                        @if (session('error'))
-                            <div class="alert alert-danger">
-                                {{ session('error') }}
-                            </div>
-                        @endif
-
-                        <div class="table-responsive">
-                            <table class="table table-centered table-nowrap table-striped" id="usuarios-datatable">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Usuario</th>
-                                        <th>Nombre Completo</th>
-                                        <th>Correo</th>
-                                        <th>Roles</th>
-                                        <th>Estado</th>
-                                        <th>Último Acceso</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($usuarios as $usuario)
-                                        <tr>
-                                            <td>{{ $usuario->id }}</td>
-                                            <td>{{ $usuario->username }}</td>
-                                            <td>{{ $usuario->full_name }}</td>
-                                            <td>{{ $usuario->email }}</td>
-                                            <td>
-                                                @foreach ($usuario->roles as $role)
-                                                    <span class="badge bg-info">{{ $role->nombre }}</span>
-                                                @endforeach
-                                            </td>
-                                            <td>
-                                                @if ($usuario->estado)
-                                                    <span class="badge bg-success">Activo</span>
-                                                @else
-                                                    <span class="badge bg-danger">Inactivo</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $usuario->ultimo_acceso ? $usuario->ultimo_acceso->format('d/m/Y H:i') : 'Nunca' }}
-                                            </td>
-                                            <td class="table-action">
-                                                @if (Auth::user()->hasPermission('users.edit'))
-                                                    <a href="{{ route('usuarios.edit', $usuario->id) }}"
-                                                        class="action-icon">
-                                                        <i class="uil uil-edit"></i>
-                                                    </a>
-                                                @endif
-
-                                                @if (Auth::user()->hasPermission('users.delete') && $usuario->id != Auth::id())
-                                                    <form action="{{ route('usuarios.destroy', $usuario->id) }}"
-                                                        method="POST" class="d-inline delete-form">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="action-icon btn btn-link p-0"
-                                                            onclick="return confirm('¿Está seguro de desactivar este usuario?')">
-                                                            <i class="uil uil-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
                         </div>
+                    </div>
 
-                        <div class="pagination justify-content-end mt-3">
-                            {{ $usuarios->links() }}
+                    @if (session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
                         </div>
-                    </div> <!-- end card-body-->
-                </div> <!-- end card-->
-            </div> <!-- end col -->
-        </div>
-        <!-- end row -->
-    </div> <!-- container -->
+                    @endif
+
+                    @if (session('error'))
+                        <div class="alert alert-danger">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    <!-- Cambiamos el ID de la tabla para coincidir con el JS -->
+                    <table id="usuarios-datatable" class="table dt-responsive nowrap w-100">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Usuario</th>
+                                <th>Nombre Completo</th>
+                                <th>Correo</th>
+                                <th>Roles</th>
+                                <th>Estado</th>
+                                <th>Nº Documento</th> <!-- Cambiado de "Último Acceso" a "Nº Documento" -->
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- La tabla estará vacía inicialmente, los datos se cargarán vía AJAX -->
+                        </tbody>
+                    </table>
+
+                </div> <!-- end card body-->
+            </div> <!-- end card -->
+        </div><!-- end col-->
+    </div>
 @endsection
 
-@push('js')
-    <script>
-        $(document).ready(function() {
-            // Inicializar DataTable
-            $('#usuarios-datatable').DataTable({
-                "paging": false, // Desactivamos el paginado de DataTable ya que usamos Laravel Pagination
-                "ordering": true,
-                "info": false,
-                "searching": true,
-                "language": {
-                    "search": "Buscar:",
-                    "zeroRecords": "No se encontraron resultados",
-                    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
-                    "infoFiltered": "(filtrado de _MAX_ registros totales)"
-                }
-            });
-        });
-    </script>
+@push('modals')
+    <!-- Modal para Nuevo Usuario -->
+    <div class="modal fade" id="newUserModal" tabindex="-1" role="dialog" aria-labelledby="newUserModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newUserModalLabel">Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newUserForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido_paterno" class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="apellido_paterno" name="apellido_paterno"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="apellido_materno" class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="apellido_materno" name="apellido_materno">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo_documento" class="form-label">Tipo de Documento</label>
+                                <select class="form-select" id="tipo_documento" name="tipo_documento" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="DNI">DNI</option>
+                                    <option value="CE">Carnet de Extranjería</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="numero_documento" class="form-label">Número de Documento</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="numero_documento"
+                                        name="numero_documento" required>
+                                    <button class="btn btn-primary" type="button" id="btn-buscar-dni"
+                                        title="Buscar datos">
+                                        <i class="uil uil-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <button class="btn btn-outline-secondary toggle-password" type="button"
+                                        tabindex="-1" data-target="password">
+                                        <i class="uil uil-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="telefono" name="telefono">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="roles" class="form-label">Roles</label>
+                                <select class="form-select select2" id="roles" name="roles[]" multiple>
+                                    <!-- Los roles se cargarán dinámicamente mediante AJAX -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fecha_nacimiento"
+                                    name="fecha_nacimiento">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="genero" class="form-label">Género</label>
+                                <select class="form-select" id="genero" name="genero">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="direccion" class="form-label">Dirección</label>
+                                <textarea class="form-control" id="direccion" name="direccion" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveNewUser">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Usuario -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="edit_user_id" name="id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_username" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" id="edit_username" name="username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_email" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="edit_email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_apellido_paterno" class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="edit_apellido_paterno"
+                                    name="apellido_paterno" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_apellido_materno" class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="edit_apellido_materno"
+                                    name="apellido_materno">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_tipo_documento" class="form-label">Tipo de Documento</label>
+                                <select class="form-select" id="edit_tipo_documento" name="tipo_documento" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="DNI">DNI</option>
+                                    <option value="CE">Carnet de Extranjería</option>
+                                    <option value="Pasaporte">Pasaporte</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_numero_documento" class="form-label">Número de Documento</label>
+                                <input type="text" class="form-control" id="edit_numero_documento"
+                                    name="numero_documento" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_password" class="form-label">Contraseña (dejar en blanco para no
+                                    cambiar)</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="edit_password" name="password">
+                                    <button class="btn btn-outline-secondary toggle-password" type="button"
+                                        tabindex="-1" data-target="edit_password">
+                                        <i class="uil uil-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_telefono" class="form-label">Teléfono</label>
+                                <input type="text" class="form-control" id="edit_telefono" name="telefono">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_estado" class="form-label">Estado</label>
+                                <select class="form-select" id="edit_estado" name="estado">
+                                    <option value="1">Activo</option>
+                                    <option value="0">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="edit_roles" class="form-label">Roles</label>
+                                <select class="form-select select2" id="edit_roles" name="roles[]" multiple>
+                                    <!-- Los roles se cargarán dinámicamente mediante AJAX -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="edit_fecha_nacimiento"
+                                    name="fecha_nacimiento">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_genero" class="form-label">Género</label>
+                                <select class="form-select" id="edit_genero" name="genero">
+                                    <option value="">Seleccione...</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="Otro">Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="edit_direccion" class="form-label">Dirección</label>
+                                <textarea class="form-control" id="edit_direccion" name="direccion" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="updateUser">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush

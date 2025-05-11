@@ -12,6 +12,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\ParentescoController;
+use App\Http\Controllers\Api\UserController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -114,3 +115,34 @@ Route::middleware('auth')->group(function () {
     // Actualizar preferencias
     Route::put('/perfil/preferencias', [PerfilController::class, 'updatePreferencias'])->name('perfil.preferencias');
 });
+
+// Agrega el prefijo 'json' para todas las rutas de API
+Route::prefix('json')->group(function () {
+    // Ruta para obtener los roles
+    Route::get('/roles', [UserController::class, 'getRoles']);
+    // Rutas de API para usuarios (cambiado a 'usuarios' para coincidir con tu JS)
+    Route::prefix('usuarios')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get('/{id}', [UserController::class, 'show']);
+        Route::put('/{id}', [UserController::class, 'update']);
+        Route::delete('/{id}', [UserController::class, 'destroy']);
+        Route::patch('/{id}/status', [UserController::class, 'changeStatus']);
+    });
+
+    // Rutas para obtener estudiantes y padres para los selectores
+    Route::get('/estudiantes', [App\Http\Controllers\Api\UserController::class, 'listarEstudiantes']);
+    Route::get('/padres', [App\Http\Controllers\Api\UserController::class, 'listarPadres']);
+
+    // CRUD de parentescos
+    Route::prefix('parentescos')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\ParentescoController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\ParentescoController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'destroy']);
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\ParentescoController::class, 'changeStatus']);
+    });
+});
+
+Route::get('api/consulta/{dni}', [App\Http\Controllers\ApiProxyController::class, 'consultaDNI']);

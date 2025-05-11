@@ -14,8 +14,7 @@ class UsuarioController extends Controller
 {
     public function index()
     {
-        $usuarios = User::with('roles')->paginate(10);
-        return view('usuarios.index', compact('usuarios'));
+        return view('usuarios.index');
     }
 
     public function create()

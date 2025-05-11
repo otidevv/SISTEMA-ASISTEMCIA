@@ -6,19 +6,48 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Dashboard | Shreyu - Responsive Admin Dashboard Template</title>
+    <title>Portal CEPRE UNAMAD | Centro Preuniversitario Universidad Nacional Amazónica de Madre de Dios</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
-    <meta content="Coderthemes" name="author" />
+    <meta name="description"
+        content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios (CEPRE UNAMAD). Información sobre admisión, cursos, horarios y más." />
+    <meta name="keywords"
+        content="CEPRE UNAMAD, portal cepre unamad, preuniversitario, Universidad Nacional Amazónica de Madre de Dios, admisión, Puerto Maldonado" />
+    <meta name="author" content="UNAMAD" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Etiquetas Open Graph para redes sociales -->
+    <meta property="og:title" content="Portal CEPRE UNAMAD" />
+    <meta property="og:description"
+        content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios" />
+    <meta property="og:url" content="https://portalcepre.unamad.edu.pe/" />
+    <meta property="og:image" content="https://portalcepre.unamad.edu.pe/assets/images/logo-unamad.jpg" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- third party css -->
+    <link href="{{ asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet"
+        type="text/css" />
+    <link href="{{ asset('assets/libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}"
+        rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css') }}" rel="stylesheet"
+        type="text/css" />
+    <link href="{{ asset('assets/libs/datatables.net-select-bs4/css/select.bootstrap4.min.css') }}" rel="stylesheet"
+        type="text/css" />
+    <!-- third party css end -->
+
+    <!-- Icons CSS -->
+    <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
     <link href="{{ asset('assets/libs/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-default-stylesheet" />
+    @stack('css')
 
     <!-- Config js -->
     <script src="{{ asset('assets/js/config.js') }}"></script>
+    <script>
+        window.default_server = "{{ url('/') }}";
+    </script>
 </head>
 
 <body>
@@ -114,8 +143,8 @@
             <h6 class="fw-medium mt-4 mb-2 pb-1">Menu Color</h6>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
-                <input type="checkbox" class="form-check-input mt-0" name="menu-color" value="light" id="light-check"
-                    checked />
+                <input type="checkbox" class="form-check-input mt-0" name="menu-color" value="light"
+                    id="light-check" checked />
                 <label class="form-check-label" for="light-check">Light</label>
             </div>
 
@@ -199,12 +228,32 @@
         </div>
 
     </div>
+    @stack('modals')
+
 
     <script src="{{ asset('assets/js/vendor.min.js') }}"></script>
     <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/apexcharts/apexcharts.min.js') }}"></script>
     <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
-    <script src="{{ asset('assets/js/pages/dashboard.init.js') }}"></script>
+    <script src="{{ asset('assets/js/app.js') }}"></script>
+
+
+    <!-- third party js -->
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
+
+    <!-- Datatables init -->
+    <script src="{{ asset('assets/js/pages/datatables.init.js') }}"></script>
+
+    <!-- App js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
     @stack('js')
 

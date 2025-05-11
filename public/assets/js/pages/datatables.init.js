@@ -1,4 +1,3 @@
-
 /*
 Template Name: Shreyu - Responsive Bootstrap 5 Admin Dashboard
 Author: CoderThemes
@@ -13,10 +12,21 @@ $(document).ready(function() {
     // Default Datatable
     $('#basic-datatable').DataTable({
         "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+            "infoFiltered": "(filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
             "paginate": {
+                "first": "Primero",
+                "last": "Último",
                 "previous": "<i class='uil uil-angle-left'>",
                 "next": "<i class='uil uil-angle-right'>"
-            }
+            },
+            "processing": "Procesando...",
+            "emptyTable": "No hay datos disponibles",
+            "loadingRecords": "Cargando..."
         },
         "drawCallback": function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
@@ -28,10 +38,21 @@ $(document).ready(function() {
         lengthChange: false,
         buttons: ['copy', 'print'],
         "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+            "infoFiltered": "(filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
             "paginate": {
+                "first": "Primero",
+                "last": "Último",
                 "previous": "<i class='uil uil-angle-left'>",
                 "next": "<i class='uil uil-angle-right'>"
-            }
+            },
+            "processing": "Procesando...",
+            "emptyTable": "No hay datos disponibles",
+            "loadingRecords": "Cargando..."
         },
         "drawCallback": function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
@@ -44,10 +65,21 @@ $(document).ready(function() {
             style: 'multi'
         },
         "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+            "infoFiltered": "(filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
             "paginate": {
+                "first": "Primero",
+                "last": "Último",
                 "previous": "<i class='uil uil-angle-left'>",
                 "next": "<i class='uil uil-angle-right'>"
-            }
+            },
+            "processing": "Procesando...",
+            "emptyTable": "No hay datos disponibles",
+            "loadingRecords": "Cargando..."
         },
         "drawCallback": function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
@@ -58,10 +90,21 @@ $(document).ready(function() {
     $('#key-datatable').DataTable({
         keys: true,
         "language": {
+            "lengthMenu": "Mostrar _MENU_ registros por página",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+            "infoFiltered": "(filtrado de _MAX_ registros totales)",
+            "search": "Buscar:",
             "paginate": {
+                "first": "Primero",
+                "last": "Último",
                 "previous": "<i class='uil uil-angle-left'>",
                 "next": "<i class='uil uil-angle-right'>"
-            }
+            },
+            "processing": "Procesando...",
+            "emptyTable": "No hay datos disponibles",
+            "loadingRecords": "Cargando..."
         },
         "drawCallback": function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
@@ -75,7 +118,5 @@ $(document).ready(function() {
     $(".dataTables_length select").removeClass('custom-select custom-select-sm');
 
     $(".dataTables_length label").addClass('form-label');
-    
-    
+
 } );
-    
