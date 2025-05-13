@@ -13,8 +13,8 @@
                                 <div class="col-lg-6 p-4">
                                     <div class="mx-auto">
                                         <a href="{{ route('home') }}">
-                                            <img src="{{ asset('assets/images/logo-dark.png') }}" alt=""
-                                                height="24" />
+                                            <img src="{{ asset('assets/images/logocepre1.svg') }}" alt=""
+                                                height="65" />
                                         </a>
                                     </div>
 
@@ -90,12 +90,13 @@
                                 </div>
                                 <div class="col-lg-6 d-none d-md-inline-block">
                                     <div class="auth-page-sidebar">
+                                          <img src="{{ asset('assets/images/login/login.jpg') }}" alt="" style="width: 570px; height: 570px;">
                                         <div class="overlay"></div>
                                         <div class="auth-user-testimonial">
                                             <p class="fs-24 fw-bold text-white mb-1">Sistema de Asistencia</p>
                                             <p class="lead">"Control eficiente de asistencia para profesores y
                                                 estudiantes"</p>
-                                            <p>- Admin</p>
+                                            <p>- CEPRE UNAMAD CICLO ORDINARIO 2025-1</p>
                                         </div>
                                     </div>
                                 </div>

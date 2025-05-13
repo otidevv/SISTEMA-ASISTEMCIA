@@ -8,30 +8,107 @@
             height: calc(100vh - 250px);
             overflow-y: auto;
             position: relative;
+        /* Estilo específico para una sola inicial */
+        .attendance-modal .student-photo-initial.single-letter {
+            font-size: 220px !important;
+            letter-spacing: 0 !important;
+        }
+        
+        /* Estilo específico para dos iniciales */
+        .attendance-modal .student-photo-initial.double-letter {
+            font-size: 150px !important;
+            letter-spacing: -10px !important;
         }
 
-        .student-photo {
-            width: 150px;
-            height: 150px;
+        /* Contenedor de la foto - Limitado estrictamente */
+        .attendance-modal .student-photo-container {
+            position: relative;
+            margin: 0 auto;
+            width: 300px !important;
+            height: 300px !important;
+            max-width: 300px !important;
+            max-height: 300px !important;
+            overflow: hidden !important;
+        }
+        
+        /* Estilos específicos para foto en el modal - Con límites estrictos */
+        .attendance-modal .student-photo,
+        .attendance-modal .student-photo img,
+        .attendance-modal #student-photo img,
+        .attendance-modal .student-photo-container img,
+        .attendance-modal .student-photo-container > img,
+        .attendance-modal .student-photo-container * {
+            width: 300px !important;
+            height: 300px !important;
+            max-width: 300px !important;
+            max-height: 300px !important;
+            object-fit: cover !important;
+            border-radius: 50% !important;
+            border: 12px solid #fff !important;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2) !important;
+            margin: 0 auto !important;
+            display: block !important;
+        }
+
+        .attendance-modal .student-photo-initial,
+        .attendance-modal #student-photo .student-photo-initial,
+        .attendance-modal .student-photo-container .student-photo-initial {
+            width: 300px !important;
+            height: 300px !important;
+            max-width: 300px !important;
+            max-height: 300px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 180px !important;
+            font-weight: 900 !important;
+            color: white !important;
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            border: 12px solid #fff !important;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3) !important;
+            margin: 0 auto !important;
+            text-transform: uppercase !important;
+            letter-spacing: -5px !important;
+            user-select: none !important;
+            line-height: 1 !important;
+        }
+        
+        /* Asegurar que el contenedor div principal también tenga límites */
+        .attendance-modal #student-photo {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 300px !important;
+            max-height: 300px !important;
+            overflow: hidden !important;
+            border-radius: 50% !important;
+        }
+        
+        /* Fotos pequeñas en la lista de registros */
+        .asistencia-card .student-photo {
+            width: 40px;
+            height: 40px;
             object-fit: cover;
             border-radius: 50%;
-            border: 5px solid #fff;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            box-shadow: none;
         }
 
-        .student-photo-initial {
-            width: 150px;
-            height: 150px;
+        .asistencia-card .student-photo-initial {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
+            font-size: 18px;
+            font-weight: bold;
             color: white;
-            background: linear-gradient(135deg, #4158d0, #c850c0);
-            border: 5px solid #fff;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin: 0;
+            text-transform: uppercase;
         }
 
         .asistencia-card {
@@ -42,31 +119,39 @@
             background-color: rgba(0, 123, 255, 0.1);
         }
 
-        .verification-badge {
+        .attendance-modal .verification-badge {
             position: absolute;
-            bottom: 5px;
-            right: 5px;
+            bottom: 10px;
+            right: 10px;
             background-color: #4caf50;
             color: white;
-            border-radius: 20px;
-            padding: 5px 15px;
-            font-size: 14px;
+            border-radius: 40px;
+            padding: 15px 30px;
+            font-size: 1.5rem !important;
             font-weight: bold;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
             z-index: 2;
         }
 
-        .student-photo-container {
+        .attendance-modal .student-photo-container {
             position: relative;
-            margin: 0 auto 15px;
-            width: 150px;
+            margin: 0 auto;
+            width: 40vh;
+            height: 40vh;
+            max-width: 500px;
+            max-height: 500px;
         }
 
-        .check-animation {
-            font-size: 40px;
+        .attendance-modal .check-animation {
+            font-size: 6rem !important;
             color: #28a745;
-            margin-bottom: 10px;
+            margin-bottom: 2rem;
             animation: pulse 1.5s infinite;
+        }
+        
+        /* Eliminar el check animation ya que no está en el HTML actualizado */
+        .attendance-modal .check-animation {
+            display: none;
         }
 
         @keyframes pulse {
@@ -83,43 +168,135 @@
             }
         }
 
-        .progress-container {
-            height: 5px;
+        .attendance-modal .progress-container {
+            height: 12px;
             background-color: #f0f0f0;
-            width: 100%;
-            margin-top: 15px;
+            width: 60%;
+            margin: 2rem auto 0;
+            border-radius: 10px;
         }
 
-        .progress-bar-custom {
+        .attendance-modal .progress-bar-custom {
             height: 100%;
             width: 0;
             background: linear-gradient(90deg, #1e88e5, #1565c0);
             transition: width linear 0.1s;
+            border-radius: 10px;
+        }
+        
+        /* Queue indicator badge */
+        .attendance-modal .queue-badge {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 35px;
+            padding: 12px 25px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            z-index: 3;
         }
 
-        /* Modal Customization */
+        /* Modal Customization - Más ancho horizontalmente */
+        .attendance-modal .modal-dialog.modal-custom {
+            width: 98vw !important;
+            max-width: 98vw !important;
+            height: 85vh !important;
+            margin: 7.5vh 1vw;
+        }
+        
+        .attendance-modal .modal-content {
+            height: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            background: white;
+        }
+        
         .attendance-modal .modal-header {
-            background: linear-gradient(135deg, #1e88e5, #1565c0);
+            background: transparent;
             color: white;
             border-bottom: none;
+            padding: 2rem 2rem 0 0;
+            height: auto;
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .attendance-modal .btn-close {
+            font-size: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .attendance-modal .modal-content {
-            border-radius: 15px;
+        .attendance-modal .modal-body {
+            padding: 3rem;
+            height: 100%;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+        }
+        
+        /* Texto de asistencia registrada */
+        .attendance-modal h1.text-success {
+            font-size: clamp(3rem, 5vw, 6rem) !important;
+            font-weight: 900 !important;
+            color: #28a745 !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 3rem !important;
+        }
+        
+        /* Estilos para el contenido del modal */
+        #student-name {
+            font-size: clamp(2.5rem, 4vw, 5rem) !important;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+        
+        #student-info {
+            font-size: clamp(1.5rem, 3vw, 3rem) !important;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* Ajuste de clases display de Bootstrap */
+        .attendance-modal .display-2 {
+            font-size: clamp(3rem, 5vw, 6rem) !important;
+        }
+        
+        .attendance-modal .display-3 {
+            font-size: clamp(2.5rem, 4vw, 5rem) !important;
+        }
+        
+        .attendance-modal .display-5 {
+            font-size: clamp(1.5rem, 3vw, 3rem) !important;
         }
 
         /* Queue indicator badge */
         .queue-badge {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.3);
+            top: 15px;
+            left: 15px;
+            background-color: rgba(0, 0, 0, 0.4);
             color: white;
-            border-radius: 20px;
-            padding: 3px 10px;
-            font-size: 12px;
+            border-radius: 25px;
+            padding: 5px 15px;
+            font-size: 16px;
+            font-weight: bold;
             z-index: 3;
         }
     </style>
@@ -221,29 +398,34 @@
     <!-- Modal de Asistencia Bootstrap -->
     <div class="modal fade attendance-modal" id="attendance-modal" tabindex="-1" aria-labelledby="attendance-modal-label"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-custom">
             <div class="modal-content">
                 <div class="queue-badge" id="queue-indicator">1/1</div>
-                <div class="modal-header">
-                    <h5 class="modal-title" id="attendance-modal-label">Registro de Asistencia</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white btn-lg ms-auto" data-bs-dismiss="modal"
                         aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <div class="check-animation">
-                        <i class="uil uil-check-circle"></i>
-                    </div>
-                    <h4 class="text-success mb-4">¡Asistencia Registrada!</h4>
-
-                    <div class="student-photo-container">
+                <div class="modal-body text-center d-flex flex-column justify-content-center align-items-center">
+                    <h1 class="text-success mb-4 display-2 fw-bold">¡ASISTENCIA REGISTRADA!</h1>
+                    
+                    <div class="student-photo-container mb-4">
                         <div id="student-photo"></div>
                         <span class="verification-badge" id="verification-type"></span>
                     </div>
 
-                    <h2 class="mt-3 mb-1 fw-bold" id="student-name"></h2>
-                    <p class="text-muted" id="student-info"></p>
+                    <h1 class="fw-bold display-3" id="student-name"></h1>
+                    <p class="text-muted display-5" id="student-info"></p>
 
-                    <div class="progress-container">
+                    <div class="progress-container mt-5">
+                        <div class="progress-bar-custom" id="progress-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+                    <p class="text-muted display-3" id="student-info"></p>
+
+                    <div class="progress-container mt-5">
                         <div class="progress-bar-custom" id="progress-bar"></div>
                     </div>
                 </div>
@@ -326,6 +508,19 @@
                 studentInfo.textContent = data.time;
                 verificationType.textContent = data.type;
                 progressBar.style.width = '0%';
+                
+                // Aplicar estilos adicionales a las imágenes después de cargarlas
+                setTimeout(() => {
+                    const images = studentPhoto.querySelectorAll('img');
+                    images.forEach(img => {
+                        img.style.width = '300px';
+                        img.style.height = '300px';
+                        img.style.maxWidth = '300px';
+                        img.style.maxHeight = '300px';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '50%';
+                    });
+                }, 10);
 
                 // Mostrar modal usando Bootstrap API
                 attendanceModal.show();
@@ -418,20 +613,76 @@
             // Funciones auxiliares para crear HTML de fotos
             function createPhotoHtml(registro) {
                 if (registro.foto_url) {
-                    return `<img src="${registro.foto_url}" alt="Foto" class="student-photo">`;
+                    return `<img src="${registro.foto_url}" alt="Foto" class="student-photo" style="width: 300px !important; height: 300px !important; max-width: 300px !important; max-height: 300px !important; object-fit: cover !important; border-radius: 50% !important;">`;
                 } else {
-                    const inicial = registro.iniciales || 'U';
-                    return `<div class="student-photo-initial">${inicial}</div>`;
+                    // Obtener las iniciales del nombre
+                    let iniciales = 'U'; // Por defecto "U" de Usuario
+                    
+                    if (registro.iniciales) {
+                        iniciales = registro.iniciales;
+                    } else if (registro.nombre_completo) {
+                        // Generar iniciales del nombre completo
+                        const palabras = registro.nombre_completo.trim().split(' ');
+                        if (palabras.length >= 2) {
+                            iniciales = palabras[0].charAt(0) + palabras[1].charAt(0);
+                        } else if (palabras.length === 1) {
+                            iniciales = palabras[0].charAt(0);
+                        }
+                    } else if (registro.nro_documento) {
+                        // Si solo hay documento, usar los primeros 2 dígitos
+                        iniciales = registro.nro_documento.substring(0, 2);
+                    }
+                    
+                    iniciales = iniciales.toUpperCase();
+                    
+                    // Determinar la clase CSS según el número de letras
+                    const letterClass = iniciales.length === 1 ? 'single-letter' : 'double-letter';
+                    
+                    return `<div class="student-photo-initial ${letterClass}" style="width: 300px !important; height: 300px !important; max-width: 300px !important; max-height: 300px !important; font-size: 180px !important; line-height: 1 !important;">${iniciales}</div>`;
                 }
             }
 
             function createSmallPhotoHtml(registro) {
                 if (registro.foto_url) {
-                    return `<img src="${registro.foto_url}" alt="Foto" width="40" height="40" class="rounded-circle">`;
+                    return `<img src="${registro.foto_url}" alt="Foto" width="40" height="40" class="rounded-circle" style="width: 40px !important; height: 40px !important;">`;
                 } else {
-                    const inicial = registro.iniciales || 'U';
-                    return `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">${inicial}</div>`;
+                    // Misma lógica para las iniciales
+                    let iniciales = 'U';
+                    
+                    if (registro.iniciales) {
+                        iniciales = registro.iniciales;
+                    } else if (registro.nombre_completo) {
+                        const palabras = registro.nombre_completo.trim().split(' ');
+                        if (palabras.length >= 2) {
+                            iniciales = palabras[0].charAt(0) + palabras[1].charAt(0);
+                        } else if (palabras.length === 1) {
+                            iniciales = palabras[0].charAt(0);
+                        }
+                    } else if (registro.nro_documento) {
+                        iniciales = registro.nro_documento.substring(0, 2);
+                    }
+                    
+                    iniciales = iniciales.toUpperCase();
+                    
+                    return `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px !important; height: 40px !important; font-weight: bold;">${iniciales}</div>`;
                 }
+            }
+            
+            // Función para formatear la fecha
+            function formatearFecha(fechaString) {
+                if (!fechaString) return '';
+                
+                const fecha = new Date(fechaString);
+                
+                // Formatear fecha en formato dd/mm/yyyy HH:mm:ss
+                const dia = fecha.getDate().toString().padStart(2, '0');
+                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+                const año = fecha.getFullYear();
+                const horas = fecha.getHours().toString().padStart(2, '0');
+                const minutos = fecha.getMinutes().toString().padStart(2, '0');
+                const segundos = fecha.getSeconds().toString().padStart(2, '0');
+                
+                return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
             }
 
             // Configuración directa de Echo (sin función separada)
@@ -475,11 +726,16 @@
                         
                         console.log('📋 Procesando registro:', registro);
                         
+                        // Usar fecha_registro formateada en lugar de fecha_hora_formateada
+                        const fechaRegistroFormateada = registro.fecha_registro_formateada || 
+                            formatearFecha(registro.fecha_registro) || 
+                            'Fecha no disponible';
+                        
                         const eventData = {
                             id: registro.id,
                             name: registro.nombre_completo || 
                                 `Documento: ${registro.nro_documento}`,
-                            time: registro.fecha_hora_formateada,
+                            time: fechaRegistroFormateada,
                             photoHtml: createPhotoHtml(registro),
                             smallPhotoHtml: createSmallPhotoHtml(registro),
                             type: registro.tipo_verificacion_texto
@@ -527,7 +783,7 @@
                     const testData = {
                         id: 999,
                         name: 'Usuario de Prueba',
-                        time: new Date().toLocaleString(),
+                        time: formatearFecha(new Date()),
                         photoHtml: '<div class="student-photo-initial">TP</div>',
                         smallPhotoHtml: '<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">TP</div>',
                         type: 'Prueba Manual'
@@ -566,11 +822,16 @@
 
                                 // Procesar cada registro
                                 data.forEach(registro => {
+                                    // Usar fecha_registro formateada
+                                    const fechaRegistroFormateada = registro.fecha_registro_formateada || 
+                                        formatearFecha(registro.fecha_registro) || 
+                                        'Fecha no disponible';
+                                    
                                     const eventData = {
                                         id: registro.id,
                                         name: registro.nombre_completo ||
                                             `Documento: ${registro.nro_documento}`,
-                                        time: registro.fecha_hora_formateada,
+                                        time: fechaRegistroFormateada,
                                         photoHtml: createPhotoHtml(registro),
                                         smallPhotoHtml: createSmallPhotoHtml(registro),
                                         type: registro.tipo_verificacion_texto
@@ -583,13 +844,6 @@
                         .catch(error => console.error('Error al consultar nuevos registros:', error));
                 }, 5000); // Consultar cada 5 segundos
             }
-
-            // Datos de prueba (comentados)
-            /*
-            setInterval(() => {
-                // Código para simular datos...
-            }, 8000);
-            */
         });
     </script>
 @endpush

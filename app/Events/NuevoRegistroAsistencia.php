@@ -30,6 +30,9 @@ class NuevoRegistroAsistencia implements ShouldBroadcast
                 $registro->usuario->nombre . ' ' . $registro->usuario->apellido_paterno :
                 null,
             'fecha_hora_formateada' => $registro->fecha_hora->format('d/m/Y H:i:s'),
+            // AÑADIR ESTOS DOS CAMPOS:
+            'fecha_registro' => $registro->fecha_registro,
+            'fecha_registro_formateada' => $registro->fecha_registro->format('d/m/Y H:i:s'),
             'tipo_verificacion' => $registro->tipo_verificacion,
             'tipo_verificacion_texto' => $registro->tipo_verificacion_texto,
             'estado' => $registro->estado,

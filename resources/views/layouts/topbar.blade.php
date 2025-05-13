@@ -61,19 +61,19 @@
         <div class="logo-box">
             <a href="{{ route('dashboard') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="40">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-dark.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="" height="40">
                 </span>
             </a>
 
             <a href="{{ route('dashboard') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="" height="40">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-light.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="" height="40">
                 </span>
             </a>
         </div>

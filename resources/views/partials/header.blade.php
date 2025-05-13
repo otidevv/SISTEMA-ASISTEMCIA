@@ -321,21 +321,21 @@
         <div class="logo-box">
             <a href="{{ url('/dashboard') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="30">
                     <!-- <span class="logo-lg-text-light">Shreyu</span> -->
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-dark.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="" height="45">
                     <!-- <span class="logo-lg-text-light">S</span> -->
                 </span>
             </a>
 
             <a href="{{ url('/') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="30">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-light.png') }}" alt="" height="24">
+                    <img src="{{ asset('assets/images/logocepre1.psg') }}" alt="" height="45">
                 </span>
             </a>
         </div>

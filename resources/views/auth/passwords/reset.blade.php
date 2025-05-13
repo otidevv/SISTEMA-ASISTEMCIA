@@ -13,7 +13,7 @@
                                 <div class="col-lg-6 p-4">
                                     <div class="mx-auto">
                                         <a href="{{ route('home') }}">
-                                            <img src="{{ asset('assets/images/logo-dark.png') }}" alt=""
+                                            <img src="{{ asset('assets/images/logocepre1.svg') }}" alt=""
                                                 height="24" />
                                         </a>
                                     </div>
