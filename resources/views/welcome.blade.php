@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Sui Overflow 2025 Hackathon</title>
+    <title>Portal CEPRE UNAMAD</title>
     <meta
         content="Join Sui Overflow 2025, a global online hackathon where developers, builders, and innovators come together to create on the Sui blockchain."
         name="description" />
@@ -795,7 +795,7 @@
             </style>
         </div>
         <div class="css-masks w-embed"><svg width="0" height="0" viewBox="0 0 207 235" fill="none"
-                xmlns="http://www.w3.org/2000/svg">
+                xmlns="">
                 <defs>
                     <clipPath id="keyMask" clipPathUnits="objectBoundingBox"
                         transform="scale(0.004830917874, 0.004255319149)">
@@ -821,7 +821,7 @@
             <div class="load-bg"></div>
             <div class="load-modal">
                 <div class="load-modal__bar">
-                    <div class="load-modal__close"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                    <div class="load-modal__close"><svg xmlns="" width="100%"
                             viewBox="0 0 40 40" fill="none" class="svg">
                             <circle cx="8.7357" cy="32.0591" r="2.13193" transform="rotate(-45 8.7357 32.0591)"
                                 fill="currentColor"></circle>
@@ -906,7 +906,7 @@
                             </div>
                         </div>
                         <div class="card-grid__inner clip">
-                            <div class="card-grid__icon purple"><svg xmlns="http://www.w3.org/2000/svg"
+                            <div class="card-grid__icon purple"><svg xmlns=""
                                     width="100%" viewBox="0 0 30 30" fill="none" class="svg card-grid">
                                     <circle cx="2.48091" cy="14.9804" r="1.7563" fill="currentColor"></circle>
                                     <circle cx="6.73286" cy="15.0043" r="1.7563" fill="currentColor"></circle>
@@ -961,7 +961,7 @@
             <div class="container no-pad">
                 <div class="nav-inner">
                     <div class="nav-inner__left"><a aria-label="back to top" href="/" aria-current="page"
-                            class="nav-inner__logo w-inline-block w--current"><svg xmlns="http://www.w3.org/2000/svg"
+                            class="nav-inner__logo w-inline-block w--current"><svg xmlns=""
                                 width="100%" viewBox="0 0 143 15" fill="none" class="svg">
                                 <path
                                     d="M6.17333 14.216C3.16733 14.216 1.00733 12.56 0.611328 9.824H3.02333C3.25733 11.498 4.55333 12.326 6.22733 12.326C8.40533 12.326 9.61133 11.462 9.61133 10.22C9.61133 8.924 8.62133 8.582 6.60533 8.132L4.76933 7.736C2.55533 7.25 1.02533 6.134 1.02533 4.028C1.02533 1.76 3.27533 0.104004 6.13733 0.104004C9.25133 0.104004 11.1773 1.67 11.5733 3.92H9.16133C8.76533 2.57 7.64933 1.994 6.13733 1.994C4.58933 1.994 3.34733 2.696 3.34733 3.812C3.34733 4.946 4.15733 5.324 6.15533 5.774L7.97333 6.17C10.6373 6.764 11.9153 7.826 11.9153 9.968C11.9153 12.542 9.62933 14.216 6.17333 14.216Z"
@@ -1079,7 +1079,7 @@
             <a data-arrow-button="" href="https://portalcepre.unamad.edu.pe/login" target="_blank"
                 class="nav-cta w-inline-block">
                 <div class="button-icon__wrap is--nav is--duplicate">
-                    <div class="button-icon"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                    <div class="button-icon"><svg xmlns="" width="100%"
                             viewBox="0 0 23 24" fill="none" class="svg">
                             <circle cx="1.51169" cy="12.0732" r="1.35934" fill="currentColor"></circle>
                             <circle cx="4.79294" cy="12.0742" r="1.35934" fill="currentColor"></circle>
@@ -1103,7 +1103,7 @@
                     <div class="text-wrap__innner"><span class="p-medium u--fw-med">Iniciar Sesion</span></div>
                 </div>
                 <div class="button-icon__wrap is--nav is--main">
-                    <div class="button-icon"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                    <div class="button-icon"><svg xmlns="" width="100%"
                             viewBox="0 0 23 24" fill="none" class="svg">
                             <circle cx="1.51169" cy="12.0732" r="1.35934" fill="currentColor"></circle>
                             <circle cx="4.79294" cy="12.0742" r="1.35934" fill="currentColor"></circle>
@@ -1137,7 +1137,7 @@
                             </div><a data-arrow-button="" href="https://portalcepre.unamad.edu.pe/login" target="_blank"
                                 class="button w-inline-block">
                                 <div class="button-icon__wrap is--duplicate">
-                                    <div class="button-icon is--duplicate"><svg xmlns="http://www.w3.org/2000/svg"
+                                    <div class="button-icon is--duplicate"><svg xmlns=""
                                             width="100%" viewBox="0 0 23 24" fill="none" class="svg">
                                             <circle cx="1.51169" cy="12.0732" r="1.35934" fill="currentColor"
                                                 class="c"></circle>
@@ -1176,7 +1176,7 @@
                                     </div>
                                 </div>
                                 <div class="button-icon__wrap is--main">
-                                    <div class="button-icon"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="button-icon"><svg xmlns="" width="100%"
                                             viewBox="0 0 23 24" fill="none" class="svg">
                                             <circle cx="1.51169" cy="12.0732" r="1.35934" fill="currentColor"
                                                 class="c"></circle>
@@ -1214,7 +1214,7 @@
                         <div class="home-hero__right">
                             <div class="home-hero__visual">
                                 <div class="home-hero__visual-inner">
-                                    <div class="hero-key o-1"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key o-1"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1235,7 +1235,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669c8_key-o-1-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key v"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key v"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1256,7 +1256,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669c9_key-w-bg.png"
                                             loading="lazy" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key e"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key e"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1277,7 +1277,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669cb_key-e-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key r"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key r"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1298,7 +1298,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669cc_key-r-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key f"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key f"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1319,7 +1319,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669cc_key-r-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key l"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key l"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1340,7 +1340,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669ca_key-l-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key o-2"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key o-2"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1361,7 +1361,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669c8_key-o-1-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div class="hero-key w"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-key w"><svg xmlns="" width="100%"
                                             viewBox="0 0 200 197" fill="none" class="hero-key-svg">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M5.22759 99.0471L0.0782774 148.857C-0.726302 158.372 4.74484 160.909 13.1125 164.239L18.1009 166.142L112.237 194.528C119.317 196.749 127.041 197.224 134.121 195.48L116.903 141.403C110.306 143.148 101.616 142.355 95.0187 140.61L16 119L10.1871 114.043L7.5 107.5L5.22759 99.0471Z"
@@ -1382,7 +1382,7 @@
                                             src="https://cdn.prod.website-files.com/67acdc4f394bcf4f3e3669b6/67acdc4f394bcf4f3e3669c9_key-w-bg.png"
                                             loading="eager" alt="" class="key-gradient key-base-right" />
                                     </div>
-                                    <div data-wiggle="" class="hero-speech"><svg xmlns="http://www.w3.org/2000/svg"
+                                    <div data-wiggle="" class="hero-speech"><svg xmlns=""
                                             width="100%" viewBox="0 0 274 165" fill="none">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M8.95703 56.9731L13.2844 80.8537L13.4447 81.8154L13.7652 82.777L13.9255 83.7386L14.246 84.7003L14.5666 85.6619L14.8871 86.4633L15.2077 87.4249L15.5282 88.3865L11.3611 64.5059L10.8803 63.5443L10.5598 62.5827L10.2392 61.7813L9.91867 60.8197L9.75839 59.858L9.43785 58.8964L9.27758 57.9348L8.95703 56.9731Z"
@@ -1447,7 +1447,7 @@
                                                 </linearGradient>
                                             </defs>
                                         </svg></div>
-                                    <div data-wiggle="" class="hero-pencil"><svg xmlns="http://www.w3.org/2000/svg"
+                                    <div data-wiggle="" class="hero-pencil"><svg xmlns=""
                                             width="100%" viewBox="0 0 309 134" fill="none">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M16.8134 4.88525L9.44089 19.3098L2.06836 33.7343L5.43408 48.6396L8.63953 63.5449L19.2175 64.0258L29.7955 64.3463L37.168 49.9218L44.3803 35.4973L41.1748 20.5919L37.9694 5.68662L27.3914 5.36607L16.8134 4.88525Z"
@@ -1481,7 +1481,7 @@
                                                 </linearGradient>
                                             </defs>
                                         </svg></div>
-                                    <div data-wiggle="" class="hero-hand"><svg xmlns="http://www.w3.org/2000/svg"
+                                    <div data-wiggle="" class="hero-hand"><svg xmlns=""
                                             width="100%" viewBox="0 0 122 135" fill="none">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M75.427 9.8689L76.7092 21.088L76.8695 21.8893L76.7092 22.851L76.549 23.8126L76.2284 24.614L75.7476 25.5756L61.6436 49.1356L60.2012 38.0768L74.3051 14.3565L74.786 13.3949L75.1065 12.5935L75.2668 11.6319L75.427 10.6703V9.8689Z"
@@ -1526,7 +1526,7 @@
                                             data-is-ix2-target="0" data-renderer="svg" data-default-duration="0"
                                             data-duration="0"></div>
                                     </div>
-                                    <div class="hero-stars"><svg xmlns="http://www.w3.org/2000/svg" width="100%"
+                                    <div class="hero-stars"><svg xmlns="" width="100%"
                                             viewBox="0 0 229 129" fill="none" class="o--visible">
                                             <g data-wiggle="" class="hero-star">
                                                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -1601,7 +1601,7 @@
                                             data-is-ix2-target="0" data-renderer="svg" data-default-duration="0"
                                             data-duration="3.0166666666666666"></div>
                                     </div>
-                                    <div data-wiggle="" class="hero-phone"><svg xmlns="http://www.w3.org/2000/svg"
+                                    <div data-wiggle="" class="hero-phone"><svg xmlns=""
                                             width="100%" viewBox="0 0 181 175" fill="none">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
                                                 d="M2.80273 126.388L6.00818 141.454C8.25199 149.147 13.8615 154.276 21.8751 157.481L23.3176 157.962L64.0268 171.745C77.3294 175.913 93.6771 173.508 102.011 161.488L102.492 160.366L153.298 70.1328C155.222 66.4465 155.863 63.5616 155.382 59.3945L155.222 58.2726L152.016 43.207L152.177 44.3289C152.497 48.3357 152.016 51.3809 149.933 55.2275L99.2867 145.301L98.6456 146.422C90.7922 157.962 75.2458 160.687 62.2638 157.161L60.8213 156.84L19.9519 143.057L18.6697 142.416C11.2972 139.531 6.32873 135.203 3.44382 128.472L3.12328 127.35L2.80273 126.388Z"

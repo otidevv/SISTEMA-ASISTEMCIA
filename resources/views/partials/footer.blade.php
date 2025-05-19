@@ -5,7 +5,7 @@
             <div class="col-md-6">
                 <script>
                     document.write(new Date().getFullYear())
-                </script> &copy; Shreyu theme by <a href="#">Coderthemes</a>
+                </script> &copy; Todos los derechos reservados <a href="#">CepreUnamad</a>
             </div>
             <div class="col-md-6">
                 <div class="text-md-end footer-links d-none d-sm-block">

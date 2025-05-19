@@ -291,7 +291,7 @@
                         <i data-feather="user" class="icon-dual icon-xs me-1"></i><span>Mi Perfil</span>
                     </a>
 
-                    <a href="{{ route('perfil.configuracion') }}" class="dropdown-item notify-item">
+                    <a href="{{ route('perfil.index') }}" class="dropdown-item notify-item">
                         <i data-feather="settings" class="icon-dual icon-xs me-1"></i><span>Configuración</span>
                     </a>
 
@@ -581,7 +581,7 @@
                 </li>
 
                 <li>
-                    <a href="{{ route('perfil.configuracion') }}">
+                    <a href="{{ route('perfil.index') }}">
                         <i data-feather="settings"></i>
                         <span> Ajustes </span>
                     </a>
