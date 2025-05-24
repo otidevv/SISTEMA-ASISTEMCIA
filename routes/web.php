@@ -143,6 +143,16 @@ Route::prefix('json')->group(function () {
         Route::delete('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'destroy']);
         Route::patch('/{id}/status', [App\Http\Controllers\Api\ParentescoController::class, 'changeStatus']);
     });
+
+    // Rutas para el perfil de usuario
+    Route::prefix('perfil')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\PerfilController::class, 'index']);
+        Route::put('/update', [App\Http\Controllers\Api\PerfilController::class, 'update']);
+        Route::put('/password', [App\Http\Controllers\Api\PerfilController::class, 'updatePassword']);
+        Route::post('/foto', [App\Http\Controllers\Api\PerfilController::class, 'updateFoto']);
+        Route::delete('/foto', [App\Http\Controllers\Api\PerfilController::class, 'eliminarFoto']);
+        Route::put('/preferencias', [App\Http\Controllers\Api\PerfilController::class, 'updatePreferencias']);
+    });
 });
 
 Route::get('api/consulta/{dni}', [App\Http\Controllers\ApiProxyController::class, 'consultaDNI']);
