@@ -19,34 +19,41 @@ class AsistenciaController extends Controller
         Artisan::call('asistencia:procesar-eventos');
     }
     /**
-     * Mostrar la lista de registros de asistencia.
+     * Mostrar la lista de registros de asistencia de BIOMETRICO Y MANUAL.
      */
     public function index(Request $request)
     {
         // Obtener parámetros de filtrado
         $fecha = $request->get('fecha', Carbon::today()->format('Y-m-d'));
         $documento = $request->get('documento');
-
+        
         // Crear la consulta base
         $query = RegistroAsistencia::query();
-
+        
         // Aplicar filtros
         if ($fecha) {
-            $query->whereDate('fecha_registro', $fecha); // Cambiado de fecha_hora a fecha_registro
+            $query->where(function($q) use ($fecha) {
+                $q->whereDate('fecha_registro', $fecha)
+                ->orWhere(function($q2) use ($fecha) {
+                    $q2->where('tipo_verificacion', 4)
+                    ->whereDate('fecha_hora', $fecha);
+                });
+            });
         }
-
+        
         if ($documento) {
             $query->where('nro_documento', $documento);
         }
-
+        
         // Obtener registros paginados
-        $registros = $query->orderBy('fecha_registro', 'desc')->paginate(15); // Cambiado de fecha_hora a fecha_registro
-
+        $registros = $query->orderBy('fecha_registro', 'desc')->paginate(15);
+        
         // Obtener usuarios para el filtro (opcional)
         $usuarios = User::select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
-
+        
         return view('asistencia.index', compact('registros', 'usuarios', 'fecha', 'documento'));
     }
+    
 
     /**
      * Muestra la vista de monitoreo en tiempo real de registros de asistencia.

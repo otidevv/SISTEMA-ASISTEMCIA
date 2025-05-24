@@ -2,6 +2,90 @@
 
 @section('title', 'Registrar Asistencia')
 
+@push('css')
+<style>
+    .search-container {
+        position: relative;
+    }
+
+    .search-input {
+        padding-right: 40px;
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.25rem 0.25rem;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 1050;
+    }
+
+    .suggestion-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid #f1f3f4;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.active {
+        background-color: #f8f9fa;
+    }
+
+    .suggestion-item .text-primary {
+        font-weight: 600;
+    }
+
+    .suggestion-item .dni {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .selected-student {
+        padding: 10px;
+        background-color: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 0.25rem;
+        margin-bottom: 10px;
+        display: none;
+    }
+
+    .selected-student .remove-btn {
+        float: right;
+        color: #dc3545;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .no-results {
+        padding: 15px;
+        text-align: center;
+        color: #6c757d;
+    }
+</style>
+@endpush
+
 @section('content')
     <!-- Start Content-->
     <div class="container-fluid">
@@ -45,19 +129,30 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="nro_documento" class="form-label">Estudiante <span
+                                        <label for="estudiante_search" class="form-label">Estudiante <span
                                                 class="text-danger">*</span></label>
-                                        <select class="form-select" id="nro_documento" name="nro_documento" required>
-                                            <option value="">Seleccione un estudiante</option>
-                                            @foreach ($estudiantes as $estudiante)
-                                                <option value="{{ $estudiante->numero_documento }}"
-                                                    {{ old('nro_documento') == $estudiante->numero_documento ? 'selected' : '' }}>
-                                                    {{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }}
-                                                    {{ $estudiante->apellido_materno }}
-                                                    ({{ $estudiante->numero_documento }})
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        
+                                        <!-- Contenedor del estudiante seleccionado -->
+                                        <div class="selected-student" id="selectedStudent">
+                                            <span class="remove-btn" onclick="removeStudent()">×</span>
+                                            <strong id="selectedName"></strong><br>
+                                            <small>DNI: <span id="selectedDNI"></span></small>
+                                        </div>
+
+                                        <!-- Campo de búsqueda con autocompletado -->
+                                        <div class="search-container">
+                                            <input type="text" 
+                                                   class="form-control search-input" 
+                                                   id="estudiante_search" 
+                                                   placeholder="Buscar por nombre o DNI..."
+                                                   autocomplete="off">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <div class="suggestions-dropdown" id="suggestions"></div>
+                                        </div>
+
+                                        <!-- Campo oculto para enviar el DNI -->
+                                        <input type="hidden" id="nro_documento" name="nro_documento" 
+                                               value="{{ old('nro_documento') }}" required>
                                     </div>
                                 </div>
 
@@ -126,10 +221,160 @@
 @endsection
 
 @push('js')
-    <script>
-        $(document).ready(function() {
-            // Si lo necesitas, aquí puedes inicializar select2 u otros componentes JS
-            // $('#nro_documento').select2();
+<script>
+    // Convertir los datos de PHP a JavaScript
+    const estudiantes = @json($estudiantes);
+    
+    const searchInput = document.getElementById('estudiante_search');
+    const suggestionsContainer = document.getElementById('suggestions');
+    const nroDocumentoInput = document.getElementById('nro_documento');
+    const selectedStudentDiv = document.getElementById('selectedStudent');
+    const selectedNameSpan = document.getElementById('selectedName');
+    const selectedDNISpan = document.getElementById('selectedDNI');
+    
+    let currentFocus = -1;
+    let filteredEstudiantes = [];
+
+    // Función para resaltar coincidencias
+    function highlightMatch(text, searchTerm) {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<span class="text-primary">$1</span>');
+    }
+
+    // Función para buscar estudiantes
+    function searchEstudiantes(searchTerm) {
+        if (!searchTerm) return [];
+        
+        const term = searchTerm.toLowerCase();
+        return estudiantes.filter(estudiante => {
+            const nombreCompleto = `${estudiante.nombre} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`.toLowerCase();
+            return nombreCompleto.includes(term) || estudiante.numero_documento.includes(term);
         });
-    </script>
+    }
+
+    // Función para mostrar sugerencias
+    function showSuggestions(searchTerm) {
+        filteredEstudiantes = searchEstudiantes(searchTerm);
+        
+        if (searchTerm.length === 0 || filteredEstudiantes.length === 0) {
+            suggestionsContainer.style.display = 'none';
+            if (searchTerm.length > 0 && filteredEstudiantes.length === 0) {
+                suggestionsContainer.innerHTML = '<div class="no-results">No se encontraron resultados</div>';
+                suggestionsContainer.style.display = 'block';
+            }
+            return;
+        }
+
+        let html = '';
+        filteredEstudiantes.slice(0, 10).forEach((estudiante, index) => {
+            const nombreCompleto = `${estudiante.nombre} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`;
+            const highlightedNombre = highlightMatch(nombreCompleto, searchTerm);
+            const highlightedDNI = highlightMatch(estudiante.numero_documento, searchTerm);
+            
+            html += `
+                <div class="suggestion-item" data-index="${index}">
+                    <div>${highlightedNombre}</div>
+                    <div class="dni">DNI: ${highlightedDNI}</div>
+                </div>
+            `;
+        });
+
+        suggestionsContainer.innerHTML = html;
+        suggestionsContainer.style.display = 'block';
+        currentFocus = -1;
+
+        // Agregar eventos a las sugerencias
+        document.querySelectorAll('.suggestion-item').forEach((item, index) => {
+            item.addEventListener('click', function() {
+                selectEstudiante(filteredEstudiantes[index]);
+            });
+        });
+    }
+
+    // Función para seleccionar un estudiante
+    function selectEstudiante(estudiante) {
+        const nombreCompleto = `${estudiante.nombre} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`;
+        
+        // Mostrar el estudiante seleccionado
+        selectedNameSpan.textContent = nombreCompleto;
+        selectedDNISpan.textContent = estudiante.numero_documento;
+        selectedStudentDiv.style.display = 'block';
+        
+        // Establecer el valor del campo oculto
+        nroDocumentoInput.value = estudiante.numero_documento;
+        
+        // Limpiar y ocultar el campo de búsqueda
+        searchInput.value = '';
+        searchInput.style.display = 'none';
+        suggestionsContainer.style.display = 'none';
+    }
+
+    // Función para remover el estudiante seleccionado
+    function removeStudent() {
+        selectedStudentDiv.style.display = 'none';
+        searchInput.style.display = 'block';
+        nroDocumentoInput.value = '';
+        searchInput.focus();
+    }
+
+    // Eventos del input
+    searchInput.addEventListener('input', function() {
+        showSuggestions(this.value);
+    });
+
+    // Navegación con teclado
+    searchInput.addEventListener('keydown', function(e) {
+        const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentFocus++;
+            if (currentFocus >= items.length) currentFocus = 0;
+            setActive(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentFocus--;
+            if (currentFocus < 0) currentFocus = items.length - 1;
+            setActive(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (currentFocus > -1 && filteredEstudiantes[currentFocus]) {
+                selectEstudiante(filteredEstudiantes[currentFocus]);
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsContainer.style.display = 'none';
+            currentFocus = -1;
+        }
+    });
+
+    // Función para marcar elemento activo
+    function setActive(items) {
+        items.forEach(item => item.classList.remove('active'));
+        if (currentFocus >= 0 && currentFocus < items.length) {
+            items[currentFocus].classList.add('active');
+            items[currentFocus].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container') && e.target !== searchInput) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
+
+    // Si hay un valor old() de Laravel, pre-seleccionar el estudiante
+    @if(old('nro_documento'))
+        const oldDNI = "{{ old('nro_documento') }}";
+        const oldEstudiante = estudiantes.find(e => e.numero_documento === oldDNI);
+        if (oldEstudiante) {
+            selectEstudiante(oldEstudiante);
+        }
+    @endif
+
+    // Hacer la función removeStudent global
+    window.removeStudent = removeStudent;
+</script>
 @endpush
+
