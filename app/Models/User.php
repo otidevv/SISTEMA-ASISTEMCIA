@@ -159,4 +159,22 @@ class User extends Authenticatable
     {
         return "{$this->nombre} {$this->apellido_paterno} " . ($this->apellido_materno ? $this->apellido_materno : '');
     }
+
+    // Agrega esto a tu modelo User.php
+
+    /**
+     * Obtener el código del usuario (usando numero_documento)
+     */
+    public function getCodigoAttribute()
+    {
+        return $this->numero_documento;
+    }
+
+    /**
+     * Obtener el nombre completo del usuario
+     */
+    public function getNombreCompletoAttribute()
+    {
+        return trim($this->nombre . ' ' . $this->apellido_paterno . ' ' . $this->apellido_materno);
+    }
 }

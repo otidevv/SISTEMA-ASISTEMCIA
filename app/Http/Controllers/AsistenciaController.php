@@ -26,34 +26,34 @@ class AsistenciaController extends Controller
         // Obtener parámetros de filtrado
         $fecha = $request->get('fecha', Carbon::today()->format('Y-m-d'));
         $documento = $request->get('documento');
-        
+
         // Crear la consulta base
         $query = RegistroAsistencia::query();
-        
+
         // Aplicar filtros
         if ($fecha) {
-            $query->where(function($q) use ($fecha) {
+            $query->where(function ($q) use ($fecha) {
                 $q->whereDate('fecha_registro', $fecha)
-                ->orWhere(function($q2) use ($fecha) {
-                    $q2->where('tipo_verificacion', 4)
-                    ->whereDate('fecha_hora', $fecha);
-                });
+                    ->orWhere(function ($q2) use ($fecha) {
+                        $q2->where('tipo_verificacion', 4)
+                            ->whereDate('fecha_hora', $fecha);
+                    });
             });
         }
-        
+
         if ($documento) {
             $query->where('nro_documento', $documento);
         }
-        
+
         // Obtener registros paginados
         $registros = $query->orderBy('fecha_registro', 'desc')->paginate(15);
-        
+
         // Obtener usuarios para el filtro (opcional)
         $usuarios = User::select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
-        
+
         return view('asistencia.index', compact('registros', 'usuarios', 'fecha', 'documento'));
     }
-    
+
 
     /**
      * Muestra la vista de monitoreo en tiempo real de registros de asistencia.
@@ -102,7 +102,7 @@ class AsistenciaController extends Controller
             'codigo_trabajo' => $request->codigo_trabajo,
             'terminal_id' => $request->terminal_id,
             'sn_dispositivo' => $request->sn_dispositivo ?? 'MANUAL',
-            'fecha_registro' => now(),
+            'fecha_registro' => $request->fecha_hora,
         ]);
 
         return redirect()->route('asistencia.index')->with('success', 'Registro de asistencia creado exitosamente.');

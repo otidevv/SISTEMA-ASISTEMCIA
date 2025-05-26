@@ -102,6 +102,54 @@ Route::middleware('auth')->group(function () {
         Route::get('/asistencia/reportes', [AsistenciaController::class, 'reportesIndex'])->name('asistencia.reportes');
     });
 
+
+    Route::middleware('can:ciclos.view')->group(function () {
+        Route::get('/ciclos', [App\Http\Controllers\CicloController::class, 'index'])->name('ciclos.index');
+        Route::get('/ciclos/create', [App\Http\Controllers\CicloController::class, 'create'])->name('ciclos.create')->middleware('can:ciclos.create');
+        Route::post('/ciclos', [App\Http\Controllers\CicloController::class, 'store'])->name('ciclos.store')->middleware('can:ciclos.create');
+        Route::get('/ciclos/{ciclo}/edit', [App\Http\Controllers\CicloController::class, 'edit'])->name('ciclos.edit')->middleware('can:ciclos.edit');
+        Route::put('/ciclos/{ciclo}', [App\Http\Controllers\CicloController::class, 'update'])->name('ciclos.update')->middleware('can:ciclos.edit');
+        Route::delete('/ciclos/{ciclo}', [App\Http\Controllers\CicloController::class, 'destroy'])->name('ciclos.destroy')->middleware('can:ciclos.delete');
+        Route::post('/ciclos/{ciclo}/activar', [App\Http\Controllers\CicloController::class, 'activar'])->name('ciclos.activar')->middleware('can:ciclos.activate');
+    });
+
+    Route::middleware('can:carreras.view')->group(function () {
+        Route::get('/carreras', [App\Http\Controllers\CarreraController::class, 'index'])->name('carreras.index');
+        Route::get('/carreras/create', [App\Http\Controllers\CarreraController::class, 'create'])->name('carreras.create')->middleware('can:carreras.create');
+        Route::post('/carreras', [App\Http\Controllers\CarreraController::class, 'store'])->name('carreras.store')->middleware('can:carreras.create');
+        Route::get('/carreras/{carrera}/edit', [App\Http\Controllers\CarreraController::class, 'edit'])->name('carreras.edit')->middleware('can:carreras.edit');
+        Route::put('/carreras/{carrera}', [App\Http\Controllers\CarreraController::class, 'update'])->name('carreras.update')->middleware('can:carreras.edit');
+        Route::delete('/carreras/{carrera}', [App\Http\Controllers\CarreraController::class, 'destroy'])->name('carreras.destroy')->middleware('can:carreras.delete');
+    });
+
+    Route::middleware('can:turnos.view')->group(function () {
+        Route::get('/turnos', [App\Http\Controllers\TurnoController::class, 'index'])->name('turnos.index');
+        Route::get('/turnos/create', [App\Http\Controllers\TurnoController::class, 'create'])->name('turnos.create')->middleware('can:turnos.create');
+        Route::post('/turnos', [App\Http\Controllers\TurnoController::class, 'store'])->name('turnos.store')->middleware('can:turnos.create');
+        Route::get('/turnos/{turno}/edit', [App\Http\Controllers\TurnoController::class, 'edit'])->name('turnos.edit')->middleware('can:turnos.edit');
+        Route::put('/turnos/{turno}', [App\Http\Controllers\TurnoController::class, 'update'])->name('turnos.update')->middleware('can:turnos.edit');
+        Route::delete('/turnos/{turno}', [App\Http\Controllers\TurnoController::class, 'destroy'])->name('turnos.destroy')->middleware('can:turnos.delete');
+    });
+    Route::middleware('can:aulas.view')->group(function () {
+        Route::get('/aulas', [App\Http\Controllers\AulaController::class, 'index'])->name('aulas.index');
+        Route::get('/aulas/create', [App\Http\Controllers\AulaController::class, 'create'])->name('aulas.create')->middleware('can:aulas.create');
+        Route::post('/aulas', [App\Http\Controllers\AulaController::class, 'store'])->name('aulas.store')->middleware('can:aulas.create');
+        Route::get('/aulas/{aula}/edit', [App\Http\Controllers\AulaController::class, 'edit'])->name('aulas.edit')->middleware('can:aulas.edit');
+        Route::put('/aulas/{aula}', [App\Http\Controllers\AulaController::class, 'update'])->name('aulas.update')->middleware('can:aulas.edit');
+        Route::delete('/aulas/{aula}', [App\Http\Controllers\AulaController::class, 'destroy'])->name('aulas.destroy')->middleware('can:aulas.delete');
+        Route::get('/aulas/disponibilidad', [App\Http\Controllers\AulaController::class, 'disponibilidad'])->name('aulas.disponibilidad')->middleware('can:aulas.availability');
+    });
+    Route::middleware('can:inscripciones.view')->group(function () {
+        Route::get('/inscripciones', [App\Http\Controllers\InscripcionController::class, 'index'])->name('inscripciones.index');
+        Route::get('/inscripciones/create', [App\Http\Controllers\InscripcionController::class, 'create'])->name('inscripciones.create')->middleware('can:inscripciones.create');
+        Route::post('/inscripciones', [App\Http\Controllers\InscripcionController::class, 'store'])->name('inscripciones.store')->middleware('can:inscripciones.create');
+        Route::get('/inscripciones/{inscripcion}/edit', [App\Http\Controllers\InscripcionController::class, 'edit'])->name('inscripciones.edit')->middleware('can:inscripciones.edit');
+        Route::put('/inscripciones/{inscripcion}', [App\Http\Controllers\InscripcionController::class, 'update'])->name('inscripciones.update')->middleware('can:inscripciones.edit');
+        Route::delete('/inscripciones/{inscripcion}', [App\Http\Controllers\InscripcionController::class, 'destroy'])->name('inscripciones.destroy')->middleware('can:inscripciones.delete');
+        Route::get('/inscripciones/reportes', [App\Http\Controllers\InscripcionController::class, 'reportes'])->name('inscripciones.reportes')->middleware('can:inscripciones.reports');
+        Route::post('/inscripciones/exportar', [App\Http\Controllers\InscripcionController::class, 'exportar'])->name('inscripciones.exportar')->middleware('can:inscripciones.export');
+    });
+
     // Perfil de usuario - Accesible para todos los usuarios autenticados
     Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
     Route::get('/perfil/configuracion', [PerfilController::class, 'configuracion'])->name('perfil.configuracion');
@@ -118,6 +166,75 @@ Route::middleware('auth')->group(function () {
 
 // Agrega el prefijo 'json' para todas las rutas de API
 Route::prefix('json')->group(function () {
+
+
+    // API Ciclos
+    Route::prefix('ciclos')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\CicloController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\CicloController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\Api\CicloController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\CicloController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\CicloController::class, 'destroy']);
+        Route::post('/{id}/activar', [App\Http\Controllers\Api\CicloController::class, 'activar']);
+        Route::get('/activo/actual', [App\Http\Controllers\Api\CicloController::class, 'cicloActivo']);
+    });
+
+    // API Carreras
+    Route::prefix('carreras')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\CarreraController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\CarreraController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\Api\CarreraController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\CarreraController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\CarreraController::class, 'destroy']);
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\CarreraController::class, 'changeStatus']);
+        Route::get('/activas/lista', [App\Http\Controllers\Api\CarreraController::class, 'listaActivas']);
+    });
+
+    // API Turnos
+    Route::prefix('turnos')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\TurnoController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\TurnoController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'destroy']);
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\TurnoController::class, 'changeStatus']);
+        Route::get('/activos/lista', [App\Http\Controllers\Api\TurnoController::class, 'listaActivos']);
+    });
+
+    // API Aulas
+    Route::prefix('aulas')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\AulaController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\AulaController::class, 'store']);
+        Route::get('/{id}', [App\Http\Controllers\Api\AulaController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\AulaController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\AulaController::class, 'destroy']);
+        Route::patch('/{id}/status', [App\Http\Controllers\Api\AulaController::class, 'changeStatus']);
+        Route::get('/disponibles/capacidad/{capacidad}', [App\Http\Controllers\Api\AulaController::class, 'porCapacidad']);
+        Route::get('/tipo/{tipo}', [App\Http\Controllers\Api\AulaController::class, 'porTipo']);
+    });
+
+    // API Inscripciones
+    Route::prefix('inscripciones')->group(function () {
+        // ✅ RUTAS ESPECÍFICAS PRIMERO (antes de /{id})
+        Route::get('/aulas-disponibles', [App\Http\Controllers\Api\InscripcionController::class, 'aulasDisponibles']);
+        Route::get('/estudiante/{estudianteId}', [App\Http\Controllers\Api\InscripcionController::class, 'porEstudiante']);
+        Route::get('/ciclo/{cicloId}', [App\Http\Controllers\Api\InscripcionController::class, 'porCiclo']);
+        Route::get('/carrera/{carreraId}', [App\Http\Controllers\Api\InscripcionController::class, 'porCarrera']);
+        Route::get('/estadisticas/resumen', [App\Http\Controllers\Api\InscripcionController::class, 'estadisticas']);
+        Route::post('/exportar/excel', [App\Http\Controllers\Api\InscripcionController::class, 'exportarExcel']);
+
+        // ✅ RUTAS GENERALES DESPUÉS
+        Route::get('/', [App\Http\Controllers\Api\InscripcionController::class, 'index']);
+        Route::post('/', [App\Http\Controllers\Api\InscripcionController::class, 'store']);
+
+        // ✅ RUTAS CON PARÁMETROS DINÁMICOS AL FINAL
+        Route::get('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'show']);
+        Route::put('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'update']);
+        Route::delete('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'destroy']);
+        Route::patch('/{id}/estado', [App\Http\Controllers\Api\InscripcionController::class, 'cambiarEstado']);
+    });
+    Route::get('/estudiantes-sin-inscripcion', [App\Http\Controllers\Api\InscripcionController::class, 'estudiantesSinInscripcion']);
+
     // Ruta para obtener los roles
     Route::get('/roles', [UserController::class, 'getRoles']);
     // Rutas de API para usuarios (cambiado a 'usuarios' para coincidir con tu JS)
@@ -154,5 +271,7 @@ Route::prefix('json')->group(function () {
         Route::put('/preferencias', [App\Http\Controllers\Api\PerfilController::class, 'updatePreferencias']);
     });
 });
+
+
 
 Route::get('api/consulta/{dni}', [App\Http\Controllers\ApiProxyController::class, 'consultaDNI']);
