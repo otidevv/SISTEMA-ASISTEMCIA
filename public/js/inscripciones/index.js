@@ -606,7 +606,7 @@ $(document).ready(function() {
         });
 
         // Crear la URL para descargar el PDF - ACTUALIZADA
-        const url = default_server + `/pdf/${inscripcionId}/reporte-asistencia`;
+        const url = default_server + `/json/inscripciones/pdf/${inscripcionId}/reporte-asistencia`;
 
         // Descargar el PDF
         window.open(url, '_blank');
