@@ -3,6 +3,8 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use App\Models\Inscripcion;
 use Illuminate\Http\Request;
 
@@ -27,4 +29,7 @@ class InscripcionController extends Controller
     {
         return view('inscripciones.reportes');
     }
+    // Agregar este método en la clase InscripcionController
+
+
 }

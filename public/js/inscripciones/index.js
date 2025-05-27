@@ -592,8 +592,25 @@ $(document).ready(function() {
             });
         }
     });
+     // Descargar reporte de asistencia
+    // Descargar reporte de asistencia
+    $('#inscripciones-datatable').on('click', '.download-asistencia', function() {
+        const inscripcionId = $(this).data('id');
+        const estudianteId = $(this).data('estudiante-id');
+        const cicloId = $(this).data('ciclo-id');
 
-    // Exportar inscripciones
+        // Mostrar loading
+        toastr.info('Generando reporte de asistencia...', 'Por favor espere', {
+            timeOut: 2000,
+            progressBar: true
+        });
+
+        // Crear la URL para descargar el PDF - ACTUALIZADA
+        const url = default_server + `/pdf/${inscripcionId}/reporte-asistencia`;
+
+        // Descargar el PDF
+        window.open(url, '_blank');
+    });  // Exportar inscripciones
     $('#exportarInscripciones').on('click', function() {
         const ciclo = $('#filtro-ciclo').val();
         const carrera = $('#filtro-carrera').val();
@@ -610,4 +627,6 @@ $(document).ready(function() {
 
         window.location.href = default_server + '/json/inscripciones/exportar/excel?' + params.toString();
     });
+    // Exportar inscripciones
+
 });

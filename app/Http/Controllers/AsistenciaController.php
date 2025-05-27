@@ -159,14 +159,14 @@ class AsistenciaController extends Controller
     {
         $request->validate([
             'nro_documento' => 'required|string|max:20',
-            'fecha_hora' => 'required|date',
+            'fecha_registro' => 'required|date',
             'tipo_verificacion' => 'required|integer',
             'estado' => 'required|boolean',
         ]);
 
         $asistencia->update([
             'nro_documento' => $request->nro_documento,
-            'fecha_hora' => $request->fecha_hora,
+            'fecha_registro' => $request->fecha_registro,
             'tipo_verificacion' => $request->tipo_verificacion,
             'estado' => $request->estado,
             'codigo_trabajo' => $request->codigo_trabajo,

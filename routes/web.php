@@ -231,6 +231,7 @@ Route::prefix('json')->group(function () {
         Route::get('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'destroy']);
+        Route::get('/pdf/{id}/reporte-asistencia', [App\Http\Controllers\Api\InscripcionController::class, 'reporteAsistenciaPdf']);
         Route::patch('/{id}/estado', [App\Http\Controllers\Api\InscripcionController::class, 'cambiarEstado']);
     });
     Route::get('/estudiantes-sin-inscripcion', [App\Http\Controllers\Api\InscripcionController::class, 'estudiantesSinInscripcion']);

@@ -55,10 +55,11 @@
 
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="fecha_hora" class="form-label">Fecha y Hora <span
+                                        <label for="fecha_registro" class="form-label">Fecha y Hora <span
                                                 class="text-danger">*</span></label>
-                                        <input type="datetime-local" class="form-control" id="fecha_hora" name="fecha_hora"
-                                            value="{{ old('fecha_hora', $asistencia->fecha_hora->format('Y-m-d\TH:i:s')) }}"
+                                        <input type="datetime-local" class="form-control" id="fecha_registro"
+                                            name="fecha_registro"
+                                            value="{{ old('fecha_registro', $asistencia->fecha_registro->format('Y-m-d\TH:i:s')) }}"
                                             required>
                                     </div>
                                 </div>

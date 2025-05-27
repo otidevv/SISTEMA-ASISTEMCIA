@@ -90,7 +90,7 @@ class DashboardController extends Controller
                     $infoAsistencia['total_ciclo'] = $this->calcularAsistenciaExamen(
                         $user->numero_documento,
                         $primerRegistro->fecha_registro,
-                        $ciclo->fecha_fin,
+                        min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)), // Usar fecha actual si el ciclo no ha terminado
                         $ciclo
                     );
                 }
@@ -106,11 +106,92 @@ class DashboardController extends Controller
 
         // Si el usuario es un padre
         if ($user->hasRole('padre')) {
-            $data['hijosCount'] = \App\Models\Parentesco::where('padre_id', $user->id)
-                ->where('activo', true)
-                ->count();
+            // Obtener los hijos del padre
+            $hijos = \App\Models\Parentesco::where('padre_id', $user->id)
+                ->where('estado', true)
+                ->with('estudiante')
+                ->get();
 
+            $data['hijosCount'] = $hijos->count();
             $data['esPadre'] = true;
+
+            // Array para almacenar la información de asistencia de cada hijo
+            $hijosAsistencia = [];
+
+            foreach ($hijos as $parentesco) {
+                $hijo = $parentesco->estudiante;
+
+                // Obtener inscripción activa del hijo
+                $inscripcionActiva = Inscripcion::where('estudiante_id', $hijo->id)
+                    ->where('estado_inscripcion', 'activo')
+                    ->whereHas('ciclo', function ($query) {
+                        $query->where('es_activo', true);
+                    })
+                    ->with(['ciclo', 'carrera', 'aula', 'turno'])
+                    ->first();
+
+                if ($inscripcionActiva) {
+                    $ciclo = $inscripcionActiva->ciclo;
+
+                    // Obtener el primer registro de asistencia del estudiante
+                    $primerRegistro = RegistroAsistencia::where('nro_documento', $hijo->numero_documento)
+                        ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+                        ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+                        ->orderBy('fecha_registro')
+                        ->first();
+
+                    // Información de asistencia para cada examen
+                    $infoAsistencia = [];
+
+                    if ($primerRegistro) {
+                        // Calcular asistencia para cada examen
+                        $infoAsistencia['primer_examen'] = $this->calcularAsistenciaExamen(
+                            $hijo->numero_documento,
+                            $primerRegistro->fecha_registro,
+                            $ciclo->fecha_primer_examen,
+                            $ciclo
+                        );
+
+                        if ($ciclo->fecha_segundo_examen) {
+                            $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen);
+                            $infoAsistencia['segundo_examen'] = $this->calcularAsistenciaExamen(
+                                $hijo->numero_documento,
+                                $inicioSegundo,
+                                $ciclo->fecha_segundo_examen,
+                                $ciclo
+                            );
+                        }
+
+                        if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                            $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen);
+                            $infoAsistencia['tercer_examen'] = $this->calcularAsistenciaExamen(
+                                $hijo->numero_documento,
+                                $inicioTercero,
+                                $ciclo->fecha_tercer_examen,
+                                $ciclo
+                            );
+                        }
+
+                        // Asistencia total del ciclo
+                        $infoAsistencia['total_ciclo'] = $this->calcularAsistenciaExamen(
+                            $hijo->numero_documento,
+                            $primerRegistro->fecha_registro,
+                            min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                            $ciclo
+                        );
+                    }
+
+                    $hijosAsistencia[] = [
+                        'hijo' => $hijo,
+                        'parentesco' => $parentesco,
+                        'inscripcionActiva' => $inscripcionActiva,
+                        'infoAsistencia' => $infoAsistencia,
+                        'primerRegistro' => $primerRegistro
+                    ];
+                }
+            }
+
+            $data['hijosAsistencia'] = $hijosAsistencia;
         }
 
         // Estadísticas generales (para administradores)

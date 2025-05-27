@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Inscripcion;
 use App\Models\User;
 use App\Models\Aula;
+use App\Models\RegistroAsistencia;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -93,13 +96,18 @@ class InscripcionController extends Controller
             'data' => $data
         ]);
     }
-
     private function getActionButtons($inscripcion)
     {
         $buttons = '';
 
         // Ver detalles
         $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info view-inscripcion" data-id="' . $inscripcion->id . '" title="Ver detalles"><i class="uil uil-eye"></i></a> ';
+
+        // ⭐ AGREGAR ESTE BOTÓN PARA EL PDF ⭐
+        // Descargar reporte de asistencia
+        if (auth()->user()->hasPermission('inscripciones.view') || auth()->user()->hasPermission('attendance.reports')) {
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-success download-asistencia" data-id="' . $inscripcion->id . '" data-estudiante-id="' . $inscripcion->estudiante_id . '" data-ciclo-id="' . $inscripcion->ciclo_id . '" title="Descargar reporte de asistencia"><i class="uil uil-file-download"></i></a> ';
+        }
 
         if (auth()->user()->hasPermission('inscripciones.edit')) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-inscripcion" data-id="' . $inscripcion->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
@@ -111,6 +119,7 @@ class InscripcionController extends Controller
 
         return $buttons;
     }
+
 
     public function store(Request $request)
     {
@@ -631,5 +640,280 @@ class InscripcionController extends Controller
             'success' => true,
             'data' => $aulas
         ]);
+    }
+    public function reporteAsistenciaPdf($id)
+    {
+        // Obtener la inscripción con todas las relaciones necesarias
+        $inscripcion = Inscripcion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])
+            ->find($id);
+
+        if (!$inscripcion) {
+            abort(404, 'Inscripción no encontrada');
+        }
+
+        $ciclo = $inscripcion->ciclo;
+        $estudiante = $inscripcion->estudiante;
+
+        // Obtener el primer registro de asistencia del estudiante
+        $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
+            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+            ->orderBy('fecha_registro')
+            ->first();
+
+        // Array para almacenar toda la información
+        $data = [
+            'inscripcion' => $inscripcion,
+            'estudiante' => $estudiante,
+            'ciclo' => $ciclo,
+            'carrera' => $inscripcion->carrera,
+            'turno' => $inscripcion->turno,
+            'aula' => $inscripcion->aula,
+            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s'),
+            'primer_registro' => $primerRegistro
+        ];
+
+        // Información de asistencia
+        $infoAsistencia = [];
+
+        if ($primerRegistro) {
+            // Primer Examen
+            $infoAsistencia['primer_examen'] = $this->calcularAsistenciaExamenPdf(
+                $estudiante->numero_documento,
+                $primerRegistro->fecha_registro,
+                $ciclo->fecha_primer_examen,
+                $ciclo
+            );
+
+            // Segundo Examen
+            if ($ciclo->fecha_segundo_examen) {
+                $inicioSegundo = $this->getSiguienteDiaHabilPdf($ciclo->fecha_primer_examen);
+                $infoAsistencia['segundo_examen'] = $this->calcularAsistenciaExamenPdf(
+                    $estudiante->numero_documento,
+                    $inicioSegundo,
+                    $ciclo->fecha_segundo_examen,
+                    $ciclo
+                );
+            }
+
+            // Tercer Examen
+            if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                $inicioTercero = $this->getSiguienteDiaHabilPdf($ciclo->fecha_segundo_examen);
+                $infoAsistencia['tercer_examen'] = $this->calcularAsistenciaExamenPdf(
+                    $estudiante->numero_documento,
+                    $inicioTercero,
+                    $ciclo->fecha_tercer_examen,
+                    $ciclo
+                );
+            }
+
+            // Asistencia total del ciclo
+            $infoAsistencia['total_ciclo'] = $this->calcularAsistenciaExamenPdf(
+                $estudiante->numero_documento,
+                $primerRegistro->fecha_registro,
+                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                $ciclo
+            );
+
+            // Obtener detalle de asistencias por mes
+            $detalleAsistencias = $this->obtenerDetalleAsistenciasPorMes(
+                $estudiante->numero_documento,
+                $primerRegistro->fecha_registro,
+                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin))
+            );
+
+            $data['detalle_asistencias'] = $detalleAsistencias;
+        }
+
+        $data['info_asistencia'] = $infoAsistencia;
+
+        // Generar el PDF
+        $pdf = PDF::loadView('reportes.asistencia-estudiante', $data);
+        $pdf->setPaper('a4', 'portrait');
+
+        // Nombre del archivo
+        $filename = 'reporte_asistencia_' . $estudiante->numero_documento . '_' . $ciclo->codigo . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Calcular asistencia para el reporte PDF
+     */
+    private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
+    {
+        $hoy = Carbon::now();
+        $fechaInicioCarbon = Carbon::parse($fechaInicio);
+        $fechaExamenCarbon = Carbon::parse($fechaExamen);
+
+        // Si el examen aún no ha llegado, calcular hasta hoy
+        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
+
+        // Si la fecha de inicio es futura, no calcular aún
+        if ($fechaInicioCarbon > $hoy) {
+            return [
+                'dias_habiles' => 0,
+                'dias_asistidos' => 0,
+                'dias_falta' => 0,
+                'porcentaje_asistencia' => 0,
+                'porcentaje_inasistencia' => 0,
+                'estado' => 'pendiente',
+                'puede_rendir' => true,
+                'fecha_inicio' => $fechaInicio,
+                'fecha_fin' => $fechaExamen
+            ];
+        }
+
+        // Calcular días hábiles totales
+        $diasHabilesTotales = $this->contarDiasHabilesPdf($fechaInicio, $fechaExamen);
+        $diasHabilesTranscurridos = $this->contarDiasHabilesPdf($fechaInicio, $fechaFinCalculo);
+
+        // Obtener registros de asistencia
+        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [
+                $fechaInicioCarbon->startOfDay(),
+                $fechaFinCalculo->endOfDay()
+            ])
+            ->select(DB::raw('DATE(fecha_registro) as fecha'))
+            ->distinct()
+            ->get()
+            ->pluck('fecha');
+
+        // Contar días con asistencia
+        $diasConAsistencia = 0;
+        foreach ($registrosAsistencia as $fecha) {
+            $carbonFecha = Carbon::parse($fecha);
+            if ($carbonFecha->isWeekday()) {
+                $diasConAsistencia++;
+            }
+        }
+
+        $diasFaltaActuales = $diasHabilesTranscurridos - $diasConAsistencia;
+        $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
+            round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
+        $porcentajeInasistenciaProyectado = 100 - $porcentajeAsistenciaProyectado;
+
+        $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
+            round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
+
+        // Calcular límites
+        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
+        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
+
+        // Determinar estado
+        $estado = 'regular';
+        $puedeRendir = true;
+
+        if ($diasFaltaActuales >= $limiteInhabilitacion) {
+            $estado = 'inhabilitado';
+            $puedeRendir = false;
+        } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
+            $estado = 'amonestado';
+        }
+
+        return [
+            'dias_habiles' => $diasHabilesTotales,
+            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
+            'dias_asistidos' => $diasConAsistencia,
+            'dias_falta' => $diasFaltaActuales,
+            'porcentaje_asistencia' => $porcentajeAsistenciaProyectado,
+            'porcentaje_asistencia_actual' => $porcentajeAsistenciaActual,
+            'porcentaje_inasistencia' => $porcentajeInasistenciaProyectado,
+            'limite_amonestacion' => $limiteAmonestacion,
+            'limite_inhabilitacion' => $limiteInhabilitacion,
+            'estado' => $estado,
+            'puede_rendir' => $puedeRendir,
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin' => $fechaExamen,
+            'es_proyeccion' => $hoy < $fechaExamenCarbon
+        ];
+    }
+
+    /**
+     * Contar días hábiles para el PDF
+     */
+    private function contarDiasHabilesPdf($fechaInicio, $fechaFin)
+    {
+        $inicio = Carbon::parse($fechaInicio);
+        $fin = Carbon::parse($fechaFin);
+        $diasHabiles = 0;
+
+        while ($inicio <= $fin) {
+            if ($inicio->isWeekday()) {
+                $diasHabiles++;
+            }
+            $inicio->addDay();
+        }
+
+        return $diasHabiles;
+    }
+
+    /**
+     * Obtener siguiente día hábil para el PDF
+     */
+    private function getSiguienteDiaHabilPdf($fecha)
+    {
+        $dia = Carbon::parse($fecha)->addDay();
+
+        while (!$dia->isWeekday()) {
+            $dia->addDay();
+        }
+
+        return $dia;
+    }
+
+    /**
+     * Obtener detalle de asistencias por mes
+     */
+    private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin)
+    {
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [
+                Carbon::parse($fechaInicio)->startOfDay(),
+                Carbon::parse($fechaFin)->endOfDay()
+            ])
+            ->orderBy('fecha_registro')
+            ->get();
+
+        $detallesPorMes = [];
+
+        foreach ($registros as $registro) {
+            $mes = Carbon::parse($registro->fecha_registro)->format('Y-m');
+            $nombreMes = Carbon::parse($registro->fecha_registro)->locale('es')->monthName;
+            $anio = Carbon::parse($registro->fecha_registro)->year;
+
+            if (!isset($detallesPorMes[$mes])) {
+                $detallesPorMes[$mes] = [
+                    'mes' => ucfirst($nombreMes),
+                    'anio' => $anio,
+                    'dias_asistidos' => 0,
+                    'registros' => []
+                ];
+            }
+
+            $fecha = Carbon::parse($registro->fecha_registro)->format('Y-m-d');
+            if (!isset($detallesPorMes[$mes]['registros'][$fecha])) {
+                $detallesPorMes[$mes]['registros'][$fecha] = [
+                    'fecha' => Carbon::parse($registro->fecha_registro)->format('d/m/Y'),
+                    'dia_semana' => Carbon::parse($registro->fecha_registro)->locale('es')->dayName,
+                    'hora_entrada' => null,
+                    'hora_salida' => null
+                ];
+
+                if (Carbon::parse($registro->fecha_registro)->isWeekday()) {
+                    $detallesPorMes[$mes]['dias_asistidos']++;
+                }
+            }
+
+            // Determinar si es entrada o salida basado en la hora
+            $hora = Carbon::parse($registro->fecha_registro)->format('H:i');
+            if (Carbon::parse($registro->fecha_registro)->hour < 12) {
+                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $hora;
+            } else {
+                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $hora;
+            }
+        }
+
+        return $detallesPorMes;
     }
 }
