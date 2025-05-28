@@ -611,22 +611,22 @@ $(document).ready(function() {
         // Descargar el PDF
         window.open(url, '_blank');
     });  // Exportar inscripciones
-    $('#exportarInscripciones').on('click', function() {
+    $('#exportarInscripciones').on('click', function () {
         const ciclo = $('#filtro-ciclo').val();
-        const carrera = $('#filtro-carrera').val();
-        const turno = $('#filtro-turno').val();
-        const aula = $('#filtro-aula').val();
-        const estado = $('#filtro-estado').val();
 
-        let params = new URLSearchParams();
-        if (ciclo) params.append('ciclo_id', ciclo);
-        if (carrera) params.append('carrera_id', carrera);
-        if (turno) params.append('turno_id', turno);
-        if (aula) params.append('aula_id', aula);
-        if (estado) params.append('estado', estado);
+        if (!ciclo) {
+            toastr.warning('Seleccione un ciclo para exportar asistencias.');
+            return;
+        }
 
-        window.location.href = default_server + '/json/inscripciones/exportar/excel?' + params.toString();
+        // Mostrar notificación de carga
+        toastr.info('Generando archivo...', { timeOut: 1500 });
+
+        // Redirigir a la URL que genera el archivo Excel
+        window.location.href = `${default_server}/json/inscripciones/exportar/asistencias?ciclo_id=${ciclo}`;
     });
+
+
     // Exportar inscripciones
 
 });

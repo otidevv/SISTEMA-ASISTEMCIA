@@ -215,25 +215,27 @@ Route::prefix('json')->group(function () {
 
     // API Inscripciones
     Route::prefix('inscripciones')->group(function () {
-        // ✅ RUTAS ESPECÍFICAS PRIMERO (antes de /{id})
+        // ✅ RUTAS ESPECÍFICAS PRIMERO
         Route::get('/aulas-disponibles', [App\Http\Controllers\Api\InscripcionController::class, 'aulasDisponibles']);
         Route::get('/estudiante/{estudianteId}', [App\Http\Controllers\Api\InscripcionController::class, 'porEstudiante']);
         Route::get('/ciclo/{cicloId}', [App\Http\Controllers\Api\InscripcionController::class, 'porCiclo']);
         Route::get('/carrera/{carreraId}', [App\Http\Controllers\Api\InscripcionController::class, 'porCarrera']);
         Route::get('/estadisticas/resumen', [App\Http\Controllers\Api\InscripcionController::class, 'estadisticas']);
+        Route::get('/exportar/asistencias', [App\Http\Controllers\Api\InscripcionController::class, 'exportarAsistenciasPorCiclo']);
         Route::post('/exportar/excel', [App\Http\Controllers\Api\InscripcionController::class, 'exportarExcel']);
 
-        // ✅ RUTAS GENERALES DESPUÉS
+        // ✅ RUTAS GENERALES
         Route::get('/', [App\Http\Controllers\Api\InscripcionController::class, 'index']);
         Route::post('/', [App\Http\Controllers\Api\InscripcionController::class, 'store']);
 
-        // ✅ RUTAS CON PARÁMETROS DINÁMICOS AL FINAL
+        // ✅ RUTAS CON ID AL FINAL
         Route::get('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\InscripcionController::class, 'destroy']);
         Route::get('/pdf/{id}/reporte-asistencia', [App\Http\Controllers\Api\InscripcionController::class, 'reporteAsistenciaPdf']);
         Route::patch('/{id}/estado', [App\Http\Controllers\Api\InscripcionController::class, 'cambiarEstado']);
     });
+
     Route::get('/estudiantes-sin-inscripcion', [App\Http\Controllers\Api\InscripcionController::class, 'estudiantesSinInscripcion']);
 
     // Ruta para obtener los roles

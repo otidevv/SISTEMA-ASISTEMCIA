@@ -7,14 +7,17 @@ use App\Models\Inscripcion;
 use App\Models\User;
 use App\Models\Aula;
 use App\Models\RegistroAsistencia;
-
+use App\Exports\AsistenciasPorCicloExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\InscripcionesExport;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InscripcionController extends Controller
 {
@@ -915,5 +918,27 @@ class InscripcionController extends Controller
         }
 
         return $detallesPorMes;
+    }
+
+    public function exportarAsistenciasPorCiclo(Request $request): BinaryFileResponse
+    {
+        $request->validate([
+            'ciclo_id' => 'required|exists:ciclos,id'
+        ]);
+
+        $cicloId = $request->ciclo_id;
+
+        // Verificar si hay inscripciones activas
+        $tieneInscripciones = Inscripcion::where('ciclo_id', $cicloId)
+            ->where('estado_inscripcion', 'activo')
+            ->exists();
+
+        if (!$tieneInscripciones) {
+            // Si se usa desde un frontend con JS, este bloque se podría adaptar para respuesta 200 con tipo application/json
+            abort(404, 'No existen inscripciones activas para este ciclo.');
+        }
+
+        $filename = 'asistencias_ciclo_' . $cicloId . '.xlsx';
+        return Excel::download(new AsistenciasPorCicloExport($cicloId), $filename);
     }
 }
