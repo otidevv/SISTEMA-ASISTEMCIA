@@ -743,6 +743,10 @@ class InscripcionController extends Controller
     /**
      * Calcular asistencia para el reporte PDF
      */
+    /**
+     * Calcular asistencia para el reporte PDF
+     * REEMPLAZA TODO EL MÉTODO calcularAsistenciaExamenPdf CON ESTE CÓDIGO
+     */
     private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
         $hoy = Carbon::now();
@@ -759,20 +763,18 @@ class InscripcionController extends Controller
                 'dias_asistidos' => 0,
                 'dias_falta' => 0,
                 'porcentaje_asistencia' => 0,
-                'porcentaje_inasistencia' => 0,
-                'estado' => 'pendiente',
-                'puede_rendir' => true,
-                'fecha_inicio' => $fechaInicio,
-                'fecha_fin' => $fechaExamen
+                'porcentaje_falta' => 0,
+                'condicion' => 'Pendiente',
+                'puede_rendir' => '-'
             ];
         }
 
-        // Calcular días hábiles totales
+        // Calcular días hábiles
         $diasHabilesTotales = $this->contarDiasHabilesPdf($fechaInicio, $fechaExamen);
         $diasHabilesTranscurridos = $this->contarDiasHabilesPdf($fechaInicio, $fechaFinCalculo);
 
-        // Obtener registros de asistencia
-        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+        // Obtener días con asistencia
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
                 $fechaInicioCarbon->startOfDay(),
                 $fechaFinCalculo->endOfDay()
@@ -782,54 +784,67 @@ class InscripcionController extends Controller
             ->get()
             ->pluck('fecha');
 
-        // Contar días con asistencia
         $diasConAsistencia = 0;
-        foreach ($registrosAsistencia as $fecha) {
-            $carbonFecha = Carbon::parse($fecha);
-            if ($carbonFecha->isWeekday()) {
+        foreach ($registros as $fecha) {
+            if (Carbon::parse($fecha)->isWeekday()) {
                 $diasConAsistencia++;
             }
         }
 
-        $diasFaltaActuales = $diasHabilesTranscurridos - $diasConAsistencia;
-        $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
+        // Calcular faltas solo de los días transcurridos
+        $diasFalta = $diasHabilesTranscurridos - $diasConAsistencia;
+
+        // IMPORTANTE: Calcular porcentajes SIEMPRE sobre el total de días del período
+        $porcentajeAsistencia = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-        $porcentajeInasistenciaProyectado = 100 - $porcentajeAsistenciaProyectado;
 
-        $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
-            round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
+        $porcentajeFalta = $diasHabilesTotales > 0 ?
+            round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
 
-        // Calcular límites
+        // Calcular límites basados en el total de días del período
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
 
-        // Determinar estado
-        $estado = 'regular';
-        $puedeRendir = true;
+        // Determinar condición basada en las faltas actuales
+        $condicion = 'Regular';
+        $puedeRendir = 'SÍ';
 
-        if ($diasFaltaActuales >= $limiteInhabilitacion) {
-            $estado = 'inhabilitado';
-            $puedeRendir = false;
-        } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
-            $estado = 'amonestado';
+        if ($diasFalta >= $limiteInhabilitacion) {
+            $condicion = 'Inhabilitado';
+            $puedeRendir = 'NO';
+        } elseif ($diasFalta >= $limiteAmonestacion) {
+            $condicion = 'Amonestado';
         }
 
-        return [
+        // Si el período aún no ha terminado, agregar información adicional
+        $resultado = [
             'dias_habiles' => $diasHabilesTotales,
-            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
             'dias_asistidos' => $diasConAsistencia,
-            'dias_falta' => $diasFaltaActuales,
-            'porcentaje_asistencia' => $porcentajeAsistenciaProyectado,
-            'porcentaje_asistencia_actual' => $porcentajeAsistenciaActual,
-            'porcentaje_inasistencia' => $porcentajeInasistenciaProyectado,
-            'limite_amonestacion' => $limiteAmonestacion,
-            'limite_inhabilitacion' => $limiteInhabilitacion,
-            'estado' => $estado,
-            'puede_rendir' => $puedeRendir,
-            'fecha_inicio' => $fechaInicio,
-            'fecha_fin' => $fechaExamen,
-            'es_proyeccion' => $hoy < $fechaExamenCarbon
+            'dias_falta' => $diasFalta,
+            'porcentaje_asistencia' => $porcentajeAsistencia,
+            'porcentaje_falta' => $porcentajeFalta,
+            'condicion' => $condicion,
+            'puede_rendir' => $puedeRendir
         ];
+
+        // Agregar información de días transcurridos si el período aún no termina
+        if ($diasHabilesTranscurridos < $diasHabilesTotales) {
+            $resultado['dias_habiles_transcurridos'] = $diasHabilesTranscurridos;
+
+            // Calcular porcentajes actuales (sobre días transcurridos) para información adicional
+            $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
+                round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
+            $porcentajeFaltaActual = $diasHabilesTranscurridos > 0 ?
+                round(($diasFalta / $diasHabilesTranscurridos) * 100, 2) : 0;
+
+            $resultado['porcentaje_asistencia_actual'] = $porcentajeAsistenciaActual;
+            $resultado['porcentaje_falta_actual'] = $porcentajeFaltaActual;
+
+            // Indicar si es una proyección
+            $resultado['es_proyeccion'] = true;
+        }
+
+        return $resultado;
     }
 
     /**
