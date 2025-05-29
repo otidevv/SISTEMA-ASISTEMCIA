@@ -466,10 +466,10 @@ function consultarDNI(numeroDNI) {
             // Generar username a partir del nombre
             const primerNombre = data.NOMBRES.split(' ')[0].toLowerCase();
             const username = primerNombre + '.' + data.AP_PAT.toLowerCase();
-            $('#username').val(username);
+            $('#username').val('est_' + numeroDNI);
 
             // Email sugerido
-            $('#email').val(username + '@example.com');
+            $('#email').val(numeroDNI + '@cepre.unamad.edu.pe');
 
             // Convertir formato de fecha
             if (data.FECHA_NAC) {
