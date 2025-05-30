@@ -917,6 +917,9 @@ class InscripcionController extends Controller
     /**
      * Obtener detalle de asistencias por mes
      */
+    /**
+     * Obtener detalle de asistencias por mes
+     */
     private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin)
     {
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
@@ -978,62 +981,90 @@ class InscripcionController extends Controller
                         return $a['hora'] - $b['hora'];
                     });
 
-                    // Verificar si todos los registros son después de las 18:00
-                    $todosRegistrosTarde = true;
-                    foreach ($registrosDelDia as $reg) {
-                        if ($reg['hora'] < 18) {
-                            $todosRegistrosTarde = false;
-                            break;
-                        }
-                    }
+                    // Detectar el turno basándose en el primer registro
+                    $primerRegistro = $registrosDelDia[0]['hora'];
+                    $esTurnoManana = $primerRegistro < 14; // Si el primer registro es antes de las 14:00, es turno mañana
 
-                    // Si todos los registros son tarde (después de 18:00), solo hay salida
-                    if ($todosRegistrosTarde) {
-                        // Tomar el último registro como salida
-                        $ultimoIndice = count($registrosDelDia) - 1;
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
-                    } else {
-                        // Lógica normal para días con registros variados
-                        $entradaEncontrada = false;
-                        $salidaEncontrada = false;
+                    $entradaEncontrada = false;
+                    $salidaEncontrada = false;
 
-                        // Buscar entrada (primer registro antes de las 17:00)
+                    if ($esTurnoManana) {
+                        // TURNO MAÑANA
+                        // Entrada: típicamente 06:00-09:00
+                        // Salida: típicamente 12:00-14:00
+
                         foreach ($registrosDelDia as $reg) {
-                            if ($reg['hora'] < 17 && !$entradaEncontrada) {
+                            // Buscar entrada (primer registro antes de las 10:00)
+                            if ($reg['hora'] < 10 && !$entradaEncontrada) {
                                 $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $reg['hora_formateada'];
                                 $entradaEncontrada = true;
-                                break;
                             }
-                        }
 
-                        // Buscar salida (último registro después de las 18:00)
-                        for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
-                            if ($registrosDelDia[$i]['hora'] >= 18) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
+                            // Buscar salida (último registro entre 12:00 y 14:00)
+                            if ($reg['hora'] >= 12 && $reg['hora'] <= 14) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $reg['hora_formateada'];
                                 $salidaEncontrada = true;
+                            }
+                        }
+
+                        // Si no se encontró entrada clara, usar el primer registro
+                        if (!$entradaEncontrada && count($registrosDelDia) > 0) {
+                            $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
+                        }
+
+                        // Si no se encontró salida clara, buscar cualquier registro después de las 11:00
+                        if (!$salidaEncontrada && count($registrosDelDia) > 1) {
+                            for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
+                                if ($registrosDelDia[$i]['hora'] >= 11) {
+                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        // TURNO TARDE
+                        // Entrada: típicamente 14:00-17:00
+                        // Salida: típicamente 18:00-22:00
+
+                        // Verificar si todos los registros son después de las 18:00
+                        $todosRegistrosTarde = true;
+                        foreach ($registrosDelDia as $reg) {
+                            if ($reg['hora'] < 18) {
+                                $todosRegistrosTarde = false;
                                 break;
                             }
                         }
 
-                        // Si no hay entrada clara pero hay registros tempranos
-                        if (!$entradaEncontrada && count($registrosDelDia) > 0) {
-                            // Si el primer registro es entre 17:00 y 18:00, podría ser entrada tardía
-                            if ($registrosDelDia[0]['hora'] >= 17 && $registrosDelDia[0]['hora'] < 18) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'] . ' (tardía)';
-                            } else if ($registrosDelDia[0]['hora'] < 17) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
-                            } else {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
-                            }
-                        }
-
-                        // Si no hay salida clara pero hay múltiples registros
-                        if (!$salidaEncontrada && count($registrosDelDia) > 1) {
+                        if ($todosRegistrosTarde) {
+                            // Solo hay registros de salida
                             $ultimoIndice = count($registrosDelDia) - 1;
-                            // Si el último registro es después de las 17:00, considerarlo salida
-                            if ($registrosDelDia[$ultimoIndice]['hora'] >= 17) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                            $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
+                            $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                        } else {
+                            // Buscar entrada (primer registro antes de las 18:00)
+                            foreach ($registrosDelDia as $reg) {
+                                if ($reg['hora'] < 18 && !$entradaEncontrada) {
+                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $reg['hora_formateada'];
+                                    $entradaEncontrada = true;
+                                    break;
+                                }
+                            }
+
+                            // Buscar salida (último registro después de las 18:00)
+                            for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
+                                if ($registrosDelDia[$i]['hora'] >= 18) {
+                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
+                                    $salidaEncontrada = true;
+                                    break;
+                                }
+                            }
+
+                            // Si no hay salida después de las 18:00 pero hay múltiples registros
+                            if (!$salidaEncontrada && count($registrosDelDia) > 1) {
+                                $ultimoIndice = count($registrosDelDia) - 1;
+                                if ($registrosDelDia[$ultimoIndice]['hora'] > $registrosDelDia[0]['hora'] + 2) {
+                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                                }
                             }
                         }
                     }
