@@ -321,7 +321,7 @@
         <div class="logo-box">
             <a href="{{ url('/dashboard') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="30">
+                    <img src="{{ asset('assets/images/logo cepre.png') }}" alt="" height="35">
                     <!-- <span class="logo-lg-text-light">Shreyu</span> -->
                 </span>
                 <span class="logo-lg">
@@ -332,10 +332,10 @@
 
             <a href="{{ url('/') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="30">
+                    <img src="{{ asset('assets/images/logo cepre black.png') }}" alt="" height="30">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logocepre1.psg') }}" alt="" height="45">
+                    <img src="{{ asset('assets/images/logo cepre black.svg') }}" alt="" height="45">
                 </span>
             </a>
         </div>
@@ -362,35 +362,35 @@
             <li class="dropdown d-none d-xl-block">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
                     aria-haspopup="false" aria-expanded="false">
-                    Create New
+                    Crear Nuevo
                     <i class="uil uil-angle-down"></i>
                 </a>
                 <div class="dropdown-menu">
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
-                        <i class="uil uil-bag me-1"></i><span>New Projects</span>
+                        <i class="uil uil-bag me-1"></i><span>Ciclos Académicos</span>
                     </a>
 
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
-                        <i class="uil uil-user-plus me-1"></i><span>Create Users</span>
+                        <i class="uil uil-user-plus me-1"></i><span>Crear Usuarios</span>
                     </a>
 
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
-                        <i class="uil uil-chart-pie me-1"></i><span>Revenue Report</span>
+                        <i class="uil uil-chart-pie me-1"></i><span>Generar Reportes</span>
                     </a>
 
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
-                        <i class="uil uil-cog me-1"></i><span>Settings</span>
+                        <i class="uil uil-cog me-1"></i><span>Configuración</span>
                     </a>
 
                     <div class="dropdown-divider"></div>
 
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
-                        <i class="uil uil-question-circle me-1"></i><span>Help & Support</span>
+                        <i class="uil uil-question-circle me-1"></i><span>Soporte Code_BonFer</span>
                     </a>
 
                 </div>
