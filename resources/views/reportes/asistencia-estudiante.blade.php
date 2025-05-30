@@ -668,9 +668,6 @@
                 {{ $ciclo->porcentaje_inhabilitacion }}%</p>
             <p>A/F/T = Asistidos/Faltas/Total días hábiles</p>
             <p><strong>Notas sobre registros:</strong></p>
-            <p>• "Sin registro" en Hora Entrada indica que el estudiante olvidó registrar su ingreso</p>
-            <p>• Los registros después de las 18:00 se consideran salidas</p>
-            <p>• Los registros antes de las 17:00 se consideran entradas</p>
             <p>Este es un documento generado automáticamente por el sistema de gestión académica.</p>
         </div>
     </div>
