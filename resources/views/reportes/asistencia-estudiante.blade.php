@@ -640,8 +640,13 @@
                                     <tr>
                                         <td>{{ $registro['fecha'] }}</td>
                                         <td>{{ ucfirst($registro['dia_semana']) }}</td>
-                                        <td>{{ $registro['hora_entrada'] ?? '-' }}</td>
-                                        <td>{{ $registro['hora_salida'] ?? '-' }}</td>
+                                        <td
+                                            style="{{ $registro['hora_entrada'] == 'Sin registro' ? 'color: #dc3545; font-style: italic;' : '' }}">
+                                            {{ $registro['hora_entrada'] ?? '-' }}
+                                        </td>
+                                        <td style="{{ $registro['hora_salida'] == '-' ? 'color: #6c757d;' : '' }}">
+                                            {{ $registro['hora_salida'] ?? '-' }}
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -662,6 +667,10 @@
                 {{ $ciclo->porcentaje_amonestacion }}% | Límite de inhabilitación:
                 {{ $ciclo->porcentaje_inhabilitacion }}%</p>
             <p>A/F/T = Asistidos/Faltas/Total días hábiles</p>
+            <p><strong>Notas sobre registros:</strong></p>
+            <p>• "Sin registro" en Hora Entrada indica que el estudiante olvidó registrar su ingreso</p>
+            <p>• Los registros después de las 18:00 se consideran salidas</p>
+            <p>• Los registros antes de las 17:00 se consideran entradas</p>
             <p>Este es un documento generado automáticamente por el sistema de gestión académica.</p>
         </div>
     </div>

@@ -750,11 +750,12 @@ class InscripcionController extends Controller
     private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
         $hoy = Carbon::now();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio);
-        $fechaExamenCarbon = Carbon::parse($fechaExamen);
+        // IMPORTANTE: Usar startOfDay para la fecha de inicio
+        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaExamenCarbon = Carbon::parse($fechaExamen)->endOfDay();
 
-        // Si el examen aún no ha llegado, calcular hasta hoy
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
+        // Si el examen aún no ha llegado, calcular hasta el final del día de hoy
+        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
 
         // Si la fecha de inicio es futura, no calcular aún
         if ($fechaInicioCarbon > $hoy) {
@@ -769,37 +770,71 @@ class InscripcionController extends Controller
             ];
         }
 
-        // Calcular días hábiles
-        $diasHabilesTotales = $this->contarDiasHabilesPdf($fechaInicio, $fechaExamen);
-        $diasHabilesTranscurridos = $this->contarDiasHabilesPdf($fechaInicio, $fechaFinCalculo);
+        // Calcular días hábiles - IMPORTANTE: usar endOfDay para incluir el día completo
+        $diasHabilesTotales = $this->contarDiasHabilesPdf(
+            $fechaInicioCarbon->format('Y-m-d'),
+            $fechaExamenCarbon->format('Y-m-d')
+        );
 
-        // Obtener días con asistencia
+        $diasHabilesTranscurridos = $this->contarDiasHabilesPdf(
+            $fechaInicioCarbon->format('Y-m-d'),
+            $fechaFinCalculo->format('Y-m-d')
+        );
+
+        // Obtener días con asistencia - usar DATE para agrupar por día
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon->startOfDay(),
-                $fechaFinCalculo->endOfDay()
+                $fechaInicioCarbon,
+                $fechaFinCalculo
             ])
             ->select(DB::raw('DATE(fecha_registro) as fecha'))
             ->distinct()
             ->get()
             ->pluck('fecha');
 
+        // Contar asistencias en días hábiles
         $diasConAsistencia = 0;
+        $fechasContadas = [];
+
         foreach ($registros as $fecha) {
-            if (Carbon::parse($fecha)->isWeekday()) {
+            $fechaCarbon = Carbon::parse($fecha);
+
+            // Solo contar días hábiles (lunes a viernes)
+            if ($fechaCarbon->isWeekday()) {
                 $diasConAsistencia++;
+                $fechasContadas[] = $fecha;
             }
         }
 
-        // Calcular faltas solo de los días transcurridos
-        $diasFalta = $diasHabilesTranscurridos - $diasConAsistencia;
+        // IMPORTANTE: Asegurarse de que los días con asistencia no excedan los días transcurridos
+        if ($diasConAsistencia > $diasHabilesTranscurridos) {
+            // Log para debugging
+            \Log::warning("Asistencias exceden días transcurridos en PDF", [
+                'documento' => $numeroDocumento,
+                'dias_asistidos' => $diasConAsistencia,
+                'dias_transcurridos' => $diasHabilesTranscurridos,
+                'fecha_inicio' => $fechaInicio,
+                'fecha_fin_calculo' => $fechaFinCalculo->format('Y-m-d'),
+                'fechas_contadas' => $fechasContadas
+            ]);
 
-        // IMPORTANTE: Calcular porcentajes SIEMPRE sobre el total de días del período
+            // Ajustar al máximo posible
+            $diasConAsistencia = $diasHabilesTranscurridos;
+        }
+
+        // Calcular faltas solo de los días transcurridos
+        $diasFalta = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+
+        // Calcular porcentajes sobre el total de días del período
         $porcentajeAsistencia = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
 
         $porcentajeFalta = $diasHabilesTotales > 0 ?
             round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
+
+        // Asegurar que los porcentajes no excedan 100% ni sean negativos
+        $porcentajeAsistencia = min(100, max(0, $porcentajeAsistencia));
+        $porcentajeFalta = min(100, max(0, $porcentajeFalta));
 
         // Calcular límites basados en el total de días del período
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
@@ -816,7 +851,7 @@ class InscripcionController extends Controller
             $condicion = 'Amonestado';
         }
 
-        // Si el período aún no ha terminado, agregar información adicional
+        // Preparar resultado
         $resultado = [
             'dias_habiles' => $diasHabilesTotales,
             'dias_asistidos' => $diasConAsistencia,
@@ -831,7 +866,7 @@ class InscripcionController extends Controller
         if ($diasHabilesTranscurridos < $diasHabilesTotales) {
             $resultado['dias_habiles_transcurridos'] = $diasHabilesTranscurridos;
 
-            // Calcular porcentajes actuales (sobre días transcurridos) para información adicional
+            // Calcular porcentajes actuales (sobre días transcurridos)
             $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
                 round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
             $porcentajeFaltaActual = $diasHabilesTranscurridos > 0 ?
@@ -839,8 +874,6 @@ class InscripcionController extends Controller
 
             $resultado['porcentaje_asistencia_actual'] = $porcentajeAsistenciaActual;
             $resultado['porcentaje_falta_actual'] = $porcentajeFaltaActual;
-
-            // Indicar si es una proyección
             $resultado['es_proyeccion'] = true;
         }
 
@@ -852,10 +885,11 @@ class InscripcionController extends Controller
      */
     private function contarDiasHabilesPdf($fechaInicio, $fechaFin)
     {
-        $inicio = Carbon::parse($fechaInicio);
-        $fin = Carbon::parse($fechaFin);
+        $inicio = Carbon::parse($fechaInicio)->startOfDay();
+        $fin = Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
 
+        // IMPORTANTE: usar <= para incluir ambos días (inicio y fin)
         while ($inicio <= $fin) {
             if ($inicio->isWeekday()) {
                 $diasHabiles++;
@@ -915,7 +949,8 @@ class InscripcionController extends Controller
                     'fecha' => Carbon::parse($registro->fecha_registro)->format('d/m/Y'),
                     'dia_semana' => Carbon::parse($registro->fecha_registro)->locale('es')->dayName,
                     'hora_entrada' => null,
-                    'hora_salida' => null
+                    'hora_salida' => null,
+                    'registros_del_dia' => [] // Para almacenar todos los registros del día
                 ];
 
                 if (Carbon::parse($registro->fecha_registro)->isWeekday()) {
@@ -923,12 +958,104 @@ class InscripcionController extends Controller
                 }
             }
 
-            // Determinar si es entrada o salida basado en la hora
-            $hora = Carbon::parse($registro->fecha_registro)->format('H:i');
-            if (Carbon::parse($registro->fecha_registro)->hour < 12) {
-                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $hora;
-            } else {
-                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $hora;
+            // Guardar todos los registros del día
+            $hora = Carbon::parse($registro->fecha_registro)->hour;
+            $horaFormateada = Carbon::parse($registro->fecha_registro)->format('H:i');
+            $detallesPorMes[$mes]['registros'][$fecha]['registros_del_dia'][] = [
+                'hora' => $hora,
+                'hora_formateada' => $horaFormateada
+            ];
+        }
+
+        // Procesar los registros de cada día para determinar entrada y salida
+        foreach ($detallesPorMes as $mes => $datosMes) {
+            foreach ($datosMes['registros'] as $fecha => $datosdia) {
+                $registrosDelDia = $datosdia['registros_del_dia'];
+
+                if (count($registrosDelDia) > 0) {
+                    // Ordenar registros por hora
+                    usort($registrosDelDia, function ($a, $b) {
+                        return $a['hora'] - $b['hora'];
+                    });
+
+                    // Verificar si todos los registros son después de las 18:00
+                    $todosRegistrosTarde = true;
+                    foreach ($registrosDelDia as $reg) {
+                        if ($reg['hora'] < 18) {
+                            $todosRegistrosTarde = false;
+                            break;
+                        }
+                    }
+
+                    // Si todos los registros son tarde (después de 18:00), solo hay salida
+                    if ($todosRegistrosTarde) {
+                        // Tomar el último registro como salida
+                        $ultimoIndice = count($registrosDelDia) - 1;
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                    } else {
+                        // Lógica normal para días con registros variados
+                        $entradaEncontrada = false;
+                        $salidaEncontrada = false;
+
+                        // Buscar entrada (primer registro antes de las 17:00)
+                        foreach ($registrosDelDia as $reg) {
+                            if ($reg['hora'] < 17 && !$entradaEncontrada) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $reg['hora_formateada'];
+                                $entradaEncontrada = true;
+                                break;
+                            }
+                        }
+
+                        // Buscar salida (último registro después de las 18:00)
+                        for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
+                            if ($registrosDelDia[$i]['hora'] >= 18) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
+                                $salidaEncontrada = true;
+                                break;
+                            }
+                        }
+
+                        // Si no hay entrada clara pero hay registros tempranos
+                        if (!$entradaEncontrada && count($registrosDelDia) > 0) {
+                            // Si el primer registro es entre 17:00 y 18:00, podría ser entrada tardía
+                            if ($registrosDelDia[0]['hora'] >= 17 && $registrosDelDia[0]['hora'] < 18) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'] . ' (tardía)';
+                            } else if ($registrosDelDia[0]['hora'] < 17) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
+                            } else {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
+                            }
+                        }
+
+                        // Si no hay salida clara pero hay múltiples registros
+                        if (!$salidaEncontrada && count($registrosDelDia) > 1) {
+                            $ultimoIndice = count($registrosDelDia) - 1;
+                            // Si el último registro es después de las 17:00, considerarlo salida
+                            if ($registrosDelDia[$ultimoIndice]['hora'] >= 17) {
+                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                            }
+                        }
+                    }
+
+                    // Manejar casos donde no hay entrada o salida
+                    if (
+                        !isset($detallesPorMes[$mes]['registros'][$fecha]['hora_entrada']) ||
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] === null
+                    ) {
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
+                    }
+
+                    if (
+                        !isset($detallesPorMes[$mes]['registros'][$fecha]['hora_salida']) ||
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] === null
+                    ) {
+                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = '-';
+                    }
+                }
+
+                // Limpiar el array temporal
+                unset($detallesPorMes[$mes]['registros'][$fecha]['registros_del_dia']);
             }
         }
 

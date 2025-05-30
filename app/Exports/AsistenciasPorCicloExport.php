@@ -119,110 +119,12 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
     private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
         $hoy = Carbon::now();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio);
-        $fechaExamenCarbon = Carbon::parse($fechaExamen);
+        // IMPORTANTE: Usar startOfDay para la fecha de inicio
+        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaExamenCarbon = Carbon::parse($fechaExamen)->endOfDay();
 
-        // Si el examen aún no ha llegado, calcular hasta hoy
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
-
-        // Si la fecha de inicio es futura, no calcular aún
-        if ($fechaInicioCarbon > $hoy) {
-            return [
-                'dias_habiles' => 0,
-                'dias_asistidos' => 0,
-                'dias_falta' => 0,
-                'porcentaje_asistencia' => 0,
-                'porcentaje_falta' => 0,
-                'condicion' => 'Pendiente',
-                'puede_rendir' => '-'
-            ];
-        }
-
-        // Calcular días hábiles
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen);
-        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo);
-
-        // Obtener días con asistencia
-        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-            ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon->startOfDay(),
-                $fechaFinCalculo->endOfDay()
-            ])
-            ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct()
-            ->get()
-            ->pluck('fecha');
-
-        $diasConAsistencia = 0;
-        foreach ($registros as $fecha) {
-            if (Carbon::parse($fecha)->isWeekday()) {
-                $diasConAsistencia++;
-            }
-        }
-
-        // Calcular faltas solo de los días transcurridos
-        $diasFalta = $diasHabilesTranscurridos - $diasConAsistencia;
-
-        // IMPORTANTE: Calcular porcentajes SIEMPRE sobre el total de días del período
-        $porcentajeAsistencia = $diasHabilesTotales > 0 ?
-            round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-
-        $porcentajeFalta = $diasHabilesTotales > 0 ?
-            round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
-
-        // Calcular límites basados en el total de días del período
-        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
-        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
-
-        // Determinar condición basada en las faltas actuales
-        $condicion = 'Regular';
-        $puedeRendir = 'SÍ';
-
-        if ($diasFalta >= $limiteInhabilitacion) {
-            $condicion = 'Inhabilitado';
-            $puedeRendir = 'NO';
-        } elseif ($diasFalta >= $limiteAmonestacion) {
-            $condicion = 'Amonestado';
-        }
-
-        // Si el período aún no ha terminado, agregar información adicional
-        $resultado = [
-            'dias_habiles' => $diasHabilesTotales,
-            'dias_asistidos' => $diasConAsistencia,
-            'dias_falta' => $diasFalta,
-            'porcentaje_asistencia' => $porcentajeAsistencia,
-            'porcentaje_falta' => $porcentajeFalta,
-            'condicion' => $condicion,
-            'puede_rendir' => $puedeRendir
-        ];
-
-        // Agregar información de días transcurridos si el período aún no termina
-        if ($diasHabilesTranscurridos < $diasHabilesTotales) {
-            $resultado['dias_habiles_transcurridos'] = $diasHabilesTranscurridos;
-
-            // Calcular porcentajes actuales (sobre días transcurridos) para información adicional
-            $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
-                round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
-            $porcentajeFaltaActual = $diasHabilesTranscurridos > 0 ?
-                round(($diasFalta / $diasHabilesTranscurridos) * 100, 2) : 0;
-
-            $resultado['porcentaje_asistencia_actual'] = $porcentajeAsistenciaActual;
-            $resultado['porcentaje_falta_actual'] = $porcentajeFaltaActual;
-
-            // Indicar si es una proyección
-            $resultado['es_proyeccion'] = true;
-        }
-
-        return $resultado;
-    }
-    private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
-    {
-        $hoy = Carbon::now();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio);
-        $fechaExamenCarbon = Carbon::parse($fechaExamen);
-
-        // Si el examen aún no ha llegado, calcular hasta hoy
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
+        // Si el examen aún no ha llegado, calcular hasta el final del día de hoy
+        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
 
         // Si la fecha de inicio es futura, no calcular aún
         if ($fechaInicioCarbon > $hoy) {
@@ -237,43 +139,79 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             ];
         }
 
-        // Calcular días hábiles
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen);
-        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo);
+        // Calcular días hábiles - IMPORTANTE: usar endOfDay para incluir el día completo
+        $diasHabilesTotales = $this->contarDiasHabiles(
+            $fechaInicioCarbon->format('Y-m-d'),
+            $fechaExamenCarbon->format('Y-m-d')
+        );
 
-        // Obtener días con asistencia
-        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+        $diasHabilesTranscurridos = $this->contarDiasHabiles(
+            $fechaInicioCarbon->format('Y-m-d'),
+            $fechaFinCalculo->format('Y-m-d')
+        );
+
+        // DEBUG: Ver exactamente qué rango estamos usando
+        \Log::info("DEBUG Rango de búsqueda", [
+            'documento' => $numeroDocumento,
+            'fecha_inicio_original' => $fechaInicio,
+            'fecha_inicio_carbon' => $fechaInicioCarbon->format('Y-m-d H:i:s'),
+            'fecha_fin_calculo' => $fechaFinCalculo->format('Y-m-d H:i:s'),
+            'dias_habiles_transcurridos' => $diasHabilesTranscurridos
+        ]);
+
+        // Obtener días con asistencia - usar DATE para agrupar por día
+        $registrosQuery = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon->startOfDay(),
-                $fechaFinCalculo->endOfDay()
+                $fechaInicioCarbon,
+                $fechaFinCalculo
             ])
             ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct()
-            ->get()
-            ->pluck('fecha');
+            ->distinct();
 
+        // DEBUG: Ver la consulta SQL exacta
+        \Log::info("SQL Query", [
+            'sql' => $registrosQuery->toSql(),
+            'bindings' => $registrosQuery->getBindings()
+        ]);
+
+        $registros = $registrosQuery->get()->pluck('fecha');
+
+        // Contar asistencias en días hábiles
         $diasConAsistencia = 0;
+        $fechasContadas = [];
+
         foreach ($registros as $fecha) {
-            if (Carbon::parse($fecha)->isWeekday()) {
+            $fechaCarbon = Carbon::parse($fecha);
+
+            // Solo contar días hábiles (lunes a viernes)
+            if ($fechaCarbon->isWeekday()) {
                 $diasConAsistencia++;
+                $fechasContadas[] = $fecha . ' (' . $fechaCarbon->format('l') . ')';
             }
         }
 
-        // Calcular faltas solo de los días transcurridos
-        $diasFalta = $diasHabilesTranscurridos - $diasConAsistencia;
+        // DEBUG: Mostrar todas las fechas encontradas
+        \Log::info("DEBUG Asistencias encontradas", [
+            'total_registros' => $registros->count(),
+            'dias_habiles_con_asistencia' => $diasConAsistencia,
+            'fechas_con_asistencia' => $fechasContadas
+        ]);
 
-        // IMPORTANTE: Calcular porcentajes SIEMPRE sobre el total de días del período
+        // Calcular faltas
+        $diasFalta = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+
+        // Calcular porcentajes sobre el total de días del período
         $porcentajeAsistencia = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
 
         $porcentajeFalta = $diasHabilesTotales > 0 ?
             round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
 
-        // Calcular límites basados en el total de días del período
+        // Calcular límites
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
 
-        // Determinar condición basada en las faltas actuales
+        // Determinar condición
         $condicion = 'Regular';
         $puedeRendir = 'SÍ';
 
@@ -284,7 +222,6 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             $condicion = 'Amonestado';
         }
 
-        // Si el período aún no ha terminado, agregar información adicional
         $resultado = [
             'dias_habiles' => $diasHabilesTotales,
             'dias_asistidos' => $diasConAsistencia,
@@ -295,31 +232,22 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             'puede_rendir' => $puedeRendir
         ];
 
-        // Agregar información de días transcurridos si el período aún no termina
         if ($diasHabilesTranscurridos < $diasHabilesTotales) {
             $resultado['dias_habiles_transcurridos'] = $diasHabilesTranscurridos;
-
-            // Calcular porcentajes actuales (sobre días transcurridos) para información adicional
-            $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
-                round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
-            $porcentajeFaltaActual = $diasHabilesTranscurridos > 0 ?
-                round(($diasFalta / $diasHabilesTranscurridos) * 100, 2) : 0;
-
-            $resultado['porcentaje_asistencia_actual'] = $porcentajeAsistenciaActual;
-            $resultado['porcentaje_falta_actual'] = $porcentajeFaltaActual;
-
-            // Indicar si es una proyección
             $resultado['es_proyeccion'] = true;
         }
 
         return $resultado;
     }
+
+    // También asegúrate de que el método contarDiasHabiles sea inclusivo
     private function contarDiasHabiles($fechaInicio, $fechaFin)
     {
-        $inicio = Carbon::parse($fechaInicio);
-        $fin = Carbon::parse($fechaFin);
+        $inicio = Carbon::parse($fechaInicio)->startOfDay();
+        $fin = Carbon::parse($fechaFin)->startOfDay();
         $dias = 0;
 
+        // IMPORTANTE: usar <= para incluir ambos días (inicio y fin)
         while ($inicio <= $fin) {
             if ($inicio->isWeekday()) {
                 $dias++;
@@ -329,6 +257,15 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
 
         return $dias;
     }
+
+    // También debes actualizar el método calcularAsistenciaExamenPdf con los mismos cambios
+    private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
+    {
+        // Usar exactamente la misma lógica que calcularAsistenciaExamen
+        return $this->calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo);
+    }
+
+
 
     private function getSiguienteDiaHabil($fecha)
     {
