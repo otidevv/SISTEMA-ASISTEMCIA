@@ -399,6 +399,55 @@
                 page-break-after: always;
             }
         }
+
+        tr.falta-row {
+            background-color: #ffe4e4;
+        }
+
+        tr.falta-row td {
+            color: #721c24;
+        }
+
+        .falta-text {
+            color: #dc3545;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .sin-registro {
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        /* Contador de resumen */
+        .resumen-mes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .contador-asistencias {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+        }
+
+        .contador-item {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .contador-asistidos {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .contador-faltas {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 
@@ -487,12 +536,7 @@
                                 </div>
                             </div>
 
-                            <div class="progress-bar">
-                                <div class="progress-fill {{ $info_asistencia['primer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['primer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}"
-                                    style="width: {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}%">
-                                    {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}%
-                                </div>
-                            </div>
+
 
                             <div
                                 class="alert {{ $info_asistencia['primer_examen']['puede_rendir'] == 'SÍ' ? 'success' : 'danger' }}">
@@ -624,28 +668,45 @@
 
                 @foreach ($detalle_asistencias as $mesKey => $mes)
                     <div class="info-section" style="margin-bottom: 20px;">
-                        <h3>{{ $mes['mes'] }} {{ $mes['anio'] }} - Total días asistidos:
-                            {{ $mes['dias_asistidos'] }}</h3>
+                        <div class="resumen-mes">
+                            <h3>{{ $mes['mes'] }} {{ $mes['anio'] }}</h3>
+                            <div class="contador-asistencias">
+                                <span class="contador-item contador-asistidos">
+                                    Asistidos: {{ $mes['dias_asistidos'] }}
+                                </span>
+                                <span class="contador-item contador-faltas">
+                                    Faltas: {{ $mes['dias_falta'] }}
+                                </span>
+                            </div>
+                        </div>
                         <table>
                             <thead>
                                 <tr>
-                                    <th style="width: 25%;">Fecha</th>
-                                    <th style="width: 25%;">Día</th>
-                                    <th style="width: 25%;">Hora Entrada</th>
-                                    <th style="width: 25%;">Hora Salida</th>
+                                    <th style="width: 20%;">Fecha</th>
+                                    <th style="width: 20%;">Día</th>
+                                    <th style="width: 20%;">Hora Entrada</th>
+                                    <th style="width: 20%;">Hora Salida</th>
+                                    <th style="width: 20%;">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($mes['registros'] as $registro)
-                                    <tr>
+                                    <tr class="{{ !$registro['asistio'] ? 'falta-row' : '' }}">
                                         <td>{{ $registro['fecha'] }}</td>
-                                        <td>{{ ucfirst($registro['dia_semana']) }}</td>
+                                        <td>{{ $registro['dia_semana'] }}</td>
                                         <td
-                                            style="{{ $registro['hora_entrada'] == 'Sin registro' ? 'color: #dc3545; font-style: italic;' : '' }}">
-                                            {{ $registro['hora_entrada'] ?? '-' }}
+                                            class="{{ $registro['hora_entrada'] == 'Sin registro' ? 'sin-registro' : ($registro['hora_entrada'] == 'FALTA' ? 'falta-text' : '') }}">
+                                            {{ $registro['hora_entrada'] }}
                                         </td>
-                                        <td style="{{ $registro['hora_salida'] == '-' ? 'color: #6c757d;' : '' }}">
-                                            {{ $registro['hora_salida'] ?? '-' }}
+                                        <td class="{{ $registro['hora_salida'] == 'FALTA' ? 'falta-text' : '' }}">
+                                            {{ $registro['hora_salida'] }}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            @if ($registro['asistio'])
+                                                <span style="color: #28a745; font-weight: 600;"> Asistió</span>
+                                            @else
+                                                <span style="color: #dc3545; font-weight: 600;"> Falta</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

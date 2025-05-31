@@ -915,13 +915,11 @@ class InscripcionController extends Controller
     }
 
     /**
-     * Obtener detalle de asistencias por mes
-     */
-    /**
-     * Obtener detalle de asistencias por mes
+     * Obtener detalle de asistencias por mes incluyendo faltas
      */
     private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin)
     {
+        // Primero, obtener todos los registros de asistencia
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
                 Carbon::parse($fechaInicio)->startOfDay(),
@@ -930,103 +928,94 @@ class InscripcionController extends Controller
             ->orderBy('fecha_registro')
             ->get();
 
-        $detallesPorMes = [];
-
+        // Organizar registros por fecha
+        $registrosPorFecha = [];
         foreach ($registros as $registro) {
-            $mes = Carbon::parse($registro->fecha_registro)->format('Y-m');
-            $nombreMes = Carbon::parse($registro->fecha_registro)->locale('es')->monthName;
-            $anio = Carbon::parse($registro->fecha_registro)->year;
-
-            if (!isset($detallesPorMes[$mes])) {
-                $detallesPorMes[$mes] = [
-                    'mes' => ucfirst($nombreMes),
-                    'anio' => $anio,
-                    'dias_asistidos' => 0,
-                    'registros' => []
-                ];
-            }
-
             $fecha = Carbon::parse($registro->fecha_registro)->format('Y-m-d');
-            if (!isset($detallesPorMes[$mes]['registros'][$fecha])) {
-                $detallesPorMes[$mes]['registros'][$fecha] = [
-                    'fecha' => Carbon::parse($registro->fecha_registro)->format('d/m/Y'),
-                    'dia_semana' => Carbon::parse($registro->fecha_registro)->locale('es')->dayName,
-                    'hora_entrada' => null,
-                    'hora_salida' => null,
-                    'registros_del_dia' => [] // Para almacenar todos los registros del día
-                ];
-
-                if (Carbon::parse($registro->fecha_registro)->isWeekday()) {
-                    $detallesPorMes[$mes]['dias_asistidos']++;
-                }
+            if (!isset($registrosPorFecha[$fecha])) {
+                $registrosPorFecha[$fecha] = [];
             }
-
-            // Guardar todos los registros del día
-            $hora = Carbon::parse($registro->fecha_registro)->hour;
-            $horaFormateada = Carbon::parse($registro->fecha_registro)->format('H:i');
-            $detallesPorMes[$mes]['registros'][$fecha]['registros_del_dia'][] = [
-                'hora' => $hora,
-                'hora_formateada' => $horaFormateada
-            ];
+            $registrosPorFecha[$fecha][] = $registro;
         }
 
-        // Procesar los registros de cada día para determinar entrada y salida
-        foreach ($detallesPorMes as $mes => $datosMes) {
-            foreach ($datosMes['registros'] as $fecha => $datosdia) {
-                $registrosDelDia = $datosdia['registros_del_dia'];
+        // Generar todos los días hábiles del período
+        $detallesPorMes = [];
+        $fechaActual = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaFinCarbon = Carbon::parse($fechaFin)->endOfDay();
 
-                if (count($registrosDelDia) > 0) {
+        while ($fechaActual <= $fechaFinCarbon) {
+            // Solo procesar días hábiles (lunes a viernes)
+            if ($fechaActual->isWeekday()) {
+                $mes = $fechaActual->format('Y-m');
+                $nombreMes = $fechaActual->locale('es')->monthName;
+                $anio = $fechaActual->year;
+                $fechaStr = $fechaActual->format('Y-m-d');
+
+                // Inicializar el mes si no existe
+                if (!isset($detallesPorMes[$mes])) {
+                    $detallesPorMes[$mes] = [
+                        'mes' => ucfirst($nombreMes),
+                        'anio' => $anio,
+                        'dias_asistidos' => 0,
+                        'dias_falta' => 0,
+                        'registros' => []
+                    ];
+                }
+
+                // Datos básicos del día
+                $datosDelDia = [
+                    'fecha' => $fechaActual->format('d/m/Y'),
+                    'dia_semana' => ucfirst($fechaActual->locale('es')->dayName),
+                    'hora_entrada' => null,
+                    'hora_salida' => null,
+                    'asistio' => false
+                ];
+
+                // Verificar si hay registros para este día
+                if (isset($registrosPorFecha[$fechaStr])) {
+                    $datosDelDia['asistio'] = true;
+                    $detallesPorMes[$mes]['dias_asistidos']++;
+
+                    // Procesar los registros del día
+                    $registrosDelDia = [];
+                    foreach ($registrosPorFecha[$fechaStr] as $reg) {
+                        $hora = Carbon::parse($reg->fecha_registro)->hour;
+                        $horaFormateada = Carbon::parse($reg->fecha_registro)->format('H:i');
+                        $registrosDelDia[] = [
+                            'hora' => $hora,
+                            'hora_formateada' => $horaFormateada
+                        ];
+                    }
+
                     // Ordenar registros por hora
                     usort($registrosDelDia, function ($a, $b) {
                         return $a['hora'] - $b['hora'];
                     });
 
-                    // Detectar el turno basándose en el primer registro
+                    // Detectar turno y asignar entrada/salida
                     $primerRegistro = $registrosDelDia[0]['hora'];
-                    $esTurnoManana = $primerRegistro < 14; // Si el primer registro es antes de las 14:00, es turno mañana
-
-                    $entradaEncontrada = false;
-                    $salidaEncontrada = false;
+                    $esTurnoManana = $primerRegistro < 14;
 
                     if ($esTurnoManana) {
                         // TURNO MAÑANA
-                        // Entrada: típicamente 06:00-09:00
-                        // Salida: típicamente 12:00-14:00
-
                         foreach ($registrosDelDia as $reg) {
-                            // Buscar entrada (primer registro antes de las 10:00)
-                            if ($reg['hora'] < 10 && !$entradaEncontrada) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $reg['hora_formateada'];
-                                $entradaEncontrada = true;
+                            if ($reg['hora'] < 10 && !$datosDelDia['hora_entrada']) {
+                                $datosDelDia['hora_entrada'] = $reg['hora_formateada'];
                             }
-
-                            // Buscar salida (último registro entre 12:00 y 14:00)
                             if ($reg['hora'] >= 12 && $reg['hora'] <= 14) {
-                                $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $reg['hora_formateada'];
-                                $salidaEncontrada = true;
+                                $datosDelDia['hora_salida'] = $reg['hora_formateada'];
                             }
                         }
 
-                        // Si no se encontró entrada clara, usar el primer registro
-                        if (!$entradaEncontrada && count($registrosDelDia) > 0) {
-                            $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
+                        // Valores por defecto si no se encontraron
+                        if (!$datosDelDia['hora_entrada'] && count($registrosDelDia) > 0) {
+                            $datosDelDia['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
                         }
-
-                        // Si no se encontró salida clara, buscar cualquier registro después de las 11:00
-                        if (!$salidaEncontrada && count($registrosDelDia) > 1) {
-                            for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
-                                if ($registrosDelDia[$i]['hora'] >= 11) {
-                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
-                                    break;
-                                }
-                            }
+                        if (!$datosDelDia['hora_salida'] && count($registrosDelDia) > 1) {
+                            $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
                         }
                     } else {
                         // TURNO TARDE
-                        // Entrada: típicamente 14:00-17:00
-                        // Salida: típicamente 18:00-22:00
-
-                        // Verificar si todos los registros son después de las 18:00
                         $todosRegistrosTarde = true;
                         foreach ($registrosDelDia as $reg) {
                             if ($reg['hora'] < 18) {
@@ -1036,63 +1025,51 @@ class InscripcionController extends Controller
                         }
 
                         if ($todosRegistrosTarde) {
-                            // Solo hay registros de salida
-                            $ultimoIndice = count($registrosDelDia) - 1;
-                            $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
-                            $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
+                            $datosDelDia['hora_entrada'] = 'Sin registro';
+                            $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
                         } else {
-                            // Buscar entrada (primer registro antes de las 18:00)
                             foreach ($registrosDelDia as $reg) {
-                                if ($reg['hora'] < 18 && !$entradaEncontrada) {
-                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = $reg['hora_formateada'];
-                                    $entradaEncontrada = true;
-                                    break;
+                                if ($reg['hora'] < 18 && !$datosDelDia['hora_entrada']) {
+                                    $datosDelDia['hora_entrada'] = $reg['hora_formateada'];
+                                }
+                                if ($reg['hora'] >= 18) {
+                                    $datosDelDia['hora_salida'] = $reg['hora_formateada'];
                                 }
                             }
 
-                            // Buscar salida (último registro después de las 18:00)
-                            for ($i = count($registrosDelDia) - 1; $i >= 0; $i--) {
-                                if ($registrosDelDia[$i]['hora'] >= 18) {
-                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$i]['hora_formateada'];
-                                    $salidaEncontrada = true;
-                                    break;
-                                }
+                            if (!$datosDelDia['hora_entrada'] && count($registrosDelDia) > 0) {
+                                $datosDelDia['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
                             }
-
-                            // Si no hay salida después de las 18:00 pero hay múltiples registros
-                            if (!$salidaEncontrada && count($registrosDelDia) > 1) {
-                                $ultimoIndice = count($registrosDelDia) - 1;
-                                if ($registrosDelDia[$ultimoIndice]['hora'] > $registrosDelDia[0]['hora'] + 2) {
-                                    $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = $registrosDelDia[$ultimoIndice]['hora_formateada'];
-                                }
+                            if (!$datosDelDia['hora_salida'] && count($registrosDelDia) > 1) {
+                                $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
                             }
                         }
                     }
 
-                    // Manejar casos donde no hay entrada o salida
-                    if (
-                        !isset($detallesPorMes[$mes]['registros'][$fecha]['hora_entrada']) ||
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] === null
-                    ) {
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_entrada'] = 'Sin registro';
+                    // Limpiar valores nulos
+                    if (!$datosDelDia['hora_entrada']) {
+                        $datosDelDia['hora_entrada'] = 'Sin registro';
                     }
-
-                    if (
-                        !isset($detallesPorMes[$mes]['registros'][$fecha]['hora_salida']) ||
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] === null
-                    ) {
-                        $detallesPorMes[$mes]['registros'][$fecha]['hora_salida'] = '-';
+                    if (!$datosDelDia['hora_salida']) {
+                        $datosDelDia['hora_salida'] = '-';
                     }
+                } else {
+                    // NO ASISTIÓ
+                    $datosDelDia['hora_entrada'] = 'FALTA';
+                    $datosDelDia['hora_salida'] = 'FALTA';
+                    $detallesPorMes[$mes]['dias_falta']++;
                 }
 
-                // Limpiar el array temporal
-                unset($detallesPorMes[$mes]['registros'][$fecha]['registros_del_dia']);
+                // Agregar el día al mes correspondiente
+                $detallesPorMes[$mes]['registros'][] = $datosDelDia;
             }
+
+            // Avanzar al siguiente día
+            $fechaActual->addDay();
         }
 
         return $detallesPorMes;
     }
-
     public function exportarAsistenciasPorCiclo(Request $request): BinaryFileResponse
     {
         $request->validate([
