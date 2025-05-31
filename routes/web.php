@@ -235,6 +235,11 @@ Route::prefix('json')->group(function () {
         Route::get('/pdf/{id}/reporte-asistencia', [App\Http\Controllers\Api\InscripcionController::class, 'reporteAsistenciaPdf']);
         Route::patch('/{id}/estado', [App\Http\Controllers\Api\InscripcionController::class, 'cambiarEstado']);
     });
+    Route::prefix('reportes')->group(function () {
+        Route::post('/asistencia-dia', [App\Http\Controllers\Api\ReporteController::class, 'asistenciaDia']);
+
+        Route::post('/asistencia-dia/preview', [App\Http\Controllers\Api\ReporteController::class, 'asistenciaDiaPreview']);
+    });
 
     Route::get('/estudiantes-sin-inscripcion', [App\Http\Controllers\Api\InscripcionController::class, 'estudiantesSinInscripcion']);
 

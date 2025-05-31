@@ -27,7 +27,24 @@ class InscripcionController extends Controller
 
     public function reportes()
     {
-        return view('inscripciones.reportes');
+        // Obtener datos para los filtros
+        $ciclos = \App\Models\Ciclo::where('es_activo', 1)
+            ->orderBy('fecha_inicio', 'desc')
+            ->get();
+
+        $carreras = \App\Models\Carrera::where('estado', 1)
+            ->orderBy('nombre')
+            ->get();
+
+        $turnos = \App\Models\Turno::where('estado', 1)
+            ->orderBy('nombre')
+            ->get();
+
+        $aulas = \App\Models\Aula::where('estado', 1)
+            ->orderBy('codigo')
+            ->get();
+
+        return view('inscripciones.reportes', compact('ciclos', 'carreras', 'turnos', 'aulas'));
     }
     // Agregar este método en la clase InscripcionController
 
