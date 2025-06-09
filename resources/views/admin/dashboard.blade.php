@@ -179,6 +179,33 @@
                                             {{ $infoAsistencia['primer_examen']['mensaje'] }}
                                         </div>
                                     @endif
+
+                                    {{-- AVISO DE RENDIR - PRIMER EXAMEN --}}
+                                    @if (isset($infoAsistencia['primer_examen']) && $infoAsistencia['primer_examen']['estado'] != 'pendiente')
+                                        @if ($infoAsistencia['primer_examen']['puede_rendir'])
+                                            @if ($infoAsistencia['primer_examen']['estado'] == 'regular')
+                                                <div class="alert alert-success mt-2 fw-bold text-center">
+                                                    ✅ Rendiste este examen sin restricciones.
+                                                </div>
+                                            @elseif ($infoAsistencia['primer_examen']['estado'] == 'amonestado')
+                                                <div class="alert alert-warning mt-2 fw-bold text-center">
+                                                    ⚠️ Rendiste este examen estando amonestado por inasistencias.<br>
+                                                    <span class="fw-normal d-block mt-2">
+                                                        Si tuviste motivos válidos (como salud), aún puedes justificar tus
+                                                        faltas ante coordinación académica.
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        @else
+                                            <div class="alert alert-danger mt-2 fw-bold text-center">
+                                                ❌ No pudiste rendir este examen.<br>
+                                                <span class="fw-normal d-block mt-2">
+                                                    Si tus faltas fueron por salud u otra causa válida, puedes justificar tu
+                                                    inasistencia ante coordinación académica.
+                                                </span>
+                                            </div>
+                                        @endif
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -256,6 +283,34 @@
                                                 {{ $infoAsistencia['segundo_examen']['mensaje'] }}
                                             </div>
                                         @endif
+
+                                        {{-- AVISO DE RENDIR - SEGUNDO EXAMEN --}}
+                                        @if (isset($infoAsistencia['segundo_examen']) && $infoAsistencia['segundo_examen']['estado'] != 'pendiente')
+                                            @if ($infoAsistencia['segundo_examen']['puede_rendir'])
+                                                @if ($infoAsistencia['segundo_examen']['estado'] == 'regular')
+                                                    <div class="alert alert-success mt-2 fw-bold text-center">
+                                                        ✅ Puedes rendir este examen sin restricciones (por el momento).
+                                                    </div>
+                                                @elseif ($infoAsistencia['segundo_examen']['estado'] == 'amonestado')
+                                                    <div class="alert alert-warning mt-2 fw-bold text-center">
+                                                        ⚠️ Puedes rendir este examen, pero estás amonestado por faltas.<br>
+                                                        <span class="fw-normal d-block mt-2">
+                                                            Si fueron justificadas, presenta tu documentación antes del
+                                                            examen a coordinación académica.
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <div class="alert alert-danger mt-2 fw-bold text-center">
+                                                    ❌ Actualmente no puedes rendir este examen.<br>
+                                                    <span class="fw-normal d-block mt-2">
+                                                        Si tus faltas fueron por causas justificables, aún puedes presentar
+                                                        documentación para revisión antes del examen.
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        @endif
+
                                     @endif
                                 </div>
                             </div>
@@ -333,6 +388,35 @@
                                                 {{ $infoAsistencia['tercer_examen']['mensaje'] }}
                                             </div>
                                         @endif
+
+                                        {{-- AVISO DE RENDIR - TERCER EXAMEN --}}
+                                        @if (isset($infoAsistencia['tercer_examen']) && $infoAsistencia['tercer_examen']['estado'] != 'pendiente')
+                                            @if ($infoAsistencia['tercer_examen']['puede_rendir'])
+                                                @if ($infoAsistencia['tercer_examen']['estado'] == 'regular')
+                                                    <div class="alert alert-success mt-2 fw-bold text-center">
+                                                        ✅ Puedes rendir este examen sin restricciones (por el momento).
+                                                    </div>
+                                                @elseif ($infoAsistencia['tercer_examen']['estado'] == 'amonestado')
+                                                    <div class="alert alert-warning mt-2 fw-bold text-center">
+                                                        ⚠️ Puedes rendir este examen, pero estás amonestado por
+                                                        inasistencias.<br>
+                                                        <span class="fw-normal d-block mt-2">
+                                                            Si tienes una justificación válida, presenta tu documentación
+                                                            con anticipación a coordinación académica.
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <div class="alert alert-danger mt-2 fw-bold text-center">
+                                                    ❌ Actualmente no puedes rendir este examen.<br>
+                                                    <span class="fw-normal d-block mt-2">
+                                                        Puedes justificar tu inasistencia con documentación médica u otra
+                                                        causa válida ante coordinación académica.
+                                                    </span>
+                                                </div>
+                                            @endif
+                                        @endif
+
                                     @endif
                                 </div>
                             </div>
