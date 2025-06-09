@@ -225,9 +225,9 @@ class DashboardController extends Controller
      */
     private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
-        $hoy = Carbon::now();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio);
-        $fechaExamenCarbon = Carbon::parse($fechaExamen);
+        $hoy = Carbon::now()->startOfDay();
+        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
 
         // Si el examen aún no ha llegado, calcular hasta hoy
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
@@ -360,8 +360,8 @@ class DashboardController extends Controller
      */
     private function contarDiasHabiles($fechaInicio, $fechaFin)
     {
-        $inicio = Carbon::parse($fechaInicio);
-        $fin = Carbon::parse($fechaFin);
+        $inicio = Carbon::parse($fechaInicio)->startOfDay();
+        $fin = Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
 
         while ($inicio <= $fin) {
