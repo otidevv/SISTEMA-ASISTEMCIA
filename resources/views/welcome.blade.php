@@ -38,15 +38,3 @@
     @include('partials.cepreunamad')
 @endsection
 
-@push('js')
-    <script src="{{ asset('assets_cepre/js/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/odometer.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/jquery.appear.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/swiper-bundle.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/jquery.meanmenu.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/jquery.magnific-popup.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/circle-progress.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/wow.min.js') }}"></script>
-    <script src="{{ asset('assets_cepre/js/main.js') }}"></script>
-@endpush

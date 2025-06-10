@@ -1675,14 +1675,14 @@
                                     <div class="accordion-btn">
                                         <div class="content-items">
                                             <div class="post-date">
-                                                13 de septiembre, 2025
+                                                26 de enero, 2025
                                             </div>
                                             <div class="content">
                                                 <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
                                             </div>
                                         </div>
                                         <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/01.jpg') }}" alt="img">
+                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
                                         </div>
                                         <ul class="button-list">
                                             <li>
@@ -1703,14 +1703,14 @@
                                     <div class="accordion-btn">
                                         <div class="content-items">
                                             <div class="post-date">
-                                                14 de septiembre, 2025
+                                                14 de septiembre, ----
                                             </div>
                                             <div class="content">
                                                 <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
                                             </div>
                                         </div>
                                         <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/01.jpg') }}" alt="img">
+                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
                                         </div>
                                         <ul class="button-list">
                                             <li>
@@ -1731,14 +1731,14 @@
                                     <div class="accordion-btn">
                                         <div class="content-items">
                                             <div class="post-date">
-                                                14 de septiembre, 2025
+                                                14 de septiembre, ----
                                             </div>
                                             <div class="content">
                                                 <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
                                             </div>
                                         </div>
                                         <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/01.jpg') }}" alt="img">
+                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
                                         </div>
                                         <ul class="button-list">
                                             <li>
@@ -1759,14 +1759,14 @@
                                     <div class="accordion-btn">
                                         <div class="content-items">
                                             <div class="post-date">
-                                                14 de septiembre, 2025
+                                                14 de septiembre, ----
                                             </div>
                                             <div class="content">
                                                 <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
                                             </div>
                                         </div>
                                         <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/01.jpg') }}" alt="img">
+                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
                                         </div>
                                         <ul class="button-list">
                                             <li>
@@ -1787,14 +1787,14 @@
                                     <div class="accordion-btn">
                                         <div class="content-items">
                                             <div class="post-date">
-                                                14 de septiembre, 2025
+                                                14 de septiembre, ----
                                             </div>
                                             <div class="content">
                                                 <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
                                             </div>
                                         </div>
                                         <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/01.jpg') }}" alt="img">
+                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
                                         </div>
                                         <ul class="button-list">
                                             <li>
@@ -1893,7 +1893,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".2s">
                         <div class="team-box-items style-2">
                             <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docenteboni.jpg') }}" alt="img">
+                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
                                 <div class="social-profile">
                                     <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
                                     <ul>
@@ -1914,7 +1914,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".4s">
                         <div class="team-box-items style-2">
                             <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docenteboni.jpg') }}" alt="img">
+                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
                                 <div class="social-profile">
                                     <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
                                     <ul>
@@ -1935,7 +1935,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".6s">
                         <div class="team-box-items style-2">
                             <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docenteboni.jpg') }}" alt="img">
+                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
                                 <div class="social-profile">
                                     <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
                                     <ul>
@@ -1956,7 +1956,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".8s">
                         <div class="team-box-items style-2">
                             <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docenteboni.jpg') }}" alt="img">
+                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
                                 <div class="social-profile">
                                     <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
                                     <ul>
@@ -2011,7 +2011,7 @@
                                         </div>
                                     </div>
                                     <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/01.png') }}" alt="img">
+                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
                                     </div>
                                 </div>
                                 <div class="content">
@@ -2048,7 +2048,7 @@
                                         </div>
                                     </div>
                                     <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/02.png') }}" alt="img">
+                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
                                     </div>
                                 </div>
                                 <div class="content">
@@ -2085,7 +2085,7 @@
                                         </div>
                                     </div>
                                     <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/03.png') }}" alt="img">
+                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
                                     </div>
                                 </div>
                                 <div class="content">
@@ -2122,7 +2122,7 @@
                                         </div>
                                     </div>
                                     <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/02.png') }}" alt="img">
+                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
                                     </div>
                                 </div>
                                 <div class="content">
@@ -2444,142 +2444,104 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Seccion de noticias y blog -->
+                </section>
+        
+        <!-- Sección de Noticias y Blog -->
         <section class="news-section fix section-padding section-bg">
-            <div class="container">
-                <div class="section-title text-center text-center">
-                    <h6 class="wow fadeInUp">
-                        Noticias y blog 
-                    </h6>
-                    <h2 class="wow fadeInUp" data-wow-delay=".3s">Últimas noticias y artículos</h2>
-                </div>
-                <div class="row">
-                    <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                        <div class="news-card-items">
-                            <div class="news-image">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <div class="post-cat">
-                                    Noticia
-                                </div>
-                            </div>
-                            <div class="news-content">
-                                <ul class="post-meta">
-                                    <li>
-                                        <i class="far fa-calendar-alt"></i>
-                                        27 abril 2025
-                                    </li>
-                                    <li>
-                                        <i class="far fa-user"></i>
-                                        C. Smith
-                                    </li>
-                                </ul>
-                                <h5>
-                                    <a href="news-details.html">
-                                        Inscripciones
-                                        Cepre Unamad 2025-1
-                                    </a>
-                                </h5>
-                                <a href="news-details.html" class="link-btn">leer Más <i class="far fa-chevron-double-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".4s">
-                        <div class="news-card-items">
-                            <div class="news-image">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <div class="post-cat">
-                                    Noticia
-                                </div>
-                            </div>
-                            <div class="news-content">
-                                <ul class="post-meta">
-                                    <li>
-                                        <i class="far fa-calendar-alt"></i>
-                                        27 abril 2025
-                                    </li>
-                                    <li>
-                                        <i class="far fa-user"></i>
-                                        C. Smith
-                                    </li>
-                                </ul>
-                                <h5>
-                                    <a href="news-details.html">
-                                        Inscripciones
-                                        Cepre Unamad 2025-1
-                                    </a>
-                                </h5>
-                                <a href="news-details.html" class="link-btn">leer Más <i class="far fa-chevron-double-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".6s">
-                        <div class="news-card-items">
-                            <div class="news-image">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <div class="post-cat">
-                                    Noticia
-                                </div>
-                            </div>
-                            <div class="news-content">
-                                <ul class="post-meta">
-                                    <li>
-                                        <i class="far fa-calendar-alt"></i>
-                                        27 abril 2025
-                                    </li>
-                                    <li>
-                                        <i class="far fa-user"></i>
-                                        C. Smith
-                                    </li>
-                                </ul>
-                                <h5>
-                                    <a href="news-details.html">
-                                        Inscripciones
-                                        Cepre Unamad 2025-1
-                                    </a>
-                                </h5>
-                                <a href="news-details.html" class="link-btn">leer Más <i class="far fa-chevron-double-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                        <div class="news-card-items">
-                            <div class="news-image">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <img src="{{ asset('assets_cepre/img/news/04.jpg') }}" alt="img">
-                                <div class="post-cat">
-                                    Noticia
-                                </div>
-                            </div>
-                            <div class="news-content">
-                                <ul class="post-meta">
-                                    <li>
-                                        <i class="far fa-calendar-alt"></i>
-                                        27 abril 2025
-                                    </li>
-                                    <li>
-                                        <i class="far fa-user"></i>
-                                        C. Smith
-                                    </li>
-                                </ul>
-                                <h5>
-                                    <a href="news-details.html">
-                                        Inscripciones
-                                        Cepre Unamad 2025-1
-                                    </a>
-                                </h5>
-                                <a href="news-details.html" class="link-btn">leer Más <i class="far fa-chevron-double-right"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div class="container">
+            <div class="section-title text-center mb-5">
+              <h6 class="text-primary">Noticias y Blog</h6>
+              <h2 class="fw-bold">Últimas Noticias y Artículos</h2>
             </div>
+        
+            <div class="position-relative">
+              <!-- Carrusel -->
+              <div class="carousel-wrapper mx-auto overflow-hidden" style="max-width: 100%; width: 100%;">
+                <div id="facebookCarousel" class="d-flex gap-3" style="transition: transform 0.5s ease;">
+                  <!-- Tarjeta 1 -->
+                  <div class="fb-card flex-shrink-0" style="width: 340px;">
+                    <div class="fb-page"
+                      data-href="https://www.facebook.com/unamad.oficial"
+                      data-tabs="timeline"
+                      data-width="340"
+                      data-height="500"
+                      data-small-header="false"
+                      data-adapt-container-width="true"
+                      data-hide-cover="false"
+                      data-show-facepile="true"></div>
+                  </div>
+                  <!-- Tarjeta 2 -->
+                  <div class="fb-card flex-shrink-0" style="width: 340px;">
+                    <div class="fb-page"
+                      data-href="https://www.facebook.com/CentroPreuniversitarioUnamad/?locale=es_LA"
+                      data-tabs="timeline"
+                      data-width="340"
+                      data-height="500"
+                      data-small-header="false"
+                      data-adapt-container-width="true"
+                      data-hide-cover="false"
+                      data-show-facepile="true"></div>
+                  </div>
+                  <!-- Tarjeta 3 --> 
+                  <div class="fb-card flex-shrink-0" style="width: 340px;">
+                    <div class="fb-page"
+                      data-href="https://www.facebook.com/p/ADMISION-UNAMAD-100057438618593/?locale=es_LA"
+                      data-tabs="timeline"
+                      data-width="340"
+                      data-height="500"
+                      data-small-header="false"
+                      data-adapt-container-width="true"
+                      data-hide-cover="false"
+                      data-show-facepile="true"></div>
+                  </div>
+                  <!-- Tarjeta 4 --> 
+                  <div class="fb-card flex-shrink-0" style="width: 340px;">
+                    <div class="fb-page"
+                      data-href="https://www.facebook.com/GobiernoRegionalMDD/?locale=es_LA"
+                      data-tabs="timeline"
+                      data-width="340"
+                      data-height="500"
+                      data-small-header="false"
+                      data-adapt-container-width="true"
+                      data-hide-cover="false"
+                      data-show-facepile="true"></div>
+                  </div>
+                </div>
+              </div>
+        
+              <!-- Controles -->
+              <div class="d-flex justify-content-between mt-4 px-3">
+                <button onclick="prevSlide()" class="btn btn-outline-dark rounded-circle shadow-sm">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <button onclick="nextSlide()" class="btn btn-outline-dark rounded-circle shadow-sm">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+        
+              <!-- Indicadores -->
+              <div class="d-flex justify-content-center mt-3 gap-2" id="carouselIndicators">
+                <span class="indicator-dot bg-secondary rounded-circle" style="width: 12px; height: 12px;"></span>
+                <span class="indicator-dot bg-light rounded-circle" style="width: 12px; height: 12px;"></span>
+                <span class="indicator-dot bg-light rounded-circle" style="width: 12px; height: 12px;"></span>
+              </div>
+            </div>
+          </div>
         </section>
-
+        
+        <!-- Estilo adicional -->
+        <style>
+          .indicator-dot {
+            transition: background-color 0.3s;
+          }
+        
+          @media (max-width: 767px) {
+            .carousel-wrapper {
+              max-width: 340px !important;
+              margin: 0 auto;
+            }
+          }
+        </style>     
         <!-- Marquee Section Start -->
         <div class="marquee-section">
             <div class="mycustom-marque theme-blue-bg">
@@ -2741,26 +2703,3 @@
                 </div>
             </div>
         </footer>
-
-         <!--<< All JS Plugins >>-->
-         <script src="{{ asset('assets_cepre/js/jquery-3.7.1.min.js') }}"></script>
-         <!--<< Bootstrap Js >>-->
-         <script src="{{ asset('assets_cepre/js/bootstrap.bundle.min.js') }}"></script>
-         <!--<< Nice Select Js >>-->
-         <script src="{{ asset('assets_cepre/js/jquery.nice-select.min.js') }}"></script>
-         <!--<< Odometer Js >>-->
-         <script src="{{ asset('assets_cepre/js/odometer.min.js') }}"></script>
-         <!--<< Appear Js >>-->
-         <script src="{{ asset('assets_cepre/js/jquery.appear.min.js') }}"></script>
-         <!--<< Swiper Slider Js >>-->
-         <script src="{{ asset('assets_cepre/js/swiper-bundle.min.js') }}"></script>
-         <!--<< MeanMenu Js >>-->
-         <script src="{{ asset('assets_cepre/js/jquery.meanmenu.min.js') }}"></script>
-         <!--<< Magnific Popup Js >>-->
-         <script src="{{ asset('assets_cepre/js/jquery.magnific-popup.min.js') }}"></script>
-         <!--<< Circle Progress Js >>-->
-         <script src="{{ asset('assets_cepre/js/circle-progress.js') }}"></script>
-         <!--<< Wow Animation Js >>-->
-         <script src="{{ asset('assets_cepre/js/wow.min.js') }}"></script>
-         <!--<< Main.js >>-->
-         <script src="{{ asset('assets_cepre/js/main.js') }}"></script>
