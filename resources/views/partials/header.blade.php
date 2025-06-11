@@ -671,6 +671,123 @@
                     </li>
                 @endif
 
+                <li class="menu-title mt-2">Modulos Docentes Cepre</li>              
+                 {{-- ============================== --}}
+                 {{-- Módulo: Horarios Docentes --}}
+                 {{-- ============================== --}}
+                 @if (Auth::user()->hasPermission('horarios-docentes.view'))
+                     <li>
+                         <a href="#sidebarHorariosDocentes" data-bs-toggle="collapse">
+                             <i data-feather="calendar"></i>
+                             <span> Horarios Docentes </span>
+                             <span class="menu-arrow"></span>
+                         </a>
+                         <div class="collapse" id="sidebarHorariosDocentes">
+                             <ul class="nav-second-level">
+                                 <li><a href="{{ route('horarios-docentes.index') }}">Listar Horarios</a></li>
+                                 @if (Auth::user()->hasPermission('horarios-docentes.create'))
+                                     <li><a href="{{ route('horarios-docentes.create') }}">Asignar Horario</a></li>
+                                 @endif
+                             </ul>
+                         </div>
+                     </li>
+                 @endif
+                 
+                 {{-- ============================== --}}
+                 {{-- Módulo: Pagos Docentes --}}
+                 {{-- ============================== --}}
+                 @if (Auth::user()->hasPermission('pagos-docentes.view'))
+                     <li>
+                         <a href="#sidebarPagosDocentes" data-bs-toggle="collapse">
+                             <i data-feather="dollar-sign"></i>
+                             <span> Pagos Docentes </span>
+                             <span class="menu-arrow"></span>
+                         </a>
+                         <div class="collapse" id="sidebarPagosDocentes">
+                             <ul class="nav-second-level">
+                                 <li><a href="{{ route('pagos-docentes.index') }}">Ver Pagos</a></li>
+                                 @if (Auth::user()->hasPermission('pagos-docentes.create'))
+                                     <li><a href="{{ route('pagos-docentes.create') }}">Registrar Pago</a></li>
+                                 @endif
+                             </ul>
+                         </div>
+                     </li>
+                 @endif
+                 
+                 {{-- ============================== --}}
+                 {{-- Módulo: Asistencia Docente --}}
+                 {{-- ============================== --}}
+                 @if (Auth::user()->hasPermission('asistencia-docente.view'))
+                     <li>
+                         <a href="#sidebarAsistenciaDocente" data-bs-toggle="collapse">
+                             <i data-feather="check-square"></i>
+                             <span> Asistencia Docente </span>
+                             <span class="menu-arrow"></span>
+                         </a>
+                         <div class="collapse" id="sidebarAsistenciaDocente">
+                             <ul class="nav-second-level">
+                                 <li>
+                                     <a href="{{ route('asistencia-docente.index') }}">Ver Asistencia Docente</a>
+                                 </li>
+                 
+                                 @if (Auth::user()->hasPermission('asistencia-docente.create'))
+                                     <li>
+                                         <a href="{{ route('asistencia-docente.create') }}">Registrar Asistencia Docente</a>
+                                     </li>
+                                 @endif
+                 
+                                 @if (Auth::user()->hasPermission('asistencia-docente.edit'))
+                                     <li>
+                                         <a href="{{ route('asistencia-docente.editar') }}">Editar Asistencia Docente</a>
+                                     </li>
+                                 @endif
+                 
+                                 @if (Auth::user()->hasPermission('asistencia-docente.export'))
+                                     <li>
+                                         <a href="{{ route('asistencia-docente.exportar') }}">Exportar Asistencia Docente</a>
+                                     </li>
+                                 @endif
+                 
+                                 @if (Auth::user()->hasPermission('asistencia-docente.reports'))
+                                     <li>
+                                         <a href="{{ route('asistencia-docente.reports') }}">Reportes de Asistencia Docente</a>
+                                     </li>
+                                 @endif
+                 
+                                 @if (Auth::user()->hasPermission('asistencia-docente.monitor'))
+                                     <li>
+                                         <a href="{{ route('asistencia-docente.monitor') }}">Monitorear Asistencia en Tiempo Real (Docente)</a>
+                                     </li>
+                                 @endif
+                             </ul>
+                         </div>
+                     </li>
+                 @endif
+
+
+                 {{-- ============================== --}}
+                 {{-- Módulo: Cursos --}}
+                 {{-- ============================== --}}
+                 @if (Auth::user()->hasPermission('cursos.view'))
+                     <li>
+                         <a href="#sidebarCursos" data-bs-toggle="collapse">
+                             <i data-feather="book-open"></i>
+                             <span> Cursos </span>
+                             <span class="menu-arrow"></span>
+                         </a>
+                         <div class="collapse" id="sidebarCursos">
+                             <ul class="nav-second-level">
+                                 <li><a href="{{ route('cursos.index') }}">Listado de Cursos</a></li>
+                                 @if (Auth::user()->hasPermission('cursos.create'))
+                                     <li><a href="{{ route('cursos.create') }}">Registrar Curso</a></li>
+                                 @endif
+                             </ul>
+                         </div>
+                     </li>
+                 @endif
+
+                                      
+
                 <li class="menu-title mt-2">Configuración</li>
 
                 <!-- Ajustes de perfil - Visible para todos -->

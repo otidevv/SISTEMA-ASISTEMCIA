@@ -4,7 +4,10 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+
+// Importar comandos personalizados
 use App\Console\Commands\ProcesarEventosAsistencia;
+use App\Console\Commands\RegistrarAsistenciaDocente;
 
 class Kernel extends ConsoleKernel
 {
@@ -13,10 +16,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Se usa withoutOverlapping para evitar ejecuciones simultáneas
+        // Procesar eventos cada minuto (ejemplo previo)
         $schedule->command('asistencia:procesar-eventos')
             ->withoutOverlapping()
             ->everyMinute();
+
+        // Puedes activar esto si deseas que el registro de asistencia docente sea automático
+        // $schedule->command('asistencia:registrar-docentes')
+        //     ->withoutOverlapping()
+        //     ->everyFiveMinutes();
     }
 
     /**
