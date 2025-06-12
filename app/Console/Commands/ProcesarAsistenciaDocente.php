@@ -17,6 +17,8 @@ class ProcesarAsistenciaDocente extends Command
 
     public function handle()
     {
+        Carbon::setLocale('es'); // Asegura que los días estén en español
+
         $eventos = AsistenciaEvento::where('procesado', false)
             ->orderBy('id', 'asc')
             ->take(50)
@@ -43,10 +45,10 @@ class ProcesarAsistenciaDocente extends Command
                 }
 
                 $fechaHora = Carbon::parse($registro->fecha_hora);
-                $diaSemana = strtolower($fechaHora->dayName);
+                $diaSemana = strtolower($fechaHora->translatedFormat('l')); // "lunes", "martes", etc.
 
                 $horario = HorarioDocente::where('docente_id', $usuario->id)
-                    ->where('dia', $diaSemana)
+                    ->where('dia_semana', $diaSemana)
                     ->whereTime('hora_inicio', '<=', $fechaHora->format('H:i:s'))
                     ->whereTime('hora_fin', '>=', $fechaHora->format('H:i:s'))
                     ->first();
