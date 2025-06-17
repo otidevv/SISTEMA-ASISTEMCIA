@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class moduloAcademico extends Seeder
+class ModuloAcademico extends Seeder
 {
     /**
      * Run the database seeds.
@@ -14,7 +14,7 @@ class moduloAcademico extends Seeder
     public function run(): void
     {
         // Módulo de Ciclos Académicos
-        DB::table('permissions')->insert([
+        $permisos = [
             [
                 'nombre' => 'Ver Ciclos',
                 'codigo' => 'ciclos.view',
@@ -45,10 +45,17 @@ class moduloAcademico extends Seeder
                 'descripcion' => 'Permite activar/desactivar ciclos académicos',
                 'modulo' => 'ciclos'
             ]
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            DB::table('permissions')->updateOrInsert(
+                ['codigo' => $permiso['codigo']],
+                $permiso
+            );
+        }
 
         // Módulo de Carreras
-        DB::table('permissions')->insert([
+        $permisos = [
             [
                 'nombre' => 'Ver Carreras',
                 'codigo' => 'carreras.view',
@@ -79,10 +86,17 @@ class moduloAcademico extends Seeder
                 'descripcion' => 'Permite activar/desactivar carreras',
                 'modulo' => 'carreras'
             ]
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            DB::table('permissions')->updateOrInsert(
+                ['codigo' => $permiso['codigo']],
+                $permiso
+            );
+        }
 
         // Módulo de Turnos
-        DB::table('permissions')->insert([
+        $permisos = [
             [
                 'nombre' => 'Ver Turnos',
                 'codigo' => 'turnos.view',
@@ -113,10 +127,17 @@ class moduloAcademico extends Seeder
                 'descripcion' => 'Permite activar/desactivar turnos',
                 'modulo' => 'turnos'
             ]
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            DB::table('permissions')->updateOrInsert(
+                ['codigo' => $permiso['codigo']],
+                $permiso
+            );
+        }
 
         // Módulo de Aulas
-        DB::table('permissions')->insert([
+        $permisos = [
             [
                 'nombre' => 'Ver Aulas',
                 'codigo' => 'aulas.view',
@@ -153,10 +174,17 @@ class moduloAcademico extends Seeder
                 'descripcion' => 'Permite ver la disponibilidad de aulas',
                 'modulo' => 'aulas'
             ]
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            DB::table('permissions')->updateOrInsert(
+                ['codigo' => $permiso['codigo']],
+                $permiso
+            );
+        }
 
         // Módulo de Inscripciones
-        DB::table('permissions')->insert([
+        $permisos = [
             [
                 'nombre' => 'Ver Inscripciones',
                 'codigo' => 'inscripciones.view',
@@ -199,6 +227,13 @@ class moduloAcademico extends Seeder
                 'descripcion' => 'Permite exportar datos de inscripciones',
                 'modulo' => 'inscripciones'
             ]
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            DB::table('permissions')->updateOrInsert(
+                ['codigo' => $permiso['codigo']],
+                $permiso
+            );
+        }
     }
 }

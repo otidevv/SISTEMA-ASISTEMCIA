@@ -104,6 +104,132 @@ class DashboardController extends Controller
             $data['esEstudiante'] = true;
         }
 
+        // Si el usuario es un profesor
+        if ($user->hasRole('profesor')) {
+            $data['esProfesor'] = true;
+            
+            // Obtener horarios del profesor para hoy
+            $hoy = Carbon::now()->format('Y-m-d');
+            $diaSemana = Carbon::now()->locale('es')->dayName;
+            
+            $horariosHoy = \App\Models\HorarioDocente::where('docente_id', $user->id)
+                ->where('dia_semana', $diaSemana)
+                ->with(['aula', 'curso', 'ciclo'])
+                ->get();
+            
+            $data['horariosHoy'] = $horariosHoy;
+            $data['sesionesHoy'] = $horariosHoy->count();
+            
+            // Calcular horas del día
+            $horasHoy = 0;
+            foreach ($horariosHoy as $horario) {
+                $inicio = Carbon::parse($horario->hora_inicio);
+                $fin = Carbon::parse($horario->hora_fin);
+                $horasHoy += $fin->diffInHours($inicio);
+            }
+            $data['horasHoy'] = $horasHoy;
+            
+            // Obtener asistencias del profesor para hoy
+            $asistenciasHoy = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+                ->whereDate('fecha_hora', $hoy)
+                ->get();
+            
+            $data['asistenciasHoy'] = $asistenciasHoy;
+            
+            // Calcular pago estimado del día
+            $pagoEstimadoHoy = 0;
+            foreach ($asistenciasHoy as $asistencia) {
+                $pagoEstimadoHoy += $asistencia->monto_total ?? 0;
+            }
+            $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
+            
+            // Obtener sesiones pendientes (horarios sin asistencia registrada)
+            $sesionesPendientes = 0;
+            foreach ($horariosHoy as $horario) {
+                $tieneAsistencia = $asistenciasHoy->where('horario_id', $horario->id)->count() > 0;
+                if (!$tieneAsistencia && Carbon::now()->greaterThan(Carbon::parse($horario->hora_inicio))) {
+                    $sesionesPendientes++;
+                }
+            }
+            $data['sesionesPendientes'] = $sesionesPendientes;
+            
+            // Resumen semanal (últimos 7 días)
+            $fechaInicio = Carbon::now()->subDays(6)->startOfDay();
+            $fechaFin = Carbon::now()->endOfDay();
+            
+            $resumenSemanal = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+                ->whereBetween('fecha_hora', [$fechaInicio, $fechaFin])
+                ->selectRaw('
+                    COUNT(*) as total_sesiones,
+                    SUM(horas_dictadas) as total_horas,
+                    SUM(monto_total) as total_ingresos,
+                    AVG(CASE WHEN estado = "completada" THEN 1 ELSE 0 END) * 100 as porcentaje_asistencia
+                ')
+                ->first();
+            
+            $data['resumenSemanal'] = [
+                'sesiones' => $resumenSemanal->total_sesiones ?? 0,
+                'horas' => $resumenSemanal->total_horas ?? 0,
+                'ingresos' => $resumenSemanal->total_ingresos ?? 0,
+                'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0)
+            ];
+            
+            // Próxima clase
+            $proximaClase = \App\Models\HorarioDocente::where('docente_id', $user->id)
+                ->where(function($query) use ($hoy, $diaSemana) {
+                    // Clases de hoy que aún no han comenzado
+                    $query->where('dia_semana', $diaSemana)
+                          ->where('hora_inicio', '>', Carbon::now()->format('H:i:s'));
+                })
+                ->orWhere(function($query) use ($diaSemana) {
+                    // Clases de días siguientes
+                    $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+                    $diaActualIndex = array_search(strtolower($diaSemana), $diasSemana);
+                    $diasSiguientes = array_slice($diasSemana, $diaActualIndex + 1);
+                    
+                    if (!empty($diasSiguientes)) {
+                        $query->whereIn('dia_semana', $diasSiguientes);
+                    }
+                })
+                ->with(['aula', 'curso'])
+                ->orderByRaw("
+                    CASE dia_semana
+                        WHEN 'lunes' THEN 1
+                        WHEN 'martes' THEN 2
+                        WHEN 'miércoles' THEN 3
+                        WHEN 'jueves' THEN 4
+                        WHEN 'viernes' THEN 5
+                        WHEN 'sábado' THEN 6
+                        WHEN 'domingo' THEN 7
+                    END
+                ")
+                ->orderBy('hora_inicio')
+                ->first();
+            
+            $data['proximaClase'] = $proximaClase;
+            
+            // Recordatorios
+            $recordatorios = [];
+            if ($sesionesPendientes > 0) {
+                $recordatorios[] = [
+                    'tipo' => 'warning',
+                    'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar"
+                ];
+            }
+            
+            if ($proximaClase) {
+                $horasHastaProxima = Carbon::now()->diffInHours(Carbon::parse($proximaClase->hora_inicio));
+                if ($horasHastaProxima <= 5) {
+                    $recordatorios[] = [
+                        'tipo' => 'info',
+                        'mensaje' => "Próxima clase en {$horasHastaProxima} horas"
+                    ];
+                }
+            }
+            
+            $data['recordatorios'] = $recordatorios;
+        }
+
         // Si el usuario es un padre
         if ($user->hasRole('padre')) {
             // Obtener los hijos del padre
@@ -217,7 +343,16 @@ class DashboardController extends Controller
             $data['totalAulas'] = \App\Models\Aula::where('estado', true)->count();
         }
 
-        return view('admin.dashboard', $data);
+        // Determinar qué vista mostrar según el rol
+        if ($user->hasRole('profesor')) {
+            return view('admin.dashboard-profesor', $data);
+        } elseif ($user->hasRole('estudiante')) {
+            return view('admin.dashboard-estudiante', $data);
+        } elseif ($user->hasRole('padre')) {
+            return view('admin.dashboard-padre', $data);
+        } else {
+            return view('admin.dashboard', $data);
+        }
     }
 
     /**

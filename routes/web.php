@@ -299,18 +299,22 @@ Route::prefix('json')->group(function () {
         Route::put('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'update'])->name('pagos-docentes.update');
         Route::delete('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'destroy'])->name('pagos-docentes.delete');
     });
-  // Asistencia Docente
+   // Asistencia Docente
    Route::prefix('asistencia-docente')->middleware(['auth'])->group(function () {
        Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
        Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
        Route::post('/', [AsistenciaDocenteController::class, 'store'])->name('asistencia-docente.store');
-       Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.eliminar');
+       Route::get('/{id}/editar', [AsistenciaDocenteController::class, 'edit'])->name('asistencia-docente.edit');
+       Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
+       Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
    
        // Opcionales si ya están implementadas
        Route::get('/editar', [AsistenciaDocenteController::class, 'editar'])->name('asistencia-docente.editar');
        Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+       Route::post('/exportar', [AsistenciaDocenteController::class, 'exportarAction'])->name('asistencia-docente.exportar.action');
        Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
        Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
+       Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
   });
 
      // Cursos

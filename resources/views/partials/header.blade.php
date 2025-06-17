@@ -404,6 +404,9 @@
 <!-- end Topbar -->
 
 <!-- ========== Left Sidebar Start ========== -->
+@if(Auth::user()->hasRole('profesor'))
+    @include('layouts.sidebar-profesor')
+@else
 <div class="left-side-menu">
 
     <div class="h-100" data-simplebar>
@@ -824,3 +827,4 @@
 
 </div>
 <!-- Left Sidebar End -->
+@endif

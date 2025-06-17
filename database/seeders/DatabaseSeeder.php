@@ -18,6 +18,12 @@ class DatabaseSeeder extends Seeder
 
         // Insert permissions
         $this->seedPermissions();
+        
+        // Ejecutar seeders de módulos adicionales
+        $this->call([
+            moduloAcademico::class,
+            moduloHorarioDocente::class,
+        ]);
 
         // Assign permissions to roles
         $this->assignPermissionsToRoles();
@@ -27,6 +33,13 @@ class DatabaseSeeder extends Seeder
 
         // Seed parentescos
         $this->seedParentescos();
+
+        // Ejecutar seeders de módulos adicionales
+        $this->call([
+            \Database\Seeders\ModuloHorarioDocente::class,
+            \Database\Seeders\ModuloAcademico::class,
+            \Database\Seeders\AttendanceViewPermissionSeeder::class,
+        ]);
     }
 
     private function seedRoles(): void
@@ -212,7 +225,31 @@ class DatabaseSeeder extends Seeder
             'attendance.edit',
             'attendance.export',
             'attendance.reports',
-            'parentescos.view'
+            'parentescos.view',
+            // Permisos de horarios docentes
+            'horarios-docentes.view',
+            'horarios-docentes.create',
+            'horarios-docentes.edit',
+            'horarios-docentes.delete',
+            // Permisos de pagos docentes
+            'pagos-docentes.view',
+            'pagos-docentes.create',
+            'pagos-docentes.edit',
+            'pagos-docentes.delete',
+            // Permisos de asistencia docente
+            'asistencia-docente.view',
+            'asistencia-docente.create',
+            'asistencia-docente.edit',
+            'asistencia-docente.delete',
+            'asistencia-docente.export',
+            'asistencia-docente.reports',
+            'asistencia-docente.monitor',
+            // Permisos de cursos
+            'cursos.view',
+            'cursos.create',
+            'cursos.edit',
+            'cursos.delete',
+            'cursos.toggle'
         ];
 
         $permisos = DB::table('permissions')
