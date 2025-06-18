@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -41,28 +42,50 @@ return new class extends Migration
             if (!Schema::hasColumn('asistencias_docentes', 'mes')) {
                 $table->string('mes')->nullable()->after('semana');
             }
-            
-            // Agregar clave foránea para aula_id si no existe
-            try {
-                $table->foreign('aula_id')->references('id')->on('aulas')->onDelete('set null');
-            } catch (Exception $e) {
-                // La clave foránea ya existe
-            }
         });
+        
+        // Verificar y agregar foreign key en una operación separada
+        if (Schema::hasColumn('asistencias_docentes', 'aula_id')) {
+            // Verificar si la foreign key ya existe
+            $foreignKeyExists = DB::select("
+                SELECT COUNT(*) as count
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'asistencias_docentes' 
+                AND COLUMN_NAME = 'aula_id'
+                AND REFERENCED_TABLE_NAME = 'aulas'
+            ");
+            
+            if ($foreignKeyExists[0]->count == 0) {
+                Schema::table('asistencias_docentes', function (Blueprint $table) {
+                    $table->foreign('aula_id')->references('id')->on('aulas')->onDelete('set null');
+                });
+            }
+        }
     }
 
     public function down(): void
     {
+        // Primero verificar y eliminar la foreign key si existe
+        $foreignKeyExists = DB::select("
+            SELECT CONSTRAINT_NAME
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+            WHERE TABLE_SCHEMA = DATABASE() 
+            AND TABLE_NAME = 'asistencias_docentes' 
+            AND COLUMN_NAME = 'aula_id'
+            AND REFERENCED_TABLE_NAME = 'aulas'
+        ");
+        
+        if (!empty($foreignKeyExists)) {
+            Schema::table('asistencias_docentes', function (Blueprint $table) use ($foreignKeyExists) {
+                $table->dropForeign($foreignKeyExists[0]->CONSTRAINT_NAME);
+            });
+        }
+        
+        // Eliminar columnas
         Schema::table('asistencias_docentes', function (Blueprint $table) {
-            // Eliminar clave foránea
-            try {
-                $table->dropForeign(['aula_id']);
-            } catch (Exception $e) {
-                // La clave foránea no existe
-            }
-            
-            // Eliminar columnas
             $columnsToRemove = [];
+            
             if (Schema::hasColumn('asistencias_docentes', 'aula_id')) {
                 $columnsToRemove[] = 'aula_id';
             }

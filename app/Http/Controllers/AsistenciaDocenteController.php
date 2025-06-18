@@ -47,7 +47,7 @@ class AsistenciaDocenteController extends Controller
         $docentes = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         })->select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
-
+        
         return view('asistencia-docente.index', compact('asistencias', 'docentes', 'fecha', 'documento'));
     }
 
