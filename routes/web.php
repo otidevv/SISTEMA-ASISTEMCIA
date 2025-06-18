@@ -21,7 +21,92 @@ use App\Http\Controllers\CursoController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 
+// Agregar temporalmente en tu routes/web.php para debugging
 
+// Agregar temporalmente en tu routes/web.php para debugging
+
+Route::get('/debug-horarios-docentes', function () {
+    $docentes = \App\Models\User::whereHas('roles', function ($query) {
+        $query->where('nombre', 'profesor');
+    })->with(['horarios.curso'])->get();
+
+    echo "<h2>Debug de Horarios de Docentes</h2>";
+    echo "<style>table { border-collapse: collapse; } td, th { border: 1px solid #ddd; padding: 8px; }</style>";
+
+    foreach ($docentes as $docente) {
+        echo "<h3>{$docente->nombre} {$docente->apellido_paterno} (ID: {$docente->id}, Doc: {$docente->numero_documento})</h3>";
+
+        if ($docente->horarios->count() > 0) {
+            echo "<table>";
+            echo "<tr><th>Día (DB)</th><th>Día (Texto)</th><th>Hora Inicio</th><th>Hora Fin</th><th>Curso</th><th>Aula</th></tr>";
+
+            foreach ($docente->horarios as $horario) {
+                $dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+                // Determinar qué tipo de día es
+                $tipoValor = is_numeric($horario->dia_semana) ? 'Número' : 'Texto';
+
+                echo "<tr>";
+                echo "<td>{$horario->dia_semana} ({$tipoValor})</td>";
+                echo "<td>";
+                if (is_numeric($horario->dia_semana)) {
+                    echo isset($dias[$horario->dia_semana]) ? $dias[$horario->dia_semana] : "Día {$horario->dia_semana}";
+                } else {
+                    echo $horario->dia_semana;
+                }
+                echo "</td>";
+                echo "<td>{$horario->hora_inicio}</td>";
+                echo "<td>{$horario->hora_fin}</td>";
+                echo "<td>" . ($horario->curso ? $horario->curso->nombre : 'Sin curso') . "</td>";
+                echo "<td>" . ($horario->aula ? $horario->aula->nombre : 'Sin aula') . "</td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        } else {
+            echo "<p>No tiene horarios asignados</p>";
+        }
+        echo "<hr>";
+    }
+
+    // Mostrar también los registros de asistencia recientes
+    echo "<h2>Últimos Registros de Asistencia</h2>";
+    $asistencias = \App\Models\RegistroAsistencia::with('usuario')
+        ->whereHas('usuario.roles', function ($q) {
+            $q->where('nombre', 'profesor');
+        })
+        ->orderBy('fecha_hora', 'desc')
+        ->take(10)
+        ->get();
+
+    echo "<table>";
+    echo "<tr><th>Docente</th><th>Fecha/Hora</th><th>Día Semana (Número)</th><th>Día Semana (Nombre)</th><th>Hora</th></tr>";
+
+    $diasNombres = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    foreach ($asistencias as $asistencia) {
+        $fecha = \Carbon\Carbon::parse($asistencia->fecha_hora);
+        $diaSemanaNum = $fecha->dayOfWeek;
+        $diaSemanaTexto = $diasNombres[$diaSemanaNum];
+
+        echo "<tr>";
+        echo "<td>" . ($asistencia->usuario ? $asistencia->usuario->nombre : 'N/A') . "</td>";
+        echo "<td>{$asistencia->fecha_hora}</td>";
+        echo "<td>{$diaSemanaNum}</td>";
+        echo "<td>{$diaSemanaTexto}</td>";
+        echo "<td>{$fecha->format('H:i:s')}</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+
+    // Verificar el tipo de datos en la BD
+    echo "<h2>Información de la tabla horarios_docentes</h2>";
+    $columna = \DB::select("SHOW COLUMNS FROM horarios_docentes WHERE Field = 'dia_semana'");
+    if (!empty($columna)) {
+        echo "<pre>";
+        print_r($columna[0]);
+        echo "</pre>";
+    }
+})->middleware('auth');
 // Rutas de autenticación
 Route::middleware('guest')->group(function () {
     // Login
@@ -290,7 +375,7 @@ Route::prefix('json')->group(function () {
         Route::put('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'update'])->name('horarios-docentes.update');
         Route::delete('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'destroy'])->name('horarios-docentes.delete');
     });
-   // Pagos Docentes
+    // Pagos Docentes
     Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
         Route::get('/', [App\Http\Controllers\PagoDocenteController::class, 'index'])->name('pagos-docentes.index');
         Route::get('/crear', [App\Http\Controllers\PagoDocenteController::class, 'create'])->name('pagos-docentes.create');
@@ -299,38 +384,36 @@ Route::prefix('json')->group(function () {
         Route::put('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'update'])->name('pagos-docentes.update');
         Route::delete('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'destroy'])->name('pagos-docentes.delete');
     });
-   // Asistencia Docente
-   Route::prefix('asistencia-docente')->middleware(['auth'])->group(function () {
-       Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
-       Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
-       Route::post('/', [AsistenciaDocenteController::class, 'store'])->name('asistencia-docente.store');
-       Route::get('/{id}/editar', [AsistenciaDocenteController::class, 'edit'])->name('asistencia-docente.edit');
-       Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
-       Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
-   
-       // Opcionales si ya están implementadas
-       Route::get('/editar', [AsistenciaDocenteController::class, 'editar'])->name('asistencia-docente.editar');
-       Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
-       Route::post('/exportar', [AsistenciaDocenteController::class, 'exportarAction'])->name('asistencia-docente.exportar.action');
-       Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
-       Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
-       Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
-  });
+    // Asistencia Docente
+    Route::prefix('asistencia-docente')->middleware(['auth'])->group(function () {
+        Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
+        Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
+        Route::post('/', [AsistenciaDocenteController::class, 'store'])->name('asistencia-docente.store');
+        Route::get('/{id}/editar', [AsistenciaDocenteController::class, 'edit'])->name('asistencia-docente.edit');
+        Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
+        Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
 
-     // Cursos
-     Route::prefix('cursos')->middleware(['auth'])->group(function () {
-         Route::get('/', [App\Http\Controllers\CursoController::class, 'index'])->name('cursos.index');
-         Route::get('/crear', [App\Http\Controllers\CursoController::class, 'create'])->name('cursos.create');
-         Route::post('/', [App\Http\Controllers\CursoController::class, 'store'])->name('cursos.store');
-         Route::get('/{curso}/editar', [App\Http\Controllers\CursoController::class, 'edit'])->name('cursos.edit');
-         Route::put('/{curso}', [App\Http\Controllers\CursoController::class, 'update'])->name('cursos.update');
-         Route::delete('/{curso}', [App\Http\Controllers\CursoController::class, 'destroy'])->name('cursos.destroy');
-     
-         // Ruta para alternar estado (activar/desactivar)
-         Route::put('/{id}/toggle', [App\Http\Controllers\CursoController::class, 'toggle'])->name('cursos.toggle');
-     });
+        // Opcionales si ya están implementadas
+        Route::get('/editar', [AsistenciaDocenteController::class, 'editar'])->name('asistencia-docente.editar');
+        Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+        Route::post('/exportar', [AsistenciaDocenteController::class, 'exportarAction'])->name('asistencia-docente.exportar.action');
+        Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
+        Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
+        Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
+    });
 
+    // Cursos
+    Route::prefix('cursos')->middleware(['auth'])->group(function () {
+        Route::get('/', [App\Http\Controllers\CursoController::class, 'index'])->name('cursos.index');
+        Route::get('/crear', [App\Http\Controllers\CursoController::class, 'create'])->name('cursos.create');
+        Route::post('/', [App\Http\Controllers\CursoController::class, 'store'])->name('cursos.store');
+        Route::get('/{curso}/editar', [App\Http\Controllers\CursoController::class, 'edit'])->name('cursos.edit');
+        Route::put('/{curso}', [App\Http\Controllers\CursoController::class, 'update'])->name('cursos.update');
+        Route::delete('/{curso}', [App\Http\Controllers\CursoController::class, 'destroy'])->name('cursos.destroy');
 
+        // Ruta para alternar estado (activar/desactivar)
+        Route::put('/{id}/toggle', [App\Http\Controllers\CursoController::class, 'toggle'])->name('cursos.toggle');
+    });
 });
 
 

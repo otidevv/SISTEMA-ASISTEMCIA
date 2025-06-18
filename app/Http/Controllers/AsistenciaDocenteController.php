@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\HorarioDocente;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Artisan;
+use App\Models\RegistroAsistencia; // Asegúrate de que esta línea esté presente
 
 class AsistenciaDocenteController extends Controller
 {
@@ -26,18 +27,28 @@ class AsistenciaDocenteController extends Controller
         $fecha = $request->get('fecha', Carbon::today()->format('Y-m-d'));
         $documento = $request->get('documento');
 
-        // Crear la consulta base
-        $query = AsistenciaDocente::with(['docente', 'horario.curso']);
+        // Primero, obtener todos los números de documento de los docentes
+        $docentesDocumentos = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
+        })->pluck('numero_documento')->toArray();
+
+        // Crear la consulta base filtrando solo registros de docentes
+        $query = RegistroAsistencia::with(['usuario.roles'])
+            ->whereIn('nro_documento', $docentesDocumentos);
 
         // Aplicar filtros
         if ($fecha) {
-            $query->whereDate('fecha_hora', $fecha);
+            $query->where(function ($q) use ($fecha) {
+                $q->whereDate('fecha_registro', $fecha)
+                    ->orWhere(function ($q2) use ($fecha) {
+                        $q2->where('tipo_verificacion', 4) // Manual
+                            ->whereDate('fecha_hora', $fecha);
+                    });
+            });
         }
 
         if ($documento) {
-            $query->whereHas('docente', function ($q) use ($documento) {
-                $q->where('numero_documento', 'like', '%' . $documento . '%');
-            });
+            $query->where('nro_documento', 'like', '%' . $documento . '%');
         }
 
         // Obtener registros paginados
@@ -47,9 +58,62 @@ class AsistenciaDocenteController extends Controller
         $docentes = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         })->select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
-        
+
+        // Agregar información adicional a cada registro
+        $asistencias->getCollection()->transform(function ($asistencia) {
+            // Intentar obtener información del horario del docente para ese día
+            if ($asistencia->usuario) {
+                $fechaAsistencia = Carbon::parse($asistencia->fecha_hora);
+                $diaSemana = $fechaAsistencia->dayOfWeek;
+
+                // IMPORTANTE: Convertir número a nombre del día en español
+                $diasSemana = [
+                    0 => 'Domingo',
+                    1 => 'Lunes',
+                    2 => 'Martes',
+                    3 => 'Miércoles',
+                    4 => 'Jueves',
+                    5 => 'Viernes',
+                    6 => 'Sábado'
+                ];
+
+                $nombreDia = $diasSemana[$diaSemana]; // Esto convierte 2 a "Martes"
+
+                // Buscar horario del docente para ese día usando el NOMBRE
+                $horario = HorarioDocente::where('docente_id', $asistencia->usuario->id)
+                    ->where('dia_semana', $nombreDia) // AQUÍ ES DONDE CAMBIA - usa $nombreDia en lugar de $diaSemana
+                    ->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'))
+                    ->whereTime('hora_fin', '>=', $fechaAsistencia->format('H:i:s'))
+                    ->with('curso')
+                    ->first();
+
+                $asistencia->horario = $horario;
+
+                // Determinar si es entrada o salida basado en el horario
+                if ($horario) {
+                    $horaAsistencia = $fechaAsistencia->format('H:i:s');
+                    $horaInicio = Carbon::parse($horario->hora_inicio);
+                    $horaFin = Carbon::parse($horario->hora_fin);
+
+                    // Si está más cerca de la hora de inicio, es entrada
+                    $diffInicio = abs($fechaAsistencia->diffInMinutes($horaInicio));
+                    $diffFin = abs($fechaAsistencia->diffInMinutes($horaFin));
+
+                    $asistencia->tipo_asistencia = $diffInicio < $diffFin ? 'entrada' : 'salida';
+                } else {
+                    // Si no hay horario, determinar por la hora
+                    $asistencia->tipo_asistencia = $fechaAsistencia->hour < 12 ? 'entrada' : 'salida';
+                }
+            }
+
+            return $asistencia;
+        });
+
         return view('asistencia-docente.index', compact('asistencias', 'docentes', 'fecha', 'documento'));
     }
+
+
+
 
     /**
      * Muestra la vista de monitoreo en tiempo real de asistencia docente.
@@ -165,7 +229,7 @@ class AsistenciaDocenteController extends Controller
     public function edit($id)
     {
         $asistencia = AsistenciaDocente::with(['docente', 'horario.curso'])->findOrFail($id);
-        
+
         $docentes = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         })->get();
@@ -308,13 +372,13 @@ class AsistenciaDocenteController extends Controller
         foreach ($asistenciasRecientes as $asistencia) {
             $registros[] = [
                 'id' => $asistencia->id,
-                'docente_nombre' => $asistencia->docente ? 
-                    $asistencia->docente->nombre . ' ' . $asistencia->docente->apellido_paterno : 
+                'docente_nombre' => $asistencia->docente ?
+                    $asistencia->docente->nombre . ' ' . $asistencia->docente->apellido_paterno :
                     'N/A',
                 'numero_documento' => $asistencia->docente ? $asistencia->docente->numero_documento : 'N/A',
                 'fecha_hora_formateada' => $asistencia->fecha_hora->format('d/m/Y H:i:s'),
                 'estado' => $asistencia->estado,
-                'curso' => $asistencia->horario && $asistencia->horario->curso ? 
+                'curso' => $asistencia->horario && $asistencia->horario->curso ?
                     $asistencia->horario->curso->nombre : 'N/A',
                 'tipo_verificacion' => $asistencia->tipo_verificacion,
                 'foto_url' => $asistencia->docente && $asistencia->docente->foto_perfil ?
@@ -339,8 +403,8 @@ class AsistenciaDocenteController extends Controller
     {
         // Procesar eventos pendientes del biométrico para docentes
         $eventos = AsistenciaEvento::where('procesado', false)
-            ->whereHas('usuario', function($query) {
-                $query->whereHas('roles', function($q) {
+            ->whereHas('usuario', function ($query) {
+                $query->whereHas('roles', function ($q) {
                     $q->where('nombre', 'profesor');
                 });
             })
@@ -351,7 +415,7 @@ class AsistenciaDocenteController extends Controller
 
         foreach ($eventos as $evento) {
             // Buscar el docente por número de documento
-            $docente = User::whereHas('roles', function($query) {
+            $docente = User::whereHas('roles', function ($query) {
                 $query->where('nombre', 'profesor');
             })->where('numero_documento', $evento->nro_documento)->first();
 

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use Carbon\Carbon;
+
 class User extends Authenticatable
 {
     use Notifiable;
@@ -176,5 +178,34 @@ class User extends Authenticatable
     public function getNombreCompletoAttribute()
     {
         return trim($this->nombre . ' ' . $this->apellido_paterno . ' ' . $this->apellido_materno);
+    }
+
+
+    /**
+     * Obtener los horarios del docente
+     */
+    public function horarios()
+    {
+        return $this->hasMany(HorarioDocente::class, 'docente_id');
+    }
+
+    /**
+     * Obtener el horario del docente para un día y hora específicos
+     */
+    public function getHorarioActual($fecha = null)
+    {
+        $fecha = $fecha ? Carbon::parse($fecha) : Carbon::now();
+        $diaSemana = $fecha->dayOfWeek;
+        $hora = $fecha->format('H:i:s');
+
+        // Ajustar el día si tu BD usa 1-7 en lugar de 0-6
+        $diaSemanaDB = $diaSemana == 0 ? 7 : $diaSemana;
+
+        return $this->horarios()
+            ->where('dia_semana', $diaSemanaDB)
+            ->where('hora_inicio', '<=', $hora)
+            ->where('hora_fin', '>=', $hora)
+            ->with(['curso', 'aula'])
+            ->first();
     }
 }
