@@ -4,291 +4,700 @@
 
 @push('css')
 <style>
-    .dashboard-card {
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease;
+    /* Reset y base */
+    * {
+        box-sizing: border-box;
     }
-    .dashboard-card:hover {
-        transform: translateY(-2px);
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+        color: #333;
     }
-    .stat-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
+
+    /* Contenedor principal */
+    .dashboard-container {
+        max-width: 1140px;
+        margin: 2rem auto;
+        padding: 0 1rem;
     }
-    .stat-card.warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    .stat-card.success {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    .stat-card.info {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    }
-    .session-card {
-        border-left: 4px solid #007bff;
-        transition: all 0.3s ease;
-    }
-    .session-card.completed {
-        border-left-color: #28a745;
-        background-color: #f8fff9;
-    }
-    .session-card.pending {
-        border-left-color: #ffc107;
-        background-color: #fffdf5;
-    }
-    .session-card.programmed {
-        border-left-color: #6c757d;
-        background-color: #f8f9fa;
-    }
+
+    /* Header de bienvenida */
     .welcome-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
         color: white;
         border-radius: 12px;
-        padding: 30px;
-        margin-bottom: 30px;
+        padding: 1.5rem 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
-    .recordatorio {
+
+    .welcome-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        flex: 1 1 60%;
+        min-width: 250px;
+    }
+
+    .welcome-title i {
+        font-size: 2.4rem;
+        margin-right: 1rem;
+        color: #bfdbfe;
+    }
+
+    .welcome-subtitle {
+        font-size: 1rem;
+        opacity: 0.85;
+        margin-top: 0.3rem;
+        flex: 1 1 60%;
+        min-width: 250px;
+        color: #dbeafe;
+    }
+
+    .time-display {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 0.6rem 1.2rem;
+        border-radius: 9999px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 30%;
+        min-width: 150px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .time-display i {
+        margin-right: 0.6rem;
+        font-size: 1.5rem;
+    }
+
+    /* Estadísticas */
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        border-radius: 12px;
+        color: white;
+        padding: 1.5rem 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stat-card.warning {
+        background: linear-gradient(135deg, #facc15, #eab308);
+        box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+        color: #78350f;
+    }
+
+    .stat-card.success {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 4px 12px rgba(21, 128, 61, 0.3);
+        color: white;
+    }
+
+    .stat-card.info {
+        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        color: white;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+    }
+
+    .stat-icon {
+        position: absolute;
+        right: 1rem;
+        bottom: 1rem;
+        font-size: 4.5rem;
+        opacity: 0.15;
+    }
+
+    /* Sesiones */
+    .sessions-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 1rem 1.5rem 2rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .sessions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .sessions-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        flex: 1 1 60%;
+        min-width: 200px;
+    }
+
+    .sessions-title i {
+        font-size: 1.6rem;
+        margin-right: 0.8rem;
+        color: #3b82f6;
+    }
+
+    .sessions-header > div {
+        display: flex;
+        gap: 0.5rem;
+        flex: 1 1 35%;
+        justify-content: flex-end;
+        min-width: 150px;
+    }
+
+    .action-button {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
         border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-left: 4px solid;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background-color 0.3s ease;
     }
+
+    .action-button:hover {
+        background-color: #1e40af;
+    }
+
+    .action-button.outline {
+        background-color: transparent;
+        border: 2px solid #2563eb;
+        color: #2563eb;
+    }
+
+    .action-button.outline:hover {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    /* Tarjetas de sesión */
+    .session-card {
+        background: #f9fafb;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        padding: 1rem 1.5rem;
+        border-left: 6px solid transparent;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .session-card.completed {
+        border-left-color: #22c55e;
+    }
+
+    .session-card.pending {
+        border-left-color: #facc15;
+    }
+
+    .session-card.programmed {
+        border-left-color: #2563eb;
+    }
+
+    .session-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        transform: translateX(5px);
+    }
+
+    .session-time {
+        font-weight: 600;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        flex: 1 1 100%;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .session-time i {
+        margin-right: 0.5rem;
+        font-size: 1.3rem;
+    }
+
+    .session-info {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        flex: 1 1 100%;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    }
+
+    .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+
+    .status-badge i {
+        margin-right: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .status-badge.success {
+        background-color: #22c55e;
+        color: white;
+    }
+
+    .status-badge.warning {
+        background-color: #facc15;
+        color: #78350f;
+    }
+
+    .status-badge.info {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    /* Botones de acción */
+    .action-button {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .action-button i {
+        font-size: 1.2rem;
+    }
+
+    .btn-primary {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #1e40af;
+    }
+
+    .btn-outline-primary {
+        background-color: transparent;
+        border: 2px solid #2563eb;
+        color: #2563eb;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    /* Sidebar derecho */
+    .sidebar-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .sidebar-card-header {
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sidebar-card-title i {
+        font-size: 1.4rem;
+    }
+
+    /* Recordatorios */
+    .recordatorio {
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border-left: 6px solid;
+        background: #f9fafb;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+    }
+
     .recordatorio.warning {
-        background-color: #fff3cd;
-        border-left-color: #ffc107;
-        color: #856404;
+        border-color: #facc15;
+        color: #78350f;
+        background-color: #fef3c7;
     }
+
     .recordatorio.info {
-        background-color: #d1ecf1;
-        border-left-color: #17a2b8;
-        color: #0c5460;
+        border-color: #2563eb;
+        color: #1e40af;
+        background-color: #dbeafe;
+    }
+
+    /* Resumen semanal */
+    .stat-summary {
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    .stat-summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-summary-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 991.98px) {
+        .welcome-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .welcome-title, .welcome-subtitle, .time-display {
+            flex: 1 1 100%;
+            margin-bottom: 0.75rem;
+            justify-content: flex-start !important;
+        }
+        .sessions-header > div {
+            flex: 1 1 100%;
+            justify-content: flex-start !important;
+            margin-bottom: 1rem;
+        }
+        .session-card {
+            flex-direction: column;
+            margin: 1rem 0.5rem;
+        }
+        .session-time, .session-info, .status-badge, .action-button {
+            flex: 1 1 100%;
+            margin-bottom: 0.5rem;
+        }
+        .action-button {
+            justify-content: flex-start;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .stat-card {
+            padding: 1rem;
+        }
+        .stat-value {
+            font-size: 1.8rem;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+        }
+        .sessions-title {
+            font-size: 1.1rem;
+        }
+        .action-button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+        .session-card {
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        .session-time {
+            font-size: 1rem;
+        }
+        .session-info {
+            padding: 0.8rem;
+        }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid">
+<div class="dashboard-container">
     <!-- Header de Bienvenida -->
     <div class="welcome-header">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h2 class="mb-1">¡Bienvenida, {{ $user->nombre }} {{ $user->apellido_paterno }}!</h2>
-                <p class="mb-0">
-                    <i class="mdi mdi-calendar-today me-2"></i>
-                    Hoy es {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
-                </p>
-            </div>
-            <div class="col-md-4 text-end">
-                <div class="h4 mb-0">
-                    <i class="mdi mdi-clock-outline me-2"></i>
-                    <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i A') }}</span>
+        <div class="welcome-title">
+            <i class="mdi mdi-account-circle"></i>
+            <div>
+                <div>¡Bienvenido, {{ $user->nombre }} {{ $user->apellido_paterno }}!</div>
+                <div class="welcome-subtitle">
+                    <i class="mdi mdi-calendar-today"></i>
+                    {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
                 </div>
-                <small>Última actualización</small>
             </div>
+        </div>
+        <div class="time-display">
+            <i class="mdi mdi-clock-outline"></i>
+            <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i A') }}</span>
         </div>
     </div>
 
-    <!-- Tarjetas de Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h3 class="mb-0">{{ $sesionesHoy }}</h3>
-                        <p class="mb-0">Sesiones Hoy</p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <i class="mdi mdi-calendar-today" style="font-size: 2.5rem; opacity: 0.7;"></i>
-                    </div>
-                </div>
-            </div>
+    <!-- Estadísticas -->
+    <div class="stats-container">
+        <div class="stat-card primary">
+            <div class="stat-value">{{ $sesionesHoy }}</div>
+            <div class="stat-label">Sesiones Hoy</div>
+            <i class="mdi mdi-calendar-check stat-icon"></i>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card warning">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h3 class="mb-0">{{ $sesionesPendientes }}</h3>
-                        <p class="mb-0">Pendientes</p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <i class="mdi mdi-alert-circle-outline" style="font-size: 2.5rem; opacity: 0.7;"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="stat-card warning">
+            <div class="stat-value">{{ $sesionesPendientes }}</div>
+            <div class="stat-label">Pendientes</div>
+            <i class="mdi mdi-alert-circle stat-icon"></i>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card success">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h3 class="mb-0">{{ $horasHoy }}</h3>
-                        <p class="mb-0">Horas Hoy</p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <i class="mdi mdi-clock-outline" style="font-size: 2.5rem; opacity: 0.7;"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="stat-card success">
+            <div class="stat-value">{{ $horasHoy }}</div>
+            <div class="stat-label">Horas Hoy</div>
+            <i class="mdi mdi-clock stat-icon"></i>
         </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="stat-card info">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <h3 class="mb-0">S/. {{ number_format($pagoEstimadoHoy, 2) }}</h3>
-                        <p class="mb-0">Pago Estimado</p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <i class="mdi mdi-currency-usd" style="font-size: 2.5rem; opacity: 0.7;"></i>
-                    </div>
-                </div>
-            </div>
+        <div class="stat-card info">
+            <div class="stat-value">S/. {{ number_format($pagoEstimadoHoy, 2) }}</div>
+            <div class="stat-label">Pago Estimado</div>
+            <i class="mdi mdi-currency-usd stat-icon"></i>
         </div>
     </div>
 
     <div class="row">
-        <!-- Mis Sesiones de Hoy -->
+        <!-- Sesiones de Hoy -->
         <div class="col-lg-8">
-            <div class="card dashboard-card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="mdi mdi-calendar-today me-2"></i>
+            <div class="sessions-container">
+                <div class="sessions-header">
+                    <h5 class="sessions-title">
+                        <i class="mdi mdi-calendar-clock"></i>
                         Mis Sesiones de Hoy
                     </h5>
                     <div>
-                        <button class="btn btn-outline-primary btn-sm me-2">
-                            <i class="mdi mdi-filter-variant"></i> Filtros
+                        <button class="action-button outline btn-sm me-2">
+                            <i class="mdi mdi-filter-variant"></i>
+                            Filtros
                         </button>
-                        <button class="btn btn-primary btn-sm">
-                            <i class="mdi mdi-plus"></i> Registro Manual
+                        <button class="action-button btn-primary btn-sm">
+                            <i class="mdi mdi-plus"></i>
+                            Registro Manual
                         </button>
                     </div>
                 </div>
-                <div class="card-body">
+
+                <div>
                     @if($horariosHoy->count() > 0)
-                        @foreach($horariosHoy as $horario)
+                        @foreach($horariosHoyConHoras as $item)
                             @php
-                                $asistencia = $asistenciasHoy->where('horario_id', $horario->id)->first();
+                                $horario = $item['horario'];
+                                $asistencia = $item['asistencia'];
+                                $horaEntradaRegistrada = $item['hora_entrada_registrada'];
+                                $horaSalidaRegistrada = $item['hora_salida_registrada'];
                                 $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
                                 $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
                                 $ahora = \Carbon\Carbon::now();
-                                
+
                                 if ($asistencia) {
                                     $estado = 'completed';
                                     $estadoTexto = 'COMPLETADA';
                                     $estadoColor = 'success';
+                                    $estadoIcon = 'mdi-check-circle';
                                 } elseif ($ahora->greaterThan($horaInicio)) {
                                     $estado = 'pending';
                                     $estadoTexto = 'PENDIENTE';
                                     $estadoColor = 'warning';
+                                    $estadoIcon = 'mdi-clock-alert';
                                 } else {
                                     $estado = 'programmed';
                                     $estadoTexto = 'PROGRAMADA';
-                                    $estadoColor = 'secondary';
+                                    $estadoColor = 'info';
+                                    $estadoIcon = 'mdi-clock-outline';
                                 }
                             @endphp
-                            
-                            <div class="session-card {{ $estado }} card mb-3">
-                                <div class="card-body">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-2">
-                                            <div class="text-center">
-                                                <div class="h5 mb-0 text-primary">
-                                                    <i class="mdi mdi-clock-outline"></i>
-                                                    {{ $horaInicio->format('H:i') }} AM
-                                                </div>
-                                                <small class="text-muted">
-                                                    <i class="mdi mdi-arrow-right"></i>
-                                                    {{ $horaFin->format('H:i') }} AM
+
+                            <div class="session-card {{ $estado }}">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <h5 class="mb-0 d-flex align-items-center gap-2">
+                                            <i class="mdi mdi-book-open-variant text-primary"></i>
+                                            {{ $horario->curso->nombre ?? 'Sin curso' }}
+                                        </h5>
+                                        <div class="session-time text-primary fw-semibold">
+                                            <i class="mdi mdi-clock-outline me-1"></i>
+                                            {{ $horaInicio->format('H:i A') }} - {{ $horaFin->format('H:i A') }}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                                    <div class="session-info flex-grow-1 bg-white p-3 rounded shadow-sm">
+                                        <div>
+                                            <i class="mdi mdi-login text-success"></i>
+                                            <strong>Entrada:</strong>
+                                            {{ $horaEntradaRegistrada ?? 'Pendiente' }}
+                                        </div>
+                                        <div>
+                                            <i class="mdi mdi-logout text-danger"></i>
+                                            <strong>Salida:</strong>
+                                            {{ $horaSalidaRegistrada ?? 'Pendiente' }}
+                                        </div>
+                                        @if($asistencia && $asistencia->tema_desarrollado)
+                                            <div class="mt-2">
+                                                <small class="text-primary d-block">
+                                                    <i class="mdi mdi-notebook me-1"></i>
+                                                    {{ $asistencia->tema_desarrollado }}
                                                 </small>
+                                            </div>
+                                        @endif
+                                    </div>
+
+
+                                        <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between w-100">
+                                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                                <div class="status-badge bg-{{ $estadoColor }}">
+                                                    <i class="mdi {{ $estadoIcon }}"></i>
+                                                    {{ $estadoTexto }}
+                                                </div>
+                                                <div class="text-muted d-none d-md-block shadow-sm px-2 rounded">
+                                                    <i class="mdi mdi-map-marker me-1"></i>
+                                                    {{ $horario->aula->nombre ?? 'Sin aula' }}
+                                                </div>
+                                                <div class="text-muted d-none d-md-block">
+                                                    <i class="mdi mdi-clock-outline me-1"></i>
+                                                    {{ $horaFin->diffInHours($horaInicio) }} horas
+                                                </div>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-wrap">
                                                 @if($asistencia)
-                                                    <div class="mt-2">
-                                                        <small class="text-muted">Registros biométricos</small>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="col-md-4">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <i class="mdi mdi-clock-outline me-2 text-primary"></i>
-                                                <span class="badge bg-primary">{{ $horaFin->diffInHours($horaInicio) }}.0 hrs</span>
-                                            </div>
-                                            @if($asistencia)
-                                                <div class="small text-success">
-                                                    S/. {{ number_format($asistencia->monto_total ?? 0, 2) }}
-                                                </div>
-                                            @else
-                                                <div class="small text-muted">
-                                                    S/. {{ number_format(80.00, 2) }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                        
-                                        <div class="col-md-4">
-                                            <h6 class="mb-1">{{ $horario->curso->nombre ?? 'Sin curso' }} - {{ $horario->aula->nombre ?? 'Sin aula' }}</h6>
-                                            @if($horario->aula)
-                                                <small class="text-muted">
-                                                    <i class="mdi mdi-map-marker"></i> {{ $horario->aula->nombre }}
-                                                </small>
-                                            @endif
-                                            @if($asistencia && $asistencia->tema_desarrollado)
-                                                <div class="mt-1">
-                                                    <small class="text-primary">
-                                                        <i class="mdi mdi-book-open-variant"></i> {{ $asistencia->tema_desarrollado }}
-                                                    </small>
-                                                </div>
-                                            @endif
-                                            <div class="mt-1">
-                                                <small class="text-muted">
-                                                    @if($asistencia)
-                                                        Sesión teórica completada
-                                                    @else
-                                                        Turno {{ $horario->turno ?? 'No definido' }}
-                                                    @endif
-                                                </small>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="col-md-2 text-end">
-                                            <span class="badge bg-{{ $estadoColor }} mb-2">
-                                                <i class="mdi mdi-check-circle"></i> {{ $estadoTexto }}
-                                            </span>
-                                            <div class="btn-group-vertical d-grid gap-1">
-                                                @if($asistencia)
-                                                    <button class="btn btn-outline-success btn-sm">
-                                                        <i class="mdi mdi-eye"></i> Detalles
+                                                    <button class="action-button outline btn-sm">
+                                                        <i class="mdi mdi-eye"></i>
+                                                        Detalles
                                                     </button>
-                                                    <button class="btn btn-outline-primary btn-sm">
-                                                        <i class="mdi mdi-file-document"></i> Reporte
+                                                    <button class="action-button outline btn-sm">
+                                                        <i class="mdi mdi-file-document"></i>
+                                                        Reporte
+                                                    </button>
+                                                @elseif($estado == 'pending')
+                                                    <button class="action-button btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#completarModal{{ $horario->id }}">
+                                                        <i class="mdi mdi-check"></i>
+                                                        Completar
                                                     </button>
                                                 @else
-                                                    @if($estado == 'pending')
-                                                        <button class="btn btn-success btn-sm">
-                                                            <i class="mdi mdi-check"></i> Completar
-                                                        </button>
-                                                    @else
-                                                        <button class="btn btn-outline-secondary btn-sm" disabled>
-                                                            <i class="mdi mdi-clock"></i> Esperando
-                                                        </button>
-                                                    @endif
+                                                    <button class="action-button outline btn-sm" disabled>
+                                                        <i class="mdi mdi-clock"></i>
+                                                        Esperando
+                                                    </button>
                                                 @endif
                                             </div>
                                         </div>
+
+
                                     </div>
                                 </div>
                             </div>
+
+
+
+                            @if($estado == 'pending')
+                                <!-- Modal para completar tema -->
+                                <div class="modal fade" id="completarModal{{ $horario->id }}" tabindex="-1" aria-labelledby="completarModalLabel{{ $horario->id }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="POST" action="{{ route('asistencia-docente.store') }}">
+                                                @csrf
+                                                <input type="hidden" name="asistencia_id" value="{{ $asistencia ? $asistencia->id : '' }}">
+
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="completarModalLabel{{ $horario->id }}">
+                                                        <i class="mdi mdi-clipboard-text me-2"></i>
+                                                        Registrar Tema Desarrollado
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label for="tema_desarrollado{{ $horario->id }}" class="form-label">
+                                                        <i class="mdi mdi-notebook me-2"></i>
+                                                        Tema desarrollado
+                                                    </label>
+                                                    <textarea class="form-control" id="tema_desarrollado{{ $horario->id }}" name="tema_desarrollado" rows="3" required autofocus placeholder="Ingrese el tema desarrollado en la sesión..."></textarea>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                        <i class="mdi mdi-close me-1"></i>
+                                                        Cancelar
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="mdi mdi-content-save me-1"></i>
+                                                        Guardar Tema
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @endif
                         @endforeach
                     @else
-                        <div class="text-center py-4">
-                            <i class="mdi mdi-calendar-remove" style="font-size: 3rem; color: #dee2e6;"></i>
-                            <h5 class="mt-3 text-muted">No tienes sesiones programadas para hoy</h5>
-                            <p class="text-muted">Disfruta tu día libre o revisa tu horario semanal</p>
+                        <div class="text-center py-5 text-gray-500">
+                            <i class="mdi mdi-calendar-remove" style="font-size: 4rem;"></i>
+                            <h5 class="mt-3">No tienes sesiones programadas para hoy</h5>
+                            <p>Disfruta tu día libre o revisa tu horario semanal</p>
                         </div>
                     @endif
                 </div>
@@ -297,19 +706,18 @@
 
         <!-- Sidebar Derecho -->
         <div class="col-lg-4">
-            <!-- Recordatorios -->
             @if(count($recordatorios) > 0)
-                <div class="card dashboard-card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="mdi mdi-bell-outline me-2"></i>
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="sidebar-card-title">
+                            <i class="mdi mdi-bell-outline"></i>
                             Recordatorios
                         </h6>
                     </div>
-                    <div class="card-body">
+                    <div>
                         @foreach($recordatorios as $recordatorio)
                             <div class="recordatorio {{ $recordatorio['tipo'] }}">
-                                <i class="mdi mdi-alert-circle me-2"></i>
+                                <i class="mdi mdi-alert-circle"></i>
                                 {{ $recordatorio['mensaje'] }}
                             </div>
                         @endforeach
@@ -317,63 +725,84 @@
                 </div>
             @endif
 
-            <!-- Próxima Clase -->
             @if($proximaClase)
-                <div class="card dashboard-card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="mdi mdi-clock-outline me-2"></i>
+                <div class="sidebar-card">
+                    <div class="sidebar-card-header">
+                        <h6 class="sidebar-card-title">
+                            <i class="mdi mdi-clock-outline"></i>
                             Próxima Clase
                         </h6>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">{{ $proximaClase->curso->nombre ?? 'Sin curso' }}</h6>
-                                <p class="mb-1 text-muted">
-                                    <i class="mdi mdi-map-marker me-1"></i>
-                                    {{ $proximaClase->aula->nombre ?? 'Sin aula' }}
-                                </p>
-                                <small class="text-primary">
-                                    {{ ucfirst($proximaClase->dia_semana) }} - 
-                                    {{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('H:i') }}
-                                </small>
-                            </div>
-                            <div class="flex-shrink-0">
-                                <span class="badge bg-info">
-                                    En {{ \Carbon\Carbon::now()->diffInHours(\Carbon\Carbon::parse($proximaClase->hora_inicio)) }} horas
-                                </span>
-                            </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="mdi mdi-book-open-variant me-2 text-primary"></i>
+                                {{ $proximaClase->curso->nombre ?? 'Sin curso' }}
+                            </h6>
+                            <p class="mb-1 text-muted">
+                                <i class="mdi mdi-map-marker me-2"></i>
+                                {{ $proximaClase->aula->nombre ?? 'Sin aula' }}
+                            </p>
+                            <small class="text-primary">
+                                <i class="mdi mdi-calendar-clock me-2"></i>
+                                {{ ucfirst($proximaClase->dia_semana) }} - 
+                                {{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('H:i') }}
+                            </small>
                         </div>
+                        <span class="badge bg-info d-flex align-items-center gap-1">
+                            <i class="mdi mdi-clock-outline"></i>
+                            En {{ \Carbon\Carbon::now()->diffInHours(\Carbon\Carbon::parse($proximaClase->hora_inicio)) }} horas
+                        </span>
                     </div>
                 </div>
             @endif
 
-            <!-- Resumen Semanal -->
-            <div class="card dashboard-card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="mdi mdi-chart-line me-2"></i>
-                        Resumen Semanal ({{ \Carbon\Carbon::now()->subDays(6)->format('d/m') }} - {{ \Carbon\Carbon::now()->format('d/m') }})
+            <div class="sidebar-card">
+                <div class="sidebar-card-header">
+                    <h6 class="sidebar-card-title">
+                        <i class="mdi mdi-chart-line"></i>
+                        Resumen Semanal
                     </h6>
+                    <small class="text-muted">
+                        {{ \Carbon\Carbon::now()->subDays(6)->format('d/m') }} - 
+                        {{ \Carbon\Carbon::now()->format('d/m') }}
+                    </small>
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6 mb-3">
-                            <div class="h4 text-primary mb-0">{{ $resumenSemanal['sesiones'] }}</div>
-                            <small class="text-muted">Sesiones</small>
+                <div class="row text-center">
+                    <div class="col-6 mb-4">
+                        <div class="stat-summary">
+                            <div class="stat-summary-value text-primary">
+                                <i class="mdi mdi-calendar-check mb-2" style="font-size: 2rem;"></i>
+                                <div>{{ $resumenSemanal['sesiones'] }}</div>
+                            </div>
+                            <div class="stat-summary-label">Sesiones</div>
                         </div>
-                        <div class="col-6 mb-3">
-                            <div class="h4 text-success mb-0">{{ $resumenSemanal['horas'] }}</div>
-                            <small class="text-muted">Horas</small>
+                    </div>
+                    <div class="col-6 mb-4">
+                        <div class="stat-summary">
+                            <div class="stat-summary-value text-success">
+                                <i class="mdi mdi-clock mb-2" style="font-size: 2rem;"></i>
+                                <div>{{ $resumenSemanal['horas'] }}</div>
+                            </div>
+                            <div class="stat-summary-label">Horas</div>
                         </div>
-                        <div class="col-6">
-                            <div class="h4 text-info mb-0">S/. {{ number_format($resumenSemanal['ingresos'], 0) }}</div>
-                            <small class="text-muted">Ingresos</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-summary">
+                            <div class="stat-summary-value text-info">
+                                <i class="mdi mdi-currency-usd mb-2" style="font-size: 2rem;"></i>
+                                <div>S/. {{ number_format($resumenSemanal['ingresos'], 0) }}</div>
+                            </div>
+                            <div class="stat-summary-label">Ingresos</div>
                         </div>
-                        <div class="col-6">
-                            <div class="h4 text-warning mb-0">{{ $resumenSemanal['asistencia'] }}%</div>
-                            <small class="text-muted">Asistencia</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="stat-summary">
+                            <div class="stat-summary-value text-warning">
+                                <i class="mdi mdi-chart-arc mb-2" style="font-size: 2rem;"></i>
+                                <div>{{ $resumenSemanal['asistencia'] }}%</div>
+                            </div>
+                            <div class="stat-summary-label">Asistencia</div>
                         </div>
                     </div>
                 </div>
@@ -381,6 +810,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @push('js')
@@ -395,18 +825,5 @@
         });
         document.getElementById('current-time').textContent = timeString;
     }, 60000);
-
-    // Efectos de hover para las tarjetas de sesión
-    document.querySelectorAll('.session-card').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateX(5px)';
-            this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateX(0)';
-            this.style.boxShadow = '';
-        });
-    });
 </script>
 @endpush

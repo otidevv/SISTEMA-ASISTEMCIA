@@ -741,7 +741,7 @@
                  
                                  @if (Auth::user()->hasPermission('asistencia-docente.edit'))
                                      <li>
-                                         <a href="{{ route('asistencia-docente.editar') }}">Editar Asistencia Docente</a>
+                                 <a href="{{ route('asistencia-docente.index') }}">Editar Asistencia Docente</a>
                                      </li>
                                  @endif
                  

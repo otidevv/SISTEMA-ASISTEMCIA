@@ -120,20 +120,47 @@ class DashboardController extends Controller
             $data['horariosHoy'] = $horariosHoy;
             $data['sesionesHoy'] = $horariosHoy->count();
             
-            // Calcular horas del día
-            $horasHoy = 0;
-            foreach ($horariosHoy as $horario) {
-                $inicio = Carbon::parse($horario->hora_inicio);
-                $fin = Carbon::parse($horario->hora_fin);
-                $horasHoy += $fin->diffInHours($inicio);
-            }
-            $data['horasHoy'] = $horasHoy;
-            
             // Obtener asistencias del profesor para hoy
             $asistenciasHoy = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
                 ->whereDate('fecha_hora', $hoy)
                 ->get();
             
+            // Calcular horas del día basadas en asistencias reales
+            $horasHoy = 0;
+            foreach ($horariosHoy as $horario) {
+                $asistenciasEntrada = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'entrada')->sortBy('fecha_hora');
+                $asistenciasSalida = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'salida')->sortBy('fecha_hora');
+
+                $count = min($asistenciasEntrada->count(), $asistenciasSalida->count());
+                for ($i = 0; $i < $count; $i++) {
+                    $entrada = Carbon::parse($asistenciasEntrada->values()[$i]->fecha_hora);
+                    $salida = Carbon::parse($asistenciasSalida->values()[$i]->fecha_hora);
+                    if ($salida->greaterThan($entrada)) {
+                        $horasHoy += $salida->diffInMinutes($entrada) / 60;
+                    }
+                }
+            }
+            $data['horasHoy'] = round($horasHoy, 2);
+            
+            // Para cada horario, obtener la hora de entrada y salida registradas
+            $horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($asistenciasHoy) {
+                $asistenciasEntrada = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'entrada')->sortBy('fecha_hora');
+                $asistenciasSalida = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'salida')->sortBy('fecha_hora');
+
+                $horaEntrada = $asistenciasEntrada->first() ? \Carbon\Carbon::parse($asistenciasEntrada->first()->fecha_hora)->format('H:i A') : null;
+                $horaSalida = $asistenciasSalida->first() ? \Carbon\Carbon::parse($asistenciasSalida->first()->fecha_hora)->format('H:i A') : null;
+
+                $asistencia = $asistenciasHoy->where('horario_id', $horario->id)->first();
+
+                return [
+                    'horario' => $horario,
+                    'hora_entrada_registrada' => $horaEntrada,
+                    'hora_salida_registrada' => $horaSalida,
+                    'asistencia' => $asistencia
+                ];
+            });
+
+            $data['horariosHoyConHoras'] = $horariosHoyConHoras;
             $data['asistenciasHoy'] = $asistenciasHoy;
             
             // Calcular pago estimado del día

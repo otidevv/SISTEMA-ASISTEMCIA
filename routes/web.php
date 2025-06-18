@@ -394,7 +394,6 @@ Route::prefix('json')->group(function () {
         Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
 
         // Opcionales si ya están implementadas
-        Route::get('/editar', [AsistenciaDocenteController::class, 'editar'])->name('asistencia-docente.editar');
         Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
         Route::post('/exportar', [AsistenciaDocenteController::class, 'exportarAction'])->name('asistencia-docente.exportar.action');
         Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');

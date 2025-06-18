@@ -40,7 +40,7 @@
                             @endcan
                             @can('asistencia-docente.edit')
                             <li>
-                                <a href="{{ route('asistencia-docente.editar') }}">Editar</a>
+                                <a href="{{ route('asistencia-docente.index') }}">Editar</a>
                             </li>
                             @endcan
                             @can('asistencia-docente.monitor')

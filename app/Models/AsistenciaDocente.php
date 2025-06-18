@@ -68,4 +68,63 @@ class AsistenciaDocente extends Model
         }
         return false;
     }
+
+    /**
+     * Calcular horas dictadas y monto total basado en registros de entrada y salida y horario docente.
+     */
+    public function calcularHorasYMontos()
+    {
+        // Obtener registros de entrada y salida para el mismo docente y horario en la fecha de la asistencia
+        $fecha = \Carbon\Carbon::parse($this->fecha_hora)->toDateString();
+
+        $entradas = self::where('docente_id', $this->docente_id)
+            ->where('horario_id', $this->horario_id)
+            ->whereDate('fecha_hora', $fecha)
+            ->where('estado', 'entrada')
+            ->orderBy('fecha_hora', 'asc')
+            ->get();
+
+        $salidas = self::where('docente_id', $this->docente_id)
+            ->where('horario_id', $this->horario_id)
+            ->whereDate('fecha_hora', $fecha)
+            ->where('estado', 'salida')
+            ->orderBy('fecha_hora', 'asc')
+            ->get();
+
+        // Calcular total de minutos trabajados sumando diferencias entre pares entrada-salida
+        $totalMinutos = 0;
+        $count = min($entradas->count(), $salidas->count());
+
+        for ($i = 0; $i < $count; $i++) {
+            $entrada = \Carbon\Carbon::parse($entradas[$i]->fecha_hora);
+            $salida = \Carbon\Carbon::parse($salidas[$i]->fecha_hora);
+
+            if ($salida->greaterThan($entrada)) {
+                $totalMinutos += $salida->diffInMinutes($entrada);
+            }
+        }
+
+        // Convertir minutos a horas con decimales
+        $horasDictadas = round($totalMinutos / 60, 2);
+
+        // Ajustar horas según horario docente (no exceder horas programadas)
+        $horaInicio = \Carbon\Carbon::parse($this->hora_entrada);
+        $horaFin = \Carbon\Carbon::parse($this->hora_salida);
+        $horasProgramadas = $horaFin->diffInMinutes($horaInicio) / 60;
+
+        if ($horasDictadas > $horasProgramadas) {
+            $horasDictadas = $horasProgramadas;
+        }
+
+        // Calcular monto total (ejemplo: tarifa fija por hora, puede ajustarse)
+        $tarifaPorHora = 40; // Ejemplo: 40 unidades monetarias por hora
+        $montoTotal = $horasDictadas * $tarifaPorHora;
+
+        // Actualizar el modelo
+        $this->horas_dictadas = $horasDictadas;
+        $this->monto_total = $montoTotal;
+        $this->save();
+
+        return ['horas_dictadas' => $horasDictadas, 'monto_total' => $montoTotal];
+    }
 }

@@ -132,7 +132,7 @@
                         </thead>
                         <tbody>
                             @forelse($asistencias as $asistencia)
-                                <tr>
+                                <tr @if(isset($asistencia->horario) && $asistencia->horario && $asistencia->horario->curso && $asistencia->horario->curso->codigo === 'A-1' && $asistencia->horario->turno === 'mañana') style="box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" @endif>
                                     <td>{{ $loop->iteration + ($asistencias->currentPage() - 1) * $asistencias->perPage() }}
                                     </td>
                                     <td>
