@@ -52,7 +52,7 @@
                         <div class="d-flex justify-content-between">
                             <div>
                                 <h6 class="card-title">Total Hoy</h6>
-                                <h4>{{ $asistencias->where('fecha_hora', '>=', now()->startOfDay())->count() }}</h4>
+                                <h4>{{ $asistencias->where('fecha_registro', '>=', now()->startOfDay())->count() }}</h4>
                             </div>
                             <div class="align-self-center">
                                 <i class="fas fa-calendar-day fa-2x"></i>
@@ -166,7 +166,7 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ \Carbon\Carbon::parse($asistencia->fecha_hora)->format('d/m/Y H:i:s') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}</td>
                                     <td>
                                         <span
                                             class="badge bg-{{ isset($asistencia->tipo_asistencia) && $asistencia->tipo_asistencia === 'entrada' ? 'success' : 'secondary' }}">
@@ -242,7 +242,7 @@
 
                                                     <dt class="col-sm-4">Fecha y Hora:</dt>
                                                     <dd class="col-sm-8">
-                                                        {{ \Carbon\Carbon::parse($asistencia->fecha_hora)->format('d/m/Y H:i:s') }}
+                                                        {{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}
                                                     </dd>
 
                                                     <dt class="col-sm-4">Tipo Verificación:</dt>
