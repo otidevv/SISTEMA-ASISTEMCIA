@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\PagoDocente;
 class AsistenciaDocente extends Model
 {
     protected $table = 'asistencias_docentes';
@@ -72,6 +72,8 @@ class AsistenciaDocente extends Model
     /**
      * Calcular horas dictadas y monto total basado en registros de entrada y salida y horario docente.
      */
+ 
+
     public function calcularHorasYMontos()
     {
         // Obtener registros de entrada y salida para el mismo docente y horario en la fecha de la asistencia
@@ -116,8 +118,30 @@ class AsistenciaDocente extends Model
             $horasDictadas = $horasProgramadas;
         }
 
-        // Calcular monto total (ejemplo: tarifa fija por hora, puede ajustarse)
-        $tarifaPorHora = 40; // Ejemplo: 40 unidades monetarias por hora
+        // Obtener ciclo activo para la fecha de la asistencia
+        $cicloActivo = \App\Models\Ciclo::where('fecha_inicio', '<=', $fecha)
+            ->where('fecha_fin', '>=', $fecha)
+            ->where('estado', true)
+            ->first();
+
+        // Obtener tarifa por hora desde pagos_docentes considerando fechas ciclo y pago
+        $tarifaPorHora = 40; // Valor por defecto en soles
+
+        if ($cicloActivo) {
+            $pago = PagoDocente::where('docente_id', $this->docente_id)
+                ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
+                ->where(function ($query) use ($cicloActivo) {
+                    $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
+                          ->orWhereNull('fecha_fin');
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+
+            if ($pago) {
+                $tarifaPorHora = $pago->tarifa_por_hora;
+            }
+        }
+
         $montoTotal = $horasDictadas * $tarifaPorHora;
 
         // Actualizar el modelo

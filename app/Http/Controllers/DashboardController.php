@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\AsistenciaDocente;
 
 class DashboardController extends Controller
 {
@@ -176,9 +177,8 @@ return [
 $data['horasHoy'] = round($horasHoy, 2);
 $data['horariosHoyConHoras'] = $horariosHoyConHoras;
 
-            
             // Calcular pago estimado del día
-            $pagoEstimadoHoy = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+            $pagoEstimadoHoy = AsistenciaDocente::where('docente_id', $user->id)
             ->whereDate('fecha_hora', $hoy)
             ->sum('monto_total');
         

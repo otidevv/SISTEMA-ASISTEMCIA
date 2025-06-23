@@ -20,9 +20,6 @@ use App\Http\Controllers\CursoController;
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-
-// Agregar temporalmente en tu routes/web.php para debugging
-
 // Agregar temporalmente en tu routes/web.php para debugging
 
 Route::get('/debug-horarios-docentes', function () {
@@ -250,11 +247,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/perfil/foto/eliminar', [PerfilController::class, 'eliminarFoto'])->name('perfil.eliminar.foto');
     // Actualizar preferencias
     Route::put('/perfil/preferencias', [PerfilController::class, 'updatePreferencias'])->name('perfil.preferencias');
+
+    // Pagos Docentes
+    Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
+        Route::get('/', [App\Http\Controllers\PagoDocenteController::class, 'index'])->name('pagos-docentes.index');
+        Route::get('/crear', [App\Http\Controllers\PagoDocenteController::class, 'create'])->name('pagos-docentes.create');
+        Route::post('/', [App\Http\Controllers\PagoDocenteController::class, 'store'])->name('pagos-docentes.store');
+        Route::get('/{id}/editar', [App\Http\Controllers\PagoDocenteController::class, 'edit'])->name('pagos-docentes.edit');
+        Route::put('/{pagoDocente}', [PagoDocenteController::class, 'update'])->name('pagos-docentes.update');
+        Route::delete('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'destroy'])->name('pagos-docentes.destroy');
+    });
 });
 
 // Agrega el prefijo 'json' para todas las rutas de API
 Route::prefix('json')->group(function () {
-
 
     // API Ciclos
     Route::prefix('ciclos')->group(function () {
@@ -374,15 +380,6 @@ Route::prefix('json')->group(function () {
         Route::get('/{id}/editar', [App\Http\Controllers\HorarioDocenteController::class, 'edit'])->name('horarios-docentes.edit');
         Route::put('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'update'])->name('horarios-docentes.update');
         Route::delete('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'destroy'])->name('horarios-docentes.delete');
-    });
-    // Pagos Docentes
-    Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
-        Route::get('/', [App\Http\Controllers\PagoDocenteController::class, 'index'])->name('pagos-docentes.index');
-        Route::get('/crear', [App\Http\Controllers\PagoDocenteController::class, 'create'])->name('pagos-docentes.create');
-        Route::post('/', [App\Http\Controllers\PagoDocenteController::class, 'store'])->name('pagos-docentes.store');
-        Route::get('/{id}/editar', [App\Http\Controllers\PagoDocenteController::class, 'edit'])->name('pagos-docentes.edit');
-        Route::put('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'update'])->name('pagos-docentes.update');
-        Route::delete('/{id}', [App\Http\Controllers\PagoDocenteController::class, 'destroy'])->name('pagos-docentes.delete');
     });
     // Asistencia Docente
     Route::prefix('asistencia-docente')->middleware(['auth'])->group(function () {
