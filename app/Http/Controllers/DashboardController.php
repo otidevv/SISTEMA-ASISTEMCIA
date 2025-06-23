@@ -120,65 +120,89 @@ class DashboardController extends Controller
             $data['horariosHoy'] = $horariosHoy;
             $data['sesionesHoy'] = $horariosHoy->count();
             
-            // Obtener asistencias del profesor para hoy
-            $asistenciasHoy = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
-                ->whereDate('fecha_hora', $hoy)
-                ->get();
-            
-            // Calcular horas del día basadas en asistencias reales
-            $horasHoy = 0;
-            foreach ($horariosHoy as $horario) {
-                $asistenciasEntrada = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'entrada')->sortBy('fecha_hora');
-                $asistenciasSalida = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'salida')->sortBy('fecha_hora');
+           // Obtener registros del biométrico de hoy
+$registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
+->whereDate('fecha_registro', $hoy)
+->orderBy('fecha_registro')
+->get();
 
-                $count = min($asistenciasEntrada->count(), $asistenciasSalida->count());
-                for ($i = 0; $i < $count; $i++) {
-                    $entrada = Carbon::parse($asistenciasEntrada->values()[$i]->fecha_hora);
-                    $salida = Carbon::parse($asistenciasSalida->values()[$i]->fecha_hora);
-                    if ($salida->greaterThan($entrada)) {
-                        $horasHoy += $salida->diffInMinutes($entrada) / 60;
-                    }
-                }
-            }
-            $data['horasHoy'] = round($horasHoy, 2);
-            
-            // Para cada horario, obtener la hora de entrada y salida registradas
-            $horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($asistenciasHoy) {
-                $asistenciasEntrada = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'entrada')->sortBy('fecha_hora');
-                $asistenciasSalida = $asistenciasHoy->where('horario_id', $horario->id)->where('estado', 'salida')->sortBy('fecha_hora');
+$horasHoy = 0;
 
-                $horaEntrada = $asistenciasEntrada->first() ? \Carbon\Carbon::parse($asistenciasEntrada->first()->fecha_hora)->format('H:i A') : null;
-                $horaSalida = $asistenciasSalida->first() ? \Carbon\Carbon::parse($asistenciasSalida->first()->fecha_hora)->format('H:i A') : null;
+$horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($registrosHoy, &$horasHoy, $user) {
+$horaInicio = Carbon::parse($horario->hora_inicio);
+$horaFin = Carbon::parse($horario->hora_fin);
 
-                $asistencia = $asistenciasHoy->where('horario_id', $horario->id)->first();
+// Entrada válida: entre 15 minutos antes y 30 después del inicio
+$entrada = $registrosHoy
+    ->filter(fn($r) =>
+        Carbon::parse($r->fecha_registro)->format('H:i:s') >= $horaInicio->copy()->subMinutes(15)->format('H:i:s') &&
+        Carbon::parse($r->fecha_registro)->format('H:i:s') <= $horaInicio->copy()->addMinutes(30)->format('H:i:s')
+    )
+    ->sortBy('fecha_registro')
+    ->first();
 
-                return [
-                    'horario' => $horario,
-                    'hora_entrada_registrada' => $horaEntrada,
-                    'hora_salida_registrada' => $horaSalida,
-                    'asistencia' => $asistencia
-                ];
-            });
+// Salida válida: entre 15 minutos antes y 60 después del final
+$salida = $registrosHoy
+    ->filter(fn($r) =>
+        Carbon::parse($r->fecha_registro)->format('H:i:s') >= $horaFin->copy()->subMinutes(15)->format('H:i:s') &&
+        Carbon::parse($r->fecha_registro)->format('H:i:s') <= $horaFin->copy()->addMinutes(60)->format('H:i:s')
+    )
+    ->sortByDesc('fecha_registro')
+    ->first();
 
-            $data['horariosHoyConHoras'] = $horariosHoyConHoras;
-            $data['asistenciasHoy'] = $asistenciasHoy;
+// Sumar horas si ambas existen
+if ($entrada && $salida) {
+    $hEntrada = Carbon::parse($entrada->fecha_registro);
+    $hSalida = Carbon::parse($salida->fecha_registro);
+    if ($hSalida->greaterThan($hEntrada)) {
+        $horasHoy += $hSalida->diffInMinutes($hEntrada) / 60;
+    }
+}
+
+// Buscar asistencia docente solo para tema desarrollado
+$asistencia = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+    ->where('horario_id', $horario->id)
+    ->whereDate('fecha_hora', Carbon::today())
+    ->first();
+
+return [
+    'horario' => $horario,
+    'hora_entrada_registrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i A') : null,
+    'hora_salida_registrada' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i A') : null,
+    'asistencia' => $asistencia
+];
+});
+
+$data['horasHoy'] = round($horasHoy, 2);
+$data['horariosHoyConHoras'] = $horariosHoyConHoras;
+
             
             // Calcular pago estimado del día
-            $pagoEstimadoHoy = 0;
-            foreach ($asistenciasHoy as $asistencia) {
-                $pagoEstimadoHoy += $asistencia->monto_total ?? 0;
-            }
-            $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
+            $pagoEstimadoHoy = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+            ->whereDate('fecha_hora', $hoy)
+            ->sum('monto_total');
+        
+        $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
+        
             
             // Obtener sesiones pendientes (horarios sin asistencia registrada)
             $sesionesPendientes = 0;
-            foreach ($horariosHoy as $horario) {
-                $tieneAsistencia = $asistenciasHoy->where('horario_id', $horario->id)->count() > 0;
-                if (!$tieneAsistencia && Carbon::now()->greaterThan(Carbon::parse($horario->hora_inicio))) {
-                    $sesionesPendientes++;
-                }
-            }
-            $data['sesionesPendientes'] = $sesionesPendientes;
+foreach ($horariosHoy as $horario) {
+    $horaInicio = Carbon::parse($horario->hora_inicio);
+    $horaFin = Carbon::parse($horario->hora_fin);
+
+    $hayRegistro = $registrosHoy->filter(function ($r) use ($horaInicio, $horaFin) {
+        $hora = Carbon::parse($r->fecha_registro)->format('H:i:s');
+        return $hora >= $horaInicio->copy()->subMinutes(15)->format('H:i:s') &&
+               $hora <= $horaFin->copy()->addMinutes(60)->format('H:i:s');
+    })->count() > 0;
+
+    if (!$hayRegistro && Carbon::now()->greaterThan($horaInicio)) {
+        $sesionesPendientes++;
+    }
+}
+$data['sesionesPendientes'] = $sesionesPendientes;
+
             
             // Resumen semanal (últimos 7 días)
             $fechaInicio = Carbon::now()->subDays(6)->startOfDay();
