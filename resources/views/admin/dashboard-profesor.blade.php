@@ -217,6 +217,13 @@
         color: white;
     }
 
+    .action-button:disabled {
+        background-color: #9ca3af !important;
+        color: #ffffff !important;
+        cursor: not-allowed !important;
+        border-color: #9ca3af !important;
+    }
+
     /* Tarjetas de sesión */
     .session-card {
         background: #f9fafb;
@@ -241,6 +248,16 @@
 
     .session-card.programmed {
         border-left-color: #2563eb;
+    }
+
+    .session-card.active {
+        border-left-color: #06b6d4;
+        background: #f0f9ff;
+    }
+
+    .session-card.no-access {
+        border-left-color: #ef4444;
+        background: #fef2f2;
     }
 
     .session-card:hover {
@@ -303,43 +320,75 @@
         color: white;
     }
 
-    /* Botones de acción */
-    .action-button {
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        white-space: nowrap;
+    .status-badge.danger {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    .status-badge.active {
+        background-color: #06b6d4;
+        color: white;
+    }
+
+    /* Modal mejorado */
+    .modal-content {
         border: none;
-        transition: background-color 0.3s ease;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
 
-    .action-button i {
-        font-size: 1.2rem;
-    }
-
-    .btn-primary {
-        background-color: #2563eb;
+    .modal-header {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
         color: white;
+        border-radius: 15px 15px 0 0;
+        border: none;
+        padding: 1.5rem 2rem;
     }
 
-    .btn-primary:hover {
-        background-color: #1e40af;
+    .modal-title {
+        font-weight: 700;
+        font-size: 1.25rem;
     }
 
-    .btn-outline-primary {
-        background-color: transparent;
-        border: 2px solid #2563eb;
-        color: #2563eb;
+    .btn-close {
+        filter: invert(1);
+        opacity: 0.8;
     }
 
-    .btn-outline-primary:hover {
-        background-color: #2563eb;
-        color: white;
+    .btn-close:hover {
+        opacity: 1;
+    }
+
+    /* Alertas */
+    .alert {
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background-color: #dcfce7;
+        color: #166534;
+        border-left: 4px solid #22c55e;
+    }
+
+    .alert-danger {
+        background-color: #fef2f2;
+        color: #dc2626;
+        border-left: 4px solid #ef4444;
+    }
+
+    .alert-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .alert-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
     }
 
     /* Sidebar derecho */
@@ -432,46 +481,28 @@
             justify-content: flex-start !important;
             margin-bottom: 1rem;
         }
-        .session-card {
-            flex-direction: column;
-            margin: 1rem 0.5rem;
-        }
-        .session-time, .session-info, .status-badge, .action-button {
-            flex: 1 1 100%;
-            margin-bottom: 0.5rem;
-        }
-        .action-button {
-            justify-content: flex-start;
-        }
     }
 
-    @media (max-width: 575.98px) {
-        .stat-card {
-            padding: 1rem;
-        }
-        .stat-value {
-            font-size: 1.8rem;
-        }
-        .stat-label {
-            font-size: 0.8rem;
-        }
-        .sessions-title {
-            font-size: 1.1rem;
-        }
-        .action-button {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
-        }
-        .session-card {
-            padding: 1rem;
-            margin: 0.5rem 0;
-        }
-        .session-time {
-            font-size: 1rem;
-        }
-        .session-info {
-            padding: 0.8rem;
-        }
+    /* Spinner de carga */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+
+    /* Formulario */
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-text {
+        font-size: 0.875rem;
     }
 </style>
 @endpush
@@ -530,13 +561,9 @@
                         Mis Sesiones de Hoy
                     </h5>
                     <div>
-                        <button class="action-button outline btn-sm me-2">
-                            <i class="mdi mdi-filter-variant"></i>
-                            Filtros
-                        </button>
-                        <button class="action-button btn-primary btn-sm">
-                            <i class="mdi mdi-plus"></i>
-                            Registro Manual
+                        <button class="action-button outline btn-sm me-2" onclick="location.reload()">
+                            <i class="mdi mdi-refresh"></i>
+                            Actualizar
                         </button>
                     </div>
                 </div>
@@ -549,29 +576,62 @@
                                 $asistencia = $item['asistencia'];
                                 $horaEntradaRegistrada = $item['hora_entrada_registrada'];
                                 $horaSalidaRegistrada = $item['hora_salida_registrada'];
+                                $puedeRegistrarTema = $item['puede_registrar_tema'];
+                                $dentroHorario = $item['dentro_horario'];
+                                $claseTerminada = $item['clase_terminada'];
+                                $tieneRegistros = $item['tiene_registros'];
+                                
                                 $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
                                 $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
                                 $ahora = \Carbon\Carbon::now();
 
+                                // Determinar estado y estilo
                                 if ($asistencia) {
                                     $estado = 'completed';
                                     $estadoTexto = 'COMPLETADA';
                                     $estadoColor = 'success';
                                     $estadoIcon = 'mdi-check-circle';
-                                } elseif ($ahora->greaterThan($horaInicio)) {
+                                    $cardClass = 'completed';
+                                    $mensaje = 'Tema desarrollado registrado';
+                                } elseif ($dentroHorario) {
+                                    $estado = 'active';
+                                    $estadoTexto = 'EN CURSO';
+                                    $estadoColor = 'active';
+                                    $estadoIcon = 'mdi-play-circle';
+                                    $cardClass = 'active';
+                                    $mensaje = $horaEntradaRegistrada ? 'Puedes registrar el tema ahora' : 'Marca tu entrada para registrar tema';
+                                } elseif ($claseTerminada && $tieneRegistros) {
                                     $estado = 'pending';
-                                    $estadoTexto = 'PENDIENTE';
+                                    $estadoTexto = 'PENDIENTE TEMA';
                                     $estadoColor = 'warning';
                                     $estadoIcon = 'mdi-clock-alert';
+                                    $cardClass = 'pending';
+                                    $mensaje = 'Registra el tema desarrollado';
+                                } elseif ($claseTerminada && !$tieneRegistros) {
+                                    $estado = 'no-access';
+                                    $estadoTexto = 'SIN REGISTROS';
+                                    $estadoColor = 'danger';
+                                    $estadoIcon = 'mdi-alert-circle';
+                                    $cardClass = 'no-access';
+                                    $mensaje = 'No se puede registrar tema sin marcaciones';
+                                } elseif ($ahora->lessThan($horaInicio)) {
+                                    $estado = 'programmed';
+                                    $estadoTexto = 'PROGRAMADA';
+                                    $estadoColor = 'info';
+                                    $estadoIcon = 'mdi-clock-outline';
+                                    $cardClass = 'programmed';
+                                    $mensaje = 'Clase programada para las ' . $horaInicio->format('H:i');
                                 } else {
                                     $estado = 'programmed';
                                     $estadoTexto = 'PROGRAMADA';
                                     $estadoColor = 'info';
                                     $estadoIcon = 'mdi-clock-outline';
+                                    $cardClass = 'programmed';
+                                    $mensaje = 'Esperando inicio de clase';
                                 }
                             @endphp
 
-                            <div class="session-card {{ $estado }}">
+                            <div class="session-card {{ $cardClass }}" id="session-{{ $horario->id }}">
                                 <div class="d-flex flex-column gap-2">
                                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                         <h5 class="mb-0 d-flex align-items-center gap-2">
@@ -585,113 +645,75 @@
                                     </div>
 
                                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                                    <div class="session-info flex-grow-1 bg-white p-3 rounded shadow-sm">
-                                        <div>
-                                            <i class="mdi mdi-login text-success"></i>
-                                            <strong>Entrada:</strong>
-                                            {{ $horaEntradaRegistrada ?? 'Pendiente' }}
-                                        </div>
-                                        <div>
-                                            <i class="mdi mdi-logout text-danger"></i>
-                                            <strong>Salida:</strong>
-                                            {{ $horaSalidaRegistrada ?? 'Pendiente' }}
-                                        </div>
-                                        @if($asistencia && $asistencia->tema_desarrollado)
-                                            <div class="mt-2">
-                                                <small class="text-primary d-block">
-                                                    <i class="mdi mdi-notebook me-1"></i>
-                                                    {{ $asistencia->tema_desarrollado }}
-                                                </small>
+                                        <div class="session-info flex-grow-1 bg-white p-3 rounded shadow-sm">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-2">
+                                                        <i class="mdi mdi-login text-success"></i>
+                                                        <strong>Entrada:</strong>
+                                                        <span class="{{ $horaEntradaRegistrada ? 'text-success' : 'text-muted' }}">
+                                                            {{ $horaEntradaRegistrada ?? 'No registrada' }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <i class="mdi mdi-logout text-danger"></i>
+                                                        <strong>Salida:</strong>
+                                                        <span class="{{ $horaSalidaRegistrada ? 'text-success' : 'text-muted' }}">
+                                                            {{ $horaSalidaRegistrada ?? 'No registrada' }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-2">
+                                                        <i class="mdi mdi-map-marker text-info"></i>
+                                                        <strong>Aula:</strong>
+                                                        {{ $horario->aula->nombre ?? 'Sin aula' }}
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">{{ $mensaje }}</small>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        @endif
-                                    </div>
-
+                                            
+                                            @if($asistencia && $asistencia->tema_desarrollado)
+                                                <div class="mt-2 p-2 bg-light rounded">
+                                                    <small class="text-primary d-block">
+                                                        <i class="mdi mdi-notebook me-1"></i>
+                                                        <strong>Tema:</strong> {{ $asistencia->tema_desarrollado }}
+                                                    </small>
+                                                </div>
+                                            @endif
+                                        </div>
 
                                         <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between w-100">
                                             <div class="d-flex align-items-center gap-3 flex-wrap">
-                                                <div class="status-badge bg-{{ $estadoColor }}">
+                                                <div class="status-badge {{ $estadoColor }}">
                                                     <i class="mdi {{ $estadoIcon }}"></i>
                                                     {{ $estadoTexto }}
                                                 </div>
-                                                <div class="text-muted d-none d-md-block shadow-sm px-2 rounded">
-                                                    <i class="mdi mdi-map-marker me-1"></i>
-                                                    {{ $horario->aula->nombre ?? 'Sin aula' }}
-                                                </div>
                                                 <div class="text-muted d-none d-md-block">
                                                     <i class="mdi mdi-clock-outline me-1"></i>
-                                                    {{ $horaFin->diffInHours($horaInicio) }} horas
+                                                    {{ $horaFin->diffInHours($horaInicio) }} hora{{ $horaFin->diffInHours($horaInicio) > 1 ? 's' : '' }}
                                                 </div>
                                             </div>
                                             <div class="d-flex gap-2 flex-wrap">
-                                                @if($asistencia)
-                                                    <button class="action-button outline btn-sm">
-                                                        <i class="mdi mdi-eye"></i>
-                                                        Detalles
-                                                    </button>
-                                                    <button class="action-button outline btn-sm">
-                                                        <i class="mdi mdi-file-document"></i>
-                                                        Reporte
-                                                    </button>
-                                                @elseif($estado == 'pending')
-                                                    <button class="action-button btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#completarModal{{ $horario->id }}">
-                                                        <i class="mdi mdi-check"></i>
-                                                        Completar
+                                                @if($puedeRegistrarTema)
+                                                    <button class="action-button btn-primary btn-sm" 
+                                                            onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}')">
+                                                        <i class="mdi mdi-{{ $asistencia ? 'pencil' : 'plus' }}"></i>
+                                                        {{ $asistencia ? 'Editar Tema' : 'Registrar Tema' }}
                                                     </button>
                                                 @else
                                                     <button class="action-button outline btn-sm" disabled>
-                                                        <i class="mdi mdi-clock"></i>
-                                                        Esperando
+                                                        <i class="mdi mdi-lock"></i>
+                                                        No disponible
                                                     </button>
                                                 @endif
                                             </div>
                                         </div>
-
-
                                     </div>
                                 </div>
                             </div>
-
-
-
-                            @if($estado == 'pending')
-                                <!-- Modal para completar tema -->
-                                <div class="modal fade" id="completarModal{{ $horario->id }}" tabindex="-1" aria-labelledby="completarModalLabel{{ $horario->id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="POST" action="{{ route('asistencia-docente.store') }}">
-                                                @csrf
-                                                <input type="hidden" name="asistencia_id" value="{{ $asistencia ? $asistencia->id : '' }}">
-
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="completarModalLabel{{ $horario->id }}">
-                                                        <i class="mdi mdi-clipboard-text me-2"></i>
-                                                        Registrar Tema Desarrollado
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <label for="tema_desarrollado{{ $horario->id }}" class="form-label">
-                                                        <i class="mdi mdi-notebook me-2"></i>
-                                                        Tema desarrollado
-                                                    </label>
-                                                    <textarea class="form-control" id="tema_desarrollado{{ $horario->id }}" name="tema_desarrollado" rows="3" required autofocus placeholder="Ingrese el tema desarrollado en la sesión..."></textarea>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                                        <i class="mdi mdi-close me-1"></i>
-                                                        Cancelar
-                                                    </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="mdi mdi-content-save me-1"></i>
-                                                        Guardar Tema
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            @endif
                         @endforeach
                     @else
                         <div class="text-center py-5 text-gray-500">
@@ -749,10 +771,6 @@
                                 {{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('H:i') }}
                             </small>
                         </div>
-                        <span class="badge bg-info d-flex align-items-center gap-1">
-                            <i class="mdi mdi-clock-outline"></i>
-                            En {{ \Carbon\Carbon::now()->diffInHours(\Carbon\Carbon::parse($proximaClase->hora_inicio)) }} horas
-                        </span>
                     </div>
                 </div>
             @endif
@@ -811,6 +829,55 @@
     </div>
 </div>
 
+<!-- Modal para registrar tema desarrollado -->
+<div class="modal fade" id="modalTemaDesarrollado" tabindex="-1" aria-labelledby="modalTemaDesarrolladoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTemaDesarrolladoLabel">
+                    <i class="mdi mdi-clipboard-text me-2"></i>
+                    Registrar Tema Desarrollado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formTemaDesarrollado">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="horario_id" name="horario_id">
+                    
+                    <div id="alertContainer"></div>
+                    
+                    <div class="alert alert-info">
+                        <i class="mdi mdi-information me-2"></i>
+                        <strong>Importante:</strong> Solo puedes registrar el tema durante la clase o después de que termine, siempre que tengas los registros biométricos correspondientes.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tema_desarrollado" class="form-label">
+                            <i class="mdi mdi-notebook me-2"></i>
+                            Tema Desarrollado *
+                        </label>
+                        <textarea class="form-control" id="tema_desarrollado" name="tema_desarrollado" 
+                                  rows="5" required 
+                                  placeholder="Describe detalladamente el tema desarrollado en esta sesión..."></textarea>
+                        <div class="form-text">Mínimo 10 caracteres, máximo 1000 caracteres. <span id="contador">0/1000</span></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarTema">
+                        <i class="mdi mdi-content-save me-1"></i>
+                        Guardar Tema
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('js')
@@ -825,5 +892,142 @@
         });
         document.getElementById('current-time').textContent = timeString;
     }, 60000);
+
+    // Función para abrir modal de tema desarrollado
+    function abrirModalTema(horarioId, temaExistente = '') {
+        const modal = new bootstrap.Modal(document.getElementById('modalTemaDesarrollado'));
+        
+        // Configurar formulario
+        document.getElementById('horario_id').value = horarioId;
+        document.getElementById('tema_desarrollado').value = temaExistente;
+        
+        // Actualizar título del modal
+        const titulo = document.getElementById('modalTemaDesarrolladoLabel');
+        if (temaExistente) {
+            titulo.innerHTML = '<i class="mdi mdi-pencil me-2"></i>Editar Tema Desarrollado';
+        } else {
+            titulo.innerHTML = '<i class="mdi mdi-clipboard-text me-2"></i>Registrar Tema Desarrollado';
+        }
+        
+        // Limpiar alertas y actualizar contador
+        document.getElementById('alertContainer').innerHTML = '';
+        actualizarContador();
+        
+        modal.show();
+    }
+
+    // Contador de caracteres
+    document.getElementById('tema_desarrollado').addEventListener('input', actualizarContador);
+
+    function actualizarContador() {
+        const textarea = document.getElementById('tema_desarrollado');
+        const contador = document.getElementById('contador');
+        const actual = textarea.value.length;
+        
+        contador.textContent = `${actual}/1000`;
+        
+        if (actual < 10) {
+            contador.style.color = '#dc2626';
+        } else if (actual > 900) {
+            contador.style.color = '#f59e0b';
+        } else {
+            contador.style.color = '#22c55e';
+        }
+    }
+
+    // Manejar envío del formulario
+    document.getElementById('formTemaDesarrollado').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const btnGuardar = document.getElementById('btnGuardarTema');
+        const originalText = btnGuardar.innerHTML;
+        
+        // Validación básica
+        const tema = document.getElementById('tema_desarrollado').value.trim();
+        if (tema.length < 10) {
+            mostrarAlertEnModal('danger', 'El tema debe tener al menos 10 caracteres');
+            return;
+        }
+        
+        // Deshabilitar botón y mostrar loading
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+        
+        // Limpiar alertas previas
+        document.getElementById('alertContainer').innerHTML = '';
+        
+        const formData = new FormData(this);
+        
+        fetch('{{ route("dashboard") }}/docente/tema-desarrollado', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarAlertEnModal('success', data.message);
+                
+                // Cerrar modal y recargar después de 2 segundos
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado')).hide();
+                    location.reload();
+                }, 2000);
+            } else {
+                let mensaje = data.message;
+                if (data.errors) {
+                    mensaje += '<ul class="mt-2 mb-0">';
+                    Object.values(data.errors).forEach(error => {
+                        if (Array.isArray(error)) {
+                            error.forEach(err => mensaje += `<li>${err}</li>`);
+                        } else {
+                            mensaje += `<li>${error}</li>`;
+                        }
+                    });
+                    mensaje += '</ul>';
+                }
+                mostrarAlertEnModal('danger', mensaje);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarAlertEnModal('danger', 'Error de conexión. Por favor, inténtalo de nuevo.');
+        })
+        .finally(() => {
+            // Restaurar botón
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = originalText;
+        });
+    });
+
+    // Función para mostrar alertas en el modal
+    function mostrarAlertEnModal(tipo, mensaje) {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+        const icon = tipo === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle';
+        
+        alertContainer.innerHTML = `
+            <div class="alert ${alertClass}" role="alert">
+                <i class="mdi ${icon} me-2"></i>
+                ${mensaje}
+            </div>
+        `;
+        
+        // Scroll hacia arriba del modal
+        document.querySelector('.modal-body').scrollTop = 0;
+    }
+
+    // Cerrar alertas automáticamente después de 5 segundos
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            if (alert.classList.contains('alert-success')) {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }
+        });
+    }, 5000);
 </script>
 @endpush

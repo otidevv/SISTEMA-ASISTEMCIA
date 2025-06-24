@@ -116,93 +116,111 @@ class DashboardController extends Controller
             $horariosHoy = \App\Models\HorarioDocente::where('docente_id', $user->id)
                 ->where('dia_semana', $diaSemana)
                 ->with(['aula', 'curso', 'ciclo'])
+                ->orderBy('hora_inicio')
                 ->get();
             
             $data['horariosHoy'] = $horariosHoy;
             $data['sesionesHoy'] = $horariosHoy->count();
             
            // Obtener registros del biométrico de hoy
-$registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
-->whereDate('fecha_registro', $hoy)
-->orderBy('fecha_registro')
-->get();
+            $registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $hoy)
+                ->orderBy('fecha_registro')
+                ->get();
 
-$horasHoy = 0;
+            $horasHoy = 0;
+            $sesionesPendientes = 0;
 
-$horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($registrosHoy, &$horasHoy, $user) {
-$horaInicio = Carbon::parse($horario->hora_inicio);
-$horaFin = Carbon::parse($horario->hora_fin);
+            $horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($registrosHoy, &$horasHoy, $user, &$sesionesPendientes) {
+                $horaInicio = Carbon::parse($horario->hora_inicio);
+                $horaFin = Carbon::parse($horario->hora_fin);
+                $ahora = Carbon::now();
 
-// Entrada válida: entre 15 minutos antes y 30 después del inicio
-$entrada = $registrosHoy
-    ->filter(fn($r) =>
-        Carbon::parse($r->fecha_registro)->format('H:i:s') >= $horaInicio->copy()->subMinutes(15)->format('H:i:s') &&
-        Carbon::parse($r->fecha_registro)->format('H:i:s') <= $horaInicio->copy()->addMinutes(30)->format('H:i:s')
-    )
-    ->sortBy('fecha_registro')
-    ->first();
+                // Buscar entrada válida (15 min antes hasta 30 min después del inicio)
+                $entrada = $registrosHoy
+                ->filter(function($r) use ($horaInicio) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between(
+                        $horaInicio->copy()->subMinutes(15),
+                        $horaInicio->copy()->addMinutes(30)
+                    );
+                })
+                ->sortBy('fecha_registro')
+                ->first();
 
-// Salida válida: entre 15 minutos antes y 60 después del final
-$salida = $registrosHoy
-    ->filter(fn($r) =>
-        Carbon::parse($r->fecha_registro)->format('H:i:s') >= $horaFin->copy()->subMinutes(15)->format('H:i:s') &&
-        Carbon::parse($r->fecha_registro)->format('H:i:s') <= $horaFin->copy()->addMinutes(60)->format('H:i:s')
-    )
-    ->sortByDesc('fecha_registro')
-    ->first();
+                // Buscar salida válida (15 min antes hasta 60 min después del final)
+                $salida = $registrosHoy
+                ->filter(function($r) use ($horaFin) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between(
+                        $horaFin->copy()->subMinutes(15),
+                        $horaFin->copy()->addMinutes(60)
+                    );
+                })
+                ->sortByDesc('fecha_registro')
+                ->first();
+            
 
-// Sumar horas si ambas existen
-if ($entrada && $salida) {
-    $hEntrada = Carbon::parse($entrada->fecha_registro);
-    $hSalida = Carbon::parse($salida->fecha_registro);
-    if ($hSalida->greaterThan($hEntrada)) {
-        $horasHoy += $hSalida->diffInMinutes($hEntrada) / 60;
-    }
-}
+                // Calcular horas trabajadas
+                if ($entrada && $salida) {
+                    $hEntrada = Carbon::parse($entrada->fecha_registro);
+                    $hSalida = Carbon::parse($salida->fecha_registro);
+                    if ($hSalida->greaterThan($hEntrada)) {
+                        $horasHoy += $hSalida->diffInMinutes($hEntrada) / 60;
+                    }
+                }
 
-// Buscar asistencia docente solo para tema desarrollado
-$asistencia = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
-    ->where('horario_id', $horario->id)
-    ->whereDate('fecha_hora', Carbon::today())
-    ->first();
+                // Buscar asistencia docente (tema desarrollado)
+                $asistencia = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+                    ->where('horario_id', $horario->id)
+                    ->whereDate('fecha_hora', Carbon::today())
+                    ->first();
 
-return [
-    'horario' => $horario,
-    'hora_entrada_registrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i A') : null,
-    'hora_salida_registrada' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i A') : null,
-    'asistencia' => $asistencia
-];
-});
+                // Determinar si puede registrar tema (SOLO DENTRO DEL HORARIO DE CLASE)
+                $dentroDelHorario = $ahora->between($horaInicio, $horaFin);
+                $claseTerminada = $ahora->greaterThan($horaFin);
+                $tieneRegistros = $entrada && $salida;
+                
+                // NUEVA LÓGICA: Solo puede registrar durante la clase O después si tiene registros
+                $puedeRegistrarTema = false;
+                if ($asistencia) {
+                    // Ya tiene tema registrado, puede editar
+                    $puedeRegistrarTema = true;
+                } elseif ($dentroDelHorario && $entrada) {
+                    // Está dentro del horario y tiene entrada
+                    $puedeRegistrarTema = true;
+                } elseif ($claseTerminada && $tieneRegistros) {
+                    // Clase terminada pero tiene ambos registros
+                    $puedeRegistrarTema = true;
+                }
 
-$data['horasHoy'] = round($horasHoy, 2);
-$data['horariosHoyConHoras'] = $horariosHoyConHoras;
+                // Contar sesiones pendientes
+                if ($claseTerminada && !$asistencia && $tieneRegistros) {
+                    $sesionesPendientes++;
+                }
+
+                return [
+                    'horario' => $horario,
+                    'hora_entrada_registrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i A') : null,
+                    'hora_salida_registrada' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i A') : null,
+                    'asistencia' => $asistencia,
+                    'puede_registrar_tema' => $puedeRegistrarTema,
+                    'dentro_horario' => $dentroDelHorario,
+                    'clase_terminada' => $claseTerminada,
+                    'tiene_registros' => $tieneRegistros
+                ];
+            });
+
+            $data['horasHoy'] = round($horasHoy, 2);
+            $data['horariosHoyConHoras'] = $horariosHoyConHoras;
+            $data['sesionesPendientes'] = $sesionesPendientes;
 
             // Calcular pago estimado del día
             $pagoEstimadoHoy = AsistenciaDocente::where('docente_id', $user->id)
             ->whereDate('fecha_hora', $hoy)
             ->sum('monto_total');
         
-        $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
-        
-            
-            // Obtener sesiones pendientes (horarios sin asistencia registrada)
-            $sesionesPendientes = 0;
-foreach ($horariosHoy as $horario) {
-    $horaInicio = Carbon::parse($horario->hora_inicio);
-    $horaFin = Carbon::parse($horario->hora_fin);
-
-    $hayRegistro = $registrosHoy->filter(function ($r) use ($horaInicio, $horaFin) {
-        $hora = Carbon::parse($r->fecha_registro)->format('H:i:s');
-        return $hora >= $horaInicio->copy()->subMinutes(15)->format('H:i:s') &&
-               $hora <= $horaFin->copy()->addMinutes(60)->format('H:i:s');
-    })->count() > 0;
-
-    if (!$hayRegistro && Carbon::now()->greaterThan($horaInicio)) {
-        $sesionesPendientes++;
-    }
-}
-$data['sesionesPendientes'] = $sesionesPendientes;
-
+            $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
             
             // Resumen semanal (últimos 7 días)
             $fechaInicio = Carbon::now()->subDays(6)->startOfDay();
@@ -220,7 +238,7 @@ $data['sesionesPendientes'] = $sesionesPendientes;
             
             $data['resumenSemanal'] = [
                 'sesiones' => $resumenSemanal->total_sesiones ?? 0,
-                'horas' => $resumenSemanal->total_horas ?? 0,
+                'horas' => round($resumenSemanal->total_horas ?? 0, 2),
                 'ingresos' => $resumenSemanal->total_ingresos ?? 0,
                 'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0)
             ];
@@ -403,6 +421,156 @@ $data['sesionesPendientes'] = $sesionesPendientes;
             return view('admin.dashboard-padre', $data);
         } else {
             return view('admin.dashboard', $data);
+        }
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Registrar tema desarrollado con validación de horarios
+     */
+    public function registrarTemaDesarrollado(Request $request)
+    {
+        try {
+            $request->validate([
+                'horario_id' => 'required|exists:horarios_docentes,id',
+                'tema_desarrollado' => 'required|string|min:10|max:1000'
+            ], [
+                'tema_desarrollado.required' => 'El tema desarrollado es obligatorio',
+                'tema_desarrollado.min' => 'El tema debe tener al menos 10 caracteres',
+                'tema_desarrollado.max' => 'El tema no puede exceder 1000 caracteres'
+            ]);
+
+            $user = Auth::user();
+            $ahora = Carbon::now();
+            $hoy = $ahora->format('Y-m-d');
+            $diaSemana = $ahora->locale('es')->dayName;
+            
+            // Verificar que el horario pertenece al docente y es del día actual
+            $horario = \App\Models\HorarioDocente::where('id', $request->horario_id)
+                ->where('docente_id', $user->id)
+                ->where('dia_semana', $diaSemana)
+                ->first();
+                
+            if (!$horario) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Horario no válido o no corresponde al día actual'
+                ], 400);
+            }
+
+            $horaInicio = Carbon::parse($horario->hora_inicio);
+            $horaFin = Carbon::parse($horario->hora_fin);
+            
+            // VALIDACIÓN ESTRICTA: Solo dentro del horario o después con registros
+            $dentroDelHorario = $ahora->between($horaInicio, $horaFin);
+            $claseTerminada = $ahora->greaterThan($horaFin);
+            
+            if (!$dentroDelHorario && !$claseTerminada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo puedes registrar el tema durante la clase (de ' . $horaInicio->format('H:i') . ' a ' . $horaFin->format('H:i') . ') o después de que termine'
+                ], 400);
+            }
+
+            // Obtener registros biométricos del día
+            $registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $hoy)
+                ->get();
+
+            // Buscar entrada válida
+            $entrada = $registrosHoy->filter(function($r) use ($horaInicio) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horaInicio->copy()->subMinutes(15),
+                    $horaInicio->copy()->addMinutes(30)
+                );
+            })->first();
+
+            // Si la clase terminó, verificar que tenga entrada mínimo
+            if ($claseTerminada && !$entrada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró registro de entrada válido para esta sesión'
+                ], 400);
+            }
+
+            // Si está dentro del horario, solo necesita entrada
+            if ($dentroDelHorario && !$entrada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debes marcar tu entrada antes de registrar el tema'
+                ], 400);
+            }
+
+            // Buscar salida si la clase terminó
+            $salida = null;
+            if ($claseTerminada) {
+                $salida = $registrosHoy->filter(function($r) use ($horaFin) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between(
+                        $horaFin->copy()->subMinutes(15),
+                        $horaFin->copy()->addMinutes(60)
+                    );
+                })->first();
+
+                if (!$salida) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No se encontró registro de salida válido para esta sesión'
+                    ], 400);
+                }
+            }
+
+            // Calcular datos de asistencia
+            $horaEntrada = $entrada ? Carbon::parse($entrada->fecha_registro) : $ahora;
+            $horaSalida = $salida ? Carbon::parse($salida->fecha_registro) : null;
+            
+            $horasTrabajadas = 0;
+            $montoTotal = 0;
+            
+            if ($horaSalida) {
+                $horasTrabajadas = $horaSalida->diffInMinutes($horaEntrada) / 60;
+                $tarifaHora = $horario->tarifa_hora ?? $user->tarifa_hora ?? 25;
+                $montoTotal = $horasTrabajadas * $tarifaHora;
+            }
+
+            // Crear o actualizar registro
+            $asistencia = \App\Models\AsistenciaDocente::updateOrCreate(
+                [
+                    'docente_id' => $user->id,
+                    'horario_id' => $request->horario_id,
+                    'fecha_hora' => Carbon::today()
+                ],
+                [
+                    'tema_desarrollado' => $request->tema_desarrollado,
+                    'hora_entrada' => $horaEntrada,
+                    'hora_salida' => $horaSalida,
+                    'horas_dictadas' => round($horasTrabajadas, 2),
+                    'monto_total' => round($montoTotal, 2),
+                    'estado' => 'completada'
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tema desarrollado registrado exitosamente',
+                'data' => [
+                    'tema' => $asistencia->tema_desarrollado,
+                    'horas' => $asistencia->horas_dictadas,
+                    'monto' => $asistencia->monto_total
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar: ' . $e->getMessage()
+            ], 500);
         }
     }
 
