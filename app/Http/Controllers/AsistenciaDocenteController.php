@@ -242,4 +242,70 @@ class AsistenciaDocenteController extends Controller
         $asistencia = AsistenciaDocente::findOrFail($id);
         return view('asistencia-docente.editar', compact('asistencia'));
     }
+
+    public function registrarTema(Request $request)
+    {
+        $request->validate([
+            'horario_id' => 'required|integer',
+            'tema_desarrollado' => 'required|string|min:10|max:1000'
+        ]);
+    
+        $user = auth()->user();
+    
+        // Buscar asistencia docente del día para ese horario
+        $asistencia = AsistenciaDocente::where('horario_id', $request->horario_id)
+            ->where('docente_id', $user->id)
+            ->whereDate('fecha_hora', now()->toDateString())
+            ->first();
+    
+        if (!$asistencia) {
+            // Si no hay asistencia docente, busca registro de entrada biométrica (registros_asistencia)
+            $horario = HorarioDocente::find($request->horario_id);
+            if (!$horario) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró el horario seleccionado.',
+                ], 404);
+            }
+    
+            // Buscar entrada del biométrico para ese docente, ese día y ese rango de horario
+            $entrada = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', now()->toDateString())
+                ->whereTime('fecha_registro', '>=', $horario->hora_inicio)
+                ->whereTime('fecha_registro', '<=', $horario->hora_fin)
+                ->orderBy('fecha_registro', 'asc')
+                ->first();
+    
+            if (!$entrada) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró la asistencia biométrica del día para este horario. Marca tu entrada primero.',
+                ], 404);
+            }
+    
+            // Crear registro en asistencias_docentes con la entrada biométrica
+            $asistencia = AsistenciaDocente::create([
+                'docente_id' => $user->id,
+                'horario_id' => $horario->id,
+                'curso_id'   => $horario->curso_id,
+                'aula_id'    => $horario->aula_id,
+                'fecha_hora' => $entrada->fecha_registro,
+                'estado'     => 'entrada',
+                'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
+                'terminal_id'       => $entrada->terminal_id ?? null,
+                'codigo_trabajo'    => $entrada->codigo_trabajo ?? null,
+                'turno'      => $horario->turno,
+                'tema_desarrollado' => $request->tema_desarrollado,
+            ]);
+        } else {
+            // Si existe el registro, solo actualiza el tema
+            $asistencia->tema_desarrollado = $request->tema_desarrollado;
+            $asistencia->save();
+        }
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Tema desarrollado registrado correctamente.'
+        ]);
+    }
 }

@@ -248,9 +248,10 @@ Route::middleware('auth')->group(function () {
     // Actualizar preferencias
     Route::put('/perfil/preferencias', [PerfilController::class, 'updatePreferencias'])->name('perfil.preferencias');
     
-    // Horarios Docentes
+    // Horarios Docentes y Tema desarrollado
     Route::get('/horarios-calendario', [HorarioDocenteController::class, 'calendario'])->name('horarios.calendario');
-
+    Route::post('/docente/tema-desarrollado', [App\Http\Controllers\AsistenciaDocenteController::class, 'registrarTema'])->name('docente.tema-guardar');
+    
     // Pagos Docentes
     Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
         Route::get('/', [App\Http\Controllers\PagoDocenteController::class, 'index'])->name('pagos-docentes.index');

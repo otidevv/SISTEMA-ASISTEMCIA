@@ -958,7 +958,8 @@
         
         const formData = new FormData(this);
         
-        fetch('{{ route("dashboard") }}/docente/tema-desarrollado', {
+        fetch('{{ route("docente.tema-guardar") }}', {
+
             method: 'POST',
             body: formData,
             headers: {
