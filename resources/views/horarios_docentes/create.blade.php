@@ -187,12 +187,16 @@
                             <div class="col-lg-6">
                                 <div class="mb-3">
                                     <label for="turno" class="form-label">Turno</label>
-                                    <select name="turno" id="turno" class="form-select">
-                                        <option value="Mañana" {{ old('turno') == 'Mañana' ? 'selected' : '' }}>
+                                    <select name="turno" id="turno" class="form-select" required>
+                                        <option value="">Seleccione un turno</option>
+                                        <option value="MAÑANA" {{ old('turno') == 'MAÑANA' ? 'selected' : '' }}>
                                             Mañana
                                         </option>
-                                        <option value="Tarde" {{ old('turno') == 'Tarde' ? 'selected' : '' }}>
+                                        <option value="TARDE" {{ old('turno') == 'TARDE' ? 'selected' : '' }}>
                                             Tarde
+                                        </option>
+                                        <option value="NOCHE" {{ old('turno') == 'NOCHE' ? 'selected' : '' }}>
+                                            Noche
                                         </option>
                                     </select>
                                 </div>

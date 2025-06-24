@@ -785,11 +785,15 @@
                     </p>
                 </div>
                 <div class="header-actions">
-                    <a href="{{ route('horarios-docentes.create') }}" class="btn btn-primary-custom">
-                        <i class="uil uil-plus me-2"></i>
-                        Programar Nuevo Horario
-                    </a>
-                </div>
+    <a href="{{ route('horarios.calendario') }}" class="btn btn-primary-custom me-2">
+        <i class="uil uil-calendar-alt me-2"></i>
+        Ver Calendario
+    </a>
+    <a href="{{ route('horarios-docentes.create') }}" class="btn btn-primary-custom">
+        <i class="uil uil-plus me-2"></i>
+        Programar Nuevo Horario
+    </a>
+</div>
             </div>
         </div>
     </div>

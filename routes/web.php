@@ -247,6 +247,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/perfil/foto/eliminar', [PerfilController::class, 'eliminarFoto'])->name('perfil.eliminar.foto');
     // Actualizar preferencias
     Route::put('/perfil/preferencias', [PerfilController::class, 'updatePreferencias'])->name('perfil.preferencias');
+    
+    // Horarios Docentes
+    Route::get('/horarios-calendario', [HorarioDocenteController::class, 'calendario'])->name('horarios.calendario');
 
     // Pagos Docentes
     Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
