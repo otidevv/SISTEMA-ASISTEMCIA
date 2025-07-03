@@ -3,507 +3,509 @@
 @section('title', 'Dashboard Docente')
 
 @push('css')
+{{-- Incluir Google Fonts y Material Design Icons --}}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+
 <style>
-    /* Reset y base */
-    * {
-        box-sizing: border-box;
+    /* -------------------------------------------------------------------------- */
+    /* Variables de Diseño Avanzado                                               */
+    /* -------------------------------------------------------------------------- */
+    :root {
+        --font-family-sans-serif: 'Inter', sans-serif;
+        --bg-color: #f4f7fe;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --text-color: #1e293b;
+        --text-muted: #64748b;
+        --primary-color: #4f46e5;
+        --primary-hover: #4338ca;
+        --primary-light: #eef2ff;
+        --primary-text: #312e81;
+        --success-color: #22c55e;
+        --success-light: #f0fdf4;
+        --success-text: #166534;
+        --warning-color: #f59e0b;
+        --warning-light: #fffbeb;
+        --warning-text: #78350f;
+        --danger-color: #ef4444;
+        --danger-light: #fef2f2;
+        --danger-text: #991b1b;
+        --info-color: #3b82f6;
+        --info-light: #eff6ff;
+        --info-text: #1e40af;
+        --border-color: #e2e8f0;
+        --border-radius: 1rem; /* 16px */
+        --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    /* -------------------------------------------------------------------------- */
+    /* Estilos Base y Fondo                                                       */
+    /* -------------------------------------------------------------------------- */
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f6f8;
-        margin: 0;
-        padding: 0;
-        color: #333;
+        font-family: var(--font-family-sans-serif);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+        background-size: 20px 20px;
     }
 
-    /* Contenedor principal */
     .dashboard-container {
-        max-width: 1140px;
+        max-width: 1400px;
         margin: 2rem auto;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
     }
 
-    /* Header de bienvenida */
+    /* -------------------------------------------------------------------------- */
+    /* Encabezado de Bienvenida (Efecto Glass)                                    */
+    /* -------------------------------------------------------------------------- */
     .welcome-header {
-        background: linear-gradient(90deg, #3b82f6, #2563eb);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem 2rem;
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius);
+        padding: 1.5rem 2.5rem;
+        margin-bottom: 2.5rem;
+        box-shadow: var(--shadow);
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        gap: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(79, 70, 229, 0.1), transparent 40%);
+        animation: rotate 15s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
-    .welcome-title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        flex: 1 1 60%;
-        min-width: 250px;
+    .welcome-header .welcome-text .welcome-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-color);
+        letter-spacing: -0.5px;
     }
 
-    .welcome-title i {
-        font-size: 2.4rem;
-        margin-right: 1rem;
-        color: #bfdbfe;
-    }
-
-    .welcome-subtitle {
-        font-size: 1rem;
-        opacity: 0.85;
-        margin-top: 0.3rem;
-        flex: 1 1 60%;
-        min-width: 250px;
-        color: #dbeafe;
+    .welcome-header .welcome-text .welcome-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        font-weight: 500;
     }
 
     .time-display {
-        background: rgba(255, 255, 255, 0.25);
-        padding: 0.6rem 1.2rem;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1.5rem;
         border-radius: 9999px;
-        font-size: 1.2rem;
+        font-size: 1rem;
         font-weight: 600;
-        color: #1e40af;
         display: flex;
         align-items: center;
-        justify-content: center;
-        flex: 1 1 30%;
-        min-width: 150px;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        gap: 0.75rem;
+        box-shadow: 0 4px 15px -3px rgb(79 70 229 / 40%);
     }
 
-    .time-display i {
-        margin-right: 0.6rem;
-        font-size: 1.5rem;
-    }
-
-    /* Estadísticas */
+    /* -------------------------------------------------------------------------- */
+    /* Tarjetas de Estadísticas                                                   */
+    /* -------------------------------------------------------------------------- */
     .stats-container {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 1.5rem;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
 
     .stat-card {
-        background: linear-gradient(135deg, #2563eb, #3b82f6);
-        border-radius: 12px;
-        color: white;
-        padding: 1.5rem 2rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: var(--transition);
         position: relative;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
-    .stat-card.warning {
-        background: linear-gradient(135deg, #facc15, #eab308);
-        box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-        color: #78350f;
-    }
-
-    .stat-card.success {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        box-shadow: 0 4px 12px rgba(21, 128, 61, 0.3);
-        color: white;
-    }
-
-    .stat-card.info {
-        background: linear-gradient(135deg, #14b8a6, #0d9488);
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
-        color: white;
-    }
-
     .stat-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
     }
 
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.3rem;
+    .stat-card .stat-icon {
+        flex-shrink: 0;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        font-size: 1.5rem;
+        color: white;
+        background-image: linear-gradient(135deg, var(--color-from), var(--color-to));
+        box-shadow: 0 4px 8px -2px rgba(0,0,0,0.2);
     }
+    .stat-card.primary .stat-icon { --color-from: #6366f1; --color-to: #4f46e5; }
+    .stat-card.warning .stat-icon { --color-from: #f59e0b; --color-to: #d97706; }
+    .stat-card.success .stat-icon { --color-from: #22c55e; --color-to: #16a34a; }
+    .stat-card.info .stat-icon { --color-from: #3b82f6; --color-to: #2563eb; }
 
-    .stat-label {
+    .stat-card .stat-info .stat-value {
+        font-size: 2.25rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--text-color);
+    }
+    .stat-card .stat-info .stat-label {
         font-size: 0.9rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-top: 0.25rem;
     }
 
-    .stat-icon {
-        position: absolute;
-        right: 1rem;
-        bottom: 1rem;
-        font-size: 4.5rem;
-        opacity: 0.15;
-    }
-
-    /* Sesiones */
-    .sessions-container {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        padding: 1rem 1.5rem 2rem 1.5rem;
+    /* -------------------------------------------------------------------------- */
+    /* Área de Contenido Principal                                                */
+    /* -------------------------------------------------------------------------- */
+    .main-content-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        padding: 2rem;
         margin-bottom: 2rem;
     }
 
-    .sessions-header {
+    .main-content-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        margin-bottom: 1rem;
+        gap: 1rem;
+        margin-bottom: 2rem;
     }
-
-    .sessions-title {
-        font-size: 1.25rem;
+    .main-content-title {
+        font-size: 1.5rem;
         font-weight: 700;
-        color: #2563eb;
-        display: flex;
-        align-items: center;
-        flex: 1 1 60%;
-        min-width: 200px;
+        color: var(--text-color);
     }
 
-    .sessions-title i {
-        font-size: 1.6rem;
-        margin-right: 0.8rem;
-        color: #3b82f6;
+    /* -------------------------------------------------------------------------- */
+    /* Tarjetas de Sesión (Diseño Timeline + Tarjeta Completa y coloreada)      */
+    /* -------------------------------------------------------------------------- */
+    .session-timeline {
+        position: relative;
+    }
+    .session-timeline::before {
+        content: '';
+        position: absolute;
+        left: 14px;
+        top: 10px;
+        bottom: 10px;
+        width: 2px;
+        background-color: var(--border-color);
+        border-radius: 2px;
     }
 
-    .sessions-header > div {
-        display: flex;
-        gap: 0.5rem;
-        flex: 1 1 35%;
-        justify-content: flex-end;
-        min-width: 150px;
-    }
-
-    .action-button {
-        background-color: #2563eb;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: background-color 0.3s ease;
-    }
-
-    .action-button:hover {
-        background-color: #1e40af;
-    }
-
-    .action-button.outline {
-        background-color: transparent;
-        border: 2px solid #2563eb;
-        color: #2563eb;
-    }
-
-    .action-button.outline:hover {
-        background-color: #2563eb;
-        color: white;
-    }
-
-    .action-button:disabled {
-        background-color: #9ca3af !important;
-        color: #ffffff !important;
-        cursor: not-allowed !important;
-        border-color: #9ca3af !important;
-    }
-
-    /* Tarjetas de sesión */
     .session-card {
-        background: #f9fafb;
-        border-radius: 12px;
+        position: relative;
+        padding-left: 3rem; /* Espacio para el punto y la línea */
+        margin-bottom: 2rem;
+    }
+    .session-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .session-card::before { /* El punto en la línea de tiempo */
+        content: '';
+        position: absolute;
+        left: 8px; /* (14px de la línea) - (12px de ancho / 2) */
+        top: 2.25rem; /* Alineado con el centro del header de la tarjeta */
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: var(--dot-color);
+        border: 3px solid var(--bg-color);
+        z-index: 1;
+    }
+
+    /* Asignar colores al punto */
+    .session-card.programmed { --dot-color: var(--primary-color); }
+    .session-card.completed { --dot-color: var(--success-color); }
+    .session-card.pending { --dot-color: var(--warning-color); }
+    .session-card.active { --dot-color: var(--info-color); }
+    .session-card.no-access { --dot-color: var(--danger-color); }
+
+    .session-card-content {
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        transition: var(--transition);
+        border: 1px solid;
+    }
+
+    .session-card:hover .session-card-content {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: var(--shadow);
+    }
+
+    /* Colores de Tarjeta por Estado */
+    .session-card.programmed .session-card-content {
+        background-color: var(--card-bg);
+        border-color: var(--border-color);
+    }
+    .session-card.programmed:hover .session-card-content {
+        border-color: var(--primary-color);
+    }
+    .session-card.completed .session-card-content { background-color: var(--success-light); border-color: var(--success-color); }
+    .session-card.pending .session-card-content { background-color: var(--warning-light); border-color: var(--warning-color); }
+    .session-card.active .session-card-content { background-color: var(--info-light); border-color: var(--info-color); box-shadow: 0 0 20px 0 rgb(59 130 246 / 25%); }
+    .session-card.no-access .session-card-content { background-color: var(--danger-light); border-color: var(--danger-color); }
+    
+    .session-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
         margin-bottom: 1rem;
-        padding: 1rem 1.5rem;
-        border-left: 6px solid transparent;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .course-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+    .session-time {
+        font-weight: 500;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .session-details {
+        font-size: 0.9rem;
+        color: var(--text-muted);
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
-        transition: box-shadow 0.3s ease, transform 0.3s ease;
+        gap: 1rem 1.5rem;
+        margin-bottom: 1rem;
     }
-
-    .session-card.completed {
-        border-left-color: #22c55e;
-    }
-
-    .session-card.pending {
-        border-left-color: #facc15;
-    }
-
-    .session-card.programmed {
-        border-left-color: #2563eb;
-    }
-
-    .session-card.active {
-        border-left-color: #06b6d4;
-        background: #f0f9ff;
-    }
-
-    .session-card.no-access {
-        border-left-color: #ef4444;
-        background: #fef2f2;
-    }
-
-    .session-card:hover {
-        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-        transform: translateX(5px);
-    }
-
-    .session-time {
+    .session-details strong {
+        color: var(--text-color);
         font-weight: 600;
-        color: #2563eb;
+    }
+    
+    .tema-registrado {
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }
+    .tema-registrado strong {
+        color: var(--primary-text);
+    }
+
+    .session-footer {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .session-card.programmed .session-footer {
+        border-top-color: var(--border-color);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* Sidebar                                                                    */
+    /* -------------------------------------------------------------------------- */
+    .sidebar-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        transition: var(--transition);
+    }
+    .sidebar-card:hover {
+        box-shadow: var(--shadow-lg);
+    }
+    .sidebar-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
-        flex: 1 1 100%;
-        margin-bottom: 0.5rem;
-        font-size: 1.1rem;
+        gap: 0.5rem;
+    }
+    .sidebar-card-title i {
+        color: var(--primary-color);
     }
 
-    .session-time i {
-        margin-right: 0.5rem;
-        font-size: 1.3rem;
+    /* -------------------------------------------------------------------------- */
+    /* Componentes UI (Botones, Badges, etc)                                      */
+    /* -------------------------------------------------------------------------- */
+    .action-button {
+        background-image: linear-gradient(to right, var(--primary-color) 0%, #6d28d9 51%, var(--primary-color) 100%);
+        background-size: 200% auto;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        text-decoration: none;
+        box-shadow: var(--shadow-sm);
     }
-
-    .session-info {
-        background: white;
-        padding: 1rem;
-        border-radius: 10px;
-        flex: 1 1 100%;
-        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    .action-button:hover {
+        background-position: right center;
+        transform: scale(1.05);
+        box-shadow: var(--shadow);
+    }
+    .action-button.outline {
+        background-image: none;
+        background-color: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        box-shadow: none;
+    }
+    .action-button.outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: scale(1.05);
+        box-shadow: var(--shadow);
+    }
+    .action-button:disabled {
+        background-image: none;
+        background-color: #e5e7eb !important;
+        color: var(--text-muted) !important;
+        cursor: not-allowed !important;
+        border-color: #e5e7eb !important;
+        transform: none;
+        box-shadow: none !important;
     }
 
     .status-badge {
         padding: 0.4rem 1rem;
         border-radius: 9999px;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         display: inline-flex;
         align-items: center;
-        white-space: nowrap;
+        gap: 0.4rem;
+        border: 1px solid;
     }
+    .status-badge.success { background-color: var(--success-light); color: var(--success-text); border-color: var(--success-color); }
+    .status-badge.warning { background-color: var(--warning-light); color: var(--warning-text); border-color: var(--warning-color); }
+    .status-badge.info { background-color: var(--primary-light); color: var(--primary-text); border-color: var(--primary-color); }
+    .status-badge.danger { background-color: var(--danger-light); color: var(--danger-text); border-color: var(--danger-color); }
+    .status-badge.active { background-color: var(--info-light); color: var(--info-text); border-color: var(--info-color); }
 
-    .status-badge i {
-        margin-right: 0.5rem;
-        font-size: 1rem;
-    }
-
-    .status-badge.success {
-        background-color: #22c55e;
-        color: white;
-    }
-
-    .status-badge.warning {
-        background-color: #facc15;
-        color: #78350f;
-    }
-
-    .status-badge.info {
-        background-color: #2563eb;
-        color: white;
-    }
-
-    .status-badge.danger {
-        background-color: #ef4444;
-        color: white;
-    }
-
-    .status-badge.active {
-        background-color: #06b6d4;
-        color: white;
-    }
-
-    /* Modal mejorado */
+    /* Modal */
     .modal-content {
+        border-radius: var(--border-radius);
         border: none;
-        border-radius: 15px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        box-shadow: var(--shadow-lg);
+        background-color: var(--bg-color);
     }
-
     .modal-header {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: var(--primary-color);
         color: white;
-        border-radius: 15px 15px 0 0;
-        border: none;
-        padding: 1.5rem 2rem;
+        border-bottom: none;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        padding: 1.5rem;
     }
-
     .modal-title {
         font-weight: 700;
-        font-size: 1.25rem;
     }
-
-    .btn-close {
-        filter: invert(1);
-        opacity: 0.8;
+    .form-control {
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
     }
-
-    .btn-close:hover {
-        opacity: 1;
-    }
-
-    /* Alertas */
-    .alert {
-        border: none;
-        border-radius: 10px;
-        padding: 1rem 1.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .alert-success {
-        background-color: #dcfce7;
-        color: #166534;
-        border-left: 4px solid #22c55e;
-    }
-
-    .alert-danger {
-        background-color: #fef2f2;
-        color: #dc2626;
-        border-left: 4px solid #ef4444;
-    }
-
-    .alert-warning {
-        background-color: #fef3c7;
-        color: #92400e;
-        border-left: 4px solid #f59e0b;
-    }
-
-    .alert-info {
-        background-color: #dbeafe;
-        color: #1e40af;
-        border-left: 4px solid #3b82f6;
-    }
-
-    /* Sidebar derecho */
-    .sidebar-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        margin-bottom: 2rem;
-        padding: 1rem 1.5rem;
-    }
-
-    .sidebar-card-header {
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .sidebar-card-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #2563eb;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .sidebar-card-title i {
-        font-size: 1.4rem;
-    }
-
-    /* Recordatorios */
-    .recordatorio {
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        border-left: 6px solid;
-        background: #f9fafb;
-        box-shadow: 0 1px 5px rgba(0,0,0,0.05);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-weight: 600;
-    }
-
-    .recordatorio.warning {
-        border-color: #facc15;
-        color: #78350f;
-        background-color: #fef3c7;
-    }
-
-    .recordatorio.info {
-        border-color: #2563eb;
-        color: #1e40af;
-        background-color: #dbeafe;
-    }
-
-    /* Resumen semanal */
-    .stat-summary {
-        text-align: center;
-        padding: 1rem 0;
-    }
-
-    .stat-summary-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-summary-label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Responsive */
-    @media (max-width: 991.98px) {
-        .welcome-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .welcome-title, .welcome-subtitle, .time-display {
-            flex: 1 1 100%;
-            margin-bottom: 0.75rem;
-            justify-content: flex-start !important;
-        }
-        .sessions-header > div {
-            flex: 1 1 100%;
-            justify-content: flex-start !important;
-            margin-bottom: 1rem;
-        }
-    }
-
-    /* Spinner de carga */
-    .spinner-border-sm {
-        width: 1rem;
-        height: 1rem;
-        border-width: 0.15em;
-    }
-
-    /* Formulario */
     .form-control:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgb(79 70 229 / 15%);
+    }
+    
+    /* Estilos para el modal de anuncios */
+    #modalAnuncios .modal-body ul {
+        list-style: none;
+        padding-left: 0;
+    }
+    #modalAnuncios .modal-body li {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    #modalAnuncios .modal-body .announcement-icon {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        margin-top: 0.25rem;
     }
 
-    .form-label {
-        font-weight: 600;
-        color: #374151;
+
+    /* -------------------------------------------------------------------------- */
+    /* Estilos Responsivos                                                        */
+    /* -------------------------------------------------------------------------- */
+    @media (max-width: 768px) {
+        .welcome-header .welcome-text .welcome-title {
+            font-size: 1.5rem;
+        }
+        .main-content-title {
+            font-size: 1.25rem;
+        }
     }
 
-    .form-text {
-        font-size: 0.875rem;
+    @media (max-width: 576px) {
+        .dashboard-container {
+            padding: 0 1rem;
+            margin-top: 1rem;
+        }
+        .welcome-header {
+            padding: 1.5rem;
+            text-align: center;
+            justify-content: center;
+        }
+        .main-content-card, .sidebar-card {
+            padding: 1.5rem;
+        }
+        .session-card-content {
+            padding: 1rem;
+        }
+        .session-timeline {
+            padding-left: 0;
+        }
+        .session-timeline::before, .session-card::before {
+            display: none; /* Ocultar línea de tiempo en móviles */
+        }
+        .session-card {
+            padding-left: 0;
+        }
     }
+
 </style>
 @endpush
 
@@ -511,318 +513,183 @@
 <div class="dashboard-container">
     <!-- Header de Bienvenida -->
     <div class="welcome-header">
-        <div class="welcome-title">
-            <i class="mdi mdi-account-circle"></i>
-            <div>
-                <div>¡Bienvenido, {{ $user->nombre }} {{ $user->apellido_paterno }}!</div>
-                <div class="welcome-subtitle">
-                    <i class="mdi mdi-calendar-today"></i>
-                    {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}
-                </div>
+        <div class="welcome-text">
+            <div class="welcome-title">¡Bienvenido de vuelta, {{ $user->nombre }}!</div>
+            <div class="welcome-subtitle">
+                {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}
             </div>
         </div>
         <div class="time-display">
             <i class="mdi mdi-clock-outline"></i>
-            <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i A') }}</span>
+            <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i:s A') }}</span>
         </div>
     </div>
 
     <!-- Estadísticas -->
     <div class="stats-container">
         <div class="stat-card primary">
-            <div class="stat-value">{{ $sesionesHoy }}</div>
-            <div class="stat-label">Sesiones Hoy</div>
-            <i class="mdi mdi-calendar-check stat-icon"></i>
+            <div class="stat-icon"><i class="mdi mdi-calendar-multiselect"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $sesionesHoy }}</div>
+                <div class="stat-label">Sesiones para Hoy</div>
+            </div>
         </div>
         <div class="stat-card warning">
-            <div class="stat-value">{{ $sesionesPendientes }}</div>
-            <div class="stat-label">Pendientes</div>
-            <i class="mdi mdi-alert-circle stat-icon"></i>
+            <div class="stat-icon"><i class="mdi mdi-file-document-edit-outline"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $sesionesPendientes }}</div>
+                <div class="stat-label">Pendientes de Tema</div>
+            </div>
         </div>
         <div class="stat-card success">
-            <div class="stat-value">{{ $horasHoy }}</div>
-            <div class="stat-label">Horas Hoy</div>
-            <i class="mdi mdi-clock stat-icon"></i>
+            <div class="stat-icon"><i class="mdi mdi-clock-check-outline"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $horasHoy }}</div>
+                <div class="stat-label">Total Horas Hoy</div>
+            </div>
         </div>
         <div class="stat-card info">
-            <div class="stat-value">S/. {{ number_format($pagoEstimadoHoy, 2) }}</div>
-            <div class="stat-label">Pago Estimado</div>
-            <i class="mdi mdi-currency-usd stat-icon"></i>
+            <div class="stat-icon"><i class="mdi mdi-cash-multiple"></i></div>
+            <div class="stat-info">
+                <div class="stat-value">S/. {{ number_format($pagoEstimadoHoy, 2) }}</div>
+                <div class="stat-label">Pago Estimado</div>
+            </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Sesiones de Hoy -->
+        <!-- Columna Principal: Sesiones de Hoy -->
         <div class="col-lg-8">
-            <div class="sessions-container">
-                <div class="sessions-header">
-                    <h5 class="sessions-title">
-                        <i class="mdi mdi-calendar-clock"></i>
-                        Mis Sesiones de Hoy
+            <div class="main-content-card">
+                <div class="main-content-header">
+                    <h5 class="main-content-title">
+                        Agenda del <span class="text-primary">{{ $fechaSeleccionada->isToday() ? 'Día' : $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') }}</span>
                     </h5>
-                    <div>
-                        <button class="action-button outline btn-sm me-2" onclick="location.reload()">
-                            <i class="mdi mdi-refresh"></i>
-                            Actualizar
+                    {{-- MODIFICADO: Formulario para seleccionar fecha --}}
+                    <form method="GET" action="{{ route('dashboard') }}" class="d-flex align-items-center gap-2">
+                        <input type="date" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
+                        <button type="submit" class="action-button outline btn-sm">
+                            <i class="mdi mdi-magnify"></i>
+                            <span>Ver</span>
                         </button>
-                    </div>
+                    </form>
                 </div>
 
-                <div>
-                    @if($horariosHoy->count() > 0)
-                        @foreach($horariosHoyConHoras as $item)
-                            @php
-                                $horario = $item['horario'];
-                                $asistencia = $item['asistencia'];
-                                $horaEntradaRegistrada = $item['hora_entrada_registrada'];
-                                $horaSalidaRegistrada = $item['hora_salida_registrada'];
-                                $puedeRegistrarTema = $item['puede_registrar_tema'];
-                                $dentroHorario = $item['dentro_horario'];
-                                $claseTerminada = $item['clase_terminada'];
-                                $tieneRegistros = $item['tiene_registros'];
-                                
-                                $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
-                                $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
-                                $ahora = \Carbon\Carbon::now();
+                <div class="session-timeline">
+                    @forelse($horariosDelDia as $item)
+                        @php
+                            $horario = $item['horario'];
+                            $asistencia = $item['asistencia'];
+                            $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
+                            $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
 
-                                // Determinar estado y estilo
-                                if ($asistencia) {
-                                    $estado = 'completed';
-                                    $estadoTexto = 'COMPLETADA';
-                                    $estadoColor = 'success';
-                                    $estadoIcon = 'mdi-check-circle';
-                                    $cardClass = 'completed';
-                                    $mensaje = 'Tema desarrollado registrado';
-                                } elseif ($dentroHorario) {
-                                    $estado = 'active';
-                                    $estadoTexto = 'EN CURSO';
-                                    $estadoColor = 'active';
-                                    $estadoIcon = 'mdi-play-circle';
-                                    $cardClass = 'active';
-                                    $mensaje = $horaEntradaRegistrada ? 'Puedes registrar el tema ahora' : 'Marca tu entrada para registrar tema';
-                                } elseif ($claseTerminada && $tieneRegistros) {
-                                    $estado = 'pending';
-                                    $estadoTexto = 'PENDIENTE TEMA';
-                                    $estadoColor = 'warning';
-                                    $estadoIcon = 'mdi-clock-alert';
-                                    $cardClass = 'pending';
-                                    $mensaje = 'Registra el tema desarrollado';
-                                } elseif ($claseTerminada && !$tieneRegistros) {
-                                    $estado = 'no-access';
-                                    $estadoTexto = 'SIN REGISTROS';
-                                    $estadoColor = 'danger';
-                                    $estadoIcon = 'mdi-alert-circle';
-                                    $cardClass = 'no-access';
-                                    $mensaje = 'No se puede registrar tema sin marcaciones';
-                                } elseif ($ahora->lessThan($horaInicio)) {
-                                    $estado = 'programmed';
-                                    $estadoTexto = 'PROGRAMADA';
-                                    $estadoColor = 'info';
-                                    $estadoIcon = 'mdi-clock-outline';
-                                    $cardClass = 'programmed';
-                                    $mensaje = 'Clase programada para las ' . $horaInicio->format('H:i');
-                                } else {
-                                    $estado = 'programmed';
-                                    $estadoTexto = 'PROGRAMADA';
-                                    $estadoColor = 'info';
-                                    $estadoIcon = 'mdi-clock-outline';
-                                    $cardClass = 'programmed';
-                                    $mensaje = 'Esperando inicio de clase';
-                                }
-                            @endphp
+                            $estadoConfig = ['clase' => 'programmed', 'texto' => 'PROGRAMADA', 'color' => 'info', 'icono' => 'mdi-clock-outline'];
+                            if ($asistencia) { $estadoConfig = ['clase' => 'completed', 'texto' => 'COMPLETADA', 'color' => 'success', 'icono' => 'mdi-check-all']; } 
+                            elseif ($item['dentro_horario']) { $estadoConfig = ['clase' => 'active', 'texto' => 'EN CURSO', 'color' => 'active', 'icono' => 'mdi-play-circle']; } 
+                            elseif ($item['clase_terminada'] && $item['tiene_registros']) { $estadoConfig = ['clase' => 'pending', 'texto' => 'PENDIENTE', 'color' => 'warning', 'icono' => 'mdi-alert-circle-check-outline']; } 
+                            elseif ($item['clase_terminada'] && !$item['tiene_registros']) { $estadoConfig = ['clase' => 'no-access', 'texto' => 'SIN REGISTRO', 'color' => 'danger', 'icono' => 'mdi-close-circle-outline']; }
+                        @endphp
 
-                            <div class="session-card {{ $cardClass }}" id="session-{{ $horario->id }}">
-                                <div class="d-flex flex-column gap-2">
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                        <h5 class="mb-0 d-flex align-items-center gap-2">
-                                            <i class="mdi mdi-book-open-variant text-primary"></i>
-                                            {{ $horario->curso->nombre ?? 'Sin curso' }}
-                                        </h5>
-                                        <div class="session-time text-primary fw-semibold">
-                                            <i class="mdi mdi-clock-outline me-1"></i>
-                                            {{ $horaInicio->format('H:i A') }} - {{ $horaFin->format('H:i A') }}
-                                        </div>
+                        <div class="session-card {{ $estadoConfig['clase'] }}" id="session-{{ $horario->id }}">
+                            <div class="session-card-content">
+                                <div class="session-header">
+                                    <h6 class="course-name">{{ $horario->curso->nombre ?? 'Sin curso' }}</h6>
+                                    <div class="session-time">
+                                        <i class="mdi mdi-clock-outline"></i>
+                                        {{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}
                                     </div>
+                                </div>
 
-                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                                        <div class="session-info flex-grow-1 bg-white p-3 rounded shadow-sm">
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-2">
-                                                        <i class="mdi mdi-login text-success"></i>
-                                                        <strong>Entrada:</strong>
-                                                        <span class="{{ $horaEntradaRegistrada ? 'text-success' : 'text-muted' }}">
-                                                            {{ $horaEntradaRegistrada ?? 'No registrada' }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <i class="mdi mdi-logout text-danger"></i>
-                                                        <strong>Salida:</strong>
-                                                        <span class="{{ $horaSalidaRegistrada ? 'text-success' : 'text-muted' }}">
-                                                            {{ $horaSalidaRegistrada ?? 'No registrada' }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-2">
-                                                        <i class="mdi mdi-map-marker text-info"></i>
-                                                        <strong>Aula:</strong>
-                                                        {{ $horario->aula->nombre ?? 'Sin aula' }}
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <small class="text-muted">{{ $mensaje }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            @if($asistencia && $asistencia->tema_desarrollado)
-                                                <div class="mt-2 p-2 bg-light rounded">
-                                                    <small class="text-primary d-block">
-                                                        <i class="mdi mdi-notebook me-1"></i>
-                                                        <strong>Tema:</strong> {{ $asistencia->tema_desarrollado }}
-                                                    </small>
-                                                </div>
-                                            @endif
-                                        </div>
+                                <div class="session-details">
+                                    <div><i class="mdi mdi-login text-success"></i> <strong>Entrada:</strong> {{ $item['hora_entrada_registrada'] ?? '---' }}</div>
+                                    <div><i class="mdi mdi-logout text-danger"></i> <strong>Salida:</strong> {{ $item['hora_salida_registrada'] ?? '---' }}</div>
+                                    <div><i class="mdi mdi-map-marker-outline text-info"></i> <strong>Aula:</strong> {{ $horario->aula->nombre ?? 'N/A' }}</div>
+                                    {{-- Mostrar tardanza si existe --}}
+                                    @if(isset($item['minutos_tardanza']) && $item['minutos_tardanza'] > 0)
+                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ $item['minutos_tardanza'] }} min</div>
+                                    @endif
+                                </div>
+                                
+                                @if($asistencia && $asistencia->tema_desarrollado)
+                                    <div class="tema-registrado">
+                                        <p class="mb-0">
+                                            <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
+                                            {{ Str::limit($asistencia->tema_desarrollado, 100) }}
+                                        </p>
+                                    </div>
+                                @endif
 
-                                        <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between w-100">
-                                            <div class="d-flex align-items-center gap-3 flex-wrap">
-                                                <div class="status-badge {{ $estadoColor }}">
-                                                    <i class="mdi {{ $estadoIcon }}"></i>
-                                                    {{ $estadoTexto }}
-                                                </div>
-                                                <div class="text-muted d-none d-md-block">
-                                                    <i class="mdi mdi-clock-outline me-1"></i>
-                                                    {{ $horaFin->diffInHours($horaInicio) }} hora{{ $horaFin->diffInHours($horaInicio) > 1 ? 's' : '' }}
-                                                </div>
-                                            </div>
-                                            <div class="d-flex gap-2 flex-wrap">
-                                                @if($puedeRegistrarTema)
-                                                    <button class="action-button btn-primary btn-sm" 
-                                                            onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}')">
-                                                        <i class="mdi mdi-{{ $asistencia ? 'pencil' : 'plus' }}"></i>
-                                                        {{ $asistencia ? 'Editar Tema' : 'Registrar Tema' }}
-                                                    </button>
-                                                @else
-                                                    <button class="action-button outline btn-sm" disabled>
-                                                        <i class="mdi mdi-lock"></i>
-                                                        No disponible
-                                                    </button>
-                                                @endif
-                                            </div>
-                                        </div>
+                                <div class="session-footer">
+                                    <div class="status-badge {{ $estadoConfig['color'] }}">
+                                        <i class="mdi {{ $estadoConfig['icono'] }}"></i>
+                                        {{ $estadoConfig['texto'] }}
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        {{-- El botón de registrar tema solo debe aparecer si la clase ya pasó --}}
+                                        @if($item['puede_registrar_tema'])
+                                            <button class="action-button btn-sm" onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}')">
+                                                <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
+                                                {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
+                                            </button>
+                                        @else
+                                            <button class="action-button outline btn-sm" disabled title="Solo se puede registrar el tema de clases finalizadas y con registro de entrada/salida.">
+                                                <i class="mdi mdi-lock-outline"></i>
+                                                Registrar Tema
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
-                    @else
-                        <div class="text-center py-5 text-gray-500">
-                            <i class="mdi mdi-calendar-remove" style="font-size: 4rem;"></i>
-                            <h5 class="mt-3">No tienes sesiones programadas para hoy</h5>
-                            <p>Disfruta tu día libre o revisa tu horario semanal</p>
                         </div>
-                    @endif
+                    @empty
+                        <div class="text-center py-5 text-muted">
+                            <i class="mdi mdi-calendar-remove" style="font-size: 4rem;"></i>
+                            <h5 class="mt-3 fw-bold">Sin Sesiones</h5>
+                            <p>No se encontraron sesiones programadas para la fecha seleccionada.</p>
+                        </div>
+                    
+                    @endforelse
                 </div>
             </div>
         </div>
 
         <!-- Sidebar Derecho -->
         <div class="col-lg-4">
+            @if($proximaClase)
+                <div class="sidebar-card">
+                    <h6 class="sidebar-card-title"><i class="mdi mdi-skip-next-circle-outline"></i> Próxima Clase</h6>
+                    <div>
+                        <h6 class="mb-1 fw-bold">{{ $proximaClase->curso->nombre ?? 'Sin curso' }}</h6>
+                        <p class="mb-2 text-muted"><i class="mdi mdi-map-marker-outline me-1"></i> {{ $proximaClase->aula->nombre ?? 'Sin aula' }}</p>
+                        <div class="p-2 rounded" style="background-color: var(--primary-light); color: var(--primary-text);">
+                            <i class="mdi mdi-calendar-clock me-1"></i>
+                            <strong>{{ ucfirst($proximaClase->dia_semana) }}</strong> a las <strong>{{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('h:i A') }}</strong>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if(count($recordatorios) > 0)
                 <div class="sidebar-card">
-                    <div class="sidebar-card-header">
-                        <h6 class="sidebar-card-title">
-                            <i class="mdi mdi-bell-outline"></i>
-                            Recordatorios
-                        </h6>
-                    </div>
+                    <h6 class="sidebar-card-title"><i class="mdi mdi-bell-ring-outline"></i> Recordatorios</h6>
                     <div>
                         @foreach($recordatorios as $recordatorio)
-                            <div class="recordatorio {{ $recordatorio['tipo'] }}">
-                                <i class="mdi mdi-alert-circle"></i>
-                                {{ $recordatorio['mensaje'] }}
+                            <div class="alert alert-{{ $recordatorio['tipo'] }} d-flex align-items-center p-2" role="alert">
+                                <i class="mdi mdi-alert-circle-outline me-2"></i>
+                                <small>{{ $recordatorio['mensaje'] }}</small>
                             </div>
                         @endforeach
                     </div>
                 </div>
             @endif
-
-            @if($proximaClase)
-                <div class="sidebar-card">
-                    <div class="sidebar-card-header">
-                        <h6 class="sidebar-card-title">
-                            <i class="mdi mdi-clock-outline"></i>
-                            Próxima Clase
-                        </h6>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <div>
-                            <h6 class="mb-1">
-                                <i class="mdi mdi-book-open-variant me-2 text-primary"></i>
-                                {{ $proximaClase->curso->nombre ?? 'Sin curso' }}
-                            </h6>
-                            <p class="mb-1 text-muted">
-                                <i class="mdi mdi-map-marker me-2"></i>
-                                {{ $proximaClase->aula->nombre ?? 'Sin aula' }}
-                            </p>
-                            <small class="text-primary">
-                                <i class="mdi mdi-calendar-clock me-2"></i>
-                                {{ ucfirst($proximaClase->dia_semana) }} - 
-                                {{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('H:i') }}
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
+            
             <div class="sidebar-card">
-                <div class="sidebar-card-header">
-                    <h6 class="sidebar-card-title">
-                        <i class="mdi mdi-chart-line"></i>
-                        Resumen Semanal
-                    </h6>
-                    <small class="text-muted">
-                        {{ \Carbon\Carbon::now()->subDays(6)->format('d/m') }} - 
-                        {{ \Carbon\Carbon::now()->format('d/m') }}
-                    </small>
-                </div>
+                <h6 class="sidebar-card-title"><i class="mdi mdi-chart-donut"></i> Resumen Semanal</h6>
                 <div class="row text-center">
-                    <div class="col-6 mb-4">
-                        <div class="stat-summary">
-                            <div class="stat-summary-value text-primary">
-                                <i class="mdi mdi-calendar-check mb-2" style="font-size: 2rem;"></i>
-                                <div>{{ $resumenSemanal['sesiones'] }}</div>
-                            </div>
-                            <div class="stat-summary-label">Sesiones</div>
-                        </div>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <div class="stat-summary">
-                            <div class="stat-summary-value text-success">
-                                <i class="mdi mdi-clock mb-2" style="font-size: 2rem;"></i>
-                                <div>{{ $resumenSemanal['horas'] }}</div>
-                            </div>
-                            <div class="stat-summary-label">Horas</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="stat-summary">
-                            <div class="stat-summary-value text-info">
-                                <i class="mdi mdi-currency-usd mb-2" style="font-size: 2rem;"></i>
-                                <div>S/. {{ number_format($resumenSemanal['ingresos'], 0) }}</div>
-                            </div>
-                            <div class="stat-summary-label">Ingresos</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="stat-summary">
-                            <div class="stat-summary-value text-warning">
-                                <i class="mdi mdi-chart-arc mb-2" style="font-size: 2rem;"></i>
-                                <div>{{ $resumenSemanal['asistencia'] }}%</div>
-                            </div>
-                            <div class="stat-summary-label">Asistencia</div>
-                        </div>
-                    </div>
+                    <div class="col-6 mb-3"><div class="fs-4 fw-bold text-primary">{{ $resumenSemanal['sesiones'] }}</div><small class="text-muted">Sesiones</small></div>
+                    <div class="col-6 mb-3"><div class="fs-4 fw-bold text-success">{{ $resumenSemanal['horas'] }}</div><small class="text-muted">Horas</small></div>
+                    <div class="col-6"><div class="fs-4 fw-bold text-info">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div><small class="text-muted">Ingresos</small></div>
+                    <div class="col-6"><div class="fs-4 fw-bold text-warning">{{ $resumenSemanal['asistencia'] }}%</div><small class="text-muted">Asistencia</small></div>
                 </div>
             </div>
         </div>
@@ -831,49 +698,80 @@
 
 <!-- Modal para registrar tema desarrollado -->
 <div class="modal fade" id="modalTemaDesarrollado" tabindex="-1" aria-labelledby="modalTemaDesarrolladoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTemaDesarrolladoLabel">
-                    <i class="mdi mdi-clipboard-text me-2"></i>
-                    Registrar Tema Desarrollado
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <h5 class="modal-title" id="modalTemaDesarrolladoLabel"><i class="mdi mdi-clipboard-edit-outline me-2"></i>Registrar Tema Desarrollado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form id="formTemaDesarrollado">
+            <form id="formTemaDesarrollado" class="p-4">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body p-0">
                     <input type="hidden" id="horario_id" name="horario_id">
-                    
-                    <div id="alertContainer"></div>
-                    
-                    <div class="alert alert-info">
-                        <i class="mdi mdi-information me-2"></i>
-                        <strong>Importante:</strong> Solo puedes registrar el tema durante la clase o después de que termine, siempre que tengas los registros biométricos correspondientes.
-                    </div>
-                    
+                    {{-- AÑADIDO: Input oculto para la fecha seleccionada del calendario --}}
+                    <input type="hidden" id="fecha_seleccionada_input_oculto" name="fecha_seleccionada" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
+                    <div id="alertContainer" class="mb-3"></div>
                     <div class="mb-3">
-                        <label for="tema_desarrollado" class="form-label">
-                            <i class="mdi mdi-notebook me-2"></i>
-                            Tema Desarrollado *
-                        </label>
-                        <textarea class="form-control" id="tema_desarrollado" name="tema_desarrollado" 
-                                  rows="5" required 
-                                  placeholder="Describe detalladamente el tema desarrollado en esta sesión..."></textarea>
-                        <div class="form-text">Mínimo 10 caracteres, máximo 1000 caracteres. <span id="contador">0/1000</span></div>
+                        <label for="tema_desarrollado" class="form-label fw-bold">Tema y Actividades Realizadas *</label>
+                        <textarea class="form-control" id="tema_desarrollado" name="tema_desarrollado" rows="6" required placeholder="Sea específico sobre los temas cubiertos, ejemplos mostrados y actividades realizadas..."></textarea>
+                        <div class="form-text d-flex justify-content-between mt-1">
+                            <span>Mínimo 10 caracteres.</span>
+                            <span id="contador">0/1000</span>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        <i class="mdi mdi-close me-1"></i>
-                        Cancelar
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="btnGuardarTema">
+                <div class="modal-footer border-0 p-0 pt-3">
+                    <button type="button" class="action-button outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="action-button" id="btnGuardarTema">
                         <i class="mdi mdi-content-save me-1"></i>
-                        Guardar Tema
+                        <span>Guardar Tema</span>
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Anuncios -->
+<div class="modal fade" id="modalAnuncios" tabindex="-1" aria-labelledby="modalAnunciosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAnunciosLabel"><i class="mdi mdi-bullhorn-variant-outline me-2"></i>Anuncios Importantes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted">Por favor, tome un momento para revisar las siguientes directrices sobre el registro de asistencia y temas.</p>
+                <ul class="mt-3">
+                    <li>
+                        <i class="mdi mdi-clock-alert-outline announcement-icon"></i>
+                        <div>
+                            <strong class="d-block">Tolerancia de 5 Minutos</strong>
+                            Se permite un máximo de 5 minutos de tolerancia para el registro de su hora de entrada. Pasado este tiempo, se considerará tardanza.
+                        </div>
+                    </li>
+                    <li>
+                        <i class="mdi mdi-login-variant announcement-icon"></i>
+                        <div>
+                            <strong class="d-block">Registro de Entrada y Salida</strong>
+                            Es obligatorio registrar tanto su hora de entrada como su hora de salida para que las horas de clase sean contabilizadas correctamente.
+                        </div>
+                    </li>
+                    <li>
+                        <i class="mdi mdi-book-edit-outline announcement-icon"></i>
+                        <div>
+                            <strong class="d-block">Registro del Tema Desarrollado</strong>
+                            No olvide registrar el tema desarrollado al finalizar cada sesión. Este paso es crucial para el seguimiento académico y la validación de su trabajo.
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="action-button" data-bs-dismiss="modal">
+                    <i class="mdi mdi-check-circle-outline me-1"></i>
+                    <span>Entendido</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -882,153 +780,143 @@
 
 @push('js')
 <script>
-    // Actualizar hora cada minuto
-    setInterval(function() {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('es-PE', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: true 
-        });
-        document.getElementById('current-time').textContent = timeString;
-    }, 60000);
-
-    // Función para abrir modal de tema desarrollado
-    function abrirModalTema(horarioId, temaExistente = '') {
-        const modal = new bootstrap.Modal(document.getElementById('modalTemaDesarrollado'));
-        
-        // Configurar formulario
-        document.getElementById('horario_id').value = horarioId;
-        document.getElementById('tema_desarrollado').value = temaExistente;
-        
-        // Actualizar título del modal
-        const titulo = document.getElementById('modalTemaDesarrolladoLabel');
-        if (temaExistente) {
-            titulo.innerHTML = '<i class="mdi mdi-pencil me-2"></i>Editar Tema Desarrollado';
-        } else {
-            titulo.innerHTML = '<i class="mdi mdi-clipboard-text me-2"></i>Registrar Tema Desarrollado';
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar modal de anuncios una vez por sesión
+        if (!sessionStorage.getItem('anunciosVistos')) {
+            const modalAnuncios = new bootstrap.Modal(document.getElementById('modalAnuncios'));
+            modalAnuncios.show();
+            sessionStorage.setItem('anunciosVistos', 'true');
         }
-        
-        // Limpiar alertas y actualizar contador
-        document.getElementById('alertContainer').innerHTML = '';
-        actualizarContador();
-        
-        modal.show();
-    }
 
-    // Contador de caracteres
-    document.getElementById('tema_desarrollado').addEventListener('input', actualizarContador);
+        // --- Lógica existente ---
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            setInterval(() => {
+                const now = new Date();
+                timeElement.textContent = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            }, 1000);
+        }
+
+        const form = document.getElementById('formTemaDesarrollado');
+        if (form) form.addEventListener('submit', handleFormSubmit);
+
+        const textarea = document.getElementById('tema_desarrollado');
+        if (textarea) {
+            textarea.addEventListener('input', actualizarContador);
+            actualizarContador();
+        }
+    });
 
     function actualizarContador() {
         const textarea = document.getElementById('tema_desarrollado');
         const contador = document.getElementById('contador');
         const actual = textarea.value.length;
-        
-        contador.textContent = `${actual}/1000`;
-        
-        if (actual < 10) {
-            contador.style.color = '#dc2626';
-        } else if (actual > 900) {
-            contador.style.color = '#f59e0b';
-        } else {
-            contador.style.color = '#22c55e';
-        }
+        const max = 1000;
+        contador.textContent = `${actual}/${max}`;
+        if (actual < 10) contador.style.color = 'var(--danger-text)';
+        else if (actual > max * 0.9) contador.style.color = 'var(--warning-text)';
+        else contador.style.color = 'var(--success-text)';
     }
 
-    // Manejar envío del formulario
-    document.getElementById('formTemaDesarrollado').addEventListener('submit', function(e) {
+    function abrirModalTema(horarioId, temaExistente = '') {
+        const modalElement = document.getElementById('modalTemaDesarrollado');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        document.getElementById('horario_id').value = horarioId;
+        document.getElementById('tema_desarrollado').value = temaExistente;
+
+        // AÑADIDO: Asegurarse de que el input oculto de la fecha tenga la fecha actual del calendario
+        const fechaAgendaInput = document.getElementById('fecha-agenda');
+        if (fechaAgendaInput) {
+            document.getElementById('fecha_seleccionada_input_oculto').value = fechaAgendaInput.value;
+        }
+
+        const titulo = document.getElementById('modalTemaDesarrolladoLabel');
+        const btnGuardar = document.getElementById('btnGuardarTema').querySelector('span');
+        if (temaExistente) {
+            titulo.innerHTML = '<i class="mdi mdi-pencil-circle-outline me-2"></i>Editar Tema Desarrollado';
+            btnGuardar.textContent = 'Actualizar Tema';
+        } else {
+            titulo.innerHTML = '<i class="mdi mdi-clipboard-edit-outline me-2"></i>Registrar Tema Desarrollado';
+            btnGuardar.textContent = 'Guardar Tema';
+        }
+        document.getElementById('alertContainer').innerHTML = '';
+        actualizarContador();
+        modal.show();
+    }
+
+    function handleFormSubmit(e) {
         e.preventDefault();
-        
         const btnGuardar = document.getElementById('btnGuardarTema');
-        const originalText = btnGuardar.innerHTML;
-        
-        // Validación básica
-        const tema = document.getElementById('tema_desarrollado').value.trim();
-        if (tema.length < 10) {
-            mostrarAlertEnModal('danger', 'El tema debe tener al menos 10 caracteres');
+        const btnText = btnGuardar.querySelector('span');
+        const originalText = btnText.textContent;
+        if (document.getElementById('tema_desarrollado').value.trim().length < 10) {
+            mostrarAlertEnModal('danger', 'El tema debe tener al menos 10 caracteres.');
             return;
         }
-        
-        // Deshabilitar botón y mostrar loading
         btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-        
-        // Limpiar alertas previas
+        btnText.textContent = 'Guardando...';
+        btnGuardar.insertAdjacentHTML('afterbegin', '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>');
         document.getElementById('alertContainer').innerHTML = '';
         
-        const formData = new FormData(this);
-        
-        fetch('{{ route("docente.tema-guardar") }}', {
+        const formData = new FormData(e.target);
+        // AÑADIDO: Obtener la fecha seleccionada del input oculto
+        const fechaSeleccionada = document.getElementById('fecha_seleccionada_input_oculto').value;
+        // AÑADIDO: Agregar la fecha seleccionada al FormData antes de enviarlo
+        formData.append('fecha_seleccionada', fechaSeleccionada);
 
+        fetch('{{ route("docente.tema-guardar") }}', {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            headers: { 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 
+                'Accept': 'application/json' 
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 mostrarAlertEnModal('success', data.message);
-                
-                // Cerrar modal y recargar después de 2 segundos
                 setTimeout(() => {
-                    bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado')).hide();
-                    location.reload();
-                }, 2000);
+                    const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                    // CORRECCIÓN CLAVE: Recargar la página con la fecha seleccionada
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('fecha', fechaSeleccionada); // Establece o actualiza el parámetro 'fecha'
+                    window.location.href = currentUrl.toString(); // Recarga la página con la URL correcta
+                }, 1500);
             } else {
-                let mensaje = data.message;
+                let mensaje = data.message || 'Ocurrió un error.';
                 if (data.errors) {
-                    mensaje += '<ul class="mt-2 mb-0">';
-                    Object.values(data.errors).forEach(error => {
-                        if (Array.isArray(error)) {
-                            error.forEach(err => mensaje += `<li>${err}</li>`);
-                        } else {
-                            mensaje += `<li>${error}</li>`;
-                        }
-                    });
+                    mensaje += '<ul class="mt-2 mb-0 ps-3">';
+                    Object.values(data.errors).flat().forEach(error => mensaje += `<li>${error}</li>`);
                     mensaje += '</ul>';
                 }
                 mostrarAlertEnModal('danger', mensaje);
+                resetButton();
             }
         })
         .catch(error => {
             console.error('Error:', error);
             mostrarAlertEnModal('danger', 'Error de conexión. Por favor, inténtalo de nuevo.');
-        })
-        .finally(() => {
-            // Restaurar botón
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = originalText;
+            resetButton();
         });
-    });
 
-    // Función para mostrar alertas en el modal
-    function mostrarAlertEnModal(tipo, mensaje) {
-        const alertContainer = document.getElementById('alertContainer');
-        const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
-        const icon = tipo === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle';
-        
-        alertContainer.innerHTML = `
-            <div class="alert ${alertClass}" role="alert">
-                <i class="mdi ${icon} me-2"></i>
-                ${mensaje}
-            </div>
-        `;
-        
-        // Scroll hacia arriba del modal
-        document.querySelector('.modal-body').scrollTop = 0;
+        function resetButton() {
+            btnGuardar.disabled = false;
+            btnText.textContent = originalText;
+            const spinner = btnGuardar.querySelector('.spinner-border');
+            if(spinner) spinner.remove();
+        }
     }
 
-    // Cerrar alertas automáticamente después de 5 segundos
-    setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            if (alert.classList.contains('alert-success')) {
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 300);
-            }
-        });
-    }, 5000);
+    function mostrarAlertEnModal(tipo, mensaje) {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertClass = `alert-dismissible alert alert-${tipo} d-flex align-items-center`;
+        const icon = tipo === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle';
+        alertContainer.innerHTML = `<div class="${alertClass}" role="alert"><i class="mdi ${icon} me-2 fs-5"></i><div>${mensaje}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        document.querySelector('.modal-body').scrollTop = 0;
+    }
 </script>
 @endpush

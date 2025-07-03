@@ -5,8 +5,8 @@ namespace App\Exports;
 use App\Models\AsistenciaDocente;
 use App\Models\User; 
 use App\Models\HorarioDocente;
-use AppModels\PagoDocente; // Importa el modelo PagoDocente
-use AppModels\Ciclo; // Importa el modelo Ciclo para la relación
+use App\Models\PagoDocente; // Importa el modelo PagoDocente
+use App\Models\Ciclo; // Importa el modelo Ciclo para la relación
 
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -17,10 +17,12 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use Carbon\Carbon;
 use Illuminate\Support\Collection; 
 
+/**
+ * Esta clase genera un REPORTE DETALLADO de asistencia de docentes,
+ * mostrando cada sesión y agrupando los resultados por semana y mes.
+ */
 class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithEvents
 {
-    // La tarifa por minuto fija se remueve si es dinámica por docente.
-    // const TARIFA_POR_MINUTO = 3.00; 
     private $dataRows = []; 
     private $currentRow = 1; 
     private $processedData; 
@@ -29,15 +31,15 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
     private $selectedMonth;
     private $selectedYear;
     private $fechaInicio; 
-    private $fechaFin;    
+    private $fechaFin;      
     private $selectedCicloAcademico; 
 
 
     public function __construct($selectedDocenteId = null, $selectedMonth = null, $selectedYear = null, $fechaInicio = null, $fechaFin = null, $selectedCicloAcademico = null)
     {
         $this->selectedDocenteId = $selectedDocenteId;
-        $this->selectedMonth = (int)($selectedMonth ?? Carbon::now()->month);
-        $this->selectedYear = (int)($selectedYear ?? Carbon::now()->year);
+        $this->selectedMonth = $selectedMonth ? (int)$selectedMonth : null;
+        $this->selectedYear = $selectedYear ? (int)$selectedYear : null;
         $this->fechaInicio = $fechaInicio;
         $this->fechaFin = $fechaFin;
         $this->selectedCicloAcademico = $selectedCicloAcademico;
@@ -56,12 +58,8 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                                 ->whereYear('fecha_hora', $this->selectedYear);
         }
         
-        // ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
-        // Filtra por ciclo académico a través de la relación con HorarioDocente y luego con Ciclo
-        // Asume que la relación 'ciclo' en HorarioDocente apunta a la columna 'codigo' en la tabla 'ciclos'
         if ($this->selectedCicloAcademico) {
             $asistenciasRawQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
-                // Aquí 'codigo' se refiere a la columna 'codigo' en tu tabla 'ciclos'
                 $query->where('codigo', $selectedCicloAcademico); 
             });
         }
@@ -69,53 +67,68 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
         $asistenciasRaw = $asistenciasRawQuery->get();
 
         $processedData = [];
-        $groupedByDocenteDateHorario = $asistenciasRaw->groupBy(function ($item) {
-            return $item->docente_id . '_' . Carbon::parse($item->fecha_hora)->format('Y-m-d') . '_' . $item->horario_id;
-        });
+        // Agrupamos por docente y por día
+        $groupedByDocenteDate = $asistenciasRaw->groupBy(function ($item) {
+            if ($item && $item->fecha_hora) {
+                return $item->docente_id . '_' . Carbon::parse($item->fecha_hora)->format('Y-m-d');
+            }
+            return null;
+        })->filter();
 
-        foreach ($groupedByDocenteDateHorario as $groupKey => $records) {
-            $docenteId = $records->first()->docente_id;
-            $fecha = Carbon::parse($records->first()->fecha_hora)->format('Y-m-d');
-            $horarioId = $records->first()->horario_id;
+        foreach ($groupedByDocenteDate as $groupKey => $recordsDelDia) {
+            if ($recordsDelDia->isEmpty()) {
+                continue;
+            }
 
-            $entrada = $records->where('estado', 'entrada')->sortBy('fecha_hora')->first();
-            $salida = $records->where('estado', 'salida')->sortByDesc('fecha_hora')->first();
-
-            $horaEntrada = $entrada ? Carbon::parse($entrada->fecha_hora) : null;
-            $horaSalida = $salida ? Carbon::parse($salida->fecha_hora) : null;
-            $temaDesarrollado = $salida->tema_desarrollado ?? ($entrada->tema_desarrollado ?? 'N/A');
+            $docenteId = $recordsDelDia->first()->docente_id;
+            $fecha = Carbon::parse($recordsDelDia->first()->fecha_hora)->format('Y-m-d');
+            
+            // LÓGICA SIMPLIFICADA: Encontrar la primera entrada y la última salida del DÍA.
+            $earliestEntryRecord = $recordsDelDia->where('estado', 'entrada')->sortBy('fecha_hora')->first();
+            $latestExitRecord = $recordsDelDia->where('estado', 'salida')->sortByDesc('created_at')->first();
 
             $horasDictadas = 0;
-            $montoTotal = 0;
-
-            // Si 'horas_dictadas' ya están en la DB, úsalas.
-            if ($salida && $salida->horas_dictadas !== null) { 
-                $horasDictadas = $salida->horas_dictadas;
-            } elseif ($entrada && $entrada->horas_dictadas !== null) {
-                $horasDictadas = $entrada->horas_dictadas;
-            } else { // Recalcula si no están en DB
-                if ($horaEntrada && $horaSalida && Carbon::parse($salida->fecha_hora)->greaterThan(Carbon::parse($entrada->fecha_hora))) {
-                    $minutosDictados = Carbon::parse($salida->fecha_hora)->diffInMinutes($horaEntrada);
-                    $horasDictadas = round($minutosDictados / 60, 2);
+            if ($earliestEntryRecord && $latestExitRecord) {
+                $hEntrada = Carbon::parse($earliestEntryRecord->fecha_hora);
+                $hSalida = Carbon::parse($latestExitRecord->created_at);
+                if ($hSalida->greaterThan($hEntrada)) {
+                    $horasDictadas = round($hSalida->diffInMinutes($hEntrada) / 60, 2);
                 }
             }
             
-            // Obtener la tarifa dinámica desde PagoDocente
+            // Para mostrar la información, tomamos como referencia el primer registro del día
+            $referenceRecord = $recordsDelDia->first();
+            $horario = $referenceRecord->horario;
+            
+            $curso = $horario->curso->nombre ?? 'N/A';
+            $aula = $horario->aula->nombre ?? 'N/A';
+            $turno = $horario->turno ?? 'N/A';
+            
+            // Tomar el último tema desarrollado del día
+            $temaRecord = $recordsDelDia->where('tema_desarrollado', '!=', null)->sortByDesc('fecha_hora')->first();
+            $temaDesarrollado = $temaRecord->tema_desarrollado ?? 'N/A';
+
+            // Horas para mostrar en el reporte
+            $horaEntradaDisplay = $earliestEntryRecord ? Carbon::parse($earliestEntryRecord->fecha_hora)->format('H:i a') : 'N/A';
+            $horaSalidaDisplay = $latestExitRecord ? Carbon::parse($latestExitRecord->created_at)->format('H:i a') : 'N/A';
+
+            // CÁLCULO DE PAGO
             $tarifaPorHoraAplicable = 0;
-            if ($horasDictadas > 0 && $entrada) { // Solo si hay horas y un punto de referencia de fecha
+            $referenceDateForPayment = $earliestEntryRecord ? $earliestEntryRecord->fecha_hora : null;
+
+            if ($horasDictadas > 0 && $referenceDateForPayment) { 
                 $pagoDocente = PagoDocente::where('docente_id', $docenteId)
-                    ->whereDate('fecha_inicio', '<=', $entrada->fecha_hora) // Fecha del registro de asistencia
-                    ->whereDate('fecha_fin', '>=', $entrada->fecha_hora)
+                    ->whereDate('fecha_inicio', '<=', $referenceDateForPayment) 
+                    ->whereDate('fecha_fin', '>=', $referenceDateForPayment)
                     ->first();
                 if ($pagoDocente) {
                     $tarifaPorHoraAplicable = $pagoDocente->tarifa_por_hora;
                 }
             }
-            // ¡¡¡CORRECCIÓN DE FÓRMULA DE PAGO AQUÍ!!!
-            // Si tarifa_por_hora es por HORA, se multiplica directamente por las horas dictadas (que ya están en horas).
             $montoTotal = $horasDictadas * $tarifaPorHoraAplicable; 
 
-            $processedData[$docenteId]['docente_info'] = $records->first()->docente;
+            // Asignar los datos procesados para el reporte
+            $processedData[$docenteId]['docente_info'] = $recordsDelDia->first()->docente;
             $monthKey = Carbon::parse($fecha)->format('Y-m');
             $processedData[$docenteId]['months'][$monthKey]['month_name'] = Carbon::parse($fecha)->locale('es')->monthName;
             $weekKey = Carbon::parse($fecha)->weekOfYear;
@@ -123,12 +136,12 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
             
             $processedData[$docenteId]['months'][$monthKey]['weeks'][$weekKey]['details'][] = [
                 'fecha' => $fecha,
-                'curso' => $records->first()->horario->curso->nombre ?? 'N/A',
+                'curso' => $curso,
                 'tema_desarrollado' => $temaDesarrollado,
-                'aula' => $records->first()->horario->aula->nombre ?? 'N/A',
-                'turno' => $records->first()->horario->turno ?? 'N/A',
-                'hora_entrada' => $horaEntrada ? $horaEntrada->format('H:i a') : 'N/A',
-                'hora_salida' => $horaSalida ? $horaSalida->format('H:i a') : 'N/A',
+                'aula' => $aula,
+                'turno' => $turno,
+                'hora_entrada' => $horaEntradaDisplay,
+                'hora_salida' => $horaSalidaDisplay,
                 'horas_dictadas' => $horasDictadas,
                 'pago' => $montoTotal,
             ];
@@ -141,7 +154,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
         $this->dataRows = new Collection();
         $this->currentRow = 1; 
 
-        // Rango de fechas dinámico para el encabezado del reporte
         $rangoFechasHeader = 'PERIODO: ';
         if ($this->fechaInicio && $this->fechaFin) {
             $rangoFechasHeader .= Carbon::parse($this->fechaInicio)->format('d/m/Y') . ' - ' . Carbon::parse($this->fechaFin)->format('d/m/Y');
@@ -151,44 +163,40 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
             $rangoFechasHeader .= 'Todo el Historial';
         }
 
-        // Si se seleccionó un ciclo académico, agregarlo al encabezado
         if ($this->selectedCicloAcademico) {
             $rangoFechasHeader .= ' - CICLO: ' . $this->selectedCicloAcademico;
         }
 
-
-        // Agregar encabezados generales
         $this->dataRows->push([
             'UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS', 
-            '', '', '', '', '', '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '', '', '', '', ''
         ]);
         $this->currentRow++;
         $this->dataRows->push([
             'CENTRO PRE UNIVERSITARIO', 
-            '', '', '', '', '', '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '', '', '', '', ''
         ]);
         $this->currentRow++;
         $this->dataRows->push(['']); 
         $this->currentRow++;
         $this->dataRows->push([
             'REPORTE DE ASISTENCIA DOCENTE', 
-            '', '', '', '', '', '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '', '', '', '', ''
         ]);
         $this->currentRow++;
         $this->dataRows->push([
             'INFORME DE AVANCE ACADÉMICO', 
-            '', '', '', '', '', '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '', '', '', '', ''
         ]);
         $this->currentRow++;
         $this->dataRows->push([
             $rangoFechasHeader, 
-            '', '', '', '', '', '', '', '', '', '', '', ''
+            '', '', '', '', '', '', '', '', '', '', ''
         ]);
         $this->currentRow++;
         $this->dataRows->push(['']); 
         $this->currentRow++;
 
-        // Encabezados de la tabla principal
         $this->dataRows->push([
             'DOCENTE', 'MES', 'SEMANA', 'FECHA', 'CURSO', 'TEMA DESARROLLADO', 'AULA', 'TURNO', 'HORA ENTRADA', 'HORA SALIDA', 'HORAS DICTADAS', 'PAGO'
         ]);
@@ -302,11 +310,9 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 
-                // === Estilos y combinaciones de celdas para el encabezado ===
                 $startHeaderRow = 1; 
                 $endHeaderRow = 7; 
 
-                // UNAMAD (A1:L1)
                 $sheet->mergeCells('A1:L1');
                 $sheet->setCellValue('A1', 'UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS');
                 $sheet->getStyle('A1')->applyFromArray([
@@ -314,7 +320,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // CENTRO PRE UNIVERSITARIO (A2:L2)
                 $sheet->mergeCells('A2:L2');
                 $sheet->setCellValue('A2', 'CENTRO PRE UNIVERSITARIO');
                 $sheet->getStyle('A2')->applyFromArray([
@@ -322,7 +327,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // REPORTE DE ASISTENCIA DOCENTE (A4:L4)
                 $sheet->mergeCells('A4:L4');
                 $sheet->setCellValue('A4', 'REPORTE DE ASISTENCIA DOCENTE');
                 $sheet->getStyle('A4')->applyFromArray([
@@ -330,7 +334,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // INFORME DE AVANCE ACADÉMICO (A5:L5)
                 $sheet->mergeCells('A5:L5');
                 $sheet->setCellValue('A5', 'INFORME DE AVANCE ACADÉMICO');
                 $sheet->getStyle('A5')->applyFromArray([
@@ -338,7 +341,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // Encabezado de Periodo (A6:L6)
                 $sheet->mergeCells('A6:L6');
                 $rangoFechasHeader = 'PERIODO: ';
                 if ($this->fechaInicio && $this->fechaFin) {
@@ -357,7 +359,6 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
                 ]);
 
-                // Encabezados de la tabla (fila 8)
                 $sheet->getStyle('A8:L8')->applyFromArray([
                     'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 
                     'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF366092']], 
@@ -366,8 +367,7 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                 ]);
                 $sheet->getRowDimension(8)->setRowHeight(20); 
 
-                // Lógica para aplicar estilos y combinaciones de celdas a los datos procesados
-                $actualRowIndex = $endHeaderRow + 2; // La primera fila de datos después de los encabezados (fila 9)
+                $actualRowIndex = $endHeaderRow + 2;
 
                 foreach ($this->processedData as $docenteId => $docenteData) {
                     $docenteStartRow = $actualRowIndex;
@@ -406,7 +406,7 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                             ]);
                             $sheet->mergeCells('J'.$actualRowIndex.':K'.$actualRowIndex); 
                             $actualRowIndex++;
-                            $sheet->mergeCells('C'.$weekStartRow.':C'.($actualRowIndex - 1));
+                            $sheet->mergeCells('C'.$weekStartRow.':C'.($actualRowIndex - 2));
                             $sheet->getStyle('C'.$weekStartRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                         }
                         $sheet->getStyle('J'.$actualRowIndex.':L'.$actualRowIndex)->applyFromArray([
@@ -415,7 +415,7 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                         ]);
                         $sheet->mergeCells('J'.$actualRowIndex.':K'.$actualRowIndex); 
                         $actualRowIndex++;
-                        $sheet->mergeCells('B'.$monthStartRow.':B'.($actualRowIndex - 1));
+                        $sheet->mergeCells('B'.$monthStartRow.':B'.($actualRowIndex - 2));
                         $sheet->getStyle('B'.$monthStartRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                     }
                     $sheet->getStyle('J'.$actualRowIndex.':L'.$actualRowIndex)->applyFromArray([
@@ -424,7 +424,7 @@ class AsistenciasDocentesExport implements FromCollection, WithHeadings, WithMap
                     ]);
                     $sheet->mergeCells('J'.$actualRowIndex.':K'.$actualRowIndex); 
                     $actualRowIndex++;
-                    $sheet->mergeCells('A'.$docenteStartRow.':A'.($actualRowIndex - 1));
+                    $sheet->mergeCells('A'.$docenteStartRow.':A'.($actualRowIndex - 2));
                     $sheet->getStyle('A'.$docenteStartRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
                     $actualRowIndex++;

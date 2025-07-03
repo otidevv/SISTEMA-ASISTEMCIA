@@ -10,10 +10,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\AsistenciaDocente;
+use App\Models\HorarioDocente; // Asegúrate de que esta línea esté presente
 
 class DashboardController extends Controller
 {
-    public function index()
+    /**
+     * Muestra el dashboard principal basado en el rol del usuario.
+     * Permite a los profesores seleccionar una fecha para ver sus horarios y temas.
+     *
+     * @param Request $request La solicitud HTTP.
+     * @return \Illuminate\View\View La vista del dashboard.
+     */
+    public function index(Request $request)
     {
         $user = Auth::user();
         $data = [];
@@ -109,92 +117,99 @@ class DashboardController extends Controller
         if ($user->hasRole('profesor')) {
             $data['esProfesor'] = true;
             
-            // Obtener horarios del profesor para hoy
-            $hoy = Carbon::now()->format('Y-m-d');
-            $diaSemana = Carbon::now()->locale('es')->dayName;
+            // Obtener la fecha seleccionada del request, o usar la fecha actual por defecto
+            $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
+            $data['fechaSeleccionada'] = $fechaSeleccionada; // Pasar al Blade
             
-            $horariosHoy = \App\Models\HorarioDocente::where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemana)
+            $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            
+            // Obtener horarios del profesor para la fecha seleccionada
+            $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
+                ->where('dia_semana', $diaSemanaSeleccionada)
                 ->with(['aula', 'curso', 'ciclo'])
                 ->orderBy('hora_inicio')
                 ->get();
             
-            $data['horariosHoy'] = $horariosHoy;
-            $data['sesionesHoy'] = $horariosHoy->count();
-            
-           // Obtener registros del biométrico de hoy
-            $registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $hoy)
+            // Obtener registros del biométrico para la fecha seleccionada
+            $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
                 ->orderBy('fecha_registro')
                 ->get();
 
-            $horasHoy = 0;
+            $horasDelDia = 0;
             $sesionesPendientes = 0;
 
-            $horariosHoyConHoras = $horariosHoy->map(function ($horario) use ($registrosHoy, &$horasHoy, $user, &$sesionesPendientes) {
+            $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$horasDelDia, $user, &$sesionesPendientes, $fechaSeleccionada) {
                 $horaInicio = Carbon::parse($horario->hora_inicio);
                 $horaFin = Carbon::parse($horario->hora_fin);
-                $ahora = Carbon::now();
+
+                // Importante: Para el cálculo de `dentroDelHorario` y `claseTerminada` en la vista,
+                // si la fecha seleccionada NO ES HOY, siempre se considerará 'clase terminada'.
+                // Si la fecha seleccionada ES HOY, se usa `Carbon::now()` para la comparación.
+                $momentoActualComparacion = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay(); // Si no es hoy, asumimos que ya pasó el día completo
+
+                // Combinar la fecha seleccionada con las horas del horario
+                $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute, $horaInicio->second);
+                $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
 
                 // Buscar entrada válida (15 min antes hasta 30 min después del inicio)
-                $entrada = $registrosHoy
-                ->filter(function($r) use ($horaInicio) {
+                $entrada = $registrosDelDia
+                ->filter(function($r) use ($horarioInicioHoy) {
                     $horaRegistro = Carbon::parse($r->fecha_registro);
                     return $horaRegistro->between(
-                        $horaInicio->copy()->subMinutes(15),
-                        $horaInicio->copy()->addMinutes(30)
+                        $horarioInicioHoy->copy()->subMinutes(15),
+                        $horarioInicioHoy->copy()->addMinutes(30)
                     );
                 })
                 ->sortBy('fecha_registro')
                 ->first();
 
                 // Buscar salida válida (15 min antes hasta 60 min después del final)
-                $salida = $registrosHoy
-                ->filter(function($r) use ($horaFin) {
+                $salida = $registrosDelDia
+                ->filter(function($r) use ($horarioFinHoy) {
                     $horaRegistro = Carbon::parse($r->fecha_registro);
                     return $horaRegistro->between(
-                        $horaFin->copy()->subMinutes(15),
-                        $horaFin->copy()->addMinutes(60)
+                        $horarioFinHoy->copy()->subMinutes(15),
+                        $horarioFinHoy->copy()->addMinutes(60)
                     );
                 })
                 ->sortByDesc('fecha_registro')
                 ->first();
-            
-
-                // Calcular horas trabajadas
+                
+                // Calcular horas trabajadas para la fecha seleccionada
                 if ($entrada && $salida) {
                     $hEntrada = Carbon::parse($entrada->fecha_registro);
                     $hSalida = Carbon::parse($salida->fecha_registro);
                     if ($hSalida->greaterThan($hEntrada)) {
-                        $horasHoy += $hSalida->diffInMinutes($hEntrada) / 60;
+                        $horasDelDia += $hSalida->diffInMinutes($hEntrada) / 60;
                     }
                 }
 
-                // Buscar asistencia docente (tema desarrollado)
-                $asistencia = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+                // Buscar asistencia docente (tema desarrollado) para la fecha seleccionada
+                $asistencia = AsistenciaDocente::where('docente_id', $user->id)
                     ->where('horario_id', $horario->id)
-                    ->whereDate('fecha_hora', Carbon::today())
+                    ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d')) // IMPORTANTE: Filtrar por la fecha seleccionada
                     ->first();
 
-                // Determinar si puede registrar tema (SOLO DENTRO DEL HORARIO DE CLASE)
-                $dentroDelHorario = $ahora->between($horaInicio, $horaFin);
-                $claseTerminada = $ahora->greaterThan($horaFin);
+                // Determinar estados para la UI (usando $momentoActualComparacion)
+                $dentroDelHorario = $momentoActualComparacion->between($horarioInicioHoy, $horarioFinHoy);
+                $claseTerminada = $momentoActualComparacion->greaterThan($horarioFinHoy);
                 $tieneRegistros = $entrada && $salida;
                 
-                // NUEVA LÓGICA: Solo puede registrar durante la clase O después si tiene registros
+                // Lógica para determinar si se puede registrar tema (Ajustada para fechas anteriores)
                 $puedeRegistrarTema = false;
                 if ($asistencia) {
                     // Ya tiene tema registrado, puede editar
                     $puedeRegistrarTema = true;
-                } elseif ($dentroDelHorario && $entrada) {
-                    // Está dentro del horario y tiene entrada
-                    $puedeRegistrarTema = true;
                 } elseif ($claseTerminada && $tieneRegistros) {
-                    // Clase terminada pero tiene ambos registros
+                    // Clase terminada (hoy o en el pasado) y tiene ambos registros
+                    $puedeRegistrarTema = true;
+                } elseif ($fechaSeleccionada->isToday() && $dentroDelHorario && $entrada) {
+                    // Está dentro del horario HOY y tiene entrada
                     $puedeRegistrarTema = true;
                 }
 
-                // Contar sesiones pendientes
+                // Contar sesiones pendientes (solo para la fecha seleccionada si ya terminó y no tiene tema)
                 if ($claseTerminada && !$asistencia && $tieneRegistros) {
                     $sesionesPendientes++;
                 }
@@ -211,23 +226,24 @@ class DashboardController extends Controller
                 ];
             });
 
-            $data['horasHoy'] = round($horasHoy, 2);
-            $data['horariosHoyConHoras'] = $horariosHoyConHoras;
-            $data['sesionesPendientes'] = $sesionesPendientes;
+            $data['horasHoy'] = round($horasDelDia, 2); // Ahora es horasDelDia
+            $data['horariosDelDia'] = $horariosDelDiaConDetalles; // Renombrado para mayor claridad
+            $data['sesionesHoy'] = $horariosDelDia->count(); // Total de sesiones para la fecha seleccionada
+            $data['sesionesPendientes'] = $sesionesPendientes; // Sesiones pendientes para la fecha seleccionada
 
-            // Calcular pago estimado del día
+            // Calcular pago estimado del día (para la fecha seleccionada)
             $pagoEstimadoHoy = AsistenciaDocente::where('docente_id', $user->id)
-            ->whereDate('fecha_hora', $hoy)
+            ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
             ->sum('monto_total');
-        
+            
             $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
             
-            // Resumen semanal (últimos 7 días)
-            $fechaInicio = Carbon::now()->subDays(6)->startOfDay();
-            $fechaFin = Carbon::now()->endOfDay();
+            // Resumen semanal (últimos 7 días desde hoy, no desde la fecha seleccionada)
+            $fechaInicioSemana = Carbon::now()->subDays(6)->startOfDay();
+            $fechaFinSemana = Carbon::now()->endOfDay();
             
-            $resumenSemanal = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
-                ->whereBetween('fecha_hora', [$fechaInicio, $fechaFin])
+            $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
+                ->whereBetween('fecha_hora', [$fechaInicioSemana, $fechaFinSemana])
                 ->selectRaw('
                     COUNT(*) as total_sesiones,
                     SUM(horas_dictadas) as total_horas,
@@ -243,17 +259,20 @@ class DashboardController extends Controller
                 'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0)
             ];
             
-            // Próxima clase
-            $proximaClase = \App\Models\HorarioDocente::where('docente_id', $user->id)
-                ->where(function($query) use ($hoy, $diaSemana) {
+            // Próxima clase (siempre desde la fecha y hora actuales)
+            $ahora = Carbon::now();
+            $diaActualSemana = $ahora->locale('es')->dayName;
+
+            $proximaClase = HorarioDocente::where('docente_id', $user->id)
+                ->where(function($query) use ($ahora, $diaActualSemana) {
                     // Clases de hoy que aún no han comenzado
-                    $query->where('dia_semana', $diaSemana)
-                          ->where('hora_inicio', '>', Carbon::now()->format('H:i:s'));
+                    $query->where('dia_semana', $diaActualSemana)
+                                ->where('hora_inicio', '>', $ahora->format('H:i:s'));
                 })
-                ->orWhere(function($query) use ($diaSemana) {
+                ->orWhere(function($query) use ($diaActualSemana) {
                     // Clases de días siguientes
                     $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-                    $diaActualIndex = array_search(strtolower($diaSemana), $diasSemana);
+                    $diaActualIndex = array_search(strtolower($diaActualSemana), $diasSemana);
                     $diasSiguientes = array_slice($diasSemana, $diaActualIndex + 1);
                     
                     if (!empty($diasSiguientes)) {
@@ -277,21 +296,34 @@ class DashboardController extends Controller
             
             $data['proximaClase'] = $proximaClase;
             
-            // Recordatorios
+            // Recordatorios (siempre basados en la situación actual)
             $recordatorios = [];
-            if ($sesionesPendientes > 0) {
+            if ($sesionesPendientes > 0) { // Sesiones pendientes de la fecha seleccionada
                 $recordatorios[] = [
                     'tipo' => 'warning',
-                    'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar"
+                    'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . "."
                 ];
             }
             
             if ($proximaClase) {
-                $horasHastaProxima = Carbon::now()->diffInHours(Carbon::parse($proximaClase->hora_inicio));
-                if ($horasHastaProxima <= 5) {
+                // Calcular horas hasta la próxima clase solo si es hoy o en el futuro
+                $horaProximaClase = Carbon::parse($proximaClase->hora_inicio);
+                $diaProximaClase = $this->getFechaParaDiaSemana($proximaClase->dia_semana);
+
+                // Si la próxima clase es hoy y aún no ha pasado su hora
+                if ($diaProximaClase->isToday() && $ahora->lessThan($horaProximaClase)) {
+                    $horasHastaProxima = $ahora->diffInHours($horaProximaClase, false); // false para obtener negativo si ya pasó
+                    if ($horasHastaProxima >= 0 && $horasHastaProxima <= 5) {
+                        $recordatorios[] = [
+                            'tipo' => 'info',
+                            'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es hoy en {$horasHastaProxima} horas."
+                        ];
+                    }
+                } elseif ($diaProximaClase->greaterThan($ahora->startOfDay())) {
+                    // Si es en un día futuro, solo un recordatorio general
                     $recordatorios[] = [
                         'tipo' => 'info',
-                        'mensaje' => "Próxima clase en {$horasHastaProxima} horas"
+                        'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es el {$diaProximaClase->locale('es')->isoFormat('dddd')} a las {$horaProximaClase->format('h:i A')}."
                     ];
                 }
             }
@@ -425,125 +457,108 @@ class DashboardController extends Controller
     }
 
     /**
-     * NUEVA FUNCIÓN: Registrar tema desarrollado con validación de horarios
+     * Registra o actualiza el tema desarrollado por un docente para un horario y fecha específicos.
+     *
+     * @param Request $request La solicitud HTTP que contiene horario_id, fecha_seleccionada y tema_desarrollado.
+     * @return \Illuminate\Http\JsonResponse La respuesta JSON con el resultado de la operación.
      */
     public function registrarTemaDesarrollado(Request $request)
     {
         try {
             $request->validate([
                 'horario_id' => 'required|exists:horarios_docentes,id',
+                'fecha_seleccionada' => 'required|date', // Nueva validación para la fecha
                 'tema_desarrollado' => 'required|string|min:10|max:1000'
             ], [
                 'tema_desarrollado.required' => 'El tema desarrollado es obligatorio',
                 'tema_desarrollado.min' => 'El tema debe tener al menos 10 caracteres',
-                'tema_desarrollado.max' => 'El tema no puede exceder 1000 caracteres'
+                'tema_desarrollado.max' => 'El tema no puede exceder 1000 caracteres',
+                'fecha_seleccionada.required' => 'La fecha es obligatoria',
+                'fecha_seleccionada.date' => 'La fecha debe tener un formato válido'
             ]);
 
             $user = Auth::user();
-            $ahora = Carbon::now();
-            $hoy = $ahora->format('Y-m-d');
-            $diaSemana = $ahora->locale('es')->dayName;
+            $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay(); // Obtener y limpiar la fecha
+            $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
             
-            // Verificar que el horario pertenece al docente y es del día actual
-            $horario = \App\Models\HorarioDocente::where('id', $request->horario_id)
+            // Verificar que el horario pertenece al docente y corresponde al día de la semana de la fecha seleccionada
+            $horario = HorarioDocente::where('id', $request->horario_id)
                 ->where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemana)
+                ->where('dia_semana', $diaSemanaSeleccionada) // Usamos el día de la semana de la fecha seleccionada
                 ->first();
                 
             if (!$horario) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Horario no válido o no corresponde al día actual'
+                    'message' => 'Horario no válido o no corresponde al día de la semana de la fecha seleccionada.'
                 ], 400);
             }
 
-            $horaInicio = Carbon::parse($horario->hora_inicio);
-            $horaFin = Carbon::parse($horario->hora_fin);
+            // Combinar la fecha seleccionada con las horas del horario
+            $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
+            $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
             
-            // VALIDACIÓN ESTRICTA: Solo dentro del horario o después con registros
-            $dentroDelHorario = $ahora->between($horaInicio, $horaFin);
-            $claseTerminada = $ahora->greaterThan($horaFin);
-            
-            if (!$dentroDelHorario && !$claseTerminada) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Solo puedes registrar el tema durante la clase (de ' . $horaInicio->format('H:i') . ' a ' . $horaFin->format('H:i') . ') o después de que termine'
-                ], 400);
-            }
-
-            // Obtener registros biométricos del día
-            $registrosHoy = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $hoy)
+            // Obtener registros biométricos para la FECHA SELECCIONADA
+            $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d')) // Filtrar por la fecha seleccionada
+                ->orderBy('fecha_registro') // Ordenar para encontrar la primera entrada y última salida
                 ->get();
 
-            // Buscar entrada válida
-            $entrada = $registrosHoy->filter(function($r) use ($horaInicio) {
+            // Buscar entrada válida (15 min antes hasta 30 min después del inicio del horario)
+            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
-                    $horaInicio->copy()->subMinutes(15),
-                    $horaInicio->copy()->addMinutes(30)
+                    $horarioInicioClase->copy()->subMinutes(15),
+                    $horarioInicioClase->copy()->addMinutes(30)
                 );
             })->first();
 
-            // Si la clase terminó, verificar que tenga entrada mínimo
-            if ($claseTerminada && !$entrada) {
+            // Buscar salida válida (15 min antes hasta 60 min después del final del horario)
+            $salida = $registrosDiaSeleccionado->filter(function($r) use ($horarioFinClase) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioFinClase->copy()->subMinutes(15),
+                    $horarioFinClase->copy()->addMinutes(60)
+                );
+            })->sortByDesc('fecha_registro')->first(); // Tomar la última salida que cumpla el criterio
+
+            // Validar que existan registros de entrada y salida para poder registrar el tema
+            if (!$entrada || !$salida) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontró registro de entrada válido para esta sesión'
+                    'message' => 'No se encontraron registros biométricos de entrada y/o salida válidos para esta sesión en la fecha seleccionada. No se puede registrar el tema.'
                 ], 400);
-            }
-
-            // Si está dentro del horario, solo necesita entrada
-            if ($dentroDelHorario && !$entrada) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Debes marcar tu entrada antes de registrar el tema'
-                ], 400);
-            }
-
-            // Buscar salida si la clase terminó
-            $salida = null;
-            if ($claseTerminada) {
-                $salida = $registrosHoy->filter(function($r) use ($horaFin) {
-                    $horaRegistro = Carbon::parse($r->fecha_registro);
-                    return $horaRegistro->between(
-                        $horaFin->copy()->subMinutes(15),
-                        $horaFin->copy()->addMinutes(60)
-                    );
-                })->first();
-
-                if (!$salida) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No se encontró registro de salida válido para esta sesión'
-                    ], 400);
-                }
             }
 
             // Calcular datos de asistencia
-            $horaEntrada = $entrada ? Carbon::parse($entrada->fecha_registro) : $ahora;
-            $horaSalida = $salida ? Carbon::parse($salida->fecha_registro) : null;
+            $horaEntrada = Carbon::parse($entrada->fecha_registro);
+            $horaSalida = Carbon::parse($salida->fecha_registro);
             
             $horasTrabajadas = 0;
             $montoTotal = 0;
             
-            if ($horaSalida) {
+            if ($horaSalida->greaterThan($horaEntrada)) {
                 $horasTrabajadas = $horaSalida->diffInMinutes($horaEntrada) / 60;
-                $tarifaHora = $horario->tarifa_hora ?? $user->tarifa_hora ?? 25;
+                $tarifaHora = $horario->tarifa_hora ?? $user->tarifa_hora ?? 25; // Usar tarifa del horario o del usuario, o un valor por defecto
                 $montoTotal = $horasTrabajadas * $tarifaHora;
+            } else {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'Los registros biométricos son inválidos (hora de salida no es mayor que la de entrada).'
+                ], 400);
             }
 
-            // Crear o actualizar registro
-            $asistencia = \App\Models\AsistenciaDocente::updateOrCreate(
+            // Crear o actualizar registro de AsistenciaDocente
+            $asistencia = AsistenciaDocente::updateOrCreate(
                 [
                     'docente_id' => $user->id,
                     'horario_id' => $request->horario_id,
-                    'fecha_hora' => Carbon::today()
+                    'fecha_hora' => $fechaSeleccionada->toDateString() // Usamos la fecha seleccionada
                 ],
                 [
                     'tema_desarrollado' => $request->tema_desarrollado,
-                    'hora_entrada' => $horaEntrada,
-                    'hora_salida' => $horaSalida,
+                    'hora_entrada' => $horaEntrada->toDateTimeString(), // Guardar como datetime
+                    'hora_salida' => $horaSalida->toDateTimeString(),   // Guardar como datetime
                     'horas_dictadas' => round($horasTrabajadas, 2),
                     'monto_total' => round($montoTotal, 2),
                     'estado' => 'completada'
@@ -569,13 +584,19 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar: ' . $e->getMessage()
+                'message' => 'Error al registrar: ' . $e->getMessage() . '. Línea: ' . $e->getLine() . '. Archivo: ' . $e->getFile()
             ], 500);
         }
     }
 
     /**
-     * Calcular asistencia para un examen específico
+     * Calcula la asistencia de un estudiante para un período específico (ej. hasta un examen).
+     *
+     * @param string $numeroDocumento El número de documento del estudiante.
+     * @param string $fechaInicio La fecha de inicio del período de cálculo.
+     * @param string $fechaExamen La fecha del examen o fin del período de cálculo.
+     * @param \App\Models\Ciclo $ciclo El objeto Ciclo para obtener porcentajes de amonestación/inhabilitación.
+     * @return array Un array con los detalles de la asistencia.
      */
     private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
@@ -583,7 +604,7 @@ class DashboardController extends Controller
         $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
         $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
 
-        // Si el examen aún no ha llegado, calcular hasta hoy
+        // Si el examen aún no ha llegado, calcular hasta hoy para una proyección
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
 
         // Si la fecha de inicio es futura (para segundo y tercer examen), no calcular aún
@@ -601,7 +622,7 @@ class DashboardController extends Controller
                 'puede_rendir' => true,
                 'fecha_inicio' => $fechaInicio,
                 'fecha_fin' => $fechaExamen,
-                'es_proyeccion' => $hoy < $fechaExamenCarbon
+                'es_proyeccion' => true // Siempre es proyección si el inicio es futuro
             ];
         }
 
@@ -655,11 +676,11 @@ class DashboardController extends Controller
         if ($hoy >= $fechaExamenCarbon) {
             if ($diasFaltaActuales >= $limiteInhabilitacion) {
                 $estado = 'inhabilitado';
-                $mensaje = 'Has superado el 30% de inasistencias. No pudiste rendir este examen.';
+                $mensaje = 'Has superado el ' . $ciclo->porcentaje_inhabilitacion . '% de inasistencias. No pudiste rendir este examen.';
                 $puedeRendir = false;
             } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
                 $estado = 'amonestado';
-                $mensaje = 'Superaste el 20% de inasistencias pero pudiste rendir el examen.';
+                $mensaje = 'Superaste el ' . $ciclo->porcentaje_amonestacion . '% de inasistencias pero pudiste rendir el examen.';
             } else {
                 $mensaje = 'Tu asistencia fue adecuada para este examen.';
             }
@@ -676,17 +697,17 @@ class DashboardController extends Controller
             } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
                 $estado = 'amonestado';
                 if ($faltasParaInhabilitacion > 0) {
-                    $mensaje = "Tienes {$diasFaltaActuales} faltas. ¡Cuidado! Solo puedes faltar {$faltasParaInhabilitacion} días más antes de ser inhabilitado.";
+                    $mensaje = "Tienes {$diasFaltaActuales} faltas. ¡Cuidado! Solo puedes faltar {$faltasParaInhabilitacion} día" . ($faltasParaInhabilitacion > 1 ? 's' : '') . " más antes de ser inhabilitado.";
                 } else {
                     $mensaje = "Tienes {$diasFaltaActuales} faltas. ¡No puedes faltar más o serás inhabilitado!";
                 }
             } else {
                 $faltasParaAmonestacion = $limiteAmonestacion - $diasFaltaActuales;
-                $mensaje = "Tu asistencia va bien. Tienes {$diasFaltaActuales} faltas. Puedes faltar hasta {$faltasParaAmonestacion} días más sin ser amonestado.";
+                $mensaje = "Tu asistencia va bien. Tienes {$diasFaltaActuales} faltas. Puedes faltar hasta {$faltasParaAmonestacion} día" . ($faltasParaAmonestacion > 1 ? 's' : '') . " más sin ser amonestado.";
             }
 
             // Agregar información de días restantes
-            $mensaje .= " Quedan {$diasRestantes} días hábiles hasta el examen.";
+            $mensaje .= " Quedan {$diasRestantes} día" . ($diasRestantes > 1 ? 's' : '') . " hábil" . ($diasRestantes > 1 ? 'es' : '') . " hasta el examen.";
         }
 
         return [
@@ -710,7 +731,11 @@ class DashboardController extends Controller
     }
 
     /**
-     * Contar días hábiles entre dos fechas (Lunes a Viernes)
+     * Contar días hábiles entre dos fechas (Lunes a Viernes).
+     *
+     * @param string $fechaInicio La fecha de inicio.
+     * @param string $fechaFin La fecha de fin.
+     * @return int El número de días hábiles.
      */
     private function contarDiasHabiles($fechaInicio, $fechaFin)
     {
@@ -729,7 +754,10 @@ class DashboardController extends Controller
     }
 
     /**
-     * Obtener el siguiente día hábil (Lunes a Viernes)
+     * Obtener el siguiente día hábil (Lunes a Viernes) a partir de una fecha dada.
+     *
+     * @param string $fecha La fecha de referencia.
+     * @return \Carbon\Carbon La fecha del siguiente día hábil.
      */
     private function getSiguienteDiaHabil($fecha)
     {
@@ -743,7 +771,41 @@ class DashboardController extends Controller
     }
 
     /**
-     * Obtener estadísticas generales de asistencia (para administradores)
+     * Obtiene la fecha para un día de la semana dado, a partir de hoy o el día más cercano en el futuro.
+     * Útil para calcular la fecha real de la próxima clase.
+     *
+     * @param string $diaSemana El día de la semana en español (ej. 'lunes').
+     * @return \Carbon\Carbon La fecha calculada.
+     */
+    private function getFechaParaDiaSemana($diaSemana)
+    {
+        $diasSemanaMap = [
+            'lunes' => Carbon::MONDAY,
+            'martes' => Carbon::TUESDAY,
+            'miércoles' => Carbon::WEDNESDAY,
+            'jueves' => Carbon::THURSDAY,
+            'viernes' => Carbon::FRIDAY,
+            'sábado' => Carbon::SATURDAY,
+            'domingo' => Carbon::SUNDAY,
+        ];
+
+        $targetDayOfWeek = $diasSemanaMap[strtolower($diaSemana)];
+        $fecha = Carbon::now();
+
+        // Si el día de la semana objetivo es hoy o en el futuro esta semana
+        if ($fecha->dayOfWeek <= $targetDayOfWeek) {
+            return $fecha->next($targetDayOfWeek);
+        } else {
+            // Si el día de la semana objetivo ya pasó esta semana, buscar la próxima semana
+            return $fecha->addWeek()->startOfWeek()->next($targetDayOfWeek);
+        }
+    }
+
+    /**
+     * Obtener estadísticas generales de asistencia (para administradores).
+     *
+     * @param \App\Models\Ciclo $ciclo El ciclo activo.
+     * @return array Un array con las estadísticas de asistencia de estudiantes.
      */
     private function obtenerEstadisticasGenerales($ciclo)
     {

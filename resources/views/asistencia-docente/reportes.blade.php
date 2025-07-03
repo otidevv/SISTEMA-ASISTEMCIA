@@ -241,7 +241,7 @@
     }
 
     .panel-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        background: linear-gradient(135deg, var(--bg-light) 0%, #f1f5f9 100%);
         padding: 2rem;
         border-bottom: 1px solid var(--border-color);
         display: flex;
@@ -334,7 +334,7 @@
     }
 
     .data-table tbody td {
-        padding: 1rem 1.5rem;
+        padding: 1rem 1.5rem; /* Ajuste de padding */
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
         background-color: var(--bg-white); /* Fondo para las celdas de datos */
@@ -410,6 +410,7 @@
         border-radius: 0.75rem;
     }
 
+
     .teacher-info h4 {
         font-size: 0.95rem;
         font-weight: 600;
@@ -436,7 +437,7 @@
     }
 
     .time-display {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        background: linear-gradient(135deg, var(--bg-light) 0%, #f1f5f9 100%);
         padding: 0.625rem 1rem;
         border-radius: 0.5rem;
         font-weight: 600;
@@ -523,7 +524,7 @@
     }
 
     .action-btn.edit {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); /* Cambiado a un verde sutil */
         color: #166534;
     }
 
@@ -993,6 +994,8 @@
                                         @foreach($docenteData['months'] as $monthKey => $monthData)
                                             @php
                                                 $monthPrinted = false;
+                                                // Ordenar semanas para que siempre salgan en orden creciente
+                                                ksort($monthData['weeks']); 
                                             @endphp
                                             @foreach($monthData['weeks'] as $weekNumber => $weekData)
                                                 @php
@@ -1047,12 +1050,26 @@
                                                         {{-- Eliminado: <td>S/ {{ number_format($detail['pago'], 2, '.', ',') }}</td> --}}
                                                     </tr>
                                                 @endforeach
-                                                
+                                                {{-- Fila de Total de Semana --}}
+                                                <tr class="table-total-row">
+                                                    <td colspan="8" class="text-end pe-4">TOTAL SEMANA {{ $weekData['week_number'] }}</td>
+                                                    <td>{{ number_format($weekData['total_horas'], 2) }}</td>
+                                                    {{-- Eliminado: <td>S/ {{ number_format($weekData['total_pagos'], 2, '.', ',') }}</td> --}}
+                                                </tr>
                                             @endforeach
-                                            
+                                            {{-- Fila de Total de Mes --}}
+                                            <tr class="table-total-row" style="background-color: #dbeee0 !important;">
+                                                <td colspan="8" class="text-end pe-4">TOTAL MES {{ strtoupper($monthData['month_name']) }}</td>
+                                                <td>{{ number_format($monthData['total_horas'], 2) }}</td>
+                                                {{-- Eliminado: <td>S/ {{ number_format($monthData['total_pagos'], 2, '.', ',') }}</td> --}}
+                                            </tr>
                                         @endforeach
                                         {{-- Fila de Total de Docente --}}
-                                        
+                                        <tr class="table-total-row" style="background-color: #c6e0b4 !important;">
+                                            <td colspan="9" class="text-end pe-4">TOTAL {{ $docenteData['docente_info']->nombre . ' ' . $docenteData['docente_info']->apellido_paterno }}</td>
+                                            <td>{{ number_format($docenteData['total_horas'], 2) }}</td>
+                                            {{-- Eliminado: <td>S/ {{ number_format($docenteData['total_pagos'], 2, '.', ',') }}</td> --}}
+                                        </tr>
                                     @empty
                                         <tr>
                                             <td colspan="11"> {{-- Colspan ajustado --}}
@@ -1070,6 +1087,12 @@
                                             </td>
                                         </tr>
                                     @endforelse
+                                    {{-- Fila de Total General --}}
+                                    <tr class="table-grand-total-row">
+                                        <td colspan="9" class="text-end pe-4">TOTAL GENERAL</td>
+                                        <td>{{ number_format(collect($processedDetailedAsistencias)->sum('total_horas'), 2) }}</td>
+                                        {{-- Eliminado: <td>S/ {{ number_format(collect($processedDetailedAsistencias)->sum('total_pagos'), 2, '.', ',') }}</td> --}}
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
