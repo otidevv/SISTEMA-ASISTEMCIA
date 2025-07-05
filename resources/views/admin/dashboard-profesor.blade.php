@@ -1,3 +1,5 @@
+<!-- resources/views/dashboard.blade.php -->
+
 @extends('layouts.app')
 
 @section('title', 'Dashboard Docente')
@@ -11,7 +13,7 @@
 
 <style>
     /* -------------------------------------------------------------------------- */
-    /* Variables de Diseño Avanzado                                               */
+    /* Variables de Diseño Avanzado                                                */
     /* -------------------------------------------------------------------------- */
     :root {
         --font-family-sans-serif: 'Inter', sans-serif;
@@ -203,7 +205,7 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* Tarjetas de Sesión (Diseño Timeline + Tarjeta Completa y coloreada)      */
+    /* Tarjetas de Sesión (Diseño Timeline + Tarjeta Completa y coloreada)        */
     /* -------------------------------------------------------------------------- */
     .session-timeline {
         position: relative;
@@ -614,7 +616,14 @@
                                     <div class="tema-registrado">
                                         <p class="mb-0">
                                             <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
-                                            {{ Str::limit($asistencia->tema_desarrollado, 100) }}
+                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit($asistencia->tema_desarrollado, 100) }}</span>
+                                        </p>
+                                    </div>
+                                @else
+                                    <div class="tema-registrado text-muted fst-italic">
+                                        <p class="mb-0">
+                                            <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
+                                            <span id="display-tema-{{ $horario->id }}">No registrado.</span>
                                         </p>
                                     </div>
                                 @endif
@@ -625,16 +634,17 @@
                                         {{ $estadoConfig['texto'] }}
                                     </div>
                                     <div class="d-flex gap-2">
-                                        {{-- El botón de registrar tema solo debe aparecer si la clase ya pasó --}}
-                                        @if($item['puede_registrar_tema'])
-                                            <button class="action-button btn-sm" onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}')">
+                                        {{-- El botón de registrar tema solo debe aparecer si la clase ya pasó y tiene registros --}}
+                                        @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado)) {{-- MODIFICADO: Permitir editar siempre si ya tiene tema --}}
+                                            <button class="action-button btn-sm" 
+                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }})"> {{-- MODIFICADO: Pasar asistencia_id --}}
                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                             </button>
                                         @else
                                             <button class="action-button outline btn-sm" disabled title="Solo se puede registrar el tema de clases finalizadas y con registro de entrada/salida.">
                                                 <i class="mdi mdi-lock-outline"></i>
-                                                Registrar Tema
+                                                <span>Registrar Tema</span>
                                             </button>
                                         @endif
                                     </div>
@@ -696,6 +706,26 @@
     </div>
 </div>
 
+{{-- NUEVO: Sección para el botón de exportar a Excel --}}
+<div class="dashboard-container mt-8">
+    <div class="flex justify-end mb-4">
+        <form action="{{ route('asistencia-docente.exportar') }}" method="GET">
+            {{-- Estos campos ocultos aseguran que los filtros actuales se pasen a la exportación --}}
+            <input type="hidden" name="docente_id" value="{{ request('docente_id') }}">
+            <input type="hidden" name="mes" value="{{ request('mes') }}">
+            <input type="hidden" name="anio" value="{{ request('anio') }}">
+            <input type="hidden" name="fecha_inicio" value="{{ request('fecha_inicio') }}">
+            <input type="hidden" name="fecha_fin" value="{{ request('fecha_fin') }}">
+            <input type="hidden" name="ciclo_academico" value="{{ request('ciclo_academico') }}">
+            
+            <!--<button type="submit" class="action-button bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">
+                <i class="mdi mdi-file-excel me-2"></i> Exportar a Excel
+            </button>-->
+        </form>
+    </div>
+</div>
+
+
 <!-- Modal para registrar tema desarrollado -->
 <div class="modal fade" id="modalTemaDesarrollado" tabindex="-1" aria-labelledby="modalTemaDesarrolladoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -708,6 +738,8 @@
                 @csrf
                 <div class="modal-body p-0">
                     <input type="hidden" id="horario_id" name="horario_id">
+                    <!-- NUEVO: Campo oculto para el ID de la asistencia existente (si se está editando) -->
+                    <input type="hidden" id="asistencia_id_para_editar" name="asistencia_id">
                     {{-- AÑADIDO: Input oculto para la fecha seleccionada del calendario --}}
                     <input type="hidden" id="fecha_seleccionada_input_oculto" name="fecha_seleccionada" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
                     <div id="alertContainer" class="mb-3"></div>
@@ -818,11 +850,13 @@
         else contador.style.color = 'var(--success-text)';
     }
 
-    function abrirModalTema(horarioId, temaExistente = '') {
+    // MODIFICADO: Función para abrir el modal de tema, ahora acepta asistenciaId
+    function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null) {
         const modalElement = document.getElementById('modalTemaDesarrollado');
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
         document.getElementById('horario_id').value = horarioId;
         document.getElementById('tema_desarrollado').value = temaExistente;
+        document.getElementById('asistencia_id_para_editar').value = asistenciaId; // NUEVO: Asignar el asistenciaId
 
         // AÑADIDO: Asegurarse de que el input oculto de la fecha tenga la fecha actual del calendario
         const fechaAgendaInput = document.getElementById('fecha-agenda');
@@ -864,7 +898,16 @@
         // AÑADIDO: Agregar la fecha seleccionada al FormData antes de enviarlo
         formData.append('fecha_seleccionada', fechaSeleccionada);
 
-        fetch('{{ route("docente.tema-guardar") }}', {
+        // NUEVO: Determinar la URL de destino basada en si se está editando o registrando
+        const asistenciaId = document.getElementById('asistencia_id_para_editar').value;
+        let targetUrl = '{{ route("docente.tema-guardar") }}'; // Por defecto, para registrar
+
+        // Si hay un asistencia_id, significa que estamos editando
+        if (asistenciaId && asistenciaId !== 'null') { // Asegurarse de que no sea 'null' string
+            targetUrl = '{{ route("asistencia-docente.actualizar-tema") }}';
+        }
+
+        fetch(targetUrl, { // MODIFICADO: Usar targetUrl
             method: 'POST',
             body: formData,
             headers: { 
@@ -872,19 +915,52 @@
                 'Accept': 'application/json' 
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                // Si la respuesta no es OK (ej. 4xx, 5xx), lanzar un error
+                return response.json().then(err => { throw err; });
+            }
+            return response.json(); // Asumimos que el controlador devuelve JSON
+        })
         .then(data => {
             if (data.success) {
                 mostrarAlertEnModal('success', data.message);
+                
+                // NUEVO: Actualizar el tema en la tarjeta sin recargar la página
+                const horarioId = document.getElementById('horario_id').value;
+                const displayTemaElement = document.getElementById('display-tema-' + horarioId);
+                if (displayTemaElement) {
+                    // Limitar el texto si es muy largo para la visualización
+                    let newTemaText = document.getElementById('tema_desarrollado').value;
+                    const maxLength = 100; // Coincide con Str::limit en Blade
+                    if (newTemaText.length > maxLength) {
+                        newTemaText = newTemaText.substring(0, maxLength - 3) + '...';
+                    }
+                    displayTemaElement.textContent = newTemaText;
+
+                    // Opcional: Cambiar el estado visual de la tarjeta si se acaba de registrar el tema
+                    const sessionCard = document.getElementById('session-' + horarioId);
+                    if (sessionCard && sessionCard.classList.contains('pending')) {
+                        sessionCard.classList.remove('pending');
+                        sessionCard.classList.add('completed');
+                        // Actualizar el badge de estado si es necesario
+                        const statusBadge = sessionCard.querySelector('.status-badge');
+                        if (statusBadge) {
+                            statusBadge.classList.remove('bg-warning-light', 'text-warning-text', 'border-warning-color');
+                            statusBadge.classList.add('bg-success-light', 'text-success-text', 'border-success-color');
+                            statusBadge.innerHTML = '<i class="mdi mdi-check-all"></i> COMPLETADA';
+                        }
+                    }
+                }
+
                 setTimeout(() => {
                     const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));
                     if (modalInstance) {
                         modalInstance.hide();
                     }
-                    // CORRECCIÓN CLAVE: Recargar la página con la fecha seleccionada
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('fecha', fechaSeleccionada); // Establece o actualiza el parámetro 'fecha'
-                    window.location.href = currentUrl.toString(); // Recarga la página con la URL correcta
+                    // Ya no recargamos la página completa si actualizamos el DOM directamente
+                    // Si prefieres recargar para asegurar consistencia, descomenta la línea de abajo
+                    // window.location.reload(); 
                 }, 1500);
             } else {
                 let mensaje = data.message || 'Ocurrió un error.';
@@ -899,7 +975,11 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            mostrarAlertEnModal('danger', 'Error de conexión. Por favor, inténtalo de nuevo.');
+            let errorMessage = 'Error de conexión. Por favor, inténtalo de nuevo.';
+            if (error.message) {
+                errorMessage = error.message;
+            }
+            mostrarAlertEnModal('danger', errorMessage);
             resetButton();
         });
 

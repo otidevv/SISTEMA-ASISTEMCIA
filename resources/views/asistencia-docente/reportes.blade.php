@@ -241,7 +241,7 @@
     }
 
     .panel-header {
-        background: linear-gradient(135deg, var(--bg-light) 0%, #f1f5f9 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         padding: 2rem;
         border-bottom: 1px solid var(--border-color);
         display: flex;
@@ -334,7 +334,7 @@
     }
 
     .data-table tbody td {
-        padding: 1rem 1.5rem; /* Ajuste de padding */
+        padding: 1rem 1.5rem;
         border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
         background-color: var(--bg-white); /* Fondo para las celdas de datos */
@@ -410,7 +410,6 @@
         border-radius: 0.75rem;
     }
 
-
     .teacher-info h4 {
         font-size: 0.95rem;
         font-weight: 600;
@@ -437,7 +436,7 @@
     }
 
     .time-display {
-        background: linear-gradient(135deg, var(--bg-light) 0%, #f1f5f9 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         padding: 0.625rem 1rem;
         border-radius: 0.5rem;
         font-weight: 600;
@@ -524,7 +523,7 @@
     }
 
     .action-btn.edit {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); /* Cambiado a un verde sutil */
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         color: #166534;
     }
 
@@ -698,6 +697,7 @@
                     </p>
                 </div>
                 <div class="header-actions">
+                    {{-- BOTÓN DE EXPORTAR AHORA ESTÁ AQUÍ --}}
                     <a href="{{ route('asistencia-docente.exportar', [
                         'docente_id' => $selectedDocenteId,
                         'mes' => $selectedMonth,

@@ -17,11 +17,11 @@ use App\Http\Controllers\HorarioDocenteController;
 use App\Http\Controllers\PagoDocenteController;
 use App\Http\Controllers\AsistenciaDocenteController;
 use App\Http\Controllers\CursoController;
+
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Agregar temporalmente en tu routes/web.php para debugging
-
 Route::get('/debug-horarios-docentes', function () {
     $docentes = \App\Models\User::whereHas('roles', function ($query) {
         $query->where('nombre', 'profesor');
@@ -104,6 +104,7 @@ Route::get('/debug-horarios-docentes', function () {
         echo "</pre>";
     }
 })->middleware('auth');
+
 // Rutas de autenticación
 Route::middleware('guest')->group(function () {
     // Login
@@ -180,7 +181,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('can:attendance.export')->group(function () {
         Route::get('/asistencia/exportar', [AsistenciaController::class, 'exportarIndex'])->name('asistencia.exportar');
-        Route::post('/asistencia/exportar', [AsistenciaController::class, 'exportar'])->name('asistencia.exportar.action');
+        Route::post('/asistencia/exportar', [AsistenciaController::class, 'exportarAction'])->name('asistencia.exportar.action');
     });
 
     Route::middleware('can:attendance.reports')->group(function () {
@@ -250,8 +251,12 @@ Route::middleware('auth')->group(function () {
     
     // Horarios Docentes y Tema desarrollado
     Route::get('/horarios-calendario', [HorarioDocenteController::class, 'calendario'])->name('horarios.calendario');
+    // Esta ruta ya existe y apunta a registrarTema
     Route::post('/docente/tema-desarrollado', [App\Http\Controllers\AsistenciaDocenteController::class, 'registrarTema'])->name('docente.tema-guardar');
     
+    // NUEVO: Ruta para actualizar el tema desarrollado de una asistencia existente
+    Route::post('/asistencia-docente/actualizar-tema', [AsistenciaDocenteController::class, 'actualizarTemaDesarrollado'])->name('asistencia-docente.actualizar-tema');
+
     // Pagos Docentes
     Route::prefix('pagos-docentes')->middleware(['auth'])->group(function () {
         Route::get('/', [App\Http\Controllers\PagoDocenteController::class, 'index'])->name('pagos-docentes.index');

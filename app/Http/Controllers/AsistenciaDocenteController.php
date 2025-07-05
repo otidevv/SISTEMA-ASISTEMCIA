@@ -23,6 +23,11 @@ class AsistenciaDocenteController extends Controller
     // La tarifa por minuto fija se remueve si es dinámica por docente.
     // const TARIFA_POR_MINUTO = 3.00; 
 
+    // Tolerancia en minutos para la entrada anticipada (ej. 10 minutos antes de las 7:00 AM, se puede marcar desde las 6:50 AM)
+    const TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 10; 
+    // Tolerancia en minutos para considerar tardanza (ej. si la hora de inicio es 7:00 AM, la tardanza es a partir de las 7:05 AM)
+    const TOLERANCIA_TARDE_MINUTOS = 5; 
+
     public function __construct()
     {
         Artisan::call('asistencia:procesar-eventos');
@@ -37,8 +42,8 @@ class AsistenciaDocenteController extends Controller
         $selectedCicloAcademico = $request->input('ciclo_academico');
 
         // Determinar mes y año para los filtros si no hay rango de fechas
-        $selectedMonth = $request->input('mes'); 
-        $selectedYear = $request->input('anio');
+        $selectedMonth = $selectedMonth ?? Carbon::now()->month;
+        $selectedYear = $selectedYear ?? Carbon::now()->year;
 
         if (empty($fechaInicio) && empty($fechaFin)) {
             $selectedMonth = $selectedMonth ?? Carbon::now()->month;
@@ -360,10 +365,10 @@ class AsistenciaDocenteController extends Controller
             'docentes',
             'ciclosAcademicos', 
             'selectedDocenteId', 
-            'selectedMonth',     
-            'selectedYear',       
-            'fechaInicio',       
-            'fechaFin',          
+            'selectedMonth',    
+            'selectedYear',     
+            'fechaInicio',      
+            'fechaFin',         
             'selectedCicloAcademico',
             'processedDetailedAsistencias' // Datos detallados para la tabla
         ));
@@ -409,25 +414,53 @@ class AsistenciaDocenteController extends Controller
                 $diasSemana = [0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado'];
                 $nombreDia = $diasSemana[$diaSemana];
 
+                // Buscar un horario que la asistencia pueda corresponder, considerando la tolerancia de entrada
                 $horario = HorarioDocente::where('docente_id', $asistencia->usuario->id)
                     ->where('dia_semana', $nombreDia)
-                    ->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'))
-                    ->whereTime('hora_fin', '>=', $fechaAsistencia->format('H:i:s'))
+                    ->where(function ($q) use ($fechaAsistencia) {
+                        // Condición 1: La asistencia está dentro del horario programado real
+                        $q->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'))
+                          ->whereTime('hora_fin', '>=', $fechaAsistencia->format('H:i:s'));
+                    })
+                    ->orWhere(function ($q) use ($fechaAsistencia) {
+                        // Condición 2: La asistencia está dentro de la ventana de tolerancia temprana antes de hora_inicio
+                        $q->whereTime('hora_inicio', '>=', $fechaAsistencia->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS)->format('H:i:s'))
+                          ->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'));
+                    })
                     ->with('curso')
                     ->first();
 
                 $asistencia->horario = $horario;
 
                 if ($horario) {
-                    $horaAsistencia = Carbon::parse($horario->hora_inicio);
-                    $horaFin = Carbon::parse($horario->hora_fin);
+                    $horaAsistenciaProgramada = Carbon::parse($horario->hora_inicio);
+                    $horaFinProgramada = Carbon::parse($horario->hora_fin);
 
-                    $diffInicio = abs($fechaAsistencia->diffInMinutes($horaAsistencia));
-                    $diffFin = abs($fechaAsistencia->diffInMinutes($horaFin));
+                    // Determinar entrada/salida basándose en la proximidad a las horas programadas reales
+                    $diffInicio = abs($fechaAsistencia->diffInMinutes($horaAsistenciaProgramada));
+                    $diffFin = abs($fechaAsistencia->diffInMinutes($horaFinProgramada));
 
                     $asistencia->tipo_asistencia = $diffInicio < $diffFin ? 'entrada' : 'salida';
+
+                    // Calcular tardanza solo para el tipo 'entrada'
+                    if ($asistencia->tipo_asistencia === 'entrada') {
+                        $tardinessThreshold = $horaAsistenciaProgramada->copy()->addMinutes(self::TOLERANCIA_TARDE_MINUTOS);
+                        if ($fechaAsistencia->greaterThan($tardinessThreshold)) {
+                            $asistencia->es_tardanza = true;
+                            $asistencia->minutos_tardanza = $fechaAsistencia->diffInMinutes($tardinessThreshold);
+                        } else {
+                            $asistencia->es_tardanza = false;
+                            $asistencia->minutos_tardanza = 0;
+                        }
+                    } else {
+                        $asistencia->es_tardanza = false;
+                        $asistencia->minutos_tardanza = 0;
+                    }
+
                 } else {
                     $asistencia->tipo_asistencia = $fechaAsistencia->hour < 12 ? 'entrada' : 'salida';
+                    $asistencia->es_tardanza = false; // Sin horario, no hay tardanza
+                    $asistencia->minutos_tardanza = 0;
                 }
             }
 
@@ -482,16 +515,25 @@ class AsistenciaDocenteController extends Controller
 
         $fecha = Carbon::parse($request->fecha_hora);
         $diaSemana = strtolower($fecha->locale('es')->dayName);
-        $hora = $fecha->format('H:i:s');
+        // $hora = $fecha->format('H:i:s'); // No directamente usado en la consulta, se puede eliminar
 
+        // Buscar un horario que la asistencia pueda corresponder, considerando la tolerancia de entrada
         $horario = HorarioDocente::where('docente_id', $request->docente_id)
-            ->where('dia_semana', $nombreDia)
-            ->whereTime('hora_inicio', '<=', $fecha->format('H:i:s'))
-            ->whereTime('hora_fin', '>=', $fecha->format('H:i:s'))
+            ->where('dia_semana', $diaSemana)
+            ->where(function ($q) use ($fecha) {
+                // Condición 1: La asistencia está dentro del horario programado real
+                $q->whereTime('hora_inicio', '<=', $fecha->format('H:i:s'))
+                  ->whereTime('hora_fin', '>=', $fecha->format('H:i:s'));
+            })
+            ->orWhere(function ($q) use ($fecha) {
+                // Condición 2: La asistencia está dentro de la ventana de tolerancia temprana antes de hora_inicio
+                $q->whereTime('hora_inicio', '>=', $fecha->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS)->format('H:i:s'))
+                  ->whereTime('hora_inicio', '<=', $fecha->format('H:i:s'));
+            })
             ->first();
 
         if (!$horario) {
-            return redirect()->back()->withInput()->withErrors(['horario_id' => 'No existe un horario programado para la fecha y hora seleccionadas.']);
+            return redirect()->back()->withInput()->withErrors(['horario_id' => 'No existe un horario programado para la fecha y hora seleccionadas o está fuera del rango de tolerancia para la entrada.']);
         }
 
         AsistenciaDocente::updateOrInsert(
@@ -528,11 +570,14 @@ class AsistenciaDocenteController extends Controller
         $asistencia = AsistenciaDocente::findOrFail($request->asistencia_id);
         $asistencia->update([
             'tema_desarrollado' => $request->tema_desarrollado,
-            'fecha_hora' => now(),
-            'estado' => 'entrada',
+            // No actualizamos fecha_hora ni estado aquí para mantener la flexibilidad
+            // de solo actualizar el tema sin afectar la marcación original.
         ]);
 
-        return redirect()->back()->with('success', 'Tema desarrollado y hora actualizada correctamente.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Tema desarrollado actualizado correctamente.'
+        ]);
     }
 
     public function editar($id)
@@ -545,36 +590,48 @@ class AsistenciaDocenteController extends Controller
     {
         $request->validate([
             'horario_id' => 'required|integer',
-            'tema_desarrollado' => 'required|string|min:10|max:1000'
+            'tema_desarrollado' => 'required|string|min:10|max:1000',
+            'fecha_seleccionada' => 'required|date_format:Y-m-d', // Validar que la fecha venga en el formato correcto
         ]);
     
         $user = auth()->user();
+        // Usar la fecha seleccionada del request en lugar de Carbon::today()
+        $fechaParaRegistro = Carbon::parse($request->fecha_seleccionada); 
     
+        // Primero, encontrar el horario específico solicitado por horario_id
+        $horario = HorarioDocente::find($request->horario_id);
+        if (!$horario) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el horario seleccionado.',
+            ], 404);
+        }
+    
+        // Buscar un registro de AsistenciaDocente existente para la FECHA SELECCIONADA y este horario
         $asistencia = AsistenciaDocente::where('horario_id', $request->horario_id)
             ->where('docente_id', $user->id)
-            ->whereDate('fecha_hora', now()->toDateString())
+            ->whereDate('fecha_hora', $fechaParaRegistro->toDateString()) // Usar $fechaParaRegistro
             ->first();
     
         if (!$asistencia) {
-            $horario = HorarioDocente::find($request->horario_id);
-            if (!$horario) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se encontró el horario seleccionado.',
-                ], 404);
-            }
+            // Si no existe un registro de AsistenciaDocente, necesitamos encontrar la entrada biométrica.
+            // La entrada biométrica debe haber ocurrido dentro de la ventana de tolerancia de entrada o el horario de clase.
+            $horarioStartTime = Carbon::parse($horario->hora_inicio);
+            $horarioEndTime = Carbon::parse($horario->hora_fin);
+            $tolerantEntryStart = $horarioStartTime->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS);
     
             $entrada = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', now()->toDateString())
-                ->whereTime('fecha_registro', '>=', $horario->hora_inicio)
-                ->whereTime('fecha_registro', '<=', $horario->hora_fin)
+                ->whereDate('fecha_registro', $fechaParaRegistro->toDateString()) // Usar $fechaParaRegistro
+                // La hora de entrada biométrica debe estar dentro del inicio tolerante y el final real del horario.
+                ->whereTime('fecha_registro', '>=', $tolerantEntryStart->format('H:i:s'))
+                ->whereTime('fecha_registro', '<=', $horarioEndTime->format('H:i:s'))
                 ->orderBy('fecha_registro', 'asc')
                 ->first();
     
             if (!$entrada) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontró la asistencia biométrica del día para este horario. Marca tu entrada primero.',
+                    'message' => 'No se encontró la asistencia biométrica para este horario en la fecha seleccionada dentro del rango de tolerancia. Marca tu entrada primero.',
                 ], 404);
             }
     
@@ -583,7 +640,7 @@ class AsistenciaDocenteController extends Controller
                 'horario_id' => $horario->id,
                 'curso_id'   => $horario->curso_id,
                 'aula_id'    => $horario->aula_id,
-                'fecha_hora' => $entrada->fecha_registro,
+                'fecha_hora' => $entrada->fecha_registro, // Usar la hora de entrada biométrica
                 'estado'     => 'entrada',
                 'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
                 'terminal_id'       => $entrada->terminal_id ?? null,
@@ -592,6 +649,7 @@ class AsistenciaDocenteController extends Controller
                 'tema_desarrollado' => $request->tema_desarrollado,
             ]);
         } else {
+            // Si ya existe un registro de AsistenciaDocente, simplemente actualiza el tema
             $asistencia->tema_desarrollado = $request->tema_desarrollado;
             $asistencia->save();
         }
