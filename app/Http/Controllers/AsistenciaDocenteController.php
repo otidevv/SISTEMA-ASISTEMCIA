@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Artisan;
 use App\Models\RegistroAsistencia;
 use App\Models\Ciclo; // Usando tu modelo Ciclo.php
 use App\Models\PagoDocente; // Importa el modelo PagoDocente
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 // Importa la clase Excel de Maatwebsite
 use Maatwebsite\Excel\Facades\Excel;
@@ -480,17 +482,111 @@ class AsistenciaDocenteController extends Controller
         return view('asistencia-docente.monitor', compact('ultimasAsistencias'));
     }
 
+    /**
+     * NUEVO: Mostrar el formulario para registrar asistencia docente manualmente.
+     */
     public function create()
     {
+        // Obtener docentes para el select (ordenados alfabéticamente)
         $docentes = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
-        })->get();
+        })->orderBy('apellido_paterno', 'asc')
+          ->orderBy('apellido_materno', 'asc')
+          ->orderBy('nombre', 'asc')
+          ->get();
 
         return view('asistencia-docente.create', compact('docentes'));
     }
 
+    /**
+     * ACTUALIZADO: Guardar un nuevo registro de asistencia docente manual.
+     */
     public function store(Request $request)
     {
+        // NUEVO: Si viene docente_id sin tema_desarrollado, es registro manual de asistencia biométrica
+        if ($request->has('docente_id') && !$request->has('tema_desarrollado')) {
+            $request->validate([
+                'docente_id' => 'required|exists:users,id',
+                'fecha_hora' => 'required|date',
+                'estado' => 'required|in:entrada,salida',
+                'tipo_verificacion' => 'nullable|in:manual,biometrico,tarjeta,codigo',
+                'terminal_id' => 'nullable|string',
+                'codigo_trabajo' => 'nullable|string'
+            ], [
+                'docente_id.required' => 'Debe seleccionar un docente',
+                'docente_id.exists' => 'El docente seleccionado no es válido',
+                'fecha_hora.required' => 'La fecha y hora son obligatorias',
+                'fecha_hora.date' => 'El formato de fecha no es válido',
+                'estado.required' => 'Debe seleccionar un estado (entrada o salida)',
+                'estado.in' => 'El estado debe ser entrada o salida'
+            ]);
+
+            try {
+                // Obtener el docente
+                $docente = User::findOrFail($request->docente_id);
+                
+                // Verificar que el usuario sea efectivamente un docente
+                if (!$docente->hasRole('profesor')) {
+                    return back()->withErrors(['docente_id' => 'El usuario seleccionado no es un docente.']);
+                }
+
+                // Verificar si ya existe un registro similar reciente (evitar duplicados)
+                $registroExistente = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                    ->where('fecha_registro', '>=', Carbon::parse($request->fecha_hora)->subMinutes(5))
+                    ->where('fecha_registro', '<=', Carbon::parse($request->fecha_hora)->addMinutes(5))
+                    ->first();
+
+                if ($registroExistente) {
+                    return back()->withErrors(['fecha_hora' => 'Ya existe un registro de asistencia cercano a esta fecha y hora.']);
+                }
+
+                // Convertir tipo_verificacion a número (siguiendo tu lógica existente)
+                $tipoVerificacionMap = [
+                    'biometrico' => 0,
+                    'tarjeta' => 1,
+                    'facial' => 2,
+                    'codigo' => 3,
+                    'manual' => 4
+                ];
+
+                $tipoVerificacion = $tipoVerificacionMap[$request->tipo_verificacion] ?? 4;
+
+                // Procesar terminal_id: debe ser numérico o null
+                $terminalId = null;
+                if ($request->terminal_id) {
+                    if (is_numeric($request->terminal_id)) {
+                        $terminalId = (int)$request->terminal_id;
+                    } else {
+                        // Si no es numérico pero tiene valor, usar 999 como valor por defecto para manual
+                        $terminalId = 999;
+                    }
+                }
+
+                // Crear el registro de asistencia (siguiendo la estructura de tu AsistenciaController)
+                $registro = RegistroAsistencia::create([
+                    'usuario_id' => $docente->id,
+                    'nro_documento' => $docente->numero_documento,
+                    'fecha_hora' => $request->fecha_hora,
+                    'tipo_verificacion' => $tipoVerificacion,
+                    'estado' => 1, // Activo por defecto
+                    'codigo_trabajo' => $request->codigo_trabajo,
+                    'terminal_id' => $terminalId,
+                    'sn_dispositivo' => $request->terminal_id ?? 'MANUAL',
+                    'fecha_registro' => $request->fecha_hora,
+                ]);
+
+                return redirect()
+                    ->route('asistencia-docente.create')
+                    ->with('success', "Asistencia de {$request->estado} registrada correctamente para {$docente->nombre} {$docente->apellido_paterno}");
+
+            } catch (\Exception $e) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['error' => 'Error al registrar la asistencia: ' . $e->getMessage()]);
+            }
+        }
+
+        // Lógica existente para cuando viene tema_desarrollado sin estado (actualización de tema)
         if ($request->has('tema_desarrollado') && !$request->has('estado')) {
             $request->validate([
                 'asistencia_id' => 'required|exists:asistencias_docentes,id',
@@ -503,6 +599,7 @@ class AsistenciaDocenteController extends Controller
             return redirect()->back()->with('success', 'Tema desarrollado actualizado correctamente.');
         }
 
+        // Lógica existente para registro completo con tema desarrollado
         $request->validate([
             'docente_id' => 'required|exists:users,id',
             'fecha_hora' => 'required|date',
@@ -515,7 +612,6 @@ class AsistenciaDocenteController extends Controller
 
         $fecha = Carbon::parse($request->fecha_hora);
         $diaSemana = strtolower($fecha->locale('es')->dayName);
-        // $hora = $fecha->format('H:i:s'); // No directamente usado en la consulta, se puede eliminar
 
         // Buscar un horario que la asistencia pueda corresponder, considerando la tolerancia de entrada
         $horario = HorarioDocente::where('docente_id', $request->docente_id)
@@ -558,6 +654,60 @@ class AsistenciaDocenteController extends Controller
     private function determinarEstado($tipoVerificacion)
     {
         return 'entrada';
+    }
+
+    /**
+     * NUEVO: Obtiene los últimos registros procesados para mostrar en el sidebar
+     */
+    public function ultimasProcesadas()
+    {
+        try {
+            $registros = RegistroAsistencia::select([
+                'registros_asistencia.*',
+                DB::raw("CONCAT(users.nombre, ' ', users.apellido_paterno, ' ', COALESCE(users.apellido_materno, '')) as docente_nombre")
+            ])
+            ->join('users', 'registros_asistencia.usuario_id', '=', 'users.id')
+            ->whereHas('usuario.roles', function ($query) {
+                $query->where('nombre', 'profesor');
+            })
+            ->orderBy('registros_asistencia.fecha_registro', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($registro) {
+                // Determinar el estado basado en la hora (lógica mejorada)
+                $hora = Carbon::parse($registro->fecha_registro)->format('H:i');
+                $estado = $hora < '12:00' ? 'entrada' : 'salida';
+                
+                // Mapeo de tipos de verificación
+                $tiposVerificacion = [
+                    0 => 'biometrico',
+                    1 => 'tarjeta',
+                    2 => 'facial',
+                    3 => 'codigo',
+                    4 => 'manual'
+                ];
+                
+                return [
+                    'id' => $registro->id,
+                    'docente_nombre' => $registro->docente_nombre,
+                    'estado' => $estado,
+                    'fecha_hora' => $registro->fecha_registro,
+                    'tipo_verificacion' => $tiposVerificacion[$registro->tipo_verificacion] ?? 'manual',
+                    'terminal_id' => $registro->terminal_id,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'registros' => $registros
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener registros: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function actualizarTemaDesarrollado(Request $request)
@@ -673,5 +823,47 @@ class AsistenciaDocenteController extends Controller
             new AsistenciasDocentesExport($selectedDocenteId, $selectedMonth, $selectedYear, $fechaInicio, $fechaFin, $selectedCicloAcademico), 
             'reporte_asistencia_docentes.xlsx'
         );
+    }
+
+    /**
+     * NUEVO: Actualizar un registro de asistencia docente.
+     */
+    public function update(Request $request, $id)
+    {
+        $asistencia = RegistroAsistencia::findOrFail($id);
+
+        $request->validate([
+            'nro_documento' => 'required|string|max:20',
+            'fecha_registro' => 'required|date',
+            'tipo_verificacion' => 'required|integer',
+            'estado' => 'required|boolean',
+        ]);
+
+        $asistencia->update([
+            'nro_documento' => $request->nro_documento,
+            'fecha_registro' => $request->fecha_registro,
+            'tipo_verificacion' => $request->tipo_verificacion,
+            'estado' => $request->estado,
+            'codigo_trabajo' => $request->codigo_trabajo,
+            'terminal_id' => $request->terminal_id,
+            'sn_dispositivo' => $request->sn_dispositivo,
+        ]);
+
+        return redirect()->route('asistencia-docente.index')->with('success', 'Registro de asistencia docente actualizado exitosamente.');
+    }
+
+    /**
+     * NUEVO: Eliminar un registro de asistencia docente.
+     */
+    public function destroy($id)
+    {
+        try {
+            $asistencia = RegistroAsistencia::findOrFail($id);
+            $asistencia->delete();
+
+            return redirect()->route('asistencia-docente.index')->with('success', 'Registro eliminado exitosamente.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al eliminar el registro: ' . $e->getMessage()]);
+        }
     }
 }
