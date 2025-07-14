@@ -39,21 +39,11 @@ class AsistenciaDocenteController extends Controller
     {
         // 1. Obtener parámetros de filtrado desde la URL
         $selectedDocenteId = $request->input('docente_id');
+        $selectedMonth = $request->input('mes');
+        $selectedYear = $request->input('anio');
         $fechaInicio = $request->input('fecha_inicio');
         $fechaFin = $request->input('fecha_fin');
         $selectedCicloAcademico = $request->input('ciclo_academico');
-
-        // Determinar mes y año para los filtros si no hay rango de fechas
-        $selectedMonth = $selectedMonth ?? Carbon::now()->month;
-        $selectedYear = $selectedYear ?? Carbon::now()->year;
-
-        if (empty($fechaInicio) && empty($fechaFin)) {
-            $selectedMonth = $selectedMonth ?? Carbon::now()->month;
-            $selectedYear = $selectedYear ?? Carbon::now()->year;
-        } else {
-            $selectedMonth = null; 
-            $selectedYear = null;
-        }
 
         // Obtener todos los docentes para el filtro de selección
         $docentes = User::whereHas('roles', function ($query) {
@@ -61,11 +51,64 @@ class AsistenciaDocenteController extends Controller
         })->select('id', 'nombre', 'apellido_paterno', 'numero_documento')->get();
 
         // Obtener Ciclos Académicos de la base de datos usando tu modelo Ciclo
-        // Usamos 'codigo' como valor para el select y 'nombre' para mostrar
         $ciclosAcademicos = Ciclo::orderBy('nombre', 'desc')->pluck('nombre', 'codigo')->toArray();
 
+        // 2. NUEVA LÓGICA DE DETERMINACIÓN DE FECHAS - PRIORIDAD AL CICLO
+        $startDate = null;
+        $endDate = null;
 
-        // 2. Construir la consulta base para asistencias docentes, aplicando filtros
+        // PRIORIDAD MÁXIMA: Si hay ciclo académico seleccionado, usar SUS fechas
+        if ($selectedCicloAcademico) {
+            $ciclo = Ciclo::where('codigo', $selectedCicloAcademico)->first();
+            if ($ciclo) {
+                $cicloStartDate = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+                $cicloEndDate = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+                
+                // Si NO hay filtros adicionales, usar TODO el ciclo académico
+                if (!$fechaInicio && !$fechaFin && !$selectedMonth && !$selectedYear) {
+                    $startDate = $cicloStartDate;
+                    $endDate = $cicloEndDate;
+                }
+                // Si hay fechas específicas, validar que estén dentro del ciclo
+                elseif ($fechaInicio && $fechaFin) {
+                    $customStart = Carbon::parse($fechaInicio)->startOfDay();
+                    $customEnd = Carbon::parse($fechaFin)->endOfDay();
+                    
+                    $startDate = $customStart->max($cicloStartDate);
+                    $endDate = $customEnd->min($cicloEndDate);
+                }
+                // Si hay mes/año específico, validar que esté dentro del ciclo
+                elseif ($selectedMonth && $selectedYear) {
+                    $monthStart = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->startOfDay();
+                    $monthEnd = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->endOfMonth()->endOfDay();
+                    
+                    $startDate = $monthStart->max($cicloStartDate);
+                    $endDate = $monthEnd->min($cicloEndDate);
+                }
+                else {
+                    // Usar todo el ciclo académico como fallback
+                    $startDate = $cicloStartDate;
+                    $endDate = $cicloEndDate;
+                }
+            }
+        }
+        // Si NO hay ciclo académico pero hay fechas específicas
+        elseif ($fechaInicio && $fechaFin) {
+            $startDate = Carbon::parse($fechaInicio)->startOfDay();
+            $endDate = Carbon::parse($fechaFin)->endOfDay();
+        }
+        // Si NO hay ciclo académico pero hay mes/año específico
+        elseif ($selectedMonth && $selectedYear) {
+            $startDate = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->endOfMonth()->endOfDay();
+        }
+        // Fallback final: últimos 30 días
+        else {
+            $endDate = Carbon::today()->endOfDay();
+            $startDate = $endDate->copy()->subDays(30)->startOfDay();
+        }
+
+        // 3. Construir la consulta base para asistencias docentes, aplicando filtros (TU LÓGICA EXISTENTE)
         $baseQuery = AsistenciaDocente::query();
 
         if ($selectedDocenteId) {
@@ -79,19 +122,13 @@ class AsistenciaDocenteController extends Controller
                       ->whereYear('fecha_hora', $selectedYear);
         }
         
-        // ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
-        // REEMPLAZA '[TU_COLUMNA_CICLO_EN_ASISTENCIAS_DOCENTES_REAL]' con el nombre real de la columna
-        // en tu tabla 'asistencias_docentes' que guarda el código del ciclo.
-        // Ejemplos: 'ciclo_id', 'codigo_ciclo', 'periodo_academico', etc.
         if ($selectedCicloAcademico) {
-            // Asume que tu modelo AsistenciaDocente tiene una relación 'horario' y este a su vez con 'ciclo'
-            // Y que la columna 'codigo' en tu tabla 'ciclos' contiene los códigos como '2025-1'
             $baseQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
                 $query->where('codigo', $selectedCicloAcademico);
             });
         }
 
-        // 3. Calcular estadísticas generales (para el periodo filtrado)
+        // 4. Calcular estadísticas generales (TU LÓGICA EXISTENTE)
         $totalRegistrosPeriodo = (clone $baseQuery)->count();
         
         // Asistencia por día del mes/rango de fechas para el gráfico
@@ -104,12 +141,12 @@ class AsistenciaDocenteController extends Controller
             ->map(function($item) { return $item->total; })
             ->toArray();
 
-        // Ajustar fechas del gráfico para el rango de fechas o mes/año
+        // Ajustar fechas del gráfico para el rango de fechas o mes/año (TU LÓGICA EXISTENTE)
         $fechasCompletasMes = [];
         if ($fechaInicio && $fechaFin) {
             $currentDate = Carbon::parse($fechaInicio)->startOfDay();
-            $endDate = Carbon::parse($fechaFin)->endOfDay();
-            while ($currentDate->lte($endDate)) {
+            $endDateLoop = Carbon::parse($fechaFin)->endOfDay();
+            while ($currentDate->lte($endDateLoop)) {
                 $fechasCompletasMes[$currentDate->format('Y-m-d')] = $asistenciaSemana[$currentDate->format('Y-m-d')] ?? 0;
                 $currentDate->addDay();
             }
@@ -119,11 +156,13 @@ class AsistenciaDocenteController extends Controller
                 $fecha = Carbon::createFromDate((int)$selectedYear, (int)$selectedMonth, $i)->format('Y-m-d');
                 $fechasCompletasMes[$fecha] = $asistenciaSemana[$fecha] ?? 0;
             }
+        } else {
+            // Para otros casos, mantener los datos como están
+            $fechasCompletasMes = $asistenciaSemana;
         }
         $asistenciaSemana = $fechasCompletasMes;
 
-
-        // 4. Asistencia por docente (resumen para métricas y tabla de resumen)
+        // 5. Asistencia por docente (TU LÓGICA EXISTENTE MEJORADA)
         $asistenciaPorDocenteQuery = AsistenciaDocente::query();
         
         if ($fechaInicio && $fechaFin) {
@@ -137,7 +176,6 @@ class AsistenciaDocenteController extends Controller
             $asistenciaPorDocenteQuery->where('docente_id', $selectedDocenteId);
         }
 
-        // ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
         if ($selectedCicloAcademico) {
             $asistenciaPorDocenteQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
                 $query->where('codigo', $selectedCicloAcademico);
@@ -150,7 +188,7 @@ class AsistenciaDocenteController extends Controller
             ->groupBy('docente_id')
             ->get();
 
-        // Calcular horas_dictadas y monto_total por docente para la tabla resumen
+        // Calcular horas_dictadas y monto_total por docente (TU LÓGICA EXISTENTE)
         $asistenciaPorDocente->transform(function ($item) use ($fechaInicio, $fechaFin, $selectedMonth, $selectedYear, $selectedCicloAcademico) {
             $docenteAsistenciasQuery = AsistenciaDocente::where('docente_id', $item->docente_id)
                 ->orderBy('fecha_hora', 'asc');
@@ -161,7 +199,6 @@ class AsistenciaDocenteController extends Controller
                 $docenteAsistenciasQuery->whereMonth('fecha_hora', $selectedMonth)
                                         ->whereYear('fecha_hora', $selectedYear);
             }
-            // ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
             if ($selectedCicloAcademico) {
                 $docenteAsistenciasQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
                     $query->where('codigo', $selectedCicloAcademico);
@@ -184,31 +221,28 @@ class AsistenciaDocenteController extends Controller
                 $horasDictadasSesion = 0;
                 $montoTotalSesion = 0;
 
-                // Si 'horas_dictadas' ya están en la DB, úsalas.
                 if ($salida && $salida->horas_dictadas !== null) { 
                     $horasDictadasSesion = $salida->horas_dictadas;
                 } elseif ($entrada && $entrada->horas_dictadas !== null) {
                     $horasDictadasSesion = $entrada->horas_dictadas;
-                } else { // Recalcula si no están en DB
+                } else {
                     if ($entrada && $salida && Carbon::parse($salida->fecha_hora)->greaterThan(Carbon::parse($entrada->fecha_hora))) {
                         $minutosDictados = Carbon::parse($salida->fecha_hora)->diffInMinutes(Carbon::parse($entrada->fecha_hora));
                         $horasDictadasSesion = round($minutosDictados / 60, 2);
                     }
                 }
                 
-                // Obtener la tarifa dinámica desde PagoDocente
                 $tarifaPorHoraAplicable = 0;
-                if ($horasDictadasSesion > 0 && $entrada) { // Solo si hay horas y un punto de referencia de fecha
+                if ($horasDictadasSesion > 0 && $entrada) {
                     $pagoDocente = PagoDocente::where('docente_id', $item->docente_id)
-                        ->whereDate('fecha_inicio', '<=', $entrada->fecha_hora) // Fecha del registro de asistencia
+                        ->whereDate('fecha_inicio', '<=', $entrada->fecha_hora)
                         ->whereDate('fecha_fin', '>=', $entrada->fecha_hora)
                         ->first();
                     if ($pagoDocente) {
                         $tarifaPorHoraAplicable = $pagoDocente->tarifa_por_hora;
                     }
                 }
-                // ¡¡¡CORRECCIÓN DE FÓRMULA DE PAGO AQUÍ!!! Si tarifa_por_hora es por hora, simplemente multiplica por las horas.
-                $montoTotalSesion = $horasDictadasSesion * $tarifaPorHoraAplicable; // ¡Esta es la corrección!
+                $montoTotalSesion = $horasDictadasSesion * $tarifaPorHoraAplicable;
 
                 $totalHorasDictadas += $horasDictadasSesion;
                 $totalMontoPago += $montoTotalSesion;
@@ -218,148 +252,69 @@ class AsistenciaDocenteController extends Controller
             return $item;
         });
 
-        // 5. Preparar datos detallados agrupados para la tabla en la vista
+        // 6. NUEVA LÓGICA PARA DATOS DETALLADOS - USANDO NUEVA METODOLOGÍA
         $processedDetailedAsistencias = [];
-        $detailedAsistenciasQuery = AsistenciaDocente::with(['docente', 'horario.curso', 'horario.aula'])
-            ->orderBy('fecha_hora', 'asc');
-
-        // Aplicar los mismos filtros a esta consulta detallada
-        if ($selectedDocenteId) {
-            $detailedAsistenciasQuery->where('docente_id', $selectedDocenteId);
-        }
-        if ($fechaInicio && $fechaFin) {
-            $detailedAsistenciasQuery->whereBetween('fecha_hora', [Carbon::parse($fechaInicio)->startOfDay(), Carbon::parse($fechaFin)->endOfDay()]);
-        } elseif (!empty($selectedMonth) && !empty($selectedYear)) {
-            $detailedAsistenciasQuery->whereMonth('fecha_hora', $selectedMonth)->whereYear('fecha_hora', $selectedYear);
-        }
-        // ¡¡¡CORRECCIÓN CLAVE AQUÍ!!!
-        if ($selectedCicloAcademico) {
-            $detailedAsistenciasQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
-                $query->where('codigo', $selectedCicloAcademico);
-            });
-        }
         
-        $rawDetailedAsistencias = $detailedAsistenciasQuery->get();
-
-        // Agrupar y calcular para la tabla detallada
-        $groupedForDisplay = $rawDetailedAsistencias->groupBy(function ($item) {
-            return $item->docente_id . '_' . Carbon::parse($item->fecha_hora)->format('Y-m-d') . '_' . $item->horario_id;
+        // Obtener docentes según filtros
+        $docentesQuery = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
         });
+        if ($selectedDocenteId) {
+            $docentesQuery->where('id', $selectedDocenteId);
+        }
+        $docentesParaProcesar = $docentesQuery->get();
 
-        foreach ($groupedForDisplay as $groupKey => $records) {
-            $docente = $records->first()->docente;
-            $docenteId = $docente->id;
-            $fecha = Carbon::parse($records->first()->fecha_hora)->format('Y-m-d');
-            $horarioId = $records->first()->horario_id;
+        foreach ($docentesParaProcesar as $docente) {
+            $docenteSessions = [];
 
-            $entrada = $records->where('estado', 'entrada')->sortBy('fecha_hora')->first();
-            $salida = $records->where('estado', 'salida')->sortByDesc('fecha_hora')->first();
+            // Iterar día por día dentro del rango
+            $currentDate = $startDate->copy();
+            while ($currentDate->lte($endDate)) {
+                $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
 
-            $horaEntrada = $entrada ? Carbon::parse($entrada->fecha_hora) : null;
-            $horaSalida = $salida ? Carbon::parse($salida->fecha_hora) : null;
-            $temaDesarrollado = $salida->tema_desarrollado ?? ($entrada->tema_desarrollado ?? 'N/A');
+                // Obtener sesiones programadas para este día
+                $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
+                    ->where('dia_semana', $diaSemanaNombre)
+                    ->with(['curso', 'aula', 'ciclo']);
 
-            $horasDictadas = 0;
-            $montoTotal = 0;
-
-            if ($salida && ($salida->horas_dictadas !== null || $salida->monto_total !== null)) {
-                $horasDictadas = $salida->horas_dictadas;
-                $montoTotal = $salida->monto_total;
-            } elseif ($entrada && ($entrada->horas_dictadas !== null || $entrada->monto_total !== null)) {
-                $horasDictadas = $entrada->horas_dictadas;
-                $montoTotal = $entrada->monto_total;
-            }
-            
-            if (($horasDictadas === null || $horasDictadas == 0) && ($montoTotal === null || $montoTotal == 0)) {
-                if ($horaEntrada && $horaSalida && Carbon::parse($salida->fecha_hora)->greaterThan(Carbon::parse($entrada->fecha_hora))) {
-                    $minutosDictados = Carbon::parse($salida->fecha_hora)->diffInMinutes(Carbon::parse($entrada->fecha_hora));
-                    $horasDictadas = round($minutosDictados / 60, 2);
-                    // Aquí también se recalcula el monto si no hay en DB
-                    $montoTotal = $minutosDictados * ($tarifaPorHoraAplicable > 0 ? ($tarifaPorHoraAplicable / 60) : 0); // Asumiendo que PagoDocente es la fuente
+                // Aplicar filtro de ciclo SOLO si está especificado
+                if ($selectedCicloAcademico) {
+                    $horariosQuery->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
+                        $q->where('codigo', $selectedCicloAcademico);
+                    });
                 }
-            }
-            // Obtener la tarifa dinámica para la tabla detallada (similar al resumen)
-            $tarifaPorHoraAplicableDetalle = 0;
-            if ($horasDictadas > 0 && $entrada) {
-                $pagoDocenteDetalle = PagoDocente::where('docente_id', $docenteId)
-                    ->whereDate('fecha_inicio', '<=', $entrada->fecha_hora)
-                    ->whereDate('fecha_fin', '>=', $entrada->fecha_hora)
-                    ->first();
-                if ($pagoDocenteDetalle) {
-                    $tarifaPorHoraAplicableDetalle = $pagoDocenteDetalle->tarifa_por_hora;
+
+                $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
+
+                // Obtener registros biométricos del día
+                $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                    ->whereDate('fecha_registro', $currentDate->toDateString())
+                    ->orderBy('fecha_registro', 'asc')
+                    ->get();
+
+                // Procesar cada sesión del día
+                foreach ($horariosDelDia as $horario) {
+                    if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
+                        continue;
+                    }
+
+                    $sessionData = $this->processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+                    
+                    if ($sessionData) {
+                        $docenteSessions[] = $sessionData;
+                    }
                 }
-            }
-            // ¡¡¡CORRECCIÓN DE FÓRMULA DE PAGO AQUÍ!!!
-            $montoTotal = $horasDictadas * $tarifaPorHoraAplicableDetalle;
-
-            // Agrupar por docente, luego por mes, luego por semana, luego los detalles
-            if (!isset($processedDetailedAsistencias[$docenteId])) {
-                $processedDetailedAsistencias[$docenteId] = [
-                    'docente_info' => $docente,
-                    'months' => [],
-                    'total_horas' => 0,
-                    'total_pagos' => 0,
-                ];
+                
+                $currentDate->addDay();
             }
 
-            $monthKey = Carbon::parse($fecha)->format('Y-m');
-            if (!isset($processedDetailedAsistencias[$docenteId]['months'][$monthKey])) {
-                $processedDetailedAsistencias[$docenteId]['months'][$monthKey] = [
-                    'month_name' => Carbon::parse($fecha)->locale('es')->monthName,
-                    'weeks' => [],
-                    'total_horas' => 0,
-                    'total_pagos' => 0,
-                ];
+            // Estructurar datos por docente, mes y semana
+            if (!empty($docenteSessions)) {
+                $processedDetailedAsistencias[$docente->id] = $this->structureDocenteDataForReports($docente, $docenteSessions);
             }
-
-            $weekKey = Carbon::parse($fecha)->weekOfYear;
-            if (!isset($processedDetailedAsistencias[$docenteId]['months'][$monthKey]['weeks'][$weekKey])) {
-                $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['weeks'][$weekKey] = [
-                    'week_number' => $weekKey,
-                    'details' => [],
-                    'total_horas' => 0,
-                    'total_pagos' => 0,
-                ];
-            }
-            
-            $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['weeks'][$weekKey]['details'][] = [
-                'fecha' => $fecha,
-                'curso' => $records->first()->horario->curso->nombre ?? 'N/A',
-                'tema_desarrollado' => $temaDesarrollado,
-                'aula' => $records->first()->horario->aula->nombre ?? 'N/A',
-                'turno' => $records->first()->horario->turno ?? 'N/A',
-                'hora_entrada' => $horaEntrada ? $horaEntrada->format('H:i a') : 'N/A',
-                'hora_salida' => $horaSalida ? $horaSalida->format('H:i a') : 'N/A',
-                'horas_dictadas' => $horasDictadas,
-                'pago' => $montoTotal,
-            ];
-
-            // Acumular totales para la vista
-            $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['weeks'][$weekKey]['total_horas'] += $horasDictadas;
-            $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['weeks'][$weekKey]['total_pagos'] += $montoTotal;
-            $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['total_horas'] += $horasDictadas;
-            $processedDetailedAsistencias[$docenteId]['months'][$monthKey]['total_pagos'] += $montoTotal;
-            $processedDetailedAsistencias[$docenteId]['total_horas'] += $horasDictadas;
-            $processedDetailedAsistencias[$docenteId]['total_pagos'] += $montoTotal;
         }
 
-        // Calcular rowspans para la tabla de la vista
-        foreach ($processedDetailedAsistencias as $docenteId => &$docenteData) {
-            $docenteData['rowspan'] = 0;
-            foreach ($docenteData['months'] as &$monthData) {
-                $monthData['rowspan'] = 0;
-                foreach ($monthData['weeks'] as &$weekData) {
-                    $weekData['rowspan'] = count($weekData['details']) + 1; // Detalles + fila de total semanal
-                    $monthData['rowspan'] += $weekData['rowspan'];
-                }
-                $monthData['rowspan'] += 1; // +1 para la fila de total mensual
-                $docenteData['rowspan'] += $monthData['rowspan'];
-            }
-            $docenteData['rowspan'] += 1; // +1 para la fila de total docente
-        }
-        unset($docenteData, $monthData, $weekData); // Romper referencia
-
-        // Pasar todas las variables necesarias a la vista.
+        // CAMBIO CLAVE: Retornar la vista correcta
         return view('asistencia-docente.reportes', compact(
             'totalRegistrosPeriodo', 
             'asistenciaSemana', 
@@ -372,7 +327,7 @@ class AsistenciaDocenteController extends Controller
             'fechaInicio',      
             'fechaFin',         
             'selectedCicloAcademico',
-            'processedDetailedAsistencias' // Datos detallados para la tabla
+            'processedDetailedAsistencias' // NUEVO: Datos detallados para la tabla
         ));
     }
 
@@ -865,5 +820,175 @@ class AsistenciaDocenteController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al eliminar el registro: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * NUEVO: Procesa una sesión individual para reportes
+     */
+    private function processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente)
+    {
+        $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
+        $horaFinProgramada = Carbon::parse($horario->hora_fin);
+
+        $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
+        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second); 
+
+        // Buscar registros biométricos
+        $entradaBiometrica = $registrosBiometricosDelDia
+            ->filter(function($r) use ($horarioInicioHoy) {
+                $horaRegistro = Carbon::parse($r->fecha_registro); 
+                return $horaRegistro->between(
+                    $horarioInicioHoy->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS),
+                    $horarioInicioHoy->copy()->addMinutes(30)
+                );
+            })
+            ->sortBy('fecha_registro')
+            ->first();
+
+        $salidaBiometrica = $registrosBiometricosDelDia
+            ->filter(function($r) use ($horarioFinHoy) {
+                $horaRegistro = Carbon::parse($r->fecha_registro); 
+                return $horaRegistro->between(
+                    $horarioFinHoy->copy()->subMinutes(15),
+                    $horarioFinHoy->copy()->addMinutes(60)
+                );
+            })
+            ->sortByDesc('fecha_registro')
+            ->first();
+        
+        // Buscar tema desarrollado
+        $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
+            ->where('horario_id', $horario->id)
+            ->whereDate('fecha_hora', $currentDate->toDateString())
+            ->first();
+
+        $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
+        
+        // Calcular horas
+        $horasProgramadas = $horaInicioProgramada->diffInHours($horaFinProgramada, true);
+        $horasDictadas = $horasProgramadas;
+        $estadoTexto = 'PENDIENTE';
+
+        $cursoNombre = $horario->curso->nombre ?? 'N/A';
+        $aulaNombre = $horario->aula->nombre ?? 'N/A';
+        $turnoNombre = $horario->turno ?? 'N/A';
+
+        // Determinar estado
+        if ($entradaBiometrica && $salidaBiometrica) {
+            $estadoTexto = 'COMPLETADA';
+            $minutosDictados = Carbon::parse($salidaBiometrica->fecha_registro)->diffInMinutes(Carbon::parse($entradaBiometrica->fecha_registro));
+            $horasDictadas = round($minutosDictados / 60, 2);
+        } elseif ($entradaBiometrica && !$salidaBiometrica) {
+            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
+                $estadoTexto = 'INCOMPLETA';
+            } else {
+                $estadoTexto = 'EN CURSO';
+            }
+        } elseif (!$entradaBiometrica && !$salidaBiometrica) {
+            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
+                $estadoTexto = 'FALTA';
+            } else {
+                $estadoTexto = 'PROGRAMADA';
+            }
+        }
+
+        // Calcular pago
+        $montoTotal = 0;
+        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+            ->whereDate('fecha_inicio', '<=', $currentDate)
+            ->whereDate('fecha_fin', '>=', $currentDate)
+            ->first();
+        
+        if ($pagoDocente) {
+            $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
+        }
+
+        // FORMATO DE HORAS CORREGIDO - ESTE ERA EL PROBLEMA
+        $horaEntradaDisplay = $entradaBiometrica ? 
+            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i A') : 
+            $horaInicioProgramada->format('g:i A');
+        
+        $horaSalidaDisplay = $salidaBiometrica ? 
+            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i A') : 
+            $horaFinProgramada->format('g:i A');
+
+        return [
+            'fecha' => $currentDate->toDateString(),
+            'curso' => $cursoNombre,
+            'tema_desarrollado' => $temaDesarrollado,
+            'aula' => $aulaNombre,
+            'turno' => $turnoNombre,
+            'hora_entrada' => $horaEntradaDisplay,
+            'hora_salida' => $horaSalidaDisplay,
+            'horas_dictadas' => $horasDictadas,
+            'pago' => $montoTotal,
+            'estado_sesion' => $estadoTexto,
+            'mes' => $currentDate->locale('es')->monthName,
+            'semana' => $currentDate->weekOfYear,
+            'carbon_date' => $currentDate->copy(),
+            'tiene_registros' => ($entradaBiometrica && $salidaBiometrica) ? 'SI' : 'NO'
+        ];
+    }
+
+    /**
+     * NUEVO: Estructurar datos por docente para reportes
+     */
+    private function structureDocenteDataForReports($docente, $sessions)
+    {
+        // Agrupar sesiones por mes y semana
+        $groupedData = [];
+        $totalHoras = 0;
+        $totalPagos = 0;
+
+        foreach ($sessions as $session) {
+            $mes = $session['mes'];
+            $semana = $session['semana'];
+            
+            if (!isset($groupedData[$mes])) {
+                $groupedData[$mes] = [
+                    'month_name' => $mes,
+                    'weeks' => [],
+                    'total_horas' => 0,
+                    'total_pagos' => 0,
+                    'rowspan' => 0
+                ];
+            }
+            
+            if (!isset($groupedData[$mes]['weeks'][$semana])) {
+                $groupedData[$mes]['weeks'][$semana] = [
+                    'week_number' => sprintf('%02d', $semana),
+                    'details' => [],
+                    'total_horas' => 0,
+                    'total_pagos' => 0,
+                    'rowspan' => 0
+                ];
+            }
+            
+            $groupedData[$mes]['weeks'][$semana]['details'][] = $session;
+            $groupedData[$mes]['weeks'][$semana]['total_horas'] += $session['horas_dictadas'];
+            $groupedData[$mes]['weeks'][$semana]['total_pagos'] += $session['pago'];
+            $groupedData[$mes]['weeks'][$semana]['rowspan']++;
+            
+            $groupedData[$mes]['total_horas'] += $session['horas_dictadas'];
+            $groupedData[$mes]['total_pagos'] += $session['pago'];
+            $groupedData[$mes]['rowspan']++;
+            
+            $totalHoras += $session['horas_dictadas'];
+            $totalPagos += $session['pago'];
+        }
+
+        // Calcular rowspan total para el docente
+        $totalRowspan = 0;
+        foreach ($groupedData as $monthData) {
+            $totalRowspan += $monthData['rowspan'];
+        }
+
+        return [
+            'docente_info' => $docente,
+            'months' => $groupedData,
+            'total_horas' => $totalHoras,
+            'total_pagos' => $totalPagos,
+            'rowspan' => $totalRowspan
+        ];
     }
 }

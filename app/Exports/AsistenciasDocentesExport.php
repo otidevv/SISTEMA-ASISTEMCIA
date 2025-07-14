@@ -14,8 +14,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Carbon\Carbon;
 use Illuminate\Support\Collection; 
 
-// Estas importaciones son para la clase principal, no para la anónima directamente.
-// Las importaciones para la clase anónima se harán dentro de ella con el FQN.
+// Imports para la clase anónima
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -23,10 +22,15 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 /**
- * Esta clase principal genera un REPORTE DETALLADO de asistencia de docentes,
- * con una hoja separada para cada docente.
+ * Esta clase genera un INFORME DE AVANCE ACADÉMICO profesional
+ * con todas las sesiones del ciclo completo ordenadas cronológicamente
  */
 class AsistenciasDocentesExport implements WithMultipleSheets 
 {
@@ -47,6 +51,11 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         $this->fechaFin = $fechaFin;
         $this->selectedCicloAcademico = $selectedCicloAcademico;
 
+        $this->processedData = $this->processAttendanceData();
+    }
+
+    private function processAttendanceData()
+    {
         $processedDetailedAsistencias = [];
 
         // 1. Obtener todos los docentes relevantes según los filtros
@@ -58,258 +67,319 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         }
         $docentes = $docentesQuery->get();
 
-        // 2. Determinar el rango de fechas para iterar
-        $startDate = $this->fechaInicio ? Carbon::parse($this->fechaInicio)->startOfDay() : null;
-        $endDate = $this->fechaFin ? Carbon::parse($this->fechaFin)->endOfDay() : null;
+        // 2. Determinar el rango de fechas CORRECTAMENTE - PRIORIDAD AL CICLO
+        $startDate = null;
+        $endDate = null;
 
-        if (!$startDate && $this->selectedMonth && $this->selectedYear) {
+        // PRIORIDAD MÁXIMA: Si hay ciclo académico seleccionado, usar SUS fechas
+        if ($this->selectedCicloAcademico) {
+            $ciclo = Ciclo::where('codigo', $this->selectedCicloAcademico)->first();
+            if ($ciclo) {
+                $cicloStartDate = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+                $cicloEndDate = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+                
+                // Si NO hay filtros adicionales, usar TODO el ciclo académico
+                if (!$this->fechaInicio && !$this->fechaFin && !$this->selectedMonth && !$this->selectedYear) {
+                    $startDate = $cicloStartDate;
+                    $endDate = $cicloEndDate;
+                }
+                // Si hay fechas específicas, validar que estén dentro del ciclo
+                elseif ($this->fechaInicio && $this->fechaFin) {
+                    $customStart = Carbon::parse($this->fechaInicio)->startOfDay();
+                    $customEnd = Carbon::parse($this->fechaFin)->endOfDay();
+                    
+                    $startDate = $customStart->max($cicloStartDate);
+                    $endDate = $customEnd->min($cicloEndDate);
+                }
+                // Si hay mes/año específico, validar que esté dentro del ciclo
+                elseif ($this->selectedMonth && $this->selectedYear) {
+                    $monthStart = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->startOfDay();
+                    $monthEnd = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->endOfMonth()->endOfDay();
+                    
+                    $startDate = $monthStart->max($cicloStartDate);
+                    $endDate = $monthEnd->min($cicloEndDate);
+                }
+                else {
+                    // Usar todo el ciclo académico como fallback
+                    $startDate = $cicloStartDate;
+                    $endDate = $cicloEndDate;
+                }
+            }
+        }
+        // Si NO hay ciclo académico pero hay fechas específicas
+        elseif ($this->fechaInicio && $this->fechaFin) {
+            $startDate = Carbon::parse($this->fechaInicio)->startOfDay();
+            $endDate = Carbon::parse($this->fechaFin)->endOfDay();
+        }
+        // Si NO hay ciclo académico pero hay mes/año específico
+        elseif ($this->selectedMonth && $this->selectedYear) {
             $startDate = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->startOfDay();
             $endDate = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->endOfMonth()->endOfDay();
-        } elseif (!$startDate && !$endDate) {
-            // Si no hay filtros de fecha, por defecto a un rango razonable, por ejemplo, los últimos 30 días
+        }
+        // Fallback final: últimos 30 días
+        else {
             $endDate = Carbon::today()->endOfDay();
             $startDate = $endDate->copy()->subDays(30)->startOfDay();
         }
 
-        // Asegurar que la fecha de inicio no sea posterior a la fecha de fin
-        if ($startDate && $endDate && $startDate->greaterThan($endDate)) {
-            list($startDate, $endDate) = [$endDate, $startDate];
-        }
-        
-        // 3. Iterar a través de cada docente y cada día en el rango seleccionado
+        // 3. Procesar sesiones día por día
         foreach ($docentes as $docente) {
-            // Inicializar la estructura para este docente
             if (!isset($processedDetailedAsistencias[$docente->id])) {
                 $processedDetailedAsistencias[$docente->id] = [
                     'docente_info' => $docente,
-                    'months' => [],
+                    'sessions' => [],
                     'total_horas' => 0,
                     'total_pagos' => 0,
                 ];
             }
 
-            // Iterar día por día dentro del rango
+            // Iterar cada día del rango
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
                 $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
 
-                // Obtener las sesiones programadas para este docente en este día específico
-                $horariosDelDia = HorarioDocente::where('docente_id', $docente->id)
+                // Construir query base para horarios
+                $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
                     ->where('dia_semana', $diaSemanaNombre)
-                    ->with(['curso', 'aula', 'ciclo']) // Cargar ciclo para el filtro
-                    ->when($this->selectedCicloAcademico, function ($query) {
-                        $query->whereHas('ciclo', function ($q) {
-                            $q->where('codigo', $this->selectedCicloAcademico);
-                        });
-                    })
-                    ->orderBy('hora_inicio')
-                    ->get();
+                    ->with(['curso', 'aula', 'ciclo']);
 
-                // Cargar todos los registros BIOMÉTRICOS (RegistroAsistencia) para el docente en este día
+                // Aplicar filtro de ciclo SOLO si está especificado
+                if ($this->selectedCicloAcademico) {
+                    $horariosQuery->whereHas('ciclo', function ($q) {
+                        $q->where('codigo', $this->selectedCicloAcademico);
+                    });
+                }
+
+                $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
+
+                // Obtener registros biométricos del día
                 $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
                     ->whereDate('fecha_registro', $currentDate->toDateString())
                     ->orderBy('fecha_registro', 'asc')
                     ->get();
 
-                // Para cada horario programado, buscar sus asistencias reales
+                // Procesar cada sesión del día
                 foreach ($horariosDelDia as $horario) {
-                    // --- INICIO DE LA VERIFICACIÓN CRUCIAL DE $horario ---
                     if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
-                        // Si el horario es nulo o le faltan propiedades de tiempo, agregamos una fila de error
-                        // para que el reporte sea completo y no se rompa.
-                        $monthKey = $currentDate->format('Y-m');
-                        $weekKey = $currentDate->weekOfYear;
-
-                        // Asegurarse de que la estructura exista antes de añadir el detalle
-                        if (!isset($processedDetailedAsistencias[$docente->id]['months'][$monthKey])) {
-                            $processedDetailedAsistencias[$docente->id]['months'][$monthKey] = [
-                                'month_name' => $currentDate->locale('es')->monthName,
-                                'weeks' => [],
-                                'total_horas' => 0,
-                                'total_pagos' => 0,
-                            ];
-                        }
-                        if (!isset($processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey])) {
-                            $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey] = [
-                                'week_number' => $weekKey,
-                                'details' => [],
-                                'total_horas' => 0,
-                                'total_pagos' => 0,
-                            ];
-                        }
-
-                        $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey]['details'][] = [
-                            'fecha' => $currentDate->toDateString(),
-                            'curso' => 'ERROR: Horario no encontrado/inválido', 
-                            'tema_desarrollado' => 'N/A',
-                            'aula' => 'N/A', 
-                            'turno' => 'N/A', 
-                            'hora_entrada' => 'N/A',
-                            'hora_salida' => 'N/A',
-                            'horas_dictadas' => 0,
-                            'pago' => 0,
-                            'minutos_tardanza' => 0,
-                            'estado_sesion' => 'ERROR', 
-                            'salida_source' => 'N/A', 
-                        ];
-                        continue; // Pasa a la siguiente iteración del loop foreach ($horariosDelDia as $horario)
+                        continue;
                     }
-                    // --- FIN DE LA VERIFICACIÓN CRUCIAL ---
 
-                    $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
-                    $horaFinProgramada = Carbon::parse($horario->hora_fin);
-
-                    // Combinar la fecha actual con las horas del horario para las ventanas de búsqueda
-                    $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
-                    $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second); 
-
-                    // --- REPLICANDO LÓGICA DEL DASHBOARD PARA ENTRADA Y SALIDA ---
-                    // Buscar entrada válida (15 min antes hasta 30 min después del inicio)
-                    $entradaBiometrica = $registrosBiometricosDelDia
-                        ->filter(function($r) use ($horarioInicioHoy) {
-                            $horaRegistro = \Carbon\Carbon::parse($r->fecha_registro); 
-                            return $horaRegistro->between(
-                                $horarioInicioHoy->copy()->subMinutes(15),
-                                $horarioInicioHoy->copy()->addMinutes(30)
-                            );
-                        })
-                        ->sortBy('fecha_registro')
-                        ->first();
-
-                    // Buscar salida válida (15 min antes hasta 60 min después del final)
-                    $salidaBiometrica = $registrosBiometricosDelDia
-                        ->filter(function($r) use ($horarioFinHoy) {
-                            $horaRegistro = \Carbon\Carbon::parse($r->fecha_registro); 
-                            return $horaRegistro->between(
-                                $horarioFinHoy->copy()->subMinutes(15),
-                                $horarioFinHoy->copy()->addMinutes(60)
-                            );
-                        })
-                        ->sortByDesc('fecha_registro')
-                        ->first();
-                    // --- FIN REPLICANDO LÓGICA DEL DASHBOARD ---
+                    $sessionData = $this->processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente);
                     
-                    // Buscar el registro de AsistenciaDocente (procesado) para obtener el tema desarrollado
-                    $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
-                        ->where('horario_id', $horario->id)
-                        ->whereDate('fecha_hora', $currentDate->toDateString())
-                        ->first(); // Puede ser null si aún no se ha procesado o registrado el tema
-
-                    // Inicializar variables para los detalles de la sesión
-                    $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'No registrado';
-                    $horasDictadas = 0;
-                    $montoTotal = 0;
-                    $minutosTardanza = 0;
-                    $estadoTexto = 'PROGRAMADA';
-                    $horaEntradaDisplay = 'N/A';
-                    $horaSalidaDisplay = 'N/A';
-                    $salidaSource = 'N/A'; 
-
-                    $cursoNombre = $horario->curso->nombre ?? 'N/A';
-                    $aulaNombre = $horario->aula->nombre ?? 'N/A';
-                    $turnoNombre = $horario->turno ?? 'N/A';
-
-                    // Procesar la entrada
-                    if ($entradaBiometrica) {
-                        $horaEntradaDisplay = Carbon::parse($entradaBiometrica->fecha_registro)->format('h:i A');
-                        
-                        // Calcular tardanza
-                        $toleranciaTarde = $horaInicioProgramada->copy()->addMinutes(AsistenciaDocenteController::TOLERANCIA_TARDE_MINUTOS);
-                        if (Carbon::parse($entradaBiometrica->fecha_registro)->greaterThan($toleranciaTarde)) {
-                            $minutosTardanza = Carbon::parse($entradaBiometrica->fecha_registro)->diffInMinutes($toleranciaTarde);
-                        }
+                    if ($sessionData) {
+                        $processedDetailedAsistencias[$docente->id]['sessions'][] = $sessionData;
+                        $processedDetailedAsistencias[$docente->id]['total_horas'] += $sessionData['horas_dictadas'];
+                        $processedDetailedAsistencias[$docente->id]['total_pagos'] += $sessionData['pago'];
                     }
-
-                    // Procesar la salida
-                    if ($salidaBiometrica) {
-                        $horaSalidaDisplay = Carbon::parse($salidaBiometrica->fecha_registro)->format('h:i A');
-                        $salidaSource = 'Biométrico'; 
-                    }
-
-                    // Calcular horas dictadas y pago si hay entrada y salida válidas
-                    if ($entradaBiometrica && $salidaBiometrica && Carbon::parse($salidaBiometrica->fecha_registro)->greaterThan(Carbon::parse($entradaBiometrica->fecha_registro))) {
-                        $minutosDictados = Carbon::parse($salidaBiometrica->fecha_registro)->diffInMinutes(Carbon::parse($entradaBiometrica->fecha_registro));
-                        $horasDictadas = round($minutosDictados / 60, 2);
-
-                        // Obtener tarifa dinámica desde PagoDocente
-                        $tarifaPorHoraAplicable = 0;
-                        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
-                            ->whereDate('fecha_inicio', '<=', $currentDate)
-                            ->whereDate('fecha_fin', '>=', $currentDate)
-                            ->first();
-                        if ($pagoDocente) {
-                            $tarifaPorHoraAplicable = $pagoDocente->tarifa_por_hora;
-                        }
-                        $montoTotal = $horasDictadas * $tarifaPorHoraAplicable;
-                    }
-
-                    // Determinar el estado de la sesión (lógica similar al dashboard)
-                    if ($entradaBiometrica && $salidaBiometrica) {
-                        $estadoTexto = 'COMPLETADA';
-                    } elseif ($entradaBiometrica && !$salidaBiometrica) {
-                        // Si solo hay entrada y la clase ya debería haber terminado (hoy o en el pasado)
-                        if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horaFinProgramada))) {
-                            $estadoTexto = 'PENDIENTE (solo entrada)';
-                        } else {
-                            $estadoTexto = 'EN CURSO (solo entrada)'; // Si es hoy y aún no termina
-                        }
-                    } elseif (!$entradaBiometrica && !$salidaBiometrica) {
-                        // Si no hay registros y la clase ya pasó (hoy o en el pasado)
-                        if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horaFinProgramada))) {
-                            $estadoTexto = 'SIN REGISTRO';
-                        } else {
-                            $estadoTexto = 'PROGRAMADA'; // Clase futura o que aún no empieza hoy
-                        }
-                    }
-
-                    // Almacenar los datos procesados para el reporte
-                    $monthKey = $currentDate->format('Y-m');
-                    if (!isset($processedDetailedAsistencias[$docente->id]['months'][$monthKey])) {
-                        $processedDetailedAsistencias[$docente->id]['months'][$monthKey] = [
-                            'month_name' => $currentDate->locale('es')->monthName,
-                            'weeks' => [],
-                            'total_horas' => 0,
-                            'total_pagos' => 0,
-                        ];
-                    }
-
-                    $weekKey = $currentDate->weekOfYear;
-                    if (!isset($processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey])) {
-                        $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey] = [
-                            'week_number' => $weekKey,
-                            'details' => [],
-                            'total_horas' => 0,
-                            'total_pagos' => 0,
-                        ];
-                    }
-                    
-                    $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey]['details'][] = [
-                        'fecha' => $currentDate->toDateString(),
-                        'curso' => $cursoNombre, 
-                        'tema_desarrollado' => $temaDesarrollado,
-                        'aula' => $aulaNombre, 
-                        'turno' => $turnoNombre, 
-                        'hora_entrada' => $horaEntradaDisplay,
-                        'hora_salida' => $horaSalidaDisplay,
-                        'horas_dictadas' => $horasDictadas,
-                        'pago' => $montoTotal,
-                        'minutos_tardanza' => $minutosTardanza,
-                        'estado_sesion' => $estadoTexto, 
-                        'salida_source' => $salidaSource, 
-                    ];
-
-                    // Acumular totales para la agrupación
-                    $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey]['total_horas'] += $horasDictadas;
-                    $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['weeks'][$weekKey]['total_pagos'] += $montoTotal;
-                    $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['total_horas'] += $horasDictadas;
-                    $processedDetailedAsistencias[$docente->id]['months'][$monthKey]['total_pagos'] += $montoTotal;
-                    $processedDetailedAsistencias[$docente->id]['total_horas'] += $horasDictadas;
-                    $processedDetailedAsistencias[$docente->id]['total_pagos'] += $montoTotal;
                 }
+                
                 $currentDate->addDay(); 
             }
         }
-        $this->processedData = $processedDetailedAsistencias;
+
+        return $processedDetailedAsistencias;
+    }
+
+    private function processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente)
+    {
+        $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
+        $horaFinProgramada = Carbon::parse($horario->hora_fin);
+
+        $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
+        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second); 
+
+        // Buscar registros biométricos
+        $entradaBiometrica = $registrosBiometricosDelDia
+            ->filter(function($r) use ($horarioInicioHoy) {
+                $horaRegistro = Carbon::parse($r->fecha_registro); 
+                return $horaRegistro->between(
+                    $horarioInicioHoy->copy()->subMinutes(15),
+                    $horarioInicioHoy->copy()->addMinutes(30)
+                );
+            })
+            ->sortBy('fecha_registro')
+            ->first();
+
+        $salidaBiometrica = $registrosBiometricosDelDia
+            ->filter(function($r) use ($horarioFinHoy) {
+                $horaRegistro = Carbon::parse($r->fecha_registro); 
+                return $horaRegistro->between(
+                    $horarioFinHoy->copy()->subMinutes(15),
+                    $horarioFinHoy->copy()->addMinutes(60)
+                );
+            })
+            ->sortByDesc('fecha_registro')
+            ->first();
+        
+        // Buscar tema desarrollado
+        $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
+            ->where('horario_id', $horario->id)
+            ->whereDate('fecha_hora', $currentDate->toDateString())
+            ->first();
+
+        $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
+        
+        // CALCULAR SIEMPRE LAS HORAS PROGRAMADAS
+        $horasProgramadas = $horaInicioProgramada->diffInHours($horaFinProgramada, true);
+        $horasDictadas = $horasProgramadas; // Por defecto, asumir horas programadas
+        $estadoTexto = 'PENDIENTE';
+
+        $cursoNombre = $horario->curso->nombre ?? 'N/A';
+        $aulaNombre = $horario->aula->nombre ?? 'N/A';
+        $turnoNombre = $horario->turno ?? 'N/A';
+
+        // Determinar estado basado en registros biométricos
+        if ($entradaBiometrica && $salidaBiometrica) {
+            $estadoTexto = 'COMPLETADA';
+            // Calcular horas reales
+            $minutosDictados = Carbon::parse($salidaBiometrica->fecha_registro)->diffInMinutes(Carbon::parse($entradaBiometrica->fecha_registro));
+            $horasDictadas = round($minutosDictados / 60, 2);
+        } elseif ($entradaBiometrica && !$salidaBiometrica) {
+            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
+                $estadoTexto = 'INCOMPLETA';
+            } else {
+                $estadoTexto = 'EN CURSO';
+            }
+        } elseif (!$entradaBiometrica && !$salidaBiometrica) {
+            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
+                $estadoTexto = 'FALTA';
+            } else {
+                $estadoTexto = 'PROGRAMADA';
+            }
+        }
+
+        // CALCULAR PAGO SIEMPRE (basado en horas programadas o reales)
+        $montoTotal = 0;
+        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+            ->whereDate('fecha_inicio', '<=', $currentDate)
+            ->whereDate('fecha_fin', '>=', $currentDate)
+            ->first();
+        
+        if ($pagoDocente) {
+            $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
+        }
+
+        // CORREGIR EL FORMATO DE HORAS - PROBLEMA SOLUCIONADO
+        $horaEntradaDisplay = $entradaBiometrica ? 
+            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i A') : 
+            $horaInicioProgramada->format('g:i A');
+        
+        $horaSalidaDisplay = $salidaBiometrica ? 
+            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i A') : 
+            $horaFinProgramada->format('g:i A');
+
+        return [
+            'fecha' => $currentDate->toDateString(),
+            'curso' => $cursoNombre,
+            'tema_desarrollado' => $temaDesarrollado,
+            'aula' => $aulaNombre,
+            'turno' => $turnoNombre,
+            'hora_entrada' => $horaEntradaDisplay,
+            'hora_salida' => $horaSalidaDisplay,
+            'horas_dictadas' => $horasDictadas,
+            'pago' => $montoTotal,
+            'estado_sesion' => $estadoTexto,
+            'mes' => $currentDate->locale('es')->monthName,
+            'semana' => $currentDate->weekOfYear,
+            'carbon_date' => $currentDate->copy(),
+            'tiene_registros' => ($entradaBiometrica && $salidaBiometrica) ? 'SI' : 'NO',
+            // NUEVOS CAMPOS PARA ORDENAMIENTO CRONOLÓGICO
+            'year' => $currentDate->year,
+            'month_number' => $currentDate->month, // 1=enero, 2=febrero, etc.
+            'day_number' => $currentDate->day
+        ];
+    }
+
+    /**
+     * Método para generar encabezado dinámico basado en los filtros aplicados
+     */
+    private function generateDynamicHeader()
+    {
+        // PRIORIDAD 1: Si hay ciclo académico, usarlo como contexto principal
+        if ($this->selectedCicloAcademico) {
+            $ciclo = Ciclo::where('codigo', $this->selectedCicloAcademico)->first();
+            if ($ciclo) {
+                $fechaInicioCiclo = Carbon::parse($ciclo->fecha_inicio);
+                $fechaFinCiclo = Carbon::parse($ciclo->fecha_fin);
+                
+                // Si hay fechas específicas dentro del ciclo
+                if ($this->fechaInicio && $this->fechaFin) {
+                    $fechaInicio = Carbon::parse($this->fechaInicio);
+                    $fechaFin = Carbon::parse($this->fechaFin);
+                    
+                    // Validar que estén dentro del ciclo
+                    $fechaInicio = $fechaInicio->max($fechaInicioCiclo);
+                    $fechaFin = $fechaFin->min($fechaFinCiclo);
+                    
+                    if ($fechaInicio->month === $fechaFin->month && $fechaInicio->year === $fechaFin->year) {
+                        return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - ' . 
+                               $fechaInicio->format('d') . ' AL ' . 
+                               $fechaFin->format('d') . ' DE ' . 
+                               strtoupper($fechaInicio->locale('es')->monthName) . ' ' . 
+                               $fechaInicio->year;
+                    } else {
+                        return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - ' . 
+                               $fechaInicio->format('d') . ' DE ' . 
+                               strtoupper($fechaInicio->locale('es')->monthName) . ' AL ' . 
+                               $fechaFin->format('d') . ' DE ' . 
+                               strtoupper($fechaFin->locale('es')->monthName) . ' ' . 
+                               $fechaFin->year;
+                    }
+                }
+                
+                // Si hay mes específico dentro del ciclo
+                if ($this->selectedMonth && $this->selectedYear) {
+                    $fechaMes = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1);
+                    $fechaInicioMes = $fechaMes->copy()->startOfMonth();
+                    $fechaFinMes = $fechaMes->copy()->endOfMonth();
+                    
+                    // Validar que el mes esté dentro del ciclo
+                    $fechaInicioMes = $fechaInicioMes->max($fechaInicioCiclo);
+                    $fechaFinMes = $fechaFinMes->min($fechaFinCiclo);
+                    
+                    return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - MES DE ' . 
+                           strtoupper($fechaMes->locale('es')->monthName) . ' ' . $this->selectedYear;
+                }
+                
+                // Ciclo completo
+                return 'CICLO ACADÉMICO ' . strtoupper($this->selectedCicloAcademico) . ' (' . 
+                       $fechaInicioCiclo->format('d/m/Y') . ' - ' . $fechaFinCiclo->format('d/m/Y') . ')';
+            }
+        }
+        
+        // PRIORIDAD 2: Si hay fechas específicas (sin ciclo)
+        if ($this->fechaInicio && $this->fechaFin) {
+            $fechaInicio = Carbon::parse($this->fechaInicio);
+            $fechaFin = Carbon::parse($this->fechaFin);
+            
+            if ($fechaInicio->month === $fechaFin->month && $fechaInicio->year === $fechaFin->year) {
+                return 'PERIODO DEL ' . 
+                       $fechaInicio->format('d') . ' AL ' . 
+                       $fechaFin->format('d') . ' DE ' . 
+                       strtoupper($fechaInicio->locale('es')->monthName) . ' ' . 
+                       $fechaInicio->year;
+            } else {
+                return 'PERIODO DEL ' . 
+                       $fechaInicio->format('d') . ' DE ' . 
+                       strtoupper($fechaInicio->locale('es')->monthName) . ' AL ' . 
+                       $fechaFin->format('d') . ' DE ' . 
+                       strtoupper($fechaFin->locale('es')->monthName) . ' ' . 
+                       $fechaFin->year;
+            }
+        }
+        
+        // PRIORIDAD 3: Si hay mes y año específicos (sin ciclo)
+        if ($this->selectedMonth && $this->selectedYear) {
+            $fecha = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1);
+            return 'MES DE ' . strtoupper($fecha->locale('es')->monthName) . ' ' . $this->selectedYear;
+        }
+        
+        // FALLBACK: Período reciente por defecto
+        $fechaFin = Carbon::today();
+        $fechaInicio = $fechaFin->copy()->subDays(30);
+        return 'ÚLTIMOS 30 DÍAS (' . 
+               $fechaInicio->format('d/m/Y') . ' - ' . 
+               $fechaFin->format('d/m/Y') . ')';
     }
 
     /**
@@ -320,353 +390,376 @@ class AsistenciasDocentesExport implements WithMultipleSheets
     {
         $sheets = [];
 
-        $rangoFechasHeader = 'PERIODO: ';
-        if ($this->fechaInicio && $this->fechaFin) {
-            $rangoFechasHeader .= \Carbon\Carbon::parse($this->fechaInicio)->format('d/m/Y') . ' - ' . \Carbon\Carbon::parse($this->fechaFin)->format('d/m/Y');
-        } elseif ($this->selectedMonth && $this->selectedYear) {
-            $rangoFechasHeader .= \Carbon\Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->locale('es')->monthName . ' ' . $this->selectedYear;
-        } else {
-            $rangoFechasHeader .= 'Todo el Historial';
-        }
-
-        $cicloHeader = null;
-        if ($this->selectedCicloAcademico) {
-            $cicloHeader = ' - CICLO: ' . $this->selectedCicloAcademico;
-        }
+        // GENERAR ENCABEZADO DINÁMICO CORREGIDO
+        $rangoFechasHeader = $this->generateDynamicHeader();
 
         foreach ($this->processedData as $docenteId => $docenteData) {
-            $docenteName = $docenteData['docente_info']->nombre . ' ' . $docenteData['docente_info']->apellido_paterno;
+            $docente = $docenteData['docente_info'];
+            $docenteName = 'Lic. ' . $docente->nombre . ' ' . $docente->apellido_paterno . ' ' . $docente->apellido_materno;
             
-            // Crea una nueva instancia de clase anónima para cada hoja
-            $sheets[] = new class($docenteData, $docenteName, $rangoFechasHeader, $cicloHeader) implements 
+            // Crear hoja para cada docente con diseño profesional
+            $sheets[] = new class($docenteData, $docenteName, $rangoFechasHeader, $this->selectedCicloAcademico) implements 
                 \Maatwebsite\Excel\Concerns\FromCollection, 
                 \Maatwebsite\Excel\Concerns\WithTitle, 
                 \Maatwebsite\Excel\Concerns\WithHeadings, 
                 \Maatwebsite\Excel\Concerns\WithMapping, 
                 \Maatwebsite\Excel\Concerns\ShouldAutoSize, 
-                \Maatwebsite\Excel\Concerns\WithEvents 
+                \Maatwebsite\Excel\Concerns\WithEvents,
+                \Maatwebsite\Excel\Concerns\WithStyles
             {
-                // No se usan 'use' statements aquí, se usa el FQN directamente en la línea 'implements' y en el código.
-                // Esto es para evitar el error "Trait not found" en clases anónimas.
-
                 private $docenteData;
                 private $docenteName;
                 private $filterPeriodHeader;
-                private $filterCicloHeader;
-                private $currentRow = 1; // Track current row for styling
+                private $selectedCicloAcademico;
+                private $currentRow = 1;
 
-                public function __construct(array $docenteData, string $docenteName, string $filterPeriodHeader, ?string $filterCicloHeader)
+                public function __construct(array $docenteData, string $docenteName, string $filterPeriodHeader, ?string $selectedCicloAcademico)
                 {
                     $this->docenteData = $docenteData;
                     $this->docenteName = $docenteName;
                     $this->filterPeriodHeader = $filterPeriodHeader;
-                    $this->filterCicloHeader = $filterCicloHeader;
+                    $this->selectedCicloAcademico = $selectedCicloAcademico;
                 }
 
-                /**
-                 * @return string
-                 */
                 public function title(): string
                 {
-                    // Usa el nombre del docente como título de la hoja
-                    // Los nombres de hoja de Excel tienen un máximo de 31 caracteres y no pueden contener ciertos caracteres.
-                    // Lo sanitizamos para mayor seguridad.
-                    $title = substr(\preg_replace('/[\\\\\/:\*\?\[\]]/', '', $this->docenteName), 0, 31); // Usar FQN para preg_replace
-                    return $title ?: 'Docente'; // Fallback si el nombre está vacío después de la sanitización
+                    $title = substr(\preg_replace('/[\\\\\/:\*\?\[\]]/', '', $this->docenteName), 0, 31);
+                    return $title ?: 'Docente';
                 }
 
-                /**
-                 * @return \Illuminate\Support\Collection
-                 */
                 public function collection()
                 {
-                    $dataRows = new \Illuminate\Support\Collection(); // Usar FQN
-                    $this->currentRow = 1; // Reiniciar el contador de filas para cada hoja
+                    $dataRows = new \Illuminate\Support\Collection();
 
-                    // Sección de encabezado para cada hoja (similar al reporte principal)
+                    // ENCABEZADO INSTITUCIONAL
                     $dataRows->push([
-                        'UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS', 
-                        '', '', '', '', '', '', '', '', '', '', '', '', '', '' 
+                        'UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS',
+                        '', '', '', '', '', '', '', '', '', '', ''
                     ]);
-                    $this->currentRow++;
+                    
                     $dataRows->push([
-                        'CENTRO PRE UNIVERSITARIO', 
-                        '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+                        'CENTRO PRE UNIVERSITARIO',
+                        '', '', '', '', '', '', '', '', '', '', ''
                     ]);
-                    $this->currentRow++;
-                    $dataRows->push(['']); 
-                    $this->currentRow++;
+                    
                     $dataRows->push([
-                        'REPORTE DE ASISTENCIA DOCENTE', 
-                        '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+                        'CICLO ORDINARIO 2025-1',
+                        '', '', '', '', '', '', '', '', '', '', ''
                     ]);
-                    $this->currentRow++;
+                    
                     $dataRows->push([
-                        'INFORME DE AVANCE ACADÉMICO', 
-                        '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+                        'INFORME DE AVANCE ACADÉMICO',
+                        '', '', '', '', '', '', '', '', '', '', ''
                     ]);
-                    $this->currentRow++;
+                    
                     $dataRows->push([
-                        $this->filterPeriodHeader . ($this->filterCicloHeader ? ' ' . $this->filterCicloHeader : ''), 
-                        '', '', '', '', '', '', '', '', '', '', '', '', '', ''
+                        $this->filterPeriodHeader, // AQUÍ SE USA EL HEADER DINÁMICO
+                        '', '', '', '', '', '', '', '', '', '', ''
                     ]);
-                    $this->currentRow++;
-                    $dataRows->push(['']); 
-                    $this->currentRow++;
 
-                    // Fila del nombre del Docente
-                    $dataRows->push([$this->docenteName, '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                    $this->currentRow++;
+                    // Línea en blanco
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '']);
 
-                    // Encabezados de la tabla
+                    // ENCABEZADOS DE TABLA
                     $dataRows->push([
-                        'MES', 'SEMANA', 'FECHA', 'CURSO', 'TEMA DESARROLLADO', 'AULA', 'TURNO', 
-                        'HORA ENTRADA', 'HORA SALIDA', 'TARDANZA (min)', 'HORAS DICTADAS', 'PAGO', 'ESTADO', 'NOTA DE SALIDA' 
+                        'DOCENTE', 'MES', 'SEMANA', 'FECHA', 'CURSO', 'TEMA DESARROLLADO', 
+                        'AULA', 'TURNO', 'HORA ENTRADA', 'HORA SALIDA', 'HORAS DICTADAS', 'PAGO'
                     ]);
-                    $this->currentRow++; 
 
+                    // *** ORDENAMIENTO CRONOLÓGICO CORREGIDO ***
+                    // Primero ordenar todas las sesiones por fecha cronológica
+                    $sortedSessions = collect($this->docenteData['sessions'])
+                        ->sortBy([
+                            ['year', 'asc'],
+                            ['month_number', 'asc'],
+                            ['day_number', 'asc']
+                        ]);
+
+                    // Agrupar sesiones por mes cronológicamente ordenado
+                    $sessionsByMonth = [];
+                    foreach ($sortedSessions as $session) {
+                        $monthKey = $session['year'] . '-' . sprintf('%02d', $session['month_number']); // 2025-01, 2025-02, etc.
+                        $weekKey = $session['semana'];
+                        
+                        if (!isset($sessionsByMonth[$monthKey])) {
+                            $sessionsByMonth[$monthKey] = [
+                                'month_name' => $session['mes'],
+                                'weeks' => []
+                            ];
+                        }
+                        if (!isset($sessionsByMonth[$monthKey]['weeks'][$weekKey])) {
+                            $sessionsByMonth[$monthKey]['weeks'][$weekKey] = [];
+                        }
+                        $sessionsByMonth[$monthKey]['weeks'][$weekKey][] = $session;
+                    }
+
+                    // Los meses ya están ordenados cronológicamente por el key
+                    ksort($sessionsByMonth);
+
+                    // DATOS DE SESIONES
                     $docenteTotalHoras = 0;
                     $docenteTotalPago = 0;
+                    $isFirstRowForDocente = true;
 
-                    ksort($this->docenteData['months']); 
-                    foreach ($this->docenteData['months'] as $monthKey => $monthData) {
-                        $monthName = \strtoupper($monthData['month_name']); 
+                    foreach ($sessionsByMonth as $monthKey => $monthData) {
+                        $isFirstRowForMes = true;
                         
-                        // Fila del Mes
-                        $dataRows->push([$monthName, '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                        $this->currentRow++;
-
-                        $monthTotalHoras = 0;
-                        $monthTotalPago = 0;
+                        // Ordenar semanas dentro del mes
+                        ksort($monthData['weeks']);
                         
-                        ksort($monthData['weeks']); 
-                        foreach ($monthData['weeks'] as $weekNumber => $weekData) {
-                            // Fila de la Semana
-                            $dataRows->push(['', 'SEMANA ' . $weekNumber, '', '', '', '', '', '', '', '', '', '', '', '']);
-                            $this->currentRow++;
-
-                            $weekTotalHoras = 0;
-                            $weekTotalPago = 0;
-
-                            // Filas de Detalles
-                            foreach ($weekData['details'] as $detail) {
+                        foreach ($monthData['weeks'] as $semana => $sessions) {
+                            $isFirstRowForSemana = true;
+                            
+                            foreach ($sessions as $session) {
                                 $dataRows->push([
-                                    '', '', // Columnas de agrupación vacías
-                                    \Carbon\Carbon::parse($detail['fecha'])->format('d/m/Y'), 
-                                    $detail['curso'],
-                                    $detail['tema_desarrollado'],
-                                    $detail['aula'],
-                                    $detail['turno'],
-                                    $detail['hora_entrada'],
-                                    $detail['hora_salida'],
-                                    $detail['minutos_tardanza'] > 0 ? $detail['minutos_tardanza'] : '', 
-                                    \number_format($detail['horas_dictadas'], 2), 
-                                    'S/ ' . \number_format($detail['pago'], 2, '.', ','), 
-                                    $detail['estado_sesion'], 
-                                    $detail['salida_source'], 
+                                    $isFirstRowForDocente ? $this->docenteName : '',
+                                    $isFirstRowForMes ? \strtoupper($monthData['month_name']) : '',
+                                    $isFirstRowForSemana ? 'SEMANA ' . \sprintf('%02d', $semana) : '',
+                                    \Carbon\Carbon::parse($session['fecha'])->format('d/m/Y'),
+                                    $session['curso'],
+                                    $session['tema_desarrollado'],
+                                    $session['aula'],
+                                    $session['turno'],
+                                    $session['hora_entrada'],
+                                    $session['hora_salida'],
+                                    \number_format($session['horas_dictadas'], 2) . ' Horas/Min',
+                                    'S/. ' . \number_format($session['pago'], 2)
                                 ]);
-                                $this->currentRow++;
-                                $weekTotalHoras += $detail['horas_dictadas'];
-                                $weekTotalPago += $detail['pago'];
+                                
+                                $docenteTotalHoras += $session['horas_dictadas'];
+                                $docenteTotalPago += $session['pago'];
+                                
+                                $isFirstRowForDocente = false;
+                                $isFirstRowForSemana = false;
                             }
-                            // Fila de Total Semanal
-                            $dataRows->push([
-                                '', '', '', '', '', '', '', '', 'TOTAL SEMANA ' . $weekNumber,
-                                '', // Vacío para Tardanza
-                                \number_format($weekTotalHoras, 2),
-                                'S/ ' . \number_format($weekTotalPago, 2, '.', ','),
-                                '', // Vacío para Estado
-                                '', // Vacío para Nota de Salida
-                            ]);
-                            $this->currentRow++;
-                            $monthTotalHoras += $weekTotalHoras;
-                            $monthTotalPago += $weekTotalPago;
+                            $isFirstRowForMes = false;
                         }
-                        // Fila de Total Mensual
-                        $dataRows->push([
-                            '', '', '', '', '', '', '', '', 'TOTAL MES ' . $monthName,
-                            '', // Vacío para Tardanza
-                            \number_format($monthTotalHoras, 2),
-                            'S/ ' . \number_format($monthTotalPago, 2, '.', ','),
-                            '', // Vacío para Estado
-                            '', // Vacío para Nota de Salida
-                        ]);
-                        $this->currentRow++;
-                        $docenteTotalHoras += $monthTotalHoras;
-                        $docenteTotalPago += $monthTotalPago; 
                     }
-                    // Fila de Total por Docente
+
+                    // FILA DE TOTALES
                     $dataRows->push([
-                        '', '', '', '', '', '', '', '', 'TOTAL ' . $this->docenteName,
-                        '', // Vacío para Tardanza
-                        \number_format($docenteTotalHoras, 2),
-                        'S/ ' . \number_format($docenteTotalPago, 2, '.', ','),
-                        '', // Vacío para Estado
-                        '', // Vacío para Nota de Salida
+                        '', '', '', '', '', '', '', '', '', 'TOTAL',
+                        \number_format($docenteTotalHoras, 2) . ' HORAS',
+                        'S/. ' . \number_format($docenteTotalPago, 2)
                     ]);
-                    $this->currentRow++;
 
                     return $dataRows;
                 }
 
-                /**
-                 * @return array
-                 */
-                public function headings(): array
+                public function headings(): array { return []; }
+                public function map($row): array { return $row; }
+
+                public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
                 {
-                    return []; 
+                    return [
+                        // Estilos base para encabezados
+                        1 => ['font' => ['bold' => true, 'size' => 16, 'color' => ['argb' => 'FF1F4E79']]],
+                        2 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
+                        3 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
+                        4 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
+                        5 => ['font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FF1F4E79']]],
+                        7 => ['font' => ['bold' => true, 'size' => 11, 'color' => ['argb' => 'FF000000']]]
+                    ];
                 }
 
-                /**
-                 * @param mixed $row
-                 * @return array
-                 */
-                public function map($row): array
-                {
-                    return $row; 
-                }
-
-                /**
-                 * @return array
-                 */
                 public function registerEvents(): array
                 {
                     return [
-                        \Maatwebsite\Excel\Events\AfterSheet::class => function(\Maatwebsite\Excel\Events\AfterSheet $event) { // Usar FQN
+                        \Maatwebsite\Excel\Events\AfterSheet::class => function(\Maatwebsite\Excel\Events\AfterSheet $event) {
                             $sheet = $event->sheet->getDelegate();
                             
-                            $startHeaderRow = 1; 
-                            $endHeaderRow = 7; 
-                            $totalColumns = 'O'; // 15 columnas (A-O)
+                            // CONFIGURACIÓN DE ENCABEZADOS
+                            $sheet->mergeCells('A1:L1');
+                            $sheet->mergeCells('A2:L2');
+                            $sheet->mergeCells('A3:L3');
+                            $sheet->mergeCells('A4:L4');
+                            $sheet->mergeCells('A5:L5');
 
-                            // Estilos para los encabezados principales (filas 1-6)
-                            $sheet->mergeCells('A1:'.$totalColumns.'1');
-                            $sheet->getStyle('A1')->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 14],
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                            ]);
-
-                            $sheet->mergeCells('A2:'.$totalColumns.'2');
-                            $sheet->getStyle('A2')->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 12],
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                            ]);
-
-                            $sheet->mergeCells('A4:'.$totalColumns.'4');
-                            $sheet->getStyle('A4')->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 12],
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                            ]);
-
-                            $sheet->mergeCells('A5:'.$totalColumns.'5');
-                            $sheet->getStyle('A5')->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 12],
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                            ]);
-
-                            $sheet->mergeCells('A6:'.$totalColumns.'6');
-                            $sheet->getStyle('A6')->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 12],
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
-                            ]);
-
-                            // Teacher Name Header (Row 8)
-                            $teacherNameRow = 8;
-                            $sheet->mergeCells('A'.$teacherNameRow.':'.$totalColumns.$teacherNameRow);
-                            $sheet->getStyle('A'.$teacherNameRow)->applyFromArray([
-                                'font' => ['bold' => true, 'size' => 12],
-                                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFDDEBF7']], // Light Blue for teacher
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT],
-                            ]);
-
-                            // Table Headers (Row 9)
-                            $tableHeaderRow = 9;
-                            $sheet->getStyle('A'.$tableHeaderRow.':'.$totalColumns.$tableHeaderRow)->applyFromArray([
-                                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']], 
-                                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF366092']], // Dark Blue
-                                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER, 'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
-                                'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]],
-                            ]);
-                            $sheet->getRowDimension($tableHeaderRow)->setRowHeight(20); 
-
-                            $actualRowIndex = $tableHeaderRow + 1; // Start data rows from row 10
-
-                            // Apply styles and merges for grouped data
-                            $docenteData = $this->docenteData; // Access the processed data for this sheet
+                            // Alineación centrada para encabezados institucionales
+                            $sheet->getStyle('A1:L5')->getAlignment()
+                                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
                             
-                            ksort($docenteData['months']); 
-                            foreach ($docenteData['months'] as $monthKey => $monthData) {
-                                $monthStartRow = $actualRowIndex;
-                                $actualRowIndex++; 
-
-                                // Month row style
-                                $sheet->getStyle('A'.$monthStartRow.':'.$totalColumns.$monthStartRow)->applyFromArray([
-                                    'font' => ['bold' => true, 'size' => 11],
-                                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFD9E1F2']], // Lighter blue for month
-                                ]);
-                                $sheet->mergeCells('A'.$monthStartRow.':B'.$monthStartRow); // Merge 'MES' and 'SEMANA' for month title
-
-                                ksort($monthData['weeks']);
-                                foreach ($monthData['weeks'] as $weekNumber => $weekData) {
-                                    $weekStartRow = $actualRowIndex;
-                                    $actualRowIndex++; 
-
-                                    // Week row style
-                                    $sheet->getStyle('B'.$weekStartRow.':'.$totalColumns.$weekStartRow)->applyFromArray([
-                                        'font' => ['bold' => true, 'size' => 10],
-                                        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFEBF1DE']], // Light green for week
-                                    ]);
-                                    $sheet->mergeCells('B'.$weekStartRow.':C'.$weekStartRow); // Merge 'SEMANA' with 'FECHA' for week title
-
-                                    // Count detail rows for the week
-                                    foreach ($weekData['details'] as $detail) {
-                                        $actualRowIndex++; 
-                                    }
-                                    
-                                    // Weekly Total row style
-                                    $sheet->getStyle('I'.$actualRowIndex.':'.$totalColumns.$actualRowIndex)->applyFromArray([
-                                        'font' => ['bold' => true],
-                                        'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE2EFDA']], // Green for weekly total
-                                    ]);
-                                    $sheet->mergeCells('I'.$actualRowIndex.':J'.$actualRowIndex); // Merge "TOTAL SEMANA" with "TARDANZA"
-                                    $actualRowIndex++; 
-
-                                    // Merge 'SEMANA' column for the group
-                                    $sheet->mergeCells('B'.$weekStartRow.':B'.($actualRowIndex - 2));
-                                    $sheet->getStyle('B'.$weekStartRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                                }
-                                // Monthly Total row style
-                                $sheet->getStyle('I'.$actualRowIndex.':'.$totalColumns.$actualRowIndex)->applyFromArray([
-                                    'font' => ['bold' => true],
-                                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFC6E0B4']], // Darker green for monthly total
-                                ]);
-                                $sheet->mergeCells('I'.$actualRowIndex.':J'.$actualRowIndex); 
-                                $actualRowIndex++;
-                                
-                                // Merge 'MES' column for the group
-                                $sheet->mergeCells('A'.$monthStartRow.':A'.($actualRowIndex - 2));
-                                $sheet->getStyle('A'.$monthStartRow)->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-                            }
-                            // Teacher's Total row style - This is the last row for the teacher's section
-                            $sheet->getStyle('I'.$actualRowIndex.':'.$totalColumns.$actualRowIndex)->applyFromArray([
-                                'font' => ['bold' => true],
-                                'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFA9D18E']], // Even darker green for teacher total
+                            // ESTILO DE ENCABEZADOS DE TABLA (Fila 7)
+                            $sheet->getStyle('A7:L7')->applyFromArray([
+                                'font' => [
+                                    'bold' => true, 
+                                    'size' => 11,
+                                    'color' => ['argb' => 'FFFFFFFF']
+                                ],
+                                'fill' => [
+                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 
+                                    'startColor' => ['argb' => 'FF366092']
+                                ],
+                                'alignment' => [
+                                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                                ],
+                                'borders' => [
+                                    'allBorders' => [
+                                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                        'color' => ['argb' => 'FF000000']
+                                    ]
+                                ]
                             ]);
-                            $sheet->mergeCells('I'.$actualRowIndex.':J'.$actualRowIndex); 
-                            $actualRowIndex++;
+
+                            // Altura de fila para encabezados
+                            $sheet->getRowDimension(7)->setRowHeight(25);
+
+                            // APLICAR BORDES A TODA LA TABLA
+                            $lastRow = $sheet->getHighestRow();
+                            $sheet->getStyle('A7:L' . $lastRow)->applyFromArray([
+                                'borders' => [
+                                    'allBorders' => [
+                                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                        'color' => ['argb' => 'FF000000']
+                                    ]
+                                ]
+                            ]);
+
+                            // CONFIGURAR ANCHOS DE COLUMNA
+                            $sheet->getColumnDimension('A')->setWidth(30); // DOCENTE
+                            $sheet->getColumnDimension('B')->setWidth(12); // MES
+                            $sheet->getColumnDimension('C')->setWidth(12); // SEMANA
+                            $sheet->getColumnDimension('D')->setWidth(12); // FECHA
+                            $sheet->getColumnDimension('E')->setWidth(15); // CURSO
+                            $sheet->getColumnDimension('F')->setWidth(35); // TEMA DESARROLLADO
+                            $sheet->getColumnDimension('G')->setWidth(8);  // AULA
+                            $sheet->getColumnDimension('H')->setWidth(10); // TURNO
+                            $sheet->getColumnDimension('I')->setWidth(15); // HORA ENTRADA
+                            $sheet->getColumnDimension('J')->setWidth(15); // HORA SALIDA
+                            $sheet->getColumnDimension('K')->setWidth(18); // HORAS DICTADAS
+                            $sheet->getColumnDimension('L')->setWidth(15); // PAGO
+
+                            // FUSIONAR CELDAS AGRUPADAS
+                            $this->mergeCellsForGroupedData($sheet);
                             
-                            // Apply borders to all data cells for this sheet
-                            // Note: This range needs to be dynamic based on the actual content of the sheet
-                            $sheet->getStyle('A'.$tableHeaderRow.':'.$totalColumns.($actualRowIndex - 1))->applyFromArray([
-                                'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN, 'color' => ['argb' => 'FF000000']]],
-                            ]);
-
-                            // Auto-size columns for this sheet
-                            foreach (range('A', $totalColumns) as $col) {
-                                $sheet->getColumnDimension($col)->setAutoSize(true);
-                            }
-                        },
+                            // APLICAR FORMATO CONDICIONAL
+                            $this->applyProfessionalFormatting($sheet, $lastRow);
+                        }
                     ];
+                }
+
+                private function mergeCellsForGroupedData($sheet)
+                {
+                    $lastRow = $sheet->getHighestRow();
+                    
+                    $currentGroups = ['docente' => '', 'mes' => '', 'semana' => ''];
+                    $startRows = ['docente' => 8, 'mes' => 8, 'semana' => 8];
+                    
+                    for ($row = 8; $row <= $lastRow; $row++) {
+                        $docente = $sheet->getCell('A' . $row)->getValue();
+                        $mes = $sheet->getCell('B' . $row)->getValue();
+                        $semana = $sheet->getCell('C' . $row)->getValue();
+                        
+                        // Docente grouping
+                        if ($docente !== '' && $docente !== $currentGroups['docente']) {
+                            if ($currentGroups['docente'] !== '' && $startRows['docente'] < $row - 1) {
+                                $sheet->mergeCells('A' . $startRows['docente'] . ':A' . ($row - 1));
+                                $sheet->getStyle('A' . $startRows['docente'])->getAlignment()
+                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            }
+                            $startRows['docente'] = $row;
+                            $currentGroups['docente'] = $docente;
+                        }
+                        
+                        // Mes grouping
+                        if ($mes !== '' && $mes !== $currentGroups['mes']) {
+                            if ($currentGroups['mes'] !== '' && $startRows['mes'] < $row - 1) {
+                                $sheet->mergeCells('B' . $startRows['mes'] . ':B' . ($row - 1));
+                                $sheet->getStyle('B' . $startRows['mes'])->getAlignment()
+                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            }
+                            $startRows['mes'] = $row;
+                            $currentGroups['mes'] = $mes;
+                        }
+                        
+                        // Semana grouping
+                        if ($semana !== '' && $semana !== $currentGroups['semana']) {
+                            if ($currentGroups['semana'] !== '' && $startRows['semana'] < $row - 1) {
+                                $sheet->mergeCells('C' . $startRows['semana'] . ':C' . ($row - 1));
+                                $sheet->getStyle('C' . $startRows['semana'])->getAlignment()
+                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            }
+                            $startRows['semana'] = $row;
+                            $currentGroups['semana'] = $semana;
+                        }
+                    }
+                    
+                    // Merge final groups
+                    if ($startRows['docente'] < $lastRow) {
+                        $sheet->mergeCells('A' . $startRows['docente'] . ':A' . $lastRow);
+                        $sheet->getStyle('A' . $startRows['docente'])->getAlignment()
+                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                    }
+                    if ($startRows['mes'] < $lastRow) {
+                        $sheet->mergeCells('B' . $startRows['mes'] . ':B' . $lastRow);
+                        $sheet->getStyle('B' . $startRows['mes'])->getAlignment()
+                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                    }
+                    if ($startRows['semana'] < $lastRow) {
+                        $sheet->mergeCells('C' . $startRows['semana'] . ':C' . $lastRow);
+                        $sheet->getStyle('C' . $startRows['semana'])->getAlignment()
+                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                    }
+                }
+
+                private function applyProfessionalFormatting($sheet, $lastRow)
+                {
+                    // FORMATO ALTERNO PARA FILAS
+                    for ($row = 8; $row < $lastRow; $row++) {
+                        if (($row - 8) % 2 == 0) {
+                            // Filas pares - fondo blanco
+                            $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                                'fill' => [
+                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                    'startColor' => ['argb' => 'FFFFFFFF']
+                                ]
+                            ]);
+                        } else {
+                            // Filas impares - fondo gris muy claro
+                            $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                                'fill' => [
+                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                    'startColor' => ['argb' => 'FFF8F9FA']
+                                ]
+                            ]);
+                        }
+                    }
+                    
+                    // FILA DE TOTALES - Formato especial
+                    $sheet->getStyle('A' . $lastRow . ':L' . $lastRow)->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 12,
+                            'color' => ['argb' => 'FFFFFFFF']
+                        ],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'FF1F4E79']
+                        ],
+                        'alignment' => [
+                            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                        ]
+                    ]);
+
+                    // ALINEACIÓN PARA COLUMNAS ESPECÍFICAS
+                    $sheet->getStyle('D8:D' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('G8:H' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle('I8:L' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+                    // FORMATO PARA COLUMNAS AGRUPADAS
+                    $sheet->getStyle('A8:C' . ($lastRow-1))->applyFromArray([
+                        'font' => ['bold' => true],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'FFE7F3FF']
+                        ]
+                    ]);
                 }
             };
         }
