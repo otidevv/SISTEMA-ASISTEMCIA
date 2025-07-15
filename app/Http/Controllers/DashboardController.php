@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\AsistenciaDocente;
-use App\Models\HorarioDocente; // Asegúrate de que esta línea esté presente
+use App\Models\HorarioDocente;
+use App\Models\PagoDocente; // NUEVO: Importar modelo PagoDocente
 
 class DashboardController extends Controller
 {
@@ -119,9 +120,12 @@ class DashboardController extends Controller
             
             // Obtener la fecha seleccionada del request, o usar la fecha actual por defecto
             $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
-            $data['fechaSeleccionada'] = $fechaSeleccionada; // Pasar al Blade
+            $data['fechaSeleccionada'] = $fechaSeleccionada;
             
             $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            
+            // NUEVO: Obtener ciclo activo para calcular tarifa
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
             
             // Obtener horarios del profesor para la fecha seleccionada
             $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
@@ -139,14 +143,16 @@ class DashboardController extends Controller
             $horasDelDia = 0;
             $sesionesPendientes = 0;
 
+            // NUEVO: Obtener tarifa por hora desde la base de datos
+            $tarifaPorHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
+            $data['tarifa_por_hora'] = $tarifaPorHora;
+
             $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$horasDelDia, $user, &$sesionesPendientes, $fechaSeleccionada) {
                 $horaInicio = Carbon::parse($horario->hora_inicio);
                 $horaFin = Carbon::parse($horario->hora_fin);
 
-                // Importante: Para el cálculo de `dentroDelHorario` y `claseTerminada` en la vista,
-                // si la fecha seleccionada NO ES HOY, siempre se considerará 'clase terminada'.
-                // Si la fecha seleccionada ES HOY, se usa `Carbon::now()` para la comparación.
-                $momentoActualComparacion = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay(); // Si no es hoy, asumimos que ya pasó el día completo
+                // Para el cálculo de estados en la UI
+                $momentoActualComparacion = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay();
 
                 // Combinar la fecha seleccionada con las horas del horario
                 $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute, $horaInicio->second);
@@ -188,30 +194,65 @@ class DashboardController extends Controller
                 // Buscar asistencia docente (tema desarrollado) para la fecha seleccionada
                 $asistencia = AsistenciaDocente::where('docente_id', $user->id)
                     ->where('horario_id', $horario->id)
-                    ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d')) // IMPORTANTE: Filtrar por la fecha seleccionada
+                    ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
                     ->first();
 
-                // Determinar estados para la UI (usando $momentoActualComparacion)
+                // Determinar estados para la UI
                 $dentroDelHorario = $momentoActualComparacion->between($horarioInicioHoy, $horarioFinHoy);
                 $claseTerminada = $momentoActualComparacion->greaterThan($horarioFinHoy);
                 $tieneRegistros = $entrada && $salida;
                 
-                // Lógica para determinar si se puede registrar tema (Ajustada para fechas anteriores)
+                // Lógica para determinar si se puede registrar tema
                 $puedeRegistrarTema = false;
                 if ($asistencia) {
                     // Ya tiene tema registrado, puede editar
                     $puedeRegistrarTema = true;
                 } elseif ($claseTerminada && $tieneRegistros) {
-                    // Clase terminada (hoy o en el pasado) y tiene ambos registros
+                    // Clase terminada y tiene ambos registros
                     $puedeRegistrarTema = true;
                 } elseif ($fechaSeleccionada->isToday() && $dentroDelHorario && $entrada) {
                     // Está dentro del horario HOY y tiene entrada
                     $puedeRegistrarTema = true;
                 }
 
-                // Contar sesiones pendientes (solo para la fecha seleccionada si ya terminó y no tiene tema)
+                // Contar sesiones pendientes
                 if ($claseTerminada && !$asistencia && $tieneRegistros) {
                     $sesionesPendientes++;
+                }
+
+                // NUEVO: Información avanzada de la sesión
+                $tiempoInfo = $this->calcularInfoTiempo($horarioInicioHoy, $horarioFinHoy, $momentoActualComparacion, $fechaSeleccionada);
+                
+                // Progreso de clase si está en curso
+                $progresoClase = 0;
+                if ($dentroDelHorario && $fechaSeleccionada->isToday()) {
+                    $totalMinutos = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
+                    $minutosTranscurridos = $horarioInicioHoy->diffInMinutes($momentoActualComparacion);
+                    $progresoClase = round(($minutosTranscurridos / $totalMinutos) * 100);
+                }
+                
+                // Duración y eficiencia
+                $duracionProgramada = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
+                $duracionReal = null;
+                $eficiencia = null;
+                
+                if ($entrada && $salida) {
+                    $entradaCarbon = Carbon::parse($entrada->fecha_registro);
+                    $salidaCarbon = Carbon::parse($salida->fecha_registro);
+                    $duracionReal = $entradaCarbon->diffInMinutes($salidaCarbon);
+                    $eficiencia = round(($duracionReal / $duracionProgramada) * 100);
+                }
+
+                // Calcular tardanza
+                $minutosTardanza = 0;
+                $dentroTolerancia = true;
+                if ($entrada) {
+                    $horaEntradaReal = Carbon::parse($entrada->fecha_registro);
+                    $tolerancia = $horarioInicioHoy->copy()->addMinutes(5);
+                    if ($horaEntradaReal->gt($tolerancia)) {
+                        $minutosTardanza = $horaEntradaReal->diffInMinutes($tolerancia);
+                        $dentroTolerancia = false;
+                    }
                 }
 
                 return [
@@ -222,23 +263,45 @@ class DashboardController extends Controller
                     'puede_registrar_tema' => $puedeRegistrarTema,
                     'dentro_horario' => $dentroDelHorario,
                     'clase_terminada' => $claseTerminada,
-                    'tiene_registros' => $tieneRegistros
+                    'tiene_registros' => $tieneRegistros,
+                    'minutos_tardanza' => $minutosTardanza > 0 ? $minutosTardanza : null,
+                    'dentro_tolerancia' => $dentroTolerancia,
+                    'tiempo_info' => $tiempoInfo,
+                    'progreso_clase' => $progresoClase,
+                    'duracion_programada' => $duracionProgramada,
+                    'duracion_real' => $duracionReal,
+                    'eficiencia' => $eficiencia
                 ];
             });
 
-            $data['horasHoy'] = round($horasDelDia, 2); // Ahora es horasDelDia
-            $data['horariosDelDia'] = $horariosDelDiaConDetalles; // Renombrado para mayor claridad
-            $data['sesionesHoy'] = $horariosDelDia->count(); // Total de sesiones para la fecha seleccionada
-            $data['sesionesPendientes'] = $sesionesPendientes; // Sesiones pendientes para la fecha seleccionada
+            $data['horasHoy'] = round($horasDelDia, 2);
+            $data['horariosDelDia'] = $horariosDelDiaConDetalles;
+            $data['sesionesHoy'] = $horariosDelDia->count();
+            $data['sesionesPendientes'] = $sesionesPendientes;
 
-            // Calcular pago estimado del día (para la fecha seleccionada)
-            $pagoEstimadoHoy = AsistenciaDocente::where('docente_id', $user->id)
-            ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
-            ->sum('monto_total');
-            
+            // CORREGIDO: Calcular pago estimado del día mejorado con tarifa real
+            $pagoEstimadoHoy = $this->calcularPagoEstimadoMejorado($user->id, $fechaSeleccionada, $horariosDelDia, $tarifaPorHora);
             $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
             
-            // Resumen semanal (últimos 7 días desde hoy, no desde la fecha seleccionada)
+            // Calcular horas reales vs programadas
+            $horasReales = 0;
+            $horasProgramadas = 0;
+            
+            foreach ($horariosDelDiaConDetalles as $item) {
+                $horasProgramadas += $item['duracion_programada'] / 60;
+                if ($item['duracion_real']) {
+                    $horasReales += $item['duracion_real'] / 60;
+                }
+            }
+            
+            $data['horasReales'] = round($horasReales, 1);
+            $data['horasProgramadas'] = round($horasProgramadas, 1);
+            
+            // Calcular métricas de rendimiento
+            $data['eficiencia'] = $this->calcularEficienciaDocente($user->id, $fechaSeleccionada);
+            $data['puntualidad'] = $this->calcularPuntualidadDocente($user->id);
+            
+            // Resumen semanal
             $fechaInicioSemana = Carbon::now()->subDays(6)->startOfDay();
             $fechaFinSemana = Carbon::now()->endOfDay();
             
@@ -256,78 +319,20 @@ class DashboardController extends Controller
                 'sesiones' => $resumenSemanal->total_sesiones ?? 0,
                 'horas' => round($resumenSemanal->total_horas ?? 0, 2),
                 'ingresos' => $resumenSemanal->total_ingresos ?? 0,
-                'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0)
+                'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0),
+                'tendencia' => $this->calcularTendenciaSemanal($user->id)
             ];
             
-            // Próxima clase (siempre desde la fecha y hora actuales)
-            $ahora = Carbon::now();
-            $diaActualSemana = $ahora->locale('es')->dayName;
-
-            $proximaClase = HorarioDocente::where('docente_id', $user->id)
-                ->where(function($query) use ($ahora, $diaActualSemana) {
-                    // Clases de hoy que aún no han comenzado
-                    $query->where('dia_semana', $diaActualSemana)
-                                ->where('hora_inicio', '>', $ahora->format('H:i:s'));
-                })
-                ->orWhere(function($query) use ($diaActualSemana) {
-                    // Clases de días siguientes
-                    $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-                    $diaActualIndex = array_search(strtolower($diaActualSemana), $diasSemana);
-                    $diasSiguientes = array_slice($diasSemana, $diaActualIndex + 1);
-                    
-                    if (!empty($diasSiguientes)) {
-                        $query->whereIn('dia_semana', $diasSiguientes);
-                    }
-                })
-                ->with(['aula', 'curso'])
-                ->orderByRaw("
-                    CASE dia_semana
-                        WHEN 'lunes' THEN 1
-                        WHEN 'martes' THEN 2
-                        WHEN 'miércoles' THEN 3
-                        WHEN 'jueves' THEN 4
-                        WHEN 'viernes' THEN 5
-                        WHEN 'sábado' THEN 6
-                        WHEN 'domingo' THEN 7
-                    END
-                ")
-                ->orderBy('hora_inicio')
-                ->first();
-            
+            // CORREGIDO: Próxima clase - asegurar que solo sea del docente actual
+            $proximaClase = $this->obtenerProximaClaseCorregida($user->id);
             $data['proximaClase'] = $proximaClase;
             
-            // Recordatorios (siempre basados en la situación actual)
-            $recordatorios = [];
-            if ($sesionesPendientes > 0) { // Sesiones pendientes de la fecha seleccionada
-                $recordatorios[] = [
-                    'tipo' => 'warning',
-                    'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . "."
-                ];
-            }
+            // NUEVO: Sistema de notificaciones mejorado
+            $notificaciones = $this->generarNotificacionesDocente($user->id, $fechaSeleccionada, $sesionesPendientes, $proximaClase);
+            $data['notificaciones'] = $notificaciones;
             
-            if ($proximaClase) {
-                // Calcular horas hasta la próxima clase solo si es hoy o en el futuro
-                $horaProximaClase = Carbon::parse($proximaClase->hora_inicio);
-                $diaProximaClase = $this->getFechaParaDiaSemana($proximaClase->dia_semana);
-
-                // Si la próxima clase es hoy y aún no ha pasado su hora
-                if ($diaProximaClase->isToday() && $ahora->lessThan($horaProximaClase)) {
-                    $horasHastaProxima = $ahora->diffInHours($horaProximaClase, false); // false para obtener negativo si ya pasó
-                    if ($horasHastaProxima >= 0 && $horasHastaProxima <= 5) {
-                        $recordatorios[] = [
-                            'tipo' => 'info',
-                            'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es hoy en {$horasHastaProxima} horas."
-                        ];
-                    }
-                } elseif ($diaProximaClase->greaterThan($ahora->startOfDay())) {
-                    // Si es en un día futuro, solo un recordatorio general
-                    $recordatorios[] = [
-                        'tipo' => 'info',
-                        'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es el {$diaProximaClase->locale('es')->isoFormat('dddd')} a las {$horaProximaClase->format('h:i A')}."
-                    ];
-                }
-            }
-            
+            // Recordatorios (mantener compatibilidad)
+            $recordatorios = $this->generarRecordatorios($sesionesPendientes, $proximaClase, $fechaSeleccionada);
             $data['recordatorios'] = $recordatorios;
         }
 
@@ -457,6 +462,406 @@ class DashboardController extends Controller
     }
 
     /**
+     * NUEVO: Método para obtener la tarifa del docente desde la base de datos
+     */
+    private function obtenerTarifaDocente($docenteId, $cicloActivo = null)
+    {
+        if (!$cicloActivo) {
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+        }
+
+        if ($cicloActivo) {
+            // Buscar tarifa en la tabla pagos_docentes para el ciclo activo
+            $pagoDocente = PagoDocente::where('docente_id', $docenteId)
+                ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
+                ->where(function ($query) use ($cicloActivo) {
+                    $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
+                          ->orWhereNull('fecha_fin');
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+
+            if ($pagoDocente) {
+                return $pagoDocente->tarifa_por_hora;
+            }
+        }
+
+        // Si no hay registro en pagos_docentes, usar tarifa del usuario o valor por defecto
+        $user = \App\Models\User::find($docenteId);
+        return $user->tarifa_por_hora ?? 25.00;
+    }
+
+    /**
+     * NUEVO: Sistema de notificaciones para docentes
+     */
+    private function generarNotificacionesDocente($docenteId, $fechaSeleccionada, $sesionesPendientes, $proximaClase)
+    {
+        $notificaciones = [];
+
+        // Notificación para sesiones pendientes
+        if ($sesionesPendientes > 0) {
+            $notificaciones[] = [
+                'id' => 'sesiones_pendientes',
+                'tipo' => 'warning',
+                'titulo' => 'Sesiones Pendientes',
+                'mensaje' => "Tienes {$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . ".",
+                'icono' => 'mdi-alert-circle',
+                'accion' => 'completar_temas',
+                'fecha_creacion' => Carbon::now(),
+                'prioridad' => 'alta'
+            ];
+        }
+
+        // Notificaciones para próxima clase
+        if ($proximaClase) {
+            $horaProximaClase = Carbon::parse($proximaClase->hora_inicio);
+            $diaProximaClase = $this->calcularFechaProximaClase($proximaClase->dia_semana);
+            $proximaClase->fecha_proxima = $diaProximaClase;
+
+            if ($diaProximaClase->isToday()) {
+                $ahora = Carbon::now();
+                $horaCompleta = $diaProximaClase->copy()->setTime($horaProximaClase->hour, $horaProximaClase->minute);
+                $minutosHastaProxima = $ahora->diffInMinutes($horaCompleta, false);
+                
+                if ($minutosHastaProxima >= 0 && $minutosHastaProxima <= 300) { // 5 horas
+                    $tipoNotificacion = 'info';
+                    $prioridad = 'media';
+                    
+                    if ($minutosHastaProxima <= 30) {
+                        $tipoNotificacion = 'danger';
+                        $prioridad = 'critica';
+                        $mensaje = "¡Tu clase de {$proximaClase->curso->nombre} comienza en {$minutosHastaProxima} minutos!";
+                    } elseif ($minutosHastaProxima <= 60) {
+                        $tipoNotificacion = 'warning';
+                        $prioridad = 'alta';
+                        $mensaje = "Tu clase de {$proximaClase->curso->nombre} comienza en 1 hora.";
+                    } else {
+                        $horas = round($minutosHastaProxima / 60, 1);
+                        $mensaje = "Tu próxima clase de {$proximaClase->curso->nombre} es hoy en {$horas} horas.";
+                    }
+
+                    $notificaciones[] = [
+                        'id' => 'proxima_clase_hoy',
+                        'tipo' => $tipoNotificacion,
+                        'titulo' => 'Próxima Clase',
+                        'mensaje' => $mensaje,
+                        'icono' => 'mdi-clock-fast',
+                        'accion' => 'ver_agenda',
+                        'fecha_creacion' => Carbon::now(),
+                        'prioridad' => $prioridad,
+                        'datos' => [
+                            'horario_id' => $proximaClase->id,
+                            'curso' => $proximaClase->curso->nombre,
+                            'aula' => $proximaClase->aula->nombre ?? 'Sin aula',
+                            'hora' => $horaProximaClase->format('H:i')
+                        ]
+                    ];
+                }
+            } elseif ($diaProximaClase->isTomorrow()) {
+                $notificaciones[] = [
+                    'id' => 'proxima_clase_manana',
+                    'tipo' => 'info',
+                    'titulo' => 'Clase de Mañana',
+                    'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es mañana a las {$horaProximaClase->format('h:i A')}.",
+                    'icono' => 'mdi-calendar-clock',
+                    'accion' => 'preparar_clase',
+                    'fecha_creacion' => Carbon::now(),
+                    'prioridad' => 'baja',
+                    'datos' => [
+                        'horario_id' => $proximaClase->id,
+                        'curso' => $proximaClase->curso->nombre,
+                        'aula' => $proximaClase->aula->nombre ?? 'Sin aula',
+                        'hora' => $horaProximaClase->format('H:i')
+                    ]
+                ];
+            }
+        }
+
+        // Notificación de rendimiento semanal
+        $eficiencia = $this->calcularEficienciaDocente($docenteId, $fechaSeleccionada);
+        $puntualidad = $this->calcularPuntualidadDocente($docenteId);
+
+        if ($eficiencia < 70 || $puntualidad < 80) {
+            $mensaje = "Tu rendimiento semanal: Eficiencia {$eficiencia}%, Puntualidad {$puntualidad}%.";
+            if ($eficiencia < 70) $mensaje .= " Considera revisar tu gestión del tiempo en clase.";
+            if ($puntualidad < 80) $mensaje .= " Recuerda llegar puntual a tus sesiones.";
+
+            $notificaciones[] = [
+                'id' => 'rendimiento_semanal',
+                'tipo' => 'warning',
+                'titulo' => 'Rendimiento Semanal',
+                'mensaje' => $mensaje,
+                'icono' => 'mdi-chart-line',
+                'accion' => 'ver_estadisticas',
+                'fecha_creacion' => Carbon::now(),
+                'prioridad' => 'media'
+            ];
+        }
+
+        // Ordenar notificaciones por prioridad
+        $prioridadOrden = ['critica' => 1, 'alta' => 2, 'media' => 3, 'baja' => 4];
+        usort($notificaciones, function($a, $b) use ($prioridadOrden) {
+            return $prioridadOrden[$a['prioridad']] <=> $prioridadOrden[$b['prioridad']];
+        });
+
+        return $notificaciones;
+    }
+
+    /**
+     * NUEVO: Método para calcular pago estimado mejorado con tarifa real
+     */
+    private function calcularPagoEstimadoMejorado($docenteId, $fechaSeleccionada, $horariosDelDia, $tarifaPorHora)
+    {
+        // Primero intentar obtener el monto real de AsistenciaDocente
+        $pagoReal = AsistenciaDocente::where('docente_id', $docenteId)
+            ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
+            ->sum('monto_total');
+
+        // Si hay registros reales, usar ese monto
+        if ($pagoReal > 0) {
+            return $pagoReal;
+        }
+
+        // Si no hay registros reales, calcular estimado basado en horarios programados
+        $totalHorasEstimadas = 0;
+        
+        foreach ($horariosDelDia as $horario) {
+            $horaInicio = Carbon::parse($horario->hora_inicio);
+            $horaFin = Carbon::parse($horario->hora_fin);
+            $totalHorasEstimadas += $horaInicio->diffInMinutes($horaFin) / 60;
+        }
+
+        return $totalHorasEstimadas * $tarifaPorHora;
+    }
+
+    /**
+     * Mantener método de recordatorios para compatibilidad
+     */
+    private function generarRecordatorios($sesionesPendientes, $proximaClase, $fechaSeleccionada)
+    {
+        $recordatorios = [];
+        
+        if ($sesionesPendientes > 0) {
+            $recordatorios[] = [
+                'tipo' => 'warning',
+                'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . "."
+            ];
+        }
+        
+        if ($proximaClase) {
+            $horaProximaClase = Carbon::parse($proximaClase->hora_inicio);
+            $diaProximaClase = $this->calcularFechaProximaClase($proximaClase->dia_semana);
+            $proximaClase->fecha_proxima = $diaProximaClase;
+
+            if ($diaProximaClase->isToday()) {
+                $ahora = Carbon::now();
+                $horaCompleta = $diaProximaClase->copy()->setTime($horaProximaClase->hour, $horaProximaClase->minute);
+                $horasHastaProxima = $ahora->diffInHours($horaCompleta, false);
+                
+                if ($horasHastaProxima >= 0 && $horasHastaProxima <= 5) {
+                    $recordatorios[] = [
+                        'tipo' => 'info',
+                        'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es hoy en {$horasHastaProxima} horas."
+                    ];
+                }
+            } elseif ($diaProximaClase->isTomorrow()) {
+                $recordatorios[] = [
+                    'tipo' => 'info',
+                    'mensaje' => "Tu próxima clase de {$proximaClase->curso->nombre} es mañana a las {$horaProximaClase->format('h:i A')}."
+                ];
+            }
+        }
+        
+        return $recordatorios;
+    }
+
+    /**
+     * CORREGIDO: Método para obtener próxima clase solo del docente actual
+     */
+    private function obtenerProximaClaseCorregida($docenteId)
+    {
+        $ahora = Carbon::now();
+        $diaActualSemana = $ahora->locale('es')->dayName;
+
+        // Primero buscar clases de hoy que aún no han comenzado
+        $proximaClaseHoy = HorarioDocente::where('docente_id', $docenteId)
+            ->where('dia_semana', $diaActualSemana)
+            ->where('hora_inicio', '>', $ahora->format('H:i:s'))
+            ->with(['aula', 'curso'])
+            ->orderBy('hora_inicio')
+            ->first();
+
+        if ($proximaClaseHoy) {
+            return $proximaClaseHoy;
+        }
+
+        // Si no hay clases hoy, buscar en los próximos días
+        $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+        $diaActualIndex = array_search(strtolower($diaActualSemana), $diasSemana);
+        
+        // Buscar en los próximos 7 días
+        for ($i = 1; $i <= 7; $i++) {
+            $indexDia = ($diaActualIndex + $i) % 7;
+            $diaBuscado = $diasSemana[$indexDia];
+            
+            $claseEncontrada = HorarioDocente::where('docente_id', $docenteId) // CORREGIDO: Filtro por docente
+                ->where('dia_semana', $diaBuscado)
+                ->with(['aula', 'curso'])
+                ->orderBy('hora_inicio')
+                ->first();
+            
+            if ($claseEncontrada) {
+                return $claseEncontrada;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * NUEVO: Calcular información de tiempo
+     */
+    private function calcularInfoTiempo($horaInicio, $horaFin, $momentoActual, $fechaSeleccionada)
+    {
+        if (!$fechaSeleccionada->isToday()) {
+            if ($fechaSeleccionada->isPast()) {
+                return [
+                    'estado' => 'terminada',
+                    'texto' => 'Clase finalizada'
+                ];
+            } else {
+                return [
+                    'estado' => 'por_empezar',
+                    'texto' => 'Clase programada'
+                ];
+            }
+        }
+        
+        if ($momentoActual->lt($horaInicio)) {
+            $minutosParaInicio = $momentoActual->diffInMinutes($horaInicio);
+            return [
+                'estado' => 'por_empezar',
+                'texto' => $minutosParaInicio < 60 ? 
+                    "En {$minutosParaInicio} min" : 
+                    "En " . $momentoActual->diffForHumans($horaInicio, true)
+            ];
+        } elseif ($momentoActual->between($horaInicio, $horaFin)) {
+            $minutosRestantes = $momentoActual->diffInMinutes($horaFin);
+            return [
+                'estado' => 'en_curso',
+                'texto' => "Termina en {$minutosRestantes} min"
+            ];
+        } else {
+            return [
+                'estado' => 'terminada',
+                'texto' => "Terminó " . $horaFin->diffForHumans()
+            ];
+        }
+    }
+
+    /**
+     * NUEVO: Calcular eficiencia del docente
+     */
+    private function calcularEficienciaDocente($docenteId, $fecha)
+    {
+        $sesiones = AsistenciaDocente::where('docente_id', $docenteId)
+            ->where('fecha_hora', '>=', Carbon::now()->subDays(30))
+            ->with('horario')
+            ->get();
+        
+        if ($sesiones->isEmpty()) {
+            return 85; // Valor por defecto
+        }
+        
+        $eficienciaPromedio = $sesiones->avg(function ($sesion) {
+            // Calcular eficiencia basada en tiempo trabajado vs programado
+            if (!$sesion->horario) {
+                return 85; // Valor por defecto si no hay horario
+            }
+            
+            $programado = Carbon::parse($sesion->horario->hora_fin)->diffInMinutes(Carbon::parse($sesion->horario->hora_inicio));
+            $real = $sesion->horas_dictadas * 60; // Convertir a minutos
+            
+            return $real > 0 ? min(($real / $programado) * 100, 100) : 0;
+        });
+        
+        return round($eficienciaPromedio);
+    }
+
+    /**
+     * NUEVO: Calcular puntualidad del docente
+     */
+    private function calcularPuntualidadDocente($docenteId)
+    {
+        $registros = DB::table('asistencias_docentes as ad')
+            ->join('horarios_docentes as hd', 'ad.horario_id', '=', 'hd.id')
+            ->where('ad.docente_id', $docenteId)
+            ->where('ad.fecha_hora', '>=', Carbon::now()->subDays(30))
+            ->whereNotNull('ad.hora_entrada')
+            ->select('ad.*', 'hd.hora_inicio')
+            ->get();
+        
+        if ($registros->isEmpty()) {
+            return 95; // Valor por defecto
+        }
+        
+        $sesionesAPunto = 0;
+        $totalSesiones = $registros->count();
+        
+        foreach ($registros as $registro) {
+            $horaInicioProgramada = Carbon::parse($registro->hora_inicio);
+            $horaEntradaReal = Carbon::parse($registro->hora_entrada);
+            $tolerancia = $horaInicioProgramada->copy()->addMinutes(5);
+            
+            if ($horaEntradaReal->lte($tolerancia)) {
+                $sesionesAPunto++;
+            }
+        }
+        
+        return round(($sesionesAPunto / $totalSesiones) * 100);
+    }
+
+    /**
+     * NUEVO: Calcular fecha de próxima clase
+     */
+    private function calcularFechaProximaClase($diaSemana)
+    {
+        $diasMap = [
+            'lunes' => 1, 'martes' => 2, 'miércoles' => 3, 'jueves' => 4,
+            'viernes' => 5, 'sábado' => 6, 'domingo' => 0
+        ];
+        
+        $targetDay = $diasMap[strtolower($diaSemana)];
+        $ahora = Carbon::now();
+        $daysUntilTarget = ($targetDay - $ahora->dayOfWeek + 7) % 7;
+        
+        if ($daysUntilTarget == 0) {
+            $daysUntilTarget = 7; // Próxima semana si es el mismo día
+        }
+        
+        return $ahora->addDays($daysUntilTarget);
+    }
+
+    /**
+     * NUEVO: Calcular tendencia semanal
+     */
+    private function calcularTendenciaSemanal($docenteId)
+    {
+        $semanaActual = AsistenciaDocente::where('docente_id', $docenteId)
+            ->whereBetween('fecha_hora', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            ->sum('horas_dictadas');
+        
+        $semanaAnterior = AsistenciaDocente::where('docente_id', $docenteId)
+            ->whereBetween('fecha_hora', [
+                Carbon::now()->subWeek()->startOfWeek(), 
+                Carbon::now()->subWeek()->endOfWeek()
+            ])
+            ->sum('horas_dictadas');
+        
+        return $semanaActual >= $semanaAnterior ? 'up' : 'down';
+    }
+
+    /**
      * Registra o actualiza el tema desarrollado por un docente para un horario y fecha específicos.
      *
      * @param Request $request La solicitud HTTP que contiene horario_id, fecha_seleccionada y tema_desarrollado.
@@ -467,7 +872,7 @@ class DashboardController extends Controller
         try {
             $request->validate([
                 'horario_id' => 'required|exists:horarios_docentes,id',
-                'fecha_seleccionada' => 'required|date', // Nueva validación para la fecha
+                'fecha_seleccionada' => 'required|date',
                 'tema_desarrollado' => 'required|string|min:10|max:1000'
             ], [
                 'tema_desarrollado.required' => 'El tema desarrollado es obligatorio',
@@ -478,13 +883,13 @@ class DashboardController extends Controller
             ]);
 
             $user = Auth::user();
-            $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay(); // Obtener y limpiar la fecha
+            $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay();
             $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
             
-            // Verificar que el horario pertenece al docente y corresponde al día de la semana de la fecha seleccionada
+            // Verificar que el horario pertenece al docente
             $horario = HorarioDocente::where('id', $request->horario_id)
                 ->where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemanaSeleccionada) // Usamos el día de la semana de la fecha seleccionada
+                ->where('dia_semana', $diaSemanaSeleccionada)
                 ->first();
                 
             if (!$horario) {
@@ -498,13 +903,13 @@ class DashboardController extends Controller
             $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
             $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
             
-            // Obtener registros biométricos para la FECHA SELECCIONADA
+            // Obtener registros biométricos para la fecha seleccionada
             $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d')) // Filtrar por la fecha seleccionada
-                ->orderBy('fecha_registro') // Ordenar para encontrar la primera entrada y última salida
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+                ->orderBy('fecha_registro')
                 ->get();
 
-            // Buscar entrada válida (15 min antes hasta 30 min después del inicio del horario)
+            // Buscar entrada válida
             $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
@@ -513,16 +918,16 @@ class DashboardController extends Controller
                 );
             })->first();
 
-            // Buscar salida válida (15 min antes hasta 60 min después del final del horario)
+            // Buscar salida válida
             $salida = $registrosDiaSeleccionado->filter(function($r) use ($horarioFinClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
                     $horarioFinClase->copy()->subMinutes(15),
                     $horarioFinClase->copy()->addMinutes(60)
                 );
-            })->sortByDesc('fecha_registro')->first(); // Tomar la última salida que cumpla el criterio
+            })->sortByDesc('fecha_registro')->first();
 
-            // Validar que existan registros de entrada y salida para poder registrar el tema
+            // Validar que existan registros de entrada y salida
             if (!$entrada || !$salida) {
                 return response()->json([
                     'success' => false,
@@ -539,7 +944,10 @@ class DashboardController extends Controller
             
             if ($horaSalida->greaterThan($horaEntrada)) {
                 $horasTrabajadas = $horaSalida->diffInMinutes($horaEntrada) / 60;
-                $tarifaHora = $horario->tarifa_hora ?? $user->tarifa_hora ?? 25; // Usar tarifa del horario o del usuario, o un valor por defecto
+                
+                // CORREGIDO: Usar tarifa desde base de datos
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
                 $montoTotal = $horasTrabajadas * $tarifaHora;
             } else {
                  return response()->json([
@@ -553,12 +961,12 @@ class DashboardController extends Controller
                 [
                     'docente_id' => $user->id,
                     'horario_id' => $request->horario_id,
-                    'fecha_hora' => $fechaSeleccionada->toDateString() // Usamos la fecha seleccionada
+                    'fecha_hora' => $fechaSeleccionada->toDateString()
                 ],
                 [
                     'tema_desarrollado' => $request->tema_desarrollado,
-                    'hora_entrada' => $horaEntrada->toDateTimeString(), // Guardar como datetime
-                    'hora_salida' => $horaSalida->toDateTimeString(),   // Guardar como datetime
+                    'hora_entrada' => $horaEntrada->toDateTimeString(),
+                    'hora_salida' => $horaSalida->toDateTimeString(),
                     'horas_dictadas' => round($horasTrabajadas, 2),
                     'monto_total' => round($montoTotal, 2),
                     'estado' => 'completada'
@@ -584,19 +992,13 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar: ' . $e->getMessage() . '. Línea: ' . $e->getLine() . '. Archivo: ' . $e->getFile()
+                'message' => 'Error al registrar: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Calcula la asistencia de un estudiante para un período específico (ej. hasta un examen).
-     *
-     * @param string $numeroDocumento El número de documento del estudiante.
-     * @param string $fechaInicio La fecha de inicio del período de cálculo.
-     * @param string $fechaExamen La fecha del examen o fin del período de cálculo.
-     * @param \App\Models\Ciclo $ciclo El objeto Ciclo para obtener porcentajes de amonestación/inhabilitación.
-     * @return array Un array con los detalles de la asistencia.
+     * Calcula la asistencia de un estudiante para un período específico.
      */
     private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
@@ -604,10 +1006,8 @@ class DashboardController extends Controller
         $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
         $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
 
-        // Si el examen aún no ha llegado, calcular hasta hoy para una proyección
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
 
-        // Si la fecha de inicio es futura (para segundo y tercer examen), no calcular aún
         if ($fechaInicioCarbon > $hoy) {
             return [
                 'dias_habiles' => 0,
@@ -622,17 +1022,13 @@ class DashboardController extends Controller
                 'puede_rendir' => true,
                 'fecha_inicio' => $fechaInicio,
                 'fecha_fin' => $fechaExamen,
-                'es_proyeccion' => true // Siempre es proyección si el inicio es futuro
+                'es_proyeccion' => true
             ];
         }
 
-        // Calcular días hábiles totales hasta el examen
         $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen);
-
-        // Calcular días hábiles transcurridos hasta hoy o fecha del examen
         $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo);
 
-        // Obtener registros de asistencia
         $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
                 $fechaInicioCarbon->startOfDay(),
@@ -643,36 +1039,30 @@ class DashboardController extends Controller
             ->get()
             ->pluck('fecha');
 
-        // Contar días con asistencia (solo días hábiles)
         $diasConAsistencia = 0;
         foreach ($registrosAsistencia as $fecha) {
             $carbonFecha = Carbon::parse($fecha);
-            if ($carbonFecha->isWeekday()) { // Lunes a Viernes
+            if ($carbonFecha->isWeekday()) {
                 $diasConAsistencia++;
             }
         }
 
         $diasFaltaActuales = $diasHabilesTranscurridos - $diasConAsistencia;
 
-        // Para proyección: calcular el porcentaje sobre el total de días hasta el examen
         $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
         $porcentajeInasistenciaProyectado = 100 - $porcentajeAsistenciaProyectado;
 
-        // Para estado actual: calcular sobre días transcurridos
         $porcentajeAsistenciaActual = $diasHabilesTranscurridos > 0 ?
             round(($diasConAsistencia / $diasHabilesTranscurridos) * 100, 2) : 0;
 
-        // Calcular límites basados en el total de días hasta el examen
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
 
-        // Determinar estado y mensaje
         $estado = 'regular';
         $mensaje = '';
         $puedeRendir = true;
 
-        // Si el examen ya pasó, usar estado definitivo
         if ($hoy >= $fechaExamenCarbon) {
             if ($diasFaltaActuales >= $limiteInhabilitacion) {
                 $estado = 'inhabilitado';
@@ -685,7 +1075,6 @@ class DashboardController extends Controller
                 $mensaje = 'Tu asistencia fue adecuada para este examen.';
             }
         } else {
-            // El examen aún no llega, mostrar proyección
             $diasRestantes = $diasHabilesTotales - $diasHabilesTranscurridos;
             $faltasMaximasPermitidas = $limiteInhabilitacion - 1;
             $faltasParaInhabilitacion = $faltasMaximasPermitidas - $diasFaltaActuales;
@@ -706,7 +1095,6 @@ class DashboardController extends Controller
                 $mensaje = "Tu asistencia va bien. Tienes {$diasFaltaActuales} faltas. Puedes faltar hasta {$faltasParaAmonestacion} día" . ($faltasParaAmonestacion > 1 ? 's' : '') . " más sin ser amonestado.";
             }
 
-            // Agregar información de días restantes
             $mensaje .= " Quedan {$diasRestantes} día" . ($diasRestantes > 1 ? 's' : '') . " hábil" . ($diasRestantes > 1 ? 'es' : '') . " hasta el examen.";
         }
 
@@ -731,11 +1119,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Contar días hábiles entre dos fechas (Lunes a Viernes).
-     *
-     * @param string $fechaInicio La fecha de inicio.
-     * @param string $fechaFin La fecha de fin.
-     * @return int El número de días hábiles.
+     * Contar días hábiles entre dos fechas.
      */
     private function contarDiasHabiles($fechaInicio, $fechaFin)
     {
@@ -744,7 +1128,7 @@ class DashboardController extends Controller
         $diasHabiles = 0;
 
         while ($inicio <= $fin) {
-            if ($inicio->isWeekday()) { // Lunes a Viernes
+            if ($inicio->isWeekday()) {
                 $diasHabiles++;
             }
             $inicio->addDay();
@@ -754,10 +1138,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Obtener el siguiente día hábil (Lunes a Viernes) a partir de una fecha dada.
-     *
-     * @param string $fecha La fecha de referencia.
-     * @return \Carbon\Carbon La fecha del siguiente día hábil.
+     * Obtener el siguiente día hábil.
      */
     private function getSiguienteDiaHabil($fecha)
     {
@@ -771,11 +1152,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Obtiene la fecha para un día de la semana dado, a partir de hoy o el día más cercano en el futuro.
-     * Útil para calcular la fecha real de la próxima clase.
-     *
-     * @param string $diaSemana El día de la semana en español (ej. 'lunes').
-     * @return \Carbon\Carbon La fecha calculada.
+     * Obtiene la fecha para un día de la semana dado.
      */
     private function getFechaParaDiaSemana($diaSemana)
     {
@@ -792,24 +1169,18 @@ class DashboardController extends Controller
         $targetDayOfWeek = $diasSemanaMap[strtolower($diaSemana)];
         $fecha = Carbon::now();
 
-        // Si el día de la semana objetivo es hoy o en el futuro esta semana
         if ($fecha->dayOfWeek <= $targetDayOfWeek) {
             return $fecha->next($targetDayOfWeek);
         } else {
-            // Si el día de la semana objetivo ya pasó esta semana, buscar la próxima semana
             return $fecha->addWeek()->startOfWeek()->next($targetDayOfWeek);
         }
     }
 
     /**
-     * Obtener estadísticas generales de asistencia (para administradores).
-     *
-     * @param \App\Models\Ciclo $ciclo El ciclo activo.
-     * @return array Un array con las estadísticas de asistencia de estudiantes.
+     * Obtener estadísticas generales de asistencia.
      */
     private function obtenerEstadisticasGenerales($ciclo)
     {
-        // Obtener todas las inscripciones activas del ciclo
         $inscripciones = Inscripcion::where('ciclo_id', $ciclo->id)
             ->where('estado_inscripcion', 'activo')
             ->with('estudiante')
@@ -823,14 +1194,12 @@ class DashboardController extends Controller
         foreach ($inscripciones as $inscripcion) {
             $estudiante = $inscripcion->estudiante;
 
-            // Obtener primer registro
             $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
                 ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
                 ->orderBy('fecha_registro')
                 ->first();
 
             if ($primerRegistro) {
-                // Calcular asistencia hasta la fecha actual o fin del ciclo
                 $fechaFin = Carbon::now() < $ciclo->fecha_fin ? Carbon::now() : $ciclo->fecha_fin;
 
                 $info = $this->calcularAsistenciaExamen(
