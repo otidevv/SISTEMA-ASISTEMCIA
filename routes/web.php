@@ -22,6 +22,9 @@ use App\Http\Controllers\CarnetController; // ← AGREGADO PARA CARNETS
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Ruta para sitemap.xml
+Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+
 // Agregar temporalmente en tu routes/web.php para debugging
 Route::get('/debug-horarios-docentes', function () {
     $docentes = \App\Models\User::whereHas('roles', function ($query) {
