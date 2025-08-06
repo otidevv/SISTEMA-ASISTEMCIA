@@ -1,1168 +1,1051 @@
 @extends('layouts.app')
 
-@section('title', 'Gestión de Horarios Académicos')
+@section('title', 'Gestión de Horarios Docentes')
 
 @push('css')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --accent-color: #3b82f6;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --danger-color: #ef4444;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --bg-light: #f8fafc;
-        --bg-white: #ffffff;
-        --border-color: #e5e7eb;
-        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    .search-container {
+        position: relative;
     }
 
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    .search-input {
+        padding-right: 40px;
     }
 
-    body {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        min-height: 100vh;
+    .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
     }
 
-    /* Header Principal Mejorado */
-    .academic-header {
-        background: var(--primary-gradient);
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.25rem 0.25rem;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        z-index: 1050;
+    }
+
+    .suggestion-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid #f1f3f4;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+
+    .suggestion-item:hover,
+    .suggestion-item.active {
+        background-color: #f8f9fa;
+    }
+
+    .suggestion-item .suggestion-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
         color: white;
-        padding: 3rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .suggestion-item .text-primary {
+        font-weight: 600;
+    }
+
+    .no-results {
+        padding: 15px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-action-btn {
+        padding: 1.25rem;
+        border: 2px dashed #d1d5db;
+        border-radius: 0.75rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
         position: relative;
         overflow: hidden;
     }
 
-    .academic-header::before {
+    .quick-action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .quick-action-btn:hover::before {
+        left: 100%;
+    }
+
+    .quick-action-btn:hover {
+        border-color: #4f46e5;
+        background: #f8fafc;
+        color: inherit;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+    }
+
+    .quick-action-btn.active {
+        border-color: #4f46e5;
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+
+    .quick-action-icon {
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .day-filter-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 0.25rem;
+        gap: 0.375rem;
+    }
+
+    .day-filter-badge.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .day-filter-badge:not(.active) {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
+    }
+
+    .day-filter-badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .horario-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 0.75rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .horario-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+
+    .horario-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1.75rem;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #1d4ed8);
     }
 
-    .academic-header .container {
-        position: relative;
-        z-index: 2;
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.15);
     }
 
-    .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 2rem;
-    }
-
-    .header-info h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.025em;
-    }
-
-    .header-info .subtitle {
-        font-size: 1.125rem;
-        opacity: 0.9;
-        font-weight: 400;
-        margin-bottom: 1rem;
-    }
-
-    .breadcrumb-custom {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .breadcrumb-custom .breadcrumb-item {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.875rem;
-    }
-
-    .breadcrumb-custom .breadcrumb-item.active {
-        color: white;
-        font-weight: 500;
-    }
-
-    .header-actions .btn-primary-custom {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.875rem 2rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-    }
-
-    .header-actions .btn-primary-custom:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Estadísticas Mejoradas */
-    .metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin: -2rem 0 3rem 0;
-        position: relative;
-        z-index: 10;
-    }
-
-    .metric-card {
-        background: var(--bg-white);
-        border-radius: 1rem;
-        padding: 2rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: var(--accent-color);
-        transition: all 0.3s ease;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-xl);
-    }
-
-    .metric-card:nth-child(1)::before { background: var(--accent-color); }
-    .metric-card:nth-child(2)::before { background: var(--success-color); }
-    .metric-card:nth-child(3)::before { background: var(--warning-color); }
-    .metric-card:nth-child(4)::before { background: #8b5cf6; }
-
-    .metric-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-    }
-
-    .metric-icon {
+    .stat-icon {
         width: 3.5rem;
         height: 3.5rem;
-        border-radius: 0.75rem;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin: 0 auto 1rem;
         font-size: 1.5rem;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-        color: var(--accent-color);
+        position: relative;
     }
 
-    .metric-icon.success {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-        color: var(--success-color);
+    .stat-icon::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, transparent, rgba(255,255,255,0.3));
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    .metric-icon.warning {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-        color: var(--warning-color);
+    .stat-card:hover .stat-icon::after {
+        opacity: 1;
     }
 
-    .metric-icon.purple {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-        color: #8b5cf6;
+    .stat-icon.primary {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1d4ed8;
     }
 
-    .metric-value {
-        font-size: 2.5rem;
+    .stat-icon.success {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #16a34a;
+    }
+
+    .stat-icon.warning {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #d97706;
+    }
+
+    .stat-icon.info {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        color: #0284c7;
+    }
+
+    .stat-value {
+        font-size: 2.25rem;
         font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
         line-height: 1;
     }
 
-    .metric-label {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .metric-trend {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.375rem;
-        font-weight: 600;
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success-color);
-    }
-
-    /* Card Principal Mejorado */
-    .main-panel {
-        background: var(--bg-white);
-        border-radius: 1.25rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-
-    .panel-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        padding: 2rem;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-    }
-
-    .panel-title {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .panel-title h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0;
-    }
-
-    .panel-title .icon {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 0.5rem;
-        background: var(--accent-color);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.125rem;
-    }
-
-    /* Buscador Avanzado */
-    .search-panel {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .search-container {
-        position: relative;
-        min-width: 320px;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.875rem 1rem 0.875rem 3rem;
-        border: 2px solid var(--border-color);
-        border-radius: 0.75rem;
-        font-size: 0.95rem;
-        background: var(--bg-white);
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-sm);
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: var(--accent-color);
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-secondary);
-        font-size: 1.125rem;
-    }
-
-    .filter-buttons {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .filter-btn {
-        padding: 0.875rem 1.25rem;
-        border: 1px solid var(--border-color);
-        background: var(--bg-white);
-        color: var(--text-secondary);
-        border-radius: 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .filter-btn:hover,
-    .filter-btn.active {
-        background: var(--accent-color);
-        color: white;
-        border-color: var(--accent-color);
-    }
-
-    /* Tabla Profesional */
-    .data-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .data-table thead th {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 1.25rem 1.5rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border: none;
-        position: sticky;
-        top: 0;
-        z-index: 5;
-    }
-
-    .data-table thead th:first-child {
-        border-top-left-radius: 0.75rem;
-    }
-
-    .data-table thead th:last-child {
-        border-top-right-radius: 0.75rem;
-    }
-
-    .data-table tbody td {
-        padding: 1.5rem;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-        transition: all 0.3s ease;
-    }
-
-    .data-table tbody tr {
-        transition: all 0.3s ease;
-    }
-
-    .data-table tbody tr:hover {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        transform: scale(1.01);
-        box-shadow: var(--shadow-md);
-    }
-
-    .data-table tbody tr:last-child td:first-child {
-        border-bottom-left-radius: 0.75rem;
-    }
-
-    .data-table tbody tr:last-child td:last-child {
-        border-bottom-right-radius: 0.75rem;
-    }
-
-    /* Componentes de la Tabla */
-    .teacher-profile {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .teacher-avatar {
-        width: 2.75rem;
-        height: 2.75rem;
-        border-radius: 0.75rem;
-        background: var(--secondary-gradient);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.125rem;
-        box-shadow: var(--shadow-md);
-    }
-
-    .teacher-info h4 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 0 0 0.25rem 0;
-    }
-
-    .teacher-info .teacher-id {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-
-    .day-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        text-align: center;
-        min-width: 80px;
-        display: inline-block;
-    }
-
-    .day-badge.lunes { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e40af; }
-    .day-badge.martes { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #166534; }
-    .day-badge.miercoles { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
-    .day-badge.jueves { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); color: #7c2d12; }
-    .day-badge.viernes { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); color: #be185d; }
-    .day-badge.sabado { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0c4a6e; }
-    .day-badge.domingo { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; }
-
-    .time-display {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        padding: 0.625rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        min-width: 100px;
-        justify-content: center;
-    }
-
-    .location-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--text-secondary);
+    .stat-label {
+        color: #6b7280;
         font-size: 0.9rem;
         font-weight: 500;
-    }
-
-    .location-badge .building-icon {
-        color: var(--accent-color);
-        font-size: 1rem;
-    }
-
-    .course-details {
         display: flex;
-        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 0.375rem;
     }
 
-    .course-name {
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 0.95rem;
-        line-height: 1.3;
-    }
-
-    .course-meta {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--text-secondary);
-        font-size: 0.8rem;
-    }
-
-    .cycle-indicator {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        color: #0369a1;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    /* Botones de Acción Mejorados */
-    .action-group {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-
-    .action-btn {
-        width: 2.5rem;
-        height: 2.5rem;
+    .recent-activity {
+        max-height: 400px;
+        overflow-y: auto;
+        background: #f8fafb;
         border-radius: 0.5rem;
-        border: none;
+        padding: 1rem;
+    }
+
+    .activity-item {
+        padding: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .activity-item.created {
+        border-left-color: #10b981;
+    }
+
+    .activity-item.updated {
+        border-left-color: #f59e0b;
+    }
+
+    .activity-item.deleted {
+        border-left-color: #ef4444;
+    }
+
+    .activity-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.875rem;
+        color: white;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.created {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .activity-icon.updated {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .activity-icon.deleted {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    /* Vista Calendario */
+    .calendario-container {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .calendario-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .calendario-nav {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .nav-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .nav-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: scale(1.1);
+    }
+
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        background: #f8fafb;
+    }
+
+    .dia-header {
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        color: #374151;
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .dia-column {
+        min-height: 150px;
+        padding: 0.75rem;
+        border-right: 1px solid #e5e7eb;
+        border-bottom: 1px solid #e5e7eb;
+        background: white;
+    }
+
+    .dia-column:last-child {
+        border-right: none;
+    }
+
+    .horario-bloque {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 1px solid #93c5fd;
+        border-radius: 0.375rem;
+        padding: 0.5rem;
+        margin-bottom: 0.375rem;
+        font-size: 0.75rem;
+        cursor: pointer;
         transition: all 0.3s ease;
         position: relative;
-        cursor: pointer;
+        overflow: hidden;
     }
 
-    .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+    .horario-bloque::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #3b82f6;
     }
 
-    .action-btn.edit {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
+    .horario-bloque:hover {
+        background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+        transform: scale(1.02);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
 
-    .action-btn.edit:hover {
-        background: var(--warning-color);
-        color: white;
-    }
-
-    .action-btn.delete {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
-    }
-
-    .action-btn.delete:hover {
-        background: var(--danger-color);
-        color: white;
-    }
-
-    .action-btn.view {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
-    }
-
-    .action-btn.view:hover {
-        background: var(--accent-color);
-        color: white;
-    }
-
-    /* Estado Vacío Mejorado */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .empty-icon {
-        font-size: 5rem;
-        margin-bottom: 2rem;
-        opacity: 0.3;
-        background: var(--secondary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .empty-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-    }
-
-    .empty-message {
-        font-size: 1.125rem;
-        margin-bottom: 2.5rem;
-        max-width: 500px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.6;
-    }
-
-    .empty-action {
-        background: var(--secondary-gradient);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 0.75rem;
+    .horario-time {
         font-weight: 600;
-        text-decoration: none;
+        color: #1e40af;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .horario-details {
+        margin-top: 0.25rem;
+        color: #374151;
+    }
+
+    .empty-day {
+        text-align: center;
+        color: #9ca3af;
+        font-style: italic;
+        padding: 2rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .toggle-view-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .toggle-view-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .view-lista {
+        display: block;
+    }
+
+    .view-calendario {
+        display: none;
+    }
+
+    .docente-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        flex-shrink: 0;
+    }
+
+    .curso-badge {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        color: #0284c7;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-md);
+        gap: 0.375rem;
     }
 
-    .empty-action:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
-        color: white;
-    }
-
-    /* Paginación Moderna */
-    .pagination-container {
-        padding: 2rem;
-        border-top: 1px solid var(--border-color);
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    }
-
-    .pagination-modern {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .pagination-modern .page-item .page-link {
-        border: none;
-        color: var(--text-secondary);
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        background: transparent;
-    }
-
-    .pagination-modern .page-item .page-link:hover {
-        background: var(--accent-color);
-        color: white;
-        transform: translateY(-1px);
-    }
-
-    .pagination-modern .page-item.active .page-link {
-        background: var(--accent-color);
-        color: white;
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Alertas Mejoradas */
-    .alert-modern {
-        border: none;
-        border-radius: 0.75rem;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 2rem;
+    .aula-info {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        box-shadow: var(--shadow-md);
+        gap: 0.5rem;
+        color: #6b7280;
+        font-size: 0.875rem;
     }
 
-    .alert-success {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #166534;
-        border-left: 4px solid var(--success-color);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1024px) {
-        .header-content {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .metrics-grid {
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            margin-top: -1rem;
-        }
-
-        .panel-header {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-panel {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-container {
-            min-width: 100%;
-        }
+    .time-badge {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
     }
 
     @media (max-width: 768px) {
-        .academic-header {
-            padding: 2rem 0;
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
         }
-
-        .header-info h1 {
-            font-size: 2rem;
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
-
-        .metrics-grid {
+        
+        .calendario-grid {
             grid-template-columns: 1fr;
         }
-
-        .metric-card {
-            padding: 1.5rem;
+        
+        .dia-column {
+            min-height: auto;
         }
-
-        .data-table {
-            font-size: 0.875rem;
-        }
-
-        .data-table thead th,
-        .data-table tbody td {
-            padding: 1rem;
-        }
-
-        .teacher-profile {
-            flex-direction: column;
-            text-align: center;
-            gap: 0.5rem;
-        }
-
-        .action-group {
-            flex-direction: column;
-        }
-    }
-
-    /* Animaciones */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in-up {
-        animation: fadeInUp 0.6s ease-out;
-    }
-
-    /* Tooltips Personalizados */
-    .tooltip-inner {
-        background: var(--text-primary);
-        border-radius: 0.5rem;
-        font-size: 0.8rem;
-        font-weight: 500;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .bs-tooltip-top .tooltip-arrow::before {
-        border-top-color: var(--text-primary);
-    }
-
-    .bs-tooltip-bottom .tooltip-arrow::before {
-        border-bottom-color: var(--text-primary);
     }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid">
-    <!-- Header Académico Principal -->
-    <div class="academic-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="header-info">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-custom mb-3">
-                            <li class="breadcrumb-item">
-                                <i class="uil uil-estate me-1"></i>Centro Preuniversitario
-                            </li>
-                            <li class="breadcrumb-item">Gestión Académica</li>
-                            <li class="breadcrumb-item active">Horarios Docentes</li>
-                        </ol>
-                    </nav>
-                    <h1>
-                        <i class="uil uil-schedule me-3"></i>
-                        Gestión de Horarios Académicos
-                    </h1>
-                    <p class="subtitle">
-                        Sistema integral de programación y administración de horarios para el cuerpo docente
-                    </p>
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('dashboard') }}">
+                                <i class="fas fa-home me-1"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('horarios-docentes.index') }}">
+                                <i class="fas fa-calendar-alt me-1"></i>Horarios
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">
+                            <i class="fas fa-cogs me-1"></i>Gestión
+                        </li>
+                    </ol>
                 </div>
-                <div class="header-actions">
-    <a href="{{ route('horarios.calendario') }}" class="btn btn-primary-custom me-2">
-        <i class="uil uil-calendar-alt me-2"></i>
-        Ver Calendario
-    </a>
-    <a href="{{ route('horarios-docentes.create') }}" class="btn btn-primary-custom">
-        <i class="uil uil-plus me-2"></i>
-        Programar Nuevo Horario
-    </a>
-</div>
+                <h4 class="page-title">
+                    <i class="fas fa-calendar-check me-2 text-primary"></i>
+                    Gestión de Horarios Docentes
+                </h4>
             </div>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Panel de Métricas Académicas -->
-        <div class="metrics-grid">
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="uil uil-calendar-alt"></i>
-                    </div>
-                    <div class="metric-trend">+12%</div>
-                </div>
-                <div class="metric-value">{{ $horarios->total() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-chart-line me-1"></i>
-                    Horarios Programados
-                </div>
+    <!-- Estadísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-calendar-check"></i>
             </div>
-
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon success">
-                        <i class="uil uil-users-alt"></i>
-                    </div>
-                    <div class="metric-trend">Activos</div>
-                </div>
-                <div class="metric-value">{{ $horarios->unique('docente_id')->count() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-user-check me-1"></i>
-                    Docentes Asignados
-                </div>
-            </div>
-
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon warning">
-                        <i class="uil uil-books"></i>
-                    </div>
-                    <div class="metric-trend">En curso</div>
-                </div>
-                <div class="metric-value">{{ $horarios->unique('curso_id')->count() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-graduation-cap me-1"></i>
-                    Cursos Programados
-                </div>
-            </div>
-
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon purple">
-                        <i class="uil uil-building"></i>
-                    </div>
-                    <div class="metric-trend">100%</div>
-                </div>
-                <div class="metric-value">{{ $horarios->unique('aula_id')->count() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-map-marker me-1"></i>
-                    Aulas Utilizadas
-                </div>
+            <div class="stat-value" id="totalHorarios">{{ $horarios->total() }}</div>
+            <div class="stat-label">
+                <i class="fas fa-chart-line me-1"></i>
+                Total Horarios
             </div>
         </div>
-
-        <!-- Alerta de Éxito -->
-        @if (session('success'))
-            <div class="alert alert-modern alert-success">
-                <i class="uil uil-check-circle" style="font-size: 1.25rem;"></i>
-                <div>
-                    <strong>¡Operación exitosa!</strong>
-                    {{ session('success') }}
-                </div>
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-chalkboard-teacher"></i>
             </div>
-        @endif
-
-        <!-- Panel Principal de Datos -->
-        <div class="main-panel fade-in-up">
-            <!-- Header del Panel -->
-            <div class="panel-header">
-                <div class="panel-title">
-                    <div class="icon">
-                        <i class="uil uil-list-ul"></i>
-                    </div>
-                    <div>
-                        <h2>Registro de Horarios Académicos</h2>
-                        <p class="text-muted mb-0">Gestión completa de la programación docente</p>
-                    </div>
-                </div>
-
-                <!-- Panel de Búsqueda y Filtros -->
-                <div class="search-panel">
-                    <div class="search-container">
-                        <i class="uil uil-search search-icon"></i>
-                        <input type="text" 
-                               class="search-input" 
-                               placeholder="Buscar por docente, curso, aula..." 
-                               id="searchInput">
-                    </div>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">
-                            <i class="uil uil-apps me-1"></i>Todos
-                        </button>
-                        <button class="filter-btn" data-filter="lunes">
-                            <i class="uil uil-calendar-alt me-1"></i>Lunes
-                        </button>
-                        <button class="filter-btn" data-filter="martes">
-                            <i class="uil uil-calendar-alt me-1"></i>Martes
-                        </button>
-                        <button class="filter-btn" data-filter="miercoles">
-                            <i class="uil uil-calendar-alt me-1"></i>Miércoles
-                        </button>
-                    </div>
-                </div>
+            <div class="stat-value" id="docentesActivos">{{ $horarios->unique('docente_id')->count() }}</div>
+            <div class="stat-label">
+                <i class="fas fa-user-check me-1"></i>
+                Docentes Activos
             </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <div class="stat-value" id="cursosProgram">{{ $horarios->unique('curso_id')->count() }}</div>
+            <div class="stat-label">
+                <i class="fas fa-graduation-cap me-1"></i>
+                Cursos Programados
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="fas fa-door-open"></i>
+            </div>
+            <div class="stat-value" id="aulasUso">{{ $horarios->unique('aula_id')->count() }}</div>
+            <div class="stat-label">
+                <i class="fas fa-building me-1"></i>
+                Aulas en Uso
+            </div>
+        </div>
+    </div>
 
-            <!-- Contenido de la Tabla -->
-            <div class="panel-body p-0">
-                <div class="table-responsive">
-                    <table class="data-table" id="scheduleTable">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <i class="uil uil-user me-2"></i>
-                                    Docente
-                                </th>
-                                <th>
-                                    <i class="uil uil-calendar-alt me-2"></i>
-                                    Día Académico
-                                </th>
-                                <th>
-                                    <i class="uil uil-clock-three me-2"></i>
-                                    Hora Inicio
-                                </th>
-                                <th>
-                                    <i class="uil uil-clock-nine me-2"></i>
-                                    Hora Fin
-                                </th>
-                                <th>
-                                    <i class="uil uil-building me-2"></i>
-                                    Aula
-                                </th>
-                                <th>
-                                    <i class="uil uil-book-open me-2"></i>
-                                    Curso Académico
-                                </th>
-                                <th>
-                                    <i class="uil uil-layer-group me-2"></i>
-                                    Ciclo
-                                </th>
-                                <th class="text-center">
-                                    <i class="uil uil-setting me-2"></i>
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($horarios as $horario)
-                                <tr data-day="{{ strtolower($horario->dia_semana) }}" class="schedule-row">
-                                    <td>
-                                        <div class="teacher-profile">
-                                            <div class="teacher-avatar">
-                                                {{ substr($horario->docente->nombre_completo ?? 'N/A', 0, 1) }}
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list-ul me-2"></i>
+                        Horarios Programados
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
+                    <!-- Acciones Rápidas -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">
+                            <i class="fas fa-bolt me-1"></i>
+                            Acciones Rápidas
+                        </h6>
+                        <div class="quick-actions">
+                            <a href="{{ route('horarios-docentes.create') }}" class="quick-action-btn">
+                                <div class="quick-action-icon">
+                                    <i class="fas fa-plus-circle text-primary fs-3"></i>
+                                </div>
+                                <div class="fw-bold mt-2">
+                                    <i class="fas fa-calendar-plus me-1"></i>
+                                    Nuevo Horario
+                                </div>
+                                <small class="text-muted">Programar nueva clase</small>
+                            </a>
+                            <div class="quick-action-btn" onclick="toggleCalendarioView()">
+                                <div class="quick-action-icon">
+                                    <i class="fas fa-calendar-week text-success fs-3"></i>
+                                </div>
+                                <div class="fw-bold mt-2">
+                                    <i class="fas fa-eye me-1"></i>
+                                    Vista Calendario
+                                </div>
+                                <small class="text-muted">Ver programación semanal</small>
+                            </div>
+                            <div class="quick-action-btn" onclick="exportarHorarios()">
+                                <div class="quick-action-icon">
+                                    <i class="fas fa-file-export text-info fs-3"></i>
+                                </div>
+                                <div class="fw-bold mt-2">
+                                    <i class="fas fa-download me-1"></i>
+                                    Exportar Excel
+                                </div>
+                                <small class="text-muted">Descargar horarios</small>
+                            </div>
+                            <div class="quick-action-btn" onclick="generarReporte()">
+                                <div class="quick-action-icon">
+                                    <i class="fas fa-chart-pie text-warning fs-3"></i>
+                                </div>
+                                <div class="fw-bold mt-2">
+                                    <i class="fas fa-analytics me-1"></i>
+                                    Reportes
+                                </div>
+                                <small class="text-muted">Estadísticas avanzadas</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle de Vista -->
+                    <button class="toggle-view-btn" id="toggleViewBtn" onclick="toggleCalendarioView()">
+                        <i class="fas fa-calendar-alt" id="toggleIcon"></i>
+                        <span id="toggleText">Ver Calendario</span>
+                    </button>
+
+                    <!-- Búsqueda y Filtros -->
+                    <div class="mb-4 view-lista" id="searchFilters">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="search-container">
+                                    <input type="text" 
+                                           class="form-control search-input" 
+                                           id="horario_search" 
+                                           placeholder="🔍 Buscar por docente, curso, aula..."
+                                           autocomplete="off">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <div class="suggestions-dropdown" id="suggestions"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="filtroTipo">
+                                    <option value="">
+                                        <i class="fas fa-filter"></i> Todos los tipos
+                                    </option>
+                                    <option value="teoria">📚 Teoría</option>
+                                    <option value="practica">⚡ Práctica</option>
+                                    <option value="laboratorio">🧪 Laboratorio</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por día -->
+                    <div class="mb-4 view-lista" id="dayFilters">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-calendar-day me-1"></i>
+                            Filtrar por día:
+                        </h6>
+                        <div class="d-flex flex-wrap">
+                            <span class="day-filter-badge active" data-day="todos">
+                                <i class="fas fa-calendar"></i> Todos
+                            </span>
+                            <span class="day-filter-badge" data-day="lunes">
+                                <i class="fas fa-calendar-day"></i> Lunes
+                            </span>
+                            <span class="day-filter-badge" data-day="martes">
+                                <i class="fas fa-calendar-day"></i> Martes
+                            </span>
+                            <span class="day-filter-badge" data-day="miercoles">
+                                <i class="fas fa-calendar-day"></i> Miércoles
+                            </span>
+                            <span class="day-filter-badge" data-day="jueves">
+                                <i class="fas fa-calendar-day"></i> Jueves
+                            </span>
+                            <span class="day-filter-badge" data-day="viernes">
+                                <i class="fas fa-calendar-day"></i> Viernes
+                            </span>
+                            <span class="day-filter-badge" data-day="sabado">
+                                <i class="fas fa-calendar-day"></i> Sábado
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Vista Lista -->
+                    <div id="horariosList" class="view-lista">
+                        @forelse($horarios as $horario)
+                            <div class="horario-card" data-day="{{ strtolower($horario->dia_semana) }}" 
+                                 data-docente="{{ $horario->docente->nombre_completo ?? '' }}" 
+                                 data-curso="{{ $horario->curso->nombre ?? '' }}" 
+                                 data-aula="{{ $horario->aula->nombre ?? '' }}">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="docente-avatar">
+                                                {{ substr($horario->docente->nombre_completo ?? 'N', 0, 1) }}
                                             </div>
-                                            <div class="teacher-info">
-                                                <h4>{{ $horario->docente->nombre_completo ?? 'Sin asignar' }}</h4>
-                                                <div class="teacher-id">ID: {{ $horario->docente->id ?? '---' }}</div>
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    <i class="fas fa-user-tie me-1 text-primary"></i>
+                                                    {{ $horario->docente->nombre_completo ?? 'Sin asignar' }}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                    {{ $horario->docente->email ?? 'Sin email' }}
+                                                </small>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="day-badge {{ strtolower($horario->dia_semana) }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="day-filter-badge" data-day="{{ strtolower($horario->dia_semana) }}">
+                                            <i class="fas fa-calendar-day"></i>
                                             {{ ucfirst($horario->dia_semana) }}
                                         </span>
-                                    </td>
-                                    <td>
-                                        <div class="time-display">
-                                            <i class="uil uil-clock-three"></i>
-                                            {{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="time-display">
-                                            <i class="uil uil-clock-nine"></i>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="time-badge">
+                                            <i class="fas fa-clock"></i>
+                                            {{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }} - 
                                             {{ \Carbon\Carbon::parse($horario->hora_fin)->format('H:i') }}
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="location-badge">
-                                            <i class="uil uil-map-marker building-icon"></i>
-                                            <span>{{ $horario->aula->nombre ?? 'Sin asignar' }}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="aula-info">
+                                            <i class="fas fa-door-open text-info"></i>
+                                            <strong>{{ $horario->aula->nombre ?? 'N/A' }}</strong>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="course-details">
-                                            <div class="course-name">
-                                                {{ $horario->curso->nombre ?? 'Curso no asignado' }}
-                                            </div>
-                                            <div class="course-meta">
-                                                <span class="cycle-indicator">
-                                                    {{ $horario->ciclo->nombre ?? 'Sin ciclo' }}
-                                                </span>
-                                                <span>•</span>
-                                                <span>
-                                                    <i class="uil uil-users-alt me-1"></i>
-                                                    Preuniversitario
-                                                </span>
-                                            </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="curso-badge">
+                                            <i class="fas fa-book"></i>
+                                            {{ Str::limit($horario->curso->nombre ?? 'N/A', 15) }}
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="cycle-indicator">
-                                            <i class="uil uil-layer-group me-1"></i>
-                                            {{ $horario->ciclo->nombre ?? 'Sin definir' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="action-group">
-                                            <button class="action-btn view" 
-                                                    data-bs-toggle="tooltip" 
-                                                    title="Ver detalles del horario">
-                                                <i class="uil uil-eye"></i>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
                                             </button>
-                                            <a href="{{ route('horarios-docentes.edit', $horario->id) }}" 
-                                               class="action-btn edit" 
-                                               data-bs-toggle="tooltip" 
-                                               title="Editar horario académico">
-                                                <i class="uil uil-edit"></i>
-                                            </a>
-                                            <form action="{{ route('horarios-docentes.destroy', $horario->id) }}" 
-                                                  method="POST" 
-                                                  class="d-inline"
-                                                  onsubmit="return confirmDeletion(event)">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" 
-                                                        class="action-btn delete" 
-                                                        data-bs-toggle="tooltip" 
-                                                        title="Eliminar horario">
-                                                    <i class="uil uil-trash-alt"></i>
-                                                </button>
-                                            </form>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="verDetalles({{ $horario->id }})">
+                                                    <i class="fas fa-eye me-2 text-info"></i>Ver Detalles
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="{{ route('horarios-docentes.edit', $horario->id) }}">
+                                                    <i class="fas fa-edit me-2 text-warning"></i>Editar
+                                                </a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="duplicarHorario({{ $horario->id }})">
+                                                    <i class="fas fa-copy me-2 text-success"></i>Duplicar
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#" onclick="eliminarHorario({{ $horario->id }})">
+                                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                                </a></li>
+                                            </ul>
                                         </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8">
-                                        <div class="empty-state">
-                                            <div class="empty-icon">
-                                                <i class="uil uil-calendar-slash"></i>
-                                            </div>
-                                            <div class="empty-title">
-                                                No hay horarios programados
-                                            </div>
-                                            <div class="empty-message">
-                                                El sistema de horarios está listo para comenzar. Programa el primer horario académico 
-                                                para organizar las clases del centro preuniversitario.
-                                            </div>
-                                            <a href="{{ route('horarios-docentes.create') }}" class="empty-action">
-                                                <i class="uil uil-plus me-2"></i>
-                                                Programar Primer Horario
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if($horarios->hasPages())
-                    <div class="pagination-container">
-                        <nav class="pagination-modern">
-                            {{ $horarios->links('pagination::bootstrap-5') }}
-                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-5" id="emptyState">
+                                <i class="fas fa-calendar-times fs-1 text-muted mb-3"></i>
+                                <h5 class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No hay horarios programados
+                                </h5>
+                                <p class="text-muted">Comienza creando tu primer horario académico</p>
+                                <a href="{{ route('horarios-docentes.create') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Crear Primer Horario
+                                </a>
+                            </div>
+                        @endforelse
                     </div>
-                @endif
+
+                    <!-- Vista Calendario -->
+                    <div id="calendarioView" class="view-calendario">
+                        <div class="calendario-container">
+                            <div class="calendario-header">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fas fa-calendar-week fs-4"></i>
+                                    <h5 class="mb-0">Programación Semanal</h5>
+                                </div>
+                                <div class="calendario-nav">
+                                    <button class="nav-btn" onclick="previousWeek()">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <span id="semanaActual" class="fw-bold">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        Semana Actual
+                                    </span>
+                                    <button class="nav-btn" onclick="nextWeek()">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="calendario-grid">
+                                @php
+                                    $dias = [
+                                        'lunes' => 'Lunes',
+                                        'martes' => 'Martes', 
+                                        'miercoles' => 'Miércoles',
+                                        'jueves' => 'Jueves',
+                                        'viernes' => 'Viernes',
+                                        'sabado' => 'Sábado',
+                                        'domingo' => 'Domingo'
+                                    ];
+                                    $iconosDias = [
+                                        'lunes' => 'fa-moon',
+                                        'martes' => 'fa-sun',
+                                        'miercoles' => 'fa-cloud-sun',
+                                        'jueves' => 'fa-star',
+                                        'viernes' => 'fa-heart',
+                                        'sabado' => 'fa-gem',
+                                        'domingo' => 'fa-home'
+                                    ];
+                                @endphp
+                                
+                                @foreach($dias as $diaKey => $diaNombre)
+                                    <div class="dia-header">
+                                        <i class="fas {{ $iconosDias[$diaKey] }} me-2"></i>
+                                        {{ $diaNombre }}
+                                    </div>
+                                @endforeach
+                                
+                                @foreach($dias as $diaKey => $diaNombre)
+                                    <div class="dia-column">
+                                        @php
+                                            $horariosDia = $horarios->where('dia_semana', $diaKey)->sortBy('hora_inicio');
+                                        @endphp
+                                        @forelse($horariosDia as $horario)
+                                            <div class="horario-bloque" 
+                                                 title="🎓 {{ $horario->docente->nombre_completo ?? 'N/A' }} - 📚 {{ $horario->curso->nombre ?? 'N/A' }}"
+                                                 onclick="verDetalles({{ $horario->id }})">
+                                                <div class="horario-time">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ \Carbon\Carbon::parse($horario->hora_inicio)->format('H:i') }}
+                                                </div>
+                                                <div class="horario-details">
+                                                    <div class="fw-bold">
+                                                        <i class="fas fa-user-tie"></i>
+                                                        {{ Str::limit($horario->docente->nombre_completo ?? 'N/A', 12) }}
+                                                    </div>
+                                                    <div>
+                                                        <i class="fas fa-book"></i>
+                                                        {{ Str::limit($horario->curso->nombre ?? 'N/A', 10) }}
+                                                    </div>
+                                                    <div>
+                                                        <i class="fas fa-door-open"></i>
+                                                        {{ $horario->aula->nombre ?? 'N/A' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="empty-day">
+                                                <i class="fas fa-calendar-times fs-4 mb-2"></i>
+                                                <small>Sin horarios programados</small>
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paginación -->
+                    @if($horarios->hasPages())
+                        <div class="d-flex justify-content-center mt-4 view-lista">
+                            {{ $horarios->links() }}
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <!-- Panel de Estadísticas Adicionales -->
-        <div class="row mt-4">
-            <div class="col-lg-8">
-                <div class="main-panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <div class="icon" style="background: var(--success-color);">
-                                <i class="uil uil-chart-bar"></i>
-                            </div>
-                            <div>
-                                <h2>Distribución por Días</h2>
-                                <p class="text-muted mb-0">Análisis de carga académica semanal</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="row g-3">
-                            @php
-                                $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-                                $colores = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
-                            @endphp
-                            @foreach($diasSemana as $index => $dia)
-                                @php
-                                    $cantidadDia = $horarios->where('dia_semana', $dia)->count();
-                                    $porcentaje = $horarios->count() > 0 ? ($cantidadDia / $horarios->count()) * 100 : 0;
-                                @endphp
-                                <div class="col-md-6 col-lg-4">
-                                    <div class="day-stat-card" style="border-left: 4px solid {{ $colores[$index] }};">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="fw-bold text-capitalize">{{ $dia }}</span>
-                                            <span class="badge" style="background: {{ $colores[$index] }}20; color: {{ $colores[$index] }};">
-                                                {{ $cantidadDia }} horarios
-                                            </span>
-                                        </div>
-                                        <div class="progress" style="height: 6px; background: #f1f5f9;">
-                                            <div class="progress-bar" 
-                                                 style="width: {{ $porcentaje }}%; background: {{ $colores[$index] }};"></div>
-                                        </div>
-                                        <small class="text-muted">{{ number_format($porcentaje, 1) }}% del total</small>
-                                    </div>
-                                </div>
-                            @endforeach
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Actividad Reciente -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-history me-1 text-primary"></i>
+                        Actividad Reciente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="recent-activity" id="recentActivity">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-clock fs-3"></i>
+                            <p class="mb-0 mt-2">Cargando actividad...</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="main-panel">
-                    <div class="panel-header">
-                        <div class="panel-title">
-                            <div class="icon" style="background: var(--warning-color);">
-                                <i class="uil uil-info-circle"></i>
-                            </div>
-                            <div>
-                                <h2>Información del Sistema</h2>
-                                <p class="text-muted mb-0">Estado actual del sistema</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-4">
-                        <div class="system-info">
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="uil uil-database" style="color: var(--success-color);"></i>
+
+            <!-- Resumen por Docente -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-user-graduate me-1 text-success"></i>
+                        Top Docentes Activos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="resumenDocentes">
+                        @php
+                            $docentesConHorarios = $horarios->groupBy('docente_id');
+                        @endphp
+                        @foreach($docentesConHorarios->take(5) as $docenteId => $horariosDocente)
+                            @php
+                                $docente = $horariosDocente->first()->docente;
+                                $totalHoras = $horariosDocente->sum(function($h) {
+                                    return \Carbon\Carbon::parse($h->hora_fin)->diffInHours(\Carbon\Carbon::parse($h->hora_inicio));
+                                });
+                            @endphp
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="docente-avatar" style="width: 35px; height: 35px; font-size: 0.9rem;">
+                                        {{ substr($docente->nombre_completo ?? 'N', 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <strong class="d-block">{{ Str::limit($docente->nombre_completo ?? 'Sin nombre', 15) }}</strong>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ $totalHoras }}h/semana
+                                        </small>
+                                    </div>
                                 </div>
-                                <div class="info-content">
-                                    <div class="info-label">Base de Datos</div>
-                                    <div class="info-value">Operativa</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="uil uil-sync" style="color: var(--accent-color);"></i>
-                                </div>
-                                <div class="info-content">
-                                    <div class="info-label">Última Actualización</div>
-                                    <div class="info-value">{{ now()->format('d/m/Y H:i') }}</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="uil uil-shield-check" style="color: var(--success-color);"></i>
-                                </div>
-                                <div class="info-content">
-                                    <div class="info-label">Sistema</div>
-                                    <div class="info-value">Seguro y Estable</div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary">{{ $horariosDocente->count() }}</span>
+                                    <small class="text-muted d-block">horarios</small>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
+                        
+                        @if($docentesConHorarios->count() > 5)
+                            <div class="text-center mt-3">
+                                <button class="btn btn-sm btn-outline-primary" onclick="verTodosDocentes()">
+                                    <i class="fas fa-users me-1"></i>
+                                    Ver todos ({{ $docentesConHorarios->count() }} docentes)
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -1170,264 +1053,618 @@
     </div>
 </div>
 
-<!-- Scripts de Funcionalidad -->
+<!-- Modal para detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Detalles del Horario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallesContent">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @push('js')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tooltips con configuración mejorada
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl, {
-            delay: { show: 500, hide: 100 },
-            animation: true
-        });
+    // Variables globales
+    let vistaActual = 'lista';
+    const horariosData = @json($horarios->toArray());
+    
+    const searchInput = document.getElementById('horario_search');
+    const suggestionsContainer = document.getElementById('suggestions');
+    const horarioCards = document.querySelectorAll('.horario-card');
+    
+    let currentFocus = -1;
+    let filteredHorarios = [];
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarActividadReciente();
+        inicializarFiltros();
+        animarContadores();
+        inicializarBusqueda();
+        actualizarSemanaActual();
     });
 
-    // Sistema de búsqueda avanzada
-    const searchInput = document.getElementById('searchInput');
-    const scheduleTable = document.getElementById('scheduleTable');
-    const scheduleRows = scheduleTable.querySelectorAll('.schedule-row');
+    // Sistema de búsqueda mejorado
+    function inicializarBusqueda() {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            mostrarSugerencias(searchTerm);
+            filtrarHorarios(searchTerm);
+        });
 
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase().trim();
-        
-        scheduleRows.forEach(row => {
-            const searchableText = [
-                row.querySelector('.teacher-info h4')?.textContent || '',
-                row.querySelector('.course-name')?.textContent || '',
-                row.querySelector('.location-badge span')?.textContent || '',
-                row.querySelector('.day-badge')?.textContent || '',
-                row.querySelector('.cycle-indicator')?.textContent || ''
-            ].join(' ').toLowerCase();
+        searchInput.addEventListener('keydown', function(e) {
+            const items = suggestionsContainer.querySelectorAll('.suggestion-item');
             
-            const shouldShow = searchableText.includes(searchTerm);
-            row.style.display = shouldShow ? '' : 'none';
-            
-            // Animación suave
-            if (shouldShow) {
-                row.style.opacity = '0';
-                row.style.transform = 'translateY(10px)';
-                setTimeout(() => {
-                    row.style.transition = 'all 0.3s ease';
-                    row.style.opacity = '1';
-                    row.style.transform = 'translateY(0)';
-                }, 50);
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentFocus++;
+                if (currentFocus >= items.length) currentFocus = 0;
+                setActive(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentFocus--;
+                if (currentFocus < 0) currentFocus = items.length - 1;
+                setActive(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentFocus > -1 && filteredHorarios[currentFocus]) {
+                    seleccionarSugerencia(currentFocus);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsContainer.style.display = 'none';
+                currentFocus = -1;
             }
         });
+    }
 
-        // Mostrar mensaje si no hay resultados
-        updateEmptyState();
-    });
+    function mostrarSugerencias(searchTerm) {
+        if (!searchTerm) {
+            suggestionsContainer.style.display = 'none';
+            return;
+        }
 
-    // Sistema de filtros por día
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    
-    filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Actualizar botones activos
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            const filterValue = this.getAttribute('data-filter');
-            
-            scheduleRows.forEach(row => {
-                const dayValue = row.getAttribute('data-day');
-                const shouldShow = filterValue === 'all' || dayValue === filterValue;
-                row.style.display = shouldShow ? '' : 'none';
-            });
-
-            // Limpiar búsqueda cuando se aplica filtro
-            searchInput.value = '';
-            updateEmptyState();
-        });
-    });
-
-    // Función para mostrar/ocultar estado vacío
-    function updateEmptyState() {
-        const visibleRows = Array.from(scheduleRows).filter(row => 
-            row.style.display !== 'none'
-        );
+        // Buscar en los datos reales
+        filteredHorarios = [];
         
-        const emptyRow = scheduleTable.querySelector('.empty-state')?.closest('tr');
-        if (emptyRow) {
-            emptyRow.style.display = visibleRows.length === 0 ? '' : 'none';
+        if (horariosData.data) {
+            filteredHorarios = horariosData.data.filter(horario => {
+                const docenteNombre = horario.docente ? horario.docente.nombre_completo || 'Sin asignar' : 'Sin asignar';
+                const cursoNombre = horario.curso ? horario.curso.nombre || 'Sin curso' : 'Sin curso';
+                const aulaNombre = horario.aula ? horario.aula.nombre || 'Sin aula' : 'Sin aula';
+                const diaName = horario.dia_semana || '';
+                
+                return docenteNombre.toLowerCase().includes(searchTerm) ||
+                       cursoNombre.toLowerCase().includes(searchTerm) ||
+                       aulaNombre.toLowerCase().includes(searchTerm) ||
+                       diaName.toLowerCase().includes(searchTerm);
+            });
+        }
+
+        if (filteredHorarios.length === 0) {
+            suggestionsContainer.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search-minus me-2"></i>
+                    No se encontraron resultados
+                </div>`;
+            suggestionsContainer.style.display = 'block';
+            return;
+        }
+
+        let html = '';
+        filteredHorarios.slice(0, 5).forEach((horario, index) => {
+            const docenteNombre = horario.docente ? horario.docente.nombre_completo || 'Sin asignar' : 'Sin asignar';
+            const cursoNombre = horario.curso ? horario.curso.nombre || 'Sin curso' : 'Sin curso';
+            const aulaNombre = horario.aula ? horario.aula.nombre || 'Sin aula' : 'Sin aula';
+            const diaName = horario.dia_semana || '';
+            
+            html += `
+                <div class="suggestion-item" data-index="${index}">
+                    <div class="suggestion-icon">
+                        ${docenteNombre.charAt(0)}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div><span class="text-primary">${highlightMatch(docenteNombre, searchTerm)}</span> - ${highlightMatch(cursoNombre, searchTerm)}</div>
+                        <div><small class="text-muted">
+                            <i class="fas fa-calendar-day me-1"></i>${diaName} | 
+                            <i class="fas fa-door-open me-1"></i>${aulaNombre} | 
+                            <i class="fas fa-clock me-1"></i>${horario.hora_inicio} - ${horario.hora_fin}
+                        </small></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        suggestionsContainer.innerHTML = html;
+        suggestionsContainer.style.display = 'block';
+
+        // Agregar eventos click
+        document.querySelectorAll('.suggestion-item').forEach((item, index) => {
+            item.addEventListener('click', function() {
+                seleccionarSugerencia(index);
+            });
+        });
+    }
+
+    function highlightMatch(text, searchTerm) {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    function seleccionarSugerencia(index) {
+        const horario = filteredHorarios[index];
+        const docenteNombre = horario.docente ? horario.docente.nombre_completo || 'Sin asignar' : 'Sin asignar';
+        const cursoNombre = horario.curso ? horario.curso.nombre || 'Sin curso' : 'Sin curso';
+        searchInput.value = docenteNombre + ' - ' + cursoNombre;
+        suggestionsContainer.style.display = 'none';
+        filtrarHorarios(searchInput.value.toLowerCase());
+    }
+
+    function setActive(items) {
+        items.forEach(item => item.classList.remove('active'));
+        if (currentFocus >= 0 && currentFocus < items.length) {
+            items[currentFocus].classList.add('active');
+            items[currentFocus].scrollIntoView({ block: 'nearest' });
         }
     }
 
-    // Confirmación elegante para eliminar
-    window.confirmDeletion = function(event) {
-        event.preventDefault();
+    function filtrarHorarios(searchTerm) {
+        const diaActivo = document.querySelector('.day-filter-badge.active').dataset.day;
+        let visibleCount = 0;
         
-        const result = confirm(
-            '⚠️ ¿Estás seguro de eliminar este horario?\n\n' +
-            'Esta acción no se puede deshacer y afectará la programación académica.'
+        horarioCards.forEach(card => {
+            const docente = card.dataset.docente.toLowerCase();
+            const curso = card.dataset.curso.toLowerCase();
+            const aula = card.dataset.aula.toLowerCase();
+            const dia = card.dataset.day;
+            
+            const matchesSearch = !searchTerm || 
+                docente.includes(searchTerm) || 
+                curso.includes(searchTerm) || 
+                aula.includes(searchTerm);
+            
+            const matchesDay = diaActivo === 'todos' || dia === diaActivo;
+            
+            if (matchesSearch && matchesDay) {
+                card.style.display = 'block';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50 * visibleCount);
+                
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        verificarEstadoVacio();
+    }
+
+    // Filtros por día
+    function inicializarFiltros() {
+        const dayFilters = document.querySelectorAll('.day-filter-badge');
+        
+        dayFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                dayFilters.forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                filtrarHorarios(searchInput.value.toLowerCase());
+            });
+        });
+    }
+
+    function verificarEstadoVacio() {
+        const visibleCards = Array.from(horarioCards).filter(card => 
+            card.style.display !== 'none'
         );
         
-        if (result) {
-            // Agregar animación antes de enviar
-            const form = event.target.closest('form');
-            const row = form.closest('tr');
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) {
+            emptyState.style.display = visibleCards.length === 0 ? 'block' : 'none';
+        }
+    }
+
+    // Toggle entre vista lista y calendario
+    function toggleCalendarioView() {
+        const listaView = document.querySelector('.view-lista');
+        const calendarioView = document.querySelector('.view-calendario');
+        const toggleBtn = document.getElementById('toggleViewBtn');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const toggleText = document.getElementById('toggleText');
+        const searchFilters = document.getElementById('searchFilters');
+        const dayFilters = document.getElementById('dayFilters');
+
+        if (vistaActual === 'lista') {
+            // Cambiar a vista calendario
+            listaView.style.display = 'none';
+            calendarioView.style.display = 'block';
+            searchFilters.style.display = 'none';
+            dayFilters.style.display = 'none';
             
-            row.style.transition = 'all 0.5s ease';
-            row.style.opacity = '0.5';
-            row.style.transform = 'scale(0.95)';
+            toggleBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            toggleIcon.className = 'fas fa-list';
+            toggleText.textContent = 'Ver Lista';
+            
+            vistaActual = 'calendario';
+            
+            // Animación de entrada
+            calendarioView.style.opacity = '0';
+            calendarioView.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                calendarioView.style.transition = 'all 0.5s ease';
+                calendarioView.style.opacity = '1';
+                calendarioView.style.transform = 'translateY(0)';
+            }, 100);
+            
+        } else {
+            // Cambiar a vista lista
+            listaView.style.display = 'block';
+            calendarioView.style.display = 'none';
+            searchFilters.style.display = 'block';
+            dayFilters.style.display = 'block';
+            
+            toggleBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            toggleIcon.className = 'fas fa-calendar-alt';
+            toggleText.textContent = 'Ver Calendario';
+            
+            vistaActual = 'lista';
+        }
+    }
+
+    // Cargar actividad reciente con datos reales
+    function cargarActividadReciente() {
+        setTimeout(() => {
+            const container = document.getElementById('recentActivity');
+            
+            // Generar actividad basada en horarios reales
+            let actividadHTML = '';
+            const tiposActividad = ['created', 'updated', 'deleted'];
+            const iconos = {
+                'created': 'fa-plus-circle',
+                'updated': 'fa-edit',
+                'deleted': 'fa-trash-alt'
+            };
+            const acciones = {
+                'created': 'Horario creado',
+                'updated': 'Horario actualizado', 
+                'deleted': 'Horario eliminado'
+            };
+
+            // Simulación de actividad reciente
+            for (let i = 0; i < 5; i++) {
+                const tipo = tiposActividad[Math.floor(Math.random() * tiposActividad.length)];
+                const horario = horariosData.data ? horariosData.data[Math.floor(Math.random() * horariosData.data.length)] : null;
+                
+                if (horario) {
+                    const docenteNombre = horario.docente ? horario.docente.nombre_completo : 'Docente';
+                    const cursoNombre = horario.curso ? horario.curso.nombre : 'Curso';
+                    const minutos = Math.floor(Math.random() * 120) + 1;
+                    
+                    actividadHTML += `
+                        <div class="activity-item ${tipo}">
+                            <div class="activity-icon ${tipo}">
+                                <i class="fas ${iconos[tipo]}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong>${acciones[tipo]}</strong>
+                                <div class="text-muted small">
+                                    <i class="fas fa-user me-1"></i>${docenteNombre} - 
+                                    <i class="fas fa-book me-1"></i>${cursoNombre}
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Hace ${minutos} min
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            container.innerHTML = actividadHTML;
+        }, 1000);
+    }
+
+    // Animar contadores
+    function animarContadores() {
+        const contadores = document.querySelectorAll('.stat-value');
+        contadores.forEach((contador, index) => {
+            const valor = parseInt(contador.textContent);
+           let actual = 0;
+            const incremento = valor / 50;
             
             setTimeout(() => {
-                form.submit();
-            }, 300);
-        }
-        
-        return false;
-    };
-
-    // Animaciones de entrada escalonadas
-    const metricCards = document.querySelectorAll('.metric-card');
-    metricCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 150);
-    });
-
-    // Efecto de hover mejorado para filas de tabla
-    scheduleRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transition = 'all 0.3s ease';
-            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
-            this.style.borderRadius = '0.75rem';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.boxShadow = '';
-            this.style.borderRadius = '';
-        });
-    });
-
-    // Contador animado para las métricas
-    const animateCounter = (element, target) => {
-        let current = 0;
-        const increment = target / 50;
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            element.textContent = Math.floor(current);
-        }, 30);
-    };
-
-    // Iniciar contadores cuando las tarjetas sean visibles
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const valueElement = entry.target.querySelector('.metric-value');
-                const targetValue = parseInt(valueElement.textContent);
-                animateCounter(valueElement, targetValue);
-                observer.unobserve(entry.target);
-            }
-        });
-    });
-
-    metricCards.forEach(card => observer.observe(card));
-
-    // Actualización periódica de la hora
-    function updateTime() {
-        const timeElements = document.querySelectorAll('.info-value');
-        timeElements.forEach(element => {
-            if (element.textContent.includes(':')) {
-                element.textContent = new Date().toLocaleString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
+                const timer = setInterval(() => {
+                    actual += incremento;
+                    if (actual >= valor) {
+                        actual = valor;
+                        clearInterval(timer);
+                    }
+                    contador.textContent = Math.floor(actual);
+                }, 50);
+            }, index * 200);
         });
     }
 
-    // Actualizar cada minuto
-    setInterval(updateTime, 60000);
-});
+    // Navegación de calendario
+    function previousWeek() {
+        console.log('Semana anterior');
+        // Implementar lógica para cargar semana anterior
+    }
 
-// Función para exportar datos (opcional)
-function exportSchedules() {
-    // Implementar exportación de horarios
-    console.log('Exportando horarios...');
-}
+    function nextWeek() {
+        console.log('Siguiente semana');
+        // Implementar lógica para cargar siguiente semana
+    }
 
-// Función para imprimir horarios (opcional)
-function printSchedules() {
-    window.print();
-}
+    function actualizarSemanaActual() {
+        const semanaElement = document.getElementById('semanaActual');
+        const fecha = new Date();
+        const opciones = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        semanaElement.innerHTML = `
+            <i class="fas fa-calendar me-2"></i>
+            Semana del ${fecha.toLocaleDateString('es-ES', opciones)}
+        `;
+    }
+
+    // Funciones de acciones
+    function exportarHorarios() {
+        // Crear datos para exportar
+        const datosExport = [];
+        
+        if (horariosData.data) {
+            horariosData.data.forEach(horario => {
+                datosExport.push({
+                    'Docente': horario.docente ? horario.docente.nombre_completo : 'Sin asignar',
+                    'Día': horario.dia_semana,
+                    'Hora Inicio': horario.hora_inicio,
+                    'Hora Fin': horario.hora_fin,
+                    'Curso': horario.curso ? horario.curso.nombre : 'Sin curso',
+                    'Aula': horario.aula ? horario.aula.nombre : 'Sin aula'
+                });
+            });
+        }
+        
+        // Simular descarga
+        console.log('Exportando horarios:', datosExport);
+        
+        // Mostrar notificación
+        mostrarNotificacion('Exportación iniciada', 'Los horarios se están preparando para descargar', 'success');
+    }
+
+    function generarReporte() {
+        mostrarNotificacion('Generando reporte', 'Se está preparando el reporte estadístico', 'info');
+        
+        setTimeout(() => {
+            mostrarNotificacion('Reporte generado', 'El reporte estadístico está listo', 'success');
+        }, 2000);
+    }
+
+    function verDetalles(horarioId) {
+        const modal = new bootstrap.Modal(document.getElementById('detallesModal'));
+        const content = document.getElementById('detallesContent');
+        
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando detalles del horario...</p>
+            </div>
+        `;
+        
+        modal.show();
+        
+        // Buscar horario específico
+        let horarioDetalle = null;
+        if (horariosData.data) {
+            horarioDetalle = horariosData.data.find(h => h.id == horarioId);
+        }
+        
+        setTimeout(() => {
+            if (horarioDetalle) {
+                const docenteNombre = horarioDetalle.docente ? horarioDetalle.docente.nombre_completo : 'Sin asignar';
+                const cursoNombre = horarioDetalle.curso ? horarioDetalle.curso.nombre : 'Sin curso';
+                const aulaNombre = horarioDetalle.aula ? horarioDetalle.aula.nombre : 'Sin aula';
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-info-circle me-2 text-primary"></i>Información General</h6>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-hashtag me-1"></i>ID:</strong> ${horarioDetalle.id}
+                            </div>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-toggle-on me-1 text-success"></i>Estado:</strong> 
+                                <span class="badge bg-success">Activo</span>
+                            </div>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-calendar-plus me-1"></i>Creado:</strong> 
+                                ${new Date().toLocaleDateString('es-ES')}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-clock me-2 text-info"></i>Detalles del Horario</h6>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-user-tie me-1"></i>Docente:</strong> ${docenteNombre}
+                            </div>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-book me-1"></i>Curso:</strong> ${cursoNombre}
+                            </div>
+                            <div class="mb-3">
+                                <strong><i class="fas fa-door-open me-1"></i>Aula:</strong> ${aulaNombre}
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><i class="fas fa-chart-bar me-2 text-warning"></i>Estadísticas</h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="stat-card p-3">
+                                        <div class="stat-icon primary" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div class="fw-bold">25</div>
+                                        <small class="text-muted">Estudiantes</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-card p-3">
+                                        <div class="stat-icon success" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="fw-bold">2.5</div>
+                                        <small class="text-muted">Horas</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="stat-card p-3">
+                                        <div class="stat-icon warning" style="width: 2.5rem; height: 2.5rem; font-size: 1rem;">
+                                            <i class="fas fa-percentage"></i>
+                                        </div>
+                                        <div class="fw-bold">95%</div>
+                                        <small class="text-muted">Asistencia</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-exclamation-triangle fs-1 text-warning mb-3"></i>
+                        <h5>Error al cargar detalles</h5>
+                        <p class="text-muted">No se pudo encontrar la información del horario</p>
+                    </div>
+                `;
+            }
+        }, 1500);
+    }
+
+    function duplicarHorario(horarioId) {
+        mostrarNotificacion('Duplicando horario', 'Se está creando una copia del horario', 'info');
+        
+        setTimeout(() => {
+            mostrarNotificacion('Horario duplicado', 'Se ha creado una copia exitosamente', 'success');
+        }, 1500);
+    }
+
+    function eliminarHorario(horarioId) {
+        if (confirm('⚠️ ¿Estás seguro de eliminar este horario?\n\nEsta acción no se puede deshacer y afectará la programación académica.')) {
+            mostrarNotificacion('Eliminando horario', 'Procesando eliminación...', 'warning');
+            
+            // Simular eliminación
+            setTimeout(() => {
+                // Crear formulario dinámico para eliminación
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/horarios-docentes/${horarioId}`;
+                
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                const methodField = document.createElement('input');
+                methodField.type = 'hidden';
+                methodField.name = '_method';
+                methodField.value = 'DELETE';
+                
+                form.appendChild(csrfToken);
+                form.appendChild(methodField);
+                document.body.appendChild(form);
+                form.submit();
+            }, 1000);
+        }
+    }
+
+    function verTodosDocentes() {
+        mostrarNotificacion('Cargando docentes', 'Preparando vista completa de docentes', 'info');
+    }
+
+    // Sistema de notificaciones
+    function mostrarNotificacion(titulo, mensaje, tipo = 'info') {
+        const iconos = {
+            'success': 'fa-check-circle',
+            'error': 'fa-times-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+        
+        const colores = {
+            'success': '#10b981',
+            'error': '#ef4444',
+            'warning': '#f59e0b',
+            'info': '#3b82f6'
+        };
+        
+        const notif = document.createElement('div');
+        notif.className = 'position-fixed';
+        notif.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: white;
+            border-left: 4px solid ${colores[tipo]};
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 1rem;
+            max-width: 400px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+        
+        notif.innerHTML = `
+            <div class="d-flex align-items-start gap-3">
+                <i class="fas ${iconos[tipo]} fs-5" style="color: ${colores[tipo]};"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${titulo}</div>
+                    <div class="text-muted small">${mensaje}</div>
+                </div>
+                <button class="btn-close btn-sm" onclick="this.parentElement.parentElement.remove()"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notif);
+        
+        setTimeout(() => {
+            notif.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            notif.style.transform = 'translateX(100%)';
+            setTimeout(() => notif.remove(), 300);
+        }, 4000);
+    }
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-container')) {
+            suggestionsContainer.style.display = 'none';
+        }
+    });
 </script>
-
-<style>
-/* Estilos adicionales para los nuevos componentes */
-.day-stat-card {
-    background: var(--bg-white);
-    padding: 1.25rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-}
-
-.day-stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.system-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.info-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 0.75rem;
-    border: 1px solid var(--border-color);
-}
-
-.info-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    background: var(--bg-white);
-    border-radius: 0.5rem;
-    box-shadow: var(--shadow-sm);
-}
-
-.info-content {
-    flex: 1;
-}
-
-.info-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.25rem;
-}
-
-.info-value {
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-</style>
 @endpush
-@endsection

@@ -131,6 +131,11 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Notificaciones
+    Route::get('/notificaciones', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notificaciones/fetch', [App\Http\Controllers\NotificationController::class, 'fetch'])->name('notifications.fetch');
+    Route::get('/notificaciones/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -154,6 +159,43 @@ Route::middleware('auth')->group(function () {
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->middleware('can:roles.delete');
         Route::get('/roles/permisos', [RoleController::class, 'permisosIndex'])->name('roles.permisos')->middleware('can:roles.assign_permissions');
         Route::post('/roles/permisos', [RoleController::class, 'permisosUpdate'])->name('roles.permisos.update')->middleware('can:roles.assign_permissions');
+    });
+
+  
+    // ✅ ANUNCIOS - Sistema Completo CON CÓDIGOS CORRECTOS
+    Route::prefix('anuncios')->middleware('auth')->name('anuncios.')->group(function () {
+        // Ver lista de anuncios (para administradores)
+        Route::get('/', [App\Http\Controllers\AnnouncementController::class, 'index'])
+            ->name('index')
+            ->middleware('can:announcements_view');
+        
+        // Crear nuevo anuncio
+        Route::get('/crear', [App\Http\Controllers\AnnouncementController::class, 'create'])
+            ->name('create')
+            ->middleware('can:announcements_create');
+        
+        Route::post('/', [App\Http\Controllers\AnnouncementController::class, 'store'])
+            ->name('store')
+            ->middleware('can:announcements_create');
+        
+        // Ver anuncio específico
+        Route::get('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'show'])
+            ->name('show')
+            ->middleware('can:announcements_view');
+        
+        // Editar anuncio
+        Route::get('/{anuncio}/editar', [App\Http\Controllers\AnnouncementController::class, 'edit'])
+            ->name('edit')
+            ->middleware('can:announcements_edit');
+        
+        Route::put('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'update'])
+            ->name('update')
+            ->middleware('can:announcements_edit');
+        
+        // Eliminar anuncio
+        Route::delete('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'destroy'])
+            ->name('destroy')
+            ->middleware('can:announcements_delete');
     });
 
     // Parentescos - Requiere permiso 'parentescos.view'
@@ -258,39 +300,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/inscripciones/reportes', [App\Http\Controllers\InscripcionController::class, 'reportes'])->name('inscripciones.reportes')->middleware('can:inscripciones.reports');
         Route::post('/inscripciones/exportar', [App\Http\Controllers\InscripcionController::class, 'exportar'])->name('inscripciones.exportar')->middleware('can:inscripciones.export');
     });
-
-    // ==========================================
-    // RUTAS PARA CARNETS DE ESTUDIANTES
-    // ==========================================
-    
-    /**
-     * Generar carnet individual por inscripción
-     * GET /carnets/generar/{inscripcion}
-     */
-    Route::get('/carnets/generar/{inscripcion}', [CarnetController::class, 'generarCarnet'])
-        ->name('carnets.generar')
-        ->where('inscripcion', '[0-9]+')
-        ->middleware('can:inscripciones.view');
-    
-    /**
-     * Generar carnets masivos para múltiples inscripciones
-     * POST /carnets/masivo
-     */
-    Route::post('/carnets/masivo', [CarnetController::class, 'generarCarnetsMasivo'])
-        ->name('carnets.masivo')
-        ->middleware('can:inscripciones.view');
-    
-    /**
-     * Obtener lista de carnets disponibles (opcional - para búsquedas AJAX)
-     * GET /carnets/disponibles
-     */
-    Route::get('/carnets/disponibles', [CarnetController::class, 'carnetesDisponibles'])
-        ->name('carnets.disponibles')
-        ->middleware('can:inscripciones.view');
-    
-    // ==========================================
-    // FIN RUTAS CARNETS
-    // ==========================================
 
     // Perfil de usuario - Accesible para todos los usuarios autenticados
     Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');

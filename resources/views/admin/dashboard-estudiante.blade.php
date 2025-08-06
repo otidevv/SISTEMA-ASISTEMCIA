@@ -912,4 +912,192 @@
             </div>
         </div>
     @endif
+
+{{-- ============================================ --}}
+{{-- MODAL DE ANUNCIOS - INTEGRADO AL DASHBOARD --}}
+{{-- ============================================ --}}
+@if(isset($anuncios) && $anuncios->count() > 0)
+<div class="modal fade" id="anunciosModal" tabindex="-1" aria-labelledby="anunciosModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            {{-- Header del Modal --}}
+            <div class="modal-header bg-primary text-white text-center border-0" style="background: linear-gradient(135deg, #28a745, #20c997) !important;">
+                <div class="w-100">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <img src="{{ asset('assets/images/logo cepre.png') }}" alt="Logo CEPRE" height="40" class="me-2">
+                        <div>
+                            <h6 class="mb-0 fw-bold">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h6>
+                            <small>CENTRO PREUNIVERSITARIO - UNAMAD</small>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 15px; right: 15px;"></button>
+            </div>
+
+            {{-- Body del Modal --}}
+            <div class="modal-body p-0">
+                {{-- Carrusel de Anuncios --}}
+                <div id="anunciosCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @foreach($anuncios as $index => $anuncio)
+                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                            <div class="p-4 text-center" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); min-height: 400px;">
+                                {{-- Icono según tipo de anuncio --}}
+                                <div class="mb-3">
+                                    @switch($anuncio->tipo)
+                                        @case('importante')
+                                            <i class="fas fa-exclamation-circle text-warning" style="font-size: 3rem;"></i>
+                                            @break
+                                        @case('urgente')
+                                            <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                                            @break
+                                        @case('evento')
+                                            <i class="fas fa-calendar-alt text-info" style="font-size: 3rem;"></i>
+                                            @break
+                                        @case('mantenimiento')
+                                            <i class="fas fa-tools text-secondary" style="font-size: 3rem;"></i>
+                                            @break
+                                        @default
+                                            <i class="fas fa-info-circle text-primary" style="font-size: 3rem;"></i>
+                                    @endswitch
+                                </div>
+
+                                {{-- Título del Anuncio --}}
+                                <h2 class="fw-bold text-uppercase mb-3" style="color: #28a745; font-size: 2.5rem;">
+                                    {{ $anuncio->titulo }}
+                                </h2>
+
+                                {{-- Descripción --}}
+                                @if($anuncio->descripcion)
+                                <p class="lead mb-3" style="color: #495057;">
+                                    {{ $anuncio->descripcion }}
+                                </p>
+                                @endif
+
+                                {{-- Contenido Principal --}}
+                                <div class="bg-white rounded-3 p-4 mx-auto shadow-sm" style="max-width: 500px;">
+                                    <div style="color: #212529; font-size: 1.1rem; line-height: 1.6;">
+                                        {!! nl2br(e($anuncio->contenido)) !!}
+                                    </div>
+                                </div>
+
+                                {{-- Badge de tipo de anuncio --}}
+                                <div class="mt-3">
+                                    <span class="badge fs-6 px-3 py-2 
+                                        @switch($anuncio->tipo)
+                                            @case('importante') bg-warning text-dark @break
+                                            @case('urgente') bg-danger @break
+                                            @case('evento') bg-info @break
+                                            @case('mantenimiento') bg-secondary @break
+                                            @default bg-primary @break
+                                        @endswitch
+                                    ">
+                                        {{ ucfirst($anuncio->tipo) }}
+                                    </span>
+                                </div>
+
+                                {{-- Fecha de publicación --}}
+                                <p class="text-muted mt-3 mb-0">
+                                    <small>
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        Publicado: {{ $anuncio->fecha_publicacion ? \Carbon\Carbon::parse($anuncio->fecha_publicacion)->format('d/m/Y') : $anuncio->created_at->format('d/m/Y') }}
+                                    </small>
+                                </p>
+
+                                {{-- Imagen si existe --}}
+                                @if($anuncio->imagen)
+                                <div class="mt-3">
+                                    <img src="{{ asset('storage/' . $anuncio->imagen) }}" 
+                                         alt="{{ $anuncio->titulo }}" 
+                                         class="img-fluid rounded shadow-sm" 
+                                         style="max-height: 200px;">
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Controles del carrusel (solo si hay más de 1 anuncio) --}}
+                    @if($anuncios->count() > 1)
+                    <button class="carousel-control-prev" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+
+                    {{-- Indicadores --}}
+                    <div class="carousel-indicators">
+                        @foreach($anuncios as $index => $anuncio)
+                        <button type="button" data-bs-target="#anunciosCarousel" data-bs-slide-to="{{ $index }}" 
+                                class="{{ $index === 0 ? 'active' : '' }}" aria-label="Anuncio {{ $index + 1 }}"></button>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Footer del Modal --}}
+            <div class="modal-footer bg-light border-0 justify-content-between">
+                <div class="text-muted">
+                    <small>
+                        <i class="fas fa-bullhorn me-1"></i>
+                        Anuncios del Centro Preuniversitario
+                    </small>
+                </div>
+                <div>
+                    @if($anuncios->count() > 1)
+                    <small class="text-muted me-3">
+                        <i class="fas fa-layer-group me-1"></i>
+                        {{ $anuncios->count() }} anuncios
+                    </small>
+                    @endif
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-1"></i>Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- JavaScript para mostrar automáticamente el modal --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si el usuario ya vio los anuncios hoy
+    const today = new Date().toDateString();
+    const lastShown = localStorage.getItem('anunciosModalLastShown');
+    
+    // Solo mostrar si no se ha mostrado hoy o si hay anuncios urgentes
+    const hasUrgentAnnouncements = @json($anuncios->whereIn('tipo', ['urgente', 'importante'])->count() > 0);
+    
+    if (lastShown !== today || hasUrgentAnnouncements) {
+        // Pequeño delay para que cargue completamente la página
+        setTimeout(function() {
+            const modal = new bootstrap.Modal(document.getElementById('anunciosModal'));
+            modal.show();
+            
+            // Guardar que se mostró hoy (solo para anuncios no urgentes)
+            if (!hasUrgentAnnouncements) {
+                localStorage.setItem('anunciosModalLastShown', today);
+            }
+        }, 1000);
+    }
+    
+    // Auto-avanzar el carrusel cada 8 segundos si hay múltiples anuncios
+    @if($anuncios->count() > 1)
+    setInterval(function() {
+        const carousel = document.getElementById('anunciosCarousel');
+        if (carousel && document.getElementById('anunciosModal').classList.contains('show')) {
+            const bsCarousel = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
+            bsCarousel.next();
+        }
+    }, 8000);
+    @endif
+});
+</script>
+@endif
 @endsection
