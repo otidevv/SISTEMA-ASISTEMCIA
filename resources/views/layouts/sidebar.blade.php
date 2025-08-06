@@ -5,13 +5,10 @@
 
         <!-- User box -->
         <div class="user-box text-center">
-            @if (Auth::user()->foto_perfil)
-                <img src="{{ asset(Auth::user()->foto_perfil) }}" alt="foto de perfil" title="{{ Auth::user()->nombre }}"
-                    class="rounded-circle avatar-md">
-            @else
-                <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
-                    class="rounded-circle avatar-md">
-            @endif
+            <!-- IMAGEN SIMPLIFICADA SIN ERRORES -->
+            <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
+                class="rounded-circle avatar-md">
+            
             <div class="dropdown">
                 <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
                     data-bs-toggle="dropdown">{{ Auth::user()->nombre }} {{ Auth::user()->apellido_paterno }}</a>
@@ -51,6 +48,31 @@
                     </a>
                 </li>
 
+                <!-- ✅ MÓDULO ANUNCIOS - USANDO CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
+                @if (Auth::user()->hasPermission('announcements_view') || 
+                     Auth::user()->hasPermission('announcements_create') ||
+                     Auth::user()->hasPermission('announcements_edit') ||
+                     Auth::user()->hasPermission('announcements_delete'))
+                    <li>
+                        <a href="#sidebarAnuncios" data-bs-toggle="collapse">
+                            <i data-feather="megaphone"></i>
+                            <span> Anuncios </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarAnuncios">
+                            <ul class="nav-second-level">
+                                @if (Auth::user()->hasPermission('announcements_view'))
+                                    <li><a href="{{ route('anuncios.index') }}">Ver Anuncios</a></li>
+                                @endif
+                                
+                                @if (Auth::user()->hasPermission('announcements_create'))
+                                    <li><a href="{{ route('anuncios.create') }}">Crear Anuncio</a></li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
+                @endif
+                
                 <!-- Módulo Usuarios - Solo visible si tiene permiso -->
                 @if (Auth::user()->hasPermission('users.view'))
                     <li>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Anuncio;
 use App\Models\Inscripcion;
 use App\Models\RegistroAsistencia;
 use App\Models\Ciclo;
@@ -25,6 +26,17 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $data = [];
+
+        // OBTENER ANUNCIOS ACTIVOS PARA TODOS
+        $data['anuncios'] = Anuncio::where('es_activo', true)
+            ->where(function ($query) {
+                $query->whereNull('fecha_expiracion')
+                      ->orWhere('fecha_expiracion', '>', now());
+            })
+            ->where('fecha_publicacion', '<=', now())
+            ->orderBy('fecha_publicacion', 'desc')
+            ->take(5) // Limitar a los 5 más recientes
+            ->get();
 
         // Información común para todos los usuarios
         $data['user'] = $user;

@@ -508,6 +508,7 @@
                     </li>
                 @endif
 
+                
                 <!-- Módulo Asistencia - Accesible para todos con sus permisos específicos -->
                 @if (Auth::user()->hasPermission('attendance.view') ||
                         Auth::user()->hasPermission('attendance.register') ||
@@ -668,6 +669,31 @@
                                 @endif
                                 @if (Auth::user()->hasPermission('inscripciones.reports'))
                                     <li><a href="{{ route('inscripciones.reportes') }}">Reportes</a></li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
+                @endif
+
+                <!-- ✅ MÓDULO ANUNCIOS - CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
+                @if (Auth::user()->hasPermission('announcements_view') || 
+                     Auth::user()->hasPermission('announcements_create') ||
+                     Auth::user()->hasPermission('announcements_edit') ||
+                     Auth::user()->hasPermission('announcements_delete'))
+                    <li>
+                        <a href="#sidebarAnuncios" data-bs-toggle="collapse">
+                            <i data-feather="megaphone"></i>
+                            <span> Anuncios </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarAnuncios">
+                            <ul class="nav-second-level">
+                                @if (Auth::user()->hasPermission('announcements_view'))
+                                    <li><a href="{{ route('anuncios.index') }}">Ver Anuncios</a></li>
+                                @endif
+                                
+                                @if (Auth::user()->hasPermission('announcements_create'))
+                                    <li><a href="{{ route('anuncios.create') }}">Crear Anuncio</a></li>
                                 @endif
                             </ul>
                         </div>
