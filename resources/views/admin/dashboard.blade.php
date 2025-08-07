@@ -19,7 +19,7 @@
     <!-- end page title -->
 
     @if (isset($esEstudiante) && $esEstudiante)
-        {{-- Dashboard para Estudiantes --}}
+        {{-- Dashboard para Estudiantes - Sin cambios --}}
         @if (isset($inscripcionActiva))
             {{-- Información del Ciclo Actual --}}
             <div class="row">
@@ -468,7 +468,7 @@
             </div>
         @endif
     @elseif(isset($esPadre) && $esPadre)
-        {{-- Dashboard para Padres --}}
+        {{-- Dashboard para Padres - Sin cambios --}}
         <div class="row">
             <div class="col-xl-3 col-md-6">
                 <div class="card">
@@ -912,74 +912,378 @@
             </div>
         </div>
     @else
-        {{-- Dashboard para Administradores y otros roles --}}
-        <div class="row">
-            <div class="col-xl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="mb-0">{{ $totalUsuarios }}</h4>
-                                <p class="text-muted mb-0">Total Usuarios</p>
-                            </div>
-                            <div class="avatar-sm">
-                                <span class="avatar-title bg-primary rounded">
-                                    <i class="mdi mdi-account-multiple font-22"></i>
-                                </span>
-                            </div>
-                        </div>
+    {{-- Dashboard para Administradores y otros roles - VERSIÓN PROFESIONAL --}}
+    @if (Auth::user()->hasRole('admin') || Auth::user()->hasPermission('dashboard.admin'))
+        
+        <style>
+        /* Paleta de colores profesional para centro preuniversitario */
+        :root {
+            --primary-color: #1e3a8a;      /* Azul académico profundo */
+            --secondary-color: #374151;     /* Gris corporativo */
+            --success-color: #065f46;       /* Verde institucional */
+            --info-color: #0c4a6e;          /* Azul información */
+            --warning-color: #92400e;       /* Ámbar profesional */
+            --danger-color: #991b1b;        /* Rojo sobrio */
+            --light-color: #f8fafc;         /* Blanco hueso */
+            --dark-color: #111827;          /* Negro carbón */
+            
+            /* Colores de fondo sutiles */
+            --primary-bg: #eff6ff;
+            --secondary-bg: #f9fafb;
+            --success-bg: #ecfdf5;
+            --info-bg: #f0f9ff;
+            --warning-bg: #fffbeb;
+            --danger-bg: #fef2f2;
+            
+            /* Sombras profesionales */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-header {
+            background-color: var(--secondary-bg);
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            color: var(--dark-color);
+            padding: 1rem 1.25rem;
+        }
+        
+        .card-header.bg-primary {
+            background-color: var(--primary-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-secondary {
+            background-color: var(--secondary-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-success {
+            background-color: var(--success-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-info {
+            background-color: var(--info-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-warning {
+            background-color: var(--warning-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .card-header.bg-danger {
+            background-color: var(--danger-color) !important;
+            color: white;
+            border-bottom: none;
+        }
+        
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-width: 1px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #1e40af;
+            border-color: #1e40af;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #047857;
+            border-color: #047857;
+            transform: translateY(-1px);
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .btn-info:hover {
+            background-color: #0369a1;
+            border-color: #0369a1;
+            transform: translateY(-1px);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #a16207;
+            border-color: #a16207;
+            transform: translateY(-1px);
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+        }
+        
+        .progress-bar {
+            border-radius: 4px;
+        }
+        
+        .badge {
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Estadísticas profesionales */
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-desc {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        
+        /* Tablas profesionales */
+        .table-professional {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .table-professional thead th {
+            background-color: var(--secondary-bg);
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--dark-color);
+            padding: 0.75rem 1rem;
+        }
+        
+        .table-professional tbody tr {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .table-professional tbody tr:hover {
+            background-color: var(--light-color);
+        }
+        
+        .table-professional tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+        
+        /* Colores de texto profesionales */
+        .text-primary-custom { color: var(--primary-color) !important; }
+        .text-secondary-custom { color: var(--secondary-color) !important; }
+        .text-success-custom { color: var(--success-color) !important; }
+        .text-info-custom { color: var(--info-color) !important; }
+        .text-warning-custom { color: var(--warning-color) !important; }
+        .text-danger-custom { color: var(--danger-color) !important; }
+        
+        /* Fondos sutiles */
+        .bg-primary-subtle { background-color: var(--primary-bg) !important; }
+        .bg-secondary-subtle { background-color: var(--secondary-bg) !important; }
+        .bg-success-subtle { background-color: var(--success-bg) !important; }
+        .bg-info-subtle { background-color: var(--info-bg) !important; }
+        .bg-warning-subtle { background-color: var(--warning-bg) !important; }
+        .bg-danger-subtle { background-color: var(--danger-bg) !important; }
+        
+        /* Elementos específicos */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1e40af 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            border-left: 4px solid;
+            background: white;
+        }
+        
+        .metric-card.primary { border-left-color: var(--primary-color); }
+        .metric-card.success { border-left-color: var(--success-color); }
+        .metric-card.info { border-left-color: var(--info-color); }
+        .metric-card.warning { border-left-color: var(--warning-color); }
+        </style>
+
+        {{-- HEADER PRINCIPAL --}}
+        <div class="dashboard-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="mb-1 text-white">
+                        <i class="bi bi-speedometer2 me-2 text-white"></i>
+                        Panel de Control Administrativo
+                    </h4>
+                    <p class="mb-0 opacity-90">Sistema de Gestión Académica - Centro Preuniversitario</p>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-light text-dark fs-6">
+                        {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-xl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="mb-0">{{ $totalEstudiantes }}</h4>
-                                <p class="text-muted mb-0">Estudiantes</p>
-                            </div>
-                            <div class="avatar-sm">
-                                <span class="avatar-title bg-success rounded">
-                                    <i class="mdi mdi-school font-22"></i>
-                                </span>
-                            </div>
-                        </div>
+        {{-- SECCIÓN 1: ESTADÍSTICAS PRINCIPALES --}}
+        <div class="row g-4 mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary-subtle">
+                        <i class="bi bi-people text-primary-custom fs-3"></i>
                     </div>
+                    <div class="stat-number text-primary-custom">{{ $totalUsuarios }}</div>
+                    <div class="stat-label">Total de Usuarios</div>
+                    <div class="stat-desc">Registrados en el sistema</div>
                 </div>
             </div>
-
-            <div class="col-xl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="mb-0">{{ $totalCarreras ?? 0 }}</h4>
-                                <p class="text-muted mb-0">Carreras Activas</p>
-                            </div>
-                            <div class="avatar-sm">
-                                <span class="avatar-title bg-info rounded">
-                                    <i class="mdi mdi-book-education font-22"></i>
-                                </span>
-                            </div>
-                        </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-subtle">
+                        <i class="bi bi-mortarboard text-success-custom fs-3"></i>
                     </div>
+                    <div class="stat-number text-success-custom">{{ $totalEstudiantes }}</div>
+                    <div class="stat-label">Estudiantes Activos</div>
+                    <div class="stat-desc">Matriculados actualmente</div>
                 </div>
             </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info-subtle">
+                        <i class="bi bi-person-workspace text-info-custom fs-3"></i>
+                    </div>
+                    <div class="stat-number text-info-custom">{{ $totalProfesores }}</div>
+                    <div class="stat-label">Docentes</div>
+                    <div class="stat-desc">Personal académico</div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning-subtle">
+                        <i class="bi bi-person-hearts text-warning-custom fs-3"></i>
+                    </div>
+                    <div class="stat-number text-warning-custom">{{ $totalPadres }}</div>
+                    <div class="stat-label">Padres de Familia</div>
+                    <div class="stat-desc">Cuentas vinculadas</div>
+                </div>
+            </div>
+        </div>
 
-            <div class="col-xl-3 col-md-6">
+        {{-- SECCIÓN 2: INFRAESTRUCTURA --}}
+        <div class="row g-4 mb-4">
+            <div class="col-12">
                 <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="mb-0">{{ $totalAulas ?? 0 }}</h4>
-                                <p class="text-muted mb-0">Aulas Disponibles</p>
+                    <div class="card-header bg-secondary">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-building me-2"></i>Infraestructura Académica
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-lg-3 col-md-6">
+                                <div class="text-center">
+                                    <div class="stat-icon bg-primary-subtle mx-auto">
+                                        <i class="bi bi-journal-bookmark text-primary-custom fs-4"></i>
+                                    </div>
+                                    <h4 class="text-primary-custom mb-2">{{ $totalCarreras ?? 0 }}</h4>
+                                    <p class="stat-label mb-0">Carreras Profesionales</p>
+                                </div>
                             </div>
-                            <div class="avatar-sm">
-                                <span class="avatar-title bg-warning rounded">
-                                    <i class="mdi mdi-door font-22"></i>
-                                </span>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="text-center">
+                                    <div class="stat-icon bg-warning-subtle mx-auto">
+                                        <i class="bi bi-door-open text-warning-custom fs-4"></i>
+                                    </div>
+                                    <h4 class="text-warning-custom mb-2">{{ $totalAulas ?? 0 }}</h4>
+                                    <p class="stat-label mb-0">Aulas Disponibles</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="text-center">
+                                    <div class="stat-icon bg-danger-subtle mx-auto">
+                                        <i class="bi bi-calendar3 text-danger-custom fs-4"></i>
+                                    </div>
+                                    <h4 class="text-danger-custom mb-2">{{ $totalCiclos ?? 0 }}</h4>
+                                    <p class="stat-label mb-0">Ciclos Académicos</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <div class="text-center">
+                                    <div class="stat-icon bg-success-subtle mx-auto">
+                                        <i class="bi bi-clock text-success-custom fs-4"></i>
+                                    </div>
+                                    <h4 class="text-success-custom mb-2">{{ $totalTurnos ?? 0 }}</h4>
+                                    <p class="stat-label mb-0">Turnos Académicos</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -987,28 +1291,165 @@
             </div>
         </div>
 
+        {{-- SECCIÓN 3: GESTIÓN ACADÉMICA Y ASISTENCIA --}}
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card h-100">
+                    <div class="card-header bg-success">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-clipboard-data me-2"></i>Gestión Académica
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="metric-card primary p-3 rounded">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-primary-subtle me-3" style="width: 40px; height: 40px; margin-bottom: 0;">
+                                            <i class="bi bi-journal-text text-primary-custom fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="h5 mb-0 text-primary-custom">{{ $totalCursos ?? 0 }}</div>
+                                            <small class="text-muted">Cursos Activos</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card warning p-3 rounded">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-warning-subtle me-3" style="width: 40px; height: 40px; margin-bottom: 0;">
+                                            <i class="bi bi-megaphone text-warning-custom fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="h5 mb-0 text-warning-custom">{{ $totalAnuncios ?? 0 }}</div>
+                                            <small class="text-muted">Anuncios Publicados</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="metric-card info p-3 rounded">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-info-subtle me-3" style="width: 40px; height: 40px; margin-bottom: 0;">
+                                            <i class="bi bi-person-plus text-info-custom fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="h5 mb-0 text-info-custom">{{ $totalInscripcionesGeneral ?? 0 }}</div>
+                                            <small class="text-muted">Inscripciones</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-info">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-calendar-check me-2"></i>Asistencia del Día
+                        </h5>
+                        <small>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 text-center">
+                            <div class="col-4">
+                                <div class="stat-number text-secondary-custom" style="font-size: 1.5rem;">{{ $asistenciaHoy['total_registros'] ?? 0 }}</div>
+                                <div class="stat-desc">Total</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-number text-success-custom" style="font-size: 1.5rem;">{{ $asistenciaHoy['presentes'] ?? 0 }}</div>
+                                <div class="stat-desc">Presentes</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-number text-danger-custom" style="font-size: 1.5rem;">{{ $asistenciaHoy['ausentes'] ?? 0 }}</div>
+                                <div class="stat-desc">Ausentes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- SECCIÓN 4: GESTIÓN DOCENTE --}}
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-person-badge me-2"></i>Gestión Docente
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-lg-4">
+                                <div class="text-center p-3">
+                                    <div class="stat-icon bg-warning-subtle mx-auto">
+                                        <i class="bi bi-calendar-week text-warning-custom fs-3"></i>
+                                    </div>
+                                    <h4 class="text-warning-custom mt-3">{{ $totalHorariosDocentes ?? 0 }}</h4>
+                                    <p class="stat-label">Horarios Programados</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="text-center p-3">
+                                    <div class="stat-icon bg-danger-subtle mx-auto">
+                                        <i class="bi bi-cash-stack text-danger-custom fs-3"></i>
+                                    </div>
+                                    <h4 class="text-danger-custom mt-3">{{ $totalPagosDocentes ?? 0 }}</h4>
+                                    <p class="stat-label">Pagos Procesados</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="text-center p-3">
+                                    <div class="stat-icon bg-success-subtle mx-auto">
+                                        <i class="bi bi-check2-all text-success-custom fs-3"></i>
+                                    </div>
+                                    <h4 class="text-success-custom mt-3">{{ $totalAsistenciaDocente ?? 0 }}</h4>
+                                    <p class="stat-label">Asistencias Registradas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- SECCIÓN 5: INFORMACIÓN DEL CICLO ACTIVO --}}
         @if (isset($cicloActivo))
-            {{-- Información del Ciclo Activo --}}
-            <div class="row">
+            <div class="row g-4 mb-4">
                 <div class="col-12">
                     <div class="card">
+                        <div class="card-header bg-primary">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar-event me-2"></i>Ciclo Académico Actual: {{ $cicloActivo->nombre }}
+                            </h5>
+                        </div>
                         <div class="card-body">
-                            <h5 class="card-title mb-3">Ciclo Activo: {{ $cicloActivo->nombre }}</h5>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <p><strong>Inscripciones Activas:</strong> {{ $totalInscripciones ?? 0 }}</p>
-                                    <p><strong>Inicio:</strong> {{ $cicloActivo->fecha_inicio->format('d/m/Y') }}</p>
-                                    <p><strong>Fin:</strong> {{ $cicloActivo->fecha_fin->format('d/m/Y') }}</p>
+                                    <h6 class="text-primary-custom mb-3">Inscripciones Activas</h6>
+                                    <div class="stat-number text-success-custom mb-2">{{ $totalInscripciones ?? 0 }}</div>
+                                    <p class="text-muted mb-3">estudiantes matriculados</p>
+                                    <div class="small">
+                                        <div><strong>Inicio:</strong> {{ $cicloActivo->fecha_inicio->format('d/m/Y') }}</div>
+                                        <div><strong>Fin:</strong> {{ $cicloActivo->fecha_fin->format('d/m/Y') }}</div>
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <p><strong>Progreso del Ciclo:</strong></p>
-                                    <div class="progress mb-2" style="height: 20px;">
-                                        <div class="progress-bar" role="progressbar"
-                                            style="width: {{ $cicloActivo->calcularPorcentajeAvance() }}%;"
-                                            aria-valuenow="{{ $cicloActivo->calcularPorcentajeAvance() }}"
-                                            aria-valuemin="0" aria-valuemax="100">
-                                            {{ $cicloActivo->calcularPorcentajeAvance() }}%
+                                    <h6 class="text-primary-custom mb-3">Progreso del Ciclo</h6>
+                                    <div class="progress mb-2" style="height: 12px;">
+                                        <div class="progress-bar bg-primary" role="progressbar"
+                                            style="width: {{ $cicloActivo->calcularPorcentajeAvance() }}%;">
                                         </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="badge bg-primary-subtle text-primary-custom">
+                                            {{ $cicloActivo->calcularPorcentajeAvance() }}% completado
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -1016,10 +1457,16 @@
                                         $proximoExamen = $cicloActivo->getProximoExamen();
                                     @endphp
                                     @if ($proximoExamen)
-                                        <p><strong>Próximo Examen:</strong></p>
-                                        <p>{{ $proximoExamen['nombre'] }} -
-                                            {{ $proximoExamen['fecha']->format('d/m/Y') }}</p>
-                                        <p class="text-muted">En {{ $proximoExamen['fecha']->diffInDays() }} días</p>
+                                        <h6 class="text-primary-custom mb-3">Próximo Examen</h6>
+                                        <div class="h5 mb-1">{{ $proximoExamen['nombre'] }}</div>
+                                        <div class="text-info-custom h6 mb-2">{{ $proximoExamen['fecha']->format('d/m/Y') }}</div>
+                                        <span class="badge bg-info-subtle text-info-custom">
+                                            <i class="bi bi-clock me-1"></i>{{ $proximoExamen['fecha']->diffInDays() }} días restantes
+                                        </span>
+                                    @else
+                                        <h6 class="text-success-custom mb-3">Estado del Ciclo</h6>
+                                        <p class="text-muted">Todos los exámenes completados</p>
+                                        <span class="badge bg-success-subtle text-success-custom">Ciclo en curso</span>
                                     @endif
                                 </div>
                             </div>
@@ -1028,43 +1475,56 @@
                 </div>
             </div>
 
-            {{-- Estadísticas de Asistencia General --}}
+            {{-- ESTADÍSTICAS DE ASISTENCIA --}}
             @if (isset($estadisticasAsistencia))
-                <div class="row">
+                <div class="row g-4 mb-4">
                     <div class="col-12">
                         <div class="card">
+                            <div class="card-header bg-info">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-bar-chart me-2"></i>Estadísticas de Asistencia Estudiantil
+                                </h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title mb-3">Estadísticas de Asistencia General</h5>
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-success">{{ $estadisticasAsistencia['regulares'] }}</h4>
-                                            <p class="text-muted">Estudiantes Regulares</p>
-                                            <span
-                                                class="badge bg-success">{{ $estadisticasAsistencia['porcentaje_regulares'] }}%</span>
+                                <div class="row g-4 text-center">
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="p-3 bg-success-subtle rounded">
+                                            <div class="stat-icon bg-success-subtle mx-auto mb-2" style="background: transparent !important;">
+                                                <i class="bi bi-check-circle text-success-custom fs-2"></i>
+                                            </div>
+                                            <div class="stat-number text-success-custom">{{ $estadisticasAsistencia['regulares'] }}</div>
+                                            <div class="stat-label">Estudiantes Regulares</div>
+                                            <span class="badge bg-success-subtle text-success-custom">{{ $estadisticasAsistencia['porcentaje_regulares'] }}%</span>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-warning">{{ $estadisticasAsistencia['amonestados'] }}</h4>
-                                            <p class="text-muted">Estudiantes Amonestados</p>
-                                            <span
-                                                class="badge bg-warning">{{ $estadisticasAsistencia['porcentaje_amonestados'] }}%</span>
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="p-3 bg-warning-subtle rounded">
+                                            <div class="stat-icon bg-warning-subtle mx-auto mb-2" style="background: transparent !important;">
+                                                <i class="bi bi-exclamation-triangle text-warning-custom fs-2"></i>
+                                            </div>
+                                            <div class="stat-number text-warning-custom">{{ $estadisticasAsistencia['amonestados'] }}</div>
+                                            <div class="stat-label">Estudiantes Amonestados</div>
+                                            <span class="badge bg-warning-subtle text-warning-custom">{{ $estadisticasAsistencia['porcentaje_amonestados'] }}%</span>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-danger">{{ $estadisticasAsistencia['inhabilitados'] }}</h4>
-                                            <p class="text-muted">Estudiantes Inhabilitados</p>
-                                            <span
-                                                class="badge bg-danger">{{ $estadisticasAsistencia['porcentaje_inhabilitados'] }}%</span>
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="p-3 bg-danger-subtle rounded">
+                                            <div class="stat-icon bg-danger-subtle mx-auto mb-2" style="background: transparent !important;">
+                                                <i class="bi bi-x-circle text-danger-custom fs-2"></i>
+                                            </div>
+                                            <div class="stat-number text-danger-custom">{{ $estadisticasAsistencia['inhabilitados'] }}</div>
+                                            <div class="stat-label">Estudiantes Inhabilitados</div>
+                                            <span class="badge bg-danger-subtle text-danger-custom">{{ $estadisticasAsistencia['porcentaje_inhabilitados'] }}%</span>
                                         </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="text-center">
-                                            <h4 class="text-primary">{{ $estadisticasAsistencia['total_estudiantes'] }}
-                                            </h4>
-                                            <p class="text-muted">Total Estudiantes</p>
+                                    <div class="col-lg-3 col-md-6">
+                                        <div class="p-3 bg-primary-subtle rounded">
+                                            <div class="stat-icon bg-primary-subtle mx-auto mb-2" style="background: transparent !important;">
+                                                <i class="bi bi-people text-primary-custom fs-2"></i>
+                                            </div>
+                                            <div class="stat-number text-primary-custom">{{ $estadisticasAsistencia['total_estudiantes'] }}</div>
+                                            <div class="stat-label">Total de Estudiantes</div>
+                                            <span class="badge bg-primary-subtle text-primary-custom">100%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1075,41 +1535,122 @@
             @endif
         @endif
 
-        {{-- Accesos Rápidos para Administradores --}}
-        <div class="row">
+        {{-- ÚLTIMOS REGISTROS DE ASISTENCIA --}}
+        <div class="row g-4 mb-4">
             <div class="col-12">
                 <div class="card">
+                    <div class="card-header bg-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-clock-history me-2"></i>Registros de Asistencia Recientes
+                        </h5>
+                        <span class="badge bg-light text-dark">Tiempo Real</span>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title mb-3">Accesos Rápidos</h5>
-                        <div class="row">
+                        <div class="table-responsive">
+                            <table class="table table-professional">
+                                <thead>
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Documento</th>
+                                        <th>Estudiante</th>
+                                        <th>Verificación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="latest-attendance-table-body">
+                                    @forelse ($ultimosRegistrosAsistencia as $registro)
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary-subtle text-primary-custom">
+                                                    {{ \Carbon\Carbon::parse($registro->fecha_registro)->format('H:i:s') }}
+                                                </span>
+                                            </td>
+                                            <td class="fw-semibold">{{ $registro->nro_documento }}</td>
+                                            <td>{{ $registro->usuario ? $registro->usuario->nombre . ' ' . $registro->usuario->apellido_paterno : 'N/A' }}</td>
+                                            <td>
+                                                <span class="badge bg-info-subtle text-info-custom">
+                                                    {{ $registro->tipo_verificacion_texto }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                                <p>No hay registros de asistencia recientes</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ACCESOS RÁPIDOS --}}
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-grid me-2"></i>Accesos Rápidos de Administración
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
                             @if (Auth::user()->hasPermission('users.view'))
-                                <div class="col-md-3 mb-2">
-                                    <a href="{{ route('usuarios.index') }}" class="btn btn-primary btn-block">
-                                        <i class="mdi mdi-account-multiple me-2"></i> Usuarios
+                                <div class="col-md-3">
+                                    <a href="{{ route('usuarios.index') }}" class="btn btn-outline-primary w-100 h-100 d-flex align-items-center p-3">
+                                        <div class="me-3">
+                                            <i class="bi bi-people fs-2"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <div class="fw-semibold">Usuarios</div>
+                                            <small class="text-muted">Gestión de usuarios</small>
+                                        </div>
                                     </a>
                                 </div>
                             @endif
 
                             @if (Auth::user()->hasPermission('inscripciones.view'))
-                                <div class="col-md-3 mb-2">
-                                    <a href="{{ route('inscripciones.index') }}" class="btn btn-success btn-block">
-                                        <i class="mdi mdi-clipboard-list me-2"></i> Inscripciones
+                                <div class="col-md-3">
+                                    <a href="{{ route('inscripciones.index') }}" class="btn btn-outline-success w-100 h-100 d-flex align-items-center p-3">
+                                        <div class="me-3">
+                                            <i class="bi bi-clipboard-plus fs-2"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <div class="fw-semibold">Inscripciones</div>
+                                            <small class="text-muted">Control de matrículas</small>
+                                        </div>
                                     </a>
                                 </div>
                             @endif
 
                             @if (Auth::user()->hasPermission('ciclos.view'))
-                                <div class="col-md-3 mb-2">
-                                    <a href="{{ route('ciclos.index') }}" class="btn btn-info btn-block">
-                                        <i class="mdi mdi-calendar me-2"></i> Ciclos
+                                <div class="col-md-3">
+                                    <a href="{{ route('ciclos.index') }}" class="btn btn-outline-info w-100 h-100 d-flex align-items-center p-3">
+                                        <div class="me-3">
+                                            <i class="bi bi-calendar3 fs-2"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <div class="fw-semibold">Ciclos</div>
+                                            <small class="text-muted">Períodos académicos</small>
+                                        </div>
                                     </a>
                                 </div>
                             @endif
 
                             @if (Auth::user()->hasPermission('carreras.view'))
-                                <div class="col-md-3 mb-2">
-                                    <a href="{{ route('carreras.index') }}" class="btn btn-warning btn-block">
-                                        <i class="mdi mdi-book-education me-2"></i> Carreras
+                                <div class="col-md-3">
+                                    <a href="{{ route('carreras.index') }}" class="btn btn-outline-warning w-100 h-100 d-flex align-items-center p-3">
+                                        <div class="me-3">
+                                            <i class="bi bi-book fs-2"></i>
+                                        </div>
+                                        <div class="text-start">
+                                            <div class="fw-semibold">Carreras</div>
+                                            <small class="text-muted">Programas académicos</small>
+                                        </div>
                                     </a>
                                 </div>
                             @endif
@@ -1118,5 +1659,78 @@
                 </div>
             </div>
         </div>
+
+        @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (typeof Echo !== 'undefined') {
+                        Echo.channel('asistencia-channel')
+                            .listen('NuevoRegistroAsistencia', (e) => {
+                                const tableBody = document.getElementById('latest-attendance-table-body');
+                                if (tableBody) {
+                                    const newRow = document.createElement('tr');
+                                    newRow.innerHTML = `
+                                        <td>
+                                            <span class="badge bg-primary-subtle text-primary-custom">
+                                                ${e.registro.fecha_hora_formateada.split(' ')[1]}
+                                            </span>
+                                        </td>
+                                        <td class="fw-semibold">${e.registro.nro_documento}</td>
+                                        <td>${e.registro.nombre_completo || 'N/A'}</td>
+                                        <td>
+                                            <span class="badge bg-info-subtle text-info-custom">
+                                                ${e.registro.tipo_verificacion_texto}
+                                            </span>
+                                        </td>
+                                    `;
+
+                                    tableBody.prepend(newRow);
+
+                                    while (tableBody.children.length > 10) {
+                                        tableBody.removeChild(tableBody.lastChild);
+                                    }
+
+                                    const emptyRow = tableBody.querySelector('td[colspan="4"]');
+                                    if (emptyRow) {
+                                        emptyRow.closest('tr').remove();
+                                    }
+                                }
+                            });
+                    }
+                });
+            </script>
+        @endpush
+    @else
+        {{-- Dashboard para usuarios sin permisos de administrador --}}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="mdi mdi-account-circle h1 text-muted"></i>
+                        <h4>Bienvenido al Sistema</h4>
+                        <p class="text-muted">Tu dashboard específico se está preparando.</p>
+                        
+                        @if(isset($anuncios) && count($anuncios) > 0)
+                            <hr>
+                            <h5 class="text-primary">Anuncios Recientes</h5>
+                            <div class="row">
+                                @foreach($anuncios->take(3) as $anuncio)
+                                    <div class="col-md-4">
+                                        <div class="card border-left border-primary">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ $anuncio->titulo }}</h6>
+                                                <p class="card-text small">{{ Str::limit($anuncio->contenido, 100) }}</p>
+                                                <small class="text-muted">{{ $anuncio->fecha_publicacion->format('d/m/Y') }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
+@endif
 @endsection

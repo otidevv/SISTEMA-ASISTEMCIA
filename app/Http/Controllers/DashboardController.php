@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\DB;
 use App\Models\AsistenciaDocente;
 use App\Models\HorarioDocente;
 use App\Models\PagoDocente; // NUEVO: Importar modelo PagoDocente
+use App\Models\User; // Importar modelo User
+use App\Models\Role; // Importar modelo Role
+use App\Models\Permission; // Importar modelo Permission
+use App\Models\Turno; // Importar modelo Turno
+use App\Models\Curso; // Importar modelo Curso
+use App\Models\Carrera; // ← AGREGAR ESTA LÍNEA
+use App\Models\Aula; 
 
 class DashboardController extends Controller
 {
@@ -41,13 +48,21 @@ class DashboardController extends Controller
 
         // Información común para todos los usuarios
         $data['user'] = $user;
-        $data['totalUsuarios'] = \App\Models\User::count();
-        $data['totalEstudiantes'] = \App\Models\User::whereHas('roles', function ($query) {
+        $data['totalUsuarios'] = User::count();
+        $data['totalEstudiantes'] = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'estudiante');
         })->count();
-        $data['totalPadres'] = \App\Models\User::whereHas('roles', function ($query) {
+        $data['totalProfesores'] = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
+        })->count();
+        $data['totalPadres'] = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'padre');
         })->count();
+
+        $data['ultimosRegistrosAsistencia'] = RegistroAsistencia::with('usuario')
+        ->orderBy('fecha_registro', 'desc')
+        ->take(10)
+        ->get();
 
         // Si el usuario es un estudiante
         if ($user->hasRole('estudiante')) {
@@ -438,29 +453,6 @@ class DashboardController extends Controller
             $data['hijosAsistencia'] = $hijosAsistencia;
         }
 
-        // Estadísticas generales (para administradores)
-        if ($user->hasRole('administrador') || $user->hasPermission('dashboard.admin')) {
-            // Ciclo activo
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
-
-            if ($cicloActivo) {
-                // Estadísticas del ciclo activo
-                $data['cicloActivo'] = $cicloActivo;
-                $data['totalInscripciones'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
-                    ->where('estado_inscripcion', 'activo')
-                    ->count();
-
-                // Estadísticas de asistencia general
-                $data['estadisticasAsistencia'] = $this->obtenerEstadisticasGenerales($cicloActivo);
-            }
-
-            // Carreras activas
-            $data['totalCarreras'] = \App\Models\Carrera::where('estado', true)->count();
-
-            // Aulas
-            $data['totalAulas'] = \App\Models\Aula::where('estado', true)->count();
-        }
-
         // Determinar qué vista mostrar según el rol
         if ($user->hasRole('profesor')) {
             return view('admin.dashboard-profesor', $data);
@@ -469,6 +461,56 @@ class DashboardController extends Controller
         } elseif ($user->hasRole('padre')) {
             return view('admin.dashboard-padre', $data);
         } else {
+            // Estadísticas generales (para administradores)
+            if ($user->hasRole('admin') || $user->hasPermission('dashboard.admin')) {
+                // Ciclo activo
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+                if ($cicloActivo) {
+                    // Estadísticas del ciclo activo
+                    $data['cicloActivo'] = $cicloActivo;
+                    $data['totalInscripciones'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
+                        ->where('estado_inscripcion', 'activo')
+                        ->count();
+
+                    // Estadísticas de asistencia general
+                    $data['estadisticasAsistencia'] = $this->obtenerEstadisticasGenerales($cicloActivo);
+                }
+
+                // Carreras activas
+                $data['totalCarreras'] = Carrera::where('estado', true)->count();
+
+                // Aulas
+                $data['totalAulas'] = Aula::where('estado', true)->count();
+
+                $data['totalAdministradores'] = User::whereHas('roles', function ($query) {
+                    $query->where('nombre', 'administrador');
+                })->count();
+                $data['totalRoles'] = Role::count();
+                $data['totalPermisos'] = Permission::count();
+                $data['totalCiclos'] = Ciclo::count();
+                $data['totalTurnos'] = Turno::where('estado', true)->count();
+                $data['totalCursos'] = Curso::where('estado', true)->count();
+                $data['totalAnuncios'] = Anuncio::count();
+                $data['totalHorariosDocentes'] = HorarioDocente::count();
+                $data['totalPagosDocentes'] = PagoDocente::count();
+                $data['totalAsistenciaDocente'] = AsistenciaDocente::count();
+                $data['totalInscripcionesGeneral'] = Inscripcion::count();
+
+                // Asistencia de estudiantes para hoy
+                $today = Carbon::today();
+                $data['asistenciaHoy'] = [
+                    'total_registros' => RegistroAsistencia::whereDate('fecha_registro', $today)->count(),
+                    // Asumiendo que 'estado' en RegistroAsistencia puede ser 'presente' o 'ausente'
+                    'presentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
+                                    ->where('estado', 'presente')
+                                    ->count(),
+                    'ausentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
+                                    ->where('estado', 'ausente')
+                                    ->count(),
+                ];
+
+            }
             return view('admin.dashboard', $data);
         }
     }
