@@ -685,10 +685,41 @@ class AsistenciaDocenteController extends Controller
         ]);
     }
 
-    public function editar($id)
+    public function edit($id)
     {
-        $asistencia = AsistenciaDocente::findOrFail($id);
-        return view('asistencia-docente.editar', compact('asistencia'));
+        // 1. Obtener el registro de asistencia
+        $asistencia = RegistroAsistencia::findOrFail($id);
+        
+        // 2. Obtener TODOS los docentes para el select
+        $docentes = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
+        })->select('id', 'nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento')
+          ->orderBy('apellido_paterno', 'asc')
+          ->get();
+    
+        // 3. DEBUGGING MEJORADO
+        \Log::info('=== EDITANDO ASISTENCIA ===');
+        \Log::info('ID: ' . $id);
+        \Log::info('Usuario ID: ' . ($asistencia->usuario_id ?? 'NULL'));
+        \Log::info('Documento: ' . $asistencia->nro_documento);
+        \Log::info('Total docentes: ' . $docentes->count());
+        
+        // Verificar si existe el docente específico
+        $docenteEncontrado = $docentes->where('numero_documento', $asistencia->nro_documento)->first();
+        if ($docenteEncontrado) {
+            \Log::info('✅ DOCENTE ENCONTRADO: ID=' . $docenteEncontrado->id . ', NOMBRE=' . $docenteEncontrado->nombre . ' ' . $docenteEncontrado->apellido_paterno);
+        } else {
+            \Log::info('❌ DOCENTE NO ENCONTRADO para documento: ' . $asistencia->nro_documento);
+            
+            // Mostrar los primeros 5 docentes para debugging
+            \Log::info('Primeros 5 docentes disponibles:');
+            foreach ($docentes->take(5) as $doc) {
+                \Log::info('  - ID=' . $doc->id . ', DOC=' . $doc->numero_documento . ', NOMBRE=' . $doc->nombre . ' ' . $doc->apellido_paterno);
+            }
+        }
+        
+        // ✅ 4. CAMBIO CRÍTICO: usar 'edit' en lugar de 'editar'
+        return view('asistencia-docente.edit', compact('asistencia', 'docentes'));
     }
 
     public function registrarTema(Request $request)

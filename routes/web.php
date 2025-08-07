@@ -191,6 +191,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'update'])
             ->name('update')
             ->middleware('can:announcements_edit');
+        // 🚀 AGREGAR ESTA LÍNEA PARA EL BOTÓN ACTIVAR/DESACTIVAR
+        Route::patch('/{anuncio}/toggle-status', [App\Http\Controllers\AnnouncementController::class, 'toggleStatus'])
+        ->name('toggle-status')
+        ->middleware('can:announcements_edit');
         
         // Eliminar anuncio
         Route::delete('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'destroy'])

@@ -574,6 +574,8 @@
                     </li>
                 @endif
 
+                
+
                 <!-- Módulo Ciclos Académicos -->
                 @if (Auth::user()->hasPermission('ciclos.view'))
                     <li>
@@ -611,6 +613,7 @@
                         </div>
                     </li>
                 @endif
+                
 
                 <!-- Módulo Turnos -->
                 @if (Auth::user()->hasPermission('turnos.view'))
@@ -682,7 +685,7 @@
                      Auth::user()->hasPermission('announcements_delete'))
                     <li>
                         <a href="#sidebarAnuncios" data-bs-toggle="collapse">
-                            <i data-feather="megaphone"></i>
+                            <i data-feather="calendar"></i>
                             <span> Anuncios </span>
                             <span class="menu-arrow"></span>
                         </a>

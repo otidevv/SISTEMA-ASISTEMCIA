@@ -48,30 +48,7 @@
                     </a>
                 </li>
 
-                <!-- ✅ MÓDULO ANUNCIOS - USANDO CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
-                @if (Auth::user()->hasPermission('announcements_view') || 
-                     Auth::user()->hasPermission('announcements_create') ||
-                     Auth::user()->hasPermission('announcements_edit') ||
-                     Auth::user()->hasPermission('announcements_delete'))
-                    <li>
-                        <a href="#sidebarAnuncios" data-bs-toggle="collapse">
-                            <i data-feather="megaphone"></i>
-                            <span> Anuncios </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarAnuncios">
-                            <ul class="nav-second-level">
-                                @if (Auth::user()->hasPermission('announcements_view'))
-                                    <li><a href="{{ route('anuncios.index') }}">Ver Anuncios</a></li>
-                                @endif
-                                
-                                @if (Auth::user()->hasPermission('announcements_create'))
-                                    <li><a href="{{ route('anuncios.create') }}">Crear Anuncio</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
+                
                 
                 <!-- Módulo Usuarios - Solo visible si tiene permiso -->
                 @if (Auth::user()->hasPermission('users.view'))
@@ -113,6 +90,8 @@
                         </div>
                     </li>
                 @endif
+
+                
 
                 <!-- Módulo Asistencia - Accesible para todos con sus permisos específicos -->
                 @if (Auth::user()->hasPermission('attendance.view') ||

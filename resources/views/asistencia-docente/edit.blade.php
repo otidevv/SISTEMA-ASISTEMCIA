@@ -5,10 +5,19 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-edit"></i> Editar Asistencia Docente
+                        <i class="fas fa-edit me-2"></i> Editar Asistencia Docente
                     </h5>
+                    <small>
+                        {{-- CORRECCIÓN: Header con nombres completos --}}
+                        {{ $asistencia->usuario ? 
+                            $asistencia->usuario->nombre . ' ' . 
+                            $asistencia->usuario->apellido_paterno . 
+                            ($asistencia->usuario->apellido_materno ? ' ' . $asistencia->usuario->apellido_materno : '') 
+                            : 'Doc: ' . $asistencia->nro_documento }}
+                        | {{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}
+                    </small>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('asistencia-docente.update', $asistencia->id) }}" method="POST">
@@ -23,15 +32,39 @@
                                             id="docente_id" name="docente_id" required>
                                         <option value="">Seleccionar docente...</option>
                                         @foreach($docentes as $docente)
+                                            @php
+                                                $nombreCompleto = trim($docente->apellido_paterno . ' ' . 
+                                                                     ($docente->apellido_materno ? $docente->apellido_materno . ' ' : '') . 
+                                                                     $docente->nombre);
+                                                
+                                                // ✅ LÓGICA DE AUTO-SELECCIÓN EN PHP
+                                                $esSeleccionado = false;
+                                                
+                                                // Método 1: Si hay usuario_id, usar ese
+                                                if ($asistencia->usuario_id && $asistencia->usuario_id == $docente->id) {
+                                                    $esSeleccionado = true;
+                                                }
+                                                // Método 2: Si no hay usuario_id, buscar por documento
+                                                elseif (!$asistencia->usuario_id && $docente->numero_documento == $asistencia->nro_documento) {
+                                                    $esSeleccionado = true;
+                                                }
+                                                // Método 3: Respetar old() si hay error de validación
+                                                elseif (old('docente_id') == $docente->id) {
+                                                    $esSeleccionado = true;
+                                                }
+                                            @endphp
                                             <option value="{{ $docente->id }}" 
-                                                    {{ old('docente_id', $asistencia->docente_id) == $docente->id ? 'selected' : '' }}>
-                                                {{ $docente->nombre }} {{ $docente->apellido_paterno }} - {{ $docente->numero_documento }}
+                                                    {{ $esSeleccionado ? 'selected' : '' }}
+                                                    data-documento="{{ $docente->numero_documento }}"
+                                                    data-nombre-completo="{{ $nombreCompleto }}">
+                                                {{ $nombreCompleto }} - {{ $docente->numero_documento }}
                                             </option>
                                         @endforeach
                                     </select>
                                     @error('docente_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                    <small class="text-muted">Documento original: {{ $asistencia->nro_documento }}</small>
                                 </div>
                             </div>
 
@@ -42,7 +75,7 @@
                                            class="form-control @error('fecha_hora') is-invalid @enderror" 
                                            id="fecha_hora" 
                                            name="fecha_hora" 
-                                           value="{{ old('fecha_hora', $asistencia->fecha_hora->format('Y-m-d\TH:i')) }}" 
+                                           value="{{ old('fecha_hora', \Carbon\Carbon::parse($asistencia->fecha_registro)->format('Y-m-d\TH:i')) }}" 
                                            required>
                                     @error('fecha_hora')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -58,11 +91,15 @@
                                     <select class="form-select @error('estado') is-invalid @enderror" 
                                             id="estado" name="estado" required>
                                         <option value="">Seleccionar estado...</option>
-                                        <option value="entrada" {{ old('estado', $asistencia->estado) == 'entrada' ? 'selected' : '' }}>
-                                            <i class="fas fa-sign-in-alt"></i> Entrada
+                                        @php
+                                            $horaActual = \Carbon\Carbon::parse($asistencia->fecha_registro)->format('H:i');
+                                            $estadoSugerido = $horaActual < '12:00' ? 'entrada' : 'salida';
+                                        @endphp
+                                        <option value="entrada" {{ old('estado', $estadoSugerido) == 'entrada' ? 'selected' : '' }}>
+                                            Entrada
                                         </option>
-                                        <option value="salida" {{ old('estado', $asistencia->estado) == 'salida' ? 'selected' : '' }}>
-                                            <i class="fas fa-sign-out-alt"></i> Salida
+                                        <option value="salida" {{ old('estado', $estadoSugerido) == 'salida' ? 'selected' : '' }}>
+                                            Salida
                                         </option>
                                     </select>
                                     @error('estado')
@@ -76,14 +113,19 @@
                                     <label for="tipo_verificacion" class="form-label">Tipo de Verificación</label>
                                     <select class="form-select @error('tipo_verificacion') is-invalid @enderror" 
                                             id="tipo_verificacion" name="tipo_verificacion">
-                                        <option value="manual" {{ old('tipo_verificacion', $asistencia->tipo_verificacion) == 'manual' ? 'selected' : '' }}>Manual</option>
-                                        <option value="biometrico" {{ old('tipo_verificacion', $asistencia->tipo_verificacion) == 'biometrico' ? 'selected' : '' }}>Biométrico</option>
-                                        <option value="tarjeta" {{ old('tipo_verificacion', $asistencia->tipo_verificacion) == 'tarjeta' ? 'selected' : '' }}>Tarjeta</option>
-                                        <option value="codigo" {{ old('tipo_verificacion', $asistencia->tipo_verificacion) == 'codigo' ? 'selected' : '' }}>Código</option>
+                                        @php
+                                            $tipos = [0 => 'biometrico', 1 => 'tarjeta', 2 => 'facial', 3 => 'codigo', 4 => 'manual'];
+                                            $tipoActual = $tipos[$asistencia->tipo_verificacion] ?? 'manual';
+                                        @endphp
+                                        <option value="manual" {{ old('tipo_verificacion', $tipoActual) == 'manual' ? 'selected' : '' }}>Manual</option>
+                                        <option value="biometrico" {{ old('tipo_verificacion', $tipoActual) == 'biometrico' ? 'selected' : '' }}>Biométrico</option>
+                                        <option value="tarjeta" {{ old('tipo_verificacion', $tipoActual) == 'tarjeta' ? 'selected' : '' }}>Tarjeta</option>
+                                        <option value="codigo" {{ old('tipo_verificacion', $tipoActual) == 'codigo' ? 'selected' : '' }}>Código</option>
                                     </select>
                                     @error('tipo_verificacion')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                    <small class="text-muted">Actual: {{ $asistencia->tipo_verificacion }} ({{ $tipoActual }})</small>
                                 </div>
                             </div>
                         </div>
@@ -97,7 +139,7 @@
                                            id="terminal_id" 
                                            name="terminal_id" 
                                            value="{{ old('terminal_id', $asistencia->terminal_id) }}" 
-                                           placeholder="ID del terminal o dispositivo">
+                                           placeholder="ID del terminal">
                                     @error('terminal_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -112,7 +154,7 @@
                                            id="codigo_trabajo" 
                                            name="codigo_trabajo" 
                                            value="{{ old('codigo_trabajo', $asistencia->codigo_trabajo) }}" 
-                                           placeholder="Código de trabajo o proyecto">
+                                           placeholder="Código de trabajo">
                                     @error('codigo_trabajo')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
@@ -120,21 +162,28 @@
                             </div>
                         </div>
 
-                        @if($asistencia->horario && $asistencia->horario->curso)
-                            <div class="alert alert-info">
-                                <h6><i class="fas fa-info-circle"></i> Información del Horario</h6>
-                                <p class="mb-1"><strong>Curso:</strong> {{ $asistencia->horario->curso->nombre }}</p>
-                                <p class="mb-1"><strong>Aula:</strong> {{ $asistencia->horario->aula->nombre ?? 'N/A' }}</p>
-                                <p class="mb-0"><strong>Horario:</strong> {{ $asistencia->horario->hora_inicio }} - {{ $asistencia->horario->hora_fin }}</p>
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Información del Registro</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>ID:</strong> {{ $asistencia->id }}</p>
+                                    <p class="mb-1"><strong>Documento:</strong> {{ $asistencia->nro_documento }}</p>
+                                    <p class="mb-0"><strong>Fecha Original:</strong> {{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Terminal:</strong> {{ $asistencia->terminal_id ?? 'N/A' }}</p>
+                                    <p class="mb-1"><strong>Usuario ID:</strong> {{ $asistencia->usuario_id ?? 'N/A' }}</p>
+                                    <p class="mb-0"><strong>Dispositivo:</strong> {{ $asistencia->sn_dispositivo ?? 'N/A' }}</p>
+                                </div>
                             </div>
-                        @endif
+                        </div>
 
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('asistencia-docente.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Volver
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Actualizar Asistencia
+                                <i class="fas fa-save"></i> Actualizar
                             </button>
                         </div>
                     </form>
@@ -146,22 +195,21 @@
 @endsection
 
 @push('scripts')
+{{-- JavaScript removido - auto-selección ahora se hace en PHP --}}
 <script>
-    // Actualizar fecha y hora actual por defecto
-    document.addEventListener('DOMContentLoaded', function() {
-        const fechaHoraInput = document.getElementById('fecha_hora');
+// Efecto visual opcional para confirmar la selección
+document.addEventListener('DOMContentLoaded', function() {
+    var select = document.getElementById('docente_id');
+    if (select && select.value && select.value !== '') {
+        // Mostrar brevemente que se auto-seleccionó
+        select.style.backgroundColor = '#d4edda';
+        select.style.borderColor = '#28a745';
         
-        // Si no hay valor, establecer la fecha y hora actual
-        if (!fechaHoraInput.value) {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            
-            fechaHoraInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
-    });
+        setTimeout(function() {
+            select.style.backgroundColor = '';
+            select.style.borderColor = '';
+        }, 2000);
+    }
+});
 </script>
 @endpush
