@@ -916,121 +916,101 @@
 {{-- ============================================ --}}
 {{-- MODAL DE ANUNCIOS - INTEGRADO AL DASHBOARD --}}
 {{-- ============================================ --}}
+{{-- MODAL DE ANUNCIOS CORREGIDO - REEMPLAZA TU SECCIÓN ACTUAL --}}
 @if(isset($anuncios) && $anuncios->count() > 0)
 <div class="modal fade" id="anunciosModal" tabindex="-1" aria-labelledby="anunciosModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            {{-- Header del Modal --}}
-            <div class="modal-header bg-primary text-white text-center border-0" style="background: linear-gradient(135deg, #28a745, #20c997) !important;">
-                <div class="w-100">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <img src="{{ asset('assets/images/logo cepre.png') }}" alt="Logo CEPRE" height="40" class="me-2">
-                        <div>
-                            <h6 class="mb-0 fw-bold">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h6>
-                            <small>CENTRO PREUNIVERSITARIO - UNAMAD</small>
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            
+            {{-- Header con mejor posicionamiento --}}
+            <div class="modal-header-corregido">
+                <div class="header-content-corregido">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ asset('assets/images/logo cepre.png') }}" alt="Logo CEPRE" height="28" class="me-2">
+                        <div class="texto-header-corregido">
+                            <h6 class="mb-0 fw-bold">UNAMAD - CENTRO PREUNIVERSITARIO</h6>
+                            <small class="opacity-90">Anuncios Importantes</small>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Close" style="top: 15px; right: 15px;"></button>
+                
+                {{-- BOTÓN CERRAR CORREGIDO Y SÚPER VISIBLE --}}
+                <button type="button" class="btn-close-super-visible" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <span class="icono-cerrar">✕</span>
+                </button>
             </div>
 
-            {{-- Body del Modal --}}
-            <div class="modal-body p-0">
-                {{-- Carrusel de Anuncios --}}
-                <div id="anunciosCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
+            {{-- Badge mejorado que no tapa --}}
+            <div class="badge-mejorado-container">
+                @foreach($anuncios as $index => $anuncio)
+                <span class="badge-mejorado badge-{{ $anuncio->tipo }} {{ $index === 0 ? 'active' : '' }}" data-slide="{{ $index }}">
+                    <i class="fas fa-
+                    @switch($anuncio->tipo)
+                        @case('importante') exclamation-circle @break
+                        @case('urgente') exclamation-triangle @break
+                        @case('evento') calendar-alt @break
+                        @case('mantenimiento') tools @break
+                        @default info-circle @break
+                    @endswitch
+                    me-1"></i>
+                    {{ strtoupper($anuncio->tipo) }}
+                </span>
+                @endforeach
+            </div>
+
+            {{-- Cuerpo del modal sin conflictos --}}
+            <div class="modal-body-sin-conflictos">
+                <div id="anunciosCarousel" class="carousel slide h-100" data-bs-ride="carousel">
+                    <div class="carousel-inner h-100">
                         @foreach($anuncios as $index => $anuncio)
-                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                            <div class="p-4 text-center" style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); min-height: 400px;">
-                                {{-- Icono según tipo de anuncio --}}
-                                <div class="mb-3">
-                                    @switch($anuncio->tipo)
-                                        @case('importante')
-                                            <i class="fas fa-exclamation-circle text-warning" style="font-size: 3rem;"></i>
-                                            @break
-                                        @case('urgente')
-                                            <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                                            @break
-                                        @case('evento')
-                                            <i class="fas fa-calendar-alt text-info" style="font-size: 3rem;"></i>
-                                            @break
-                                        @case('mantenimiento')
-                                            <i class="fas fa-tools text-secondary" style="font-size: 3rem;"></i>
-                                            @break
-                                        @default
-                                            <i class="fas fa-info-circle text-primary" style="font-size: 3rem;"></i>
-                                    @endswitch
-                                </div>
-
-                                {{-- Título del Anuncio --}}
-                                <h2 class="fw-bold text-uppercase mb-3" style="color: #28a745; font-size: 2.5rem;">
-                                    {{ $anuncio->titulo }}
-                                </h2>
-
-                                {{-- Descripción --}}
-                                @if($anuncio->descripcion)
-                                <p class="lead mb-3" style="color: #495057;">
-                                    {{ $anuncio->descripcion }}
-                                </p>
-                                @endif
-
-                                {{-- Contenido Principal --}}
-                                <div class="bg-white rounded-3 p-4 mx-auto shadow-sm" style="max-width: 500px;">
-                                    <div style="color: #212529; font-size: 1.1rem; line-height: 1.6;">
-                                        {!! nl2br(e($anuncio->contenido)) !!}
-                                    </div>
-                                </div>
-
-                                {{-- Badge de tipo de anuncio --}}
-                                <div class="mt-3">
-                                    <span class="badge fs-6 px-3 py-2 
-                                        @switch($anuncio->tipo)
-                                            @case('importante') bg-warning text-dark @break
-                                            @case('urgente') bg-danger @break
-                                            @case('evento') bg-info @break
-                                            @case('mantenimiento') bg-secondary @break
-                                            @default bg-primary @break
-                                        @endswitch
-                                    ">
-                                        {{ ucfirst($anuncio->tipo) }}
-                                    </span>
-                                </div>
-
-                                {{-- Fecha de publicación --}}
-                                <p class="text-muted mt-3 mb-0">
-                                    <small>
-                                        <i class="fas fa-calendar-check me-1"></i>
-                                        Publicado: {{ $anuncio->fecha_publicacion ? \Carbon\Carbon::parse($anuncio->fecha_publicacion)->format('d/m/Y') : $anuncio->created_at->format('d/m/Y') }}
-                                    </small>
-                                </p>
-
-                                {{-- Imagen si existe --}}
+                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }} h-100">
+                            
+                            {{-- Contenedor de imagen sin espacios --}}
+                            <div class="contenedor-imagen-perfecto">
                                 @if($anuncio->imagen)
-                                <div class="mt-3">
                                     <img src="{{ asset('storage/' . $anuncio->imagen) }}" 
                                          alt="{{ $anuncio->titulo }}" 
-                                         class="img-fluid rounded shadow-sm" 
-                                         style="max-height: 200px;">
-                                </div>
+                                         class="imagen-sin-espacios">
+                                @else
+                                    {{-- Fallback mejorado --}}
+                                    <div class="fallback-mejorado">
+                                        <i class="fas fa-
+                                        @switch($anuncio->tipo)
+                                            @case('importante') exclamation-circle @break
+                                            @case('urgente') exclamation-triangle @break
+                                            @case('evento') calendar-alt @break
+                                            @case('mantenimiento') tools @break
+                                            @default info-circle @break
+                                        @endswitch
+                                        icono-fallback"></i>
+                                    </div>
                                 @endif
+                                
+                                {{-- Overlay de información mejorado --}}
+                                <div class="overlay-informacion-mejorado">
+                                    <div class="contenido-overlay">
+                                        <h1 class="titulo-overlay">{{ $anuncio->titulo }}</h1>
+                                        @if($anuncio->descripcion)
+                                        <p class="descripcion-overlay">{{ $anuncio->descripcion }}</p>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         @endforeach
                     </div>
 
-                    {{-- Controles del carrusel (solo si hay más de 1 anuncio) --}}
+                    {{-- Controles mejorados --}}
                     @if($anuncios->count() > 1)
-                    <button class="carousel-control-prev" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                        <span class="visually-hidden">Anterior</span>
+                    <button class="carousel-control-prev control-mejorado" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="prev">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-                        <span class="visually-hidden">Siguiente</span>
+                    <button class="carousel-control-next control-mejorado" type="button" data-bs-target="#anunciosCarousel" data-bs-slide="next">
+                        <i class="fas fa-chevron-right"></i>
                     </button>
 
-                    {{-- Indicadores --}}
-                    <div class="carousel-indicators">
+                    {{-- Indicadores mejorados --}}
+                    <div class="carousel-indicators indicadores-mejorados">
                         @foreach($anuncios as $index => $anuncio)
                         <button type="button" data-bs-target="#anunciosCarousel" data-bs-slide-to="{{ $index }}" 
                                 class="{{ $index === 0 ? 'active' : '' }}" aria-label="Anuncio {{ $index + 1 }}"></button>
@@ -1040,22 +1020,46 @@
                 </div>
             </div>
 
-            {{-- Footer del Modal --}}
-            <div class="modal-footer bg-light border-0 justify-content-between">
-                <div class="text-muted">
-                    <small>
-                        <i class="fas fa-bullhorn me-1"></i>
-                        Anuncios del Centro Preuniversitario
-                    </small>
+            {{-- Footer corregido --}}
+            <div class="modal-footer-corregido">
+                <div class="contenido-footer-mejorado">
+                    @foreach($anuncios as $index => $anuncio)
+                    <div class="info-slide {{ $index === 0 ? 'active' : '' }}" data-slide="{{ $index }}">
+                        <div class="texto-info">
+                            {{ Str::limit(strip_tags($anuncio->contenido), 100) }}
+                            @if(strlen(strip_tags($anuncio->contenido)) > 100)
+                                <button class="btn-ver-mas" onclick="mostrarContenidoCompleto({{ $index }})">Ver más</button>
+                            @endif
+                        </div>
+                        
+                        {{-- Modal interno para contenido completo --}}
+                        @if(strlen(strip_tags($anuncio->contenido)) > 100)
+                        <div id="contenido-completo-{{ $index }}" class="modal-contenido-completo d-none">
+                            <div class="contenido-completo-inner">
+                                <div class="header-contenido-completo">
+                                    <h4>{{ $anuncio->titulo }}</h4>
+                                    <button class="btn-cerrar-contenido" onclick="cerrarContenidoCompleto({{ $index }})">×</button>
+                                </div>
+                                <div class="texto-completo">
+                                    {!! nl2br(e($anuncio->contenido)) !!}
+                                </div>
+                                <div class="fecha-contenido">
+                                    <small><i class="fas fa-calendar-alt me-1"></i>{{ $anuncio->fecha_publicacion ? \Carbon\Carbon::parse($anuncio->fecha_publicacion)->format('d/m/Y') : $anuncio->created_at->format('d/m/Y') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        
+                        <div class="fecha-info">
+                            <small><i class="fas fa-calendar-alt me-1"></i>{{ $anuncio->fecha_publicacion ? \Carbon\Carbon::parse($anuncio->fecha_publicacion)->format('d/m/Y') : $anuncio->created_at->format('d/m/Y') }}</small>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
-                <div>
-                    @if($anuncios->count() > 1)
-                    <small class="text-muted me-3">
-                        <i class="fas fa-layer-group me-1"></i>
-                        {{ $anuncios->count() }} anuncios
-                    </small>
-                    @endif
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">
+                
+                <div class="acciones-footer">
+                    <small class="texto-institucion">Centro Preuniversitario UNAMAD</small>
+                    <button type="button" class="btn btn-success btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-check me-1"></i>Entendido
                     </button>
                 </div>
@@ -1064,39 +1068,927 @@
     </div>
 </div>
 
-{{-- JavaScript para mostrar automáticamente el modal --}}
+{{-- ESTILOS COMPLETAMENTE CORREGIDOS --}}
+<style>
+/* === RESET Y BASE === */
+.modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    height: 95vh;
+    position: relative;
+}
+
+/* === HEADER CORREGIDO === */
+.modal-header-corregido {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, transparent 100%);
+    color: white;
+    padding: 12px 20px;
+    z-index: 15;
+    backdrop-filter: blur(8px);
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: auto;
+    min-height: 60px;
+}
+
+.header-content-corregido .texto-header-corregido h6,
+.header-content-corregido .texto-header-corregido small {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    line-height: 1.2;
+}
+
+/* === BOTÓN CERRAR SÚPER VISIBLE CORREGIDO === */
+.btn-close-super-visible {
+    background: #dc3545;
+    color: white;
+    border: 3px solid white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 900;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 
+        0 0 0 2px rgba(220, 53, 69, 1),
+        0 4px 15px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 20;
+    flex-shrink: 0;
+}
+
+.btn-close-super-visible:hover,
+.btn-close-super-visible:focus {
+    background: #c82333;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 
+        0 0 0 3px white,
+        0 0 0 6px rgba(220, 53, 69, 1),
+        0 6px 20px rgba(0,0,0,0.6);
+    border: 3px solid white;
+}
+
+.icono-cerrar {
+    font-size: 1.8rem;
+    line-height: 1;
+    display: block;
+}
+
+/* === BADGE MEJORADO === */
+.badge-mejorado-container {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    z-index: 10;
+}
+
+.badge-mejorado {
+    display: none;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+}
+
+.badge-mejorado.active {
+    display: inline-block;
+    animation: badge-entrada 0.5s ease-out;
+}
+
+.badge-importante {
+    background: rgba(255, 193, 7, 0.9);
+    color: #000;
+    border-color: rgba(255, 193, 7, 0.6);
+}
+
+.badge-urgente {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border-color: rgba(220, 53, 69, 0.6);
+}
+
+.badge-evento {
+    background: rgba(23, 162, 184, 0.9);
+    color: white;
+    border-color: rgba(23, 162, 184, 0.6);
+}
+
+.badge-mantenimiento {
+    background: rgba(108, 117, 125, 0.9);
+    color: white;
+    border-color: rgba(108, 117, 125, 0.6);
+}
+
+.badge-general {
+    background: rgba(0, 123, 255, 0.9);
+    color: white;
+    border-color: rgba(0, 123, 255, 0.6);
+}
+
+@keyframes badge-entrada {
+    0% { opacity: 0; transform: translateY(-10px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* === CUERPO SIN CONFLICTOS === */
+.modal-body-sin-conflictos {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.contenedor-imagen-perfecto {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+/* === IMAGEN SIN ESPACIOS BLANCOS CORREGIDA PARA MÓVILES === */
+.imagen-sin-espacios {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+/* Corrección específica para móviles */
+@media (max-width: 768px) {
+    .imagen-sin-espacios {
+        object-fit: contain;
+        object-position: center;
+        background: #000;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .imagen-sin-espacios {
+        object-fit: contain;
+        object-position: center top;
+        background: #000;
+        max-height: 100vh;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+/* Prevenir zoom en iOS Safari */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .modal-content {
+        -webkit-text-size-adjust: 100%;
+        -webkit-transform: translateZ(0);
+    }
+    
+    .imagen-sin-espacios {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* === FALLBACK MEJORADO === */
+.fallback-mejorado {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icono-fallback {
+    font-size: 8rem;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* === OVERLAY DE INFORMACIÓN MENOS INTRUSIVO === */
+.overlay-informacion-mejorado {
+    position: absolute;
+    bottom: 55px;
+    left: 15px;
+    right: 15px;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.6);
+}
+
+.titulo-overlay {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: #ffffff;
+    text-shadow: 
+        0 0 8px rgba(255,255,255,0.6),
+        2px 2px 0px rgba(0,0,0,1),
+        3px 3px 0px rgba(0,0,0,0.7);
+    line-height: 1.1;
+    letter-spacing: 1px;
+}
+
+.descripcion-overlay {
+    font-size: 1rem;
+    margin-bottom: 0;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+/* === INDICADORES REPOSICIONADOS === */
+.indicadores-mejorados {
+    bottom: 110px;
+    margin-bottom: 0;
+    z-index: 11;
+}
+
+.indicadores-mejorados button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    border: 2px solid rgba(255,255,255,0.8);
+    margin: 0 4px;
+    transition: all 0.3s ease;
+}
+
+.indicadores-mejorados button.active {
+    background: white;
+    transform: scale(1.3);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+/* === FOOTER MEJORADO Y MENOS INTRUSIVO === */
+.modal-footer-corregido {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,0.85) 100%);
+    backdrop-filter: blur(8px);
+    border: none;
+    padding: 0;
+    z-index: 8;
+    height: auto;
+    min-height: 45px;
+}
+
+.contenido-footer-mejorado {
+    padding: 8px 15px 4px 15px;
+}
+
+.info-slide {
+    display: none;
+}
+
+.info-slide.active {
+    display: block;
+}
+
+.texto-info {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.95);
+    line-height: 1.3;
+    margin-bottom: 4px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+    max-height: none;
+    overflow: visible;
+}
+
+.btn-ver-mas {
+    background: rgba(79, 195, 247, 0.95);
+    color: white;
+    border: none;
+    font-size: 0.8rem;
+    padding: 4px 12px;
+    margin: 4px 0 0 0;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    display: inline-block;
+    vertical-align: top;
+}
+
+.btn-ver-mas:hover {
+    background: rgba(79, 195, 247, 1);
+    transform: scale(1.05);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+}
+
+.fecha-info {
+    display: none;
+}
+
+.acciones-footer {
+    background: rgba(0,0,0,0.9);
+    padding: 6px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(12px);
+    min-height: 36px;
+}
+
+.texto-institucion {
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    font-size: 0.8rem;
+}
+
+/* === MODAL PARA CONTENIDO COMPLETO MENOS INVASIVO === */
+.modal-contenido-completo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(15px);
+    overflow-y: auto;
+}
+
+.contenido-completo-inner {
+    background: white;
+    color: #333;
+    border-radius: 15px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+.header-contenido-completo {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.header-contenido-completo h4 {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+    flex: 1;
+    margin-right: 15px;
+}
+
+.btn-cerrar-contenido {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.btn-cerrar-contenido:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+.texto-completo {
+    padding: 25px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+
+.fecha-contenido {
+    padding: 15px 25px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    flex-shrink: 0;
+}
+
+/* === VERSIÓN MÓVIL MENOS INVASIVA === */
+@media (max-width: 768px) {
+    .modal-contenido-completo {
+        padding: 15px;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    
+    .contenido-completo-inner {
+        max-width: 95%;
+        max-height: 75vh;
+        width: 100%;
+        margin-bottom: 0;
+        border-radius: 15px 15px 0 0;
+        animation: slide-up-mobile 0.3s ease-out;
+    }
+    
+    .header-contenido-completo {
+        padding: 15px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    }
+    
+    .header-contenido-completo h4 {
+        font-size: 1.1rem;
+    }
+    
+    .btn-cerrar-contenido {
+        width: 32px;
+        height: 32px;
+        font-size: 1.3rem;
+    }
+    
+    .texto-completo {
+        padding: 20px;
+        font-size: 1rem;
+        max-height: 50vh;
+    }
+    
+    .fecha-contenido {
+        padding: 12px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-contenido-completo {
+        padding: 10px;
+    }
+    
+    .contenido-completo-inner {
+        max-width: 98%;
+        max-height: 70vh;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .header-contenido-completo {
+        padding: 12px 15px;
+    }
+    
+    .header-contenido-completo h4 {
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+    
+    .btn-cerrar-contenido {
+        width: 28px;
+        height: 28px;
+        font-size: 1.2rem;
+    }
+    
+    .texto-completo {
+        padding: 15px;
+        font-size: 0.95rem;
+        max-height: 45vh;
+    }
+    
+    .fecha-contenido {
+        padding: 10px 15px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Animación de entrada para móviles */
+@keyframes slide-up-mobile {
+    0% {
+        transform: translateY(100%);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* === RESPONSIVE DESIGN COMPLETO === */
+
+/* Tablets y pantallas medianas (768px a 1199px) */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .modal-content { height: 100vh; border-radius: 0; }
+    .titulo-overlay { font-size: 1.9rem; }
+    .descripcion-overlay { font-size: 0.95rem; }
+    .overlay-informacion-mejorado { 
+        bottom: 50px; 
+        left: 12px; 
+        right: 12px; 
+        padding: 14px; 
+    }
+    .control-mejorado { width: 45px; height: 45px; font-size: 1.2rem; }
+    .badge-mejorado-container { top: 60px; left: 15px; }
+    .modal-header-corregido { padding: 10px 15px; min-height: 55px; }
+    .btn-close-super-visible { width: 45px; height: 45px; }
+    .contenido-completo-inner { max-width: 95%; }
+    .indicadores-mejorados { bottom: 95px; }
+    .acciones-footer { padding: 4px 12px; }
+    .contenido-footer-mejorado { padding: 4px 12px 2px 12px; }
+}
+
+/* Móviles (576px a 767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .modal-content { height: 100vh; border-radius: 0; }
+    .titulo-overlay { 
+        font-size: 1.6rem; 
+        letter-spacing: 0.5px; 
+        line-height: 1;
+    }
+    .descripcion-overlay { font-size: 0.9rem; }
+    .modal-header-corregido { 
+        padding: 8px 12px; 
+        min-height: 50px;
+    }
+    .header-content-corregido .texto-header-corregido h6 { font-size: 0.9rem; }
+    .header-content-corregido .texto-header-corregido small { font-size: 0.75rem; }
+    .btn-close-super-visible { width: 42px; height: 42px; font-size: 1.1rem; }
+    .icono-cerrar { font-size: 1.6rem; }
+    .control-mejorado { 
+        width: 40px; 
+        height: 40px; 
+        left: 12px; 
+        font-size: 1.1rem;
+    }
+    .carousel-control-next.control-mejorado { right: 12px; }
+    .indicadores-mejorados { bottom: 90px; }
+    .overlay-informacion-mejorado { 
+        bottom: 55px; 
+        left: 10px; 
+        right: 10px; 
+        padding: 12px;
+    }
+    .badge-mejorado-container { top: 52px; left: 12px; }
+    .badge-mejorado { 
+        font-size: 0.75rem; 
+        padding: 6px 12px; 
+    }
+    .contenido-completo-inner { 
+        max-width: 95%;
+        max-height: 95vh;
+    }
+    .texto-completo { 
+        padding: 20px; 
+        font-size: 1rem;
+    }
+    .acciones-footer { padding: 5px 10px; }
+    .contenido-footer-mejorado { padding: 8px 10px 4px 10px; }
+    .texto-info { font-size: 0.8rem; }
+    .btn-ver-mas { 
+        font-size: 0.75rem; 
+        padding: 4px 10px;
+        margin: 4px 0 0 0;
+    }
+    .modal-footer-corregido { min-height: 50px; }
+}
+
+/* Móviles pequeños (menos de 576px) */
+@media (max-width: 575px) {
+    .modal-content { height: 100vh; border-radius: 0; }
+    .titulo-overlay { 
+        font-size: 1.4rem; 
+        letter-spacing: 0px; 
+        line-height: 1.1;
+        margin-bottom: 6px;
+    }
+    .descripcion-overlay { font-size: 0.85rem; }
+    .modal-header-corregido { 
+        padding: 6px 10px; 
+        min-height: 45px;
+    }
+    .header-content-corregido .texto-header-corregido h6 { font-size: 0.85rem; }
+    .header-content-corregido .texto-header-corregido small { font-size: 0.7rem; }
+    .header-content-corregido img { height: 24px; }
+    .btn-close-super-visible { 
+        width: 38px; 
+        height: 38px; 
+        font-size: 1rem; 
+        border-width: 2px;
+    }
+    .icono-cerrar { font-size: 1.4rem; }
+    .control-mejorado { 
+        width: 35px; 
+        height: 35px; 
+        left: 10px; 
+        font-size: 1rem;
+    }
+    .carousel-control-next.control-mejorado { right: 10px; }
+    .indicadores-mejorados { bottom: 80px; }
+    .indicadores-mejorados button {
+        width: 8px;
+        height: 8px;
+        margin: 0 3px;
+    }
+    .overlay-informacion-mejorado { 
+        bottom: 50px; 
+        left: 8px; 
+        right: 8px; 
+        padding: 10px;
+    }
+    .badge-mejorado-container { top: 48px; left: 10px; }
+    .badge-mejorado { 
+        font-size: 0.7rem; 
+        padding: 5px 10px; 
+    }
+    .contenido-footer-mejorado { padding: 8px 8px 4px 8px; }
+    .texto-info { 
+        font-size: 0.8rem; 
+        line-height: 1.3;
+        margin-bottom: 6px;
+    }
+    .acciones-footer { padding: 5px 8px; }
+    .texto-institucion { font-size: 0.7rem; }
+    .btn.btn-success.btn-sm { padding: 4px 8px; font-size: 0.7rem; }
+    .btn-ver-mas { 
+        font-size: 0.75rem; 
+        padding: 4px 10px;
+        margin: 6px 0 0 0;
+        display: block;
+        width: fit-content;
+    }
+    .modal-footer-corregido { min-height: 55px; }
+    .contenido-completo-inner { 
+        max-width: 98%;
+        max-height: 95vh;
+    }
+    .texto-completo { 
+        padding: 15px; 
+        font-size: 0.95rem;
+    }
+    .header-contenido-completo {
+        padding: 15px;
+    }
+    .btn-cerrar-contenido {
+        width: 30px;
+        height: 30px;
+        font-size: 1.3rem;
+    }
+}
+
+/* Móviles muy pequeños (menos de 400px) */
+@media (max-width: 399px) {
+    .titulo-overlay { 
+        font-size: 1.2rem; 
+    }
+    .descripcion-overlay { font-size: 0.8rem; }
+    .modal-header-corregido { 
+        padding: 5px 8px; 
+        min-height: 40px;
+    }
+    .header-content-corregido .texto-header-corregido h6 { font-size: 0.8rem; }
+    .header-content-corregido .texto-header-corregido small { font-size: 0.65rem; }
+    .header-content-corregido img { height: 20px; }
+    .btn-close-super-visible { 
+        width: 35px; 
+        height: 35px; 
+        font-size: 0.9rem; 
+    }
+    .icono-cerrar { font-size: 1.2rem; }
+    .control-mejorado { 
+        width: 32px; 
+        height: 32px; 
+        font-size: 0.9rem;
+    }
+    .overlay-informacion-mejorado { 
+        bottom: 45px; 
+        left: 6px; 
+        right: 6px; 
+        padding: 8px;
+    }
+    .badge-mejorado { 
+        font-size: 0.65rem; 
+        padding: 4px 8px; 
+    }
+    .indicadores-mejorados button {
+        width: 6px;
+        height: 6px;
+        margin: 0 2px;
+    }
+    .indicadores-mejorados { bottom: 70px; }
+    .contenido-completo-inner { 
+        max-width: 99%;
+    }
+    .contenido-footer-mejorado { padding: 8px 6px 4px 6px; }
+    .acciones-footer { padding: 4px 6px; min-height: 32px; }
+    .texto-info { font-size: 0.75rem; }
+    .btn-ver-mas { 
+        font-size: 0.7rem; 
+        padding: 4px 8px; 
+        margin: 6px 0 0 0;
+        display: block;
+    }
+    .texto-institucion { font-size: 0.65rem; }
+    .btn.btn-success.btn-sm { padding: 3px 6px; font-size: 0.65rem; }
+    .modal-footer-corregido { min-height: 60px; }
+}
+
+/* === ANIMACIONES === */
+.carousel-item { transition: transform 0.8s ease-in-out; }
+.titulo-overlay { 
+    animation: titulo-resplandor 4s ease-in-out infinite alternate; 
+}
+
+@keyframes titulo-resplandor {
+    0% { text-shadow: 2px 2px 0px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.3); }
+    100% { text-shadow: 2px 2px 0px rgba(0,0,0,0.9), 0 0 30px rgba(255,255,255,0.5); }
+}
+
+/* === UTILIDADES === */
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+</style>
+
+{{-- JAVASCRIPT CORREGIDO --}}
 <script>
+function mostrarContenidoCompleto(index) {
+    const contenido = document.getElementById(`contenido-completo-${index}`);
+    if (contenido) {
+        contenido.classList.remove('d-none');
+        // Mejorar scroll en móviles
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        
+        // Enfocar en el contenido para activar el scroll
+        setTimeout(() => {
+            const textoCompleto = contenido.querySelector('.texto-completo');
+            if (textoCompleto) {
+                textoCompleto.scrollTop = 0;
+            }
+        }, 100);
+    }
+}
+
+function cerrarContenidoCompleto(index) {
+    const contenido = document.getElementById(`contenido-completo-${index}`);
+    if (contenido) {
+        contenido.classList.add('d-none');
+        // Restaurar scroll normal
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+    }
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const contenidos = document.querySelectorAll('.modal-contenido-completo:not(.d-none)');
+        contenidos.forEach(contenido => {
+            contenido.classList.add('d-none');
+            // Restaurar scroll
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        });
+    }
+});
+
+// Cerrar al hacer click fuera
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-contenido-completo')) {
+        e.target.classList.add('d-none');
+        // Restaurar scroll
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar si el usuario ya vio los anuncios hoy
+    // Lógica de mostrar modal
     const today = new Date().toDateString();
     const lastShown = localStorage.getItem('anunciosModalLastShown');
-    
-    // Solo mostrar si no se ha mostrado hoy o si hay anuncios urgentes
     const hasUrgentAnnouncements = @json($anuncios->whereIn('tipo', ['urgente', 'importante'])->count() > 0);
     
     if (lastShown !== today || hasUrgentAnnouncements) {
-        // Pequeño delay para que cargue completamente la página
         setTimeout(function() {
             const modal = new bootstrap.Modal(document.getElementById('anunciosModal'));
             modal.show();
             
-            // Guardar que se mostró hoy (solo para anuncios no urgentes)
             if (!hasUrgentAnnouncements) {
                 localStorage.setItem('anunciosModalLastShown', today);
             }
         }, 1000);
     }
     
-    // Auto-avanzar el carrusel cada 8 segundos si hay múltiples anuncios
+    // Sincronización de elementos
+    const carousel = document.getElementById('anunciosCarousel');
+    if (carousel) {
+        carousel.addEventListener('slide.bs.carousel', function (e) {
+            const nextIndex = e.to;
+            
+            // Cerrar cualquier contenido expandido
+            const contenidos = document.querySelectorAll('.modal-contenido-completo:not(.d-none)');
+            contenidos.forEach(contenido => {
+                contenido.classList.add('d-none');
+                // Restaurar scroll
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+            });
+            
+            // Cambiar badge
+            document.querySelectorAll('.badge-mejorado').forEach(badge => {
+                badge.classList.remove('active');
+            });
+            const nextBadge = document.querySelector(`.badge-mejorado[data-slide="${nextIndex}"]`);
+            if (nextBadge) nextBadge.classList.add('active');
+            
+            // Cambiar información
+            document.querySelectorAll('.info-slide').forEach(info => {
+                info.classList.remove('active');
+            });
+            const nextInfo = document.querySelector(`.info-slide[data-slide="${nextIndex}"]`);
+            if (nextInfo) nextInfo.classList.add('active');
+        });
+    }
+    
+    // Auto-avance
     @if($anuncios->count() > 1)
-    setInterval(function() {
-        const carousel = document.getElementById('anunciosCarousel');
+    let autoAdvance = setInterval(function() {
         if (carousel && document.getElementById('anunciosModal').classList.contains('show')) {
-            const bsCarousel = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
-            bsCarousel.next();
+            const hasOpenContent = document.querySelectorAll('.modal-contenido-completo:not(.d-none)').length > 0;
+            if (!hasOpenContent) {
+                const bsCarousel = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
+                bsCarousel.next();
+            }
         }
-    }, 8000);
+    }, 18000);
     @endif
+    
+    // Pausar en hover
+    if (carousel) {
+        carousel.addEventListener('mouseenter', function() {
+            const bsCarousel = bootstrap.Carousel.getInstance(carousel);
+            if (bsCarousel) bsCarousel.pause();
+        });
+        
+        carousel.addEventListener('mouseleave', function() {
+            const bsCarousel = bootstrap.Carousel.getInstance(carousel);
+            if (bsCarousel) bsCarousel.cycle();
+        });
+    }
+    
+    // Limpiar al cerrar modal
+    document.getElementById('anunciosModal').addEventListener('hidden.bs.modal', function() {
+        // Restaurar scroll completamente
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        
+        // Cerrar cualquier contenido completo abierto
+        const contenidos = document.querySelectorAll('.modal-contenido-completo:not(.d-none)');
+        contenidos.forEach(contenido => {
+            contenido.classList.add('d-none');
+        });
+    });
 });
 </script>
 @endif
