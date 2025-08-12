@@ -527,4 +527,241 @@ $(document).ready(function() {
             });
         }
     });
+
+    // ============= GESTIÓN DE VACANTES =============
+    let cicloActualId = null;
+    let vacantesData = [];
+    let vacantesModificadas = [];
+
+    // Guardar y Configurar Vacantes (nuevo ciclo)
+    $('#saveAndConfigVacantes').on('click', function() {
+        if (!validateDates() || !validateExamDates()) {
+            toastr.error('Por favor, corrija los errores antes de continuar');
+            return;
+        }
+
+        var formData = $('#newCicloForm').serialize();
+
+        $.ajax({
+            url: default_server + "/json/ciclos",
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#newCicloModal').modal('hide');
+                    table.ajax.reload();
+                    toastr.success('Ciclo creado exitosamente');
+                    
+                    // Abrir modal de vacantes
+                    cicloActualId = response.data.id;
+                    $('#vacantes-ciclo-nombre').text(response.data.nombre);
+                    cargarVacantes(cicloActualId);
+                    $('#vacantesModal').modal('show');
+                }
+            },
+            error: function(xhr) {
+                handleFormErrors(xhr);
+            }
+        });
+    });
+
+    // Configurar Vacantes desde edición
+    $('#configVacantesBtn').on('click', function() {
+        cicloActualId = $('#edit_ciclo_id').val();
+        const nombreCiclo = $('#edit_nombre').val();
+        
+        $('#vacantes-ciclo-nombre').text(nombreCiclo);
+        $('#editCicloModal').modal('hide');
+        cargarVacantes(cicloActualId);
+        $('#vacantesModal').modal('show');
+    });
+
+    // Cargar vacantes del ciclo
+    function cargarVacantes(cicloId) {
+        $.ajax({
+            url: default_server + `/json/ciclos/${cicloId}/vacantes`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    vacantesData = response.vacantes;
+                    vacantesModificadas = [];
+                    
+                    // Actualizar resumen
+                    $('#total-carreras').text(response.resumen.total_carreras);
+                    $('#total-vacantes').text(response.resumen.total_vacantes);
+                    $('#vacantes-ocupadas').text(response.resumen.vacantes_ocupadas);
+                    $('#vacantes-disponibles').text(response.resumen.vacantes_disponibles);
+                    
+                    // Renderizar tabla con todas las carreras
+                    renderizarTablaVacantes();
+                }
+            },
+            error: function() {
+                toastr.error('Error al cargar las vacantes');
+            }
+        });
+    }
+
+    // Renderizar tabla de vacantes
+    function renderizarTablaVacantes() {
+        const tbody = $('#vacantesTableBody');
+        tbody.empty();
+        
+        if (vacantesData.length === 0) {
+            $('#tablaVacantes').hide();
+            $('#noVacantesMessage').show();
+        } else {
+            $('#tablaVacantes').show();
+            $('#noVacantesMessage').hide();
+            
+            vacantesData.forEach(function(vacante) {
+                const estadoClass = getEstadoClass(vacante.estado_vacantes);
+                const estadoBadge = vacante.estado ? 
+                    '<span class="badge bg-success">Activo</span>' : 
+                    '<span class="badge bg-secondary">Inactivo</span>';
+                
+                // Determinar si mostrar porcentaje
+                let porcentajeHtml = '';
+                if (vacante.vacantes_total > 0) {
+                    porcentajeHtml = `
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar ${getProgressClass(vacante.porcentaje_ocupacion)}" 
+                                 role="progressbar" style="width: ${vacante.porcentaje_ocupacion}%">
+                                ${vacante.porcentaje_ocupacion}%
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    porcentajeHtml = '<span class="text-muted">Sin límite</span>';
+                }
+                
+                const row = `
+                    <tr data-id="${vacante.id || ''}" data-carrera-id="${vacante.carrera_id}">
+                        <td>${vacante.carrera_nombre}</td>
+                        <td><span class="badge bg-secondary">${vacante.carrera_codigo}</span></td>
+                        <td class="text-center">
+                            <input type="number" class="form-control form-control-sm text-center vacante-total" 
+                                   value="${vacante.vacantes_total}" min="0" style="width: 80px;">
+                        </td>
+                        <td class="text-center">${vacante.vacantes_ocupadas}</td>
+                        <td class="text-center">
+                            ${vacante.vacantes_total > 0 ? 
+                                `<span class="${estadoClass}">${vacante.vacantes_disponibles}</span>` : 
+                                '<span class="text-muted">-</span>'}
+                        </td>
+                        <td class="text-center">
+                            ${porcentajeHtml}
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm vacante-obs" 
+                                   value="${vacante.observaciones || ''}" placeholder="Observaciones...">
+                        </td>
+                        <td class="text-center">${estadoBadge}</td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+    }
+
+    // Obtener clase de estado
+    function getEstadoClass(estado) {
+        switch(estado) {
+            case 'agotado': return 'badge bg-danger';
+            case 'pocas': return 'badge bg-warning';
+            case 'limitadas': return 'badge bg-info';
+            case 'sin-configurar': return 'badge bg-secondary';
+            case 'sin-limite': return 'badge bg-light text-dark';
+            default: return 'badge bg-success';
+        }
+    }
+
+    // Obtener clase de progreso
+    function getProgressClass(porcentaje) {
+        if (porcentaje >= 90) return 'bg-danger';
+        if (porcentaje >= 70) return 'bg-warning';
+        if (porcentaje >= 50) return 'bg-info';
+        return 'bg-success';
+    }
+
+
+    // Detectar cambios en la tabla
+    $(document).on('change', '.vacante-total, .vacante-obs', function() {
+        const row = $(this).closest('tr');
+        const carreraId = row.data('carrera-id');
+        
+        if (!vacantesModificadas.includes(carreraId)) {
+            vacantesModificadas.push(carreraId);
+            row.addClass('table-warning');
+        }
+    });
+
+    // Guardar todos los cambios
+    $('#guardarTodosVacantes').on('click', function() {
+        const vacantesActualizar = [];
+        
+        // Recopilar datos de todas las filas
+        $('#vacantesTableBody tr').each(function() {
+            const row = $(this);
+            const carreraId = row.data('carrera-id');
+            const vacantesTotal = parseInt(row.find('.vacante-total').val()) || 0;
+            const observaciones = row.find('.vacante-obs').val() || '';
+            
+            vacantesActualizar.push({
+                carrera_id: carreraId,
+                vacantes_total: vacantesTotal,
+                observaciones: observaciones
+            });
+        });
+        
+        if (vacantesActualizar.length === 0) {
+            toastr.warning('No hay carreras para configurar');
+            return;
+        }
+        
+        $.ajax({
+            url: default_server + `/json/ciclos/${cicloActualId}/vacantes`,
+            type: 'POST',
+            data: { vacantes: vacantesActualizar },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Vacantes guardadas exitosamente');
+                    vacantesModificadas = [];
+                    cargarVacantes(cicloActualId);
+                }
+            },
+            error: function() {
+                toastr.error('Error al guardar las vacantes');
+            }
+        });
+    });
+
+
+    // Función auxiliar para manejar errores de formulario
+    function handleFormErrors(xhr) {
+        if (xhr.status === 422) {
+            $('.is-invalid').removeClass('is-invalid');
+            $('.invalid-feedback').remove();
+
+            var errors = xhr.responseJSON.errors;
+            var errorSummary = '<ul>';
+
+            for (var field in errors) {
+                var message = errors[field][0];
+                $('#' + field).addClass('is-invalid');
+                $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
+                errorSummary += '<li>' + message + '</li>';
+            }
+
+            errorSummary += '</ul>';
+            toastr.error(errorSummary, 'Error de validación', {
+                closeButton: true,
+                timeOut: 0,
+                extendedTimeOut: 0,
+                enableHtml: true
+            });
+        } else {
+            toastr.error('Error al procesar la solicitud');
+        }
+    }
 });

@@ -15,9 +15,11 @@ class Inscripcion extends Model
         'codigo_inscripcion',
         'estudiante_id',
         'carrera_id',
+        'tipo_inscripcion',
         'ciclo_id',
         'turno_id',
         'aula_id',
+        'centro_educativo_id',
         'fecha_inscripcion',
         'estado_inscripcion',
         'fecha_retiro',
@@ -77,6 +79,11 @@ class Inscripcion extends Model
     public function actualizadoPor()
     {
         return $this->belongsTo(User::class, 'actualizado_por');
+    }
+
+    public function centroEducativo()
+    {
+        return $this->belongsTo(CentroEducativo::class);
     }
 
     // Scopes

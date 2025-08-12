@@ -18,6 +18,11 @@ use App\Http\Controllers\PagoDocenteController;
 use App\Http\Controllers\AsistenciaDocenteController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\CarnetController; // ← AGREGADO PARA CARNETS
+use App\Http\Controllers\Api\DashboardController as ApiDashboardController;
+use App\Http\Controllers\Auth\PostulanteRegisterController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\ReniecController;
+use App\Http\Controllers\PostulacionController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -118,6 +123,22 @@ Route::middleware('guest')->group(function () {
     // Registro (opcional)
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
+    
+    // Registro de postulantes
+    Route::post('/register/postulante', [PostulanteRegisterController::class, 'register'])->name('register.postulante');
+    
+    // API de consulta RENIEC (público para el formulario de registro)
+    Route::post('/api/reniec/consultar', [ReniecController::class, 'consultarDni'])->name('api.reniec.consultar');
+    Route::post('/api/reniec/consultar-multiple', [ReniecController::class, 'consultarMultiple'])->name('api.reniec.consultar.multiple');
+    
+    // API de registro de postulantes
+    Route::post('/api/register/postulante', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
+    Route::get('/api/register/check-email-server', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'checkEmailServer'])->name('api.register.check-email');
+    Route::post('/api/register/resend-verification', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'resendVerification'])->name('api.register.resend');
+    
+    // Verificación de email
+    Route::get('/email/verify/{id}/{token}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
+    Route::post('/email/resend', [EmailVerificationController::class, 'resend'])->name('verification.resend');
 
     // Recuperación de contraseña
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
@@ -128,8 +149,21 @@ Route::middleware('guest')->group(function () {
 
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
+    // Verificación de email - página de aviso
+    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Dashboard API endpoints
+    Route::prefix('api/dashboard')->group(function () {
+        Route::get('/datos-generales', [ApiDashboardController::class, 'getDatosGenerales']);
+        Route::get('/anuncios', [ApiDashboardController::class, 'getAnuncios']);
+        Route::get('/ultimos-registros', [ApiDashboardController::class, 'getUltimosRegistros']);
+        Route::get('/admin', [ApiDashboardController::class, 'getDatosAdmin']);
+        Route::get('/estudiante', [ApiDashboardController::class, 'getDatosEstudiante']);
+        Route::get('/profesor', [ApiDashboardController::class, 'getDatosProfesor']);
+    });
 
     // Notificaciones
     Route::get('/notificaciones', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
@@ -266,6 +300,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/ciclos/{ciclo}/activar', [App\Http\Controllers\CicloController::class, 'activar'])->name('ciclos.activar')->middleware('can:ciclos.activate');
     });
 
+    // Postulaciones - Gestión de postulaciones de estudiantes
+    Route::middleware('can:postulaciones.view')->group(function () {
+        Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
+    });
+
     Route::middleware('can:carreras.view')->group(function () {
         Route::get('/carreras', [App\Http\Controllers\CarreraController::class, 'index'])->name('carreras.index');
         Route::get('/carreras/create', [App\Http\Controllers\CarreraController::class, 'create'])->name('carreras.create')->middleware('can:carreras.create');
@@ -351,7 +390,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Agrega el prefijo 'json' para todas las rutas de API
-Route::prefix('json')->group(function () {
+Route::middleware(['auth'])->prefix('json')->group(function () {
 
     // API Ciclos
     Route::prefix('ciclos')->group(function () {
@@ -362,6 +401,18 @@ Route::prefix('json')->group(function () {
         Route::delete('/{id}', [App\Http\Controllers\Api\CicloController::class, 'destroy']);
         Route::post('/{id}/activar', [App\Http\Controllers\Api\CicloController::class, 'activar']);
         Route::get('/activo/actual', [App\Http\Controllers\Api\CicloController::class, 'cicloActivo']);
+        
+        // Vacantes por ciclo
+        Route::get('/{cicloId}/vacantes', [App\Http\Controllers\Api\CicloVacanteController::class, 'getVacantesByCiclo']);
+        Route::post('/{cicloId}/vacantes', [App\Http\Controllers\Api\CicloVacanteController::class, 'saveVacantes']);
+        Route::post('/{cicloId}/vacantes/agregar', [App\Http\Controllers\Api\CicloVacanteController::class, 'addVacanteCarrera']);
+    });
+    
+    // API Vacantes
+    Route::prefix('vacantes')->group(function () {
+        Route::put('/{vacanteId}', [App\Http\Controllers\Api\CicloVacanteController::class, 'updateVacante']);
+        Route::delete('/{vacanteId}', [App\Http\Controllers\Api\CicloVacanteController::class, 'deleteVacante']);
+        Route::get('/resumen', [App\Http\Controllers\Api\CicloVacanteController::class, 'getResumenVacantes']);
     });
 
     // API Carreras
@@ -386,6 +437,28 @@ Route::prefix('json')->group(function () {
         Route::get('/activos/lista', [App\Http\Controllers\Api\TurnoController::class, 'listaActivos']);
     });
 
+    // API Postulaciones
+    Route::prefix('postulaciones')->group(function () {
+        Route::get('/', [PostulacionController::class, 'listar']);
+        Route::get('/{id}', [PostulacionController::class, 'show']);
+        Route::post('/{id}/verificar-documentos', [PostulacionController::class, 'verificarDocumentos']);
+        Route::post('/{id}/verificar-pago', [PostulacionController::class, 'verificarPago']);
+        Route::post('/{id}/rechazar', [PostulacionController::class, 'rechazar']);
+        Route::post('/{id}/observar', [PostulacionController::class, 'observar']);
+        Route::delete('/{id}', [PostulacionController::class, 'destroy']);
+    });
+
+    // API Inscripciones Estudiantes
+    Route::prefix('inscripciones-estudiante')->group(function () {
+        Route::get('/ciclo-activo', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'getCicloActivo']);
+        Route::get('/verificar', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'verificarInscripcion']);
+        Route::post('/registrar', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'registrarInscripcion']);
+        Route::get('/departamentos', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'getDepartamentos']);
+        Route::get('/provincias/{departamento}', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'getProvincias']);
+        Route::get('/distritos/{departamento}/{provincia}', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'getDistritos']);
+        Route::post('/buscar-colegios', [App\Http\Controllers\Api\InscripcionEstudianteController::class, 'buscarColegios']);
+    });
+    
     // API Aulas
     Route::prefix('aulas')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\AulaController::class, 'index']);

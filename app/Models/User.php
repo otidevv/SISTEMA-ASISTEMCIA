@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Carbon\Carbon;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use Notifiable;
 
@@ -19,6 +20,8 @@ class User extends Authenticatable
     protected $fillable = [
         'username',
         'email',
+        'email_verified_at',
+        'email_verification_token',
         'password_hash',
         'nombre',
         'apellido_paterno',
@@ -28,6 +31,7 @@ class User extends Authenticatable
         'telefono',
         'direccion',
         'fecha_nacimiento',
+        'centro_educativo_id',
         'genero',
         'foto_perfil',
         'ultimo_acceso',

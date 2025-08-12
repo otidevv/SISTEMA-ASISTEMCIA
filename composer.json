@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "doctrine/dbal": "*",
         "laravel-lang/common": "^6.7",
         "laravel-lang/lang": "^15.20",
         "laravel/framework": "^12.0",

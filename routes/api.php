@@ -2,6 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\DashboardController;
+
+// Dashboard API endpoints - Using web auth
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/dashboard/datos-generales', [DashboardController::class, 'getDatosGenerales']);
+    Route::get('/dashboard/anuncios', [DashboardController::class, 'getAnuncios']);
+    Route::get('/dashboard/ultimos-registros', [DashboardController::class, 'getUltimosRegistros']);
+    Route::get('/dashboard/admin', [DashboardController::class, 'getDatosAdmin']);
+    Route::get('/dashboard/estudiante', [DashboardController::class, 'getDatosEstudiante']);
+    Route::get('/dashboard/profesor', [DashboardController::class, 'getDatosProfesor']);
+});
 
 // En routes/ause Illuminate\Http\Request;pi.php
 Route::get('/ultimos-registros', function (Request $request) {

@@ -42,13 +42,22 @@ class LoginController extends Controller
         // dd('no autenticado gagag');
 
         if (Auth::attempt($attemptCredentials, $request->filled('remember'))) {
+            $user = Auth::user();
+            
+            // Verificar el estado de la cuenta (0 = inactivo/pendiente, 1 = activo)
+            if (!$user->estado) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Su cuenta está pendiente de verificación o ha sido desactivada. Por favor, revise su correo electrónico o contacte al administrador.',
+                ])->onlyInput('email');
+            }
+            
             $request->session()->regenerate();
 
             // Registrar la sesión del usuario
             $this->logUserSession($request);
 
             // Actualizar último acceso
-            $user = Auth::user();
             $user->ultimo_acceso = now();
             $user->save();
             return redirect()->intended('dashboard');

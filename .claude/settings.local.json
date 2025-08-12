@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(curl:*)",
+      "Bash(php:*)",
+      "Bash(mkdir:*)",
+      "Bash(dir C:Apache24htdocssistema-asistenciadatabasemigrations*inscripciones*.php)",
+      "Bash(del C:Apache24htdocssistema-asistenciadatabasemigrations2025_08_12_002326_add_fields_to_inscripciones_table.php)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

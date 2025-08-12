@@ -234,8 +234,6 @@
     <script src="{{ asset('assets/js/vendor.min.js') }}"></script>
     <script src="{{ asset('assets/libs/moment/min/moment.min.js') }}"></script>
     <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
-    <script src="{{ asset('assets/js/app.js') }}"></script>
-
 
     <!-- third party js -->
     <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
@@ -256,6 +254,7 @@
     <!-- App js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
     @stack('js')
+    @stack('scripts')
 
 
 </body>

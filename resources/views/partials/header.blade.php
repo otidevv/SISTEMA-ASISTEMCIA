@@ -404,456 +404,487 @@
 <!-- end Topbar -->
 
 <!-- ========== Left Sidebar Start ========== -->
-@if(Auth::user()->hasRole('profesor'))
+@if (Auth::user()->hasRole('profesor'))
     @include('layouts.sidebar-profesor')
 @else
-<div class="left-side-menu">
+    <div class="left-side-menu">
 
-    <div class="h-100" data-simplebar>
+        <div class="h-100" data-simplebar>
 
-        <!-- User box -->
-        <div class="user-box text-center">
-            @if (Auth::user()->foto_perfil)
-                <img src="{{ asset(Auth::user()->foto_perfil) }}" alt="foto de perfil"
-                    title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md">
-            @else
-                <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
-                    class="rounded-circle avatar-md">
-            @endif
-            <div class="dropdown">
-                <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
-                    data-bs-toggle="dropdown">{{ Auth::user()->nombre }} {{ Auth::user()->apellido_paterno }}</a>
-                <div class="dropdown-menu user-pro-dropdown">
+            <!-- User box -->
+            <div class="user-box text-center">
+                @if (Auth::user()->foto_perfil)
+                    <img src="{{ asset(Auth::user()->foto_perfil) }}" alt="foto de perfil"
+                        title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md">
+                @else
+                    <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
+                        class="rounded-circle avatar-md">
+                @endif
+                <div class="dropdown">
+                    <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
+                        data-bs-toggle="dropdown">{{ Auth::user()->nombre }} {{ Auth::user()->apellido_paterno }}</a>
+                    <div class="dropdown-menu user-pro-dropdown">
 
-                    <a href="{{ route('perfil.index') }}" class="dropdown-item notify-item">
-                        <i data-feather="user" class="icon-dual icon-xs me-1"></i><span>Mi Perfil</span>
-                    </a>
-                    <a href="{{ route('perfil.configuracion') }}" class="dropdown-item notify-item">
-                        <i data-feather="settings" class="icon-dual icon-xs me-1"></i><span>Configuración</span>
-                    </a>
-                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                        <i data-feather="help-circle" class="icon-dual icon-xs me-1"></i><span>Ayuda</span>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <a href="{{ route('logout') }}" class="dropdown-item notify-item"
-                            onclick="event.preventDefault(); this.closest('form').submit();">
-                            <i data-feather="log-out" class="icon-dual icon-xs me-1"></i><span>Cerrar Sesión</span>
+                        <a href="{{ route('perfil.index') }}" class="dropdown-item notify-item">
+                            <i data-feather="user" class="icon-dual icon-xs me-1"></i><span>Mi Perfil</span>
                         </a>
-                    </form>
+                        <a href="{{ route('perfil.configuracion') }}" class="dropdown-item notify-item">
+                            <i data-feather="settings" class="icon-dual icon-xs me-1"></i><span>Configuración</span>
+                        </a>
+                        <a href="javascript:void(0);" class="dropdown-item notify-item">
+                            <i data-feather="help-circle" class="icon-dual icon-xs me-1"></i><span>Ayuda</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <a href="{{ route('logout') }}" class="dropdown-item notify-item"
+                                onclick="event.preventDefault(); this.closest('form').submit();">
+                                <i data-feather="log-out" class="icon-dual icon-xs me-1"></i><span>Cerrar
+                                    Sesión</span>
+                            </a>
+                        </form>
+                    </div>
                 </div>
+                <p>
+                    @foreach (Auth::user()->roles as $role)
+                        {{ $role->nombre }}{{ !$loop->last ? ', ' : '' }}
+                    @endforeach
+                </p>
             </div>
-            <p>
-                @foreach (Auth::user()->roles as $role)
-                    {{ $role->nombre }}{{ !$loop->last ? ', ' : '' }}
-                @endforeach
-            </p>
-        </div>
 
-        <!--- Sidemenu -->
-        <div id="sidebar-menu">
+            <!--- Sidemenu -->
+            <div id="sidebar-menu">
 
-            <ul class="side-menu">
+                <ul class="side-menu">
 
-                <!-- <li class="menu-title">Navegación</li> -->
+                    <!-- <li class="menu-title">Navegación</li> -->
 
-                <li>
-                    <a href="{{ route('dashboard') }}">
-                        <i data-feather="home"></i>
-                        <span> Dashboard </span>
-                    </a>
-                </li>
-
-                <li class="menu-title mt-2">Módulos</li>
-
-                <!-- Módulo Usuarios - Solo visible si tiene permiso -->
-                @if (Auth::user()->hasPermission('users.view'))
                     <li>
-                        <a href="#sidebarUsuarios" data-bs-toggle="collapse">
-                            <i data-feather="users"></i>
-                            <span> Usuarios </span>
-                            <span class="menu-arrow"></span>
+                        <a href="{{ route('dashboard') }}">
+                            <i data-feather="home"></i>
+                            <span> Dashboard </span>
                         </a>
-                        <div class="collapse" id="sidebarUsuarios">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('usuarios.index') }}">Listar Usuarios</a></li>
-                                @if (Auth::user()->hasPermission('users.create'))
-                                    <li><a href="{{ route('usuarios.create') }}">Crear Usuario</a></li>
-                                @endif
-                            </ul>
-                        </div>
                     </li>
-                @endif
 
-                <!-- Módulo Roles - Solo visible si tiene permiso -->
-                @if (Auth::user()->hasPermission('roles.view'))
-                    <li>
-                        <a href="#sidebarRoles" data-bs-toggle="collapse">
-                            <i data-feather="shield"></i>
-                            <span> Roles y Permisos </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarRoles">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('roles.index') }}">Listar Roles</a></li>
-                                @if (Auth::user()->hasPermission('roles.create'))
-                                    <li><a href="{{ route('roles.create') }}">Crear Rol</a></li>
-                                @endif
-                                @if (Auth::user()->hasPermission('roles.assign_permissions'))
-                                    <li><a href="{{ route('roles.permisos') }}">Asignar Permisos</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
+                    <li class="menu-title mt-2">Módulos</li>
 
-                
-                <!-- Módulo Asistencia - Accesible para todos con sus permisos específicos -->
-                @if (Auth::user()->hasPermission('attendance.view') ||
-                        Auth::user()->hasPermission('attendance.register') ||
-                        Auth::user()->hasPermission('attendance.edit') ||
-                        Auth::user()->hasPermission('attendance.reports') ||
-                        Auth::user()->hasPermission('attendance.realtime'))
-                    <li>
-                        <a href="#sidebarAsistencia" data-bs-toggle="collapse">
-                            <i data-feather="calendar"></i>
-                            <span> Asistencia </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarAsistencia">
-                            <ul class="nav-second-level">
-                                @if (Auth::user()->hasPermission('attendance.view'))
-                                    <li><a href="{{ route('asistencia.index') }}">Ver Registros</a></li>
-                                @endif
+                    <!-- Módulo Usuarios - Solo visible si tiene permiso -->
+                    @if (Auth::user()->hasPermission('users.view'))
+                        <li>
+                            <a href="#sidebarUsuarios" data-bs-toggle="collapse">
+                                <i data-feather="users"></i>
+                                <span> Usuarios </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarUsuarios">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('usuarios.index') }}">Listar Usuarios</a></li>
+                                    @if (Auth::user()->hasPermission('users.create'))
+                                        <li><a href="{{ route('usuarios.create') }}">Crear Usuario</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
-                                @if (Auth::user()->hasPermission('attendance.register'))
-                                    <li><a href="{{ route('asistencia.registrar') }}">Registrar Asistencia</a></li>
-                                @endif
+                    <!-- Módulo Postulaciones - Solo visible si tiene permiso -->
+                    @if (Auth::user()->hasPermission('postulaciones.view'))
+                        <li>
+                            <a href="#sidebarPostulaciones" data-bs-toggle="collapse">
+                                <i data-feather="file-text"></i>
+                                <span> Postulaciones </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarPostulaciones">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('postulaciones.index') }}">Ver Postulaciones</a></li>
+                                    @if (Auth::user()->hasPermission('postulaciones.reports'))
+                                        <li><a href="#">Reportes</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('postulaciones.statistics'))
+                                        <li><a href="#">Estadísticas</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
-                                @if (Auth::user()->hasPermission('attendance.edit'))
-                                    <li><a href="{{ route('asistencia.editar') }}">Editar Registros</a></li>
-                                @endif
+                    <!-- Módulo Roles - Solo visible si tiene permiso -->
+                    @if (Auth::user()->hasPermission('roles.view'))
+                        <li>
+                            <a href="#sidebarRoles" data-bs-toggle="collapse">
+                                <i data-feather="shield"></i>
+                                <span> Roles y Permisos </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarRoles">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('roles.index') }}">Listar Roles</a></li>
+                                    @if (Auth::user()->hasPermission('roles.create'))
+                                        <li><a href="{{ route('roles.create') }}">Crear Rol</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('roles.assign_permissions'))
+                                        <li><a href="{{ route('roles.permisos') }}">Asignar Permisos</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
-                                @if (Auth::user()->hasPermission('attendance.export'))
-                                    <li><a href="{{ route('asistencia.exportar') }}">Exportar Registros</a></li>
-                                @endif
 
-                                @if (Auth::user()->hasPermission('attendance.reports'))
-                                    <li><a href="{{ route('asistencia.reportes') }}">Reportes y Estadísticas</a></li>
-                                @endif
+                    <!-- Módulo Asistencia - Accesible para todos con sus permisos específicos -->
+                    @if (Auth::user()->hasPermission('attendance.view') ||
+                            Auth::user()->hasPermission('attendance.register') ||
+                            Auth::user()->hasPermission('attendance.edit') ||
+                            Auth::user()->hasPermission('attendance.reports') ||
+                            Auth::user()->hasPermission('attendance.realtime'))
+                        <li>
+                            <a href="#sidebarAsistencia" data-bs-toggle="collapse">
+                                <i data-feather="calendar"></i>
+                                <span> Asistencia </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarAsistencia">
+                                <ul class="nav-second-level">
+                                    @if (Auth::user()->hasPermission('attendance.view'))
+                                        <li><a href="{{ route('asistencia.index') }}">Ver Registros</a></li>
+                                    @endif
 
-                                <!-- Nueva opción para monitoreo en tiempo real -->
-                                @if (Auth::user()->hasPermission('attendance.realtime'))
-                                    <li><a href="{{ route('asistencia.tiempo-real') }}">Monitoreo en Tiempo Real</a>
+                                    @if (Auth::user()->hasPermission('attendance.register'))
+                                        <li><a href="{{ route('asistencia.registrar') }}">Registrar Asistencia</a>
+                                        </li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('attendance.edit'))
+                                        <li><a href="{{ route('asistencia.editar') }}">Editar Registros</a></li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('attendance.export'))
+                                        <li><a href="{{ route('asistencia.exportar') }}">Exportar Registros</a></li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('attendance.reports'))
+                                        <li><a href="{{ route('asistencia.reportes') }}">Reportes y Estadísticas</a>
+                                        </li>
+                                    @endif
+
+                                    <!-- Nueva opción para monitoreo en tiempo real -->
+                                    @if (Auth::user()->hasPermission('attendance.realtime'))
+                                        <li><a href="{{ route('asistencia.tiempo-real') }}">Monitoreo en Tiempo
+                                                Real</a>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+
+                    <!-- Módulo Parentescos - Solo visible si tiene permiso -->
+                    @if (Auth::user()->hasPermission('parentescos.view'))
+                        <li>
+                            <a href="#sidebarParentescos" data-bs-toggle="collapse">
+                                <i data-feather="home"></i>
+                                <span> Parentescos </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarParentescos">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('parentescos.index') }}">Listar Parentescos</a></li>
+                                    @if (Auth::user()->hasPermission('parentescos.create'))
+                                        <li><a href="{{ route('parentescos.create') }}">Crear Parentesco</a></li>
+                                    @endif
+                                    <!-- Eliminada la opción problemática de Editar Parentescos -->
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+
+
+                    <!-- Módulo Ciclos Académicos -->
+                    @if (Auth::user()->hasPermission('ciclos.view'))
+                        <li>
+                            <a href="#sidebarCiclos" data-bs-toggle="collapse">
+                                <i data-feather="calendar"></i>
+                                <span> Ciclos Académicos </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarCiclos">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('ciclos.index') }}">Listar Ciclos</a></li>
+                                    @if (Auth::user()->hasPermission('ciclos.create'))
+                                        <li><a href="{{ route('ciclos.create') }}">Crear Ciclo</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- Módulo Carreras -->
+                    @if (Auth::user()->hasPermission('carreras.view'))
+                        <li>
+                            <a href="#sidebarCarreras" data-bs-toggle="collapse">
+                                <i data-feather="award"></i>
+                                <span> Carreras </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarCarreras">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('carreras.index') }}">Listar Carreras</a></li>
+                                    @if (Auth::user()->hasPermission('carreras.create'))
+                                        <li><a href="{{ route('carreras.create') }}">Crear Carrera</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+
+                    <!-- Módulo Turnos -->
+                    @if (Auth::user()->hasPermission('turnos.view'))
+                        <li>
+                            <a href="#sidebarTurnos" data-bs-toggle="collapse">
+                                <i data-feather="clock"></i>
+                                <span> Turnos </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarTurnos">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('turnos.index') }}">Listar Turnos</a></li>
+                                    @if (Auth::user()->hasPermission('turnos.create'))
+                                        <li><a href="{{ route('turnos.create') }}">Crear Turno</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- Módulo Aulas -->
+                    @if (Auth::user()->hasPermission('aulas.view'))
+                        <li>
+                            <a href="#sidebarAulas" data-bs-toggle="collapse">
+                                <i data-feather="home"></i>
+                                <span> Aulas </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarAulas">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('aulas.index') }}">Listar Aulas</a></li>
+                                    @if (Auth::user()->hasPermission('aulas.create'))
+                                        <li><a href="{{ route('aulas.create') }}">Crear Aula</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('aulas.availability'))
+                                        <li><a href="{{ route('aulas.disponibilidad') }}">Disponibilidad</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- Módulo Inscripciones -->
+                    @if (Auth::user()->hasPermission('inscripciones.view'))
+                        <li>
+                            <a href="#sidebarInscripciones" data-bs-toggle="collapse">
+                                <i data-feather="file-text"></i>
+                                <span> Inscripciones </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarInscripciones">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('inscripciones.index') }}">Listar Inscripciones</a></li>
+                                    @if (Auth::user()->hasPermission('inscripciones.create'))
+                                        <li><a href="{{ route('inscripciones.create') }}">Nueva Inscripción</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('inscripciones.reports'))
+                                        <li><a href="{{ route('inscripciones.reportes') }}">Reportes</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <!-- ✅ MÓDULO ANUNCIOS - CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
+                    @if (Auth::user()->hasPermission('announcements_view') ||
+                            Auth::user()->hasPermission('announcements_create') ||
+                            Auth::user()->hasPermission('announcements_edit') ||
+                            Auth::user()->hasPermission('announcements_delete'))
+                        <li>
+                            <a href="#sidebarAnuncios" data-bs-toggle="collapse">
+                                <i data-feather="calendar"></i>
+                                <span> Anuncios </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarAnuncios">
+                                <ul class="nav-second-level">
+                                    @if (Auth::user()->hasPermission('announcements_view'))
+                                        <li><a href="{{ route('anuncios.index') }}">Ver Anuncios</a></li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('announcements_create'))
+                                        <li><a href="{{ route('anuncios.create') }}">Crear Anuncio</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    <li class="menu-title mt-2">Modulos Docentes Cepre</li>
+                    {{-- ============================== --}}
+                    {{-- Módulo: Horarios Docentes --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('horarios-docentes.view'))
+                        <li>
+                            <a href="#sidebarHorariosDocentes" data-bs-toggle="collapse">
+                                <i data-feather="calendar"></i>
+                                <span> Horarios Docentes </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarHorariosDocentes">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('horarios-docentes.index') }}">Listar Horarios</a></li>
+                                    @if (Auth::user()->hasPermission('horarios-docentes.create'))
+                                        <li><a href="{{ route('horarios-docentes.create') }}">Asignar Horario</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- ============================== --}}
+                    {{-- Módulo: Pagos Docentes --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('pagos-docentes.view'))
+                        <li>
+                            <a href="#sidebarPagosDocentes" data-bs-toggle="collapse">
+                                <i data-feather="dollar-sign"></i>
+                                <span> Pagos Docentes </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarPagosDocentes">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('pagos-docentes.index') }}">Ver Pagos</a></li>
+                                    @if (Auth::user()->hasPermission('pagos-docentes.create'))
+                                        <li><a href="{{ route('pagos-docentes.create') }}">Registrar Pago</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+                    {{-- ============================== --}}
+                    {{-- Módulo: Asistencia Docente --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('asistencia-docente.view'))
+                        <li>
+                            <a href="#sidebarAsistenciaDocente" data-bs-toggle="collapse">
+                                <i data-feather="check-square"></i>
+                                <span> Asistencia Docente </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarAsistenciaDocente">
+                                <ul class="nav-second-level">
+                                    <li>
+                                        <a href="{{ route('asistencia-docente.index') }}">Ver Asistencia Docente</a>
                                     </li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
+
+                                    @if (Auth::user()->hasPermission('asistencia-docente.create'))
+                                        <li>
+                                            <a href="{{ route('asistencia-docente.create') }}">Registrar Asistencia
+                                                Docente</a>
+                                        </li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('asistencia-docente.edit'))
+                                        <li>
+                                            <a href="{{ route('asistencia-docente.index') }}">Editar Asistencia
+                                                Docente</a>
+                                        </li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('asistencia-docente.export'))
+                                        <li>
+                                            <a href="{{ route('asistencia-docente.exportar') }}">Exportar Asistencia
+                                                Docente</a>
+                                        </li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('asistencia-docente.reports'))
+                                        <li>
+                                            <a href="{{ route('asistencia-docente.reports') }}">Reportes de Asistencia
+                                                Docente</a>
+                                        </li>
+                                    @endif
+
+                                    @if (Auth::user()->hasPermission('asistencia-docente.monitor'))
+                                        <li>
+                                            <a href="{{ route('asistencia-docente.monitor') }}">Monitorear Asistencia
+                                                en Tiempo Real (Docente)</a>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
 
-                <!-- Módulo Parentescos - Solo visible si tiene permiso -->
-                @if (Auth::user()->hasPermission('parentescos.view'))
+                    {{-- ============================== --}}
+                    {{-- Módulo: Cursos --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('cursos.view'))
+                        <li>
+                            <a href="#sidebarCursos" data-bs-toggle="collapse">
+                                <i data-feather="book-open"></i>
+                                <span> Cursos </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarCursos">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('cursos.index') }}">Listado de Cursos</a></li>
+                                    @if (Auth::user()->hasPermission('cursos.create'))
+                                        <li><a href="{{ route('cursos.create') }}">Registrar Curso</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
+
+
+                    <li class="menu-title mt-2">Configuración</li>
+
+                    <!-- Ajustes de perfil - Visible para todos -->
                     <li>
-                        <a href="#sidebarParentescos" data-bs-toggle="collapse">
-                            <i data-feather="home"></i>
-                            <span> Parentescos </span>
-                            <span class="menu-arrow"></span>
+                        <a href="{{ route('perfil.index') }}">
+                            <i data-feather="user"></i>
+                            <span> Mi Perfil </span>
                         </a>
-                        <div class="collapse" id="sidebarParentescos">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('parentescos.index') }}">Listar Parentescos</a></li>
-                                @if (Auth::user()->hasPermission('parentescos.create'))
-                                    <li><a href="{{ route('parentescos.create') }}">Crear Parentesco</a></li>
-                                @endif
-                                <!-- Eliminada la opción problemática de Editar Parentescos -->
-                            </ul>
-                        </div>
                     </li>
-                @endif
 
-                
-
-                <!-- Módulo Ciclos Académicos -->
-                @if (Auth::user()->hasPermission('ciclos.view'))
                     <li>
-                        <a href="#sidebarCiclos" data-bs-toggle="collapse">
-                            <i data-feather="calendar"></i>
-                            <span> Ciclos Académicos </span>
-                            <span class="menu-arrow"></span>
+                        <a href="{{ route('perfil.index') }}">
+                            <i data-feather="settings"></i>
+                            <span> Ajustes </span>
                         </a>
-                        <div class="collapse" id="sidebarCiclos">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('ciclos.index') }}">Listar Ciclos</a></li>
-                                @if (Auth::user()->hasPermission('ciclos.create'))
-                                    <li><a href="{{ route('ciclos.create') }}">Crear Ciclo</a></li>
-                                @endif
-                            </ul>
-                        </div>
                     </li>
-                @endif
 
-                <!-- Módulo Carreras -->
-                @if (Auth::user()->hasPermission('carreras.view'))
                     <li>
-                        <a href="#sidebarCarreras" data-bs-toggle="collapse">
-                            <i data-feather="award"></i>
-                            <span> Carreras </span>
-                            <span class="menu-arrow"></span>
+                        <a href="javascript:void(0);">
+                            <i data-feather="help-circle"></i>
+                            <span> Ayuda </span>
                         </a>
-                        <div class="collapse" id="sidebarCarreras">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('carreras.index') }}">Listar Carreras</a></li>
-                                @if (Auth::user()->hasPermission('carreras.create'))
-                                    <li><a href="{{ route('carreras.create') }}">Crear Carrera</a></li>
-                                @endif
-                            </ul>
-                        </div>
                     </li>
-                @endif
-                
 
-                <!-- Módulo Turnos -->
-                @if (Auth::user()->hasPermission('turnos.view'))
-                    <li>
-                        <a href="#sidebarTurnos" data-bs-toggle="collapse">
-                            <i data-feather="clock"></i>
-                            <span> Turnos </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarTurnos">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('turnos.index') }}">Listar Turnos</a></li>
-                                @if (Auth::user()->hasPermission('turnos.create'))
-                                    <li><a href="{{ route('turnos.create') }}">Crear Turno</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
+                </ul>
 
-                <!-- Módulo Aulas -->
-                @if (Auth::user()->hasPermission('aulas.view'))
-                    <li>
-                        <a href="#sidebarAulas" data-bs-toggle="collapse">
-                            <i data-feather="home"></i>
-                            <span> Aulas </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarAulas">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('aulas.index') }}">Listar Aulas</a></li>
-                                @if (Auth::user()->hasPermission('aulas.create'))
-                                    <li><a href="{{ route('aulas.create') }}">Crear Aula</a></li>
-                                @endif
-                                @if (Auth::user()->hasPermission('aulas.availability'))
-                                    <li><a href="{{ route('aulas.disponibilidad') }}">Disponibilidad</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
+            </div>
+            <!-- End Sidebar -->
 
-                <!-- Módulo Inscripciones -->
-                @if (Auth::user()->hasPermission('inscripciones.view'))
-                    <li>
-                        <a href="#sidebarInscripciones" data-bs-toggle="collapse">
-                            <i data-feather="file-text"></i>
-                            <span> Inscripciones </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarInscripciones">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('inscripciones.index') }}">Listar Inscripciones</a></li>
-                                @if (Auth::user()->hasPermission('inscripciones.create'))
-                                    <li><a href="{{ route('inscripciones.create') }}">Nueva Inscripción</a></li>
-                                @endif
-                                @if (Auth::user()->hasPermission('inscripciones.reports'))
-                                    <li><a href="{{ route('inscripciones.reportes') }}">Reportes</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
-
-                <!-- ✅ MÓDULO ANUNCIOS - CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
-                @if (Auth::user()->hasPermission('announcements_view') || 
-                     Auth::user()->hasPermission('announcements_create') ||
-                     Auth::user()->hasPermission('announcements_edit') ||
-                     Auth::user()->hasPermission('announcements_delete'))
-                    <li>
-                        <a href="#sidebarAnuncios" data-bs-toggle="collapse">
-                            <i data-feather="calendar"></i>
-                            <span> Anuncios </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarAnuncios">
-                            <ul class="nav-second-level">
-                                @if (Auth::user()->hasPermission('announcements_view'))
-                                    <li><a href="{{ route('anuncios.index') }}">Ver Anuncios</a></li>
-                                @endif
-                                
-                                @if (Auth::user()->hasPermission('announcements_create'))
-                                    <li><a href="{{ route('anuncios.create') }}">Crear Anuncio</a></li>
-                                @endif
-                            </ul>
-                        </div>
-                    </li>
-                @endif
-
-                <li class="menu-title mt-2">Modulos Docentes Cepre</li>              
-                 {{-- ============================== --}}
-                 {{-- Módulo: Horarios Docentes --}}
-                 {{-- ============================== --}}
-                 @if (Auth::user()->hasPermission('horarios-docentes.view'))
-                     <li>
-                         <a href="#sidebarHorariosDocentes" data-bs-toggle="collapse">
-                             <i data-feather="calendar"></i>
-                             <span> Horarios Docentes </span>
-                             <span class="menu-arrow"></span>
-                         </a>
-                         <div class="collapse" id="sidebarHorariosDocentes">
-                             <ul class="nav-second-level">
-                                 <li><a href="{{ route('horarios-docentes.index') }}">Listar Horarios</a></li>
-                                 @if (Auth::user()->hasPermission('horarios-docentes.create'))
-                                     <li><a href="{{ route('horarios-docentes.create') }}">Asignar Horario</a></li>
-                                 @endif
-                             </ul>
-                         </div>
-                     </li>
-                 @endif
-                 
-                 {{-- ============================== --}}
-                 {{-- Módulo: Pagos Docentes --}}
-                 {{-- ============================== --}}
-                 @if (Auth::user()->hasPermission('pagos-docentes.view'))
-                     <li>
-                         <a href="#sidebarPagosDocentes" data-bs-toggle="collapse">
-                             <i data-feather="dollar-sign"></i>
-                             <span> Pagos Docentes </span>
-                             <span class="menu-arrow"></span>
-                         </a>
-                         <div class="collapse" id="sidebarPagosDocentes">
-                             <ul class="nav-second-level">
-                                 <li><a href="{{ route('pagos-docentes.index') }}">Ver Pagos</a></li>
-                                 @if (Auth::user()->hasPermission('pagos-docentes.create'))
-                                     <li><a href="{{ route('pagos-docentes.create') }}">Registrar Pago</a></li>
-                                 @endif
-                             </ul>
-                         </div>
-                     </li>
-                 @endif
-                 
-                 {{-- ============================== --}}
-                 {{-- Módulo: Asistencia Docente --}}
-                 {{-- ============================== --}}
-                 @if (Auth::user()->hasPermission('asistencia-docente.view'))
-                     <li>
-                         <a href="#sidebarAsistenciaDocente" data-bs-toggle="collapse">
-                             <i data-feather="check-square"></i>
-                             <span> Asistencia Docente </span>
-                             <span class="menu-arrow"></span>
-                         </a>
-                         <div class="collapse" id="sidebarAsistenciaDocente">
-                             <ul class="nav-second-level">
-                                 <li>
-                                     <a href="{{ route('asistencia-docente.index') }}">Ver Asistencia Docente</a>
-                                 </li>
-                 
-                                 @if (Auth::user()->hasPermission('asistencia-docente.create'))
-                                     <li>
-                                         <a href="{{ route('asistencia-docente.create') }}">Registrar Asistencia Docente</a>
-                                     </li>
-                                 @endif
-                 
-                                 @if (Auth::user()->hasPermission('asistencia-docente.edit'))
-                                     <li>
-                                 <a href="{{ route('asistencia-docente.index') }}">Editar Asistencia Docente</a>
-                                     </li>
-                                 @endif
-                 
-                                 @if (Auth::user()->hasPermission('asistencia-docente.export'))
-                                     <li>
-                                         <a href="{{ route('asistencia-docente.exportar') }}">Exportar Asistencia Docente</a>
-                                     </li>
-                                 @endif
-                 
-                                 @if (Auth::user()->hasPermission('asistencia-docente.reports'))
-                                     <li>
-                                         <a href="{{ route('asistencia-docente.reports') }}">Reportes de Asistencia Docente</a>
-                                     </li>
-                                 @endif
-                 
-                                 @if (Auth::user()->hasPermission('asistencia-docente.monitor'))
-                                     <li>
-                                         <a href="{{ route('asistencia-docente.monitor') }}">Monitorear Asistencia en Tiempo Real (Docente)</a>
-                                     </li>
-                                 @endif
-                             </ul>
-                         </div>
-                     </li>
-                 @endif
-
-
-                 {{-- ============================== --}}
-                 {{-- Módulo: Cursos --}}
-                 {{-- ============================== --}}
-                 @if (Auth::user()->hasPermission('cursos.view'))
-                     <li>
-                         <a href="#sidebarCursos" data-bs-toggle="collapse">
-                             <i data-feather="book-open"></i>
-                             <span> Cursos </span>
-                             <span class="menu-arrow"></span>
-                         </a>
-                         <div class="collapse" id="sidebarCursos">
-                             <ul class="nav-second-level">
-                                 <li><a href="{{ route('cursos.index') }}">Listado de Cursos</a></li>
-                                 @if (Auth::user()->hasPermission('cursos.create'))
-                                     <li><a href="{{ route('cursos.create') }}">Registrar Curso</a></li>
-                                 @endif
-                             </ul>
-                         </div>
-                     </li>
-                 @endif
-
-                                      
-
-                <li class="menu-title mt-2">Configuración</li>
-
-                <!-- Ajustes de perfil - Visible para todos -->
-                <li>
-                    <a href="{{ route('perfil.index') }}">
-                        <i data-feather="user"></i>
-                        <span> Mi Perfil </span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('perfil.index') }}">
-                        <i data-feather="settings"></i>
-                        <span> Ajustes </span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="javascript:void(0);">
-                        <i data-feather="help-circle"></i>
-                        <span> Ayuda </span>
-                    </a>
-                </li>
-
-            </ul>
+            <div class="clearfix"></div>
 
         </div>
-        <!-- End Sidebar -->
-
-        <div class="clearfix"></div>
+        <!-- Sidebar -left -->
 
     </div>
-    <!-- Sidebar -left -->
-
-</div>
-<!-- Left Sidebar End -->
+    <!-- Left Sidebar End -->
 @endif

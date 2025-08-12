@@ -192,6 +192,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info" id="saveAndConfigVacantes">
+                        <i class="mdi mdi-cog me-1"></i> Guardar y Configurar Vacantes
+                    </button>
                     <button type="button" class="btn btn-primary" id="saveNewCiclo">Guardar</button>
                 </div>
             </div>
@@ -308,7 +311,93 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" id="configVacantesBtn">
+                        <i class="mdi mdi-account-group me-1"></i> Configurar Vacantes
+                    </button>
                     <button type="button" class="btn btn-primary" id="updateCiclo">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Gestionar Vacantes -->
+    <div class="modal fade" id="vacantesModal" tabindex="-1" role="dialog" aria-labelledby="vacantesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="vacantesModalLabel">
+                        <i class="mdi mdi-account-group me-1"></i> Gestión de Vacantes por Carrera
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info mb-3">
+                                <h6 class="alert-heading">
+                                    <i class="mdi mdi-information-outline me-1"></i> 
+                                    Ciclo: <span id="vacantes-ciclo-nombre"></span>
+                                </h6>
+                                <div class="row mt-2">
+                                    <div class="col-md-3">
+                                        <small><strong>Total Carreras:</strong> <span id="total-carreras">0</span></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small><strong>Total Vacantes:</strong> <span id="total-vacantes">0</span></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small><strong>Vacantes Ocupadas:</strong> <span id="vacantes-ocupadas">0</span></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small><strong>Vacantes Disponibles:</strong> <span id="vacantes-disponibles">0</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Tabla de vacantes existentes -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="mdi mdi-table me-1"></i> Vacantes Configuradas
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm" id="tablaVacantes">
+                                    <thead>
+                                        <tr>
+                                            <th>Carrera</th>
+                                            <th>Código</th>
+                                            <th class="text-center">Total Vacantes</th>
+                                            <th class="text-center">Ocupadas</th>
+                                            <th class="text-center">Disponibles</th>
+                                            <th class="text-center">% Ocupación</th>
+                                                            <th>Observaciones</th>
+                                            <th class="text-center">Estado</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vacantesTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                                <div id="noVacantesMessage" class="text-center py-4 text-muted" style="display: none;">
+                                    <i class="mdi mdi-information-outline fs-1"></i>
+                                    <p>No hay vacantes configuradas para este ciclo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="guardarTodosVacantes">
+                        <i class="mdi mdi-content-save me-1"></i> Guardar Cambios
+                    </button>
                 </div>
             </div>
         </div>

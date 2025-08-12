@@ -8,7 +8,7 @@
             <!-- IMAGEN SIMPLIFICADA SIN ERRORES -->
             <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
                 class="rounded-circle avatar-md">
-            
+
             <div class="dropdown">
                 <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
                     data-bs-toggle="dropdown">{{ Auth::user()->nombre }} {{ Auth::user()->apellido_paterno }}</a>
@@ -48,8 +48,8 @@
                     </a>
                 </li>
 
-                
-                
+
+
                 <!-- Módulo Usuarios - Solo visible si tiene permiso -->
                 @if (Auth::user()->hasPermission('users.view'))
                     <li>
@@ -91,7 +91,7 @@
                     </li>
                 @endif
 
-                
+
 
                 <!-- Módulo Asistencia - Accesible para todos con sus permisos específicos -->
                 @if (Auth::user()->hasPermission('attendance.view') ||
@@ -124,6 +124,28 @@
 
                                 @if (Auth::user()->hasPermission('attendance.reports'))
                                     <li><a href="{{ route('asistencia.reportes') }}">Reportes y Estadísticas</a></li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
+                @endif
+
+                <!-- Módulo Postulaciones - Solo visible si tiene permiso -->
+                @if (Auth::user()->hasPermission('postulaciones.view'))
+                    <li>
+                        <a href="#sidebarPostulaciones" data-bs-toggle="collapse">
+                            <i data-feather="file-text"></i>
+                            <span> Postulaciones </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarPostulaciones">
+                            <ul class="nav-second-level">
+                                <li><a href="{{ route('postulaciones.index') }}">Ver Postulaciones</a></li>
+                                @if (Auth::user()->hasPermission('postulaciones.reports'))
+                                    <li><a href="#">Reportes</a></li>
+                                @endif
+                                @if (Auth::user()->hasPermission('postulaciones.statistics'))
+                                    <li><a href="#">Estadísticas</a></li>
                                 @endif
                             </ul>
                         </div>

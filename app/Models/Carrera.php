@@ -41,6 +41,18 @@ class Carrera extends Model
         return $this->hasMany(Inscripcion::class);
     }
 
+    public function vacantesCiclos()
+    {
+        return $this->hasMany(CicloCarreraVacante::class);
+    }
+
+    public function ciclos()
+    {
+        return $this->belongsToMany(Ciclo::class, 'ciclo_carrera_vacantes')
+                    ->withPivot('vacantes_total', 'vacantes_ocupadas', 'vacantes_reservadas', 'precio_inscripcion', 'observaciones', 'estado')
+                    ->withTimestamps();
+    }
+
     // Scopes
     public function scopeActivas($query)
     {
