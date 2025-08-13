@@ -304,6 +304,18 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
     });
+    
+    // Rutas para constancias de postulación (accesibles para estudiantes/postulantes)
+    Route::prefix('postulacion/constancia')->middleware('auth')->group(function () {
+        Route::get('/generar/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'generarConstancia'])
+            ->name('postulacion.constancia.generar');
+        Route::post('/subir/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'subirConstanciaFirmada'])
+            ->name('postulacion.constancia.subir');
+        Route::get('/ver/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'verConstanciaFirmada'])
+            ->name('postulacion.constancia.ver');
+        Route::get('/estado/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'estadoConstancia'])
+            ->name('postulacion.constancia.estado');
+    });
 
     Route::middleware('can:carreras.view')->group(function () {
         Route::get('/carreras', [App\Http\Controllers\CarreraController::class, 'index'])->name('carreras.index');
@@ -440,9 +452,11 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     // API Postulaciones
     Route::prefix('postulaciones')->group(function () {
         Route::get('/', [PostulacionController::class, 'listar']);
+        Route::get('/mi-postulacion-actual', [PostulacionController::class, 'miPostulacionActual']);
         Route::get('/{id}', [PostulacionController::class, 'show']);
         Route::post('/{id}/verificar-documentos', [PostulacionController::class, 'verificarDocumentos']);
         Route::post('/{id}/verificar-pago', [PostulacionController::class, 'verificarPago']);
+        Route::post('/{id}/aprobar', [PostulacionController::class, 'aprobar']);
         Route::post('/{id}/rechazar', [PostulacionController::class, 'rechazar']);
         Route::post('/{id}/observar', [PostulacionController::class, 'observar']);
         Route::delete('/{id}', [PostulacionController::class, 'destroy']);

@@ -87,7 +87,8 @@ class CicloController extends Controller
             'fecha_primer_examen' => 'nullable|date|after_or_equal:fecha_inicio',
             'fecha_segundo_examen' => 'nullable|date|after:fecha_primer_examen',
             'fecha_tercer_examen' => 'nullable|date|after:fecha_segundo_examen',
-            'estado' => 'required|in:planificado,en_curso,finalizado,cancelado'
+            'estado' => 'required|in:planificado,en_curso,finalizado,cancelado',
+            'correlativo_inicial' => 'nullable|integer|min:1'
         ]);
 
         if ($validator->fails()) {
@@ -107,6 +108,7 @@ class CicloController extends Controller
             // Valores por defecto para porcentajes si no se envían
             $data['porcentaje_amonestacion'] = $data['porcentaje_amonestacion'] ?? 20.00;
             $data['porcentaje_inhabilitacion'] = $data['porcentaje_inhabilitacion'] ?? 30.00;
+            $data['correlativo_inicial'] = $data['correlativo_inicial'] ?? 1;
 
             $ciclo = Ciclo::create($data);
 
@@ -145,6 +147,7 @@ class CicloController extends Controller
         $cicloData['fecha_primer_examen'] = $ciclo->fecha_primer_examen ? $ciclo->fecha_primer_examen->format('Y-m-d') : null;
         $cicloData['fecha_segundo_examen'] = $ciclo->fecha_segundo_examen ? $ciclo->fecha_segundo_examen->format('Y-m-d') : null;
         $cicloData['fecha_tercer_examen'] = $ciclo->fecha_tercer_examen ? $ciclo->fecha_tercer_examen->format('Y-m-d') : null;
+        $cicloData['correlativo_inicial'] = $ciclo->correlativo_inicial ?? 1;
 
         return response()->json([
             'success' => true,
@@ -174,7 +177,8 @@ class CicloController extends Controller
             'fecha_primer_examen' => 'nullable|date|after_or_equal:fecha_inicio',
             'fecha_segundo_examen' => 'nullable|date|after:fecha_primer_examen',
             'fecha_tercer_examen' => 'nullable|date|after:fecha_segundo_examen',
-            'estado' => 'required|in:planificado,en_curso,finalizado,cancelado'
+            'estado' => 'required|in:planificado,en_curso,finalizado,cancelado',
+            'correlativo_inicial' => 'nullable|integer|min:1'
         ]);
 
         if ($validator->fails()) {

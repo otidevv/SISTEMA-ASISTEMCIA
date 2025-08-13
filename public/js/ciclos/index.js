@@ -413,6 +413,7 @@ $(document).ready(function() {
                     $('#edit_fecha_segundo_examen').val(ciclo.fecha_segundo_examen || '');
                     $('#edit_fecha_tercer_examen').val(ciclo.fecha_tercer_examen || '');
                     $('#edit_estado').val(ciclo.estado);
+                    $('#edit_correlativo_inicial').val(ciclo.correlativo_inicial || 1);
                     $('#edit_porcentaje').val(ciclo.porcentaje_avance || 0);
 
                     $('#editCicloModal').modal('show');

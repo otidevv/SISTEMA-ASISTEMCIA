@@ -160,6 +160,7 @@
                                         <th>Fecha</th>
                                         <th>Estado</th>
                                         <th>Verificación</th>
+                                        <th>Constancia</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>

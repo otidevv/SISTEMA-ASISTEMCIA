@@ -610,7 +610,9 @@ $(document).ready(function() {
 
         // Descargar el PDF
         window.open(url, '_blank');
-    });  // Exportar inscripciones
+    });  
+    
+    // Exportar inscripciones
     $('#exportarInscripciones').on('click', function () {
         const ciclo = $('#filtro-ciclo').val();
 
@@ -625,8 +627,5 @@ $(document).ready(function() {
         // Redirigir a la URL que genera el archivo Excel
         window.location.href = `${default_server}/json/inscripciones/exportar/asistencias?ciclo_id=${ciclo}`;
     });
-
-
-    // Exportar inscripciones
 
 });

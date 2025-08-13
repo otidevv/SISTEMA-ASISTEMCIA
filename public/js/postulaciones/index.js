@@ -86,6 +86,30 @@ function initDataTable() {
             },
             {
                 data: null,
+                render: function(data) {
+                    // Mostrar estado de constancia y botones de acción
+                    let html = '<div class="d-flex align-items-center gap-2">';
+                    
+                    // Estado de constancia
+                    html += data.constancia_estado;
+                    
+                    // Botones de acción según el estado
+                    if (data.constancia_firmada) {
+                        // Si tiene constancia firmada, mostrar botón para verla
+                        html += ' <button class="btn btn-sm btn-success view-constancia-firmada" data-id="' + data.id + '" title="Ver constancia firmada">';
+                        html += '<i class="uil uil-file-check-alt"></i></button>';
+                    } else if (data.constancia_generada) {
+                        // Si tiene constancia generada pero no firmada, mostrar botón para descargarla
+                        html += ' <button class="btn btn-sm btn-info download-constancia" data-id="' + data.id + '" title="Descargar constancia">';
+                        html += '<i class="uil uil-file-download-alt"></i></button>';
+                    }
+                    
+                    html += '</div>';
+                    return html;
+                }
+            },
+            {
+                data: null,
                 render: function(data, type, row) {
                     return row.actions;
                 }
@@ -164,10 +188,80 @@ function setupEventHandlers() {
         $('#deleteModal').modal('show');
     });
     
-    // Aprobar (placeholder)
+    // Aprobar postulación
     $(document).on('click', '.approve-postulacion', function() {
         const id = $(this).data('id');
-        toastr.info('La función de aprobación se implementará próximamente');
+        const btn = $(this);
+        
+        // Confirmar la acción
+        if (!confirm('¿Está seguro de aprobar esta postulación? Se creará una inscripción y se asignará un aula automáticamente.')) {
+            return;
+        }
+        
+        // Deshabilitar el botón mientras se procesa
+        btn.prop('disabled', true);
+        btn.html('<i class="spinner-border spinner-border-sm"></i> Procesando...');
+        
+        $.ajax({
+            url: default_server + "/json/postulaciones/" + id + "/aprobar",
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    
+                    // Si hay información adicional, mostrarla
+                    if (response.data) {
+                        toastr.info('Código de inscripción: ' + response.data.codigo_inscripcion + 
+                                   '<br>Aula asignada: ' + response.data.aula + 
+                                   '<br>Capacidad disponible restante: ' + response.data.aula_capacidad_disponible, 
+                                   'Detalles de la inscripción', 
+                                   {timeOut: 8000, extendedTimeOut: 3000, escapeHtml: false});
+                    }
+                    
+                    // Recargar la tabla
+                    table.ajax.reload();
+                } else {
+                    toastr.error(response.message || 'Error al aprobar la postulación');
+                    // Restaurar el botón
+                    btn.prop('disabled', false);
+                    btn.html('<i class="uil uil-check-circle"></i>');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Error al aprobar la postulación';
+                
+                if (xhr.status === 400 || xhr.status === 403) {
+                    const response = xhr.responseJSON;
+                    errorMsg = response.message || response.error || errorMsg;
+                } else if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    for (let key in errors) {
+                        toastr.error(errors[key][0]);
+                    }
+                    // Restaurar el botón
+                    btn.prop('disabled', false);
+                    btn.html('<i class="uil uil-check-circle"></i>');
+                    return;
+                }
+                
+                toastr.error(errorMsg);
+                // Restaurar el botón
+                btn.prop('disabled', false);
+                btn.html('<i class="uil uil-check-circle"></i>');
+            }
+        });
+    });
+    
+    // Ver constancia firmada
+    $(document).on('click', '.view-constancia-firmada', function() {
+        const id = $(this).data('id');
+        window.open(default_server + '/postulacion/constancia/ver/' + id, '_blank');
+    });
+    
+    // Descargar constancia generada
+    $(document).on('click', '.download-constancia', function() {
+        const id = $(this).data('id');
+        window.open(default_server + '/postulacion/constancia/generar/' + id, '_blank');
     });
     
     // Confirmar rechazo
@@ -230,7 +324,7 @@ function viewPostulacion(id) {
                 html += '<div class="col-md-6">';
                 html += '<h5>Información de la Postulación</h5>';
                 html += '<table class="table table-sm">';
-                html += '<tr><td><strong>Código:</strong></td><td>' + postulacion.codigo_postulacion + '</td></tr>';
+                html += '<tr><td><strong>Código:</strong></td><td>' + postulacion.codigo_postulante + '</td></tr>';
                 html += '<tr><td><strong>Ciclo:</strong></td><td>' + postulacion.ciclo.nombre + '</td></tr>';
                 html += '<tr><td><strong>Carrera:</strong></td><td>' + postulacion.carrera.nombre + '</td></tr>';
                 html += '<tr><td><strong>Turno:</strong></td><td>' + postulacion.turno.nombre + '</td></tr>';
@@ -256,6 +350,29 @@ function viewPostulacion(id) {
                 }
                 
                 html += '</ul>';
+                html += '</div>';
+                
+                // Información de la constancia
+                html += '<div class="col-md-6">';
+                html += '<h5>Constancia de Inscripción</h5>';
+                html += '<div class="p-3 bg-light rounded">';
+                
+                if (postulacion.constancia_firmada) {
+                    html += '<p class="text-success"><i class="uil uil-check-circle"></i> <strong>Constancia firmada y subida</strong></p>';
+                    html += '<p>Fecha subida: ' + postulacion.fecha_constancia_subida + '</p>';
+                    html += '<button class="btn btn-success btn-sm view-constancia-firmada" data-id="' + postulacion.id + '">';
+                    html += '<i class="uil uil-file-check-alt"></i> Ver Constancia Firmada</button>';
+                } else if (postulacion.constancia_generada) {
+                    html += '<p class="text-warning"><i class="uil uil-file-download-alt"></i> <strong>Constancia generada, pendiente de firma</strong></p>';
+                    html += '<p>Fecha generación: ' + postulacion.fecha_constancia_generada + '</p>';
+                    html += '<button class="btn btn-info btn-sm download-constancia" data-id="' + postulacion.id + '">';
+                    html += '<i class="uil uil-download-alt"></i> Descargar Constancia</button>';
+                } else {
+                    html += '<p class="text-secondary"><i class="uil uil-times-circle"></i> <strong>Constancia no generada</strong></p>';
+                    html += '<p>El postulante aún no ha generado su constancia de inscripción.</p>';
+                }
+                
+                html += '</div>';
                 html += '</div>';
                 
                 // Información del voucher

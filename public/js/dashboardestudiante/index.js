@@ -1,3 +1,4 @@
+console.log("entraste");
 $(document).ready(function() {
     let cicloActivo = null;
     let inscripcionActual = null;
@@ -61,7 +62,7 @@ $(document).ready(function() {
             let estadoBadge = '';
             let iconoEstado = '';
             let tituloEstado = '';
-            
+
             switch(inscripcionActual.estado) {
                 case 'pendiente':
                     estadoBadge = 'bg-warning';
@@ -84,20 +85,20 @@ $(document).ready(function() {
                     tituloEstado = 'Postulación con Observaciones';
                     break;
             }
-            
+
             $('#contenedor-inscripcion').html(`
                 <div class="card inscription-card">
                     <div class="card-body text-center py-5">
                         <i class="mdi ${iconoEstado}" style="font-size: 60px;"></i>
                         <h3 class="mt-3">${tituloEstado}</h3>
                         <div class="mt-4">
-                            <p><strong>Código de Postulación:</strong> ${inscripcionActual.codigo || inscripcionActual.id}</p>
+                            <p><strong>Código de Postulante:</strong> ${inscripcionActual.codigo_postulante || inscripcionActual.id}</p>
                             <p><strong>Tipo:</strong> ${inscripcionActual.tipo_inscripcion}</p>
                             <p><strong>Carrera:</strong> ${inscripcionActual.carrera}</p>
                             <p><strong>Turno:</strong> ${inscripcionActual.turno}</p>
                             <p><strong>Estado:</strong> <span class="badge ${estadoBadge}">${inscripcionActual.estado.toUpperCase()}</span></p>
                             <p><strong>Fecha de postulación:</strong> ${formatDate(inscripcionActual.fecha_inscripcion)}</p>
-                            ${inscripcionActual.estado === 'pendiente' ? 
+                            ${inscripcionActual.estado === 'pendiente' ?
                                 '<div class="alert alert-warning mt-3">Tu postulación está siendo revisada por el personal administrativo. Te notificaremos cuando sea aprobada.</div>' : ''}
                         </div>
                     </div>
@@ -237,7 +238,7 @@ $(document).ready(function() {
                             <!-- Voucher de Pago -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Voucher de Pago <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="voucher_pago" name="voucher_pago" 
+                                <input type="file" class="form-control" id="voucher_pago" name="voucher_pago"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
@@ -245,7 +246,7 @@ $(document).ready(function() {
                             <!-- Certificado de Estudios -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Certificado de Estudios <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="certificado_estudios" name="certificado_estudios" 
+                                <input type="file" class="form-control" id="certificado_estudios" name="certificado_estudios"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
@@ -253,7 +254,7 @@ $(document).ready(function() {
                             <!-- Carta de Compromiso -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Carta de Compromiso <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="carta_compromiso" name="carta_compromiso" 
+                                <input type="file" class="form-control" id="carta_compromiso" name="carta_compromiso"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
@@ -261,7 +262,7 @@ $(document).ready(function() {
                             <!-- Constancia de Estudios -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Constancia de Estudios <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="constancia_estudios" name="constancia_estudios" 
+                                <input type="file" class="form-control" id="constancia_estudios" name="constancia_estudios"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
@@ -269,7 +270,7 @@ $(document).ready(function() {
                             <!-- DNI -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">DNI <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="dni_documento" name="dni_documento" 
+                                <input type="file" class="form-control" id="dni_documento" name="dni_documento"
                                        accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
@@ -277,7 +278,7 @@ $(document).ready(function() {
                             <!-- Foto Carnet -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Foto Carnet <span class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="foto_carnet" name="foto_carnet" 
+                                <input type="file" class="form-control" id="foto_carnet" name="foto_carnet"
                                        accept=".jpg,.jpeg,.png" required>
                                 <small class="text-muted">JPG o PNG (Max: 2MB)</small>
                             </div>
@@ -290,7 +291,7 @@ $(document).ready(function() {
                             <!-- Número de Recibo -->
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-numero-recibo">
                                 <label class="form-label">Número de Recibo <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="numero_recibo" name="numero_recibo" 
+                                <input type="text" class="form-control" id="numero_recibo" name="numero_recibo"
                                        placeholder="Ej: 0001-0004535" required>
                             </div>
 
@@ -303,14 +304,14 @@ $(document).ready(function() {
                             <!-- Monto Matrícula -->
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-monto-matricula">
                                 <label class="form-label">Matrícula de Ciclo de Preparación General (S/.) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="monto_matricula" name="monto_matricula" 
+                                <input type="number" class="form-control" id="monto_matricula" name="monto_matricula"
                                        step="0.01" min="0" placeholder="0.00" required>
                             </div>
 
                             <!-- Monto Enseñanza -->
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-monto-ensenanza">
                                 <label class="form-label">Costo de Enseñanza por Preparación (S/.) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="monto_ensenanza" name="monto_ensenanza" 
+                                <input type="number" class="form-control" id="monto_ensenanza" name="monto_ensenanza"
                                        step="0.01" min="0" placeholder="0.00" required>
                             </div>
 
@@ -446,7 +447,7 @@ $(document).ready(function() {
                 toastr.warning('Por favor seleccione un colegio de la lista');
                 return;
             }
-            
+
             // Validar archivos
             const archivosRequeridos = [
                 { id: 'voucher_pago', nombre: 'Voucher de Pago' },
@@ -596,36 +597,47 @@ $(document).ready(function() {
     $('#btnConfirmarInscripcion').on('click', function() {
         // Crear FormData para enviar archivos
         const formData = new FormData();
-        
+
         // Agregar datos del formulario
         formData.append('tipo_inscripcion', $('#tipo_inscripcion').val());
         formData.append('carrera_id', $('#carrera_id').val());
         formData.append('turno_id', $('#turno_id').val());
         formData.append('centro_educativo_id', colegioSeleccionado.id);
-        
-        // Agregar archivos
+
+        // Agregar archivos con notificaciones
         const archivos = [
-            'voucher_pago',
-            'certificado_estudios',
-            'carta_compromiso',
-            'constancia_estudios',
-            'dni_documento',
-            'foto_carnet'
+            {id: 'voucher_pago', nombre: 'Voucher de pago'},
+            {id: 'certificado_estudios', nombre: 'Certificado de estudios'},
+            {id: 'carta_compromiso', nombre: 'Carta de compromiso'},
+            {id: 'constancia_estudios', nombre: 'Constancia de estudios'},
+            {id: 'dni_documento', nombre: 'DNI'},
+            {id: 'foto_carnet', nombre: 'Foto carnet'}
         ];
-        
-        archivos.forEach(function(archivo) {
-            const input = document.getElementById(archivo);
+
+        let archivosSubidos = 0;
+        archivos.forEach(function(archivo, index) {
+            const input = document.getElementById(archivo.id);
             if (input.files && input.files[0]) {
-                formData.append(archivo, input.files[0]);
+                formData.append(archivo.id, input.files[0]);
+                archivosSubidos++;
+                // Mostrar toast individual para cada archivo
+                setTimeout(() => {
+                    toastr.info(`${archivo.nombre} cargado correctamente (${archivosSubidos}/6)`, 'Archivo ' + archivosSubidos, {
+                        "closeButton": false,
+                        "progressBar": true,
+                        "positionClass": "toast-bottom-right",
+                        "timeOut": "2000"
+                    });
+                }, index * 300); // Escalonar las notificaciones
             }
         });
-        
+
         // Agregar datos del voucher
         formData.append('numero_recibo', $('#numero_recibo').val());
         formData.append('fecha_emision_voucher', $('#fecha_emision_voucher').val());
         formData.append('monto_matricula', $('#monto_matricula').val() || 0);
         formData.append('monto_ensenanza', $('#monto_ensenanza').val() || 0);
-        
+
         // Agregar token CSRF
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
@@ -636,42 +648,67 @@ $(document).ready(function() {
             processData: false,
             contentType: false,
             beforeSend: function() {
-                $('#btnConfirmarInscripcion').prop('disabled', true).html('Procesando...');
+                $('#btnConfirmarInscripcion').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Procesando...');
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = ((evt.loaded / evt.total) * 100).toFixed(0);
+                        $('#btnConfirmarInscripcion').html(`<i class="mdi mdi-loading mdi-spin"></i> Subiendo... ${percentComplete}%`);
+                    }
+                }, false);
+                return xhr;
             },
             success: function(response) {
                 if (response.success) {
                     $('#confirmModal').modal('hide');
-                    
-                    // Mostrar mensaje diferente para postulación
-                    if (response.postulacion) {
-                        toastr.success('Postulación enviada exitosamente', 'Éxito', {
+
+                    // Mostrar toast de confirmación de archivos
+                    setTimeout(() => {
+                        toastr.success('¡Todos tus archivos fueron subidos exitosamente!', 'Archivos Completos', {
                             "closeButton": true,
                             "progressBar": true,
-                            "positionClass": "toast-top-right",
-                            "timeOut": "5000"
+                            "positionClass": "toast-top-center",
+                            "timeOut": "3000"
                         });
-                        
+                    }, archivos.length * 300 + 500);
+
+                    // Mostrar mensaje diferente para postulación
+                    if (response.postulacion) {
+                        setTimeout(() => {
+                            toastr.success('Postulación enviada exitosamente', '¡Registro Exitoso!', {
+                                "closeButton": true,
+                                "progressBar": true,
+                                "positionClass": "toast-top-right",
+                                "timeOut": "4000"
+                            });
+                        }, archivos.length * 300 + 2000);
+
                         // Mostrar mensaje adicional
                         setTimeout(() => {
                             toastr.info('Tu postulación está pendiente de aprobación. Te notificaremos cuando sea revisada.', 'Información', {
                                 "closeButton": true,
                                 "progressBar": true,
                                 "positionClass": "toast-top-right",
-                                "timeOut": "5000"
+                                "timeOut": "4000"
                             });
-                        }, 1000);
+                        }, archivos.length * 300 + 3500);
                     } else {
-                        toastr.success(response.message, 'Éxito', {
-                            "closeButton": true,
-                            "progressBar": true,
-                            "positionClass": "toast-top-right",
-                            "timeOut": "3000"
-                        });
+                        setTimeout(() => {
+                            toastr.success(response.message || 'Inscripción realizada correctamente', '¡Éxito!', {
+                                "closeButton": true,
+                                "progressBar": true,
+                                "positionClass": "toast-top-right",
+                                "timeOut": "3000"
+                            });
+                        }, archivos.length * 300 + 2000);
                     }
-                    
+
+                    // Recargar página después de mostrar todos los mensajes
                     setTimeout(() => {
                         location.reload();
-                    }, 3000);
+                    }, archivos.length * 300 + 6000);
                 }
             },
             error: function(xhr) {
@@ -723,4 +760,245 @@ $(document).ready(function() {
             day: 'numeric'
         });
     }
+
+    // Funciones para manejo de postulaciones y constancias
+    function cargarEstadoPostulacion() {
+        $.ajax({
+            url: '/json/postulaciones/mi-postulacion-actual',
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.postulacion) {
+                    mostrarEstadoPostulacion(response.postulacion);
+                } else {
+                    $('#estado-postulacion').html(`
+                        <div class="alert alert-info">
+                            <i class="mdi mdi-information-outline me-2"></i>
+                            No tienes postulaciones activas en este momento.
+                        </div>
+                    `);
+                }
+            },
+            error: function() {
+                $('#estado-postulacion').html(`
+                    <div class="alert alert-warning">
+                        <i class="mdi mdi-alert-outline me-2"></i>
+                        Error al cargar el estado de postulación.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    function mostrarEstadoPostulacion(postulacion) {
+        let htmlConstancia = '';
+
+        // Botones de constancia según el estado
+        if (!postulacion.constancia_generada) {
+            htmlConstancia = `
+                <button class="btn btn-primary btn-sm" onclick="generarConstancia(${postulacion.id})">
+                    <i class="mdi mdi-file-pdf-box me-1"></i>Generar Constancia
+                </button>
+            `;
+        } else if (!postulacion.constancia_firmada) {
+            htmlConstancia = `
+                <button class="btn btn-success btn-sm me-2" onclick="descargarConstancia(${postulacion.id})">
+                    <i class="mdi mdi-download me-1"></i>Descargar Constancia
+                </button>
+                <button class="btn btn-warning btn-sm" onclick="abrirModalSubirConstancia(${postulacion.id})">
+                    <i class="mdi mdi-upload me-1"></i>Subir Constancia Firmada
+                </button>
+            `;
+        } else {
+            htmlConstancia = `
+                <span class="badge bg-success">
+                    <i class="mdi mdi-check-circle me-1"></i>Constancia Firmada Subida
+                </span>
+                <button class="btn btn-info btn-sm ms-2" onclick="verConstanciaFirmada(${postulacion.id})">
+                    <i class="mdi mdi-eye me-1"></i>Ver Constancia
+                </button>
+            `;
+        }
+
+        $('#estado-postulacion').html(`
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Código de Postulante:</strong> ${postulacion.codigo_postulante}</p>
+                    <p><strong>Estado:</strong>
+                        <span class="badge bg-${postulacion.estado === 'aprobado' ? 'success' :
+                                               postulacion.estado === 'rechazado' ? 'danger' :
+                                               postulacion.estado === 'observado' ? 'warning' : 'info'}">
+                            ${postulacion.estado.toUpperCase()}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Carrera:</strong> ${postulacion.carrera_nombre}</p>
+                    <p><strong>Turno:</strong> ${postulacion.turno_nombre}</p>
+                    <p><strong>Fecha de Postulación:</strong> ${formatDate(postulacion.fecha_postulacion)}</p>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <h6 class="mb-3">Estado de Constancia de Inscripción</h6>
+                ${htmlConstancia}
+            </div>
+        `);
+    }
+
+    // Función global para generar constancia
+    window.generarConstancia = function(postulacionId) {
+        window.open(`/postulacion/constancia/generar/${postulacionId}`, '_blank');
+        setTimeout(() => {
+            cargarEstadoPostulacion();
+        }, 2000);
+    };
+
+    // Función global para descargar constancia
+    window.descargarConstancia = function(postulacionId) {
+        window.open(`/postulacion/constancia/generar/${postulacionId}`, '_blank');
+    };
+
+    // Función global para abrir modal de subir constancia
+    window.abrirModalSubirConstancia = function(postulacionId) {
+        $('#postulacion_id').val(postulacionId);
+        $('#subirConstanciaModal').modal('show');
+    };
+
+    // Función global para ver constancia firmada
+    window.verConstanciaFirmada = function(postulacionId) {
+        window.open(`/postulacion/constancia/ver/${postulacionId}`, '_blank');
+    };
+
+    // Manejar preview de archivo
+    $('#documento_constancia').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const fileType = file.type;
+            const fileName = file.name;
+
+            $('#preview-constancia').show();
+
+            if (fileType.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagen-preview').attr('src', e.target.result).show();
+                    $('#pdf-preview').hide();
+                };
+                reader.readAsDataURL(file);
+            } else if (fileType === 'application/pdf') {
+                $('#pdf-nombre').text(fileName);
+                $('#pdf-preview').show();
+                $('#imagen-preview').hide();
+            }
+        } else {
+            $('#preview-constancia').hide();
+        }
+    });
+
+    // Subir constancia firmada
+    $('#btnSubirConstancia').on('click', function() {
+        const formData = new FormData();
+        const archivo = $('#documento_constancia')[0].files[0];
+        const postulacionId = $('#postulacion_id').val();
+
+        if (!archivo) {
+            toastr.error('Por favor seleccione un archivo');
+            return;
+        }
+
+        formData.append('documento_constancia', archivo);
+
+        $(this).prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i>Subiendo...');
+
+        $.ajax({
+            url: `/postulacion/constancia/subir/${postulacionId}`,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Constancia firmada subida exitosamente');
+                    $('#subirConstanciaModal').modal('hide');
+                    $('#formSubirConstancia')[0].reset();
+                    $('#preview-constancia').hide();
+                    cargarEstadoPostulacion();
+                    verificarInscripcion();
+                } else {
+                    toastr.error(response.message || 'Error al subir la constancia');
+                }
+                $('#btnSubirConstancia').prop('disabled', false).html('<i class="mdi mdi-upload me-1"></i>Subir Constancia');
+            },
+            error: function(xhr) {
+                const response = xhr.responseJSON;
+                toastr.error(response?.message || 'Error al subir la constancia');
+                $('#btnSubirConstancia').prop('disabled', false).html('<i class="mdi mdi-upload me-1"></i>Subir Constancia');
+            }
+        });
+    });
+
+    // Cargar estado de postulación al inicio
+    cargarEstadoPostulacion();
+
+    // Agregar validación visual cuando se selecciona un archivo
+    $('input[type="file"]').on('change', function() {
+        const fileName = $(this).val().split('\\').pop();
+        const inputId = $(this).attr('id');
+        const labelText = $(`label[for="${inputId}"]`).text().replace(' *', '');
+
+        if (fileName) {
+            // Agregar indicador visual de archivo cargado
+            $(this).removeClass('is-invalid').addClass('is-valid');
+
+            // Mostrar mini toast de confirmación
+            toastr.info(`${labelText}: ${fileName}`, 'Archivo seleccionado', {
+                "closeButton": false,
+                "progressBar": false,
+                "positionClass": "toast-bottom-left",
+                "timeOut": "1500",
+                "showDuration": "100",
+                "hideDuration": "100"
+            });
+        } else {
+            $(this).removeClass('is-valid is-invalid');
+        }
+    });
+
+    // Validar que todos los archivos estén seleccionados antes de confirmar
+    $('#btnInscribirse').on('click', function() {
+        let archivosRequeridos = [
+            'voucher_pago',
+            'certificado_estudios',
+            'carta_compromiso',
+            'constancia_estudios',
+            'dni_documento',
+            'foto_carnet'
+        ];
+
+        let todosCargados = true;
+        let archivosFaltantes = [];
+
+        archivosRequeridos.forEach(function(archivo) {
+            const input = document.getElementById(archivo);
+            if (!input || !input.files || !input.files[0]) {
+                todosCargados = false;
+                const label = $(`label[for="${archivo}"]`).text().replace(' *', '');
+                archivosFaltantes.push(label);
+                $(`#${archivo}`).addClass('is-invalid');
+            }
+        });
+
+        if (!todosCargados) {
+            toastr.warning('Por favor carga todos los documentos requeridos: ' + archivosFaltantes.join(', '), 'Documentos faltantes', {
+                "closeButton": true,
+                "progressBar": false,
+                "positionClass": "toast-top-center",
+                "timeOut": "4000"
+            });
+            return false;
+        }
+    });
 });

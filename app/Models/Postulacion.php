@@ -12,7 +12,7 @@ class Postulacion extends Model
     protected $table = 'postulaciones';
 
     protected $fillable = [
-        'codigo_postulacion',
+        'codigo_postulante',
         'estudiante_id',
         'ciclo_id',
         'carrera_id',
@@ -26,6 +26,7 @@ class Postulacion extends Model
         'constancia_estudios_path',
         'dni_path',
         'foto_carnet_path',
+        'documento_constancia',
         // Datos del voucher
         'numero_recibo',
         'fecha_emision_voucher',
@@ -38,21 +39,29 @@ class Postulacion extends Model
         'estado',
         'observaciones',
         'motivo_rechazo',
+        'constancia_generada',
+        'constancia_firmada',
         // Auditoría
         'revisado_por',
         'fecha_revision',
-        'fecha_postulacion'
+        'fecha_postulacion',
+        'fecha_constancia_generada',
+        'fecha_constancia_subida'
     ];
 
     protected $casts = [
         'fecha_postulacion' => 'datetime',
         'fecha_revision' => 'datetime',
+        'fecha_constancia_generada' => 'datetime',
+        'fecha_constancia_subida' => 'datetime',
         'fecha_emision_voucher' => 'date',
         'monto_matricula' => 'decimal:2',
         'monto_ensenanza' => 'decimal:2',
         'monto_total_pagado' => 'decimal:2',
         'documentos_verificados' => 'boolean',
-        'pago_verificado' => 'boolean'
+        'pago_verificado' => 'boolean',
+        'constancia_generada' => 'boolean',
+        'constancia_firmada' => 'boolean'
     ];
 
     protected static function boot()
@@ -60,8 +69,8 @@ class Postulacion extends Model
         parent::boot();
 
         static::creating(function ($postulacion) {
-            if (!$postulacion->codigo_postulacion) {
-                $postulacion->codigo_postulacion = self::generarCodigoPostulacion();
+            if (!$postulacion->codigo_postulante && $postulacion->ciclo_id) {
+                $postulacion->codigo_postulante = self::generarCodigoPostulante($postulacion->ciclo_id);
             }
         });
     }
@@ -114,15 +123,25 @@ class Postulacion extends Model
     }
 
     // Métodos
-    protected static function generarCodigoPostulacion()
+    protected static function generarCodigoPostulante($cicloId)
     {
-        $año = date('Y');
-        $mes = date('m');
-        $ultimo = self::whereYear('created_at', $año)
-            ->whereMonth('created_at', $mes)
-            ->count() + 1;
-
-        return sprintf('POST-%s%s-%04d', $año, $mes, $ultimo);
+        $ciclo = Ciclo::find($cicloId);
+        if (!$ciclo) {
+            throw new \Exception('Ciclo no encontrado');
+        }
+        
+        // Obtener el correlativo inicial del ciclo (por defecto 1)
+        $correlativoInicial = $ciclo->correlativo_inicial ?? 1;
+        
+        // Contar cuántas postulaciones hay para este ciclo
+        $cantidadPostulaciones = self::where('ciclo_id', $cicloId)->count();
+        
+        // El nuevo código será el correlativo inicial + cantidad de postulaciones existentes + 1
+        // Si no hay postulaciones, será correlativo_inicial + 1
+        // Si hay 1 postulación, será correlativo_inicial + 2, etc.
+        $nuevoCorrelativo = $correlativoInicial + $cantidadPostulaciones + 1;
+        
+        return (string) $nuevoCorrelativo;
     }
 
     public function aprobar($revisadoPorId)

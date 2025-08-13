@@ -64,8 +64,8 @@ class DashboardController extends Controller
         ->take(10)
         ->get();
 
-        // Si el usuario es un estudiante
-        if ($user->hasRole('estudiante')) {
+        // Si el usuario es un estudiante o postulante
+        if ($user->hasRole('estudiante') || $user->hasRole('postulante')) {
             // Obtener inscripción activa del estudiante
             $inscripcionActiva = Inscripcion::where('estudiante_id', $user->id)
                 ->where('estado_inscripcion', 'activo')
@@ -489,7 +489,7 @@ class DashboardController extends Controller
         // Determinar qué vista mostrar según el rol
         if ($user->hasRole('profesor')) {
             return view('admin.dashboard-profesor', $data);
-        } elseif ($user->hasRole('estudiante')) {
+        } elseif ($user->hasRole('estudiante') || $user->hasRole('postulante')) {
             return view('admin.dashboard-estudiante', $data);
         } elseif ($user->hasRole('padre')) {
             return view('admin.dashboard-padre', $data);

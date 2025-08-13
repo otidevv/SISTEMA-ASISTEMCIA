@@ -26,6 +26,7 @@ class Ciclo extends Model
         'porcentaje_avance',
         'es_activo',
         'estado',
+        'correlativo_inicial',
         'creado_por',
         'actualizado_por'
     ];

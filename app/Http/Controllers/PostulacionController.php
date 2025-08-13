@@ -7,6 +7,8 @@ use App\Models\Ciclo;
 use App\Models\Carrera;
 use App\Models\Turno;
 use App\Models\User;
+use App\Models\Inscripcion;
+use App\Models\Aula;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +63,7 @@ class PostulacionController extends Controller
                 
                 return [
                     'id' => $postulacion->id,
-                    'codigo' => $postulacion->codigo_postulacion,
+                    'codigo' => $postulacion->codigo_postulante,
                     'estudiante' => $postulacion->estudiante->nombre . ' ' . 
                                    $postulacion->estudiante->apellido_paterno . ' ' . 
                                    $postulacion->estudiante->apellido_materno,
@@ -77,6 +79,9 @@ class PostulacionController extends Controller
                     'pago_verificado' => $postulacion->pago_verificado,
                     'numero_recibo' => $postulacion->numero_recibo,
                     'monto_total' => $postulacion->monto_total_pagado,
+                    'constancia_generada' => $postulacion->constancia_generada,
+                    'constancia_firmada' => $postulacion->constancia_firmada,
+                    'constancia_estado' => $this->generarEstadoConstancia($postulacion),
                     'actions' => $actions
                 ];
             });
@@ -270,6 +275,130 @@ class PostulacionController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Aprobar postulación y crear inscripción
+     */
+    public function aprobar(Request $request, $id)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.approve')) {
+            return response()->json(['error' => 'Sin permisos para aprobar postulaciones'], 403);
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Obtener la postulación con sus relaciones
+            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
+                ->findOrFail($id);
+            
+            // Verificar que la postulación esté pendiente
+            if ($postulacion->estado !== 'pendiente') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo se pueden aprobar postulaciones pendientes'
+                ], 400);
+            }
+            
+            // Verificar que los documentos y pago estén verificados
+            if (!$postulacion->documentos_verificados || !$postulacion->pago_verificado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los documentos y pago deben estar verificados antes de aprobar'
+                ], 400);
+            }
+            
+            // Buscar un aula disponible según el turno y capacidad
+            $aula = $this->asignarAulaDisponible($postulacion->turno_id, $postulacion->carrera_id);
+            
+            if (!$aula) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay aulas disponibles con capacidad suficiente para el turno seleccionado'
+                ], 400);
+            }
+            
+            // Crear la inscripción
+            $inscripcion = new Inscripcion();
+            $inscripcion->codigo_inscripcion = $postulacion->codigo_postulante; // Usar el código de postulante como código de inscripción
+            $inscripcion->estudiante_id = $postulacion->estudiante_id;
+            $inscripcion->carrera_id = $postulacion->carrera_id;
+            $inscripcion->tipo_inscripcion = $postulacion->tipo_inscripcion;
+            $inscripcion->ciclo_id = $postulacion->ciclo_id;
+            $inscripcion->turno_id = $postulacion->turno_id;
+            $inscripcion->aula_id = $aula->id;
+            $inscripcion->centro_educativo_id = $postulacion->centro_educativo_id;
+            $inscripcion->fecha_inscripcion = now();
+            $inscripcion->estado_inscripcion = 'activo';
+            $inscripcion->observaciones = 'Inscripción generada desde postulación aprobada #' . $postulacion->id;
+            $inscripcion->registrado_por = Auth::id();
+            $inscripcion->save();
+            
+            // Actualizar el estado de la postulación
+            $postulacion->aprobar(Auth::id());
+            
+            // Cambiar rol de postulante a estudiante
+            if ($postulacion->tipo_inscripcion === 'postulante') {
+                $estudiante = User::find($postulacion->estudiante_id);
+                if ($estudiante) {
+                    // Remover rol de postulante si lo tiene
+                    if ($estudiante->hasRole('postulante')) {
+                        $estudiante->removeRole('postulante');
+                    }
+                    // Asignar rol de estudiante si no lo tiene
+                    if (!$estudiante->hasRole('estudiante')) {
+                        $estudiante->assignRole('estudiante');
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Postulación aprobada exitosamente. Se ha creado la inscripción y asignado al aula ' . $aula->nombre,
+                'data' => [
+                    'inscripcion_id' => $inscripcion->id,
+                    'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
+                    'aula' => $aula->nombre,
+                    'aula_capacidad_disponible' => $aula->getCapacidadDisponible() - 1
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al aprobar postulación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Asignar aula disponible según turno y capacidad
+     */
+    private function asignarAulaDisponible($turnoId, $carreraId)
+    {
+        // Obtener todas las aulas activas ordenadas por capacidad disponible
+        $aulas = Aula::activas()
+            ->where('tipo', 'aula') // Solo aulas regulares, no laboratorios
+            ->get()
+            ->filter(function ($aula) {
+                return $aula->getCapacidadDisponible() > 0;
+            })
+            ->sortBy(function ($aula) {
+                // Ordenar por porcentaje de ocupación (llenar las aulas más ocupadas primero)
+                return -$aula->getPorcentajeOcupacion();
+            });
+        
+        // Por ahora, tomamos la primera aula disponible con capacidad
+        // En el futuro, se podría implementar lógica más compleja considerando:
+        // - Turnos específicos para cada aula
+        // - Carreras específicas por aula
+        // - Preferencias de edificio/piso
+        
+        return $aulas->first();
+    }
 
     /**
      * Eliminar postulación
@@ -373,5 +502,86 @@ class PostulacionController extends Controller
         }
 
         return '<div class="btn-group">' . implode(' ', $actions) . '</div>';
+    }
+    
+    /**
+     * Generar estado HTML de la constancia
+     */
+    private function generarEstadoConstancia($postulacion)
+    {
+        if ($postulacion->constancia_firmada) {
+            return '<span class="badge bg-success">
+                <i class="uil uil-check-circle"></i> Completa
+            </span>';
+        } elseif ($postulacion->constancia_generada) {
+            return '<span class="badge bg-warning">
+                <i class="uil uil-file-download-alt"></i> Generada
+            </span>';
+        } else {
+            return '<span class="badge bg-secondary">
+                <i class="uil uil-times-circle"></i> Pendiente
+            </span>';
+        }
+    }
+    
+    /**
+     * Obtener la postulación actual del estudiante autenticado
+     */
+    public function miPostulacionActual()
+    {
+        try {
+            $user = Auth::user();
+            
+            // Obtener el ciclo activo
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            if (!$cicloActivo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay ciclo activo',
+                    'postulacion' => null
+                ]);
+            }
+            
+            // Buscar postulación del usuario en el ciclo activo
+            $postulacion = Postulacion::where('estudiante_id', $user->id)
+                ->where('ciclo_id', $cicloActivo->id)
+                ->with(['carrera', 'turno', 'ciclo'])
+                ->first();
+            
+            if ($postulacion) {
+                return response()->json([
+                    'success' => true,
+                    'postulacion' => [
+                        'id' => $postulacion->id,
+                        'codigo_postulante' => $postulacion->codigo_postulante,
+                        'estado' => $postulacion->estado,
+                        'fecha_postulacion' => $postulacion->fecha_postulacion,
+                        'carrera_nombre' => $postulacion->carrera->nombre ?? '',
+                        'turno_nombre' => $postulacion->turno->nombre ?? '',
+                        'constancia_generada' => $postulacion->constancia_generada,
+                        'constancia_firmada' => $postulacion->constancia_firmada,
+                        'fecha_constancia_generada' => $postulacion->fecha_constancia_generada,
+                        'fecha_constancia_subida' => $postulacion->fecha_constancia_subida,
+                        'documentos_verificados' => $postulacion->documentos_verificados,
+                        'pago_verificado' => $postulacion->pago_verificado,
+                        'observaciones' => $postulacion->observaciones,
+                        'motivo_rechazo' => $postulacion->motivo_rechazo
+                    ]
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'postulacion' => null
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener postulación: ' . $e->getMessage(),
+                'postulacion' => null
+            ], 500);
+        }
     }
 }

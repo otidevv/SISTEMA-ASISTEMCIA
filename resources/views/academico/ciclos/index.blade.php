@@ -187,6 +187,12 @@
                                     <option value="cancelado">Cancelado</option>
                                 </select>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="correlativo_inicial" class="form-label">Correlativo Inicial</label>
+                                <input type="number" class="form-control" id="correlativo_inicial" name="correlativo_inicial" 
+                                    value="1" min="1" required>
+                                <small class="text-muted">Número inicial para el correlativo de inscripciones</small>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -299,6 +305,14 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label for="edit_correlativo_inicial" class="form-label">Correlativo Inicial</label>
+                                <input type="number" class="form-control" id="edit_correlativo_inicial" name="correlativo_inicial" 
+                                    min="1" required>
+                                <small class="text-muted">Número inicial para el correlativo de inscripciones</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
                                 <label for="edit_porcentaje" class="form-label">Porcentaje de Avance</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="edit_porcentaje" readonly>

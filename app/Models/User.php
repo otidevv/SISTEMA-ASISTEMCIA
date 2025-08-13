@@ -116,6 +116,56 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->roles()->whereIn('nombre', $roleNames)->exists();
     }
+    
+    /**
+     * Assign a role to the user.
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function assignRole($roleName)
+    {
+        $role = \App\Models\Role::where('nombre', $roleName)->first();
+        
+        if (!$role) {
+            return false;
+        }
+        
+        // Check if user already has this role
+        if ($this->hasRole($roleName)) {
+            return true;
+        }
+        
+        // Attach the role to the user
+        $this->roles()->attach($role->id);
+        
+        return true;
+    }
+    
+    /**
+     * Remove a role from the user.
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function removeRole($roleName)
+    {
+        $role = \App\Models\Role::where('nombre', $roleName)->first();
+        
+        if (!$role) {
+            return false;
+        }
+        
+        // Check if user has this role
+        if (!$this->hasRole($roleName)) {
+            return true;
+        }
+        
+        // Detach the role from the user
+        $this->roles()->detach($role->id);
+        
+        return true;
+    }
 
     /**
      * Check if the user has a specific permission.

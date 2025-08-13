@@ -102,6 +102,27 @@
             </div>
         </div>
 
+        <!-- Estado de Postulación -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div id="contenedor-postulacion" class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="mdi mdi-file-document-outline me-2"></i>Estado de tu Postulación
+                        </h5>
+                        <div id="estado-postulacion">
+                            <!-- Se llenará dinámicamente con el estado de la postulación -->
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando estado de postulación...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Formulario de inscripción o información de inscripción actual -->
         <div class="row">
             <div class="col-12">
@@ -132,8 +153,70 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para subir constancia firmada -->
+    <div class="modal fade" id="subirConstanciaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="mdi mdi-file-upload me-2"></i>Subir Constancia Firmada
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="mdi mdi-information-outline me-1"></i>Instrucciones:
+                        </h6>
+                        <ol class="mb-0">
+                            <li>Descargue e imprima la constancia generada</li>
+                            <li>Firme el documento y coloque su huella digital en el espacio indicado</li>
+                            <li>Escanee o tome una foto clara del documento firmado</li>
+                            <li>Suba el archivo escaneado usando el formulario de abajo</li>
+                        </ol>
+                    </div>
+
+                    <form id="formSubirConstancia" enctype="multipart/form-data">
+                        <input type="hidden" id="postulacion_id" name="postulacion_id">
+
+                        <div class="mb-3">
+                            <label for="documento_constancia" class="form-label">
+                                Seleccionar archivo de constancia firmada:
+                            </label>
+                            <input type="file" class="form-control" id="documento_constancia" name="documento_constancia"
+                                accept=".pdf,.jpg,.jpeg,.png" required>
+                            <small class="text-muted">
+                                Formatos permitidos: PDF, JPG, PNG. Tamaño máximo: 5MB
+                            </small>
+                        </div>
+
+                        <div id="preview-constancia" class="mb-3" style="display: none;">
+                            <h6>Vista previa:</h6>
+                            <div class="border rounded p-2">
+                                <img id="imagen-preview" src="" alt="Vista previa" class="img-fluid"
+                                    style="max-height: 400px; display: none;">
+                                <div id="pdf-preview" class="text-center p-3" style="display: none;">
+                                    <i class="mdi mdi-file-pdf-box text-danger" style="font-size: 48px;"></i>
+                                    <p id="pdf-nombre"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close me-1"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnSubirConstancia">
+                        <i class="mdi mdi-upload me-1"></i>Subir Constancia
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
-@push('js')
-    <script src="{{ asset('js/dashboard-estudiante/index.js') }}"></script>
+@push('scripts')
+    <script src="{{ asset('js/dashboardestudiante/index.js') }}"></script>
 @endpush

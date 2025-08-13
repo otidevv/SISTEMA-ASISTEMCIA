@@ -222,7 +222,8 @@ class InscripcionEstudianteController extends Controller
                     'inscrito' => true,
                     'inscripcion' => [
                         'id' => $postulacion->id,
-                        'codigo' => $postulacion->codigo_postulacion,
+                        'codigo' => $postulacion->codigo_postulante,
+                        'codigo_postulante' => $postulacion->codigo_postulante,
                         'tipo_inscripcion' => $postulacion->tipo_inscripcion,
                         'carrera' => $postulacion->carrera->nombre ?? '',
                         'turno' => $postulacion->turno->nombre ?? '',
@@ -244,6 +245,8 @@ class InscripcionEstudianteController extends Controller
                     'inscrito' => true,
                     'inscripcion' => [
                         'id' => $inscripcion->id,
+                        'codigo' => $inscripcion->codigo_inscripcion,
+                        'codigo_postulante' => $inscripcion->codigo_inscripcion,
                         'tipo_inscripcion' => $inscripcion->tipo_inscripcion,
                         'carrera' => $inscripcion->carrera->nombre ?? '',
                         'turno' => $inscripcion->turno->nombre ?? '',
@@ -419,7 +422,8 @@ class InscripcionEstudianteController extends Controller
                 'message' => 'Postulación enviada exitosamente. Se encuentra pendiente de aprobación.',
                 'postulacion' => [
                     'id' => $postulacion->id,
-                    'codigo_postulacion' => $postulacion->codigo_postulacion,
+                    'codigo_postulacion' => $postulacion->codigo_postulante,
+                    'codigo_postulante' => $postulacion->codigo_postulante,
                     'tipo' => $postulacion->tipo_inscripcion,
                     'carrera' => $postulacion->carrera->nombre,
                     'turno' => $postulacion->turno->nombre,
