@@ -459,6 +459,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::post('/{id}/aprobar', [PostulacionController::class, 'aprobar']);
         Route::post('/{id}/rechazar', [PostulacionController::class, 'rechazar']);
         Route::post('/{id}/observar', [PostulacionController::class, 'observar']);
+        Route::post('/{id}/actualizar-documentos', [PostulacionController::class, 'actualizarDocumentos']);
         Route::delete('/{id}', [PostulacionController::class, 'destroy']);
     });
 

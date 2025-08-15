@@ -22,6 +22,27 @@
             border-radius: 8px;
             margin-top: 10px;
         }
+        .edit-documents {
+            transition: all 0.3s ease;
+        }
+        .edit-documents:hover {
+            transform: scale(1.05);
+        }
+        #editDocumentsModal .card {
+            border: 1px solid #dee2e6;
+            transition: box-shadow 0.3s ease;
+        }
+        #editDocumentsModal .card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        #editDocumentsModal .doc-file-input {
+            margin-top: 10px;
+        }
+        #documents-container .card-title {
+            color: #495057;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
     </style>
 @endpush
 
@@ -268,6 +289,46 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">
                         <i class="mdi mdi-delete me-1"></i> Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Documentos -->
+    <div class="modal fade" id="editDocumentsModal" tabindex="-1" role="dialog" aria-labelledby="editDocumentsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editDocumentsModalLabel">Editar Documentos del Postulante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDocumentsForm" enctype="multipart/form-data">
+                        <input type="hidden" id="edit-docs-postulacion-id">
+                        
+                        <div class="alert alert-info">
+                            <i class="uil uil-info-circle"></i> 
+                            Puede reemplazar los documentos subidos por el postulante. Solo suba los documentos que desea cambiar.
+                        </div>
+
+                        <div class="row" id="documents-container">
+                            <!-- Los documentos se cargarán dinámicamente aquí -->
+                        </div>
+
+                        <div class="mt-3">
+                            <div class="form-group">
+                                <label for="edit-docs-observacion">Observación del cambio:</label>
+                                <textarea class="form-control" id="edit-docs-observacion" rows="3" 
+                                    placeholder="Explique brevemente por qué se están modificando los documentos"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveDocumentChanges">
+                        <i class="uil uil-save me-1"></i> Guardar Cambios
                     </button>
                 </div>
             </div>

@@ -289,6 +289,20 @@ function setupEventHandlers() {
         deletePostulacion(currentPostulacionId);
     });
     
+    // Editar documentos
+    $(document).on('click', '.edit-documents', function() {
+        const id = $(this).data('id');
+        currentPostulacionId = id;
+        $('#edit-docs-postulacion-id').val(id);
+        loadDocumentsForEdit(id);
+        $('#editDocumentsModal').modal('show');
+    });
+    
+    // Guardar cambios de documentos
+    $('#saveDocumentChanges').on('click', function() {
+        saveDocumentChanges();
+    });
+    
     // Limpiar formularios al cerrar modales
     $('.modal').on('hidden.bs.modal', function() {
         $(this).find('form')[0]?.reset();
@@ -336,7 +350,10 @@ function viewPostulacion(id) {
                 
                 // Documentos
                 html += '<div class="col-md-6">';
-                html += '<h5>Documentos Subidos</h5>';
+                html += '<h5>Documentos Subidos ';
+                html += '<button class="btn btn-sm btn-warning ms-2 edit-documents" data-id="' + postulacion.id + '" title="Editar documentos">';
+                html += '<i class="uil uil-edit"></i> Editar</button>';
+                html += '</h5>';
                 html += '<ul class="document-list">';
                 
                 for (let key in documentos) {
@@ -550,4 +567,159 @@ function updateStatistics(data) {
     $('#stat-aprobadas').text(aprobadas);
     $('#stat-rechazadas').text(rechazadas);
     $('#stat-observadas').text(observadas);
+}
+
+function loadDocumentsForEdit(id) {
+    $.ajax({
+        url: default_server + "/json/postulaciones/" + id,
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const documentos = response.data.documentos;
+                let html = '';
+                
+                // Mapeo de tipos de documento a sus nombres descriptivos
+                const docTypes = {
+                    'dni': 'DNI del Postulante',
+                    'certificado_estudios': 'Certificado de Estudios',
+                    'foto': 'Fotografía',
+                    'voucher': 'Voucher de Pago',
+                    'carta_compromiso': 'Carta de Compromiso',
+                    'constancia_estudios': 'Constancia de Estudios',
+                    'constancia_firmada': 'Constancia Firmada'
+                };
+                
+                for (let key in documentos) {
+                    const doc = documentos[key];
+                    const docName = docTypes[key] || doc.nombre;
+                    
+                    html += '<div class="col-md-6 mb-3">';
+                    html += '<div class="card">';
+                    html += '<div class="card-body">';
+                    html += '<h6 class="card-title">' + docName + '</h6>';
+                    
+                    if (doc.existe) {
+                        html += '<p class="text-success"><i class="uil uil-check-circle"></i> Documento actual subido</p>';
+                        html += '<a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-info mb-2">Ver documento actual</a>';
+                        html += '<div class="form-group">';
+                        html += '<label>Reemplazar con nuevo archivo:</label>';
+                        html += '<input type="file" class="form-control doc-file-input" data-doc-type="' + key + '" ';
+                        
+                        // Establecer el tipo de archivo aceptado según el documento
+                        if (key === 'foto') {
+                            html += 'accept="image/*"';
+                        } else {
+                            html += 'accept=".pdf,.jpg,.jpeg,.png"';
+                        }
+                        
+                        html += '>';
+                        html += '<small class="text-muted">Deje vacío si no desea cambiar este documento</small>';
+                        html += '</div>';
+                    } else {
+                        html += '<p class="text-warning"><i class="uil uil-exclamation-triangle"></i> Documento no subido</p>';
+                        html += '<div class="form-group">';
+                        html += '<label>Subir archivo:</label>';
+                        html += '<input type="file" class="form-control doc-file-input" data-doc-type="' + key + '" ';
+                        
+                        if (key === 'foto') {
+                            html += 'accept="image/*"';
+                        } else {
+                            html += 'accept=".pdf,.jpg,.jpeg,.png"';
+                        }
+                        
+                        html += '>';
+                        html += '</div>';
+                    }
+                    
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                }
+                
+                $('#documents-container').html(html);
+            }
+        },
+        error: function(xhr) {
+            toastr.error('Error al cargar los documentos');
+        }
+    });
+}
+
+function saveDocumentChanges() {
+    const formData = new FormData();
+    const postulacionId = $('#edit-docs-postulacion-id').val();
+    const observacion = $('#edit-docs-observacion').val();
+    
+    // Agregar observación si existe
+    if (observacion) {
+        formData.append('observacion', observacion);
+    }
+    
+    // Agregar archivos seleccionados
+    let hasFiles = false;
+    $('.doc-file-input').each(function() {
+        const file = this.files[0];
+        if (file) {
+            const docType = $(this).data('doc-type');
+            formData.append(docType, file);
+            hasFiles = true;
+        }
+    });
+    
+    if (!hasFiles) {
+        toastr.warning('No ha seleccionado ningún archivo para actualizar');
+        return;
+    }
+    
+    // Deshabilitar botón mientras se procesa
+    const btn = $('#saveDocumentChanges');
+    btn.prop('disabled', true);
+    btn.html('<i class="spinner-border spinner-border-sm"></i> Guardando...');
+    
+    $.ajax({
+        url: default_server + "/json/postulaciones/" + postulacionId + "/actualizar-documentos",
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                toastr.success('Documentos actualizados correctamente');
+                $('#editDocumentsModal').modal('hide');
+                
+                // Recargar el modal de detalle si está abierto
+                if ($('#viewModal').hasClass('show')) {
+                    viewPostulacion(postulacionId);
+                }
+                
+                // Recargar la tabla
+                table.ajax.reload();
+            } else {
+                toastr.error(response.message || 'Error al actualizar los documentos');
+            }
+            
+            // Restaurar botón
+            btn.prop('disabled', false);
+            btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error al actualizar los documentos';
+            
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                for (let key in errors) {
+                    toastr.error(errors[key][0]);
+                }
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+                toastr.error(errorMsg);
+            } else {
+                toastr.error(errorMsg);
+            }
+            
+            // Restaurar botón
+            btn.prop('disabled', false);
+            btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
+        }
+    });
 }

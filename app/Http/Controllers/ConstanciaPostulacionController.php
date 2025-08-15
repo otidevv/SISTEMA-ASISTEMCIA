@@ -93,7 +93,11 @@ class ConstanciaPostulacionController extends Controller
             
             // Subir archivo
             if ($request->hasFile('documento_constancia')) {
-                // Eliminar documento anterior si existe
+                // Eliminar documento anterior si existe (verificar ambos campos por compatibilidad)
+                if ($postulacion->constancia_firmada_path && Storage::disk('public')->exists($postulacion->constancia_firmada_path)) {
+                    Storage::disk('public')->delete($postulacion->constancia_firmada_path);
+                }
+                // También verificar el campo antiguo por si acaso
                 if ($postulacion->documento_constancia && Storage::disk('public')->exists($postulacion->documento_constancia)) {
                     Storage::disk('public')->delete($postulacion->documento_constancia);
                 }
@@ -111,7 +115,9 @@ class ConstanciaPostulacionController extends Controller
                     'public'
                 );
                 
-                $postulacion->documento_constancia = $path;
+                // Guardar en ambos campos para mantener compatibilidad
+                $postulacion->constancia_firmada_path = $path;  // Campo nuevo
+                $postulacion->documento_constancia = $path;     // Campo antiguo (mantener por compatibilidad)
                 $postulacion->constancia_firmada = true;
                 $postulacion->fecha_constancia_subida = now();
                 
@@ -156,21 +162,24 @@ class ConstanciaPostulacionController extends Controller
                 abort(403, 'No tienes permiso para ver esta constancia');
             }
             
-            if (!$postulacion->documento_constancia) {
+            // Verificar primero el campo nuevo, luego el antiguo
+            $pathConstancia = $postulacion->constancia_firmada_path ?: $postulacion->documento_constancia;
+            
+            if (!$pathConstancia) {
                 abort(404, 'No se ha subido la constancia firmada');
             }
             
             // Verificar si el archivo existe
-            if (!Storage::disk('public')->exists($postulacion->documento_constancia)) {
-                \Log::error('Archivo de constancia no encontrado: ' . $postulacion->documento_constancia);
+            if (!Storage::disk('public')->exists($pathConstancia)) {
+                \Log::error('Archivo de constancia no encontrado: ' . $pathConstancia);
                 abort(404, 'El archivo de constancia no se encuentra en el servidor');
             }
             
             // Obtener la ruta completa del archivo
-            $rutaCompleta = Storage::disk('public')->path($postulacion->documento_constancia);
+            $rutaCompleta = Storage::disk('public')->path($pathConstancia);
             
             // Determinar el tipo de contenido basado en la extensión
-            $extension = pathinfo($postulacion->documento_constancia, PATHINFO_EXTENSION);
+            $extension = pathinfo($pathConstancia, PATHINFO_EXTENSION);
             $contentType = match(strtolower($extension)) {
                 'pdf' => 'application/pdf',
                 'jpg', 'jpeg' => 'image/jpeg',
@@ -223,10 +232,14 @@ class ConstanciaPostulacionController extends Controller
      */
     private function verificarDocumentosCompletos($postulacion)
     {
-        return $postulacion->voucher_pago_path &&
+        // Verificar usando los campos nuevos o antiguos
+        $tieneVoucher = $postulacion->voucher_path || $postulacion->voucher_pago_path;
+        $tieneFoto = $postulacion->foto_path || $postulacion->foto_carnet_path || $postulacion->estudiante->foto_perfil;
+        
+        return $tieneVoucher &&
                $postulacion->certificado_estudios_path &&
                $postulacion->dni_path &&
-               $postulacion->foto_carnet_path &&
+               $tieneFoto &&
                $postulacion->constancia_firmada;
     }
     

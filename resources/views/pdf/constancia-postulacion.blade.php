@@ -335,14 +335,19 @@
             </div>
             <div class="postulante-foto">
                 <div class="foto-container">
-                    @if(!empty($postulacion->foto_carnet_path))
+                    @php
+                        // Usar foto_path (nuevo) o foto_carnet_path (antiguo) o foto_perfil del estudiante
+                        $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
+                    @endphp
+                    
+                    @if(!empty($fotoPath))
                         @php
                             // Intentar diferentes rutas de la imagen
                             $rutaFoto = null;
                             $posiblesRutas = [
-                                public_path('storage/' . $postulacion->foto_carnet_path),
-                                storage_path('app/public/' . $postulacion->foto_carnet_path),
-                                storage_path('app/' . $postulacion->foto_carnet_path)
+                                public_path('storage/' . $fotoPath),
+                                storage_path('app/public/' . $fotoPath),
+                                storage_path('app/' . $fotoPath)
                             ];
                             
                             foreach ($posiblesRutas as $ruta) {
@@ -360,7 +365,7 @@
                         @else
                             <div class="foto-placeholder">
                                 FOTO NO<br>ENCONTRADA<br><br>
-                                <small>Archivo:<br>{{ basename($postulacion->foto_carnet_path) }}</small>
+                                <small>Archivo:<br>{{ basename($fotoPath) }}</small>
                             </div>
                         @endif
                     @else

@@ -19,13 +19,14 @@ class Postulacion extends Model
         'turno_id',
         'tipo_inscripcion',
         'centro_educativo_id',
-        // Documentos
-        'voucher_pago_path',
+        // Documentos - campos actualizados según las migraciones
+        'voucher_path',  // Cambiado de voucher_pago_path
         'certificado_estudios_path',
         'carta_compromiso_path',
         'constancia_estudios_path',
         'dni_path',
-        'foto_carnet_path',
+        'foto_path',  // Cambiado de foto_carnet_path
+        'constancia_firmada_path',  // Agregado
         'documento_constancia',
         // Datos del voucher
         'numero_recibo',
@@ -46,7 +47,9 @@ class Postulacion extends Model
         'fecha_revision',
         'fecha_postulacion',
         'fecha_constancia_generada',
-        'fecha_constancia_subida'
+        'fecha_constancia_subida',
+        'actualizado_por',  // Agregado
+        'fecha_actualizacion'  // Agregado
     ];
 
     protected $casts = [
@@ -54,6 +57,7 @@ class Postulacion extends Model
         'fecha_revision' => 'datetime',
         'fecha_constancia_generada' => 'datetime',
         'fecha_constancia_subida' => 'datetime',
+        'fecha_actualizacion' => 'datetime',  // Agregado
         'fecha_emision_voucher' => 'date',
         'monto_matricula' => 'decimal:2',
         'monto_ensenanza' => 'decimal:2',

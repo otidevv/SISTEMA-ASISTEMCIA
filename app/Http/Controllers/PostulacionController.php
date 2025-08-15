@@ -114,15 +114,25 @@ class PostulacionController extends Controller
 
             // Preparar información de documentos
             $documentos = [
-                'voucher_pago' => [
-                    'nombre' => 'Voucher de Pago',
-                    'existe' => !empty($postulacion->voucher_pago_path),
-                    'url' => $postulacion->voucher_pago_path ? Storage::url($postulacion->voucher_pago_path) : null
+                'dni' => [
+                    'nombre' => 'DNI del Postulante',
+                    'existe' => !empty($postulacion->dni_path),
+                    'url' => $postulacion->dni_path ? Storage::url($postulacion->dni_path) : null
                 ],
                 'certificado_estudios' => [
                     'nombre' => 'Certificado de Estudios',
                     'existe' => !empty($postulacion->certificado_estudios_path),
                     'url' => $postulacion->certificado_estudios_path ? Storage::url($postulacion->certificado_estudios_path) : null
+                ],
+                'foto' => [
+                    'nombre' => 'Fotografía',
+                    'existe' => !empty($postulacion->foto_path),
+                    'url' => $postulacion->foto_path ? Storage::url($postulacion->foto_path) : null
+                ],
+                'voucher' => [
+                    'nombre' => 'Voucher de Pago',
+                    'existe' => !empty($postulacion->voucher_path),
+                    'url' => $postulacion->voucher_path ? Storage::url($postulacion->voucher_path) : null
                 ],
                 'carta_compromiso' => [
                     'nombre' => 'Carta de Compromiso',
@@ -134,15 +144,10 @@ class PostulacionController extends Controller
                     'existe' => !empty($postulacion->constancia_estudios_path),
                     'url' => $postulacion->constancia_estudios_path ? Storage::url($postulacion->constancia_estudios_path) : null
                 ],
-                'dni' => [
-                    'nombre' => 'DNI',
-                    'existe' => !empty($postulacion->dni_path),
-                    'url' => $postulacion->dni_path ? Storage::url($postulacion->dni_path) : null
-                ],
-                'foto_carnet' => [
-                    'nombre' => 'Foto Carnet',
-                    'existe' => !empty($postulacion->foto_carnet_path),
-                    'url' => $postulacion->foto_carnet_path ? Storage::url($postulacion->foto_carnet_path) : null
+                'constancia_firmada' => [
+                    'nombre' => 'Constancia Firmada',
+                    'existe' => !empty($postulacion->constancia_firmada_path),
+                    'url' => $postulacion->constancia_firmada_path ? Storage::url($postulacion->constancia_firmada_path) : null
                 ]
             ];
 
@@ -581,6 +586,149 @@ class PostulacionController extends Controller
                 'success' => false,
                 'message' => 'Error al obtener postulación: ' . $e->getMessage(),
                 'postulacion' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Actualizar documentos de una postulación
+     */
+    public function actualizarDocumentos(Request $request, $id)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.edit')) {
+            return response()->json(['error' => 'Sin permisos para editar documentos'], 403);
+        }
+
+        try {
+            $postulacion = Postulacion::findOrFail($id);
+            $estudiante = $postulacion->estudiante;
+            
+            // Validar archivos
+            $request->validate([
+                'dni' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'certificado_estudios' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'foto' => 'nullable|image|max:5120',
+                'voucher' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'carta_compromiso' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'constancia_estudios' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'constancia_firmada' => 'nullable|file|mimes:pdf|max:5120',
+                'observacion' => 'nullable|string|max:500'
+            ]);
+
+            $documentosActualizados = [];
+
+            // Procesar DNI
+            if ($request->hasFile('dni')) {
+                // Eliminar archivo anterior si existe
+                if ($postulacion->dni_path && Storage::exists($postulacion->dni_path)) {
+                    Storage::delete($postulacion->dni_path);
+                }
+                
+                $path = $request->file('dni')->store('documentos/dni', 'public');
+                $postulacion->dni_path = $path;
+                $documentosActualizados[] = 'DNI';
+            }
+
+            // Procesar Certificado de Estudios
+            if ($request->hasFile('certificado_estudios')) {
+                if ($postulacion->certificado_estudios_path && Storage::exists($postulacion->certificado_estudios_path)) {
+                    Storage::delete($postulacion->certificado_estudios_path);
+                }
+                
+                $path = $request->file('certificado_estudios')->store('documentos/certificados', 'public');
+                $postulacion->certificado_estudios_path = $path;
+                $documentosActualizados[] = 'Certificado de Estudios';
+            }
+
+            // Procesar Foto
+            if ($request->hasFile('foto')) {
+                if ($postulacion->foto_path && Storage::exists($postulacion->foto_path)) {
+                    Storage::delete($postulacion->foto_path);
+                }
+                
+                $path = $request->file('foto')->store('documentos/fotos', 'public');
+                $postulacion->foto_path = $path;
+                
+                // También actualizar la foto de perfil del estudiante
+                if ($estudiante->foto_perfil && Storage::exists($estudiante->foto_perfil)) {
+                    Storage::delete($estudiante->foto_perfil);
+                }
+                $estudiante->foto_perfil = $path;
+                $estudiante->save();
+                
+                $documentosActualizados[] = 'Fotografía';
+            }
+
+            // Procesar Voucher
+            if ($request->hasFile('voucher')) {
+                if ($postulacion->voucher_path && Storage::exists($postulacion->voucher_path)) {
+                    Storage::delete($postulacion->voucher_path);
+                }
+                
+                $path = $request->file('voucher')->store('documentos/vouchers', 'public');
+                $postulacion->voucher_path = $path;
+                $documentosActualizados[] = 'Voucher de Pago';
+            }
+
+            // Procesar Carta de Compromiso
+            if ($request->hasFile('carta_compromiso')) {
+                if ($postulacion->carta_compromiso_path && Storage::exists($postulacion->carta_compromiso_path)) {
+                    Storage::delete($postulacion->carta_compromiso_path);
+                }
+                
+                $path = $request->file('carta_compromiso')->store('documentos/carta_compromiso', 'public');
+                $postulacion->carta_compromiso_path = $path;
+                $documentosActualizados[] = 'Carta de Compromiso';
+            }
+
+            // Procesar Constancia de Estudios
+            if ($request->hasFile('constancia_estudios')) {
+                if ($postulacion->constancia_estudios_path && Storage::exists($postulacion->constancia_estudios_path)) {
+                    Storage::delete($postulacion->constancia_estudios_path);
+                }
+                
+                $path = $request->file('constancia_estudios')->store('documentos/constancia_estudios', 'public');
+                $postulacion->constancia_estudios_path = $path;
+                $documentosActualizados[] = 'Constancia de Estudios';
+            }
+
+            // Procesar Constancia Firmada
+            if ($request->hasFile('constancia_firmada')) {
+                if ($postulacion->constancia_firmada_path && Storage::exists($postulacion->constancia_firmada_path)) {
+                    Storage::delete($postulacion->constancia_firmada_path);
+                }
+                
+                $path = $request->file('constancia_firmada')->store('documentos/constancias_firmadas', 'public');
+                $postulacion->constancia_firmada_path = $path;
+                $postulacion->constancia_firmada = true;
+                $postulacion->fecha_constancia_subida = now();
+                $documentosActualizados[] = 'Constancia Firmada';
+            }
+
+            // Guardar observación si existe
+            if ($request->filled('observacion')) {
+                $observacionAnterior = $postulacion->observaciones ?? '';
+                $nuevaObservacion = '[' . now()->format('d/m/Y H:i') . ' - Actualización de documentos] ' . 
+                                   $request->observacion . "\n" . $observacionAnterior;
+                $postulacion->observaciones = $nuevaObservacion;
+            }
+
+            // Registrar quién y cuándo actualizó
+            $postulacion->actualizado_por = Auth::id();
+            $postulacion->fecha_actualizacion = now();
+            
+            $postulacion->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Documentos actualizados correctamente',
+                'documentos_actualizados' => $documentosActualizados
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar documentos: ' . $e->getMessage()
             ], 500);
         }
     }

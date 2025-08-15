@@ -350,7 +350,7 @@ class InscripcionEstudianteController extends Controller
             
             // Voucher de pago
             if ($request->hasFile('voucher_pago')) {
-                $documentPaths['voucher_pago_path'] = $request->file('voucher_pago')
+                $documentPaths['voucher_path'] = $request->file('voucher_pago')
                     ->store($uploadPath . '/voucher', 'public');
             }
             
@@ -380,15 +380,22 @@ class InscripcionEstudianteController extends Controller
             
             // Foto carnet
             if ($request->hasFile('foto_carnet')) {
-                $documentPaths['foto_carnet_path'] = $request->file('foto_carnet')
+                $documentPaths['foto_path'] = $request->file('foto_carnet')
                     ->store($uploadPath . '/foto', 'public');
+                
+                // También guardar como foto de perfil del usuario
+                $user->foto_perfil = $documentPaths['foto_path'];
+                $user->save();
             }
             
             // Calcular monto total
             $montoTotal = $request->monto_matricula + $request->monto_ensenanza;
             
+            // Debug: Ver qué documentos se van a guardar
+            \Log::info('Documentos a guardar:', $documentPaths);
+            
             // Crear postulación (NO inscripción directa)
-            $postulacion = Postulacion::create([
+            $datosPostulacion = [
                 'estudiante_id' => $user->id,
                 'ciclo_id' => $cicloActivo->id,
                 'carrera_id' => $request->carrera_id,
@@ -397,8 +404,6 @@ class InscripcionEstudianteController extends Controller
                 'centro_educativo_id' => $request->centro_educativo_id,
                 'fecha_postulacion' => now(),
                 'estado' => 'pendiente', // Estado inicial pendiente de aprobación
-                // Documentos
-                ...$documentPaths,
                 // Datos del voucher
                 'numero_recibo' => $request->numero_recibo,
                 'fecha_emision_voucher' => $request->fecha_emision_voucher,
@@ -407,7 +412,16 @@ class InscripcionEstudianteController extends Controller
                 'monto_total_pagado' => $montoTotal,
                 'documentos_verificados' => false, // Pendiente de verificación
                 'pago_verificado' => false // Pendiente de verificación
-            ]);
+            ];
+            
+            // Agregar documentos al array
+            foreach ($documentPaths as $key => $value) {
+                $datosPostulacion[$key] = $value;
+            }
+            
+            \Log::info('Datos completos de postulación:', $datosPostulacion);
+            
+            $postulacion = Postulacion::create($datosPostulacion);
             
             // Actualizar información del usuario si es necesario
             if ($request->centro_educativo_id && !$user->centro_educativo_id) {
