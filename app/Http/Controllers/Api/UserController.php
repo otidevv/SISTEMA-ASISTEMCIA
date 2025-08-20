@@ -45,26 +45,40 @@ class UserController extends Controller
 
     /**
      * Genera los botones de acción para cada usuario.
+     * Verifica permisos antes de mostrar cada botón.
      */
     private function getActionButtons($user)
     {
         $buttons = '';
+        $currentUser = auth()->user();
 
-        // Botón de editar
-        $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-user" data-id="' . $user->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
+        // ✅ Botón de editar - SOLO si tiene permiso
+        if ($currentUser->hasPermission('users.edit')) {
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-user" data-id="' . $user->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
+        }
 
-        // Botón de cambiar estado
-        $statusIcon = $user->estado ? 'uil-ban' : 'uil-check';
-        $statusTitle = $user->estado ? 'Desactivar' : 'Activar';
-        $statusClass = $user->estado ? 'warning' : 'success';
+        // ✅ Botón de cambiar estado - SOLO si tiene permiso
+        if ($currentUser->hasPermission('users.change_status')) {
+            $statusIcon = $user->estado ? 'uil-ban' : 'uil-check';
+            $statusTitle = $user->estado ? 'Desactivar' : 'Activar';
+            $statusClass = $user->estado ? 'warning' : 'success';
 
-        $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-' . $statusClass . ' change-status" data-id="' . $user->id . '" title="' . $statusTitle . '"><i class="uil ' . $statusIcon . '"></i></a> ';
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-' . $statusClass . ' change-status" data-id="' . $user->id . '" title="' . $statusTitle . '"><i class="uil ' . $statusIcon . '"></i></a> ';
+        }
 
-        // Botón de eliminar
-        $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-danger delete-user" data-id="' . $user->id . '" title="Eliminar"><i class="uil uil-trash-alt"></i></a>';
+        // ✅ Botón de eliminar - SOLO si tiene permiso
+        if ($currentUser->hasPermission('users.delete')) {
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-danger delete-user" data-id="' . $user->id . '" title="Eliminar"><i class="uil uil-trash-alt"></i></a>';
+        }
+
+        // Si no tiene ningún permiso, mostrar mensaje o botón de solo lectura
+        if (empty(trim($buttons))) {
+            $buttons = '<span class="text-muted">Sin acciones disponibles</span>';
+        }
 
         return $buttons;
     }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -270,7 +284,6 @@ class UserController extends Controller
             'data' => $roles
         ]);
     }
-    // En App\Http\Controllers\Api\UserController.php
 
     /**
      * Lista todos los usuarios con rol de estudiante para selectores.
