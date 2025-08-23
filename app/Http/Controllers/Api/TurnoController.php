@@ -272,6 +272,23 @@ class TurnoController extends Controller
         ]);
     }
 
+    public function porCarrera(Request $request)
+    {
+        $carreraId = $request->get('carrera_id');
+        $cicloId = $request->get('ciclo_id');
+        
+        // Por ahora retornar todos los turnos activos
+        // En el futuro podrías filtrar por carrera si hay relación
+        $turnos = Turno::where('estado', true)
+            ->orderBy('orden')
+            ->get();
+            
+        return response()->json([
+            'success' => true,
+            'data' => $turnos
+        ]);
+    }
+    
     public function listaActivos()
     {
         $turnos = Turno::activos()

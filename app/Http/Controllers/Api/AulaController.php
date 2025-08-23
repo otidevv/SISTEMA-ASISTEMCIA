@@ -12,6 +12,43 @@ use Illuminate\Support\Facades\DB;
 
 class AulaController extends Controller
 {
+    public function disponibles(Request $request)
+    {
+        $turnoId = $request->get('turno_id');
+        $carreraId = $request->get('carrera_id');
+        $cicloId = $request->get('ciclo_id');
+        
+        // Obtener aulas con sus inscripciones actuales
+        $aulas = Aula::where('estado', true)
+            ->where('tipo', 'aula') // Solo aulas, no laboratorios
+            ->withCount(['inscripciones' => function ($query) use ($cicloId) {
+                if ($cicloId) {
+                    $query->where('ciclo_id', $cicloId)
+                          ->where('estado_inscripcion', 'activo');
+                }
+            }])
+            ->get();
+            
+        $data = $aulas->map(function ($aula) {
+            return [
+                'id' => $aula->id,
+                'nombre' => $aula->nombre,
+                'capacidad' => $aula->capacidad,
+                'capacidad_disponible' => $aula->capacidad - $aula->inscripciones_count,
+                'inscripciones_actuales' => $aula->inscripciones_count,
+                'edificio' => $aula->edificio,
+                'piso' => $aula->piso
+            ];
+        })->filter(function ($aula) {
+            return $aula['capacidad_disponible'] > 0; // Solo aulas con capacidad
+        })->values();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+    
     public function index()
     {
         $aulas = Aula::all();

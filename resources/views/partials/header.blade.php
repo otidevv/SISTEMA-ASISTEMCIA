@@ -704,6 +704,31 @@
                         </li>
                     @endif
 
+                    <!-- Módulo Carnets -->
+                    @if (Auth::user()->hasPermission('carnets.view'))
+                        <li>
+                            <a href="#sidebarCarnets" data-bs-toggle="collapse">
+                                <i data-feather="credit-card"></i>
+                                <span> Carnets </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarCarnets">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('carnets.index') }}">Ver Carnets</a></li>
+                                    @if (Auth::user()->hasPermission('carnets.generate'))
+                                        <li><a href="{{ route('carnets.index') }}#generar">Generar Carnets</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('carnets.print'))
+                                        <li><a href="{{ route('carnets.index') }}#imprimir">Imprimir Carnets</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('carnets.reports'))
+                                        <li><a href="{{ route('carnets.index') }}#reportes">Reportes</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
                     <!-- ✅ MÓDULO ANUNCIOS - CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
                     @if (Auth::user()->hasPermission('announcements_view') ||
                             Auth::user()->hasPermission('announcements_create') ||

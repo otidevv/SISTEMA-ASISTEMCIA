@@ -295,6 +295,134 @@
         </div>
     </div>
 
+    <!-- Modal para Editar Postulación Aprobada -->
+    <div class="modal fade" id="editApprovedModal" tabindex="-1" role="dialog" aria-labelledby="editApprovedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="editApprovedModalLabel">Editar Postulación Aprobada</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editApprovedForm">
+                        <input type="hidden" id="edit-approved-id" name="id">
+                        
+                        <div class="alert alert-warning">
+                            <i class="uil uil-exclamation-triangle"></i> 
+                            <strong>Atención:</strong> Esta postulación ya ha sido aprobada. Los cambios que realice también actualizarán la inscripción asociada.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Datos del Estudiante</h6>
+                                <div class="mb-3">
+                                    <label for="edit-approved-dni" class="form-label">DNI</label>
+                                    <input type="text" class="form-control" id="edit-approved-dni" name="dni" maxlength="8" readonly>
+                                    <small class="text-muted">El DNI no puede ser modificado</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-nombre" class="form-label">Nombres</label>
+                                    <input type="text" class="form-control" id="edit-approved-nombre" name="nombre" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-apellido-paterno" class="form-label">Apellido Paterno</label>
+                                    <input type="text" class="form-control" id="edit-approved-apellido-paterno" name="apellido_paterno" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-apellido-materno" class="form-label">Apellido Materno</label>
+                                    <input type="text" class="form-control" id="edit-approved-apellido-materno" name="apellido_materno" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-telefono" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="edit-approved-telefono" name="telefono">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="edit-approved-email" name="email" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Datos Académicos</h6>
+                                <div class="mb-3">
+                                    <label for="edit-approved-ciclo" class="form-label">Ciclo</label>
+                                    <select class="form-select" id="edit-approved-ciclo" name="ciclo_id" required>
+                                        @foreach($ciclos as $ciclo)
+                                            <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-carrera" class="form-label">Carrera</label>
+                                    <select class="form-select" id="edit-approved-carrera" name="carrera_id" required>
+                                        @foreach($carreras as $carrera)
+                                            <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-turno" class="form-label">Turno</label>
+                                    <select class="form-select" id="edit-approved-turno" name="turno_id" required>
+                                        <!-- Los turnos se cargarán dinámicamente -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-aula" class="form-label">Aula Asignada</label>
+                                    <select class="form-select" id="edit-approved-aula" name="aula_id">
+                                        <!-- Las aulas se cargarán dinámicamente -->
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-tipo" class="form-label">Tipo de Inscripción</label>
+                                    <select class="form-select" id="edit-approved-tipo" name="tipo_inscripcion" required>
+                                        <option value="postulante">Postulante</option>
+                                        <option value="reforzamiento">Reforzamiento</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-muted mb-3">Información de Pago</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="edit-approved-recibo" class="form-label">N° Recibo</label>
+                                    <input type="text" class="form-control" id="edit-approved-recibo" name="numero_recibo">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="edit-approved-matricula" class="form-label">Monto Matrícula (S/.)</label>
+                                    <input type="number" step="0.01" class="form-control" id="edit-approved-matricula" name="monto_matricula">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="edit-approved-ensenanza" class="form-label">Monto Enseñanza (S/.)</label>
+                                    <input type="number" step="0.01" class="form-control" id="edit-approved-ensenanza" name="monto_ensenanza">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-approved-observacion" class="form-label">Observación del cambio <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="edit-approved-observacion" name="observacion_cambio" rows="3" required
+                                placeholder="Explique brevemente el motivo de la modificación"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveApprovedChanges">
+                        <i class="uil uil-save me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Editar Documentos -->
     <div class="modal fade" id="editDocumentsModal" tabindex="-1" role="dialog" aria-labelledby="editDocumentsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

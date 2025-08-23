@@ -17,7 +17,7 @@ use App\Http\Controllers\HorarioDocenteController;
 use App\Http\Controllers\PagoDocenteController;
 use App\Http\Controllers\AsistenciaDocenteController;
 use App\Http\Controllers\CursoController;
-use App\Http\Controllers\CarnetController; // ← AGREGADO PARA CARNETS
+use App\Http\Controllers\CarnetController;
 use App\Http\Controllers\Api\DashboardController as ApiDashboardController;
 use App\Http\Controllers\Auth\PostulanteRegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -305,6 +305,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
     });
     
+    // Carnets - Gestión de carnets de estudiantes
+    Route::middleware('can:carnets.view')->group(function () {
+        Route::get('/carnets', [CarnetController::class, 'index'])->name('carnets.index');
+        Route::post('/carnets/exportar-pdf', [CarnetController::class, 'exportarPDF'])->name('carnets.exportar-pdf')->middleware('can:carnets.export');
+    });
+    
     // Rutas para constancias de postulación (accesibles para estudiantes/postulantes)
     Route::prefix('postulacion/constancia')->middleware('auth')->group(function () {
         Route::get('/generar/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'generarConstancia'])
@@ -442,6 +448,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     Route::prefix('turnos')->group(function () {
         Route::get('/', [App\Http\Controllers\Api\TurnoController::class, 'index']);
         Route::post('/', [App\Http\Controllers\Api\TurnoController::class, 'store']);
+        Route::get('/por-carrera', [App\Http\Controllers\Api\TurnoController::class, 'porCarrera']);
         Route::get('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'show']);
         Route::put('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\TurnoController::class, 'destroy']);
@@ -454,6 +461,8 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::get('/', [PostulacionController::class, 'listar']);
         Route::get('/mi-postulacion-actual', [PostulacionController::class, 'miPostulacionActual']);
         Route::get('/{id}', [PostulacionController::class, 'show']);
+        Route::get('/{id}/editar-aprobada', [PostulacionController::class, 'editarAprobada']);
+        Route::put('/{id}/actualizar-aprobada', [PostulacionController::class, 'actualizarAprobada']);
         Route::post('/{id}/verificar-documentos', [PostulacionController::class, 'verificarDocumentos']);
         Route::post('/{id}/verificar-pago', [PostulacionController::class, 'verificarPago']);
         Route::post('/{id}/aprobar', [PostulacionController::class, 'aprobar']);
@@ -476,6 +485,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     
     // API Aulas
     Route::prefix('aulas')->group(function () {
+        Route::get('/disponibles', [App\Http\Controllers\Api\AulaController::class, 'disponibles']);
         Route::get('/', [App\Http\Controllers\Api\AulaController::class, 'index']);
         Route::post('/', [App\Http\Controllers\Api\AulaController::class, 'store']);
         Route::get('/{id}', [App\Http\Controllers\Api\AulaController::class, 'show']);
@@ -484,6 +494,18 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::patch('/{id}/status', [App\Http\Controllers\Api\AulaController::class, 'changeStatus']);
         Route::get('/disponibles/capacidad/{capacidad}', [App\Http\Controllers\Api\AulaController::class, 'porCapacidad']);
         Route::get('/tipo/{tipo}', [App\Http\Controllers\Api\AulaController::class, 'porTipo']);
+    });
+    
+    // API Carnets
+    Route::prefix('carnets')->group(function () {
+        Route::get('/', [CarnetController::class, 'listar']);
+        Route::post('/generar-masivo', [CarnetController::class, 'generarMasivo']);
+        Route::post('/generar-individual', [CarnetController::class, 'generarIndividual']);
+        Route::post('/marcar-impresos', [CarnetController::class, 'marcarImpresos']);
+        Route::post('/{id}/cambiar-estado', [CarnetController::class, 'cambiarEstado']);
+        Route::get('/{id}', [CarnetController::class, 'show']);
+        Route::put('/{id}', [CarnetController::class, 'update']);
+        Route::delete('/{id}', [CarnetController::class, 'destroy']);
     });
 
     // API Inscripciones

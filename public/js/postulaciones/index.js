@@ -303,6 +303,45 @@ function setupEventHandlers() {
         saveDocumentChanges();
     });
     
+    // Editar postulación aprobada
+    $(document).on('click', '.edit-approved', function() {
+        const id = $(this).data('id');
+        currentPostulacionId = id;
+        $('#edit-approved-id').val(id);
+        loadApprovedPostulationForEdit(id);
+        $('#editApprovedModal').modal('show');
+    });
+    
+    // Guardar cambios de postulación aprobada
+    $('#saveApprovedChanges').on('click', function() {
+        saveApprovedPostulationChanges();
+    });
+    
+    // Evento de cambio de carrera para cargar turnos
+    $('#edit-approved-carrera').on('change', function() {
+        const carreraId = $(this).val();
+        const cicloId = $('#edit-approved-ciclo').val();
+        if (carreraId && cicloId) {
+            // Al cambiar carrera, limpiar turno y aula
+            $('#edit-approved-turno').html('<option value="">Seleccione un turno</option>');
+            $('#edit-approved-aula').html('<option value="">Seleccione un aula</option>');
+            loadTurnosForCarrera(carreraId, cicloId);
+        }
+    });
+    
+    // Evento de cambio de turno para cargar aulas
+    $('#edit-approved-turno').on('change', function() {
+        const turnoId = $(this).val();
+        const carreraId = $('#edit-approved-carrera').val();
+        const cicloId = $('#edit-approved-ciclo').val();
+        if (turnoId && carreraId && cicloId) {
+            // Al cambiar turno, cargar aulas disponibles
+            loadAulasForTurno(turnoId, carreraId, cicloId);
+        } else {
+            $('#edit-approved-aula').html('<option value="">Primero seleccione un turno</option>');
+        }
+    });
+    
     // Limpiar formularios al cerrar modales
     $('.modal').on('hidden.bs.modal', function() {
         $(this).find('form')[0]?.reset();
@@ -715,6 +754,206 @@ function saveDocumentChanges() {
                 toastr.error(errorMsg);
             } else {
                 toastr.error(errorMsg);
+            }
+            
+            // Restaurar botón
+            btn.prop('disabled', false);
+            btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
+        }
+    });
+}
+
+// Función para cargar datos de postulación aprobada para editar
+function loadApprovedPostulationForEdit(id) {
+    $.ajax({
+        url: default_server + "/json/postulaciones/" + id + "/editar-aprobada",
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const data = response.data;
+                
+                // Guardar el aula actual si existe
+                const aulaActual = data.inscripcion ? data.inscripcion.aula_id : null;
+                
+                // Llenar datos del estudiante
+                $('#edit-approved-dni').val(data.estudiante.numero_documento);
+                $('#edit-approved-nombre').val(data.estudiante.nombre);
+                $('#edit-approved-apellido-paterno').val(data.estudiante.apellido_paterno);
+                $('#edit-approved-apellido-materno').val(data.estudiante.apellido_materno);
+                $('#edit-approved-telefono').val(data.estudiante.telefono);
+                $('#edit-approved-email').val(data.estudiante.email);
+                
+                // Llenar datos académicos
+                $('#edit-approved-ciclo').val(data.postulacion.ciclo_id);
+                $('#edit-approved-carrera').val(data.postulacion.carrera_id);
+                $('#edit-approved-tipo').val(data.postulacion.tipo_inscripcion);
+                
+                // Cargar turnos disponibles y seleccionar el actual
+                // Pasamos false como cuarto parámetro para evitar el trigger del evento change
+                loadTurnosForCarrera(data.postulacion.carrera_id, data.postulacion.ciclo_id, data.postulacion.turno_id, false);
+                
+                // Cargar aulas directamente con el turno y aula seleccionados
+                setTimeout(function() {
+                    loadAulasForTurno(data.postulacion.turno_id, data.postulacion.carrera_id, data.postulacion.ciclo_id, aulaActual);
+                }, 500);
+                
+                // Llenar datos de pago
+                $('#edit-approved-recibo').val(data.postulacion.numero_recibo);
+                $('#edit-approved-matricula').val(data.postulacion.monto_matricula);
+                $('#edit-approved-ensenanza').val(data.postulacion.monto_ensenanza);
+            }
+        },
+        error: function(xhr) {
+            toastr.error('Error al cargar los datos de la postulación');
+            $('#editApprovedModal').modal('hide');
+        }
+    });
+}
+
+// Función para cargar turnos disponibles
+function loadTurnosForCarrera(carreraId, cicloId, selectedTurnoId = null, triggerChange = true) {
+    $.ajax({
+        url: default_server + "/json/turnos/por-carrera",
+        type: 'GET',
+        data: {
+            carrera_id: carreraId,
+            ciclo_id: cicloId
+        },
+        success: function(response) {
+            let html = '<option value="">Seleccione un turno</option>';
+            if (response.data && response.data.length > 0) {
+                response.data.forEach(function(turno) {
+                    const selected = selectedTurnoId == turno.id ? 'selected' : '';
+                    html += '<option value="' + turno.id + '" ' + selected + '>' + turno.nombre + '</option>';
+                });
+            }
+            $('#edit-approved-turno').html(html);
+            
+            // Solo trigger change si se indica explícitamente
+            if (selectedTurnoId && triggerChange) {
+                $('#edit-approved-turno').trigger('change');
+            }
+        }
+    });
+}
+
+// Función para cargar aulas disponibles
+function loadAulasForTurno(turnoId, carreraId, cicloId, selectedAulaId = null) {
+    if (!turnoId) {
+        $('#edit-approved-aula').html('<option value="">Primero seleccione un turno</option>');
+        return;
+    }
+    
+    $.ajax({
+        url: default_server + "/json/aulas/disponibles",
+        type: 'GET',
+        data: {
+            turno_id: turnoId,
+            carrera_id: carreraId,
+            ciclo_id: cicloId
+        },
+        success: function(response) {
+            let html = '<option value="">Seleccione un aula</option>';
+            let aulaEncontrada = false;
+            
+            if (response.data && response.data.length > 0) {
+                response.data.forEach(function(aula) {
+                    const selected = selectedAulaId && selectedAulaId == aula.id ? 'selected' : '';
+                    if (selected) aulaEncontrada = true;
+                    const capacidadInfo = ' (Capacidad: ' + aula.capacidad_disponible + '/' + aula.capacidad + ')';
+                    html += '<option value="' + aula.id + '" ' + selected + '>' + aula.nombre + capacidadInfo + '</option>';
+                });
+            }
+            
+            // Si el aula seleccionada no está en la lista (porque está llena), agregarla como opción deshabilitada
+            if (selectedAulaId && !aulaEncontrada) {
+                // Hacer una petición adicional para obtener el nombre del aula actual
+                $.ajax({
+                    url: default_server + "/json/aulas/" + selectedAulaId,
+                    type: 'GET',
+                    success: function(aulaResponse) {
+                        if (aulaResponse.success && aulaResponse.data) {
+                            html = '<option value="' + selectedAulaId + '" selected>' + 
+                                   aulaResponse.data.nombre + ' (Aula actual - Sin capacidad disponible)</option>' + html;
+                            $('#edit-approved-aula').html(html);
+                        }
+                    }
+                });
+            } else {
+                $('#edit-approved-aula').html(html);
+            }
+            
+            // Si hay un aula seleccionada, mantenerla
+            if (selectedAulaId) {
+                $('#edit-approved-aula').val(selectedAulaId);
+            }
+        },
+        error: function() {
+            $('#edit-approved-aula').html('<option value="">Error al cargar aulas</option>');
+        }
+    });
+}
+
+// Función para guardar cambios de postulación aprobada
+function saveApprovedPostulationChanges() {
+    const formData = {
+        nombre: $('#edit-approved-nombre').val(),
+        apellido_paterno: $('#edit-approved-apellido-paterno').val(),
+        apellido_materno: $('#edit-approved-apellido-materno').val(),
+        telefono: $('#edit-approved-telefono').val(),
+        email: $('#edit-approved-email').val(),
+        ciclo_id: $('#edit-approved-ciclo').val(),
+        carrera_id: $('#edit-approved-carrera').val(),
+        turno_id: $('#edit-approved-turno').val(),
+        aula_id: $('#edit-approved-aula').val(),
+        tipo_inscripcion: $('#edit-approved-tipo').val(),
+        numero_recibo: $('#edit-approved-recibo').val(),
+        monto_matricula: $('#edit-approved-matricula').val(),
+        monto_ensenanza: $('#edit-approved-ensenanza').val(),
+        observacion_cambio: $('#edit-approved-observacion').val()
+    };
+    
+    // Validar observación
+    if (!formData.observacion_cambio || formData.observacion_cambio.length < 10) {
+        toastr.error('Debe explicar el motivo de la modificación (mínimo 10 caracteres)');
+        return;
+    }
+    
+    // Deshabilitar botón mientras se procesa
+    const btn = $('#saveApprovedChanges');
+    btn.prop('disabled', true);
+    btn.html('<i class="spinner-border spinner-border-sm"></i> Guardando...');
+    
+    $.ajax({
+        url: default_server + "/json/postulaciones/" + currentPostulacionId + "/actualizar-aprobada",
+        type: 'PUT',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                toastr.success('Postulación actualizada correctamente');
+                
+                if (response.message) {
+                    toastr.info(response.message);
+                }
+                
+                $('#editApprovedModal').modal('hide');
+                table.ajax.reload();
+            } else {
+                toastr.error(response.message || 'Error al actualizar la postulación');
+            }
+            
+            // Restaurar botón
+            btn.prop('disabled', false);
+            btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
+        },
+        error: function(xhr) {
+            if (xhr.status === 422) {
+                const errors = xhr.responseJSON.errors;
+                for (let key in errors) {
+                    toastr.error(errors[key][0]);
+                }
+            } else {
+                toastr.error('Error al actualizar la postulación');
             }
             
             // Restaurar botón

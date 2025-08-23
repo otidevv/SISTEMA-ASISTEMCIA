@@ -499,6 +499,13 @@ class PostulacionController extends Controller
             </button>';
         }
 
+        // Editar postulación aprobada
+        if ($user->hasPermission('postulaciones.edit') && $postulacion->estado == 'aprobado') {
+            $actions[] = '<button class="btn btn-sm btn-primary edit-approved" data-id="' . $postulacion->id . '" title="Editar postulación aprobada">
+                <i class="uil uil-edit"></i>
+            </button>';
+        }
+
         // Eliminar
         if ($user->hasPermission('postulaciones.delete')) {
             $actions[] = '<button class="btn btn-sm btn-danger delete-postulacion" data-id="' . $postulacion->id . '" title="Eliminar">
@@ -586,6 +593,132 @@ class PostulacionController extends Controller
                 'success' => false,
                 'message' => 'Error al obtener postulación: ' . $e->getMessage(),
                 'postulacion' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener datos de postulación aprobada para editar
+     */
+    public function editarAprobada($id)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.edit')) {
+            return response()->json(['error' => 'Sin permisos para editar'], 403);
+        }
+
+        try {
+            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+                ->findOrFail($id);
+            
+            // Buscar la inscripción asociada si existe
+            $inscripcion = Inscripcion::where('estudiante_id', $postulacion->estudiante_id)
+                ->where('ciclo_id', $postulacion->ciclo_id)
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'estudiante' => $postulacion->estudiante,
+                    'postulacion' => $postulacion,
+                    'inscripcion' => $inscripcion
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener datos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Actualizar postulación aprobada
+     */
+    public function actualizarAprobada(Request $request, $id)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.edit')) {
+            return response()->json(['error' => 'Sin permisos para editar'], 403);
+        }
+
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'apellido_paterno' => 'required|string|max:255',
+            'apellido_materno' => 'required|string|max:255',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'required|email',
+            'ciclo_id' => 'required|exists:ciclos,id',
+            'carrera_id' => 'required|exists:carreras,id',
+            'turno_id' => 'required|exists:turnos,id',
+            'aula_id' => 'nullable|exists:aulas,id',
+            'tipo_inscripcion' => 'required|in:postulante,reforzamiento',
+            'numero_recibo' => 'nullable|string|max:50',
+            'monto_matricula' => 'nullable|numeric|min:0',
+            'monto_ensenanza' => 'nullable|numeric|min:0',
+            'observacion_cambio' => 'required|string|min:10'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            $postulacion = Postulacion::findOrFail($id);
+            $estudiante = $postulacion->estudiante;
+            
+            // Actualizar datos del estudiante
+            $estudiante->nombre = $request->nombre;
+            $estudiante->apellido_paterno = $request->apellido_paterno;
+            $estudiante->apellido_materno = $request->apellido_materno;
+            $estudiante->telefono = $request->telefono;
+            $estudiante->email = $request->email;
+            $estudiante->save();
+            
+            // Actualizar datos de la postulación
+            $postulacion->ciclo_id = $request->ciclo_id;
+            $postulacion->carrera_id = $request->carrera_id;
+            $postulacion->turno_id = $request->turno_id;
+            $postulacion->tipo_inscripcion = $request->tipo_inscripcion;
+            $postulacion->numero_recibo = $request->numero_recibo;
+            $postulacion->monto_matricula = $request->monto_matricula;
+            $postulacion->monto_ensenanza = $request->monto_ensenanza;
+            $postulacion->monto_total_pagado = ($request->monto_matricula ?? 0) + ($request->monto_ensenanza ?? 0);
+            
+            // Agregar observación al historial
+            $observacionActual = $postulacion->observaciones ?? '';
+            $nuevaObservacion = date('d/m/Y H:i') . ' - Modificación: ' . $request->observacion_cambio . ' (Por: ' . Auth::user()->nombre . ')';
+            $postulacion->observaciones = $observacionActual ? $observacionActual . "\n" . $nuevaObservacion : $nuevaObservacion;
+            
+            $postulacion->save();
+            
+            // Si hay inscripción asociada, actualizarla también
+            $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
+                ->where('ciclo_id', $postulacion->ciclo_id)
+                ->first();
+                
+            if ($inscripcion) {
+                $inscripcion->carrera_id = $request->carrera_id;
+                $inscripcion->turno_id = $request->turno_id;
+                $inscripcion->tipo_inscripcion = $request->tipo_inscripcion;
+                
+                // Si se especifica un aula, actualizarla
+                if ($request->aula_id) {
+                    $inscripcion->aula_id = $request->aula_id;
+                }
+                
+                $inscripcion->save();
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Postulación actualizada correctamente' . ($inscripcion ? '. La inscripción asociada también fue actualizada.' : '')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar: ' . $e->getMessage()
             ], 500);
         }
     }

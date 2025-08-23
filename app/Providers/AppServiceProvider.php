@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
+use Illuminate\Foundation\AliasLoader;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +14,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register QrCode alias
+        $loader = AliasLoader::getInstance();
+        $loader->alias('QrCode', \SimpleSoftwareIO\QrCode\Facades\QrCode::class);
     }
 
     /**
