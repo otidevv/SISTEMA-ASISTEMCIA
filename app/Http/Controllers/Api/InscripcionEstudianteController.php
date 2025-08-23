@@ -419,6 +419,18 @@ class InscripcionEstudianteController extends Controller
                 $datosPostulacion[$key] = $value;
             }
             
+            // Generar código postulante correlativo único
+            $ultimoCodigo = Postulacion::max('codigo_postulante') ?? 1000000;
+            $nuevoCodigo = $ultimoCodigo + 1;
+            
+            // Asegurar que sea único (por si hay concurrencia)
+            while (Postulacion::where('codigo_postulante', $nuevoCodigo)->exists()) {
+                $nuevoCodigo++;
+            }
+            
+            // Agregar el código generado al array de datos
+            $datosPostulacion['codigo_postulante'] = $nuevoCodigo;
+            
             \Log::info('Datos completos de postulación:', $datosPostulacion);
             
             $postulacion = Postulacion::create($datosPostulacion);

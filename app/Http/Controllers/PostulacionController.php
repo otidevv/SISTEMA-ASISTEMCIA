@@ -313,19 +313,19 @@ class PostulacionController extends Controller
                 ], 400);
             }
             
-            // Buscar un aula disponible según el turno y capacidad
-            $aula = $this->asignarAulaDisponible($postulacion->turno_id, $postulacion->carrera_id);
+            // Buscar un aula disponible usando la lógica mejorada
+            $aula = $this->asignarAulaDisponible($postulacion->turno_id, $postulacion->carrera_id, $postulacion->tipo_inscripcion);
             
             if (!$aula) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No hay aulas disponibles con capacidad suficiente para el turno seleccionado'
+                    'message' => 'No hay aulas disponibles con capacidad suficiente para el turno y carrera seleccionados'
                 ], 400);
             }
             
             // Crear la inscripción
             $inscripcion = new Inscripcion();
-            $inscripcion->codigo_inscripcion = $postulacion->codigo_postulante; // Usar el código de postulante como código de inscripción
+            $inscripcion->codigo_inscripcion = $postulacion->codigo_postulante;
             $inscripcion->estudiante_id = $postulacion->estudiante_id;
             $inscripcion->carrera_id = $postulacion->carrera_id;
             $inscripcion->tipo_inscripcion = $postulacion->tipo_inscripcion;
@@ -361,12 +361,13 @@ class PostulacionController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Postulación aprobada exitosamente. Se ha creado la inscripción y asignado al aula ' . $aula->nombre,
+                'message' => 'Postulación aprobada exitosamente. Se ha creado la inscripción y asignado al aula ' . $aula->nombre . ' (Grupo ' . $this->determinarGrupoCarrera($postulacion->carrera->nombre) . ')',
                 'data' => [
                     'inscripcion_id' => $inscripcion->id,
                     'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
                     'aula' => $aula->nombre,
-                    'aula_capacidad_disponible' => $aula->getCapacidadDisponible() - 1
+                    'aula_capacidad_disponible' => $aula->getCapacidadDisponible() - 1,
+                    'grupo_carrera' => $this->determinarGrupoCarrera($postulacion->carrera->nombre)
                 ]
             ]);
             
@@ -380,29 +381,141 @@ class PostulacionController extends Controller
     }
     
     /**
-     * Asignar aula disponible según turno y capacidad
+     * Asignar aula disponible según turno, carrera y capacidad - LÓGICA MEJORADA
      */
-    private function asignarAulaDisponible($turnoId, $carreraId)
+    private function asignarAulaDisponible($turnoId, $carreraId, $tipoInscripcion = 'postulante')
     {
-        // Obtener todas las aulas activas ordenadas por capacidad disponible
-        $aulas = Aula::activas()
-            ->where('tipo', 'aula') // Solo aulas regulares, no laboratorios
-            ->get()
-            ->filter(function ($aula) {
-                return $aula->getCapacidadDisponible() > 0;
-            })
-            ->sortBy(function ($aula) {
-                // Ordenar por porcentaje de ocupación (llenar las aulas más ocupadas primero)
-                return -$aula->getPorcentajeOcupacion();
-            });
+        $carrera = Carrera::find($carreraId);
+        $turno = Turno::find($turnoId);
         
-        // Por ahora, tomamos la primera aula disponible con capacidad
-        // En el futuro, se podría implementar lógica más compleja considerando:
-        // - Turnos específicos para cada aula
-        // - Carreras específicas por aula
-        // - Preferencias de edificio/piso
+        // 1. Determinar el grupo de la carrera
+        $grupoCarrera = $this->determinarGrupoCarrera($carrera->nombre);
+        $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
+        
+        // 2. Buscar aulas específicas del grupo y turno
+        $query = Aula::activas()->where('estado', 1);
+        
+        // Filtrar por turno específico
+        $query->where('nombre', 'like', '%' . $turnoNombre . '%');
+        
+        $aulas = collect();
+        
+        // Priorizar aulas del grupo específico
+        if ($grupoCarrera) {
+            $aulasGrupoEspecifico = clone $query;
+            $aulasGrupoEspecifico->where(function($q) use ($grupoCarrera) {
+                $q->where('codigo', 'like', $grupoCarrera . '%')
+                  ->orWhere('codigo', 'like', '%' . $grupoCarrera . '%'); // Para casos como AB, ABC
+            });
+            
+            $aulas = $aulasGrupoEspecifico->get()->filter(function ($aula) {
+                return $aula->getCapacidadDisponible() > 0;
+            });
+        }
+        
+        // 3. Si no hay aulas del grupo específico, buscar aulas mixtas (AB, ABC) del mismo turno
+        if ($aulas->isEmpty()) {
+            $aulasMixtas = clone $query;
+            $aulasMixtas->where(function($q) {
+                $q->where('codigo', 'like', 'AB%')
+                  ->orWhere('codigo', 'like', 'ABC%');
+            });
+            
+            $aulas = $aulasMixtas->get()->filter(function ($aula) {
+                return $aula->getCapacidadDisponible() > 0;
+            });
+        }
+        
+        // 4. Como último recurso, cualquier aula del turno
+        if ($aulas->isEmpty()) {
+            $aulas = $query->get()->filter(function ($aula) {
+                return $aula->getCapacidadDisponible() > 0;
+            });
+        }
+        
+        // 5. Ordenar por prioridad
+        $aulas = $aulas->sortBy(function ($aula) use ($grupoCarrera) {
+            $score = 0;
+            
+            // Alta prioridad para aulas del grupo específico
+            if ($grupoCarrera && str_starts_with($aula->codigo, $grupoCarrera)) {
+                $score -= 100;
+            }
+            
+            // Media prioridad para aulas mixtas
+            if (str_starts_with($aula->codigo, 'AB') || str_starts_with($aula->codigo, 'ABC')) {
+                $score -= 50;
+            }
+            
+            // Equilibrar ocupación (llenar las más ocupadas primero)
+            $score += (100 - $aula->getPorcentajeOcupacion());
+            
+            // Preferir capacidades apropiadas
+            $capacidadIdeal = $this->getCapacidadIdealPorGrupo($grupoCarrera);
+            $score += abs($aula->capacidad - $capacidadIdeal);
+            
+            return $score;
+        });
         
         return $aulas->first();
+    }
+
+    /**
+     * Determinar el grupo de carrera según CEPRE UNAMAD
+     */
+    private function determinarGrupoCarrera($nombreCarrera)
+    {
+        $nombreLower = strtolower($nombreCarrera);
+        
+        // Grupo A - Ingenierías
+        if (str_contains($nombreLower, 'ingenieria') || 
+            str_contains($nombreLower, 'sistemas') ||
+            str_contains($nombreLower, 'informatica') ||
+            str_contains($nombreLower, 'forestal') ||
+            str_contains($nombreLower, 'medio ambiente') ||
+            str_contains($nombreLower, 'agroindustrial')) {
+            return 'A';
+        }
+        
+        // Grupo B - Ciencias de la Salud
+        if (str_contains($nombreLower, 'medicina') ||
+            str_contains($nombreLower, 'veterinaria') ||
+            str_contains($nombreLower, 'zootecnia') ||
+            str_contains($nombreLower, 'enfermeria')) {
+            return 'B';
+        }
+        
+        // Grupo C - Ciencias Sociales y Educación
+        if (str_contains($nombreLower, 'administracion') ||
+            str_contains($nombreLower, 'negocios') ||
+            str_contains($nombreLower, 'contabilidad') ||
+            str_contains($nombreLower, 'finanzas') ||
+            str_contains($nombreLower, 'derecho') ||
+            str_contains($nombreLower, 'ciencias politicas') ||
+            str_contains($nombreLower, 'ecoturismo') ||
+            str_contains($nombreLower, 'educacion') ||
+            str_contains($nombreLower, 'primaria') ||
+            str_contains($nombreLower, 'inicial') ||
+            str_contains($nombreLower, 'especial') ||
+            str_contains($nombreLower, 'matematica') ||
+            str_contains($nombreLower, 'computacion')) {
+            return 'C';
+        }
+        
+        return null; // Si no coincide con ningún grupo
+    }
+
+    /**
+     * Obtener capacidad ideal por grupo de carreras
+     */
+    private function getCapacidadIdealPorGrupo($grupo)
+    {
+        switch ($grupo) {
+            case 'A': return 30; // Ingenierías - grupos medianos
+            case 'B': return 25; // Ciencias de salud - grupos más pequeños
+            case 'C': return 35; // Ciencias sociales - grupos más grandes
+            default: return 30;
+        }
     }
 
     /**
@@ -489,7 +602,7 @@ class PostulacionController extends Controller
             </button>';
         }
 
-        // Aprobar (placeholder por ahora)
+        // Aprobar
         if ($user->hasPermission('postulaciones.approve') && 
             $postulacion->estado == 'pendiente' && 
             $postulacion->documentos_verificados && 
