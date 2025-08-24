@@ -68,7 +68,7 @@ class DashboardController extends Controller
         if ($user->hasRole('estudiante') || $user->hasRole('postulante')) {
             // Obtener inscripción activa del estudiante
             $inscripcionActiva = Inscripcion::where('estudiante_id', $user->id)
-                ->where('estado_inscripcion', 'activo')
+                ->whereIn('estado_inscripcion', ['activo', 'aprobada']) // ← CAMBIO APLICADO
                 ->whereHas('ciclo', function ($query) {
                     $query->where('es_activo', true);
                 })
@@ -136,6 +136,26 @@ class DashboardController extends Controller
                 $data['infoAsistencia'] = $infoAsistencia;
                 $data['primerRegistro'] = $primerRegistro;
             }
+
+            // NUEVO: Determinar si el estudiante ha completado el proceso (constancia subida)
+            // CORREGIDO: Determinar si el estudiante ha completado el proceso (constancia subida)
+            $constanciaSubida = false;
+            
+            if ($inscripcionActiva) {
+                // Buscar la postulación del estudiante para este ciclo
+                $postulacion = \App\Models\Postulacion::where('estudiante_id', $user->id)
+                    ->where('ciclo_id', $inscripcionActiva->ciclo_id)
+                    ->first();
+                
+                // Verificar si la constancia firmada fue realmente subida
+                if ($postulacion) {
+                    $constanciaSubida = !empty($postulacion->constancia_firmada_path);
+                }
+            }
+            
+            $data['constanciaSubida'] = $constanciaSubida;
+
+            $data['constanciaSubida'] = $constanciaSubida;
 
             // Información del estudiante
             $data['esEstudiante'] = true;
@@ -415,7 +435,7 @@ class DashboardController extends Controller
 
                 // Obtener inscripción activa del hijo
                 $inscripcionActiva = Inscripcion::where('estudiante_id', $hijo->id)
-                    ->where('estado_inscripcion', 'activo')
+                    ->whereIn('estado_inscripcion', ['activo', 'aprobada']) // ← CAMBIO APLICADO
                     ->whereHas('ciclo', function ($query) {
                         $query->where('es_activo', true);
                     })

@@ -668,7 +668,7 @@
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-md-8">
-                                    <h3 class="mb-1">¡Bienvenido, {{ Auth::user()->nombres }}!</h3>
+                                    <h3 class="mb-1">¡Bienvenido, {{ Auth::user()->nombre }}!</h3>
                                     <p class="mb-0">
                                         @if (Auth::user()->hasRole('postulante'))
                                             Tu camino hacia la universidad comienza aquí. Inscríbete en el ciclo actual para iniciar tu preparación académica de excelencia.
