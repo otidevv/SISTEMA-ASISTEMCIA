@@ -43,12 +43,19 @@
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-default-stylesheet" />
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     @stack('css')
 
     <!-- Config js -->
     <script src="{{ asset('assets/js/config.js') }}"></script>
     <script>
         window.default_server = "{{ url('/') }}";
+        // Configuración de sesión para JavaScript
+        window.sessionConfig = {
+            lifetime: {{ config('session.lifetime') }}, // minutos desde config
+            warningTime: 2 // mostrar contador desde el inicio
+        };
     </script>
 </head>
 
@@ -246,7 +253,7 @@
     <script src="{{ asset('assets/libs/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
 
@@ -258,6 +265,9 @@
     
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.js"></script>
+    
     <script>
         // Configuración global de toastr
         toastr.options = {
@@ -271,6 +281,282 @@
     
     @stack('js')
     @stack('scripts')
+
+    <!-- ============================================ -->
+    <!-- SISTEMA DE GESTIÓN DE SESIÓN CON CONTADOR -->
+    <!-- ============================================ -->
+    <script>
+        class SessionManager {
+            constructor() {
+                this.config = window.sessionConfig || { lifetime: 120, warningTime: 1 };
+                this.lastActivity = Date.now();
+                this.warningShown = false;
+                this.checkInterval = null;
+                this.isAlertActive = false;
+                this.countdownInterval = null;
+                
+                console.log('SessionManager iniciado:', {
+                    lifetime: this.config.lifetime + ' minutos',
+                    warningTime: this.config.warningTime + ' minuto antes'
+                });
+                
+                this.init();
+            }
+            
+            init() {
+                // Rastrear actividad del usuario
+                this.trackUserActivity();
+                
+                // Verificar estado cada 10 segundos
+                this.startSessionCheck();
+            }
+            
+            trackUserActivity() {
+                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'click', 'touchstart'];
+                const updateActivity = () => {
+                    this.lastActivity = Date.now();
+                    this.warningShown = false;
+                };
+                
+                events.forEach(event => {
+                    document.addEventListener(event, updateActivity, true);
+                });
+            }
+            
+            startSessionCheck() {
+                this.checkInterval = setInterval(() => {
+                    this.checkSessionStatus();
+                }, 10000); // Verificar cada 10 segundos
+            }
+            
+            checkSessionStatus() {
+                if (this.isAlertActive) return; // No verificar si ya hay una alerta activa
+                
+                const now = Date.now();
+                const timeSinceActivity = now - this.lastActivity;
+                const maxInactivity = this.config.lifetime * 60 * 1000; // convertir a ms
+                const warningTime = this.config.warningTime * 60 * 1000; // convertir a ms
+                
+                // Si queda 1 minuto o menos, mostrar contador regresivo
+                if (timeSinceActivity >= (maxInactivity - warningTime)) {
+                    const timeRemaining = Math.max(0, maxInactivity - timeSinceActivity);
+                    this.showCountdown(timeRemaining);
+                }
+            }
+            
+            showCountdown(timeRemaining) {
+                if (this.isAlertActive) return;
+                
+                this.isAlertActive = true;
+                this.warningShown = true;
+                
+                let secondsLeft = Math.floor(timeRemaining / 1000);
+                let userChooseToContinue = false; // Bandera para controlar si usuario eligió continuar
+                
+                console.log('Mostrando contador de sesión:', secondsLeft + ' segundos restantes');
+                
+                Swal.fire({
+                    title: 'Contador de Sesión',
+                    html: `
+                        <div style="text-align: center;">
+                            <p><strong>Tiempo de inactividad detectado</strong></p>
+                            <div style="margin: 20px 0;">
+                                <div id="countdown-circle" style="
+                                    width: 120px; 
+                                    height: 120px; 
+                                    border: 8px solid #e3e3e3; 
+                                    border-top: 8px solid #28a745; 
+                                    border-radius: 50%; 
+                                    margin: 0 auto 15px auto;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 2rem;
+                                    font-weight: bold;
+                                    color: #28a745;
+                                ">
+                                    <span id="countdown-number">${secondsLeft}</span>
+                                </div>
+                                <p style="color: #6c757d;">segundos hasta el cierre de sesión</p>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #666;">
+                                Haz cualquier actividad para reiniciar el contador
+                            </p>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Continuar Trabajando',
+                    cancelButtonText: 'Cerrar Sesión',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        this.countdownInterval = setInterval(() => {
+                            secondsLeft--;
+                            
+                            const numberElement = document.getElementById('countdown-number');
+                            const circleElement = document.getElementById('countdown-circle');
+                            
+                            if (numberElement) {
+                                numberElement.textContent = secondsLeft;
+                                
+                                // Cambiar colores según tiempo restante
+                                if (secondsLeft <= 10) {
+                                    circleElement.style.borderTopColor = '#dc3545';
+                                    numberElement.style.color = '#dc3545';
+                                    circleElement.style.animation = 'pulse 1s infinite';
+                                } else if (secondsLeft <= 30) {
+                                    circleElement.style.borderTopColor = '#fd7e14';
+                                    numberElement.style.color = '#fd7e14';
+                                }
+                            }
+                            
+                            if (secondsLeft <= 0) {
+                                clearInterval(this.countdownInterval);
+                                this.countdownInterval = null;
+                                
+                                // SOLO mostrar sesión expirada si el usuario NO eligió continuar
+                                if (!userChooseToContinue) {
+                                    Swal.close();
+                                    // Dar un momento para que se cierre la alerta, luego mostrar alerta final
+                                    setTimeout(() => {
+                                        this.showSessionExpired();
+                                    }, 300);
+                                }
+                            }
+                        }, 1000);
+                    },
+                    willClose: () => {
+                        if (this.countdownInterval) {
+                            clearInterval(this.countdownInterval);
+                        }
+                    }
+                }).then((result) => {
+                    this.isAlertActive = false;
+                    
+                    // Limpiar intervalo ANTES de hacer cualquier cosa
+                    if (this.countdownInterval) {
+                        clearInterval(this.countdownInterval);
+                        this.countdownInterval = null;
+                    }
+                    
+                    if (result.isConfirmed) {
+                        // Usuario quiere continuar - recargar página para reiniciar todo
+                        console.log('Usuario eligió continuar - recargando página');
+                        window.location.reload();
+                        
+                    } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+                        // Usuario eligió cerrar sesión
+                        console.log('Usuario eligió cerrar sesión manualmente');
+                        window.location.href = '{{ route("login") }}';
+                    }
+                    // Si result.isDismissed por timer, no hacer nada aquí - se maneja en didOpen
+                });
+            }
+            
+            showSessionExpired() {
+                if (this.isAlertActive) return;
+                
+                this.isAlertActive = true;
+                let finalCountdown = 10;
+                
+                console.log('Sesión expirada - mostrando alerta final');
+                
+                // Función para redirigir (backup)
+                const redirectToLogin = () => {
+                    console.log('Redirigiendo al login...');
+                    window.location.href = '{{ route("login") }}';
+                };
+                
+                // Timeout de seguridad - redirigir después de 11 segundos sin importar qué
+                const backupRedirect = setTimeout(redirectToLogin, 11000);
+                
+                Swal.fire({
+                    title: 'Sesión Expirada',
+                    html: `
+                        <div style="text-align: center;">
+                            <p><strong>Tu sesión ha expirado por inactividad</strong></p>
+                            <p>Serás redirigido al login en:</p>
+                            <div style="font-size: 3rem; color: #dc3545; font-weight: bold; margin: 20px 0;">
+                                <span id="final-countdown">${finalCountdown}</span>
+                            </div>
+                            <p style="color: #6c757d; font-size: 0.9rem;">
+                                Inicia sesión nuevamente para continuar
+                            </p>
+                        </div>
+                    `,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Ir al Login Ahora',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    timer: finalCountdown * 1000,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        const interval = setInterval(() => {
+                            finalCountdown--;
+                            const element = document.getElementById('final-countdown');
+                            if (element) {
+                                element.textContent = finalCountdown;
+                                element.style.animation = 'pulse 0.5s infinite';
+                            }
+                            if (finalCountdown <= 0) {
+                                clearInterval(interval);
+                                clearTimeout(backupRedirect);
+                                redirectToLogin(); // Redirigir inmediatamente
+                            }
+                        }, 1000);
+                    }
+                }).then(() => {
+                    clearTimeout(backupRedirect);
+                    redirectToLogin();
+                }).catch(() => {
+                    // Si hay cualquier error, igual redirigir
+                    clearTimeout(backupRedirect);
+                    redirectToLogin();
+                });
+            }
+            
+            destroy() {
+                if (this.checkInterval) clearInterval(this.checkInterval);
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+            }
+        }
+        
+        // Inicializar cuando el DOM esté listo
+        let sessionManager;
+        document.addEventListener('DOMContentLoaded', function() {
+            sessionManager = new SessionManager();
+            
+            // Interceptar errores 401/419 de AJAX
+            $(document).ajaxError(function(event, xhr, settings) {
+                if ((xhr.status === 401 || xhr.status === 419) && !sessionManager.isAlertActive) {
+                    console.log('Error ' + xhr.status + ' detectado - sesión expirada');
+                    sessionManager.showSessionExpired();
+                }
+            });
+        });
+        
+        // Limpiar al salir
+        window.addEventListener('beforeunload', function() {
+            if (sessionManager) {
+                sessionManager.destroy();
+            }
+        });
+        
+        // CSS para animaciones
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.8; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 
 
 </body>

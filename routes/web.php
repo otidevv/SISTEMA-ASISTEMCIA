@@ -409,6 +409,36 @@ Route::middleware('auth')->group(function () {
 
 // Agrega el prefijo 'json' para todas las rutas de API
 Route::middleware(['auth'])->prefix('json')->group(function () {
+    
+    // ==========================================
+    // RUTAS PARA GESTIÓN DE SESIÓN (NUEVO)
+    // ==========================================
+    Route::get('/session/verify', function() {
+        return response()->json([
+            'valid' => auth()->check(),
+            'timestamp' => now(),
+            'user_id' => auth()->id()
+        ]);
+    });
+    
+    Route::post('/session/renew', function() {
+        if (auth()->check()) {
+            // Regenerar la sesión para renovarla
+            session()->regenerate();
+            
+            return response()->json([
+                'renewed' => true,
+                'timestamp' => now(),
+                'user_id' => auth()->id(),
+                'session_lifetime' => config('session.lifetime') . ' minutes'
+            ]);
+        }
+        
+        return response()->json([
+            'renewed' => false,
+            'error' => 'Sesión no válida'
+        ], 401);
+    });
 
     // API Ciclos
     Route::prefix('ciclos')->group(function () {
