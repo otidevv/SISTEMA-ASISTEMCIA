@@ -147,8 +147,8 @@ $(document).ready(function() {
         $('#contenedor-inscripcion').html(`
             <div class="card inscription-card">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="mdi mdi-account-plus me-2"></i>Formulario de Inscripción
+                    <h4 class="mb-0 text-white">
+                       <i class="mdi mdi-account-plus me-2"></i>Formulario de Inscripción y Postulación
                     </h4>
                 </div>
                 <div class="card-body">
@@ -211,7 +211,7 @@ $(document).ready(function() {
                             <div class="col-md-8 mb-3">
                                 <label class="form-label">Nombre del Colegio <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="buscar_colegio"
-                                       placeholder="Escriba el nombre del colegio..." disabled>
+                                         placeholder="Escriba el nombre del colegio..." disabled>
                                 <div id="sugerencias-colegios" class="list-group mt-1" style="max-height: 200px; overflow-y: auto;"></div>
                             </div>
 
@@ -239,7 +239,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Voucher de Pago <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="voucher_pago" name="voucher_pago"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                         accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
 
@@ -247,7 +247,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Certificado de Estudios <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="certificado_estudios" name="certificado_estudios"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                         accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
 
@@ -255,7 +255,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Carta de Compromiso <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="carta_compromiso" name="carta_compromiso"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                         accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
 
@@ -263,7 +263,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Constancia de Estudios <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="constancia_estudios" name="constancia_estudios"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                         accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
 
@@ -271,7 +271,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">DNI <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="dni_documento" name="dni_documento"
-                                       accept=".pdf,.jpg,.jpeg,.png" required>
+                                         accept=".pdf,.jpg,.jpeg,.png" required>
                                 <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                             </div>
 
@@ -279,7 +279,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Foto Carnet <span class="text-danger">*</span></label>
                                 <input type="file" class="form-control" id="foto_carnet" name="foto_carnet"
-                                       accept=".jpg,.jpeg,.png" required>
+                                         accept=".jpg,.jpeg,.png" required>
                                 <small class="text-muted">JPG o PNG (Max: 2MB)</small>
                             </div>
 
@@ -292,7 +292,7 @@ $(document).ready(function() {
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-numero-recibo">
                                 <label class="form-label">Número de Recibo <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="numero_recibo" name="numero_recibo"
-                                       placeholder="Ej: 0001-0004535" required>
+                                         placeholder="Ej: 0001-0004535" required>
                             </div>
 
                             <!-- Fecha de Emisión -->
@@ -304,15 +304,36 @@ $(document).ready(function() {
                             <!-- Monto Matrícula -->
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-monto-matricula">
                                 <label class="form-label">Matrícula de Ciclo de Preparación General (S/.) <span class="text-danger">*</span></label>
+                                <!-- Título para la primera opción de matrícula -->
+                                <h6 class="mt-2 mb-1">Opción 1 Matrícula Regular:</h6>
+                                <!-- Botones con estilo mejorado -->
+                                <div class="d-flex justify-content-between mb-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-matricula flex-grow-1 me-2" data-value="100">S/ 100</button>
+                                </div>
+                                <!-- Título para la segunda opción de matrícula -->
+                                <h6 class="mt-2 mb-1">Opción 2 Descuento 50% (Resolución):</h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-matricula flex-grow-1" data-value="50">S/ 50</button>
+                                </div>
                                 <input type="number" class="form-control" id="monto_matricula" name="monto_matricula"
-                                       step="0.01" min="0" placeholder="0.00" required>
+                                         step="0.01" min="0" placeholder="0.00" required>
                             </div>
 
                             <!-- Monto Enseñanza -->
                             <div class="col-md-6 mb-3" style="display: none;" id="campo-monto-ensenanza">
                                 <label class="form-label">Costo de Enseñanza por Preparación (S/.) <span class="text-danger">*</span></label>
+                                <!-- Título para la primera opción de enseñanza -->
+                                <h6 class="mt-2 mb-1">Opción 1 Enseñanza Regular:</h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-ensenanza flex-grow-1 me-2" data-value="1050">S/ 1050</button>
+                                </div>
+                                <!-- Título para la segunda opción de enseñanza -->
+                                <h6 class="mt-2 mb-1">Opción 2 Descuento 50% (Resolución):</h6>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-ensenanza flex-grow-1" data-value="525">S/ 525</button>
+                                </div>
                                 <input type="number" class="form-control" id="monto_ensenanza" name="monto_ensenanza"
-                                       step="0.01" min="0" placeholder="0.00" required>
+                                         step="0.01" min="0" placeholder="0.00" required>
                             </div>
 
                             <!-- Subtotal -->
@@ -392,18 +413,31 @@ $(document).ready(function() {
             }
         });
 
-        // Cambio de distrito
+        // Cambio de distrito - ¡AHORA SE CARGA LA LISTA DE COLEGIOS AUTOMÁTICAMENTE!
         $('#distrito').on('change', function() {
             if ($(this).val()) {
                 $('#buscar_colegio').prop('disabled', false);
-                $('#btnBuscarColegio').prop('disabled', false);
+                // No es necesario habilitar el botón de búsqueda si la búsqueda es automática
+                $('#btnBuscarColegio').prop('disabled', false); 
                 $('#sugerencias-colegios').empty();
                 ocultarColegioSeleccionado();
+                
+                // Llamar a la función de búsqueda de colegios de inmediato
+                buscarColegios(); 
             }
         });
 
         // Búsqueda de colegio
         $('#btnBuscarColegio').on('click', buscarColegios);
+        // Evento keyup para la búsqueda en tiempo real
+        $('#buscar_colegio').on('keyup', function() {
+            const searchTerm = $(this).val();
+            if (searchTerm.length >= 2) {
+                buscarColegios();
+            } else {
+                $('#sugerencias-colegios').empty(); // Limpiar sugerencias si no hay suficientes caracteres
+            }
+        });
         $('#buscar_colegio').on('keypress', function(e) {
             if (e.which === 13) {
                 e.preventDefault();
@@ -468,6 +502,26 @@ $(document).ready(function() {
 
             mostrarConfirmacion();
         });
+
+        // Evento de click para los botones de matrícula
+        $(document).on('click', '.btn-matricula', function() {
+            if ($('#campo-monto-matricula').is(':hidden')) {
+                toastr.info('Por favor, sube primero el voucher de pago.');
+                return;
+            }
+            const value = $(this).data('value');
+            $('#monto_matricula').val(value).trigger('input');
+        });
+
+        // Evento de click para los botones de enseñanza
+        $(document).on('click', '.btn-ensenanza', function() {
+            if ($('#campo-monto-ensenanza').is(':hidden')) {
+                toastr.info('Por favor, sube primero el voucher de pago.');
+                return;
+            }
+            const value = $(this).data('value');
+            $('#monto_ensenanza').val(value).trigger('input');
+        });
     }
 
     function cargarProvincias(departamento) {
@@ -504,8 +558,9 @@ $(document).ready(function() {
 
     function buscarColegios() {
         const termino = $('#buscar_colegio').val();
-        if (termino.length < 2) {
-            toastr.warning('Escriba al menos 2 caracteres para buscar');
+        // Solo buscar si el término tiene al menos 2 caracteres o si el campo está vacío al seleccionar un distrito
+        if (termino.length < 2 && termino.length !== 0) {
+            $('#sugerencias-colegios').empty(); // Limpiar sugerencias si no hay suficientes caracteres
             return;
         }
 
