@@ -22,8 +22,11 @@ class ConstanciaPostulacionController extends Controller
                 ->findOrFail($postulacionId);
             
             // Verificar que el usuario tenga permiso para generar la constancia
-            if (Auth::id() !== $postulacion->estudiante_id && !Auth::user()->hasRole('admin')) {
-                abort(403, 'No tienes permiso para generar esta constancia');
+            $user = Auth::user();
+            if ($user->id !== $postulacion->estudiante_id && !$user->hasRole('admin')) {
+                if (!$user->hasPermission('postulaciones.generar-constancia')) {
+                    abort(403, 'No tienes permiso para generar esta constancia');
+                }
             }
             
             // Marcar que se generó la constancia
@@ -153,52 +156,58 @@ class ConstanciaPostulacionController extends Controller
     public function verConstanciaFirmada($postulacionId)
     {
         try {
-            $postulacion = Postulacion::findOrFail($postulacionId);
+            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])->findOrFail($postulacionId);
             
-            // Verificar permisos
-            if (Auth::id() !== $postulacion->estudiante_id && 
-                !Auth::user()->hasRole('admin') && 
-                !Auth::user()->hasRole('secretaria')) {
-                abort(403, 'No tienes permiso para ver esta constancia');
+            // Verificar permisos granulares
+            $user = Auth::user();
+            if ($user->id !== $postulacion->estudiante_id && !$user->hasRole('admin')) {
+                if (!$user->hasAnyPermission(['postulaciones.ver-constancia', 'postulaciones.generar-constancia'])) {
+                    abort(403, 'No tienes permiso para ver esta constancia');
+                }
             }
             
-            // Verificar primero el campo nuevo, luego el antiguo
             $pathConstancia = $postulacion->constancia_firmada_path ?: $postulacion->documento_constancia;
             
-            if (!$pathConstancia) {
-                abort(404, 'No se ha subido la constancia firmada');
+            // Si la constancia firmada existe en el disco, la muestra.
+            if ($pathConstancia && Storage::disk('public')->exists($pathConstancia)) {
+                $rutaCompleta = Storage::disk('public')->path($pathConstancia);
+                $extension = pathinfo($pathConstancia, PATHINFO_EXTENSION);
+                $contentType = match(strtolower($extension)) {
+                    'pdf' => 'application/pdf',
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    default => 'application/octet-stream'
+                };
+                $codigoPostulante = $postulacion->codigo_postulante ?: $postulacion->id;
+                
+                return response()->file($rutaCompleta, [
+                    'Content-Type' => $contentType,
+                    'Content-Disposition' => 'inline; filename="constancia_' . $codigoPostulante . '.' . $extension . '"'
+                ]);
+            } else {
+                // Si no existe, regenera la constancia original para su visualización.
+                $codigoPostulante = $postulacion->codigo_postulante ?: ('TEMP-' . $postulacion->id);
+                $data = [
+                    'postulacion' => $postulacion,
+                    'estudiante' => $postulacion->estudiante,
+                    'ciclo' => $postulacion->ciclo,
+                    'carrera' => $postulacion->carrera,
+                    'turno' => $postulacion->turno,
+                    'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
+                    'codigo_postulante' => $codigoPostulante,
+                    'codigo_verificacion' => md5($postulacion->id . $codigoPostulante)
+                ];
+                
+                $pdf = PDF::loadView('pdf.constancia-postulacion', $data);
+                $pdf->setPaper('A4', 'portrait');
+                
+                // Usamos stream() para mostrarla en el navegador en lugar de forzar la descarga.
+                return $pdf->stream('constancia_postulacion_' . $codigoPostulante . '.pdf');
             }
-            
-            // Verificar si el archivo existe
-            if (!Storage::disk('public')->exists($pathConstancia)) {
-                \Log::error('Archivo de constancia no encontrado: ' . $pathConstancia);
-                abort(404, 'El archivo de constancia no se encuentra en el servidor');
-            }
-            
-            // Obtener la ruta completa del archivo
-            $rutaCompleta = Storage::disk('public')->path($pathConstancia);
-            
-            // Determinar el tipo de contenido basado en la extensión
-            $extension = pathinfo($pathConstancia, PATHINFO_EXTENSION);
-            $contentType = match(strtolower($extension)) {
-                'pdf' => 'application/pdf',
-                'jpg', 'jpeg' => 'image/jpeg',
-                'png' => 'image/png',
-                default => 'application/octet-stream'
-            };
-            
-            // Usar el código de postulante o el ID si no existe
-            $codigoPostulante = $postulacion->codigo_postulante ?: $postulacion->id;
-            
-            // Retornar el archivo para visualización
-            return response()->file($rutaCompleta, [
-                'Content-Type' => $contentType,
-                'Content-Disposition' => 'inline; filename="constancia_' . $codigoPostulante . '.' . $extension . '"'
-            ]);
             
         } catch (\Exception $e) {
-            \Log::error('Error al ver constancia firmada: ' . $e->getMessage());
-            abort(500, 'Error al procesar la solicitud');
+            \Log::error('Error al ver/generar constancia: ' . $e->getMessage());
+            abort(500, 'Error al procesar la solicitud de constancia.');
         }
     }
     

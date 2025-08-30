@@ -110,6 +110,18 @@ class ModuloPostulacionSeeder extends Seeder
                 'codigo' => 'postulaciones.statistics',
                 'descripcion' => 'Permite ver estadísticas de postulaciones',
                 'modulo' => 'postulaciones'
+            ],
+            [
+                'nombre' => 'Ver Constancia de Postulación',
+                'codigo' => 'postulaciones.ver-constancia',
+                'descripcion' => 'Permite ver la constancia de postulación firmada.',
+                'modulo' => 'postulaciones'
+            ],
+            [
+                'nombre' => 'Generar Constancia de Postulación',
+                'codigo' => 'postulaciones.generar-constancia',
+                'descripcion' => 'Permite generar o regenerar la constancia de postulación.',
+                'modulo' => 'postulaciones'
             ]
         ];
 
@@ -152,7 +164,9 @@ class ModuloPostulacionSeeder extends Seeder
                     'postulaciones.view_documents',
                     'postulaciones.download_documents',
                     'postulaciones.reports',
-                    'postulaciones.export'
+                    'postulaciones.export',
+                    'postulaciones.ver-constancia',
+                    'postulaciones.generar-constancia'
                 ])
                 ->pluck('id');
             
@@ -184,7 +198,9 @@ class ModuloPostulacionSeeder extends Seeder
                     'postulaciones.manage_status',
                     'postulaciones.send_notifications',
                     'postulaciones.reports',
-                    'postulaciones.statistics'
+                    'postulaciones.statistics',
+                    'postulaciones.ver-constancia',
+                    'postulaciones.generar-constancia'
                 ])
                 ->pluck('id');
             

@@ -392,69 +392,53 @@ class PostulacionController extends Controller
         $grupoCarrera = $this->determinarGrupoCarrera($carrera->nombre);
         $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
         
-        // 2. Buscar aulas específicas del grupo y turno
-        $query = Aula::activas()->where('estado', 1);
+        // 2. Construir la consulta base para aulas con el conteo de inscripciones activas
+        $baseQuery = Aula::activas()->withCount(['inscripciones' => function ($query) {
+            $query->where('estado_inscripcion', 'activo')
+                  ->whereHas('ciclo', function ($subQuery) {
+                      $subQuery->where('es_activo', true);
+                  });
+        }]);
         
         // Filtrar por turno específico
-        $query->where('nombre', 'like', '%' . $turnoNombre . '%');
+        $baseQuery->where('nombre', 'like', '%' . $turnoNombre . '%');
         
+        // Función de filtro para capacidad disponible
+        $filtroCapacidad = function ($aula) {
+            return ($aula->capacidad - $aula->inscripciones_count) > 0;
+        };
+        
+        // 3. Priorizar aulas del grupo específico
         $aulas = collect();
-        
-        // Priorizar aulas del grupo específico
         if ($grupoCarrera) {
-            $aulasGrupoEspecifico = clone $query;
-            $aulasGrupoEspecifico->where(function($q) use ($grupoCarrera) {
+            $aulasGrupo = clone $baseQuery;
+            $aulasGrupo->where(function($q) use ($grupoCarrera) {
                 $q->where('codigo', 'like', $grupoCarrera . '%')
-                  ->orWhere('codigo', 'like', '%' . $grupoCarrera . '%'); // Para casos como AB, ABC
+                  ->orWhere('codigo', 'like', '%' . $grupoCarrera . '%');
             });
-            
-            $aulas = $aulasGrupoEspecifico->get()->filter(function ($aula) {
-                return $aula->getCapacidadDisponible() > 0;
-            });
+            $aulas = $aulasGrupo->get()->filter($filtroCapacidad);
         }
         
-        // 3. Si no hay aulas del grupo específico, buscar aulas mixtas (AB, ABC) del mismo turno
+        // 4. Si no hay, buscar aulas mixtas (AB, ABC)
         if ($aulas->isEmpty()) {
-            $aulasMixtas = clone $query;
+            $aulasMixtas = clone $baseQuery;
             $aulasMixtas->where(function($q) {
                 $q->where('codigo', 'like', 'AB%')
                   ->orWhere('codigo', 'like', 'ABC%');
             });
-            
-            $aulas = $aulasMixtas->get()->filter(function ($aula) {
-                return $aula->getCapacidadDisponible() > 0;
-            });
+            $aulas = $aulasMixtas->get()->filter($filtroCapacidad);
         }
         
-        // 4. Como último recurso, cualquier aula del turno
+        // 5. Como último recurso, cualquier aula del turno
         if ($aulas->isEmpty()) {
-            $aulas = $query->get()->filter(function ($aula) {
-                return $aula->getCapacidadDisponible() > 0;
-            });
+            $aulas = $baseQuery->get()->filter($filtroCapacidad);
         }
         
-        // 5. Ordenar por prioridad
-        $aulas = $aulas->sortBy(function ($aula) use ($grupoCarrera) {
-            $score = 0;
-            
-            // Alta prioridad para aulas del grupo específico
-            if ($grupoCarrera && str_starts_with($aula->codigo, $grupoCarrera)) {
-                $score -= 100;
-            }
-            
-            // Media prioridad para aulas mixtas
-            if (str_starts_with($aula->codigo, 'AB') || str_starts_with($aula->codigo, 'ABC')) {
-                $score -= 50;
-            }
-            
-            // Equilibrar ocupación (llenar las más ocupadas primero)
-            $score += (100 - $aula->getPorcentajeOcupacion());
-            
-            // Preferir capacidades apropiadas
-            $capacidadIdeal = $this->getCapacidadIdealPorGrupo($grupoCarrera);
-            $score += abs($aula->capacidad - $capacidadIdeal);
-            
-            return $score;
+        // 6. Ordenar para llenado progresivo
+        $aulas = $aulas->sortBy(function ($aula) {
+            // Primero, por el número de inscritos activos (ascendente)
+            // Segundo, por el nombre del aula (alfabético)
+            return [$aula->inscripciones_count, $aula->nombre];
         });
         
         return $aulas->first();

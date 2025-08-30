@@ -17,16 +17,16 @@
                 <div class="col-md-9 col-lg-8 col-xl-7">
                     <div class="card shadow-lg border-0 rounded-4 animated-card" style="background: rgba(255, 255, 255, 0.98);">
                         <div class="card-body p-4 p-sm-5">
-                            <div class="text-center mb-4">
-                                <a href="{{ route('home') }}" class="d-inline-block mb-4">
+                            <div class="text-center mb-3">
+                                <a href="{{ route('home') }}" class="d-inline-block mb-3">
                                     <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="CEPRE UNAMAD"
                                          height="90" class="img-fluid" />
                                 </a>
-                                
+
                                 <!-- Tabs para Login y Registro -->
-                                <ul class="nav nav-pills nav-justified mb-4" id="authTabs" role="tablist">
+                                <ul class="nav nav-pills nav-justified mb-3" id="authTabs" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="login-tab" data-bs-toggle="pill" 
+                                        <button class="nav-link active" id="login-tab" data-bs-toggle="pill"
                                                 data-bs-target="#login" type="button" role="tab">
                                             <svg class="me-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M15 3h6v6"></path>
@@ -36,7 +36,7 @@
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="register-tab" data-bs-toggle="pill" 
+                                        <button class="nav-link" id="register-tab" data-bs-toggle="pill"
                                                 data-bs-target="#register" type="button" role="tab">
                                             <svg class="me-2" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -52,7 +52,7 @@
 
                             <!-- Alertas de Error de Laravel -->
                             @if ($errors->any())
-                                <div class="alert alert-danger border-0 rounded-3 mb-4 animate__animated animate__fadeInDown" role="alert">
+                                <div class="alert alert-danger border-0 rounded-3 mb-3 animate__animated animate__fadeInDown" role="alert">
                                     <div class="d-flex align-items-center">
                                         <svg class="me-2 flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <circle cx="12" cy="12" r="10"></circle>
@@ -76,14 +76,14 @@
                                 <!-- Tab Login -->
                                 <div class="tab-pane fade show active" id="login" role="tabpanel">
                                     <h2 class="fw-bold text-dark mb-2 fs-2 text-center">Bienvenido</h2>
-                                    <p class="text-muted mb-4 text-center">Inicia sesión en tu cuenta para continuar</p>
-                                    
+                                    <p class="text-muted mb-3 text-center">Inicia sesión en tu cuenta para continuar</p>
+
                                     <!-- Formulario de Login -->
                                     <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate>
                                         @csrf
-                                        
+
                                         <!-- Campo Correo Electrónico -->
-                                        <div class="mb-4">
+                                        <div class="mb-3">
                                             <label for="email" class="form-label fw-semibold text-dark">
                                                 Correo Electrónico
                                             </label>
@@ -95,22 +95,22 @@
                                                     </svg>
                                                 </span>
                                                 <input type="email"
-                                                    class="form-control border-start-0 ps-0 @error('email') is-invalid @enderror" 
-                                                    name="email" id="email" 
-                                                    value="{{ old('email') }}"
-                                                    placeholder="ejemplo@unamad.edu.pe" 
-                                                    required autofocus>
+                                                       class="form-control border-start-0 ps-0 @error('email') is-invalid @enderror"
+                                                       name="email" id="email"
+                                                       value="{{ old('email') }}"
+                                                       placeholder="ejemplo@unamad.edu.pe"
+                                                       required autofocus>
                                             </div>
                                         </div>
 
                                         <!-- Campo Contraseña -->
-                                        <div class="mb-4">
+                                        <div class="mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <label for="password" class="form-label fw-semibold text-dark mb-0">
                                                     Contraseña
                                                 </label>
                                                 <a href="{{ route('password.request') }}"
-                                                    class="text-decoration-none text-primary small">
+                                                   class="text-decoration-none text-primary small">
                                                     ¿Olvidaste tu contraseña?
                                                 </a>
                                             </div>
@@ -121,12 +121,12 @@
                                                     </svg>
                                                 </span>
                                                 <input type="password"
-                                                    class="form-control border-start-0 border-end-0 ps-0 @error('password') is-invalid @enderror"
-                                                    name="password" id="password" 
-                                                    placeholder="Ingresa tu contraseña"
-                                                    required>
-                                                <span class="input-group-text bg-light border-start-0 cursor-pointer rounded-end-pill" 
-                                                    onclick="togglePassword('password')">
+                                                       class="form-control border-start-0 border-end-0 ps-0 @error('password') is-invalid @enderror"
+                                                       name="password" id="password"
+                                                       placeholder="Ingresa tu contraseña"
+                                                       required>
+                                                <span class="input-group-text bg-light border-start-0 cursor-pointer rounded-end-pill"
+                                                      onclick="togglePassword('password')">
                                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                                         <circle cx="12" cy="12" r="3"></circle>
@@ -136,16 +136,16 @@
                                         </div>
 
                                         <!-- Recordar Sesión -->
-                                        <div class="mb-4 form-check">
+                                        <div class="mb-3 form-check">
                                             <input type="checkbox" class="form-check-input" name="remember"
-                                                id="remember" {{ old('remember') ? 'checked' : '' }}>
+                                                   id="remember" {{ old('remember') ? 'checked' : '' }}>
                                             <label class="form-check-label text-muted" for="remember">
                                                 Mantener sesión iniciada
                                             </label>
                                         </div>
 
                                         <!-- Botón de Envío -->
-                                        <div class="d-grid mb-4">
+                                        <div class="d-grid mb-3">
                                             <button class="btn btn-primary btn-lg fw-semibold animate-on-hover" type="submit">
                                                 <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                     <path d="M15 3h6v6"></path>
@@ -161,19 +161,19 @@
                                 <div class="tab-pane fade" id="register" role="tabpanel">
                                     <div class="registration-wizard">
                                         <!-- Progress Bar -->
-                                        <div class="wizard-progress mb-4">
+                                        <div class="wizard-progress mb-3">
                                             <!-- Progreso General -->
                                             <div class="overall-progress-container mb-3">
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="fw-semibold text-primary">Progreso del Registro</span>
                                                     <div class="progress-percentage">
-                                                        <span id="overallPercentage" class="fw-bold fs-5 text-primary">25%</span>
+                                                        <span id="overallPercentage" class="fw-bold fs-5 text-primary">0%</span>
                                                         <small class="text-muted ms-1">completado</small>
                                                     </div>
                                                 </div>
                                                 <div class="progress overall-progress">
-                                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-gradient" 
-                                                         style="width: 25%;" id="overallProgressBar"></div>
+                                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-gradient"
+                                                         style="width: 0%;" id="overallProgressBar"></div>
                                                 </div>
                                             </div>
 
@@ -186,7 +186,7 @@
                                                             <polyline points="20,6 9,17 4,12"></polyline>
                                                         </svg>
                                                     </div>
-                                                    <span class="step-label">Datos Personales</span>
+                                                    <span class="step-label">Postulante</span>
                                                     <div class="step-progress-mini">
                                                         <div class="mini-progress-bar" data-step="1" style="width: 0%;"></div>
                                                     </div>
@@ -199,7 +199,7 @@
                                                             <polyline points="20,6 9,17 4,12"></polyline>
                                                         </svg>
                                                     </div>
-                                                    <span class="step-label">Padre/Tutor</span>
+                                                    <span class="step-label">Padres/Tutores</span>
                                                     <div class="step-progress-mini">
                                                         <div class="mini-progress-bar" data-step="2" style="width: 0%;"></div>
                                                     </div>
@@ -212,40 +212,25 @@
                                                             <polyline points="20,6 9,17 4,12"></polyline>
                                                         </svg>
                                                     </div>
-                                                    <span class="step-label">Madre/Tutora</span>
-                                                    <div class="step-progress-mini">
-                                                        <div class="mini-progress-bar" data-step="3" style="width: 0%;"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="progress-line"></div>
-                                                <div class="step-indicator" data-step="4">
-                                                    <div class="step-circle">
-                                                        <span class="step-number">4</span>
-                                                        <svg class="step-check d-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                                            <polyline points="20,6 9,17 4,12"></polyline>
-                                                        </svg>
-                                                    </div>
                                                     <span class="step-label">Confirmación</span>
-                                                    <div class="step-progress-mini">
-                                                        <div class="mini-progress-bar" data-step="4" style="width: 0%;"></div>
-                                                    </div>
+                                                    <div class="mini-progress-bar" data-step="3" style="width: 0%;"></div>
                                                 </div>
                                             </div>
                                             <div class="progress">
-                                                <div class="progress-bar bg-gradient" style="width: 25%;"></div>
+                                                <div class="progress-bar bg-gradient" style="width: 0%;"></div>
                                             </div>
                                             <div class="text-center mt-2">
-                                                <small class="text-muted">Paso <span id="currentStep">1</span> de 4</small>
+                                                <small class="text-muted">Paso <span id="currentStep">1</span> de 3</small>
                                             </div>
                                         </div>
 
                                         <!-- Formulario de Registro -->
                                         <form id="registrationWizard" method="POST" action="{{ route('register.postulante') }}" class="needs-validation" novalidate>
                                             @csrf
-                                            
-                                            <!-- Step 1: Datos Personales -->
+
+                                            <!-- Step 1: Datos Personales del Postulante -->
                                             <div class="wizard-step active" data-step="1">
-                                                <div class="step-header text-center mb-4">
+                                                <div class="step-header text-center mb-3">
                                                     <div class="step-icon">
                                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -260,37 +245,7 @@
                                                 </div>
 
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="reg_nombre" class="form-label">Nombres <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="reg_nombre" name="nombre" 
-                                                                   value="{{ old('nombre') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese los nombres</div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="reg_apellido_paterno" class="form-label">Apellido Paterno <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="reg_apellido_paterno" 
-                                                                   name="apellido_paterno" value="{{ old('apellido_paterno') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese el apellido paterno</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="reg_apellido_materno" class="form-label">Apellido Materno <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="reg_apellido_materno" 
-                                                                   name="apellido_materno" value="{{ old('apellido_materno') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese el apellido materno</div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_tipo_documento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <select class="form-select form-control-wizard" id="reg_tipo_documento" name="tipo_documento" required>
@@ -302,16 +257,13 @@
                                                         </div>
                                                         <div class="invalid-feedback">Seleccione el tipo de documento</div>
                                                     </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="reg_numero_documento" class="form-label">Número Documento <span class="text-danger">*</span></label>
-                                                        <div class="input-group enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="reg_numero_documento" 
-                                                                   name="numero_documento" value="{{ old('numero_documento') }}" 
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="reg_numero_documento" class="form-label glow-text">Número Documento <span class="text-danger">*</span></label>
+                                                        <div class="input-group enhanced-input-group glow-on-focus">
+                                                            <input type="text" class="form-control form-control-wizard" id="reg_numero_documento"
+                                                                   name="numero_documento" value="{{ old('numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-reniec" type="button" 
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('postulante')" id="btn_buscar_postulante">
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -321,12 +273,48 @@
                                                             <div class="input-feedback"></div>
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un número de documento válido</div>
+                                                        <small class="form-text text-muted d-block mt-2">
+                                                            Ingresa tu DNI y haz clic en la lupa para autocompletar tus datos. 🚀
+                                                        </small>
                                                     </div>
-                                                    <div class="col-md-6 mb-3">
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="reg_nombre" class="form-label">Nombres <span class="text-danger">*</span></label>
+                                                        <div class="enhanced-input-group">
+                                                            <input type="text" class="form-control form-control-wizard" id="reg_nombre" name="nombre"
+                                                                   value="{{ old('nombre') }}" required>
+                                                            <div class="input-feedback"></div>
+                                                        </div>
+                                                        <div class="invalid-feedback">Ingrese los nombres</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="reg_apellido_paterno" class="form-label">Apellido Paterno <span class="text-danger">*</span></label>
+                                                        <div class="enhanced-input-group">
+                                                            <input type="text" class="form-control form-control-wizard" id="reg_apellido_paterno"
+                                                                   name="apellido_paterno" value="{{ old('apellido_paterno') }}" required>
+                                                            <div class="input-feedback"></div>
+                                                        </div>
+                                                        <div class="invalid-feedback">Ingrese el apellido paterno</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="reg_apellido_materno" class="form-label">Apellido Materno <span class="text-danger">*</span></label>
+                                                        <div class="enhanced-input-group">
+                                                            <input type="text" class="form-control form-control-wizard" id="reg_apellido_materno"
+                                                                   name="apellido_materno" value="{{ old('apellido_materno') }}" required>
+                                                            <div class="input-feedback"></div>
+                                                        </div>
+                                                        <div class="invalid-feedback">Ingrese el apellido materno</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_fecha_nacimiento" class="form-label">Fecha Nacimiento <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
-                                                            <input type="date" class="form-control form-control-wizard" id="reg_fecha_nacimiento" 
-                                                                   name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}" 
+                                                            <input type="date" class="form-control form-control-wizard" id="reg_fecha_nacimiento"
+                                                                   name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}"
                                                                    max="{{ date('Y-m-d', strtotime('-14 years')) }}" required>
                                                             <div class="input-feedback"></div>
                                                         </div>
@@ -335,7 +323,7 @@
                                                 </div>
 
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_genero" class="form-label">Género <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <select class="form-select form-control-wizard" id="reg_genero" name="genero" required>
@@ -347,22 +335,22 @@
                                                         </div>
                                                         <div class="invalid-feedback">Seleccione el género</div>
                                                     </div>
-                                                    <div class="col-md-6 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_telefono" class="form-label">Teléfono/Celular <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
-                                                            <input type="tel" class="form-control form-control-wizard" id="reg_telefono" 
-                                                                   name="telefono" value="{{ old('telefono') }}" 
-                                                                   pattern="[0-9]{9}" maxlength="9" required placeholder="999123456">
+                                                            <input type="tel" class="form-control form-control-wizard" id="reg_telefono"
+                                                                   name="telefono" value="{{ old('telefono') }}"
+                                                                   pattern="[0-9]{9}" maxlength="9" required placeholder="">
                                                             <div class="input-feedback"></div>
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un teléfono válido (9 dígitos)</div>
                                                     </div>
                                                 </div>
 
-                                                <div class="mb-3">
+                                                <div class="mb-2">
                                                     <label for="reg_direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
                                                     <div class="enhanced-input-group">
-                                                        <input type="text" class="form-control form-control-wizard" id="reg_direccion" 
+                                                        <input type="text" class="form-control form-control-wizard" id="reg_direccion"
                                                                name="direccion" value="{{ old('direccion') }}" required>
                                                         <div class="input-feedback"></div>
                                                     </div>
@@ -370,19 +358,19 @@
                                                 </div>
 
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
-                                                            <input type="email" class="form-control form-control-wizard" id="reg_email" 
+                                                            <input type="email" class="form-control form-control-wizard" id="reg_email"
                                                                    name="email" value="{{ old('email') }}" required>
                                                             <div class="input-feedback"></div>
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un correo válido</div>
                                                     </div>
-                                                    <div class="col-md-6 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="reg_password" class="form-label">Contraseña <span class="text-danger">*</span></label>
                                                         <div class="input-group enhanced-input-group">
-                                                            <input type="password" class="form-control form-control-wizard" id="reg_password" 
+                                                            <input type="password" class="form-control form-control-wizard" id="reg_password"
                                                                    name="password" minlength="8" required>
                                                             <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('reg_password')">
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -402,10 +390,10 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="mb-3">
+                                                <div class="mb-2">
                                                     <label for="reg_password_confirmation" class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
                                                     <div class="enhanced-input-group">
-                                                        <input type="password" class="form-control form-control-wizard" id="reg_password_confirmation" 
+                                                        <input type="password" class="form-control form-control-wizard" id="reg_password_confirmation"
                                                                name="password_confirmation" minlength="8" required>
                                                         <div class="input-feedback"></div>
                                                     </div>
@@ -413,9 +401,9 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Step 2: Datos del Padre -->
+                                            <!-- Step 2: Datos de Padres/Tutores (Unificado) -->
                                             <div class="wizard-step" data-step="2" style="display: none;">
-                                                <div class="step-header text-center mb-4">
+                                                <div class="step-header text-center mb-3">
                                                     <div class="step-icon">
                                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -424,36 +412,17 @@
                                                             <circle cx="17.5" cy="7" r="4"></circle>
                                                         </svg>
                                                     </div>
-                                                    <h4 class="step-title">Datos del Padre/Tutor</h4>
-                                                    <p class="step-subtitle">Información del padre o tutor legal</p>
+                                                    <h4 class="step-title">Datos de Padres/Tutores</h4>
+                                                    <p class="step-subtitle">Información del padre y/o la madre</p>
                                                     <div class="field-counter">
-                                                        <span id="step2Counter">0 de 5 campos completados</span>
+                                                        <span id="step2Counter">0 de 12 campos completados</span>
                                                     </div>
                                                 </div>
 
+                                                <!-- Sección Padre/Tutor -->
+                                                <h5 class="fw-semibold text-dark mb-2">Datos del Padre/Tutor</h5>
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="padre_nombre" class="form-label">Nombres del Padre <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="padre_nombre" 
-                                                                   name="padre_nombre" value="{{ old('padre_nombre') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese los nombres del padre</div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="padre_apellidos" class="form-label">Apellidos del Padre <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="padre_apellidos" 
-                                                                   name="padre_apellidos" value="{{ old('padre_apellidos') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese los apellidos del padre</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="padre_tipo_doc" class="form-label">Tipo Doc. <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <select class="form-select form-control-wizard" id="padre_tipo_doc" name="padre_tipo_documento" required>
@@ -465,13 +434,13 @@
                                                         </div>
                                                         <div class="invalid-feedback">Seleccione el tipo de documento</div>
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="padre_numero_doc" class="form-label">Número Doc. <span class="text-danger">*</span></label>
-                                                        <div class="input-group enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="padre_numero_doc" 
-                                                                   name="padre_numero_documento" value="{{ old('padre_numero_documento') }}" 
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="padre_numero_doc" class="form-label glow-text">Número Doc. <span class="text-danger">*</span></label>
+                                                        <div class="input-group enhanced-input-group glow-on-focus">
+                                                            <input type="text" class="form-control form-control-wizard" id="padre_numero_doc"
+                                                                   name="padre_numero_documento" value="{{ old('padre_numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-reniec" type="button" 
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('padre')" id="btn_buscar_padre">
                                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -482,71 +451,54 @@
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un número válido</div>
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="padre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="padre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
-                                                            <input type="tel" class="form-control form-control-wizard" id="padre_telefono" 
-                                                                   name="padre_telefono" value="{{ old('padre_telefono') }}" 
-                                                                   pattern="[0-9]{9}" maxlength="9" required>
+                                                            <input type="text" class="form-control form-control-wizard" id="padre_nombre"
+                                                                   name="padre_nombre" value="{{ old('padre_nombre') }}" required>
                                                             <div class="input-feedback"></div>
                                                         </div>
-                                                        <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                        <div class="invalid-feedback">Ingrese los nombres del padre</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="padre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                                                        <div class="enhanced-input-group">
+                                                            <input type="text" class="form-control form-control-wizard" id="padre_apellidos"
+                                                                   name="padre_apellidos" value="{{ old('padre_apellidos') }}" required>
+                                                            <div class="input-feedback"></div>
+                                                        </div>
+                                                        <div class="invalid-feedback">Ingrese los apellidos del padre</div>
                                                     </div>
                                                 </div>
-
+                                                <div class="mb-2">
+                                                    <label for="padre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                    <div class="enhanced-input-group">
+                                                        <input type="tel" class="form-control form-control-wizard" id="padre_telefono"
+                                                               name="padre_telefono" value="{{ old('padre_telefono') }}"
+                                                               pattern="[0-9]{9}" maxlength="9" required>
+                                                        <div class="input-feedback"></div>
+                                                    </div>
+                                                    <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                </div>
                                                 <div class="mb-3">
                                                     <label for="padre_email" class="form-label">Correo del Padre</label>
                                                     <div class="enhanced-input-group">
-                                                        <input type="email" class="form-control form-control-wizard" id="padre_email" 
+                                                        <input type="email" class="form-control form-control-wizard" id="padre_email"
                                                                name="padre_email" value="{{ old('padre_email') }}">
                                                         <div class="input-feedback"></div>
                                                     </div>
                                                     <small class="form-text text-muted">Debe ser diferente al correo de la madre</small>
                                                     <div class="invalid-feedback" id="padre_email_feedback">Ingrese un correo válido</div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Step 3: Datos de la Madre -->
-                                            <div class="wizard-step" data-step="3" style="display: none;">
-                                                <div class="step-header text-center mb-4">
-                                                    <div class="step-icon">
-                                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                                            <circle cx="8.5" cy="7" r="4"></circle>
-                                                            <path d="M20 21v-2a4 4 0 0 0-4-4H13"></path>
-                                                            <circle cx="17.5" cy="7" r="4"></circle>
-                                                        </svg>
-                                                    </div>
-                                                    <h4 class="step-title">Datos de la Madre/Tutora</h4>
-                                                    <p class="step-subtitle">Información de la madre o tutora legal</p>
-                                                    <div class="field-counter">
-                                                        <span id="step3Counter">0 de 5 campos completados</span>
-                                                    </div>
-                                                </div>
+                                                <hr class="my-3">
 
+                                                <!-- Sección Madre/Tutora -->
+                                                <h5 class="fw-semibold text-dark mb-2">Datos de la Madre/Tutora</h5>
                                                 <div class="row">
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="madre_nombre" class="form-label">Nombres de la Madre <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="madre_nombre" 
-                                                                   name="madre_nombre" value="{{ old('madre_nombre') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese los nombres de la madre</div>
-                                                    </div>
-                                                    <div class="col-md-6 mb-3">
-                                                        <label for="madre_apellidos" class="form-label">Apellidos de la Madre <span class="text-danger">*</span></label>
-                                                        <div class="enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="madre_apellidos" 
-                                                                   name="madre_apellidos" value="{{ old('madre_apellidos') }}" required>
-                                                            <div class="input-feedback"></div>
-                                                        </div>
-                                                        <div class="invalid-feedback">Ingrese los apellidos de la madre</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-6 mb-2">
                                                         <label for="madre_tipo_doc" class="form-label">Tipo Doc. <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <select class="form-select form-control-wizard" id="madre_tipo_doc" name="madre_tipo_documento" required>
@@ -558,13 +510,13 @@
                                                         </div>
                                                         <div class="invalid-feedback">Seleccione el tipo de documento</div>
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="madre_numero_doc" class="form-label">Número Doc. <span class="text-danger">*</span></label>
-                                                        <div class="input-group enhanced-input-group">
-                                                            <input type="text" class="form-control form-control-wizard" id="madre_numero_doc" 
-                                                                   name="madre_numero_documento" value="{{ old('madre_numero_documento') }}" 
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="madre_numero_doc" class="form-label glow-text">Número Doc. <span class="text-danger">*</span></label>
+                                                        <div class="input-group enhanced-input-group glow-on-focus">
+                                                            <input type="text" class="form-control form-control-wizard" id="madre_numero_doc"
+                                                                   name="madre_numero_documento" value="{{ old('madre_numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-reniec" type="button" 
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('madre')" id="btn_buscar_madre">
                                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -575,22 +527,41 @@
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un número válido</div>
                                                     </div>
-                                                    <div class="col-md-4 mb-3">
-                                                        <label for="madre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="madre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
-                                                            <input type="tel" class="form-control form-control-wizard" id="madre_telefono" 
-                                                                   name="madre_telefono" value="{{ old('madre_telefono') }}" 
-                                                                   pattern="[0-9]{9}" maxlength="9" required>
+                                                            <input type="text" class="form-control form-control-wizard" id="madre_nombre"
+                                                                   name="madre_nombre" value="{{ old('madre_nombre') }}" required>
                                                             <div class="input-feedback"></div>
                                                         </div>
-                                                        <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                        <div class="invalid-feedback">Ingrese los nombres de la madre</div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-2">
+                                                        <label for="madre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
+                                                        <div class="enhanced-input-group">
+                                                            <input type="text" class="form-control form-control-wizard" id="madre_apellidos"
+                                                                   name="madre_apellidos" value="{{ old('madre_apellidos') }}" required>
+                                                            <div class="input-feedback"></div>
+                                                        </div>
+                                                        <div class="invalid-feedback">Ingrese los apellidos de la madre</div>
                                                     </div>
                                                 </div>
-
+                                                <div class="mb-2">
+                                                    <label for="madre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                    <div class="enhanced-input-group">
+                                                        <input type="tel" class="form-control form-control-wizard" id="madre_telefono"
+                                                               name="madre_telefono" value="{{ old('madre_telefono') }}"
+                                                               pattern="[0-9]{9}" maxlength="9" required>
+                                                        <div class="input-feedback"></div>
+                                                    </div>
+                                                    <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                </div>
                                                 <div class="mb-3">
                                                     <label for="madre_email" class="form-label">Correo de la Madre</label>
                                                     <div class="enhanced-input-group">
-                                                        <input type="email" class="form-control form-control-wizard" id="madre_email" 
+                                                        <input type="email" class="form-control form-control-wizard" id="madre_email"
                                                                name="madre_email" value="{{ old('madre_email') }}">
                                                         <div class="input-feedback"></div>
                                                     </div>
@@ -599,9 +570,9 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Step 4: Confirmación -->
-                                            <div class="wizard-step" data-step="4" style="display: none;">
-                                                <div class="step-header text-center mb-4">
+                                            <!-- Step 3: Confirmación -->
+                                            <div class="wizard-step" data-step="3" style="display: none;">
+                                                <div class="step-header text-center mb-3">
                                                     <div class="step-icon">
                                                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M9 12l2 2 4-4"></path>
@@ -617,10 +588,10 @@
                                                     <!-- Resumen será generado por JavaScript -->
                                                 </div>
 
-                                                <div class="form-check mb-4">
+                                                <div class="form-check mb-3">
                                                     <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
                                                     <label class="form-check-label" for="terms">
-                                                        Acepto los <a href="#" class="text-primary">términos y condiciones</a> y la 
+                                                        Acepto los <a href="#" class="text-primary">términos y condiciones</a> y la
                                                         <a href="#" class="text-primary">política de privacidad</a>
                                                     </label>
                                                     <div class="invalid-feedback">Debe aceptar los términos y condiciones</div>
@@ -643,10 +614,9 @@
                                                         <span class="dot active"></span>
                                                         <span class="dot"></span>
                                                         <span class="dot"></span>
-                                                        <span class="dot"></span>
                                                     </div>
                                                 </div>
-                                                <span id="stepCounter">Paso 1 de 4</span>
+                                                <span id="stepCounter">Paso 1 de 3</span>
                                             </div>
                                             <button type="button" class="btn btn-primary animate-on-hover" id="nextStepBtn" onclick="nextStep()">
                                                 <span class="btn-text">Siguiente</span>
@@ -661,7 +631,7 @@
                             </div>
 
                             <!-- Información Adicional -->
-                            <div class="text-center mt-4">
+                            <div class="text-center mt-3">
                                 <p class="text-muted small mb-0">
                                     <svg class="me-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 12l2 2 4-4"></path>
@@ -687,25 +657,24 @@
     <script>
         // Variables globales
         const csrfToken = '{{ csrf_token() }}';
-        
+
         // Variables del wizard
         let wizardCurrentStep = 1;
-        const wizardTotalSteps = 4;
+        const wizardTotalSteps = 3; // Actualizado a 3 pasos
         let wizardFormData = {};
-        
+
         // Variables para el progreso
         let fieldCounts = {
             1: { total: 10, completed: 0 },
-            2: { total: 5, completed: 0 },
-            3: { total: 5, completed: 0 },
-            4: { total: 1, completed: 0 }
+            2: { total: 12, completed: 0 }, // Unificado
+            3: { total: 1, completed: 0 }
         };
 
         // Función para mostrar/ocultar contraseña
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
             const icon = passwordInput.nextElementSibling?.querySelector('svg');
-            
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 if (icon) {
@@ -724,11 +693,11 @@
                 }
             }
         }
-        
+
         // Función para consultar DNI en RENIEC MEJORADA CON SWEETALERT2
         async function consultarDNI(tipo) {
             let dniInput, btnBuscar;
-            
+
             if (tipo === 'postulante') {
                 dniInput = document.getElementById('reg_numero_documento');
                 btnBuscar = document.getElementById('btn_buscar_postulante');
@@ -739,9 +708,9 @@
                 dniInput = document.getElementById('madre_numero_doc');
                 btnBuscar = document.getElementById('btn_buscar_madre');
             }
-            
+
             const dni = dniInput.value.trim();
-            
+
             if (dni.length !== 8 || !/^\d{8}$/.test(dni)) {
                 Swal.fire({
                     icon: 'warning',
@@ -752,12 +721,12 @@
                 dniInput.focus();
                 return;
             }
-            
+
             const btnTextoOriginal = btnBuscar.innerHTML;
             btnBuscar.disabled = true;
             btnBuscar.classList.add('loading');
             btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            
+
             try {
                 const response = await fetch('/api/reniec/consultar', {
                     method: 'POST',
@@ -768,14 +737,14 @@
                     },
                     body: JSON.stringify({ dni: dni })
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`Error HTTP: ${response.status}`);
                 }
-                
+
                 const result = await response.json();
                 console.log('Respuesta RENIEC:', result);
-                
+
                 if (result.success && result.data) {
                     if (tipo === 'postulante') {
                         autocompletarPostulante(result.data);
@@ -784,7 +753,7 @@
                     } else if (tipo === 'madre') {
                         autocompletarMadre(result.data);
                     }
-                    
+
                     Swal.fire({
                         icon: 'success',
                         title: 'Datos Encontrados',
@@ -795,7 +764,7 @@
                         toast: true,
                         position: 'top-end'
                     });
-                    
+
                     btnBuscar.classList.add('success-animation');
                     setTimeout(() => btnBuscar.classList.remove('success-animation'), 1000);
                 } else {
@@ -821,7 +790,7 @@
                 updateFieldProgress();
             }
         }
-        
+
         function autocompletarPostulante(datos) {
             const fields = [
                 { id: 'reg_nombre', value: datos.nombres },
@@ -831,7 +800,7 @@
                 { id: 'reg_genero', value: datos.genero },
                 { id: 'reg_direccion', value: datos.direccion }
             ];
-            
+
             fields.forEach((field, index) => {
                 setTimeout(() => {
                     const element = document.getElementById(field.id);
@@ -843,11 +812,11 @@
                     }
                 }, index * 100);
             });
-            
+
             document.getElementById('reg_tipo_documento').value = 'DNI';
             updateFieldProgress();
         }
-        
+
         function autocompletarPadre(datos) {
             const apellidos = (datos.apellido_paterno || '') + ' ' + (datos.apellido_materno || '');
             setTimeout(() => {
@@ -869,7 +838,7 @@
                 updateFieldProgress();
             }, 200);
         }
-        
+
         function autocompletarMadre(datos) {
             const apellidos = (datos.apellido_paterno || '') + ' ' + (datos.apellido_materno || '');
             setTimeout(() => {
@@ -893,19 +862,19 @@
         }
 
         // === FUNCIONES DEL WIZARD ===
-        
+
         function nextStep() {
             if (validateWizardStep(wizardCurrentStep)) {
                 saveCurrentStepData();
-                
+
                 if (wizardCurrentStep < wizardTotalSteps) {
                     wizardCurrentStep++;
                     updateWizardDisplay();
-                    
-                    if (wizardCurrentStep === 4) {
+
+                    if (wizardCurrentStep === 3) { // Actualizado a paso 3
                         generateConfirmationSummary();
                     }
-                    
+
                     celebrateStepCompletion();
                 } else {
                     submitWizardForm();
@@ -925,7 +894,7 @@
             document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
                 const stepNum = index + 1;
                 indicator.classList.remove('active', 'completed');
-                
+
                 if (stepNum < wizardCurrentStep) {
                     indicator.classList.add('completed');
                     indicator.querySelector('.step-number').style.display = 'none';
@@ -964,11 +933,11 @@
             const prevBtn = document.getElementById('prevStepBtn');
             const nextBtn = document.getElementById('nextStepBtn');
             const stepCounter = document.getElementById('stepCounter');
-            const currentStepSpan = document.getElementById('currentStep');
+            
+            // Corrige la visualización del contador de pasos
+            stepCounter.textContent = `Paso ${wizardCurrentStep} de ${wizardTotalSteps}`;
 
             prevBtn.style.display = wizardCurrentStep === 1 ? 'none' : 'flex';
-            stepCounter.textContent = `Paso ${wizardCurrentStep} de ${wizardTotalSteps}`;
-            if (currentStepSpan) currentStepSpan.textContent = wizardCurrentStep;
 
             document.querySelectorAll('.mini-dots .dot').forEach((dot, index) => {
                 dot.classList.toggle('active', index + 1 <= wizardCurrentStep);
@@ -992,7 +961,7 @@
             const requiredFields = currentStepElement.querySelectorAll('[required]');
             const optionalFields = currentStepElement.querySelectorAll('input:not([required]), select:not([required])');
             const allFields = [...requiredFields, ...optionalFields];
-            
+
             let completed = 0;
 
             allFields.forEach(field => {
@@ -1007,7 +976,7 @@
             const counter = document.getElementById(`step${wizardCurrentStep}Counter`);
             if (counter) {
                 counter.textContent = `${completed} de ${allFields.length} campos completados`;
-                
+
                 const progress = completed / allFields.length;
                 if (progress === 1) {
                     counter.className = 'field-counter text-success fw-bold';
@@ -1058,9 +1027,9 @@
         function updatePasswordStrength(password) {
             const strengthBar = document.getElementById('strengthBar');
             const strengthText = document.getElementById('strengthText');
-            
+
             if (!strengthBar || !strengthText) return;
-            
+
             let strength = 0;
             let feedback = '';
 
@@ -1102,13 +1071,13 @@
         function validateParentEmails() {
             const padreEmail = document.getElementById('padre_email').value.trim();
             const madreEmail = document.getElementById('madre_email').value.trim();
-            
+
             if (padreEmail && madreEmail && padreEmail === madreEmail) {
                 document.getElementById('padre_email').classList.add('is-invalid');
                 document.getElementById('madre_email').classList.add('is-invalid');
                 document.getElementById('padre_email_feedback').textContent = 'No puede ser igual al correo de la madre';
                 document.getElementById('madre_email_feedback').textContent = 'No puede ser igual al correo del padre';
-                
+
                 Swal.fire({
                     icon: 'warning',
                     title: 'Correos Duplicados',
@@ -1117,30 +1086,30 @@
                 });
                 return false;
             }
-            
+
             if (padreEmail !== madreEmail) {
                 document.getElementById('padre_email').classList.remove('is-invalid');
                 document.getElementById('madre_email').classList.remove('is-invalid');
                 document.getElementById('padre_email_feedback').textContent = 'Ingrese un correo válido';
                 document.getElementById('madre_email_feedback').textContent = 'Ingrese un correo válido';
             }
-            
+
             return true;
         }
 
         function triggerFieldValidation(field) {
             field.classList.remove('is-invalid', 'is-valid');
-            
+
             if (field.hasAttribute('required') && !field.value.trim()) {
                 field.classList.add('is-invalid');
                 return false;
             }
-            
+
             if (field.type === 'email' && field.value && !isValidEmail(field.value)) {
                 field.classList.add('is-invalid');
                 return false;
             }
-            
+
             if (field.name === 'password_confirmation') {
                 const password = document.getElementById('reg_password').value;
                 if (field.value !== password) {
@@ -1148,22 +1117,22 @@
                     return false;
                 }
             }
-            
+
             if (field.pattern && field.value && !new RegExp(field.pattern).test(field.value)) {
                 field.classList.add('is-invalid');
                 return false;
             }
-            
+
             if (field.value.trim()) {
                 field.classList.add('is-valid');
-                
+
                 const feedback = field.closest('.enhanced-input-group')?.querySelector('.input-feedback');
                 if (feedback) {
-                    feedback.innerHTML = '<i class="text-success">✓</i>';
+                    feedback.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
                     feedback.classList.add('show');
                 }
             }
-            
+
             return true;
         }
 
@@ -1178,7 +1147,7 @@
                 }
             });
 
-            if ((step === 2 || step === 3) && !validateParentEmails()) {
+            if (step === 2 && !validateParentEmails()) {
                 isValid = false;
             }
 
@@ -1205,7 +1174,7 @@
         function saveCurrentStepData() {
             // Guardar datos de TODOS los campos del formulario, no solo del paso actual
             const allInputs = document.querySelectorAll('#registrationWizard input, #registrationWizard select');
-            
+
             allInputs.forEach(input => {
                 if (input.value.trim()) {
                     wizardFormData[input.name] = input.value;
@@ -1215,11 +1184,11 @@
 
         function generateConfirmationSummary() {
             const container = document.getElementById('confirmationSummary');
-            
+
             // CORRECCIÓN: Obtener datos directamente del formulario, no de wizardFormData
             const form = document.getElementById('registrationWizard');
             const formData = new FormData(form);
-            
+
             const sections = [
                 {
                     title: 'Datos Personales del Postulante',
@@ -1238,27 +1207,19 @@
                     }
                 },
                 {
-                    title: 'Datos del Padre/Tutor',
-                    icon: '👨',
+                    title: 'Datos de los Padres/Tutores',
+                    icon: '👨‍👩‍👧',
                     data: {
-                        'Nombres': formData.get('padre_nombre'),
-                        'Apellidos': formData.get('padre_apellidos'),
-                        'Tipo de Documento': formData.get('padre_tipo_documento'),
-                        'Número de Documento': formData.get('padre_numero_documento'),
-                        'Teléfono': formData.get('padre_telefono'),
-                        'Correo': formData.get('padre_email') || 'No proporcionado'
-                    }
-                },
-                {
-                    title: 'Datos de la Madre/Tutora',
-                    icon: '👩',
-                    data: {
-                        'Nombres': formData.get('madre_nombre'),
-                        'Apellidos': formData.get('madre_apellidos'),
-                        'Tipo de Documento': formData.get('madre_tipo_documento'),
-                        'Número de Documento': formData.get('madre_numero_documento'),
-                        'Teléfono': formData.get('madre_telefono'),
-                        'Correo': formData.get('madre_email') || 'No proporcionado'
+                        'Nombres del Padre': formData.get('padre_nombre'),
+                        'Apellidos del Padre': formData.get('padre_apellidos'),
+                        'Documento del Padre': formData.get('padre_tipo_documento') + ': ' + formData.get('padre_numero_documento'),
+                        'Teléfono del Padre': formData.get('padre_telefono'),
+                        'Correo del Padre': formData.get('padre_email') || 'No proporcionado',
+                        'Nombres de la Madre': formData.get('madre_nombre'),
+                        'Apellidos de la Madre': formData.get('madre_apellidos'),
+                        'Documento de la Madre': formData.get('madre_tipo_documento') + ': ' + formData.get('madre_numero_documento'),
+                        'Teléfono de la Madre': formData.get('madre_telefono'),
+                        'Correo de la Madre': formData.get('madre_email') || 'No proporcionado'
                     }
                 }
             ];
@@ -1303,14 +1264,14 @@
             // CORRECCIÓN: Obtener datos directamente del formulario completo
             const form = document.getElementById('registrationWizard');
             const formData = new FormData(form);
-            
+
             // Asegurar que términos esté incluido
             if (termsCheckbox.checked) {
                 formData.append('terms', 'on');
             }
 
             const email = formData.get('email');
-            
+
             // Mostrar confirmación con SweetAlert2
             const result = await Swal.fire({
                 title: 'Confirmar Registro',
@@ -1330,7 +1291,7 @@
                 reverseButtons: true,
                 focusCancel: false
             });
-            
+
             if (!result.isConfirmed) {
                 return;
             }
@@ -1360,12 +1321,12 @@
                     },
                     body: formData  // DATOS COMPLETOS DEL FORMULARIO
                 });
-                
+
                 console.log('Response status:', response.status);
-                
+
                 const responseText = await response.text();
                 console.log('Response text:', responseText);
-                
+
                 let data;
                 try {
                     data = JSON.parse(responseText);
@@ -1374,15 +1335,15 @@
                     console.log('Raw response:', responseText);
                     throw new Error('La respuesta del servidor no es JSON válido');
                 }
-                
+
                 console.log('Parsed data:', data);
-                
+
                 if (data.success) {
                     Swal.close();
-                    
+
                     let mensajeExito = '';
                     let icono = 'success';
-                    
+
                     if (data.email_status === 'sent') {
                         mensajeExito = `
                             <div class="text-center">
@@ -1403,7 +1364,7 @@
                         `;
                         icono = 'warning';
                     }
-                    
+
                     await Swal.fire({
                         html: mensajeExito,
                         icon: icono,
@@ -1411,7 +1372,7 @@
                         confirmButtonText: 'Ir al Login',
                         allowOutsideClick: false
                     });
-                    
+
                     // Mostrar información adicional si hay padres existentes
                     if (data.data && data.data.padre_existente) {
                         await Swal.fire({
@@ -1425,27 +1386,27 @@
                             confirmButtonColor: '#3F51B5'
                         });
                     }
-                    
+
                     if (data.data && data.data.madre_existente) {
                         await Swal.fire({
                             title: 'Madre Vinculada',
                             html: `
                                 <p><strong>${data.data.madre_existente.nombre}</strong> ya estaba registrada en el sistema.</p>
                                 <p><small>DNI: ${data.data.madre_existente.dni}</small></p>
-                                <p><small>Hijos registrados: ${data.data.madre_existente.hijos_registrados}</small></p>
+                                <p><small>Hijos registrados: ${data.data.madre.hijos_registrados}</small></p>
                             `,
                             icon: 'info',
                             confirmButtonColor: '#3F51B5'
                         });
                     }
-                    
+
                     // Limpiar formulario y redirigir
                     document.getElementById('registrationWizard').reset();
                     window.location.href = '{{ route("login") }}';
-                    
+
                 } else {
                     Swal.close();
-                    
+
                     let errorMessages = '';
                     if (data.errors) {
                         const errorList = Object.values(data.errors).flat();
@@ -1453,7 +1414,7 @@
                     } else {
                         errorMessages = data.message || 'Error desconocido en el registro';
                     }
-                    
+
                     await Swal.fire({
                         icon: 'error',
                         title: 'Error en el Registro',
@@ -1461,11 +1422,11 @@
                         confirmButtonColor: '#3F51B5'
                     });
                 }
-                
+
             } catch (error) {
                 console.error('Error completo:', error);
                 Swal.close();
-                
+
                 await Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
@@ -1494,20 +1455,20 @@
                 field.addEventListener('input', function() {
                     triggerFieldValidation(this);
                     updateFieldProgress();
-                    
+
                     if (this.id === 'reg_password') {
                         updatePasswordStrength(this.value);
                     }
-                    
+
                     if (this.id === 'padre_email' || this.id === 'madre_email') {
                         setTimeout(() => validateParentEmails(), 100);
                     }
                 });
-                
+
                 field.addEventListener('blur', function() {
                     triggerFieldValidation(this);
                     updateFieldProgress();
-                    
+
                     if (this.id === 'padre_email' || this.id === 'madre_email') {
                         validateParentEmails();
                     }
@@ -1516,7 +1477,7 @@
                 field.addEventListener('focus', function() {
                     this.closest('.enhanced-input-group')?.classList.add('focused');
                 });
-                
+
                 field.addEventListener('blur', function() {
                     this.closest('.enhanced-input-group')?.classList.remove('focused');
                 });
@@ -1575,7 +1536,7 @@
         .bg-dark-overlay {
             background: linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(48, 63, 159, 0.9) 100%);
         }
-        
+
         .nav-pills .nav-link {
             color: #6c757d;
             background-color: #f8f9fa;
@@ -1583,31 +1544,31 @@
             padding: 12px 20px;
             transition: all 0.3s ease;
         }
-        
+
         .nav-pills .nav-link.active {
             background-color: #3F51B5;
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(63, 81, 181, 0.3);
         }
-        
+
         .nav-pills .nav-link:hover:not(.active) {
             background-color: #e9ecef;
             transform: translateY(-1px);
         }
-        
+
         .form-control:focus, .form-select:focus {
             border-color: #3F51B5;
             box-shadow: 0 0 0 0.2rem rgba(63, 81, 181, 0.25);
             transform: translateY(-1px);
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
             border: none;
             transition: all 0.3s ease;
         }
-        
+
         .btn-primary:hover {
             background: linear-gradient(135deg, #303F9F 0%, #1A237E 100%);
             transform: translateY(-2px);
@@ -1627,7 +1588,7 @@
         }
 
         .text-primary { color: #3F51B5 !important; }
-        
+
         .card {
             backdrop-filter: blur(20px);
             background: rgba(255, 255, 255, 0.98) !important;
@@ -1635,9 +1596,9 @@
             overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         /* === ESTILOS DEL WIZARD === */
-        
+
         .registration-wizard { min-height: 600px; }
 
         .overall-progress-container {
@@ -1761,11 +1722,46 @@
 
         .enhanced-input-group {
             position: relative;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem; /* Ajustado para hacerlo más compacto */
+        }
+        
+        .input-group.glow-on-focus {
+            transition: box-shadow 0.3s ease-in-out;
+            box-shadow: 0 0 0 rgba(63, 81, 181, 0);
+        }
+        
+        .input-group.glow-on-focus:not(:focus-within) {
+            animation: none;
+            box-shadow: 0 0 0 rgba(63, 81, 181, 0);
         }
 
-        .enhanced-input-group.focused {
-            transform: translateY(-1px);
+        .input-group.glow-on-focus:focus-within {
+            animation: glow-animation 1.5s infinite alternate;
+        }
+        
+        .glow-text {
+            font-weight: 700 !important;
+            color: #3F51B5 !important;
+            text-shadow: 0 0 5px rgba(63, 81, 181, 0.4);
+            animation: text-glow-animation 1.5s infinite alternate;
+        }
+
+        @keyframes text-glow-animation {
+            from {
+                text-shadow: 0 0 5px rgba(63, 81, 181, 0.4);
+            }
+            to {
+                text-shadow: 0 0 10px rgba(63, 81, 181, 0.8);
+            }
+        }
+        
+        @keyframes glow-animation {
+            from {
+                box-shadow: 0 0 8px rgba(63, 81, 181, 0.2), inset 0 0 8px rgba(63, 81, 181, 0.2);
+            }
+            to {
+                box-shadow: 0 0 20px rgba(63, 81, 181, 0.6), inset 0 0 20px rgba(63, 81, 181, 0.6);
+            }
         }
 
         .input-feedback {
@@ -1776,10 +1772,19 @@
             opacity: 0;
             transition: all 0.3s ease;
             pointer-events: none;
+            display: inline-block; /* Agregado para mejor control de la alineación */
         }
 
         .input-feedback.show {
             opacity: 1;
+        }
+        
+        .input-feedback svg {
+            vertical-align: middle;
+        }
+        
+        .form-control-wizard.is-valid + .input-feedback svg path {
+            stroke: #28a745;
         }
 
         .form-control-wizard, .form-select {
@@ -1790,11 +1795,16 @@
             font-size: 0.95rem;
             background: rgba(255, 255, 255, 0.8);
         }
-
+        
+        /* Asegurar que el input dentro del grupo no tenga su propio box-shadow */
+        .glow-on-focus input.form-control-wizard:focus {
+            box-shadow: none; 
+        }
+        
         .form-control-wizard:focus, .form-select:focus {
             border-color: #3F51B5;
-            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.15);
-            transform: translateY(-2px);
+            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+            transform: translateY(-1px);
             background: rgba(255, 255, 255, 1);
         }
 
@@ -1929,20 +1939,21 @@
 
         .wizard-step {
             min-height: 450px;
-            padding: 1rem 0;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
         }
 
-        .step-header { margin-bottom: 2rem; }
+        .step-header { margin-bottom: 1rem; }
 
         .step-icon {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
+            margin: 0 auto 0.5rem;
             color: white;
             box-shadow: 0 10px 30px rgba(63, 81, 181, 0.3);
         }
@@ -1950,13 +1961,13 @@
         .step-title {
             color: #2c3e50;
             font-weight: 700;
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+            font-size: 1.25rem;
         }
 
         .step-subtitle {
             color: #6c757d;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .confirmation-container {
@@ -1968,8 +1979,8 @@
         .confirmation-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            padding: 1rem; /* Reducido para compactar */
+            margin-bottom: 0.75rem; /* Reducido para compactar */
             border: 1px solid #dee2e6;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
             position: relative;
@@ -1989,20 +2000,20 @@
         .confirmation-title {
             color: #3F51B5;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem; /* Reducido para compactar */
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 1.1rem;
         }
 
-        .confirmation-data { display: grid; gap: 0.75rem; }
+        .confirmation-data { display: grid; gap: 0.25rem; /* Reducido para compactar */ }
 
         .data-row {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
+            gap: 0.5rem; /* Reducido para compactar */
+            padding: 0.5rem 1rem; /* Reducido para compactar */
             background: rgba(255, 255, 255, 0.8);
             border-radius: 10px;
             border-left: 4px solid #3F51B5;
@@ -2031,7 +2042,7 @@
         .animated-card {
             animation: fadeInUp 0.6s ease-out;
         }
-        
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -2046,18 +2057,18 @@
         .card::-webkit-scrollbar, .confirmation-container::-webkit-scrollbar {
             width: 8px;
         }
-        
+
         .card::-webkit-scrollbar-track, .confirmation-container::-webkit-scrollbar-track {
             background: linear-gradient(135deg, #f1f1f1 0%, #e9ecef 100%);
             border-radius: 10px;
         }
-        
+
         .card::-webkit-scrollbar-thumb, .confirmation-container::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #3F51B5, #28a745);
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .card::-webkit-scrollbar-thumb:hover, .confirmation-container::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(135deg, #303F9F, #1e7e34);
         }
