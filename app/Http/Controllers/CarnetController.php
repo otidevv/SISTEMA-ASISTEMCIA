@@ -405,7 +405,8 @@ Exception $e) {
                 'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
                 'foto' => $foto,
                 'qr_code' => $qrCode,
-                'fondo' => $fondo
+                'fondo' => $fondo,
+                'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
             ];
         });
 

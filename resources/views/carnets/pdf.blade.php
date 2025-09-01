@@ -127,6 +127,19 @@
             font-size: 7pt;
             color: #666;
         }
+        
+        /* Variante de marca de agua más discreta */
+        .fecha-impresion-discreta {
+            position: absolute;
+            bottom: 1mm;
+            right: 2mm;
+            font-size: 4pt;
+            color: rgba(0, 0, 0, 0.15);
+            z-index: 3;
+            opacity: 0.6;
+            font-weight: 200;
+        }
+        
     </style>
 </head>
 <body>
@@ -137,11 +150,11 @@
         <img src="{{ $carnet['fondo'] }}" class="carnet-background" alt="Fondo">
         @endif
         
-        <!-- Contenido del carnet - Solo elementos dinámicos que se sobreponen al fondo -->
+        <!-- Contenido del carnet CON padding -->
         <div class="carnet-content">
             
             @if($carnet['foto'])
-            <!-- Foto del estudiante - ancho reducido un poco -->
+            <!-- Foto del estudiante -->
             <div style="position: absolute; left: 50%; transform: translateX(-70%); top: 13.5mm; width: 24mm; height: 26mm; overflow: hidden;">
                 <img src="{{ $carnet['foto'] }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto">
             </div>
@@ -154,43 +167,52 @@
             </div>
             @endif
             
-            <!-- Ciclo - más a la izquierda -->
+            <!-- Ciclo -->
+             <!--
             <div style="position: absolute; left: 50%; transform: translateX(-65%); top: 33mm; width: 35mm; text-align: center; font-size: 7pt; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
                 CICLO ORDINARIO<br>{{ str_replace('CICLO ORDINARIO ', '', strtoupper($carnet['ciclo'])) }}
             </div>
+            -->
             
-            <!-- Código del postulante - aún más a la izquierda y bajado -->
+            <!-- Código del postulante -->
             <div style="position: absolute; left: 50%; transform: translateX(-70%); top: 39.5mm; text-align: center; font-size: 11pt; font-weight: bold; color: white; letter-spacing: 1mm;">
                 {{ $carnet['codigo_postulante'] }}
             </div>
             
-            <!-- Nombre del estudiante - tamaño reducido -->
+            <!-- Nombre del estudiante -->
             <div style="position: absolute; left: 46%; transform: translateX(-55%); top: 44.9mm; color: white; text-align: center; font-weight: 100; font-size: 9pt; letter-spacing: 0.2mm;">
                 {{ strtoupper($carnet['nombre_completo']) }}
             </div>
             
-            <!-- Datos del estudiante - ajustados según indicaciones -->
-            <!-- DNI - bajar un poquito -->
+            <!-- DNI -->
             <div style="position: absolute; left: 17mm; top: 55mm; color: #003d7a; font-size: 8pt;">
                 {{ $carnet['dni'] }}
             </div>
-            
-            <!-- GRUPO - bajar un poquito -->
+      
+            <!-- Grupo -->
             <div style="position: absolute; left: 22mm; top: 60mm; color: #003d7a; font-size: 8pt;">
                 {{ $carnet['grupo'] }}
             </div>
             
-            <!-- MODALIDAD - bajar un poquito -->
+            <!-- Modalidad -->
             <div style="position: absolute; left: 30mm; top: 64.5mm; color: #003d7a; font-size: 8pt;">
                 POSTULANTE
             </div>
             
-            <!-- CARRERA PROFESIONAL - más a la izquierda, tamaño reducido y letras gruesas -->
-            <div style="position: absolute; left: 50%; transform: translateX(-60%); top: 77mm; color: #003d7a; font-size: 7pt; font-weight: bold; text-align: center;">
+            <!-- Carrera profesional -->
+            <div style="position: absolute; left: 45%; transform: translateX(-60%); top: 73mm; color: #003d7a; font-size: 8pt; font-weight: bold; text-align: center;">
                 {{ strtoupper($carnet['carrera']) }}
             </div>
+            
+        </div> <!-- FIN del carnet-content -->
+
+        <!--Marca de agua muy discreta -->
+        
+        <div class="fecha-impresion-discreta">
+            {{ now()->format('d/m/Y') }}
         </div>
-    </div>
+
+    </div> <!-- FIN del carnet-container -->
     @endforeach
 </body>
 </html>
