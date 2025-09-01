@@ -71,23 +71,7 @@ class CarnetController extends Controller
             $carnets = $query->orderBy('created_at', 'desc')->get();
 
             $data = $carnets->map(function ($carnet) {
-                return [
-                    'id' => $carnet->id,
-                    'codigo' => $carnet->codigo_carnet,
-                    'estudiante' => $carnet->nombre_completo,
-                    'dni' => $carnet->estudiante->numero_documento ?? 'N/A',
-                    'ciclo' => $carnet->ciclo->nombre,
-                    'carrera' => $carnet->carrera->nombre,
-                    'turno' => $carnet->turno->nombre,
-                    'aula' => $carnet->aula->nombre ?? 'Sin asignar',
-                    'fecha_emision' => $carnet->fecha_emision->format('d/m/Y'),
-                    'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
-                    'estado' => $carnet->estado,
-                    'impreso' => $carnet->impreso,
-                    'fecha_impresion' => $carnet->fecha_impresion ? $carnet->fecha_impresion->format('d/m/Y H:i') : null,
-                    'tiene_foto' => !empty($carnet->foto),
-                    'actions' => $this->generarAcciones($carnet)
-                ];
+                return $this->formatCarnetData($carnet);
             });
 
             return response()->json([
@@ -95,12 +79,56 @@ class CarnetController extends Controller
                 'data' => $data
             ]);
 
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar carnets: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function show($id)
+    {
+        if (!Auth::user()->hasPermission('carnets.view')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $carnet = Carnet::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])->findOrFail($id);
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatCarnetData($carnet)
+            ]);
+        } catch (
+Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Carnet no encontrado.'
+            ], 404);
+        }
+    }
+
+    private function formatCarnetData($carnet)
+    {
+        return [
+            'id' => $carnet->id,
+            'codigo' => $carnet->codigo_carnet,
+            'estudiante' => $carnet->nombre_completo,
+            'dni' => $carnet->estudiante->numero_documento ?? 'N/A',
+            'ciclo' => $carnet->ciclo->nombre,
+            'carrera' => $carnet->carrera->nombre,
+            'turno' => $carnet->turno->nombre,
+            'aula' => $carnet->aula->nombre ?? 'Sin asignar',
+            'fecha_emision' => $carnet->fecha_emision->format('d/m/Y'),
+            'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
+            'estado' => $carnet->estado,
+            'impreso' => $carnet->impreso,
+            'fecha_impresion' => $carnet->fecha_impresion ? $carnet->fecha_impresion->format('d/m/Y H:i') : null,
+            'tiene_foto' => !empty($carnet->foto_path),
+            'foto_path' => $carnet->foto_path,
+            'actions' => $this->generarAcciones($carnet)
+        ];
     }
 
     /**
@@ -203,7 +231,8 @@ class CarnetController extends Controller
                 'existentes' => $carnetsExistentes
             ]);
 
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -290,7 +319,8 @@ class CarnetController extends Controller
                 'carnet' => $carnet
             ]);
 
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -417,7 +447,8 @@ class CarnetController extends Controller
                 'message' => "{$updated} carnets marcados como impresos"
             ]);
 
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar carnets: ' . $e->getMessage()
@@ -442,7 +473,7 @@ class CarnetController extends Controller
         try {
             $carnet = Carnet::findOrFail($id);
             $estadoAnterior = $carnet->estado;
-            
+
             $carnet->estado = $request->estado;
             
             if ($request->estado == 'anulado') {
@@ -458,10 +489,40 @@ class CarnetController extends Controller
                 'message' => "Estado cambiado de {$estadoAnterior} a {$request->estado}"
             ]);
 
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar estado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        if (!Auth::user()->hasPermission('carnets.delete')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $carnet = Carnet::findOrFail($id);
+            
+            // Eliminar QR asociado si existe
+            if ($carnet->qr_code) {
+                Storage::disk('public')->delete($carnet->qr_code);
+            }
+
+            $carnet->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Carnet eliminado exitosamente.'
+            ]);
+        } catch (
+Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el carnet.'
             ], 500);
         }
     }
@@ -483,7 +544,8 @@ class CarnetController extends Controller
             Storage::disk('public')->put($path, $qrCode);
             
             return $path;
-        } catch (\Exception $e) {
+        } catch (
+Exception $e) {
             // Si falla la generación del QR, continuar sin él
             return null;
         }
@@ -518,16 +580,15 @@ class CarnetController extends Controller
 
         // Cambiar estado
         if ($user->hasPermission('carnets.manage_status')) {
-            $btnClass = $carnet->estado == 'activo' ? 'btn-success' : 'btn-secondary';
-            $actions[] = '<button class="btn btn-sm ' . $btnClass . ' change-status" data-id="' . $carnet->id . '" 
+            $actions[] = '<button class="btn btn-sm btn-secondary change-status" data-id="' . $carnet->id . '" 
                 data-estado="' . $carnet->estado . '" title="Cambiar estado">
                 <i class="uil uil-sync"></i>
             </button>';
         }
 
-        // Eliminar/Anular
-        if ($user->hasPermission('carnets.delete') && $carnet->estado != 'anulado') {
-            $actions[] = '<button class="btn btn-sm btn-danger delete-carnet" data-id="' . $carnet->id . '" title="Anular">
+        // Eliminar
+        if ($user->hasPermission('carnets.delete')) {
+            $actions[] = '<button class="btn btn-sm btn-danger delete-carnet" data-id="' . $carnet->id . '" title="Eliminar">
                 <i class="uil uil-trash-alt"></i>
             </button>';
         }

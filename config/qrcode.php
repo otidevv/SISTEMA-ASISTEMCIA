@@ -1,12 +1,14 @@
 <?php
 
 return [
+    'writer' => 'gd',
+
     /*
     |--------------------------------------------------------------------------
-    | QR Code Configuration
+    | Writer-specific Options
     |--------------------------------------------------------------------------
     |
-    | This file contains the configuration for the QR Code generation
+    | The options passed to the writer.
     |
     */
 

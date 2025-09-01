@@ -97,10 +97,10 @@
         
         .qr-container {
             position: absolute;
-            top: 5mm;
-            right: 5mm;
-            width: 18mm;
-            height: 18mm;
+            top: 23mm;
+            right: 11mm;
+            width: 10mm;
+            height: 10mm;
         }
         
         .qr-code {
@@ -146,6 +146,13 @@
                 <img src="{{ $carnet['foto'] }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto">
             </div>
             @endif
+
+            <!-- QR Code -->
+            @if($carnet['qr_code'])
+            <div class="qr-container">
+                <img src="{{ $carnet['qr_code'] }}" class="qr-code" alt="QR Code">
+            </div>
+            @endif
             
             <!-- Ciclo - más a la izquierda -->
             <div style="position: absolute; left: 50%; transform: translateX(-65%); top: 33mm; width: 35mm; text-align: center; font-size: 7pt; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
@@ -153,12 +160,12 @@
             </div>
             
             <!-- Código del postulante - aún más a la izquierda y bajado -->
-            <div style="position: absolute; left: 50%; transform: translateX(-70%); top: 40.5mm; text-align: center; font-size: 8pt; font-weight: bold; color: white; letter-spacing: 1mm;">
+            <div style="position: absolute; left: 50%; transform: translateX(-70%); top: 39.5mm; text-align: center; font-size: 11pt; font-weight: bold; color: white; letter-spacing: 1mm;">
                 {{ $carnet['codigo_postulante'] }}
             </div>
             
             <!-- Nombre del estudiante - tamaño reducido -->
-            <div style="position: absolute; left: 50%; transform: translateX(-55%); top: 47mm; color: white; text-align: center; font-weight: 100; font-size: 6pt; letter-spacing: 0.2mm;">
+            <div style="position: absolute; left: 46%; transform: translateX(-55%); top: 44.9mm; color: white; text-align: center; font-weight: 100; font-size: 9pt; letter-spacing: 0.2mm;">
                 {{ strtoupper($carnet['nombre_completo']) }}
             </div>
             
@@ -179,7 +186,7 @@
             </div>
             
             <!-- CARRERA PROFESIONAL - más a la izquierda, tamaño reducido y letras gruesas -->
-            <div style="position: absolute; left: 50%; transform: translateX(-60%); top: 77mm; color: #003d7a; font-size: 5pt; font-weight: bold; text-align: center;">
+            <div style="position: absolute; left: 50%; transform: translateX(-60%); top: 77mm; color: #003d7a; font-size: 7pt; font-weight: bold; text-align: center;">
                 {{ strtoupper($carnet['carrera']) }}
             </div>
         </div>

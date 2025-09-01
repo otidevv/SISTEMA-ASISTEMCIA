@@ -173,6 +173,21 @@ function setupEventHandlers() {
         const estadoActual = $(this).data('estado');
         openChangeStatusModal(id, estadoActual);
     });
+
+    // Editar carnet
+    $(document).on('click', '.edit-carnet', function() {
+        const id = $(this).data('id');
+        alert('Función de editar carnet (ID: ' + id + ') aún no implementada.');
+        // Aquí iría la lógica para abrir un modal de edición
+    });
+
+    // Eliminar carnet
+    $(document).on('click', '.delete-carnet', function() {
+        const id = $(this).data('id');
+        if (confirm('¿Está seguro de que desea anular este carnet? Esta acción no se puede deshacer.')) {
+            deleteCarnet(id);
+        }
+    });
     
     // Mostrar/ocultar motivo anulación
     $('#nuevo-estado').on('change', function() {
@@ -282,11 +297,46 @@ function generarCarnetsMasivo() {
 }
 
 function viewCarnetDetail(id) {
-    // Aquí puedes hacer una petición AJAX para obtener los detalles del carnet
-    // Por ahora mostraremos un mensaje simple
     $('#viewCarnetBody').html('<p>Cargando información del carnet...</p>');
     $('#viewCarnetModal').modal('show');
+
+    $.ajax({
+        url: default_server + "/json/carnets/" + id,
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const carnet = response.data;
+                let content = '<div class="row">';
+                content += '<div class="col-md-4 text-center">';
+                content += carnet.tiene_foto ? '<img src="' + default_server + '/storage/' + carnet.foto_path + '" class="img-fluid rounded" alt="Foto">' : '<div class="alert alert-warning">Sin foto</div>';
+                content += '</div>';
+                content += '<div class="col-md-8">';
+                content += '<p><strong>Código:</strong> ' + carnet.codigo + '</p>';
+                content += '<p><strong>Estudiante:</strong> ' + carnet.estudiante + '</p>';
+                content += '<p><strong>DNI:</strong> ' + carnet.dni + '</p>';
+                content += '<p><strong>Ciclo:</strong> ' + carnet.ciclo + '</p>';
+                content += '<p><strong>Carrera:</strong> ' + carnet.carrera + '</p>';
+                content += '<p><strong>Turno:</strong> ' + carnet.turno + '</p>';
+                content += '<p><strong>Aula:</strong> ' + carnet.aula + '</p>';
+                content += '<p><strong>Emisión:</strong> ' + carnet.fecha_emision + '</p>';
+                content += '<p><strong>Vencimiento:</strong> ' + carnet.fecha_vencimiento + '</p>';
+                content += '<p><strong>Estado:</strong> <span class="badge badge-estado-' + carnet.estado + '">' + carnet.estado.toUpperCase() + '</span></p>';
+                content += '<p><strong>Impreso:</strong> ' + (carnet.impreso ? 'Sí' : 'No') + '</p>';
+                content += '</div>';
+                content += '</div>';
+                $('#viewCarnetBody').html(content);
+            } else {
+                $('#viewCarnetBody').html('<p class="text-danger">No se pudo cargar la información.</p>');
+                toastr.error(response.message || 'Error al cargar el detalle del carnet.');
+            }
+        },
+        error: function() {
+            $('#viewCarnetBody').html('<p class="text-danger">Ocurrió un error de red.</p>');
+            toastr.error('Error de red al intentar obtener los detalles del carnet.');
+        }
+    });
 }
+
 
 function openChangeStatusModal(id, estadoActual) {
     $('#status-carnet-id').val(id);
@@ -329,6 +379,28 @@ function changeCarnetStatus() {
         },
         error: function(xhr) {
             toastr.error('Error al cambiar estado del carnet');
+        }
+    });
+}
+
+function deleteCarnet(id) {
+    $.ajax({
+        url: default_server + "/json/carnets/" + id,
+        type: 'DELETE',
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message || 'Carnet anulado exitosamente.');
+                table.ajax.reload();
+            } else {
+                toastr.error(response.message || 'No se pudo anular el carnet.');
+            }
+        },
+        error: function(xhr) {
+            let errorMsg = 'Error al anular el carnet.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            toastr.error(errorMsg);
         }
     });
 }

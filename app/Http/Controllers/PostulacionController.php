@@ -761,6 +761,9 @@ class PostulacionController extends Controller
             $postulacion = Postulacion::findOrFail($id);
             $estudiante = $postulacion->estudiante;
             
+            // Guardar el ciclo_id original antes de actualizar la postulación
+            $original_ciclo_id = $postulacion->ciclo_id;
+
             // Actualizar datos del estudiante
             $estudiante->nombre = $request->nombre;
             $estudiante->apellido_paterno = $request->apellido_paterno;
@@ -788,10 +791,11 @@ class PostulacionController extends Controller
             
             // Si hay inscripción asociada, actualizarla también
             $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
-                ->where('ciclo_id', $postulacion->ciclo_id)
+                ->where('ciclo_id', $original_ciclo_id) // Usar el ciclo_id original para la búsqueda
                 ->first();
                 
             if ($inscripcion) {
+                $inscripcion->ciclo_id = $request->ciclo_id; // Actualizar al nuevo ciclo
                 $inscripcion->carrera_id = $request->carrera_id;
                 $inscripcion->turno_id = $request->turno_id;
                 $inscripcion->tipo_inscripcion = $request->tipo_inscripcion;
