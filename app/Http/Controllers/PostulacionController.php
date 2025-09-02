@@ -112,6 +112,15 @@ class PostulacionController extends Controller
             $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
                 ->findOrFail($id);
 
+            // Buscar la inscripción asociada si existe y cargar el aula
+            $inscripcion = null;
+            if ($postulacion->estado === 'aprobado') {
+                $inscripcion = Inscripcion::where('estudiante_id', $postulacion->estudiante_id)
+                    ->where('ciclo_id', $postulacion->ciclo_id)
+                    ->with('aula') // Cargar la relación con el aula
+                    ->first();
+            }
+
             // Preparar información de documentos
             $documentos = [
                 'dni' => [
@@ -151,11 +160,20 @@ class PostulacionController extends Controller
                 ]
             ];
 
+            // Agregar la URL de la foto de perfil del estudiante si existe
+            $fotoPerfilUrl = $postulacion->estudiante->foto_perfil ? Storage::url($postulacion->estudiante->foto_perfil) : null;
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'postulacion' => $postulacion,
-                    'documentos' => $documentos
+                    'postulacion' => array_merge($postulacion->toArray(), [
+                        'centro_educativo' => $postulacion->centroEducativo ? [
+                            'nombre' => $postulacion->centroEducativo->cen_edu
+                        ] : null
+                    ]),
+                    'documentos' => $documentos,
+                    'inscripcion' => $inscripcion, // Incluir la inscripción en la respuesta
+                    'foto_perfil_url' => $fotoPerfilUrl // Incluir la URL de la foto de perfil
                 ]
             ]);
 
@@ -716,7 +734,11 @@ class PostulacionController extends Controller
                 'success' => true,
                 'data' => [
                     'estudiante' => $postulacion->estudiante,
-                    'postulacion' => $postulacion,
+                    'postulacion' => array_merge($postulacion->toArray(), [
+                        'centro_educativo' => $postulacion->centroEducativo ? [
+                            'nombre' => $postulacion->centroEducativo->cen_edu
+                        ] : null
+                    ]),
                     'inscripcion' => $inscripcion
                 ]
             ]);

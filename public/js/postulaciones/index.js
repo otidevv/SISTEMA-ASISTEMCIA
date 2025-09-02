@@ -358,18 +358,31 @@ function viewPostulacion(id) {
                 const data = response.data;
                 const postulacion = data.postulacion;
                 const documentos = data.documentos;
+                const inscripcion = data.inscripcion; // Definir inscripcion aquí
                 
                 let html = '<div class="row">';
                 
                 // Información del estudiante
                 html += '<div class="col-md-6">';
                 html += '<h5>Información del Estudiante</h5>';
+                html += '<div class="text-center mb-3">';
+                const fotoPerfilUrl = postulacion.foto_path ? default_server + '/storage/' + postulacion.foto_path : null;
+                if (fotoPerfilUrl) {
+                    html += '<img src="' + fotoPerfilUrl + '" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;" alt="Foto de Perfil">';
+                } else {
+                    html += '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;" alt="Sin Foto">';
+                }
+                html += '</div>';
                 html += '<table class="table table-sm">';
                 html += '<tr><td><strong>Nombre:</strong></td><td>' + postulacion.estudiante.nombre + ' ' + 
                         postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</td></tr>';
                 html += '<tr><td><strong>DNI:</strong></td><td>' + (postulacion.estudiante.numero_documento || 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Email:</strong></td><td>' + postulacion.estudiante.email + '</td></tr>';
+                html += '<tr><td><strong>Email:</strong></td><td>' + (postulacion.estudiante.email || 'N/A') + '</td></tr>';
                 html += '<tr><td><strong>Teléfono:</strong></td><td>' + (postulacion.estudiante.telefono || 'N/A') + '</td></tr>';
+                html += '<tr><td><strong>Fecha Nacimiento:</strong></td><td>' + (postulacion.estudiante.fecha_nacimiento ? new Date(postulacion.estudiante.fecha_nacimiento).toLocaleDateString() : 'N/A') + '</td></tr>';
+                html += '<tr><td><strong>Género:</strong></td><td>' + (postulacion.estudiante.genero ? (postulacion.estudiante.genero === 'M' ? 'Masculino' : 'Femenino') : 'N/A') + '</td></tr>';
+                html += '<tr><td><strong>Dirección:</strong></td><td>' + (postulacion.estudiante.direccion || 'N/A') + '</td></tr>';
+                html += '<tr><td><strong>Centro Educativo:</strong></td><td>' + (postulacion.centro_educativo?.nombre || 'N/A') + '</td></tr>';
                 html += '</table>';
                 html += '</div>';
                 
@@ -383,7 +396,11 @@ function viewPostulacion(id) {
                 html += '<tr><td><strong>Turno:</strong></td><td>' + postulacion.turno.nombre + '</td></tr>';
                 html += '<tr><td><strong>Tipo:</strong></td><td>' + postulacion.tipo_inscripcion + '</td></tr>';
                 html += '<tr><td><strong>Estado:</strong></td><td><span class="badge badge-estado-' + 
-                        postulacion.estado + '">' + postulacion.estado.toUpperCase() + '</span></td></tr>';
+                        postulacion.estado + '"> ' + postulacion.estado.toUpperCase() + '</span></td></tr>';
+                // Mostrar aula si la postulación está aprobada y hay inscripción
+                if (inscripcion && inscripcion.aula) {
+                    html += '<tr><td><strong>Aula Asignada:</strong></td><td>' + inscripcion.aula.nombre + '</td></tr>';
+                }
                 html += '</table>';
                 html += '</div>';
                 
