@@ -109,8 +109,13 @@ class PostulacionController extends Controller
         }
 
         try {
-            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
-                ->findOrFail($id);
+            $postulacion = Postulacion::with([
+                'estudiante.parentescos.padre', // Eager load parentescos and their associated 'padre' (User)
+                'ciclo',
+                'carrera',
+                'turno',
+                'centroEducativo'
+            ])->findOrFail($id);
 
             // Buscar la inscripción asociada si existe y cargar el aula
             $inscripcion = null;
@@ -120,6 +125,13 @@ class PostulacionController extends Controller
                     ->with('aula') // Cargar la relación con el aula
                     ->first();
             }
+
+            // Extraer datos del padre y la madre
+            $padre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Padre')->first();
+            $madre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Madre')->first();
+
+            $padreData = $padre && $padre->padre ? $padre->padre->toArray() : null;
+            $madreData = $madre && $madre->padre ? $madre->padre->toArray() : null;
 
             // Preparar información de documentos
             $documentos = [
@@ -173,7 +185,9 @@ class PostulacionController extends Controller
                     ]),
                     'documentos' => $documentos,
                     'inscripcion' => $inscripcion, // Incluir la inscripción en la respuesta
-                    'foto_perfil_url' => $fotoPerfilUrl // Incluir la URL de la foto de perfil
+                    'foto_perfil_url' => $fotoPerfilUrl, // Incluir la URL de la foto de perfil
+                    'padre' => $padreData, // Incluir datos del padre
+                    'madre' => $madreData // Incluir datos de la madre
                 ]
             ]);
 

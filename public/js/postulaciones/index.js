@@ -385,6 +385,24 @@ function viewPostulacion(id) {
                 html += '<tr><td><strong>Centro Educativo:</strong></td><td>' + (postulacion.centro_educativo?.nombre || 'N/A') + '</td></tr>';
                 html += '</table>';
                 html += '</div>';
+
+                // Información de Padres
+                html += '<div class="col-md-6">';
+                html += '<h5>Información de Padres</h5>';
+                html += '<table class="table table-sm">';
+                if (data.padre && data.padre.nombre) { // Assuming 'data.padre' contains the parent object
+                    html += '<tr><td><strong>Nombre del Padre:</strong></td><td>' + data.padre.nombre + ' ' + data.padre.apellido_paterno + ' ' + data.padre.apellido_materno + '</td></tr>';
+                    html += '<tr><td><strong>Teléfono del Padre:</strong></td><td>' + (data.padre.telefono || 'N/A') + '</td></tr>';
+                }
+                if (data.madre && data.madre.nombre) { // Assuming 'data.madre' contains the mother object
+                    html += '<tr><td><strong>Nombre de la Madre:</strong></td><td>' + data.madre.nombre + ' ' + data.madre.apellido_paterno + ' ' + data.madre.apellido_materno + '</td></tr>';
+                    html += '<tr><td><strong>Teléfono de la Madre:</strong></td><td>' + (data.madre.telefono || 'N/A') + '</td></tr>';
+                }
+                if (!data.padre && !data.madre) {
+                    html += '<tr><td colspan="2" style="text-align: center; color: #666;">Información de padres no disponible</td></tr>';
+                }
+                html += '</table>';
+                html += '</div>';
                 
                 // Información de la postulación
                 html += '<div class="col-md-6">';

@@ -199,6 +199,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the parentescos for the user (when the user is an estudiante).
+     */
+    public function parentescos()
+    {
+        return $this->hasMany(Parentesco::class, 'estudiante_id');
+    }
+
+    /**
      * Get the reset tokens for the user.
      */
     public function resetTokens()
