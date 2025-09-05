@@ -23,6 +23,7 @@ use App\Http\Controllers\Auth\PostulanteRegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\ReniecController;
 use App\Http\Controllers\PostulacionController;
+use App\Http\Controllers\PostulacionUnificadaController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -114,6 +115,10 @@ Route::get('/debug-horarios-docentes', function () {
     }
 })->middleware('auth');
 
+// API de consulta RENIEC (pública para todos los formularios)
+Route::post('/api/reniec/consultar', [ReniecController::class, 'consultarDni'])->name('api.reniec.consultar');
+Route::post('/api/reniec/consultar-multiple', [ReniecController::class, 'consultarMultiple'])->name('api.reniec.consultar.multiple');
+
 // Rutas de autenticación
 Route::middleware('guest')->group(function () {
     // Login
@@ -126,10 +131,6 @@ Route::middleware('guest')->group(function () {
     
     // Registro de postulantes
     Route::post('/register/postulante', [PostulanteRegisterController::class, 'register'])->name('register.postulante');
-    
-    // API de consulta RENIEC (público para el formulario de registro)
-    Route::post('/api/reniec/consultar', [ReniecController::class, 'consultarDni'])->name('api.reniec.consultar');
-    Route::post('/api/reniec/consultar-multiple', [ReniecController::class, 'consultarMultiple'])->name('api.reniec.consultar.multiple');
     
     // API de registro de postulantes
     Route::post('/api/register/postulante', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
@@ -303,6 +304,22 @@ Route::middleware('auth')->group(function () {
     // Postulaciones - Gestión de postulaciones de estudiantes
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
+    });
+    
+    // ✅ NUEVA FUNCIONALIDAD: Postulación Unificada - Para uso administrativo (Admin, Secretaria, Coordinador)
+    Route::prefix('postulacion-unificada')->middleware('auth')->group(function () {
+        Route::get('/crear', [PostulacionUnificadaController::class, 'create'])->name('postulacion-unificada.create')->middleware('can:postulaciones.create-unified');
+        Route::get('/modal', [PostulacionUnificadaController::class, 'createModal'])->name('postulacion-unificada.modal')->middleware('can:postulaciones.create-unified');
+        Route::get('/form-content', [PostulacionUnificadaController::class, 'getFormContent'])->name('postulacion-unificada.form-content')->middleware('can:postulaciones.create-unified');
+        Route::post('/', [PostulacionUnificadaController::class, 'store'])->name('postulacion-unificada.store')->middleware('can:postulaciones.create-unified');
+    });
+    
+    // ✅ NUEVA FUNCIONALIDAD: API para Postulación Unificada
+    Route::prefix('api/postulacion-unificada')->middleware('auth')->group(function () {
+        Route::get('/departamentos', [PostulacionUnificadaController::class, 'getDepartamentos']);
+        Route::get('/provincias/{departamento}', [PostulacionUnificadaController::class, 'getProvincias']);
+        Route::get('/distritos/{departamento}/{provincia}', [PostulacionUnificadaController::class, 'getDistritos']);
+        Route::post('/buscar-colegios', [PostulacionUnificadaController::class, 'buscarColegios']);
     });
     
     // Carnets - Gestión de carnets de estudiantes

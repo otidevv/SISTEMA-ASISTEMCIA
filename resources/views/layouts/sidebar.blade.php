@@ -141,6 +141,9 @@
                         <div class="collapse" id="sidebarPostulaciones">
                             <ul class="nav-second-level">
                                 <li><a href="{{ route('postulaciones.index') }}">Ver Postulaciones</a></li>
+                                @if (Auth::user()->hasPermission('postulaciones.create-unified'))
+                                    <li><a href="{{ route('postulacion-unificada.create') }}">Nueva Postulación Completa</a></li>
+                                @endif
                                 @if (Auth::user()->hasPermission('postulaciones.reports'))
                                     <li><a href="#">Reportes</a></li>
                                 @endif
@@ -149,6 +152,16 @@
                                 @endif
                             </ul>
                         </div>
+                    </li>
+                @endif
+
+                <!-- Nueva Postulación Unificada - Para estudiantes/postulantes -->
+                @if (Auth::user()->hasPermission('postulaciones.create-unified'))
+                    <li>
+                        <a href="{{ route('postulacion-unificada.create') }}">
+                            <i data-feather="user-plus"></i>
+                            <span> Nueva Postulación </span>
+                        </a>
                     </li>
                 @endif
 

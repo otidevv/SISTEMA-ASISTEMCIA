@@ -53,6 +53,105 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/postulaciones/index.js') }}"></script>
+    
+    <script>
+        // Función para abrir el modal de nueva postulación unificada
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnNuevaPostulacion = document.getElementById('btn-nueva-postulacion-unificada');
+            const modalNuevaPostulacion = document.getElementById('nuevaPostulacionModal');
+            const iframe = document.getElementById('postulacion-iframe');
+            
+            if (btnNuevaPostulacion) {
+                btnNuevaPostulacion.addEventListener('click', function() {
+                    // Mostrar el modal
+                    const modal = new bootstrap.Modal(modalNuevaPostulacion);
+                    modal.show();
+                    
+                    // Cargar el formulario vía AJAX
+                    loadPostulacionForm();
+                });
+            }
+            
+            // Función para cargar el formulario vía AJAX
+            function loadPostulacionForm() {
+                const container = document.getElementById('postulacion-form-container');
+                
+                fetch("{{ route('postulacion-unificada.form-content') }}")
+                    .then(response => response.text())
+                    .then(html => {
+                        // Insertar directamente el contenido HTML
+                        container.innerHTML = html;
+                        
+                        // Cargar el script externo después de insertar el HTML
+                        const script = document.createElement('script');
+                        script.src = "{{ asset('js/postulaciones/unificado.js') }}";
+                        script.onload = function() {
+                            console.log('Script unificado.js cargado correctamente');
+                            
+                            // Verificar que jQuery esté disponible
+                            if (typeof $ === 'undefined') {
+                                console.error('jQuery no está disponible');
+                                return;
+                            }
+                            
+                            // Ejecutar la inicialización del script externo
+                            setTimeout(() => {
+                                // Simular el evento ready de jQuery para el script externo
+                                $(document).ready();
+                                console.log('Wizard inicializado después de carga AJAX');
+                            }, 100);
+                        };
+                        script.onerror = function() {
+                            console.error('Error al cargar unificado.js');
+                        };
+                        document.head.appendChild(script);
+                        
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success('Formulario cargado correctamente', 'Listo');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        container.innerHTML = '<div class="alert alert-danger">Error al cargar el formulario</div>';
+                    });
+            }
+            
+            // Escuchar mensajes del iframe para cerrar el modal cuando se complete la postulación
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'postulacion-completada') {
+                    // Cerrar el modal
+                    const modal = bootstrap.Modal.getInstance(modalNuevaPostulacion);
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Mostrar mensaje de éxito
+                    toastr.success('Postulación creada exitosamente', 'Éxito');
+                    
+                    // Actualizar la lista de postulaciones
+                    if (typeof refreshPostulacionesList === 'function') {
+                        refreshPostulacionesList();
+                    } else {
+                        // Recargar la página si no existe la función
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    }
+                }
+            });
+        });
+        
+        // Función para actualizar la lista de postulaciones
+        function refreshPostulacionesList() {
+            if (typeof window.postulacionesDataTable !== 'undefined' && window.postulacionesDataTable) {
+                window.postulacionesDataTable.ajax.reload(null, false);
+                toastr.info('Lista de postulaciones actualizada', 'Actualizado');
+            } else {
+                // Si no hay DataTable, recargar la página
+                window.location.reload();
+            }
+        }
+    </script>
 @endpush
 
 @section('content')
@@ -152,11 +251,30 @@
                         </div>
                     </div>
 
+                    <!-- Botón Nueva Postulación Unificada -->
+                    @if (Auth::user()->hasPermission('postulaciones.create-unified'))
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="header-title mt-0 mb-0">Lista de Postulaciones</h4>
+                                <button type="button" class="btn btn-success btn-lg" id="btn-nueva-postulacion-unificada">
+                                    <i class="mdi mdi-account-plus me-2"></i>
+                                    Nueva Postulación Completa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @else
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h4 class="header-title mt-0 mb-3">Lista de Postulaciones</h4>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Tabla de postulaciones -->
                     <div class="row">
                         <div class="col-12">
-                            <h4 class="header-title mt-0 mb-3">Lista de Postulaciones</h4>
-                            
                             @if (session('success'))
                                 <div class="alert alert-success">
                                     {{ session('success') }}
@@ -457,6 +575,40 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="saveDocumentChanges">
                         <i class="uil uil-save me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Nueva Postulación Unificada -->
+    <div class="modal fade" id="nuevaPostulacionModal" tabindex="-1" role="dialog" aria-labelledby="nuevaPostulacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="nuevaPostulacionModalLabel">
+                        <i class="mdi mdi-account-plus me-2"></i>
+                        Nueva Postulación Completa - Datos del Estudiante y Familia
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                    <div id="postulacion-form-container">
+                        <!-- El formulario se cargará aquí vía AJAX -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Cargando formulario...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando formulario de postulación...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close me-1"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="refreshPostulacionesList()">
+                        <i class="mdi mdi-refresh me-1"></i> Actualizar Lista
                     </button>
                 </div>
             </div>

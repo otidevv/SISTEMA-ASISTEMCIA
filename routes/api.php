@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReniecController;
+use App\Http\Controllers\PostulacionUnificadaController;
 
 // Dashboard API endpoints - Using web auth
 Route::middleware(['web', 'auth'])->group(function () {
@@ -12,6 +14,18 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/dashboard/admin', [DashboardController::class, 'getDatosAdmin']);
     Route::get('/dashboard/estudiante', [DashboardController::class, 'getDatosEstudiante']);
     Route::get('/dashboard/profesor', [DashboardController::class, 'getDatosProfesor']);
+});
+
+// RENIEC API endpoints
+Route::middleware(['web', 'auth'])->group(function () {
+    // Se comenta la ruta /api/reniec/consultar para evitar conflicto con la ruta pública definida en web.php
+    // Route::post('/reniec/consultar', [ReniecController::class, 'consultarDni']);
+    Route::post('/reniec/consultar-multiple', [ReniecController::class, 'consultarMultiple']);
+});
+
+// Postulación Unificada API endpoints
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/postulacion-unificada/buscar-colegios', [PostulacionUnificadaController::class, 'buscarColegios']);
 });
 
 // En routes/ause Illuminate\Http\Request;pi.php

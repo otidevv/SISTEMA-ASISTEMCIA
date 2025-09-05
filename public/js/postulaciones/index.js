@@ -822,6 +822,7 @@ function loadApprovedPostulationForEdit(id) {
                 $('#edit-approved-ciclo').val(data.postulacion.ciclo_id);
                 $('#edit-approved-carrera').val(data.postulacion.carrera_id);
                 $('#edit-approved-tipo').val(data.postulacion.tipo_inscripcion);
+                $('#edit-approved-codigo').val(data.postulacion.codigo_postulante);
                 
                 // Cargar turnos disponibles y seleccionar el actual
                 // Pasamos false como cuarto parámetro para evitar el trigger del evento change
@@ -942,6 +943,7 @@ function saveApprovedPostulationChanges() {
         turno_id: $('#edit-approved-turno').val(),
         aula_id: $('#edit-approved-aula').val(),
         tipo_inscripcion: $('#edit-approved-tipo').val(),
+        codigo_postulante: $('#edit-approved-codigo').val(),
         numero_recibo: $('#edit-approved-recibo').val(),
         monto_matricula: $('#edit-approved-matricula').val(),
         monto_ensenanza: $('#edit-approved-ensenanza').val(),

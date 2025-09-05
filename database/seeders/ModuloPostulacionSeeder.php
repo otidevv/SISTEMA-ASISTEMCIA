@@ -22,6 +22,12 @@ class ModuloPostulacionSeeder extends Seeder
                 'modulo' => 'postulaciones'
             ],
             [
+                'nombre' => 'Crear Postulación Unificada',
+                'codigo' => 'postulaciones.create-unified',
+                'descripcion' => 'Permite crear postulaciones con datos familiares completos',
+                'modulo' => 'postulaciones'
+            ],
+            [
                 'nombre' => 'Ver Detalle Postulación',
                 'codigo' => 'postulaciones.show',
                 'descripcion' => 'Permite ver el detalle de una postulación',
@@ -209,6 +215,42 @@ class ModuloPostulacionSeeder extends Seeder
                     [
                         'rol_id' => $rolCoordinador->id,
                         'permiso_id' => $permisoId
+                    ]
+                );
+            }
+        }
+
+        // Asignar permiso de crear postulación unificada a Estudiante
+        $rolEstudiante = DB::table('roles')->where('nombre', 'Estudiante')->first();
+        
+        if ($rolEstudiante) {
+            $permisoUnificado = DB::table('permissions')
+                ->where('codigo', 'postulaciones.create-unified')
+                ->first();
+            
+            if ($permisoUnificado) {
+                DB::table('role_permissions')->updateOrInsert(
+                    [
+                        'rol_id' => $rolEstudiante->id,
+                        'permiso_id' => $permisoUnificado->id
+                    ]
+                );
+            }
+        }
+
+        // Asignar permiso de crear postulación unificada a Postulante
+        $rolPostulante = DB::table('roles')->where('nombre', 'Postulante')->first();
+        
+        if ($rolPostulante) {
+            $permisoUnificado = DB::table('permissions')
+                ->where('codigo', 'postulaciones.create-unified')
+                ->first();
+            
+            if ($permisoUnificado) {
+                DB::table('role_permissions')->updateOrInsert(
+                    [
+                        'rol_id' => $rolPostulante->id,
+                        'permiso_id' => $permisoUnificado->id
                     ]
                 );
             }

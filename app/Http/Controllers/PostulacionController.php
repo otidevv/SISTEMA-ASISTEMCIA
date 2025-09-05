@@ -785,6 +785,7 @@ class PostulacionController extends Controller
             'turno_id' => 'required|exists:turnos,id',
             'aula_id' => 'nullable|exists:aulas,id',
             'tipo_inscripcion' => 'required|in:postulante,reforzamiento',
+            'codigo_postulante' => 'nullable|string|max:255|unique:postulaciones,codigo_postulante,' . $id,
             'numero_recibo' => 'nullable|string|max:50',
             'monto_matricula' => 'nullable|numeric|min:0',
             'monto_ensenanza' => 'nullable|numeric|min:0',
@@ -809,6 +810,7 @@ class PostulacionController extends Controller
             $estudiante->save();
             
             // Actualizar datos de la postulación
+            $postulacion->codigo_postulante = $request->codigo_postulante;
             $postulacion->ciclo_id = $request->ciclo_id;
             $postulacion->carrera_id = $request->carrera_id;
             $postulacion->turno_id = $request->turno_id;
