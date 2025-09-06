@@ -833,6 +833,7 @@ class PostulacionController extends Controller
                 ->first();
                 
             if ($inscripcion) {
+                $inscripcion->codigo_inscripcion = $request->codigo_postulante;
                 $inscripcion->ciclo_id = $request->ciclo_id; // Actualizar al nuevo ciclo
                 $inscripcion->carrera_id = $request->carrera_id;
                 $inscripcion->turno_id = $request->turno_id;

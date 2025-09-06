@@ -491,6 +491,10 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="edit-approved-codigo" class="form-label">Código de Postulante</label>
+                                    <input type="text" class="form-control" id="edit-approved-codigo" name="codigo_postulante">
+                                </div>
+                                <div class="mb-3">
                                     <label for="edit-approved-tipo" class="form-label">Tipo de Inscripción</label>
                                     <select class="form-select" id="edit-approved-tipo" name="tipo_inscripcion" required>
                                         <option value="postulante">Postulante</option>

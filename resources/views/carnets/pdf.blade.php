@@ -180,7 +180,7 @@
             </div>
             
             <!-- Nombre del estudiante -->
-            <div style="position: absolute; left: 46%; transform: translateX(-55%); top: 44.9mm; color: white; text-align: center; font-weight: 100; font-size: 9pt; letter-spacing: 0.2mm;">
+            <div style="position: absolute; left: 46%; transform: translateX(-55%); top: 44.9mm; color: white; text-align: center; font-weight: 100; font-size: 7pt; letter-spacing: 0.2mm;">
                 {{ strtoupper($carnet['nombre_completo']) }}
             </div>
             
@@ -200,7 +200,7 @@
             </div>
             
             <!-- Carrera profesional -->
-            <div style="position: absolute; left: 45%; transform: translateX(-60%); top: 73mm; color: #003d7a; font-size: 8pt; font-weight: bold; text-align: center;">
+            <div style="position: absolute; left: 45%; transform: translateX(-60%); top: 73mm; color: #003d7a; font-size: 7pt; font-weight: bold; text-align: center;">
                 {{ strtoupper($carnet['carrera']) }}
             </div>
             
