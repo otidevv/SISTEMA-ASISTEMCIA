@@ -9,6 +9,7 @@ use App\Models\Turno;
 use App\Models\User;
 use App\Models\Inscripcion;
 use App\Models\Aula;
+use App\Models\CentroEducativo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,8 +30,9 @@ class PostulacionController extends Controller
         $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
         $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
         $turnos = Turno::where('estado', true)->orderBy('nombre')->get();
+        $centrosEducativos = CentroEducativo::orderBy('cen_edu')->get();
 
-        return view('postulaciones.index', compact('ciclos', 'carreras', 'turnos'));
+        return view('postulaciones.index', compact('ciclos', 'carreras', 'turnos', 'centrosEducativos'));
     }
 
     /**
@@ -1002,6 +1004,145 @@ class PostulacionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar documentos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Crear postulación desde el panel de administración
+     * Este método permite que un admin cree una postulación para un estudiante existente
+     */
+    public function crearDesdeAdmin(Request $request)
+    {
+        // Verificar permisos de admin
+        if (!Auth::user()->hasPermission('postulaciones.create')) {
+            return response()->json(['error' => 'Sin permisos para crear postulaciones'], 403);
+        }
+
+        // Validar datos
+        $request->validate([
+            'estudiante_id' => 'required|exists:users,id',
+            'tipo_inscripcion' => 'required|in:postulante,reforzamiento',
+            'carrera_id' => 'required|exists:carreras,id',
+            'turno_id' => 'required|exists:turnos,id',
+            'centro_educativo_id' => 'required|exists:mysql_centros.centros_educativos,id',
+            // Validación de archivos
+            'voucher_pago' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'certificado_estudios' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'carta_compromiso' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'constancia_estudios' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'dni_documento' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'foto_carnet' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Obtener el ciclo activo
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            if (!$cicloActivo) {
+                throw new \Exception('No hay un ciclo activo para inscripciones');
+            }
+
+            // Verificar que el estudiante existe
+            $estudiante = User::findOrFail($request->estudiante_id);
+            
+            // Verificar si ya tiene una postulación en este ciclo
+            $postulacionExistente = Postulacion::where('estudiante_id', $estudiante->id)
+                ->where('ciclo_id', $cicloActivo->id)
+                ->first();
+                
+            if ($postulacionExistente) {
+                throw new \Exception('El estudiante ya tiene una postulación en este ciclo');
+            }
+
+            // Generar código de postulante
+            $ultimoCodigo = Postulacion::where('ciclo_id', $cicloActivo->id)
+                ->orderBy('id', 'desc')
+                ->value('codigo_postulante');
+            
+            $nuevoCodigo = $ultimoCodigo ? 
+                sprintf('P%s%04d', date('Y'), intval(substr($ultimoCodigo, -4)) + 1) :
+                sprintf('P%s%04d', date('Y'), 1);
+
+            // Crear la postulación con el ID del estudiante correcto
+            $postulacion = new Postulacion();
+            $postulacion->estudiante_id = $estudiante->id; // ID del estudiante, NO del admin
+            $postulacion->ciclo_id = $cicloActivo->id;
+            $postulacion->carrera_id = $request->carrera_id;
+            $postulacion->turno_id = $request->turno_id;
+            $postulacion->tipo_inscripcion = $request->tipo_inscripcion;
+            $postulacion->codigo_postulante = $nuevoCodigo;
+            $postulacion->estado = 'pendiente';
+            $postulacion->fecha_postulacion = now();
+            $postulacion->centro_educativo_id = $request->centro_educativo_id;
+            
+            // Datos del voucher
+            $postulacion->numero_recibo = $request->numero_recibo;
+            $postulacion->fecha_emision_voucher = $request->fecha_emision_voucher;
+            $postulacion->monto_matricula = $request->monto_matricula ?? 0;
+            $postulacion->monto_ensenanza = $request->monto_ensenanza ?? 0;
+            $postulacion->monto_total_pagado = ($request->monto_matricula ?? 0) + ($request->monto_ensenanza ?? 0);
+            
+            // Registrar que fue creado por un admin usando campos existentes
+            $postulacion->observaciones = 'Postulación creada por administrador: ' . Auth::user()->name;
+            
+            $postulacion->save();
+
+            // Subir documentos
+            $documentosPath = 'postulaciones/' . $postulacion->id . '/documentos';
+            
+            if ($request->hasFile('voucher_pago')) {
+                $postulacion->voucher_path = $request->file('voucher_pago')
+                    ->store($documentosPath, 'public');
+            }
+            
+            if ($request->hasFile('certificado_estudios')) {
+                $postulacion->certificado_estudios_path = $request->file('certificado_estudios')
+                    ->store($documentosPath, 'public');
+            }
+            
+            if ($request->hasFile('carta_compromiso')) {
+                $postulacion->carta_compromiso_path = $request->file('carta_compromiso')
+                    ->store($documentosPath, 'public');
+            }
+            
+            if ($request->hasFile('constancia_estudios')) {
+                $postulacion->constancia_estudios_path = $request->file('constancia_estudios')
+                    ->store($documentosPath, 'public');
+            }
+            
+            if ($request->hasFile('dni_documento')) {
+                $postulacion->dni_path = $request->file('dni_documento')
+                    ->store($documentosPath, 'public');
+            }
+            
+            if ($request->hasFile('foto_carnet')) {
+                $postulacion->foto_path = $request->file('foto_carnet')
+                    ->store($documentosPath, 'public');
+            }
+            
+            $postulacion->save();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Postulación creada exitosamente para el estudiante',
+                'postulacion' => true,
+                'data' => [
+                    'id' => $postulacion->id,
+                    'codigo' => $postulacion->codigo_postulante,
+                    'estudiante' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
             ], 500);
         }
     }

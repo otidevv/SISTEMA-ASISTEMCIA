@@ -132,10 +132,6 @@ Route::middleware('guest')->group(function () {
     // Registro de postulantes
     Route::post('/register/postulante', [PostulanteRegisterController::class, 'register'])->name('register.postulante');
     
-    // API de registro de postulantes
-    Route::post('/api/register/postulante', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
-    Route::get('/api/register/check-email-server', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'checkEmailServer'])->name('api.register.check-email');
-    Route::post('/api/register/resend-verification', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'resendVerification'])->name('api.register.resend');
     
     // Verificación de email
     Route::get('/email/verify/{id}/{token}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
@@ -173,6 +169,11 @@ Route::middleware('auth')->group(function () {
 
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+    // API de registro de postulantes (disponible para admins autenticados)
+    Route::post('/api/register/postulante', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
+    Route::get('/api/register/check-email-server', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'checkEmailServer'])->name('api.register.check-email');
+    Route::post('/api/register/resend-verification', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'resendVerification'])->name('api.register.resend');
 
     // Usuarios - Requiere permiso 'users.view'
     Route::middleware('can:users.view')->group(function () {
@@ -304,6 +305,7 @@ Route::middleware('auth')->group(function () {
     // Postulaciones - Gestión de postulaciones de estudiantes
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
+        Route::post('/postulaciones/crear-desde-admin', [PostulacionController::class, 'crearDesdeAdmin'])->name('postulaciones.crearDesdeAdmin')->middleware('can:postulaciones.create');
     });
     
     // ✅ NUEVA FUNCIONALIDAD: Postulación Unificada - Para uso administrativo (Admin, Secretaria, Coordinador)
@@ -311,7 +313,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/crear', [PostulacionUnificadaController::class, 'create'])->name('postulacion-unificada.create')->middleware('can:postulaciones.create-unified');
         Route::get('/modal', [PostulacionUnificadaController::class, 'createModal'])->name('postulacion-unificada.modal')->middleware('can:postulaciones.create-unified');
         Route::get('/form-content', [PostulacionUnificadaController::class, 'getFormContent'])->name('postulacion-unificada.form-content')->middleware('can:postulaciones.create-unified');
+        Route::get('/form-registro', [PostulacionUnificadaController::class, 'getFormRegistro'])->name('postulacion-unificada.form-registro')->middleware('can:postulaciones.create-unified');
         Route::post('/', [PostulacionUnificadaController::class, 'store'])->name('postulacion-unificada.store')->middleware('can:postulaciones.create-unified');
+        Route::post('/registro-completo', [PostulacionUnificadaController::class, 'storeRegistroCompleto'])->name('postulacion-unificada.store-registro')->middleware('can:postulaciones.create-unified');
     });
     
     // ✅ NUEVA FUNCIONALIDAD: API para Postulación Unificada
@@ -320,6 +324,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/provincias/{departamento}', [PostulacionUnificadaController::class, 'getProvincias']);
         Route::get('/distritos/{departamento}/{provincia}', [PostulacionUnificadaController::class, 'getDistritos']);
         Route::post('/buscar-colegios', [PostulacionUnificadaController::class, 'buscarColegios']);
+    });
+    
+    // API para buscar postulantes existentes
+    Route::prefix('api/postulantes')->middleware('auth')->group(function () {
+        Route::get('/buscar/{dni}', [PostulacionUnificadaController::class, 'buscarPostulante'])->middleware('can:postulaciones.create-unified');
     });
     
     // Carnets - Gestión de carnets de estudiantes
@@ -507,6 +516,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     Route::prefix('postulaciones')->group(function () {
         Route::get('/', [PostulacionController::class, 'listar']);
         Route::get('/mi-postulacion-actual', [PostulacionController::class, 'miPostulacionActual']);
+        Route::post('/crear', [PostulacionController::class, 'crearDesdeAdmin']); // Nueva ruta para crear desde admin
         Route::get('/{id}', [PostulacionController::class, 'show']);
         Route::get('/{id}/editar-aprobada', [PostulacionController::class, 'editarAprobada']);
         Route::put('/{id}/actualizar-aprobada', [PostulacionController::class, 'actualizarAprobada']);

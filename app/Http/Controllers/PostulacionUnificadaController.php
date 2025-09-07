@@ -80,24 +80,31 @@ class PostulacionUnificadaController extends Controller
      */
     public function store(Request $request)
     {
-        // Determinar el ID del estudiante para las reglas de validación 'unique'
-        $estudianteId = null;
-        if ($request->input('estudiante_id')) {
-            $estudianteId = $request->input('estudiante_id');
-        } else if ($request->input('estudiante_dni')) {
-            $existingUser = User::where('numero_documento', $request->input('estudiante_dni'))->first();
-            if ($existingUser) {
-                $estudianteId = $existingUser->id;
+        DB::beginTransaction();
+        
+        try {
+            // Verificar si es postulante existente (tiene estudiante_id)
+            if ($request->has('estudiante_id') && $request->estudiante_id) {
+                return $this->storePostulacionExistente($request);
             }
-        }
+            
+            // Si no tiene estudiante_id, es un flujo de creación completa (registro + postulación)
+            // Determinar el ID del estudiante para las reglas de validación 'unique'
+            $estudianteId = null;
+            if ($request->input('estudiante_dni')) {
+                $existingUser = User::where('numero_documento', $request->input('estudiante_dni'))->first();
+                if ($existingUser) {
+                    $estudianteId = $existingUser->id;
+                }
+            }
 
-        $validator = Validator::make($request->all(), [
-            // Datos del estudiante
-            'estudiante_nombre' => 'required|string|max:100',
-            'estudiante_apellido_paterno' => 'required|string|max:100',
-            'estudiante_apellido_materno' => 'required|string|max:100',
-            'estudiante_dni' => 'required|string|size:8|unique:users,numero_documento,' . $estudianteId,
-            'estudiante_email' => 'required|email|unique:users,email,' . $estudianteId,
+            $validator = Validator::make($request->all(), [
+                // Datos del estudiante
+                'estudiante_nombre' => 'required|string|max:100',
+                'estudiante_apellido_paterno' => 'required|string|max:100',
+                'estudiante_apellido_materno' => 'required|string|max:100',
+                'estudiante_dni' => 'required|string|size:8|unique:users,numero_documento,' . $estudianteId,
+                'estudiante_email' => 'required|email|unique:users,email,' . $estudianteId,
             'estudiante_telefono' => 'required|string|max:15',
             'estudiante_fecha_nacimiento' => 'required|date|before:today',
             'estudiante_genero' => 'required|in:M,F',
@@ -362,6 +369,14 @@ class PostulacionUnificadaController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+        
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la postulación: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -544,11 +559,407 @@ class PostulacionUnificadaController extends Controller
             'usuario'
         ));
     }
+    
+    /**
+     * Procesar postulación para usuario existente (simplificado)
+     */
+    private function storePostulacionExistente(Request $request)
+    {
+        try {
+            // Validar solo los campos necesarios para postulación existente
+            $validator = Validator::make($request->all(), [
+                'estudiante_id' => 'required|exists:users,id',
+                'carrera_id' => 'required|exists:carreras,id',
+                'turno_id' => 'required|exists:turnos,id',
+                'tipo_inscripcion' => 'required|in:postulante,reforzamiento',
+                'colegio_procedencia' => 'required|string|max:255',
+                'año_egreso' => 'required|integer|min:1990|max:' . date('Y'),
+                'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+                'certificado_estudios' => 'required|mimes:pdf|max:5120',
+                'voucher_pago' => 'required|mimes:pdf|max:5120',
+                'dni_pdf' => 'nullable|mimes:pdf|max:5120'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // Verificar que el usuario existe y tiene los permisos correctos
+            $estudiante = User::find($request->estudiante_id);
+            if (!$estudiante) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado'
+                ], 404);
+            }
+            
+            // Verificar ciclo activo
+            $cicloActivo = Ciclo::activo()->first();
+            if (!$cicloActivo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay ciclo activo para postulaciones'
+                ], 400);
+            }
+            
+            // Verificar si ya tiene postulación en este ciclo
+            $postulacionExistente = Postulacion::where('estudiante_id', $estudiante->id)
+                ->where('ciclo_id', $cicloActivo->id)
+                ->first();
+                
+            if ($postulacionExistente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe una postulación para este ciclo'
+                ], 400);
+            }
+            
+            // Crear la postulación
+            $postulacion = new Postulacion();
+            $postulacion->estudiante_id = $estudiante->id;
+            $postulacion->ciclo_id = $cicloActivo->id;
+            $postulacion->carrera_id = $request->carrera_id;
+            $postulacion->turno_id = $request->turno_id;
+            $postulacion->tipo_inscripcion = $request->tipo_inscripcion;
+            $postulacion->estado = 'pendiente';
+            $postulacion->fecha_postulacion = now();
+            $postulacion->codigo_postulante = 'POST-' . date('Y') . '-' . str_pad(Postulacion::count() + 1, 5, '0', STR_PAD_LEFT);
+            $postulacion->colegio_procedencia = $request->colegio_procedencia;
+            $postulacion->año_egreso = $request->año_egreso;
+            $postulacion->creado_por = Auth::id();
+            
+            // Guardar documentos
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('postulaciones/fotos', 'public');
+                $postulacion->foto = $fotoPath;
+            }
+            
+            if ($request->hasFile('dni_pdf')) {
+                $dniPath = $request->file('dni_pdf')->store('postulaciones/documentos', 'public');
+                $postulacion->dni_pdf = $dniPath;
+            }
+            
+            if ($request->hasFile('certificado_estudios')) {
+                $certificadoPath = $request->file('certificado_estudios')->store('postulaciones/documentos', 'public');
+                $postulacion->certificado_estudios = $certificadoPath;
+            }
+            
+            if ($request->hasFile('voucher_pago')) {
+                $voucherPath = $request->file('voucher_pago')->store('postulaciones/documentos', 'public');
+                $postulacion->voucher_pago = $voucherPath;
+            }
+            
+            $postulacion->save();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Postulación creada exitosamente',
+                'postulacion_id' => $postulacion->id,
+                'codigo_postulante' => $postulacion->codigo_postulante
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar la postulación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
+    /**
+     * Buscar postulante existente por DNI
+     */
+    public function buscarPostulante($dni)
+    {
+        try {
+            $postulante = User::where('numero_documento', $dni)
+                ->whereHas('roles', function($query) {
+                    $query->whereIn('nombre', ['postulante', 'estudiante']);
+                })
+                ->first();
+            
+            if ($postulante) {
+                return response()->json([
+                    'success' => true,
+                    'postulante' => [
+                        'id' => $postulante->id,
+                        'nombre' => $postulante->nombre,
+                        'apellido_paterno' => $postulante->apellido_paterno,
+                        'apellido_materno' => $postulante->apellido_materno,
+                        'numero_documento' => $postulante->numero_documento,
+                        'email' => $postulante->email,
+                        'telefono' => $postulante->telefono,
+                        'fecha_nacimiento' => $postulante->fecha_nacimiento,
+                        'genero' => $postulante->genero,
+                        'direccion' => $postulante->direccion
+                    ]
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Postulante no encontrado'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al buscar postulante: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Obtener formulario de registro completo (registro + postulación)
+     */
+    public function getFormRegistro()
+    {
+        // Verificar si hay ciclo activo
+        $cicloActivo = Ciclo::activo()->first();
+        
+        if (!$cicloActivo) {
+            return '<div class="alert alert-danger">No hay ciclo activo para postulaciones</div>';
+        }
+
+        // Obtener carreras con vacantes disponibles
+        $carreras = CicloCarreraVacante::with('carrera')
+            ->where('ciclo_id', $cicloActivo->id)
+            ->where('estado', true)
+            ->where(function($query) {
+                $query->where('vacantes_total', 0) // Sin límite
+                      ->orWhereRaw('vacantes_total > (vacantes_ocupadas + vacantes_reservadas)'); // Con vacantes disponibles
+            })
+            ->get()
+            ->map(function($vacante) {
+                return [
+                    'id' => $vacante->carrera_id,
+                    'nombre' => $vacante->carrera->nombre,
+                    'codigo' => $vacante->carrera->codigo,
+                    'vacantes_disponibles' => $vacante->vacantes_total == 0 ? 
+                        'Sin límite' : $vacante->vacantes_disponibles
+                ];
+            });
+
+        // Obtener turnos disponibles
+        $turnos = Turno::where('estado', true)
+            ->select('id', 'nombre', 'hora_inicio', 'hora_fin')
+            ->get();
+
+        return view('postulaciones.form-registro-completo', compact(
+            'cicloActivo', 
+            'carreras', 
+            'turnos'
+        ));
+    }
+    
+    /**
+     * Guardar registro completo (crear usuario + postulación)
+     */
+    public function storeRegistroCompleto(Request $request)
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Validar datos del estudiante y postulación
+            $validator = Validator::make($request->all(), [
+                // Datos del estudiante
+                'estudiante_nombre' => 'required|string|max:100',
+                'estudiante_apellido_paterno' => 'required|string|max:100',
+                'estudiante_apellido_materno' => 'required|string|max:100',
+                'estudiante_dni' => 'required|string|size:8|unique:users,numero_documento',
+                'estudiante_email' => 'required|email|unique:users,email',
+                'estudiante_password' => 'required|string|min:8|confirmed',
+                'estudiante_telefono' => 'required|string|max:20',
+                'estudiante_fecha_nacimiento' => 'required|date',
+                'estudiante_genero' => 'required|in:M,F',
+                'estudiante_direccion' => 'required|string|max:255',
+                
+                // Datos del padre
+                'padre_nombre' => 'nullable|string|max:100',
+                'padre_apellido_paterno' => 'nullable|string|max:100',
+                'padre_apellido_materno' => 'nullable|string|max:100',
+                'padre_dni' => 'nullable|string|size:8',
+                'padre_telefono' => 'nullable|string|max:20',
+                
+                // Datos de la madre
+                'madre_nombre' => 'nullable|string|max:100',
+                'madre_apellido_paterno' => 'nullable|string|max:100',
+                'madre_apellido_materno' => 'nullable|string|max:100',
+                'madre_dni' => 'nullable|string|size:8',
+                'madre_telefono' => 'nullable|string|max:20',
+                
+                // Datos académicos
+                'carrera_id' => 'required|exists:carreras,id',
+                'turno_id' => 'required|exists:turnos,id',
+                'colegio_procedencia' => 'required|string|max:255',
+                'año_egreso' => 'required|integer|min:1990|max:' . date('Y'),
+                
+                // Documentos
+                'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+                'dni_pdf' => 'required|mimes:pdf|max:5120',
+                'certificado_estudios' => 'required|mimes:pdf|max:5120',
+                'voucher_pago' => 'required|mimes:pdf|max:5120'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // 1. Crear el usuario estudiante
+            $estudiante = new User();
+            $estudiante->nombre = $request->estudiante_nombre;
+            $estudiante->apellido_paterno = $request->estudiante_apellido_paterno;
+            $estudiante->apellido_materno = $request->estudiante_apellido_materno;
+            $estudiante->tipo_documento = 'DNI';
+            $estudiante->numero_documento = $request->estudiante_dni;
+            $estudiante->email = $request->estudiante_email;
+            $estudiante->password = Hash::make($request->estudiante_password);
+            $estudiante->telefono = $request->estudiante_telefono;
+            $estudiante->fecha_nacimiento = $request->estudiante_fecha_nacimiento;
+            $estudiante->genero = $request->estudiante_genero;
+            $estudiante->direccion = $request->estudiante_direccion;
+            $estudiante->save();
+            
+            // Asignar rol de postulante
+            $rolPostulante = \App\Models\Role::where('nombre', 'postulante')->first();
+            if ($rolPostulante) {
+                $estudiante->roles()->attach($rolPostulante->id);
+            }
+            
+            // 2. Crear usuarios para padres si se proporcionaron datos
+            $padreId = null;
+            $madreId = null;
+            
+            if ($request->padre_dni) {
+                $padre = User::firstOrCreate(
+                    ['numero_documento' => $request->padre_dni],
+                    [
+                        'nombre' => $request->padre_nombre,
+                        'apellido_paterno' => $request->padre_apellido_paterno,
+                        'apellido_materno' => $request->padre_apellido_materno,
+                        'tipo_documento' => 'DNI',
+                        'telefono' => $request->padre_telefono,
+                        'email' => $request->padre_dni . '@temporal.com',
+                        'password' => Hash::make($request->padre_dni)
+                    ]
+                );
+                $padreId = $padre->id;
+                
+                // Asignar rol de padre si no lo tiene
+                $rolPadre = \App\Models\Role::where('nombre', 'padre')->first();
+                if ($rolPadre && !$padre->hasRole('padre')) {
+                    $padre->roles()->attach($rolPadre->id);
+                }
+                
+                // Crear relación de parentesco
+                Parentesco::create([
+                    'estudiante_id' => $estudiante->id,
+                    'padre_id' => $padreId,
+                    'tipo_parentesco' => 'padre'
+                ]);
+            }
+            
+            if ($request->madre_dni) {
+                $madre = User::firstOrCreate(
+                    ['numero_documento' => $request->madre_dni],
+                    [
+                        'nombre' => $request->madre_nombre,
+                        'apellido_paterno' => $request->madre_apellido_paterno,
+                        'apellido_materno' => $request->madre_apellido_materno,
+                        'tipo_documento' => 'DNI',
+                        'telefono' => $request->madre_telefono,
+                        'email' => $request->madre_dni . '@temporal.com',
+                        'password' => Hash::make($request->madre_dni)
+                    ]
+                );
+                $madreId = $madre->id;
+                
+                // Asignar rol de padre si no lo tiene
+                $rolPadre = \App\Models\Role::where('nombre', 'padre')->first();
+                if ($rolPadre && !$madre->hasRole('padre')) {
+                    $madre->roles()->attach($rolPadre->id);
+                }
+                
+                // Crear relación de parentesco
+                Parentesco::create([
+                    'estudiante_id' => $estudiante->id,
+                    'padre_id' => $madreId,
+                    'tipo_parentesco' => 'madre'
+                ]);
+            }
+            
+            // 3. Crear la postulación
+            $cicloActivo = Ciclo::activo()->first();
+            
+            $postulacion = new Postulacion();
+            $postulacion->estudiante_id = $estudiante->id;
+            $postulacion->ciclo_id = $cicloActivo->id;
+            $postulacion->carrera_id = $request->carrera_id;
+            $postulacion->turno_id = $request->turno_id;
+            $postulacion->tipo_inscripcion = 'postulante';
+            $postulacion->estado = 'pendiente';
+            $postulacion->fecha_postulacion = now();
+            $postulacion->codigo_postulante = 'POST-' . date('Y') . '-' . str_pad(Postulacion::count() + 1, 5, '0', STR_PAD_LEFT);
+            $postulacion->colegio_procedencia = $request->colegio_procedencia;
+            $postulacion->año_egreso = $request->año_egreso;
+            $postulacion->creado_por = Auth::id();
+            $postulacion->save();
+            
+            // 4. Guardar documentos
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('postulaciones/fotos', 'public');
+                $postulacion->foto = $fotoPath;
+            }
+            
+            if ($request->hasFile('dni_pdf')) {
+                $dniPath = $request->file('dni_pdf')->store('postulaciones/documentos', 'public');
+                $postulacion->dni_pdf = $dniPath;
+            }
+            
+            if ($request->hasFile('certificado_estudios')) {
+                $certificadoPath = $request->file('certificado_estudios')->store('postulaciones/documentos', 'public');
+                $postulacion->certificado_estudios = $certificadoPath;
+            }
+            
+            if ($request->hasFile('voucher_pago')) {
+                $voucherPath = $request->file('voucher_pago')->store('postulaciones/documentos', 'public');
+                $postulacion->voucher_pago = $voucherPath;
+            }
+            
+            $postulacion->save();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Registro y postulación creados exitosamente',
+                'postulacion_id' => $postulacion->id,
+                'codigo_postulante' => $postulacion->codigo_postulante
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el registro: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
     /**
      * Obtener solo el contenido del formulario para el modal (formato Blade)
      */
-    public function getFormContent()
+    public function getFormContent(Request $request)
     {
         // Verificar si hay ciclo activo
         $cicloActivo = Ciclo::activo()->first();
@@ -581,9 +992,38 @@ class PostulacionUnificadaController extends Controller
             ->select('id', 'nombre', 'hora_inicio', 'hora_fin')
             ->get();
 
-        // Obtener datos del usuario actual (si los tiene)
-        $usuario = Auth::user();
+        // Si se pasa el ID del postulante, obtener sus datos y usar formulario simplificado
+        $postulanteId = $request->get('postulante_id');
+        $usuario = null;
+        $padres = [];
+        
+        if ($postulanteId) {
+            $usuario = User::with('roles')->find($postulanteId);
+            
+            if ($usuario) {
+                // Verificar si ya tiene padres registrados
+                $padres = Parentesco::with('padre')
+                    ->where('estudiante_id', $usuario->id)
+                    ->get()
+                    ->map(function($parentesco) {
+                        return [
+                            'tipo' => $parentesco->tipo_parentesco,
+                            'padre' => $parentesco->padre
+                        ];
+                    });
+                
+                // Usar formulario simplificado para usuarios existentes
+                return view('postulaciones.form-simplificado', compact(
+                    'cicloActivo', 
+                    'carreras', 
+                    'turnos', 
+                    'usuario',
+                    'padres'
+                ));
+            }
+        }
 
+        // Formulario completo para usuarios nuevos o sin ID
         return view('postulaciones.form-content', compact(
             'cicloActivo', 
             'carreras', 

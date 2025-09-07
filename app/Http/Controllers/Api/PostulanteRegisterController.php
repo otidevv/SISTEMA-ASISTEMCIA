@@ -115,6 +115,7 @@ class PostulanteRegisterController extends Controller
                 'id' => $postulante->id,
                 'username' => $postulante->username,
                 'email' => $postulante->email,
+                'numero_documento' => $postulante->numero_documento,
                 'nombre_completo' => $postulante->nombre . ' ' . $postulante->apellido_paterno . ' ' . $postulante->apellido_materno
             ];
 
