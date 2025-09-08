@@ -350,7 +350,7 @@ class InscripcionEstudianteController extends Controller
             
             // Voucher de pago
             if ($request->hasFile('voucher_pago')) {
-                $documentPaths['voucher_path'] = $request->file('voucher_pago')
+                $documentPaths['voucher_pago_path'] = $request->file('voucher_pago')
                     ->store($uploadPath . '/voucher', 'public');
             }
             
@@ -380,11 +380,11 @@ class InscripcionEstudianteController extends Controller
             
             // Foto carnet
             if ($request->hasFile('foto_carnet')) {
-                $documentPaths['foto_path'] = $request->file('foto_carnet')
+                $documentPaths['foto_carnet_path'] = $request->file('foto_carnet')
                     ->store($uploadPath . '/foto', 'public');
                 
                 // También guardar como foto de perfil del usuario
-                $user->foto_perfil = $documentPaths['foto_path'];
+                $user->foto_perfil = $documentPaths['foto_carnet_path'];
                 $user->save();
             }
             
@@ -419,10 +419,15 @@ class InscripcionEstudianteController extends Controller
                 $datosPostulacion[$key] = $value;
             }
             
-            // Generar código postulante correlativo único
-            $ultimoCodigo = Postulacion::max('codigo_postulante') ?? 1000000;
-            $nuevoCodigo = $ultimoCodigo + 1;
-            
+            // Generar código postulante correlativo único basado en el ciclo
+            $correlativoInicial = $cicloActivo->correlativo_inicial ?? 100001;
+
+            // Buscar el máximo código de postulante solo para el ciclo actual
+            $ultimoCodigo = Postulacion::where('ciclo_id', $cicloActivo->id)->max('codigo_postulante');
+
+            // Determinar el siguiente código, asegurando que sea mayor que el correlativo inicial
+            $nuevoCodigo = max((int)$ultimoCodigo + 1, $correlativoInicial);
+
             // Asegurar que sea único (por si hay concurrencia)
             while (Postulacion::where('codigo_postulante', $nuevoCodigo)->exists()) {
                 $nuevoCodigo++;

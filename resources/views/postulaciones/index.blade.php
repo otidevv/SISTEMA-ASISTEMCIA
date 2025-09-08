@@ -1252,10 +1252,18 @@
                                         text: 'Tu postulación ha sido enviada exitosamente. Te notificaremos cuando sea revisada.',
                                         confirmButtonText: 'Entendido'
                                     }).then(() => {
-                                        // Cerrar modal y actualizar lista
+                                        // Cerrar modal y filtrar la tabla para mostrar solo al nuevo postulante
                                         $('#nuevaPostulacionModal').modal('hide');
-                                        if (typeof table !== 'undefined' && table) {
-                                            table.ajax.reload();
+                                        if (typeof table !== 'undefined' && table && response.data && response.data.dni) {
+                                            // Limpiar filtros existentes de los selectores
+                                            $('#filter-ciclo').val('').trigger('change');
+                                            $('#filter-estado').val('').trigger('change');
+                                            $('#filter-carrera').val('').trigger('change');
+                                            
+                                            // Aplicar búsqueda por DNI en el DataTable y redibujar
+                                            table.search(response.data.dni).draw();
+                                            
+                                            toastr.info('Mostrando solo la postulación creada. Limpie el filtro de búsqueda para ver todos los registros.', 'Filtro Aplicado', {timeOut: 6000});
                                         }
                                     });
                                 }, archivos.length * 300 + 2000);

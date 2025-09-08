@@ -1056,14 +1056,19 @@ class PostulacionController extends Controller
                 throw new \Exception('El estudiante ya tiene una postulación en este ciclo');
             }
 
-            // Generar código de postulante
-            $ultimoCodigo = Postulacion::where('ciclo_id', $cicloActivo->id)
-                ->orderBy('id', 'desc')
-                ->value('codigo_postulante');
-            
-            $nuevoCodigo = $ultimoCodigo ? 
-                sprintf('P%s%04d', date('Y'), intval(substr($ultimoCodigo, -4)) + 1) :
-                sprintf('P%s%04d', date('Y'), 1);
+            // Generar código postulante correlativo único basado en el ciclo
+            $correlativoInicial = $cicloActivo->correlativo_inicial ?? 100001;
+
+            // Buscar el máximo código de postulante solo para el ciclo actual
+            $ultimoCodigo = Postulacion::where('ciclo_id', $cicloActivo->id)->max('codigo_postulante');
+
+            // Determinar el siguiente código, asegurando que sea mayor que el correlativo inicial
+            $nuevoCodigo = max((int)$ultimoCodigo + 1, $correlativoInicial);
+
+            // Asegurar que sea único (por si hay concurrencia)
+            while (Postulacion::where('codigo_postulante', $nuevoCodigo)->exists()) {
+                $nuevoCodigo++;
+            }
 
             // Crear la postulación con el ID del estudiante correcto
             $postulacion = new Postulacion();

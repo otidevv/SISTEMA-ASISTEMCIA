@@ -216,8 +216,11 @@ class PostulanteRegisterController extends Controller
                 \Log::error('Error enviando email de verificación: ' . $e->getMessage());
             }
 
-            return redirect()->route('login')
-                ->with('success', 'Registro completado exitosamente. Se ha enviado un correo de verificación a ' . $request->email . '. Por favor, revise su bandeja de entrada para activar su cuenta.');
+            // Iniciar sesión automáticamente al nuevo postulante
+            auth()->login($postulante);
+
+            return redirect()->route('dashboard')
+                ->with('success', 'Registro completado exitosamente. Se ha enviado un correo de verificación a ' . $request->email . '.');
 
         } catch (\Exception $e) {
             DB::rollBack();
