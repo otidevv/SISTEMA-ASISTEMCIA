@@ -195,8 +195,8 @@
             </div>
             
             <!-- Modalidad -->
-            <div style="position: absolute; left: 30mm; top: 64.5mm; color: #003d7a; font-size: 8pt;">
-                POSTULANTE
+            <div style="position: absolute; left: 30mm; top: 64.5mm; color: #003d7a; font-size: 7pt;">
+                {{ strtoupper($carnet['modalidad']) }}
             </div>
             
             <!-- Carrera profesional -->

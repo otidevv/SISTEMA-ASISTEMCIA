@@ -377,7 +377,7 @@ class PostulacionController extends Controller
             $postulacion->aprobar(Auth::id());
             
             // Cambiar rol de postulante a estudiante
-            if ($postulacion->tipo_inscripcion === 'postulante') {
+            if ($postulacion->tipo_inscripcion === 'postulante' || $postulacion->tipo_inscripcion === 'reforzamiento') {
                 $estudiante = User::find($postulacion->estudiante_id);
                 if ($estudiante) {
                     // Remover rol de postulante si lo tiene

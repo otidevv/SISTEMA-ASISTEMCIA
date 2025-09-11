@@ -205,7 +205,7 @@ Exception $e) {
                     'turno_id' => $inscripcion->turno_id,
                     'aula_id' => $inscripcion->aula_id,
                     'tipo_carnet' => 'estudiante',
-                    'modalidad' => $inscripcion->tipo_inscripcion == 'postulante' ? 'presencial' : 'reforzamiento',
+                    'modalidad' => $inscripcion->tipo_inscripcion,
                     'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : null,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
@@ -250,14 +250,23 @@ Exception $e) {
             return response()->json(['error' => 'Sin permisos'], 403);
         }
 
-        $request->validate([
+        $rules = [
             'estudiante_id' => 'required|exists:users,id',
             'ciclo_id' => 'required|exists:ciclos,id',
-            'carrera_id' => 'required|exists:carreras,id',
-            'turno_id' => 'required|exists:turnos,id',
             'aula_id' => 'nullable|exists:aulas,id',
-            'fecha_vencimiento' => 'required|date|after:today'
-        ]);
+            'fecha_vencimiento' => 'required|date|after:today',
+            'modalidad' => 'required|string|in:postulante,reforzamiento'
+        ];
+
+        if ($request->input('modalidad') !== 'reforzamiento') {
+            $rules['carrera_id'] = 'required|exists:carreras,id';
+            $rules['turno_id'] = 'required|exists:turnos,id';
+        } else {
+            $rules['carrera_id'] = 'nullable|exists:carreras,id';
+            $rules['turno_id'] = 'nullable|exists:turnos,id';
+        }
+
+        $request->validate($rules);
 
         DB::beginTransaction();
         
@@ -291,7 +300,7 @@ Exception $e) {
                 'turno_id' => $request->turno_id,
                 'aula_id' => $request->aula_id,
                 'tipo_carnet' => 'estudiante',
-                'modalidad' => $request->modalidad ?? 'presencial',
+                'modalidad' => $request->modalidad,
                 'grupo' => $request->grupo,
                 'fecha_emision' => Carbon::now(),
                 'fecha_vencimiento' => $request->fecha_vencimiento,
