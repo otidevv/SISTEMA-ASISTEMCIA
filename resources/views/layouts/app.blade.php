@@ -47,6 +47,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     @stack('css')
 
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
+
     <!-- Config js -->
     <script src="{{ asset('assets/js/config.js') }}"></script>
     <script>

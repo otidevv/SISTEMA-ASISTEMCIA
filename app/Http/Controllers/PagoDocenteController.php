@@ -9,11 +9,34 @@ use Illuminate\Http\Request;
 
 class PagoDocenteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // CORRECCIÓN 1: Agregar with('docente') para cargar la relación y mostrar nombres
-        $pagos = PagoDocente::with('docente')->paginate(10);
-        return view('pagos-docentes.index', compact('pagos'));
+        // 1. Obtener todos los ciclos para el selector
+        $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
+
+        // 2. Determinar el ciclo a mostrar
+        $cicloSeleccionadoId = $request->input('ciclo_id');
+        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+
+        if ($cicloSeleccionadoId) {
+            $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
+        } else {
+            $cicloSeleccionado = $cicloActivo;
+        }
+
+        // 3. Construir la consulta de pagos
+        $query = PagoDocente::with('docente');
+
+        // 4. Filtrar por el ciclo seleccionado (si existe)
+        if ($cicloSeleccionado) {
+            $query->where('fecha_inicio', $cicloSeleccionado->fecha_inicio)
+                  ->where('fecha_fin', $cicloSeleccionado->fecha_fin);
+        }
+
+        $pagos = $query->paginate(10);
+
+        // 5. Pasar los datos a la vista
+        return view('pagos-docentes.index', compact('pagos', 'ciclos', 'cicloSeleccionado'));
     }
 
     public function create()

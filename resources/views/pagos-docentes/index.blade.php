@@ -1,951 +1,605 @@
 @extends('layouts.app')
 
+@section('title', 'Gestión de Pagos a Docentes')
+
+{{-- CSS para un look más profesional y colorido --}}
 @push('css')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    /* Paleta de colores y variables */
     :root {
-        --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --accent-color: #3b82f6;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --danger-color: #ef4444;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --bg-light: #f8fafc;
-        --bg-white: #ffffff;
-        --border-color: #e5e7eb;
-        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --primary-gradient: linear-gradient(135deg, #4f32c2 0%, #7367f0 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
+        --warning-gradient: linear-gradient(135deg, #ff9f43 0%, #ff8b1b 100%); /* Naranja ajustado para mejor contraste */
+        --info-gradient: linear-gradient(135deg, #00cfe8 0%, #1ce1ff 100%);
+        --primary-glow: 0 0 20px rgba(115, 103, 240, 0.4);
     }
 
-    * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
-
-    body {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        min-height: 100vh;
-    }
-
-    /* Header Principal */
-    .payments-header {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 3rem 0;
-        position: relative;
+    /* --- TARJETAS DE ESTADÍSTICAS MEJORADAS --- */
+    .tilebox-one {
+        border: none;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
         overflow: hidden;
     }
-
-    .payments-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-        opacity: 0.3;
+    .tilebox-one:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
-
-    .payments-header .container-fluid {
+    .tilebox-one .card-body {
         position: relative;
         z-index: 2;
     }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 2rem;
-    }
-
-    .header-info h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.025em;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .header-info .subtitle {
-        font-size: 1.125rem;
-        opacity: 0.9;
-        font-weight: 400;
-        margin-bottom: 1rem;
-    }
-
-    .breadcrumb-custom {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        margin-bottom: 1rem;
-    }
-
-    .breadcrumb-custom .breadcrumb-item {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.875rem;
-    }
-
-    .breadcrumb-custom .breadcrumb-item.active {
-        color: white;
-        font-weight: 500;
-    }
-
-    .header-actions .btn-primary-custom {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.875rem 2rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        font-size: 0.95rem;
+    .tilebox-one .mdi {
+        font-size: 3rem;
         transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
+    }
+    .tilebox-one:hover .mdi {
+        transform: scale(1.2) rotate(-10deg);
+    }
+    
+    /* Estilos específicos para tarjetas con fondo de color */
+    .tilebox-one[style*="--"] {
+        color: white;
+    }
+    .tilebox-one[style*="--"] .mdi {
+        opacity: 0.3 !important;
+    }
+    .tilebox-one[style*="--"] h2, .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p {
+        color: white;
+    }
+    .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p {
+        opacity: 0.8; /* Texto secundario con ligera transparencia */
     }
 
-    .header-actions .btn-primary-custom:hover {
-        background: rgba(255, 255, 255, 0.25);
+    /* --- BOTONES Y ELEMENTOS DE UI --- */
+    .btn-primary-gradient {
+        background-image: var(--primary-gradient);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(115, 103, 240, 0.5);
+    }
+    .btn-primary-gradient:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--primary-glow);
         color: white;
     }
-
-    /* Métricas */
-    .metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin: -2rem 0 3rem 0;
-        position: relative;
-        z-index: 10;
+    
+    /* --- TABLA PROFESIONAL --- */
+    .table-light thead th {
+        background: #2a3042;
+        color: #b4b7c1;
+        border-bottom: 2px solid var(--bs-primary);
     }
-
-    .metric-card {
-        background: var(--bg-white);
-        border-radius: 1rem;
-        padding: 2rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: var(--accent-color);
-        transition: all 0.3s ease;
-    }
-
-    .metric-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-xl);
-    }
-
-    .metric-card:nth-child(1)::before { background: var(--accent-color); }
-    .metric-card:nth-child(2)::before { background: var(--success-color); }
-    .metric-card:nth-child(3)::before { background: var(--warning-color); }
-    .metric-card:nth-child(4)::before { background: #8b5cf6; }
-
-    .metric-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
-    }
-
-    .metric-icon {
-        width: 3.5rem;
-        height: 3.5rem;
-        border-radius: 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-        color: var(--accent-color);
-    }
-
-    .metric-icon.success {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-        color: var(--success-color);
-    }
-
-    .metric-icon.warning {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-        color: var(--warning-color);
-    }
-
-    .metric-icon.purple {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-        color: #8b5cf6;
-    }
-
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-        line-height: 1;
-    }
-
-    .metric-label {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .metric-trend {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.375rem;
-        font-weight: 600;
-        background: rgba(16, 185, 129, 0.1);
-        color: var(--success-color);
-    }
-
-    /* Card Principal */
-    .main-panel {
-        background: var(--bg-white);
-        border-radius: 1.25rem;
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-
-    .panel-header {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        padding: 2rem;
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-    }
-
-    .panel-title {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .panel-title h2 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 0;
-    }
-
-    .panel-title .icon {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 0.5rem;
-        background: var(--accent-color);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.125rem;
-    }
-
-    /* Alertas */
-    .alert-modern {
-        border: none;
-        border-radius: 0.75rem;
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        box-shadow: var(--shadow-md);
-    }
-
-    .alert-success {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #166534;
-        border-left: 4px solid var(--success-color);
-    }
-
-    /* Tabla */
-    .data-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .data-table thead th {
-        background: var(--primary-gradient);
-        color: white;
-        padding: 1.25rem 1.5rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border: none;
-        position: sticky;
-        top: 0;
-        z-index: 5;
-    }
-
-    .data-table thead th:first-child {
-        border-top-left-radius: 0.75rem;
-    }
-
-    .data-table thead th:last-child {
-        border-top-right-radius: 0.75rem;
-    }
-
-    .data-table tbody td {
-        padding: 1.5rem;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-        transition: all 0.3s ease;
-        font-weight: 500;
-        color: var(--text-primary);
-    }
-
-    .data-table tbody tr {
-        transition: all 0.3s ease;
-    }
-
-    .data-table tbody tr:hover {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        transform: scale(1.01);
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Componentes específicos */
-    .teacher-profile {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .teacher-avatar {
-        width: 2.75rem;
-        height: 2.75rem;
-        border-radius: 0.75rem;
-        background: var(--secondary-gradient);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.125rem;
-        box-shadow: var(--shadow-md);
-    }
-
-    .teacher-info h4 {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 0 0 0.25rem 0;
-    }
-
-    .teacher-info .teacher-id {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-
-    .amount-badge {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #166534;
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.9rem;
-        font-weight: 700;
-        text-align: center;
-        min-width: 100px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        border: 1px solid #bbf7d0;
-    }
-
-    .date-badge {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-        padding: 0.4rem 0.8rem;
-        border-radius: 0.5rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        border: 1px solid #fbbf24;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .status-active {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        color: #166534;
-        padding: 0.4rem 0.8rem;
-        border-radius: 2rem;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border: 1px solid #bbf7d0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    /* Botones de acción */
-    .action-group {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-
-    .action-btn {
-        width: 2.5rem;
-        height: 2.5rem;
-        border-radius: 0.5rem;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        transition: all 0.3s ease;
-        position: relative;
+    .table-light th.sortable {
         cursor: pointer;
-        text-decoration: none;
+        position: relative;
     }
+    .table-light th.sortable:hover {
+        background-color: #323950;
+        color: #fff;
+    }
+    .sort-indicator {
+        display: inline-block; width: 16px; height: 16px; margin-left: 5px; opacity: 0.6; vertical-align: middle;
+    }
+    .sort-indicator::after {
+        font-family: 'Material Design Icons'; font-size: 16px; line-height: 1;
+    }
+    th[data-sort-direction="asc"] .sort-indicator::after { content: "\F005D"; } /* mdi-arrow-up */
+    th[data-sort-direction="desc"] .sort-indicator::after { content: "\F0045"; } /* mdi-arrow-down */
 
-    .action-btn:hover {
+    .payment-row-item:hover {
         transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        background-color: #f8f9fe;
     }
-
-    .action-btn.edit {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        color: #92400e;
-    }
-
-    .action-btn.edit:hover {
-        background: var(--warning-color);
-        color: white;
-    }
-
-    .action-btn.delete {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        color: #991b1b;
-    }
-
-    .action-btn.delete:hover {
-        background: var(--danger-color);
-        color: white;
-    }
-
-    /* Estado vacío */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: var(--text-secondary);
-    }
-
-    .empty-icon {
-        font-size: 5rem;
-        margin-bottom: 2rem;
-        opacity: 0.3;
-        background: var(--secondary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .empty-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: var(--text-primary);
-    }
-
-    .empty-message {
-        font-size: 1.125rem;
-        margin-bottom: 2.5rem;
-        max-width: 500px;
-        margin-left: auto;
-        margin-right: auto;
-        line-height: 1.6;
-    }
-
-    .empty-action {
-        background: var(--secondary-gradient);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 0.75rem;
+    
+    /* --- BADGES Y OTROS --- */
+    .badge.bg-success-lighten {
+        background-color: rgba(40, 199, 111, 0.15) !important;
+        color: #28c76f !important;
         font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.3s ease;
-        box-shadow: var(--shadow-md);
     }
-
-    .empty-action:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg);
+    .badge.bg-secondary-lighten {
+        background-color: rgba(130, 134, 139, 0.15) !important;
+        color: #82868b !important;
+        font-weight: 600;
+    }
+    .card-sidebar .card-header {
+        background: linear-gradient(135deg, #f8f9fe 0%, #f1f3f9 100%);
+        border-bottom: 1px solid #eef2f7;
+    }
+    .avatar-sm[data-bg-color] {
         color: white;
     }
-
-    /* Paginación */
-    .pagination-container {
-        padding: 2rem;
-        border-top: 1px solid var(--border-color);
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    }
-
-    .pagination-modern {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .pagination-modern .page-item .page-link {
-        border: none;
-        color: var(--text-secondary);
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        background: transparent;
-    }
-
-    .pagination-modern .page-item .page-link:hover {
-        background: var(--accent-color);
-        color: white;
-        transform: translateY(-1px);
-    }
-
-    .pagination-modern .page-item.active .page-link {
-        background: var(--accent-color);
-        color: white;
-        box-shadow: var(--shadow-md);
-    }
-
-    /* Responsive */
-    @media (max-width: 1024px) {
-        .header-content {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .metrics-grid {
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            margin-top: -1rem;
-        }
-
-        .panel-header {
-            flex-direction: column;
-            align-items: stretch;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .payments-header {
-            padding: 2rem 0;
-        }
-
-        .header-info h1 {
-            font-size: 2rem;
-        }
-
-        .metrics-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .metric-card {
-            padding: 1.5rem;
-        }
-
-        .data-table {
-            font-size: 0.875rem;
-        }
-
-        .data-table thead th,
-        .data-table tbody td {
-            padding: 1rem;
-        }
-
-        .action-group {
-            flex-direction: column;
-        }
-    }
-
-    /* Animaciones */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in-up {
-        animation: fadeInUp 0.6s ease-out;
-    }
+    .highlight { background-color: #f8e479; border-radius: 3px; }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid">
-    <!-- Header Principal -->
-    <div class="payments-header">
-        <div class="container-fluid">
-            <div class="header-content">
-                <div class="header-info">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb breadcrumb-custom mb-3">
-                            <li class="breadcrumb-item">
-                                <i class="uil uil-estate me-1"></i>Centro Preuniversitario
-                            </li>
-                            <li class="breadcrumb-item">Gestión Financiera</li>
-                            <li class="breadcrumb-item active">Pagos a Docentes</li>
-                        </ol>
-                    </nav>
-                    <h1>
-                        <i class="uil uil-money-bill"></i>
-                        Gestión de Pagos a Docentes
-                    </h1>
-                    <p class="subtitle">
-                        Sistema integral de administración y control de pagos al cuerpo docente
+    
+    <!-- Título de la página y breadcrumbs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">Centro Pre</a></li>
+                        <li class="breadcrumb-item">Gestión Financiera</li>
+                        <li class="breadcrumb-item active">Pagos a Docentes</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">
+                    <i class="mdi mdi-cash-multiple me-1"></i>
+                    Gestión de Pagos
+                </h4>
+            </div>
+        </div>
+    </div>
+    <!-- fin del título de la página -->
+
+    <!-- Alertas de sesión -->
+    @if(session('success'))
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="mdi mdi-check-all me-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Estadísticas -->
+    <div class="row">
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--info-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-cash-register float-end"></i>
+                    <h6 class="text-uppercase mt-0">Total Pagos Registrados</h6>
+                    <h2 class="my-2" id="totalPagos">{{ $pagos->total() ?? 0 }}</h2>
+                    <p class="mb-0">
+                        <span class="text-nowrap">Registros en el sistema</span>
                     </p>
                 </div>
-                <div class="header-actions">
-                    <a href="{{ route('pagos-docentes.create') }}" class="btn-primary-custom">
-                        <i class="uil uil-plus"></i>
-                        Nuevo Pago
-                    </a>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--success-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-briefcase-check float-end"></i>
+                    <h6 class="text-uppercase mt-0">Pagos Activos</h6>
+                    <h2 class="my-2" id="pagosActivos">{{ $pagos->where('fecha_fin', null)->count() ?? 0 }}</h2>
+                    <p class="mb-0">
+                        <span class="text-nowrap">Contratos vigentes</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--warning-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-currency-usd float-end"></i>
+                    <h6 class="text-uppercase mt-0">Tarifa Promedio</h6>
+                    <h2 class="my-2" id="tarifaPromedio">S/ {{ number_format($pagos->avg('tarifa_por_hora'), 2) }}</h2>
+                    <p class="mb-0">
+                        <span class="text-nowrap">Promedio por hora</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--primary-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-calendar-cash float-end"></i>
+                    <h6 class="text-uppercase mt-0">Total Pagado (Mes Actual)</h6>
+                    <h2 class="my-2" id="totalMesActual">S/ 0.00</h2>
+                     <p class="mb-0">
+                        <span class="text-nowrap">Estimado basado en registros</span>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container-fluid">
-        <!-- Panel de Métricas -->
-        <div class="metrics-grid">
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon">
-                        <i class="uil uil-money-bill"></i>
-                    </div>
-                    <div class="metric-trend">Total</div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="header-title">
+                        <i class="mdi mdi-view-list me-2"></i>
+                        Registro de Pagos
+                    </h4>
+                    <p class="text-muted mb-0">Gestione y visualice todos los pagos al personal docente</p>
                 </div>
-                <div class="metric-value">{{ $pagos->total() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-chart-line me-1"></i>
-                    Pagos Registrados
-                </div>
-            </div>
+                <div class="card-body">
 
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon success">
-                        <i class="uil uil-users-alt"></i>
+                    <!-- Acciones y Filtros -->
+                    <div class="row align-items-center mb-3 bg-light p-2 rounded">
+                        <div class="col-md-6">
+                            <a href="{{ route('pagos-docentes.create') }}" class="btn btn-primary-gradient btn-sm">
+                                <i class="mdi mdi-plus me-1"></i>
+                                Nuevo Registro de Pago
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                                <div class="position-relative" style="min-width: 220px;">
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           id="payment_search" 
+                                           placeholder="Buscar por docente..."
+                                           autocomplete="off">
+                                    <div class="position-absolute top-50 end-0 translate-middle-y pe-2">
+                                        <i class="mdi mdi-magnify text-muted"></i>
+                                    </div>
+                                </div>
+                                <select id="status_filter" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="">Todos los estados</option>
+                                    <option value="activo">Activo</option>
+                                    <option value="finalizado">Finalizado</option>
+                                </select>
+                           </div>
+                        </div>
                     </div>
-                    <div class="metric-trend">Activos</div>
-                </div>
-                <div class="metric-value">{{ $pagos->where('fecha_fin', null)->count() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-user-check me-1"></i>
-                    Pagos Activos
-                </div>
-            </div>
 
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon warning">
-                        <i class="uil uil-calculator"></i>
+                    <!-- Tabla de Pagos -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-centered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="sortable" data-sort="docente"><i class="mdi mdi-account-circle-outline me-1"></i>Docente<span class="sort-indicator"></span></th>
+                                    <th class="sortable" data-sort="tarifa"><i class="mdi mdi-cash me-1"></i>Tarifa por Hora<span class="sort-indicator"></span></th>
+                                    <th class="sortable" data-sort="periodo"><i class="mdi mdi-calendar-clock-outline me-1"></i>Periodo<span class="sort-indicator"></span></th>
+                                    <th class="text-center sortable" data-sort="estado"><i class="mdi mdi-list-status me-1"></i>Estado<span class="sort-indicator"></span></th>
+                                    <th class="text-center"><i class="mdi mdi-cogs me-1"></i>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody">
+                                @forelse($pagos as $pago)
+                                    <tr class="payment-row-item" 
+                                        data-docente="{{ $pago->docente->nombre_completo ?? '' }}"
+                                        data-status="{{ $pago->fecha_fin ? 'finalizado' : 'activo' }}"
+                                        data-tarifa="{{ $pago->tarifa_por_hora }}"
+                                        data-periodo="{{ \Carbon\Carbon::parse($pago->fecha_inicio)->timestamp }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-2" data-bg-color>
+                                                    <span class="text-white fw-bold">
+                                                        {{ substr($pago->docente->nombre ?? 'N', 0, 1) }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0 fs-14">{{ $pago->docente->nombre_completo ?? 'Docente no encontrado' }}</h6>
+                                                    <small class="text-muted">ID: {{ $pago->docente->id ?? '---' }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-success fs-15">S/ {{ number_format($pago->tarifa_por_hora, 2) }}</span>
+                                        </td>
+                                        <td>
+                                            <i class="mdi mdi-calendar-start text-info"></i> {{ \Carbon\Carbon::parse($pago->fecha_inicio)->format('d/m/Y') }}<br>
+                                            <i class="mdi mdi-calendar-end text-danger"></i> {{ $pago->fecha_fin ? \Carbon\Carbon::parse($pago->fecha_fin)->format('d/m/Y') : 'Presente' }}
+                                        </td>
+                                        <td class="text-center">
+                                            @if($pago->fecha_fin)
+                                                <span class="badge bg-secondary-lighten text-secondary">Finalizado</span>
+                                            @else
+                                                <span class="badge bg-success-lighten text-success">Activo</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Acción
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('pagos-docentes.edit', $pago->id) }}">
+                                                            <i class="mdi mdi-pencil me-2 text-warning"></i>Editar
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item text-danger" href="#" onclick="showDeleteConfirmation({{ $pago->id }})">
+                                                            <i class="mdi mdi-delete me-2"></i>Eliminar
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="text-center py-5" id="emptyState">
+                                                <i class="mdi mdi-cash-remove display-3 text-muted mb-3"></i>
+                                                <h5 class="text-muted">No hay pagos registrados</h5>
+                                                <p class="text-muted">Comience creando el primer registro de pago</p>
+                                                <a href="{{ route('pagos-docentes.create') }}" class="btn btn-primary mt-2">
+                                                    <i class="mdi mdi-plus me-2"></i>Crear Primer Registro
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                                <tr id="no-results-row" style="display: none;">
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="mdi mdi-magnify-close fs-2 text-muted"></i>
+                                        <h5 class="mt-2">No se encontraron resultados</h5>
+                                        <p class="text-muted">Intenta ajustar tu búsqueda o filtros.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="metric-trend">Promedio</div>
-                </div>
-                <div class="metric-value">S/ {{ number_format($pagos->avg('tarifa_por_hora'), 0) }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-money-withdrawal me-1"></i>
-                    Tarifa Promedio
-                </div>
-            </div>
-
-            <div class="metric-card fade-in-up">
-                <div class="metric-header">
-                    <div class="metric-icon purple">
-                        <i class="uil uil-briefcase-alt"></i>
-                    </div>
-                    <div class="metric-trend">Total</div>
-                </div>
-                <div class="metric-value">{{ $pagos->unique('docente_id')->count() }}</div>
-                <div class="metric-label">
-                    <i class="uil uil-graduation-cap me-1"></i>
-                    Docentes con Pago
+                    
+                    <!-- Paginación -->
+                    @if($pagos->hasPages())
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $pagos->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
-        <!-- Alerta de Éxito -->
-        @if(session('success'))
-            <div class="alert alert-modern alert-success">
-                <i class="uil uil-check-circle" style="font-size: 1.25rem;"></i>
-                <div>
-                    <strong>¡Operación exitosa!</strong>
-                    {{ session('success') }}
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Pagos Recientes -->
+            <div class="card card-sidebar">
+                <div class="card-header">
+                    <h4 class="header-title">
+                        <i class="mdi mdi-history me-2"></i>
+                        Pagos Recientes
+                    </h4>
+                    <p class="text-muted mb-0">Últimos registros añadidos</p>
+                </div>
+                <div class="card-body" style="max-height: 280px; overflow-y: auto;">
+                    @forelse ($pagos->take(5) as $pagoReciente)
+                    <div class="d-flex align-items-start mb-3 p-2 border-start border-3 border-primary bg-light bg-opacity-50 rounded">
+                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                            <i class="mdi mdi-cash-plus text-white"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fs-14">
+                                {{ Str::limit($pagoReciente->docente->nombre_completo, 20) ?? 'N/A' }}
+                            </h6>
+                            <div class="text-muted small mb-1">
+                                <i class="mdi mdi-currency-usd"></i> S/ {{ number_format($pagoReciente->tarifa_por_hora, 2) }} por hora
+                            </div>
+                            <small class="text-muted">
+                                <i class="mdi mdi-clock-outline me-1"></i>
+                                Registrado {{ $pagoReciente->created_at->diffForHumans() }}
+                            </small>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center text-muted py-3">
+                        <i class="mdi mdi-calendar-remove display-4"></i>
+                        <p class="mb-0 mt-2">Sin actividad reciente</p>
+                    </div>
+                    @endforelse
                 </div>
             </div>
-        @endif
-
-        <!-- Panel Principal -->
-        <div class="main-panel fade-in-up">
-            <!-- Header del Panel -->
-            <div class="panel-header">
-                <div class="panel-title">
-                    <div class="icon">
-                        <i class="uil uil-list-ul"></i>
-                    </div>
-                    <div>
-                        <h2>Registro de Pagos a Docentes</h2>
-                        <p class="text-muted mb-0">Gestión completa de la remuneración docente</p>
-                    </div>
+            
+            <!-- Top Docentes por Tarifa -->
+            <div class="card mt-3 card-sidebar">
+                <div class="card-header">
+                    <h4 class="header-title">
+                        <i class="mdi mdi-trophy-award me-2"></i>
+                        Top 5 Docentes por Tarifa
+                    </h4>
+                    <p class="text-muted mb-0">Basado en la tarifa por hora más alta</p>
                 </div>
-            </div>
-
-            <!-- Contenido de la Tabla -->
-            <div class="panel-body p-0">
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <i class="uil uil-user me-2"></i>
-                                    Docente
-                                </th>
-                                <th>
-                                    <i class="uil uil-money-bill me-2"></i>
-                                    Tarifa por Hora
-                                </th>
-                                <th>
-                                    <i class="uil uil-calendar-alt me-2"></i>
-                                    Fecha Inicio
-                                </th>
-                                <th>
-                                    <i class="uil uil-calender me-2"></i>
-                                    Fecha Fin
-                                </th>
-                                <th class="text-center">
-                                    <i class="uil uil-setting me-2"></i>
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($pagos as $pago)
-                                <tr class="payment-row">
-                                    <td>
-                                        <div class="teacher-profile">
-                                            <div class="teacher-avatar">
-                                                {{ substr($pago->docente->nombre ?? 'N', 0, 1) }}
-                                            </div>
-                                            <div class="teacher-info">
-                                                <h4>
-                                                    @if($pago->docente)
-                                                        {{ $pago->docente->nombre }} {{ $pago->docente->apellido_paterno }}
-                                                    @else
-                                                        Docente no encontrado
-                                                    @endif
-                                                </h4>
-                                                <div class="teacher-id">ID: {{ $pago->docente->id ?? '---' }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="amount-badge">
-                                            <i class="uil uil-money-bill"></i>
-                                            S/ {{ number_format($pago->tarifa_por_hora, 2) }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="date-badge">
-                                            <i class="uil uil-calendar-alt"></i>
-                                            {{ \Carbon\Carbon::parse($pago->fecha_inicio)->format('d/m/Y') }}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @if($pago->fecha_fin)
-                                            <div class="date-badge">
-                                                <i class="uil uil-calender"></i>
-                                                {{ \Carbon\Carbon::parse($pago->fecha_fin)->format('d/m/Y') }}
-                                            </div>
-                                        @else
-                                            <div class="status-active">
-                                                <i class="uil uil-check-circle"></i>
-                                                Activo
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="action-group">
-                                            <a href="{{ route('pagos-docentes.edit', $pago->id) }}" 
-                                               class="action-btn edit" 
-                                               data-bs-toggle="tooltip" 
-                                               title="Editar pago">
-                                                <i class="uil uil-edit"></i>
-                                            </a>
-                                            <form action="{{ route('pagos-docentes.destroy', $pago->id) }}" 
-                                                  method="POST" 
-                                                  class="d-inline-block" 
-                                                  onsubmit="return confirm('¿Está seguro de eliminar este pago?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" 
-                                                        class="action-btn delete" 
-                                                        data-bs-toggle="tooltip" 
-                                                        title="Eliminar pago">
-                                                    <i class="uil uil-trash-alt"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5">
-                                        <div class="empty-state">
-                                            <div class="empty-icon">
-                                                <i class="uil uil-money-withdrawal"></i>
-                                            </div>
-                                            <div class="empty-title">
-                                                No hay pagos registrados
-                                            </div>
-                                            <div class="empty-message">
-                                                El sistema de pagos está listo para comenzar. Registra el primer pago 
-                                                para establecer la estructura de remuneración docente.
-                                            </div>
-                                            <a href="{{ route('pagos-docentes.create') }}" class="empty-action">
-                                                <i class="uil uil-plus me-2"></i>
-                                                Registrar Primer Pago
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginación -->
-                @if($pagos->hasPages())
-                    <div class="pagination-container">
-                        <nav class="pagination-modern">
-                            {{ $pagos->links('pagination::bootstrap-5') }}
-                        </nav>
+                <div class="card-body" style="max-height: 450px; overflow-y: auto;">
+                    @php
+                        // Filtrar solo pagos activos, ordenarlos por tarifa y obtener docentes únicos
+                        $topDocentes = $pagos->sortByDesc('tarifa_por_hora')
+                                            ->unique('docente_id')
+                                            ->take(5);
+                    @endphp
+                    @forelse ($topDocentes as $pagoTop)
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-3" data-bg-color>
+                            <span class="text-white fw-bold">{{ substr($pagoTop->docente->nombre ?? 'N', 0, 1) }}</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fs-14">{{ $pagoTop->docente->nombre_completo ?? 'N/A' }}</h6>
+                            <small class="text-muted">
+                                <i class="mdi mdi-cash"></i> S/ {{ number_format($pagoTop->tarifa_por_hora, 2) }} / hora
+                            </small>
+                        </div>
+                        <span class="badge bg-warning-lighten text-warning">Top {{ $loop->iteration }}</span>
                     </div>
-                @endif
+                    @empty
+                    <div class="text-center text-muted py-3">
+                        <i class="mdi mdi-information-outline display-4"></i>
+                        <p class="mb-0 mt-2">No hay suficientes datos</p>
+                    </div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="mdi mdi-alert-circle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    <i class="mdi mdi-alert-circle-outline text-danger me-2"></i>
+                    ¿Estás seguro de que quieres eliminar este registro de pago?
+                </p>
+                <p class="text-muted">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
 @push('js')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl, {
-            delay: { show: 500, hide: 100 },
-            animation: true
-        });
-    });
-
-    // Animaciones de entrada escalonadas
-    const metricCards = document.querySelectorAll('.metric-card');
-    metricCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-            card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 150);
-    });
-
-    // Efectos hover para filas
-    const paymentRows = document.querySelectorAll('.payment-row');
-    paymentRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transition = 'all 0.3s ease';
-            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.1)';
-            this.style.borderRadius = '0.75rem';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.boxShadow = '';
-            this.style.borderRadius = '';
-        });
-    });
-
-    // Contador animado para métricas
-    const animateCounter = (element, target) => {
+    
+    // Función para animar contadores de estadísticas
+    function animateCounter(element) {
+        let targetText = element.textContent.replace(/[S\/,]/g, '').trim();
+        const target = parseFloat(targetText) || 0;
         let current = 0;
-        const increment = target / 50;
+        const duration = 1500; // 1.5 segundos
+        const stepTime = 20;
+        const steps = duration / stepTime;
+        const increment = target / steps;
+        
         const timer = setInterval(() => {
             current += increment;
             if (current >= target) {
                 current = target;
                 clearInterval(timer);
             }
-            element.textContent = Math.floor(current);
-        }, 30);
-    };
-
-    // Iniciar contadores cuando sean visibles
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const valueElement = entry.target.querySelector('.metric-value');
-                if (valueElement && !valueElement.textContent.includes('S/')) {
-                    const targetValue = parseInt(valueElement.textContent);
-                    animateCounter(valueElement, targetValue);
-                }
-                observer.unobserve(entry.target);
+            if (element.id === 'tarifaPromedio' || element.id === 'totalMesActual') {
+                 element.textContent = 'S/ ' + current.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+                 element.textContent = Math.floor(current);
             }
+        }, stepTime);
+    }
+    
+    document.querySelectorAll('#totalPagos, #pagosActivos, #tarifaPromedio').forEach(animateCounter);
+
+    // Lógica para el modal de eliminación
+    window.showDeleteConfirmation = function(pagoId) {
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.action = `/pagos-docentes/${pagoId}`;
+        const myModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+        myModal.show();
+    }
+
+    // Lógica de búsqueda y filtro
+    const searchInput = document.getElementById('payment_search');
+    const statusFilter = document.getElementById('status_filter');
+    const tableBody = document.getElementById('paymentsTableBody');
+    const allRows = Array.from(tableBody.querySelectorAll('tr.payment-row-item'));
+    const noResultsRow = document.getElementById('no-results-row');
+
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusTerm = statusFilter.value.toLowerCase();
+        let visibleCount = 0;
+
+        allRows.forEach(row => {
+            const docente = (row.dataset.docente || '').toLowerCase();
+            const status = (row.dataset.status || '').toLowerCase();
+            
+            const matchesSearch = !searchTerm || docente.includes(searchTerm);
+            const matchesStatus = !statusTerm || status === statusTerm;
+
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
+        
+        // Resaltar texto de búsqueda
+        allRows.forEach(row => {
+            const cell = row.querySelector('td:first-child h6');
+            if(cell){
+                const originalText = row.dataset.docente;
+                if(searchTerm){
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    cell.innerHTML = originalText.replace(regex, `<span class="highlight">$1</span>`);
+                } else {
+                    cell.innerHTML = originalText;
+                }
+            }
+        });
+    }
+
+    searchInput.addEventListener('keyup', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+
+    // Lógica de ordenamiento de tabla
+    document.querySelectorAll('.table-light th.sortable').forEach(headerCell => {
+        headerCell.addEventListener('click', () => {
+            const tableElement = headerCell.closest('table');
+            const currentIsAsc = headerCell.getAttribute('data-sort-direction') === 'asc';
+            const newDirection = currentIsAsc ? 'desc' : 'asc';
+
+            document.querySelectorAll('.table-light th.sortable').forEach(th => th.removeAttribute('data-sort-direction'));
+            headerCell.setAttribute('data-sort-direction', newDirection);
+
+            const sortProperty = headerCell.dataset.sort;
+
+            allRows.sort((a, b) => {
+                let valA, valB;
+                switch(sortProperty) {
+                    case 'tarifa':
+                    case 'periodo':
+                        valA = parseFloat(a.dataset[sortProperty]);
+                        valB = parseFloat(b.dataset[sortProperty]);
+                        break;
+                    case 'estado':
+                        valA = a.dataset.status === 'activo' ? 1 : 0;
+                        valB = b.dataset.status === 'activo' ? 1 : 0;
+                        break;
+                    default: // docente
+                        valA = a.dataset[sortProperty].toLowerCase();
+                        valB = b.dataset[sortProperty].toLowerCase();
+                }
+                
+                if (valA < valB) return newDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return newDirection === 'asc' ? 1 : -1;
+                return 0;
+            })
+            .forEach(row => tableBody.appendChild(row));
         });
     });
 
-    metricCards.forEach(card => observer.observe(card));
+    // Calcular total pagado en el mes actual (simulado)
+    const totalMesActualEl = document.getElementById('totalMesActual');
+    if (totalMesActualEl) {
+        let totalMes = 0;
+        allRows.forEach(row => {
+            if (row.dataset.status === 'activo') {
+                totalMes += parseFloat(row.dataset.tarifa) * 40; // Simulación: 40 horas al mes
+            }
+        });
+        totalMesActualEl.textContent = `S/ ${totalMes.toFixed(2)}`;
+        animateCounter(totalMesActualEl);
+    }
+    
+    // Asignar colores dinámicos a los avatares
+    const colors = ["#7367f0", "#28c76f", "#ff9f43", "#ea5455", "#00cfe8", "#8e44ad"];
+    document.querySelectorAll('[data-bg-color]').forEach((el, index) => {
+        el.style.backgroundColor = colors[index % colors.length];
+    });
 });
 </script>
 @endpush
-@endsection
+

@@ -13,11 +13,33 @@ use Illuminate\Validation\Rule;
 
 class HorarioDocenteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Carga las relaciones necesarias para mostrar en la vista
-        $horarios = HorarioDocente::with('docente', 'aula', 'ciclo', 'curso')->paginate(10);
-        return view('horarios_docentes.index', compact('horarios'));
+        // 1. Obtener todos los ciclos para el selector
+        $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
+
+        // 2. Determinar el ciclo a mostrar
+        $cicloSeleccionadoId = $request->input('ciclo_id');
+        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+
+        if ($cicloSeleccionadoId) {
+            $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
+        } else {
+            $cicloSeleccionado = $cicloActivo;
+        }
+
+        // 3. Construir la consulta de horarios
+        $query = HorarioDocente::with('docente', 'aula', 'ciclo', 'curso');
+
+        // 4. Filtrar por el ciclo seleccionado (si existe)
+        if ($cicloSeleccionado) {
+            $query->where('ciclo_id', $cicloSeleccionado->id);
+        }
+
+        $horarios = $query->paginate(10);
+
+        // 5. Pasar los datos a la vista
+        return view('horarios_docentes.index', compact('horarios', 'ciclos', 'cicloSeleccionado'));
     }
 
     public function create()

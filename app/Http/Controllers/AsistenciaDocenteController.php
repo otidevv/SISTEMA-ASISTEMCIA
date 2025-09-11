@@ -333,9 +333,22 @@ class AsistenciaDocenteController extends Controller
 
     public function index(Request $request)
     {
-        $fecha = $request->get('fecha', Carbon::today()->format('Y-m-d'));
+        // 1. Obtener ciclos y determinar el ciclo seleccionado
+        $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
+        $cicloSeleccionadoId = $request->input('ciclo_id');
+        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+
+        if ($cicloSeleccionadoId) {
+            $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
+        } else {
+            $cicloSeleccionado = $cicloActivo;
+        }
+
+        // 2. Obtener otros filtros
+        $fecha = $request->get('fecha');
         $documento = $request->get('documento');
 
+        // 3. Construir la consulta base
         $docentesDocumentos = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         })->pluck('numero_documento')->toArray();
@@ -343,15 +356,15 @@ class AsistenciaDocenteController extends Controller
         $query = RegistroAsistencia::with(['usuario.roles'])
             ->whereIn('nro_documento', $docentesDocumentos);
 
+        // 4. Aplicar filtros de fecha (con prioridad para el ciclo)
         if ($fecha) {
-            $query->where(function ($q) use ($fecha) {
-                $q->whereDate('fecha_registro', $fecha)
-                    ->orWhere(function ($q2) use ($fecha) {
-                        $q2->where('tipo_verificacion', 4) // Manual
-                            ->whereDate('fecha_hora', $fecha);
-                    });
-            });
+            // Si se especifica una fecha, se usa esa fecha
+            $query->whereDate('fecha_registro', $fecha);
+        } elseif ($cicloSeleccionado) {
+            // Si no hay fecha, pero sí ciclo, usar el rango de fechas del ciclo
+            $query->whereBetween('fecha_registro', [$cicloSeleccionado->fecha_inicio, $cicloSeleccionado->fecha_fin]);
         }
+        // Si no hay ni fecha ni ciclo, no se aplica filtro de fecha (se podría añadir un default si se quiere)
 
         if ($documento) {
             $query->where('nro_documento', 'like', '%' . $documento . '%');
@@ -363,6 +376,7 @@ class AsistenciaDocenteController extends Controller
             $query->where('nombre', 'profesor');
         })->select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
 
+        // (La lógica de transformación de la colección de asistencias permanece igual)
         $asistencias->getCollection()->transform(function ($asistencia) {
             if ($asistencia->usuario) {
                 $fechaAsistencia = Carbon::parse($asistencia->fecha_hora);
@@ -371,16 +385,13 @@ class AsistenciaDocenteController extends Controller
                 $diasSemana = [0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado'];
                 $nombreDia = $diasSemana[$diaSemana];
 
-                // Buscar un horario que la asistencia pueda corresponder, considerando la tolerancia de entrada
                 $horario = HorarioDocente::where('docente_id', $asistencia->usuario->id)
                     ->where('dia_semana', $nombreDia)
                     ->where(function ($q) use ($fechaAsistencia) {
-                        // Condición 1: La asistencia está dentro del horario programado real
                         $q->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'))
                           ->whereTime('hora_fin', '>=', $fechaAsistencia->format('H:i:s'));
                     })
                     ->orWhere(function ($q) use ($fechaAsistencia) {
-                        // Condición 2: La asistencia está dentro de la ventana de tolerancia temprana antes de hora_inicio
                         $q->whereTime('hora_inicio', '>=', $fechaAsistencia->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS)->format('H:i:s'))
                           ->whereTime('hora_inicio', '<=', $fechaAsistencia->format('H:i:s'));
                     })
@@ -393,13 +404,11 @@ class AsistenciaDocenteController extends Controller
                     $horaAsistenciaProgramada = Carbon::parse($horario->hora_inicio);
                     $horaFinProgramada = Carbon::parse($horario->hora_fin);
 
-                    // Determinar entrada/salida basándose en la proximidad a las horas programadas reales
                     $diffInicio = abs($fechaAsistencia->diffInMinutes($horaAsistenciaProgramada));
                     $diffFin = abs($fechaAsistencia->diffInMinutes($horaFinProgramada));
 
                     $asistencia->tipo_asistencia = $diffInicio < $diffFin ? 'entrada' : 'salida';
 
-                    // Calcular tardanza solo para el tipo 'entrada'
                     if ($asistencia->tipo_asistencia === 'entrada') {
                         $tardinessThreshold = $horaAsistenciaProgramada->copy()->addMinutes(self::TOLERANCIA_TARDE_MINUTOS);
                         if ($fechaAsistencia->greaterThan($tardinessThreshold)) {
@@ -424,7 +433,8 @@ class AsistenciaDocenteController extends Controller
             return $asistencia;
         });
 
-        return view('asistencia-docente.index', compact('asistencias', 'docentes', 'fecha', 'documento'));
+        // 5. Pasar todos los datos necesarios a la vista
+        return view('asistencia-docente.index', compact('asistencias', 'docentes', 'fecha', 'documento', 'ciclos', 'cicloSeleccionado'));
     }
 
     public function monitor()

@@ -1,510 +1,287 @@
 @extends('layouts.app')
 
-@section('content')
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4>Asistencia de Docentes</h4>
-            <div>
-                @can('asistencia-docente.create')
-                    <a href="{{ route('asistencia-docente.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Registrar Asistencia
-                    </a>
-                @endcan
-                @can('asistencia-docente.monitor')
-                    <a href="{{ route('asistencia-docente.monitor') }}" class="btn btn-info">
-                        <i class="fas fa-eye"></i> Monitor en Tiempo Real
-                    </a>
-                @endcan
-                @can('asistencia-docente.report')
-                    <a href="{{ route('asistencia-docente.report') }}" class="btn btn-secondary">
-                        <i class="fas fa-file-alt"></i> Reportes
-                    </a>
-                @endcan
-            </div>
-        </div>
+@section('title', 'Gestión de Asistencia Docente')
 
-        {{-- Filtros --}}
-        <form method="GET" class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label for="fecha" class="form-label">Fecha</label>
-                <input type="date" class="form-control" name="fecha" value="{{ $fecha }}">
-            </div>
-            <div class="col-md-4">
-                <label for="documento" class="form-label">Documento del Docente</label>
-                <input type="text" class="form-control" name="documento" placeholder="DNI o código"
-                    value="{{ $documento }}">
-            </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary me-2">
-                    <i class="fas fa-search"></i> Filtrar
-                </button>
-                <a href="{{ route('asistencia-docente.index') }}" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Limpiar
-                </a>
-            </div>
-        </form>
-
-        {{-- Estadísticas rápidas --}}
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="card-title">Total Hoy</h6>
-                                <h4>{{ $asistencias->where('fecha_registro', '>=', now()->startOfDay())->count() }}</h4>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-calendar-day fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="card-title">Entradas</h6>
-                                <h4>{{ $asistencias->where('tipo_asistencia', 'entrada')->count() }}</h4>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-sign-in-alt fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="card-title">Salidas</h6>
-                                <h4>{{ $asistencias->where('tipo_asistencia', 'salida')->count() }}</h4>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-sign-out-alt fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="card-title">Docentes Activos</h6>
-                                <h4>{{ $asistencias->pluck('nro_documento')->unique()->count() }}</h4>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-users fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Tabla --}}
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Registros de Asistencia - {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Docente</th>
-                                <th>Documento</th>
-                                <th>Curso</th>
-                                <th>Fecha y Hora</th>
-                                <th>Tipo</th>
-                                <th>Verificación</th>
-                                <th>Terminal</th>
-                                <th>Estado</th>
-                                <th width="150">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($asistencias as $asistencia)
-                                <tr @if(isset($asistencia->horario) && $asistencia->horario && $asistencia->horario->curso && $asistencia->horario->curso->codigo === 'A-1' && $asistencia->horario->turno === 'mañana') style="box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);" @endif>
-                                    <td>{{ $loop->iteration + ($asistencias->currentPage() - 1) * $asistencias->perPage() }}</td>
-                                    
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            @if ($asistencia->usuario && $asistencia->usuario->foto_perfil)
-                                                <img src="{{ asset('storage/' . $asistencia->usuario->foto_perfil) }}"
-                                                    class="rounded-circle me-2" width="32" height="32" alt="Foto">
-                                            @else
-                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2"
-                                                    style="width: 32px; height: 32px; color: white; font-size: 12px;">
-                                                    {{ $asistencia->usuario ? strtoupper(substr($asistencia->usuario->nombre, 0, 1)) : 'N/A' }}
-                                                </div>
-                                            @endif
-                                            <div>
-                                                <div class="fw-bold">
-                                                    {{ $asistencia->usuario ? $asistencia->usuario->nombre . ' ' . $asistencia->usuario->apellido_paterno : 'N/A' }}
-                                                </div>
-                                                @if ($asistencia->usuario && $asistencia->usuario->codigo_trabajo)
-                                                    <small class="text-muted">Código: {{ $asistencia->usuario->codigo_trabajo }}</small>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <td>{{ $asistencia->nro_documento }}</td>
-                                    
-                                    <td>
-                                        @if (isset($asistencia->horario) && $asistencia->horario && $asistencia->horario->curso)
-                                            {{ $asistencia->horario->curso->nombre }}
-                                        @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    
-                                    <td>{{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}</td>
-                                    
-                                    <td>
-                                        <span class="badge bg-{{ isset($asistencia->tipo_asistencia) && $asistencia->tipo_asistencia === 'entrada' ? 'success' : 'secondary' }}">
-                                            <i class="fas fa-{{ isset($asistencia->tipo_asistencia) && $asistencia->tipo_asistencia === 'entrada' ? 'sign-in-alt' : 'sign-out-alt' }}"></i>
-                                            {{ isset($asistencia->tipo_asistencia) ? ucfirst($asistencia->tipo_asistencia) : 'N/A' }}
-                                        </span>
-                                    </td>
-                                    
-                                    <td>
-                                        @php
-                                            $tiposVerificacion = [
-                                                0 => 'Biométrico',
-                                                1 => 'Tarjeta', 
-                                                2 => 'Facial',
-                                                3 => 'Código',
-                                                4 => 'Manual'
-                                            ];
-                                        @endphp
-                                        <span class="badge bg-{{ $asistencia->tipo_verificacion == 4 ? 'warning' : 'info' }}">
-                                            {{ $tiposVerificacion[$asistencia->tipo_verificacion] ?? 'Desconocido' }}
-                                        </span>
-                                    </td>
-                                    
-                                    <td>{{ $asistencia->terminal_id ?? 'N/A' }}</td>
-                                    
-                                    <td>
-                                        <span class="badge bg-{{ $asistencia->estado ? 'success' : 'danger' }}">
-                                            {{ $asistencia->estado ? 'Activo' : 'Inactivo' }}
-                                        </span>
-                                    </td>
-                                    
-                                    <td>
-                                        {{-- BOTONES CON BOOTSTRAP ICONS - SIEMPRE VISIBLES --}}
-                                        <div class="d-flex gap-1">
-                                            @can('asistencia-docente.show')
-                                                <button type="button" class="btn btn-info btn-sm" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#modal-detalle-{{ $asistencia->id }}" 
-                                                        title="Ver detalles">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                            @endcan
-                                            
-                                            @can('asistencia-docente.edit')
-                                                <a href="{{ route('asistencia-docente.edit', $asistencia->id) }}" 
-                                                   class="btn btn-warning btn-sm" 
-                                                   title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            @endcan
-                                            
-                                            @can('asistencia-docente.delete')
-                                                <form action="{{ route('asistencia-docente.destroy', $asistencia->id) }}" 
-                                                      method="POST" 
-                                                      style="display:inline-block;"
-                                                      onsubmit="return confirm('¿Está seguro de eliminar este registro?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {{-- Modal de detalles CORREGIDO --}}
-                                <div class="modal fade" id="modal-detalle-{{ $asistencia->id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    Detalles de Asistencia
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <dl class="row">
-                                                            <dt class="col-sm-5">Docente:</dt>
-                                                            <dd class="col-sm-7">
-                                                                {{ $asistencia->usuario ? $asistencia->usuario->nombre . ' ' . $asistencia->usuario->apellido_paterno . ' ' . ($asistencia->usuario->apellido_materno ?? '') : 'N/A' }}
-                                                            </dd>
-
-                                                            <dt class="col-sm-5">Documento:</dt>
-                                                            <dd class="col-sm-7">{{ $asistencia->nro_documento }}</dd>
-
-                                                            <dt class="col-sm-5">Código Trabajo:</dt>
-                                                            <dd class="col-sm-7">{{ $asistencia->codigo_trabajo ?? 'N/A' }}</dd>
-
-                                                            <dt class="col-sm-5">Fecha y Hora:</dt>
-                                                            <dd class="col-sm-7">
-                                                                {{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y H:i:s') }}
-                                                            </dd>
-                                                        </dl>
-                                                    </div>
-                                                    
-                                                    <div class="col-md-6">
-                                                        <dl class="row">
-                                                            <dt class="col-sm-5">Tipo Verificación:</dt>
-                                                            <dd class="col-sm-7">
-                                                                {{ $tiposVerificacion[$asistencia->tipo_verificacion] ?? 'Desconocido' }}
-                                                            </dd>
-
-                                                            <dt class="col-sm-5">Terminal:</dt>
-                                                            <dd class="col-sm-7">{{ $asistencia->terminal_id ?? 'N/A' }}</dd>
-
-                                                            <dt class="col-sm-5">SN Dispositivo:</dt>
-                                                            <dd class="col-sm-7">{{ $asistencia->sn_dispositivo ?? 'N/A' }}</dd>
-
-                                                            <dt class="col-sm-5">Estado:</dt>
-                                                            <dd class="col-sm-7">
-                                                                <span class="badge bg-{{ $asistencia->estado ? 'success' : 'danger' }}">
-                                                                    {{ $asistencia->estado ? 'Activo' : 'Inactivo' }}
-                                                                </span>
-                                                            </dd>
-                                                        </dl>
-                                                    </div>
-                                                </div>
-
-                                                @if (isset($asistencia->horario) && $asistencia->horario)
-                                                    <hr>
-                                                    <h6><i class="fas fa-clock me-2"></i>Información del Horario</h6>
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <dl class="row">
-                                                                <dt class="col-sm-5">Curso:</dt>
-                                                                <dd class="col-sm-7">{{ $asistencia->horario->curso->nombre ?? 'N/A' }}</dd>
-                                                            </dl>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <dl class="row">
-                                                                <dt class="col-sm-5">Horario:</dt>
-                                                                <dd class="col-sm-7">
-                                                                    {{ \Carbon\Carbon::parse($asistencia->horario->hora_inicio)->format('H:i') }}
-                                                                    -
-                                                                    {{ \Carbon\Carbon::parse($asistencia->horario->hora_fin)->format('H:i') }}
-                                                                </dd>
-                                                            </dl>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                    <i class="fas fa-times me-1"></i>Cerrar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <tr>
-                                    <td colspan="10" class="text-center py-4">
-                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">No se encontraron registros de asistencia de docentes para la fecha seleccionada.</p>
-                                        @can('asistencia-docente.create')
-                                            <a href="{{ route('asistencia-docente.create') }}" class="btn btn-primary">
-                                                <i class="fas fa-plus"></i> Registrar Primera Asistencia
-                                            </a>
-                                        @endcan
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        {{-- Paginación --}}
-        @if ($asistencias->hasPages())
-            <div class="mt-3">
-                {{ $asistencias->appends(request()->query())->links() }}
-            </div>
-        @endif
-    </div>
-@endsection
-
-@push('styles')
-<!-- Cargar Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-
+@push('css')
 <style>
-/* BOTONES CON BOOTSTRAP ICONS - PERFECTOS */
-.d-flex.gap-1 {
-    gap: 0.5rem !important;
-}
+    /* Paleta de colores y variables */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #4f32c2 0%, #7367f0 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
+        --warning-gradient: linear-gradient(135deg, #ff9f43 0%, #ff8b1b 100%);
+        --info-gradient: linear-gradient(135deg, #00cfe8 0%, #1ce1ff 100%);
+        --primary-glow: 0 0 20px rgba(115, 103, 240, 0.4);
+    }
 
-/* Botones optimizados para iconos */
-.btn-sm {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    line-height: 1 !important;
-    border-radius: 0.375rem !important;
-    min-width: 42px !important;
-    height: 40px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-decoration: none !important;
-    border: none !important;
-}
+    /* --- TARJETAS DE ESTADÍSTICAS --- */
+    .tilebox-one {
+        border: none; border-radius: 0.75rem; transition: all 0.3s ease; overflow: hidden;
+    }
+    .tilebox-one:hover {
+        transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .tilebox-one .card-body { position: relative; z-index: 2; }
+    .tilebox-one .mdi { font-size: 3rem; transition: all 0.3s ease; opacity: 0.3; }
+    .tilebox-one:hover .mdi { transform: scale(1.2) rotate(-10deg); }
+    .tilebox-one[style*="--"] { color: white; }
+    .tilebox-one[style*="--"] h2, .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p { color: white; }
+    .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p { opacity: 0.8; }
 
-.modal-dialog-lg {
-    max-width: 900px;
-}
+    /* --- BOTONES Y UI --- */
+    .btn-primary-gradient {
+        background-image: var(--primary-gradient); border: none; color: white; transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(115, 103, 240, 0.5);
+    }
+    .btn-primary-gradient:hover {
+        transform: translateY(-2px); box-shadow: var(--primary-glow); color: white;
+    }
 
-.table td {
-    vertical-align: middle;
-}
+    /* --- TABLA PROFESIONAL --- */
+    .table-light thead th {
+        background: #2a3042; color: #b4b7c1; border-bottom: 2px solid var(--bs-primary);
+    }
+    .table-light th.sortable { cursor: pointer; position: relative; }
+    .table-light th.sortable:hover { background-color: #323950; color: #fff; }
+    .sort-indicator { display: inline-block; width: 16px; height: 16px; margin-left: 5px; opacity: 0.6; vertical-align: middle; }
+    .sort-indicator::after { font-family: 'Material Design Icons'; font-size: 16px; line-height: 1; }
+    th[data-sort-direction="asc"] .sort-indicator::after { content: "\F005D"; } /* mdi-arrow-up */
+    th[data-sort-direction="desc"] .sort-indicator::after { content: "\F0045"; } /* mdi-arrow-down */
+    .asistencia-row-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #f8f9fe; }
 
-/* Bootstrap Icons específicos */
-.btn-sm i.bi {
-    font-size: 1.1rem !important;
-    line-height: 1 !important;
-    color: white !important;
-    font-weight: normal !important;
-}
-
-/* Efectos hover suaves */
-.d-flex.gap-1 .btn {
-    transition: all 0.2s ease !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-}
-
-.d-flex.gap-1 .btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
-}
-
-/* BOTÓN AZUL (VER - OJO) */
-.btn-info {
-    background-color: #0d6efd !important;
-    color: white !important;
-}
-
-.btn-info:hover,
-.btn-info:focus,
-.btn-info:active {
-    background-color: #0b5ed7 !important;
-    color: white !important;
-}
-
-/* BOTÓN AMARILLO (EDITAR - LÁPIZ) */
-.btn-warning {
-    background-color: #ffc107 !important;
-    color: #000 !important;
-}
-
-.btn-warning:hover,
-.btn-warning:focus,
-.btn-warning:active {
-    background-color: #ffcd39 !important;
-    color: #000 !important;
-}
-
-.btn-warning i.bi {
-    color: #000 !important;
-}
-
-/* BOTÓN ROJO (ELIMINAR - BASURA) */
-.btn-danger {
-    background-color: #dc3545 !important;
-    color: white !important;
-}
-
-.btn-danger:hover,
-.btn-danger:focus,
-.btn-danger:active {
-    background-color: #bb2d3b !important;
-    color: white !important;
-}
-
-/* Ajuste específico para la columna de acciones */
-.table th:last-child,
-.table td:last-child {
-    text-align: center;
-    vertical-align: middle;
-    width: 160px;
-}
-
-/* Mejorar alineación de botones */
-.d-flex.gap-1 {
-    justify-content: center;
-    align-items: center;
-}
-
-/* Card effects */
-.card {
-    transition: box-shadow 0.15s ease-in-out;
-}
-
-.card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-/* Asegurar que Bootstrap Icons se carguen correctamente */
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css");
+    /* --- AVATARES Y BADGES --- */
+    .avatar-sm[data-bg-color] { color: white; }
+    .highlight { background-color: #f8e479; border-radius: 3px; }
 </style>
 @endpush
 
-@push('scripts')
-    <script>
-        // Auto-refresh cada 30 segundos si estamos viendo el día actual
-        @if ($fecha === now()->format('Y-m-d'))
-            setInterval(function() {
-                location.reload();
-            }, 30000);
-        @endif
+@section('content')
+<div class="container-fluid">
 
-        // Efectos adicionales para botones
-        document.addEventListener('DOMContentLoaded', function() {
-            // Confirmación mejorada para eliminación
-            const deleteButtons = document.querySelectorAll('button[title="Eliminar"]');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const form = this.closest('form');
-                    
-                    if (confirm('⚠️ ¿Está seguro de eliminar este registro?\n\nEsta acción no se puede deshacer.')) {
-                        form.submit();
-                    }
-                });
-            });
+    <!-- Título de la página y breadcrumbs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="javascript: void(0);">Centro Pre</a></li>
+                        <li class="breadcrumb-item">Académico</li>
+                        <li class="breadcrumb-item active">Asistencias</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">
+                    <i class="mdi mdi-fingerprint me-1"></i>
+                    Asistencia de Docentes
+                    @if ($cicloSeleccionado)
+                        <span class="badge bg-primary fs-6 ms-2">{{ $cicloSeleccionado->nombre }}</span>
+                    @elseif($fecha)
+                        <span class="badge bg-info fs-6 ms-2">{{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}</span>
+                    @endif
+                </h4>
+            </div>
+        </div>
+    </div>
+    <!-- fin del título de la página -->
 
-            // Tooltip mejorados
-            const actionButtons = document.querySelectorAll('.btn[title]');
-            actionButtons.forEach(button => {
-                button.addEventListener('mouseenter', function() {
-                    // Aquí podrías agregar tooltips personalizados si quisieras
-                });
-            });
+    <!-- Estadísticas -->
+    <div class="row">
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--info-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-format-list-numbered float-end"></i>
+                    <h6 class="text-uppercase mt-0">Total Registros</h6>
+                    <h2 class="my-2" id="totalRegistros">{{ $asistencias->total() }}</h2>
+                    <p class="mb-0">En el periodo filtrado</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--success-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-login-variant float-end"></i>
+                    <h6 class="text-uppercase mt-0">Entradas</h6>
+                    <h2 class="my-2" id="totalEntradas">{{ $asistencias->where('tipo_asistencia', 'entrada')->count() }}</h2>
+                    <p class="mb-0">Registros de ingreso</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--warning-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-logout-variant float-end"></i>
+                    <h6 class="text-uppercase mt-0">Salidas</h6>
+                    <h2 class="my-2" id="totalSalidas">{{ $asistencias->where('tipo_asistencia', 'salida')->count() }}</h2>
+                    <p class="mb-0">Registros de salida</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="card tilebox-one" style="background: var(--primary-gradient);">
+                <div class="card-body">
+                    <i class="mdi mdi-account-group-outline float-end"></i>
+                    <h6 class="text-uppercase mt-0">Docentes Únicos</h6>
+                    <h2 class="my-2" id="docentesUnicos">{{ $asistencias->pluck('nro_documento')->unique()->count() }}</h2>
+                    <p class="mb-0">Con asistencia hoy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <!-- Filtros y Acciones -->
+            <form method="GET" action="{{ route('asistencia-docente.index') }}" class="row g-3 mb-4 align-items-end bg-light p-3 rounded">
+                <div class="col-md-3">
+                    <label for="ciclo_id" class="form-label fw-bold">Ciclo Académico</label>
+                    <select name="ciclo_id" id="ciclo_id" class="form-select form-select-sm">
+                        <option value="">Todos los ciclos</option>
+                        @foreach ($ciclos as $ciclo)
+                            <option value="{{ $ciclo->id }}" {{ $cicloSeleccionado && $cicloSeleccionado->id == $ciclo->id ? 'selected' : '' }}>
+                                {{ $ciclo->nombre }} @if($ciclo->es_activo) (Activo) @endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha" class="form-label fw-bold">Fecha Específica</label>
+                    <input type="date" class="form-control form-control-sm" name="fecha" value="{{ $fecha ?? '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="documento" class="form-label fw-bold">Docente (DNI o Nombre)</label>
+                    <input type="text" class="form-control form-control-sm" name="documento" placeholder="Buscar..." value="{{ request('documento') ?? '' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100"><i class="mdi mdi-filter-variant"></i> Filtrar</button>
+                    <a href="{{ route('asistencia-docente.index') }}" class="btn btn-secondary btn-sm w-100"><i class="mdi mdi-reload"></i> Limpiar</a>
+                </div>
+            </form>
+            
+            <div class="d-flex justify-content-end mb-3">
+                @can('asistencia-docente.create')
+                    <a href="{{ route('asistencia-docente.create') }}" class="btn btn-primary-gradient btn-sm me-2"><i class="mdi mdi-plus"></i> Registrar Asistencia</a>
+                @endcan
+                @can('asistencia-docente.monitor')
+                    <a href="{{ route('asistencia-docente.monitor') }}" class="btn btn-info btn-sm me-2"><i class="mdi mdi-monitor-dashboard"></i> Monitor en Vivo</a>
+                @endcan
+                @can('asistencia-docente.reports')
+                    <a href="{{ route('asistencia-docente.reports') }}" class="btn btn-light btn-sm"><i class="mdi mdi-file-chart-outline"></i> Reportes</a>
+                @endcan
+            </div>
+            
+            <!-- Tabla de Asistencias -->
+            <div class="table-responsive">
+                <table class="table table-hover table-centered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="sortable" data-sort="docente"><i class="mdi mdi-account-tie-outline me-1"></i>Docente<span class="sort-indicator"></span></th>
+                            <th class="sortable" data-sort="curso"><i class="mdi mdi-book-open-outline me-1"></i>Curso<span class="sort-indicator"></span></th>
+                            <th class="sortable" data-sort="fecha"><i class="mdi mdi-calendar-clock-outline me-1"></i>Fecha y Hora<span class="sort-indicator"></span></th>
+                            <th><i class="mdi mdi-swap-horizontal-bold me-1"></i>Tipo</th>
+                            <th><i class="mdi mdi-check-decagram-outline me-1"></i>Verificación</th>
+                            <th class="text-center"><i class="mdi mdi-cogs me-1"></i>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="asistenciasTableBody">
+                        @forelse($asistencias as $asistencia)
+                            <tr class="asistencia-row-item" data-docente="{{ $asistencia->usuario->nombre_completo ?? '' }}" data-curso="{{ $asistencia->horario->curso->nombre ?? '' }}" data-fecha="{{ \Carbon\Carbon::parse($asistencia->fecha_registro)->timestamp }}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-2" data-bg-color>
+                                            <span class="text-white fw-bold">{{ substr($asistencia->usuario->nombre ?? 'N', 0, 1) }}</span>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fs-14">{{ $asistencia->usuario->nombre_completo ?? 'N/A' }}</h6>
+                                            <small class="text-muted">DNI: {{ $asistencia->nro_documento }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ $asistencia->horario->curso->nombre ?? 'N/A' }}</td>
+                                <td>{{ \Carbon\Carbon::parse($asistencia->fecha_registro)->format('d/m/Y h:i:s A') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $asistencia->tipo_asistencia === 'entrada' ? 'success-lighten text-success' : 'secondary-lighten text-secondary' }}">
+                                        <i class="mdi mdi-{{ $asistencia->tipo_asistencia === 'entrada' ? 'login' : 'logout' }} me-1"></i>
+                                        {{ ucfirst($asistencia->tipo_asistencia) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $verificacion = ['0' => ['Biométrico', 'info'], '1' => ['Tarjeta', 'info'], '2' => ['Facial', 'info'], '3' => ['Código', 'info'], '4' => ['Manual', 'warning']];
+                                        $tipo = $asistencia->tipo_verificacion;
+                                    @endphp
+                                    <span class="badge bg-{{ $verificacion[$tipo][1] ?? 'light' }}-lighten text-{{ $verificacion[$tipo][1] ?? 'dark' }}">
+                                        {{ $verificacion[$tipo][0] ?? 'Desconocido' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-info btn-sm" title="Ver Detalles"><i class="mdi mdi-eye"></i></button>
+                                    <a href="{{ route('asistencia-docente.edit', $asistencia->id) }}" class="btn btn-warning btn-sm" title="Editar"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center py-4"><i class="mdi mdi-archive-alert-outline fs-2 text-muted"></i><h5 class="mt-2">No se encontraron registros</h5></td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+             @if ($asistencias->hasPages())
+                <div class="mt-3">{{ $asistencias->appends(request()->query())->links() }}</div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('js')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- ANIMACIÓN DE CONTADORES ---
+    function animateCounter(element) {
+        const target = parseInt(element.textContent.replace(/S\/|\s|,/g, '')) || 0;
+        let current = 0;
+        const duration = 1500, stepTime = 20, steps = duration / stepTime;
+        const increment = target / steps;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current).toLocaleString('es-PE');
+        }, stepTime);
+    }
+    document.querySelectorAll('#totalRegistros, #totalEntradas, #totalSalidas, #docentesUnicos').forEach(animateCounter);
+
+    // --- LÓGICA DE ORDENAMIENTO DE TABLA ---
+    document.querySelectorAll('.table-light th.sortable').forEach(headerCell => {
+        headerCell.addEventListener('click', () => {
+            const currentIsAsc = headerCell.getAttribute('data-sort-direction') === 'asc';
+            const newDirection = currentIsAsc ? 'desc' : 'asc';
+            document.querySelectorAll('.table-light th.sortable').forEach(th => th.removeAttribute('data-sort-direction'));
+            headerCell.setAttribute('data-sort-direction', newDirection);
+            
+            const sortProperty = headerCell.dataset.sort;
+            const tableBody = document.getElementById('asistenciasTableBody');
+            const allRows = Array.from(tableBody.querySelectorAll('tr.asistencia-row-item'));
+
+            allRows.sort((a, b) => {
+                let valA = (a.dataset[sortProperty] || '').toLowerCase();
+                let valB = (b.dataset[sortProperty] || '').toLowerCase();
+                if (sortProperty === 'fecha') {
+                    valA = parseInt(a.dataset.fecha);
+                    valB = parseInt(b.dataset.fecha);
+                }
+                if (valA < valB) return newDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return newDirection === 'asc' ? 1 : -1;
+                return 0;
+            }).forEach(row => tableBody.appendChild(row));
         });
-    </script>
+    });
+    
+    // --- ASIGNAR COLORES DINÁMICOS A AVATARES ---
+    const colors = ["#7367f0", "#28c76f", "#ff9f43", "#ea5455", "#00cfe8", "#8e44ad"];
+    document.querySelectorAll('[data-bg-color]').forEach((el, index) => {
+        el.style.backgroundColor = colors[index % colors.length];
+    });
+});
+</script>
 @endpush
