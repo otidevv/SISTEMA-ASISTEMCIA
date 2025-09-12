@@ -178,6 +178,9 @@ class DashboardController extends Controller
                 // Obtener horarios del profesor para la fecha seleccionada
                 $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
                     ->where('dia_semana', $diaSemanaSeleccionada)
+                    ->when($cicloActivo, function ($query, $ciclo) {
+                        return $query->where('ciclo_id', $ciclo->id);
+                    })
                     ->with(['aula', 'curso', 'ciclo'])
                     ->orderBy('hora_inicio')
                     ->get();
@@ -347,8 +350,8 @@ class DashboardController extends Controller
                 $data['horasProgramadas'] = round($horasProgramadas, 1);
                 
                 // Calcular métricas de rendimiento
-                $data['eficiencia'] = $this->calcularEficienciaDocente($user->id, $fechaSeleccionada);
-                $data['puntualidad'] = $this->calcularPuntualidadDocente($user->id);
+                $data['eficiencia'] = $this->calcularEficienciaDocente($user->id, $fechaSeleccionada, $cicloActivo);
+                $data['puntualidad'] = $this->calcularPuntualidadDocente($user->id, $cicloActivo);
                 
                 // Resumen semanal
                 $fechaInicioSemana = Carbon::now()->subDays(6)->startOfDay();
@@ -356,6 +359,11 @@ class DashboardController extends Controller
                 
                 $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
                     ->whereBetween('fecha_hora', [$fechaInicioSemana, $fechaFinSemana])
+                    ->when($cicloActivo, function ($query, $ciclo) {
+                        return $query->whereHas('horario', function ($q) use ($ciclo) {
+                            $q->where('ciclo_id', $ciclo->id);
+                        });
+                    })
                     ->selectRaw('
                         COUNT(*) as total_sesiones,
                         SUM(horas_dictadas) as total_horas,
@@ -373,11 +381,11 @@ class DashboardController extends Controller
                 ];
                 
                 // CORREGIDO: Próxima clase - asegurar que solo sea del docente actual
-                $proximaClase = $this->obtenerProximaClaseCorregida($user->id);
+                $proximaClase = $this->obtenerProximaClaseCorregida($user->id, $cicloActivo);
                 $data['proximaClase'] = $proximaClase;
                 
                 // NUEVO: Sistema de notificaciones mejorado
-                $notificaciones = $this->generarNotificacionesDocente($user->id, $fechaSeleccionada, $sesionesPendientes, $proximaClase);
+                $notificaciones = $this->generarNotificacionesDocente($user->id, $fechaSeleccionada, $sesionesPendientes, $proximaClase, $cicloActivo);
                 $data['notificaciones'] = $notificaciones;
                 
                 // Recordatorios (mantener compatibilidad)
@@ -601,7 +609,7 @@ class DashboardController extends Controller
     /**
      * NUEVO: Sistema de notificaciones para docentes
      */
-    private function generarNotificacionesDocente($docenteId, $fechaSeleccionada, $sesionesPendientes, $proximaClase)
+    private function generarNotificacionesDocente($docenteId, $fechaSeleccionada, $sesionesPendientes, $proximaClase, $cicloActivo)
     {
         $notificaciones = [];
 
@@ -685,8 +693,8 @@ class DashboardController extends Controller
         }
 
         // Notificación de rendimiento semanal
-        $eficiencia = $this->calcularEficienciaDocente($docenteId, $fechaSeleccionada);
-        $puntualidad = $this->calcularPuntualidadDocente($docenteId);
+        $eficiencia = $this->calcularEficienciaDocente($docenteId, $fechaSeleccionada, $cicloActivo);
+        $puntualidad = $this->calcularPuntualidadDocente($docenteId, $cicloActivo);
 
         if ($eficiencia < 70 || $puntualidad < 80) {
             $mensaje = "Tu rendimiento semanal: Eficiencia {$eficiencia}%, Puntualidad {$puntualidad}%.";
@@ -785,7 +793,7 @@ class DashboardController extends Controller
     /**
      * CORREGIDO: Método para obtener próxima clase solo del docente actual
      */
-    private function obtenerProximaClaseCorregida($docenteId)
+    private function obtenerProximaClaseCorregida($docenteId, $cicloActivo)
     {
         $ahora = Carbon::now();
         $diaActualSemana = $ahora->locale('es')->dayName;
@@ -794,6 +802,9 @@ class DashboardController extends Controller
         $proximaClaseHoy = HorarioDocente::where('docente_id', $docenteId)
             ->where('dia_semana', $diaActualSemana)
             ->where('hora_inicio', '>', $ahora->format('H:i:s'))
+            ->when($cicloActivo, function ($query, $ciclo) {
+                return $query->where('ciclo_id', $ciclo->id);
+            })
             ->with(['aula', 'curso'])
             ->orderBy('hora_inicio')
             ->first();
@@ -813,6 +824,9 @@ class DashboardController extends Controller
             
             $claseEncontrada = HorarioDocente::where('docente_id', $docenteId) // CORREGIDO: Filtro por docente
                 ->where('dia_semana', $diaBuscado)
+                ->when($cicloActivo, function ($query, $ciclo) {
+                    return $query->where('ciclo_id', $ciclo->id);
+                })
                 ->with(['aula', 'curso'])
                 ->orderBy('hora_inicio')
                 ->first();
@@ -869,10 +883,15 @@ class DashboardController extends Controller
     /**
      * NUEVO: Calcular eficiencia del docente
      */
-    private function calcularEficienciaDocente($docenteId, $fecha)
+    private function calcularEficienciaDocente($docenteId, $fecha, $cicloActivo)
     {
         $sesiones = AsistenciaDocente::where('docente_id', $docenteId)
             ->where('fecha_hora', '>=', Carbon::now()->subDays(30))
+            ->when($cicloActivo, function ($query, $ciclo) {
+                return $query->whereHas('horario', function ($q) use ($ciclo) {
+                    $q->where('ciclo_id', $ciclo->id);
+                });
+            })
             ->with('horario')
             ->get();
         
@@ -898,13 +917,16 @@ class DashboardController extends Controller
     /**
      * NUEVO: Calcular puntualidad del docente
      */
-    private function calcularPuntualidadDocente($docenteId)
+    private function calcularPuntualidadDocente($docenteId, $cicloActivo)
     {
         $registros = DB::table('asistencias_docentes as ad')
             ->join('horarios_docentes as hd', 'ad.horario_id', '=', 'hd.id')
             ->where('ad.docente_id', $docenteId)
             ->where('ad.fecha_hora', '>=', Carbon::now()->subDays(30))
             ->whereNotNull('ad.hora_entrada')
+            ->when($cicloActivo, function ($query, $ciclo) {
+                return $query->where('hd.ciclo_id', $ciclo->id);
+            })
             ->select('ad.*', 'hd.hora_inicio')
             ->get();
         
