@@ -144,16 +144,25 @@ class HorarioDocenteController extends Controller
      */
    public function calendario()
 {
-    $aulas = Aula::all(); // Trae todas las aulas (A1, B1, etc.)
-    $turnos = ['MAÑANA', 'TARDE', 'NOCHE']; // Turnos fijos
-    $semana = 1; // Semana por defecto (puedes modificar si necesitas dinámica)
+    // Obtener el ciclo activo
+    $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+    if (!$cicloActivo) {
+        // Si no hay ciclo activo, puedes redirigir o mostrar un mensaje
+        return redirect()->route('horarios-docentes.index')->with('error', 'No hay un ciclo activo para mostrar el calendario.');
+    }
+
+    $aulas = Aula::all();
+    $turnos = ['MAÑANA', 'TARDE', 'NOCHE'];
+    $semana = 1; // Semana por defecto
 
     $calendarios = [];
 
     foreach ($aulas as $aula) {
         foreach ($turnos as $turno) {
-            // Buscar horarios por aula y turno
+            // Buscar horarios por aula, turno y ciclo activo
             $horarios = HorarioDocente::with('docente', 'curso')
+                ->where('ciclo_id', $cicloActivo->id)
                 ->where('aula_id', $aula->id)
                 ->where('turno', $turno)
                 ->get();
@@ -169,7 +178,8 @@ class HorarioDocenteController extends Controller
         }
     }
 
-    return view('horarios_docentes.calendario', compact('calendarios'));
+    // Pasar también el ciclo activo a la vista para mostrar su nombre
+    return view('horarios_docentes.calendario', compact('calendarios', 'cicloActivo'));
 }
 
 
@@ -234,8 +244,9 @@ class HorarioDocenteController extends Controller
         $horaInicio = Carbon::createFromFormat('H:i', $request->hora_inicio);
         $horaFin = Carbon::createFromFormat('H:i', $request->hora_fin);
         
-        // 1. Verificar conflicto de DOCENTE en el mismo día/hora/turno
+        // 1. Verificar conflicto de DOCENTE en el mismo día/hora/turno y ciclo
         $conflictoDocente = HorarioDocente::where('docente_id', $request->docente_id)
+            ->where('ciclo_id', $request->ciclo_id)
             ->where('dia_semana', $request->dia_semana)
             ->where('turno', $request->turno)
             ->where(function ($query) use ($horaInicio, $horaFin) {
@@ -251,12 +262,13 @@ class HorarioDocenteController extends Controller
 
         if ($conflictoDocente) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'docente_id' => 'Este docente ya tiene un horario asignado en este día, turno y horario.',
+                'docente_id' => 'Este docente ya tiene un horario asignado en este día, turno y horario dentro del mismo ciclo.',
             ]);
         }
 
-        // 2. Verificar conflicto de AULA en el mismo día/hora/turno
+        // 2. Verificar conflicto de AULA en el mismo día/hora/turno y ciclo
         $conflictoAula = HorarioDocente::where('aula_id', $request->aula_id)
+            ->where('ciclo_id', $request->ciclo_id)
             ->where('dia_semana', $request->dia_semana)
             ->where('turno', $request->turno)
             ->where(function ($query) use ($horaInicio, $horaFin) {
@@ -272,12 +284,13 @@ class HorarioDocenteController extends Controller
 
         if ($conflictoAula) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'aula_id' => 'Esta aula ya está ocupada en este día, turno y horario.',
+                'aula_id' => 'Esta aula ya está ocupada en este día, turno y horario dentro del mismo ciclo.',
             ]);
         }
 
-        // 3. Verificar límite máximo de horas por docente por día y turno
+        // 3. Verificar límite máximo de horas por docente por día y turno en el mismo ciclo
         $horasTotalesDocente = HorarioDocente::where('docente_id', $request->docente_id)
+            ->where('ciclo_id', $request->ciclo_id)
             ->where('dia_semana', $request->dia_semana)
             ->where('turno', $request->turno)
             ->when($excludeId, function ($query, $excludeId) {
@@ -299,7 +312,7 @@ class HorarioDocenteController extends Controller
         // Límite: máximo 6 horas (360 minutos) por turno
         if ($totalMinutos > 360) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'hora_fin' => 'El docente excedería el límite máximo de 6 horas por turno.',
+                'hora_fin' => 'El docente excedería el límite máximo de 6 horas por turno en este ciclo.',
             ]);
         }
     }

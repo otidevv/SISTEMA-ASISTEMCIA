@@ -770,7 +770,7 @@
     <div class="header-universidad">
         <div class="ciclo-badge">
             <i class="uil uil-calendar-alt"></i>
-            Ciclo Ordinario 2025-1
+            {{ $cicloActivo->nombre ?? 'Ciclo no especificado' }}
         </div>
         <div class="header-content">
             <div class="universidad-logo">

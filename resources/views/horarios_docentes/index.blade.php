@@ -87,20 +87,6 @@
     </div>
     <!-- fin del título de la página -->
 
-    <!-- Alertas -->
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="mdi mdi-check-all me-2"></i> {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="mdi mdi-block-helper me-2"></i> {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    @endif
-
     <!-- Estadísticas -->
     <div class="row">
         <div class="col-md-6 col-xl-3">
@@ -170,44 +156,42 @@
                                         @endforeach
                                     </select>
                                 </form>
-                                <button class="btn btn-success btn-sm" id="toggleViewBtn">
-                                    <i class="mdi mdi-calendar-week me-1" id="toggleIcon"></i>
-                                    <span id="toggleText">Vista Calendario</span>
-                                </button>
+                                <a href="{{ route('horarios.calendario') }}" class="btn btn-success btn-sm">
+                                    <i class="mdi mdi-calendar-week me-1"></i>
+                                    <span>Vista Calendario</span>
+                                </a>
                             </div>
                         </div>
                     </div>
 
                     <!-- Búsqueda y Filtros de la Tabla -->
-                    <div class="view-tabla">
-                        <div class="row mb-3">
-                             <div class="col-md-4">
-                                <input type="text" class="form-control form-control-sm" id="horario_search" placeholder="Buscar por docente, curso, aula...">
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-select form-select-sm" id="filtroTipo">
-                                    <option value="">Filtrar por tipo</option>
-                                    <option value="teoria">Teoría</option>
-                                    <option value="practica">Práctica</option>
-                                    <option value="laboratorio">Laboratorio</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-select form-select-sm" id="filtroDia">
-                                    <option value="">Filtrar por día</option>
-                                    @php
-                                        $dias = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miercoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sabado' => 'Sábado', 'domingo' => 'Domingo'];
-                                    @endphp
-                                    @foreach($dias as $diaKey => $diaNombre)
-                                        <option value="{{ $diaKey }}">{{ $diaNombre }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                    <div class="row mb-3">
+                         <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm" id="horario_search" placeholder="Buscar por docente, curso, aula...">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="filtroTipo">
+                                <option value="">Filtrar por tipo</option>
+                                <option value="teoria">Teoría</option>
+                                <option value="practica">Práctica</option>
+                                <option value="laboratorio">Laboratorio</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="filtroDia">
+                                <option value="">Filtrar por día</option>
+                                @php
+                                    $dias = ['lunes' => 'Lunes', 'martes' => 'Martes', 'miercoles' => 'Miércoles', 'jueves' => 'Jueves', 'viernes' => 'Viernes', 'sabado' => 'Sábado', 'domingo' => 'Domingo'];
+                                @endphp
+                                @foreach($dias as $diaKey => $diaNombre)
+                                    <option value="{{ $diaKey }}">{{ $diaNombre }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     
                     <!-- Vista Tabla -->
-                    <div class="table-responsive view-tabla">
+                    <div class="table-responsive">
                         <table class="table table-hover table-centered mb-0">
                             <thead class="table-light">
                                 <tr>
@@ -250,7 +234,11 @@
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('horarios-docentes.edit', $horario->id) }}" class="btn btn-warning btn-sm" title="Editar"><i class="mdi mdi-pencil"></i></a>
-                                        <button class="btn btn-danger btn-sm" onclick="showDeleteConfirmation({{ $horario->id }})" title="Eliminar"><i class="mdi mdi-delete"></i></button>
+                                        <form action="{{ route('horarios-docentes.delete', $horario->id) }}" method="POST" class="d-inline form-delete">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Eliminar"><i class="mdi mdi-delete"></i></button>
+                                        </form>
                                     </td>
                                 </tr>
                                 @empty
@@ -264,36 +252,7 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Vista Calendario -->
-                    <div id="calendarioView" style="display: none;">
-                        <p class="text-center text-muted">La vista de calendario se mostrará aquí.</p>
-                        <!-- Aquí iría la lógica y el renderizado del calendario -->
-                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmación para eliminar -->
-<div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="mdi mdi-alert-circle me-2"></i>Confirmar Eliminación</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que quieres eliminar este horario? Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
             </div>
         </div>
     </div>
@@ -385,37 +344,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- MANEJO DE MODAL DE ELIMINACIÓN ---
-    window.showDeleteConfirmation = function(horarioId) {
-        const deleteForm = document.getElementById('deleteForm');
-        deleteForm.action = `/horarios-docentes/${horarioId}`;
-        const myModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-        myModal.show();
-    }
+    // --- MANEJO DE CONFIRMACIÓN DE ELIMINACIÓN CON SWEETALERT ---
+    document.querySelectorAll('.form-delete').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevenir el envío inmediato
 
-    // --- TOGGLE DE VISTAS (TABLA/CALENDARIO) ---
-    const toggleBtn = document.getElementById('toggleViewBtn');
-    const toggleIcon = document.getElementById('toggleIcon');
-    const toggleText = document.getElementById('toggleText');
-    const tablaViews = document.querySelectorAll('.view-tabla');
-    const calendarioView = document.getElementById('calendarioView');
-
-    toggleBtn.addEventListener('click', () => {
-        const isTablaVisible = tablaViews[0].style.display !== 'none';
-        
-        if (isTablaVisible) {
-            tablaViews.forEach(el => el.style.display = 'none');
-            calendarioView.style.display = 'block';
-            toggleBtn.className = 'btn btn-danger btn-sm';
-            toggleIcon.className = 'mdi mdi-view-list me-1';
-            toggleText.textContent = 'Vista Tabla';
-        } else {
-            tablaViews.forEach(el => el.style.display = ''); // Revert to default display
-            calendarioView.style.display = 'none';
-            toggleBtn.className = 'btn btn-success btn-sm';
-            toggleIcon.className = 'mdi mdi-calendar-week me-1';
-            toggleText.textContent = 'Vista Calendario';
-        }
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "¡No podrás revertir esta acción!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, ¡eliminar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.submit(); // Enviar el formulario si se confirma
+                }
+            });
+        });
     });
 
     // --- ASIGNAR COLORES DINÁMICOS A AVATARES ---
