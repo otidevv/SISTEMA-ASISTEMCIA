@@ -60,13 +60,10 @@ class MaterialAcademicoPolicy
      */
     public function update(User $user, MaterialAcademico $materialAcademico): bool
     {
-        if (!$user->hasPermission('materiales.manage')) {
+        if (!$user->hasPermission('material-academico.editar')) {
             return false;
         }
-        if ($user->hasRole('Docente')) {
-            return $user->id === $materialAcademico->profesor_id;
-        }
-        return false; // Solo Admins (manejado en before) y el propio docente pueden editar
+        return $user->id === $materialAcademico->profesor_id;
     }
 
     /**
@@ -74,13 +71,10 @@ class MaterialAcademicoPolicy
      */
     public function delete(User $user, MaterialAcademico $materialAcademico): bool
     {
-        if (!$user->hasPermission('materiales.manage')) {
+        if (!$user->hasPermission('material-academico.eliminar')) {
             return false;
         }
-        if ($user->hasRole('Docente')) {
-            return $user->id === $materialAcademico->profesor_id;
-        }
-        return false; // Solo Admins (manejado en before) y el propio docente pueden eliminar
+        return $user->id === $materialAcademico->profesor_id;
     }
 
     /**

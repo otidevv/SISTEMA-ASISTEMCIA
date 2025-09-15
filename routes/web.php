@@ -451,7 +451,7 @@ Route::middleware('auth')->group(function () {
                 ->middleware('can:material-academico.ver');
         
             Route::get('/{materialAcademico}/edit', [MaterialAcademicoController::class, 'edit'])
-                ->name('editar')
+                ->name('edit')
                 ->middleware('can:material-academico.editar');
         
             Route::put('/{materialAcademico}', [MaterialAcademicoController::class, 'update'])
@@ -459,7 +459,7 @@ Route::middleware('auth')->group(function () {
                 ->middleware('can:material-academico.editar');
         
             Route::delete('/{materialAcademico}', [MaterialAcademicoController::class, 'destroy'])
-                ->name('eliminar')
+                ->name('destroy')
                 ->middleware('can:material-academico.eliminar');
         });
 

@@ -9,6 +9,8 @@ class MaterialAcademico extends Model
 {
     use HasFactory;
 
+    protected $table = 'materiales_academicos';
+
     protected $fillable = [
         'titulo',
         'descripcion',

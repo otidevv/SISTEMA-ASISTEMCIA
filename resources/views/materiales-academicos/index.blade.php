@@ -11,29 +11,7 @@
     <!-- third party css end -->
 @endpush
 
-@push('js')
-    <!-- third party js -->
-    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons-bs5/js/buttons.bootstrap5.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/pdfmake/build/pdfmake.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/pdfmake/build/vfs_fonts.js') }}"></script>
-    <!-- third party js ends -->
 
-    <script>
-        // Define la URL base para las solicitudes AJAX
-        window.default_server = "{{ url('/') }}";
-    </script>
-    <script src="{{ asset('js/materiales-academicos/index.js') }}"></script>
-@endpush
 
 @section('content')
     <!-- start page title -->
@@ -92,4 +70,55 @@
             </div> <!-- end card -->
         </div><!-- end col-->
     </div>
+
 @endsection
+
+@push('js')
+    <!-- third party js -->
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons-bs5/js/buttons.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/pdfmake/build/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/pdfmake/build/vfs_fonts.js') }}"></script>
+    <!-- third party js ends -->
+
+    <script>
+        $(document).ready(function() {
+            $("#materiales-datatable").DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('materiales-academicos.index') }}",
+                columns: [
+                    { data: 'titulo', name: 'titulo' },
+                    { data: 'curso.nombre', name: 'curso.nombre' },
+                    { data: 'profesor.nombre_completo', name: 'profesor.nombre_completo' },
+                    { data: 'semana', name: 'semana' },
+                    { data: 'tipo', name: 'tipo' },
+                    { data: 'created_at', name: 'created_at' },
+                    { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
+                ],
+                language: {
+                    paginate: {
+                        previous: "<i class='mdi mdi-chevron-left'>",
+                        next: "<i class='mdi mdi-chevron-right'>"
+                    },
+                    info: "Showing materiales _START_ to _END_ of _TOTAL_",
+                    lengthMenu: "Display <select class='form-select form-select-sm ms-1 me-1'><option value='10'>10</option><option value='20'>20</option><option value='-1'>All</option></select> materiales"
+                },
+                pageLength: 10,
+                drawCallback: function() {
+                    $(".dataTables_paginate > .pagination").addClass("pagination-rounded");
+                }
+            });
+        });
+    </script>
+@endpush
+

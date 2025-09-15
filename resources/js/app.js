@@ -29,3 +29,5 @@ if (document.getElementById('registros-container')) {
             // Resto de tu código...
         });
 }
+
+

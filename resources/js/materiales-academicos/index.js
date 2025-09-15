@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'semana', name: 'semana' },
             { data: 'tipo', name: 'tipo' },
             { data: 'created_at', name: 'created_at' },
+            { data: 'url_debug', name: 'url_debug', title: 'URL de Depuración' },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false }
         ],
         language: {

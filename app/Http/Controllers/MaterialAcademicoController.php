@@ -11,19 +11,23 @@ use App\Models\Aula;
 use App\Models\HorarioDocente;
 use App\Models\Inscripcion;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MaterialAcademicoController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $user = Auth::user();
         $query = MaterialAcademico::with('curso', 'profesor', 'ciclo', 'aula');
 
-        if ($user->hasRole('Docente')) {
+        if ($user->hasRole('Profesor')) {
             $query->where('profesor_id', $user->id);
         } elseif ($user->hasRole('Estudiante')) {
-            $inscripcion = Inscripcion::where('estudiante_id', $user->id)->where('estado', 'activo')->first();
+            $inscripcion = Inscripcion::where('estudiante_id', $user->id)->where('estado_inscripcion', 'activo')->first();
             if ($inscripcion) {
                 $query->where('ciclo_id', $inscripcion->ciclo_id)
                       ->where('aula_id', $inscripcion->aula_id);
@@ -40,10 +44,16 @@ class MaterialAcademicoController extends Controller
                 ->addColumn('curso.nombre', function (MaterialAcademico $material) {
                     return $material->curso->nombre ?? 'N/A';
                 })
+                ->addColumn('url_debug', function (MaterialAcademico $material) {
+                    if ($material->tipo === 'link') {
+                        return $material->archivo;
+                    }
+                    return Storage::url($material->archivo);
+                })
                 ->addColumn('acciones', function (MaterialAcademico $material) use ($user) {
                     $viewUrl = $material->tipo === 'link' 
                                 ? $material->archivo 
-                                : asset('storage/' . $material->archivo);
+                                : Storage::url($material->archivo);
                     $editUrl = route('materiales-academicos.edit', $material);
                     $deleteUrl = route('materiales-academicos.destroy', $material);
 
@@ -58,11 +68,12 @@ class MaterialAcademicoController extends Controller
                     }
                     if ($user->can('delete', $material)) {
                         $actions .= '<form action="' . $deleteUrl . '" method="POST" class="d-inline">' .
-                                    csrf_field() . method_field('DELETE') .
+                                    '<input type="hidden" name="_token" value="' . csrf_token() . '">' . "\n" .
+                                    '<input type="hidden" name="_method" value="DELETE">' . 
                                     '<button type="submit" class="btn action-icon delete-material" 
                                         onclick="return confirm(\'¿Estás seguro de que quieres eliminar este material?\')">
                                         <i class="mdi mdi-delete"></i>
-                                    </button>' .
+                                    </button>' . 
                                     '</form>';
                     }
 
@@ -78,17 +89,26 @@ class MaterialAcademicoController extends Controller
     public function create()
     {
         $user = Auth::user();
+        $cicloActivo = Ciclo::where('es_activo', true)->first();
+        $ciclos = $cicloActivo ? collect([$cicloActivo]) : collect();
         $cursos = collect();
-        $ciclos = collect();
         $aulas = collect();
 
         if ($user->hasRole('Admin')) {
             $cursos = Curso::where('estado', true)->get();
-            $ciclos = Ciclo::where('estado', 'activo')->get();
             $aulas = Aula::where('estado', true)->get();
+        } elseif ($user->hasRole('Profesor')) {
+            if ($cicloActivo) {
+                $horarios = HorarioDocente::where('docente_id', $user->id)
+                                          ->where('ciclo_id', $cicloActivo->id)
+                                          ->with('curso', 'aula')
+                                          ->get();
+                $cursos = $horarios->map->curso->where('estado', true)->unique('id');
+                $aulas = $horarios->map->aula->where('estado', true)->unique('id');
+            }
         }
 
-        return view('materiales-academicos.create', compact('cursos', 'ciclos', 'aulas'));
+        return view('materiales-academicos.create', compact('ciclos', 'cursos', 'aulas'));
     }
 
     public function store(Request $request)
@@ -101,8 +121,8 @@ class MaterialAcademicoController extends Controller
             'aula_id' => 'required|exists:aulas,id',
             'semana' => 'required|integer|min:1',
             'tipo' => 'required|in:pdf,word,ppt,link,otro',
-            'archivo' => 'required_if:tipo,!=,link|file|max:10240', // Máx 10MB
-            'link' => 'required_if:tipo,==,link|url',
+            'archivo' => ['required_if:tipo,!=,link', 'file', 'max:10240'],
+            'link' => ['nullable', 'url', Rule::requiredIf($request->tipo == 'link')]
         ]);
 
         $data = $request->all();
@@ -130,24 +150,26 @@ class MaterialAcademicoController extends Controller
         $this->authorize('update', $materialAcademico);
 
         $user = Auth::user();
+        $cicloActivo = Ciclo::where('es_activo', true)->first();
+        $ciclos = $cicloActivo ? collect([$cicloActivo]) : collect();
         $cursos = collect();
-        $ciclos = collect();
         $aulas = collect();
 
         if ($user->hasRole('Admin')) {
             $cursos = Curso::where('estado', true)->get();
-            $ciclos = Ciclo::where('estado', 'activo')->get();
             $aulas = Aula::where('estado', true)->get();
-        } elseif ($user->hasRole('Docente')) {
-            $horarios = HorarioDocente::where('docente_id', $user->id)
-                                      ->with('curso', 'ciclo', 'aula')
-                                      ->get();
-            $cursos = $horarios->map->curso->unique('id');
-            $ciclos = $horarios->map->ciclo->unique('id');
-            $aulas = $horarios->map->aula->unique('id');
+        } elseif ($user->hasRole('Profesor')) {
+            if ($cicloActivo) {
+                $horarios = HorarioDocente::where('docente_id', $user->id)
+                                          ->where('ciclo_id', $cicloActivo->id)
+                                          ->with('curso', 'aula')
+                                          ->get();
+                $cursos = $horarios->map->curso->where('estado', true)->unique('id');
+                $aulas = $horarios->map->aula->where('estado', true)->unique('id');
+            }
         }
 
-        return view('materiales-academicos.edit', compact('materialAcademico', 'cursos', 'ciclos', 'aulas'));
+        return view('materiales-academicos.edit', compact('materialAcademico', 'ciclos', 'cursos', 'aulas'));
     }
 
     public function update(Request $request, MaterialAcademico $materialAcademico)
@@ -162,8 +184,8 @@ class MaterialAcademicoController extends Controller
             'aula_id' => 'required|exists:aulas,id',
             'semana' => 'required|integer|min:1',
             'tipo' => 'required|in:pdf,word,ppt,link,otro',
-            'archivo' => 'nullable|file|max:10240',
-            'link' => 'nullable|url',
+            'archivo' => ['nullable', 'file', 'max:10240'],
+            'link' => ['nullable', 'url', Rule::requiredIf($request->tipo == 'link')]
         ]);
 
         $data = $request->all();
