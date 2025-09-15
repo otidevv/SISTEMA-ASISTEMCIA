@@ -155,6 +155,25 @@
                     </li>
                 @endif
 
+                <!-- Módulo Material Académico -->
+                @if (Auth::user()->hasPermission('material-academico.ver'))
+                    <li>
+                        <a href="#sidebarMaterial" data-bs-toggle="collapse">
+                            <i data-feather="book-open"></i>
+                            <span> Material Académico </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarMaterial">
+                            <ul class="nav-second-level">
+                                <li><a href="{{ route('material-academico.ver') }}">Listar Materiales</a></li>
+                                @if (Auth::user()->hasPermission('material-academico.crear'))
+                                    <li><a href="{{ route('material-academico.crear') }}">Nuevo Material</a></li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
+                @endif
+
                 <!-- Nueva Postulación Unificada - Para estudiantes/postulantes -->
                 @if (Auth::user()->hasPermission('postulaciones.create-unified'))
                     <li>

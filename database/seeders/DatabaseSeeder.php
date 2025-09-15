@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\ModuloHorarioDocente::class,
             \Database\Seeders\ModuloAcademico::class,
             \Database\Seeders\AttendanceViewPermissionSeeder::class,
+            \Database\Seeders\MaterialesAcademicosPermissionsSeeder::class,
         ]);
     }
 
@@ -203,6 +204,22 @@ class DatabaseSeeder extends Seeder
                 'modulo' => 'parentescos'
             ]
         ]);
+
+        // Módulo de Materiales Académicos
+        DB::table('permissions')->insert([
+            [
+                'nombre' => 'Ver Materiales Académicos',
+                'codigo' => 'materiales.view',
+                'descripcion' => 'Permite ver materiales académicos',
+                'modulo' => 'académico'
+            ],
+            [
+                'nombre' => 'Gestionar Materiales Académicos',
+                'codigo' => 'materiales.manage',
+                'descripcion' => 'Permite crear, editar y eliminar materiales académicos',
+                'modulo' => 'académico'
+            ]
+        ]);
     }
 
     private function assignPermissionsToRoles(): void
@@ -249,7 +266,10 @@ class DatabaseSeeder extends Seeder
             'cursos.create',
             'cursos.edit',
             'cursos.delete',
-            'cursos.toggle'
+            'cursos.toggle',
+            // Permisos de materiales
+            'materiales.view',
+            'materiales.manage',
         ];
 
         $permisos = DB::table('permissions')

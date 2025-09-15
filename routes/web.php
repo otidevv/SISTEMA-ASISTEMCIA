@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\ReniecController;
 use App\Http\Controllers\PostulacionController;
 use App\Http\Controllers\PostulacionUnificadaController;
+use App\Http\Controllers\MaterialAcademicoController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -431,6 +432,37 @@ Route::middleware('auth')->group(function () {
         // Ruta para alternar estado (activar/desactivar)
         Route::put('/{id}/toggle', [App\Http\Controllers\CursoController::class, 'toggle'])->name('cursos.toggle');
     });
+        // Materiales Académicos
+        Route::prefix('materiales-academicos')->name('materiales-academicos.')->group(function () {
+            Route::get('/', [MaterialAcademicoController::class, 'index'])
+                ->name('index')
+                ->middleware('can:material-academico.ver');
+        
+            Route::get('/create', [MaterialAcademicoController::class, 'create'])
+                ->name('crear')
+                ->middleware('can:material-academico.crear');
+        
+            Route::post('/', [MaterialAcademicoController::class, 'store'])
+                ->name('store')
+                ->middleware('can:material-academico.crear');
+        
+            Route::get('/{materialAcademico}', [MaterialAcademicoController::class, 'show'])
+                ->name('show')
+                ->middleware('can:material-academico.ver');
+        
+            Route::get('/{materialAcademico}/edit', [MaterialAcademicoController::class, 'edit'])
+                ->name('editar')
+                ->middleware('can:material-academico.editar');
+        
+            Route::put('/{materialAcademico}', [MaterialAcademicoController::class, 'update'])
+                ->name('update')
+                ->middleware('can:material-academico.editar');
+        
+            Route::delete('/{materialAcademico}', [MaterialAcademicoController::class, 'destroy'])
+                ->name('eliminar')
+                ->middleware('can:material-academico.eliminar');
+        });
+
 });
 
 // Agrega el prefijo 'json' para todas las rutas de API

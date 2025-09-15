@@ -73,6 +73,29 @@
                 </li>
                 @endcan
 
+                <!-- Materiales Académicos - RUTAS CORREGIDAS CON EL NOMBRE CORRECTO -->
+                @can('material-academico.ver')
+                    <li>
+                        <a href="#sidebarMaterial" data-bs-toggle="collapse">
+                            <i class="mdi mdi-book-multiple-outline"></i>
+                            <span> Materiales Académicos </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarMaterial">
+                            <ul class="nav-second-level">
+                                <li>
+                                    <a href="{{ route('materiales-academicos.index') }}">Ver Materiales</a>
+                                </li>
+                                @can('material-academico.crear')
+                                <li>
+                                    <a href="{{ route('materiales-academicos.crear') }}">Subir Material</a>
+                                </li>
+                                @endcan
+                            </ul>
+                        </div>
+                    </li>
+                @endcan
+
                 <!-- Pagos -->
                 @can('pagos-docentes.view')
                 <li>

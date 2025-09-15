@@ -851,7 +851,27 @@
                             </div>
                         </li>
                     @endif
-
+                    
+                    {{-- ============================== --}}
+                    {{-- Módulo: Material Académico --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('material-academico.ver'))
+                        <li>
+                            <a href="#sidebarMaterialAcademico" data-bs-toggle="collapse">
+                                <i data-feather="book"></i>
+                                <span> Material Académico </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarMaterialAcademico">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('materiales-academicos.index') }}">Ver Material</a></li>
+                                    @if (Auth::user()->hasPermission('material-academico.crear'))
+                                        <li><a href="{{ route('materiales-academicos.crear') }}">Subir Material</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
                     {{-- ============================== --}}
                     {{-- Módulo: Cursos --}}
