@@ -49,20 +49,21 @@
                                     @error('docente_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <small class="text-muted">Documento: {{ $asistencia->nro_documento }}</small>
+                                    <small class="text-muted" id="docente_nro_documento_display">Documento: {{ $asistencia->nro_documento }}</small>
+                                    <input type="hidden" name="nro_documento" id="nro_documento_hidden" value="{{ old('nro_documento', $asistencia->nro_documento) }}">
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="fecha_hora" class="form-label">Fecha y Hora <span class="text-danger">*</span></label>
+                                    <label for="fecha_registro" class="form-label">Fecha y Hora <span class="text-danger">*</span></label>
                                     <input type="datetime-local" 
-                                           class="form-control @error('fecha_hora') is-invalid @enderror" 
-                                           id="fecha_hora" 
-                                           name="fecha_hora" 
-                                           value="{{ old('fecha_hora', \Carbon\Carbon::parse($asistencia->fecha_registro)->format('Y-m-d\TH:i')) }}" 
+                                           class="form-control @error('fecha_registro') is-invalid @enderror" 
+                                           id="fecha_registro" 
+                                           name="fecha_registro" 
+                                           value="{{ old('fecha_registro', \Carbon\Carbon::parse($asistencia->fecha_registro)->format('Y-m-d\TH:i')) }}" 
                                            required>
-                                    @error('fecha_hora')
+                                    @error('fecha_registro')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -73,13 +74,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="estado" class="form-label">Estado <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('estado') is-invalid @enderror" 
+                                    <select class="form-select @error('estado') is-invalid @enderror"
                                             id="estado" name="estado" required>
                                         <option value="">Seleccionar estado...</option>
-                                        <option value="entrada" {{ old('estado', \Carbon\Carbon::parse($asistencia->fecha_registro)->format('H:i') < '12:00' ? 'entrada' : 'salida') == 'entrada' ? 'selected' : '' }}>
+                                        <option value="1" {{ (old('estado', $asistencia->estado) == 1 || old('estado', $asistencia->estado) == 'entrada') ? 'selected' : '' }}>
                                             Entrada
                                         </option>
-                                        <option value="salida" {{ old('estado', \Carbon\Carbon::parse($asistencia->fecha_registro)->format('H:i') < '12:00' ? 'entrada' : 'salida') == 'salida' ? 'selected' : '' }}>
+                                        <option value="0" {{ (old('estado', $asistencia->estado) == 0 || old('estado', $asistencia->estado) == 'salida') ? 'selected' : '' }}>
                                             Salida
                                         </option>
                                     </select>
@@ -94,14 +95,11 @@
                                     <label for="tipo_verificacion" class="form-label">Tipo de Verificación</label>
                                     <select class="form-select @error('tipo_verificacion') is-invalid @enderror" 
                                             id="tipo_verificacion" name="tipo_verificacion">
-                                        @php
-                                            $tipos = [0 => 'biometrico', 1 => 'tarjeta', 2 => 'facial', 3 => 'codigo', 4 => 'manual'];
-                                            $tipoActual = $tipos[$asistencia->tipo_verificacion] ?? 'manual';
-                                        @endphp
-                                        <option value="manual" {{ old('tipo_verificacion', $tipoActual) == 'manual' ? 'selected' : '' }}>Manual</option>
-                                        <option value="biometrico" {{ old('tipo_verificacion', $tipoActual) == 'biometrico' ? 'selected' : '' }}>Biométrico</option>
-                                        <option value="tarjeta" {{ old('tipo_verificacion', $tipoActual) == 'tarjeta' ? 'selected' : '' }}>Tarjeta</option>
-                                        <option value="codigo" {{ old('tipo_verificacion', $tipoActual) == 'codigo' ? 'selected' : '' }}>Código</option>
+                                        <option value="4" {{ (old('tipo_verificacion', $asistencia->tipo_verificacion) == 4 || old('tipo_verificacion', $asistencia->tipo_verificacion) == 'manual') ? 'selected' : '' }}>Manual</option>
+                                        <option value="0" {{ (old('tipo_verificacion', $asistencia->tipo_verificacion) == 0 || old('tipo_verificacion', $asistencia->tipo_verificacion) == 'biometrico') ? 'selected' : '' }}>Biométrico</option>
+                                        <option value="1" {{ (old('tipo_verificacion', $asistencia->tipo_verificacion) == 1 || old('tipo_verificacion', $asistencia->tipo_verificacion) == 'tarjeta') ? 'selected' : '' }}>Tarjeta</option>
+                                        <option value="3" {{ (old('tipo_verificacion', $asistencia->tipo_verificacion) == 3 || old('tipo_verificacion', $asistencia->tipo_verificacion) == 'codigo') ? 'selected' : '' }}>Código</option>
+                                        <option value="2" {{ (old('tipo_verificacion', $asistencia->tipo_verificacion) == 2 || old('tipo_verificacion', $asistencia->tipo_verificacion) == 'facial') ? 'selected' : '' }}>Facial</option>
                                     </select>
                                     @error('tipo_verificacion')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -159,14 +157,43 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <a href="{{ route('asistencia-docente.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Volver
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Actualizar
-                            </button>
+                            <div>
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-save"></i> Actualizar
+                                </button>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
                         </div>
+                    </form>
+
+                    <!-- Modal de Confirmación de Eliminación -->
+                    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Eliminación</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ¿Estás seguro de que deseas eliminar esta asistencia? Esta acción no se puede deshacer.
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <form action="{{ route('asistencia-docente.destroy', $asistencia->id) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </form>
                 </div>
             </div>
@@ -181,6 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 INICIANDO AUTO-SELECCIÓN DE DOCENTE (VERSIÓN MEJORADA)...');
     
     const selectDocente = document.getElementById('docente_id');
+    const nroDocumentoHidden = document.getElementById('nro_documento_hidden');
+    const docenteNroDocumentoDisplay = document.getElementById('docente_nro_documento_display');
     const usuarioId = {{ $asistencia->usuario_id ?? 'null' }};
     const documento = '{{ $asistencia->nro_documento }}';
     
@@ -193,6 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verificar si el usuario_id es válido
     const usuarioIdValido = usuarioId && usuarioId !== null && usuarioId !== 'null' && usuarioId !== '';
     console.log('   ✅ Usuario ID válido:', usuarioIdValido);
+
+    // Function to update hidden nro_documento and display
+    function updateNroDocumento() {
+        const selectedOption = selectDocente.options[selectDocente.selectedIndex];
+        const selectedDocumento = selectedOption ? selectedOption.getAttribute('data-documento') : '';
+        nroDocumentoHidden.value = selectedDocumento;
+        docenteNroDocumentoDisplay.textContent = `Documento: ${selectedDocumento}`;
+    }
     
     // Función principal de auto-selección mejorada
     function autoSeleccionarDocente() {
@@ -213,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('✅ ENCONTRADO por usuario_id!');
                 console.log('   📝 Docente:', optionById.textContent.trim());
                 marcarExito(selectDocente, '#d4edda', '#28a745', 'Usuario ID');
+                updateNroDocumento(); // Update nro_documento after selection
                 return { encontrado: true, metodo: metodoExitoso };
             } else {
                 console.log('❌ No encontrado por usuario_id');
@@ -245,6 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Disparar evento change
                     const changeEvent = new Event('change', { bubbles: true });
                     selectDocente.dispatchEvent(changeEvent);
+                    updateNroDocumento(); // Update nro_documento after selection
                     
                     return { encontrado: true, metodo: metodoExitoso };
                 }
@@ -402,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('💡 ACCIONES RECOMENDADAS:');
                 console.log('   1. Verificar que el docente existe en la base de datos');
                 console.log('   2. Verificar que tiene rol "profesor"');
-                console.log('   3. Verificar la consulta del controlador incluye apellido_materno');
+                console.log('   3. Verificar la consulta que trae los docentes al controlador');
                 console.log('   4. Seleccionar manualmente el docente correcto');
             }
         }, 200);
@@ -427,6 +466,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Initial update of nro_documento_hidden and display
+    updateNroDocumento();
+
     // Event listener para limpiar estilos cuando usuario cambie manualmente
     selectDocente.addEventListener('change', function() {
         this.style.backgroundColor = '';
@@ -445,6 +487,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remover alertas
         const existingAlerts = document.querySelectorAll('.auto-select-alert');
         existingAlerts.forEach(alert => alert.remove());
+
+        updateNroDocumento(); // Update nro_documento when docente changes manually
     });
     
     console.log('🏁 Script de auto-selección inicializado completamente');

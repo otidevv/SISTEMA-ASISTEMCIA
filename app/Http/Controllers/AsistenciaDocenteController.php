@@ -828,21 +828,51 @@ class AsistenciaDocenteController extends Controller
     {
         $asistencia = RegistroAsistencia::findOrFail($id);
 
+        // Manual casting for 'estado' and 'tipo_verificacion' before validation
+        if ($request->has('estado')) {
+            if ($request->estado === 'entrada') {
+                $request->merge(['estado' => 1]);
+            } elseif ($request->estado === 'salida') {
+                $request->merge(['estado' => 0]);
+            }
+        }
+
+        if ($request->has('tipo_verificacion')) {
+            $tipoVerificacionMap = [
+                'biometrico' => 0,
+                'tarjeta' => 1,
+                'facial' => 2,
+                'codigo' => 3,
+                'manual' => 4
+            ];
+            $request->merge(['tipo_verificacion' => $tipoVerificacionMap[$request->tipo_verificacion] ?? $request->tipo_verificacion]);
+        }
+
+        // Si nro_documento no viene en la request, intentar obtenerlo del docente_id
+        if (!$request->has('nro_documento') || empty($request->nro_documento)) {
+            $docente = User::find($request->docente_id);
+            if ($docente) {
+                $request->merge(['nro_documento' => $docente->numero_documento]);
+            }
+        }
+
         $request->validate([
+            'docente_id' => 'required|exists:users,id',
             'nro_documento' => 'required|string|max:20',
-            'fecha_registro' => 'required|date',
-            'tipo_verificacion' => 'required|integer',
-            'estado' => 'required|boolean',
+            'fecha_hora' => 'required|date',
+            'tipo_verificacion' => 'required|numeric',
+            'estado' => 'required|in:0,1',
         ]);
 
         $asistencia->update([
+            'usuario_id' => $request->docente_id, // Update usuario_id
             'nro_documento' => $request->nro_documento,
-            'fecha_registro' => $request->fecha_registro,
+            'fecha_registro' => $request->fecha_hora, // Mapear fecha_hora del request a fecha_registro del modelo
             'tipo_verificacion' => $request->tipo_verificacion,
             'estado' => $request->estado,
             'codigo_trabajo' => $request->codigo_trabajo,
             'terminal_id' => $request->terminal_id,
-            'sn_dispositivo' => $request->sn_dispositivo,
+            'sn_dispositivo' => $request->terminal_id, // Usar terminal_id como sn_dispositivo si no hay otro
         ]);
 
         return redirect()->route('asistencia-docente.index')->with('success', 'Registro de asistencia docente actualizado exitosamente.');
