@@ -385,6 +385,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/inscripciones/{inscripcion}/edit', [App\Http\Controllers\InscripcionController::class, 'edit'])->name('inscripciones.edit')->middleware('can:inscripciones.edit');
         Route::put('/inscripciones/{inscripcion}', [App\Http\Controllers\InscripcionController::class, 'update'])->name('inscripciones.update')->middleware('can:inscripciones.edit');
         Route::delete('/inscripciones/{inscripcion}', [App\Http\Controllers\InscripcionController::class, 'destroy'])->name('inscripciones.destroy')->middleware('can:inscripciones.delete');
+        Route::get('/inscripciones/reportes-inscripciones', [App\Http\Controllers\InscripcionController::class, 'reportesInscripciones'])->name('inscripciones.reportes.inscripciones')->middleware('can:inscripciones.reports');
         Route::get('/inscripciones/reportes', [App\Http\Controllers\InscripcionController::class, 'reportes'])->name('inscripciones.reportes')->middleware('can:inscripciones.reports');
         Route::post('/inscripciones/exportar', [App\Http\Controllers\InscripcionController::class, 'exportar'])->name('inscripciones.exportar')->middleware('can:inscripciones.export');
     });
@@ -461,6 +462,20 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{materialAcademico}', [MaterialAcademicoController::class, 'destroy'])
                 ->name('destroy')
                 ->middleware('can:material-academico.eliminar');
+        });
+        // Reportes Financieros
+        Route::prefix('reportes/financieros')->name('reportes.financieros.')->group(function () {
+            Route::get('/', [App\Http\Controllers\ReportesFinancierosController::class, 'index'])
+                ->name('index')
+                ->middleware('can:reportes.financieros.ver');
+    
+            Route::get('/exportar', [App\Http\Controllers\ReportesFinancierosController::class, 'exportarExcel'])
+                ->name('exportar')
+                ->middleware('can:reportes.financieros.exportar');
+    
+            Route::get('/voucher/{postulacionId}', [App\Http\Controllers\ReportesFinancierosController::class, 'descargarVoucher'])
+                ->name('descargar-voucher')
+                ->middleware('can:reportes.financieros.ver');
         });
 
 });

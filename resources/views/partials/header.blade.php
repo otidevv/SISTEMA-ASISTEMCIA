@@ -753,6 +753,18 @@
                             </div>
                         </li>
                     @endif
+                    <li class="menu-title mt-2">Modulos Reportes Contables</li>
+                    {{-- ============================== --}}
+                    {{-- Módulo: Reportes Financieros --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('reportes.financieros.ver'))
+                        <li>
+                            <a href="{{ route('reportes.financieros.index') }}">
+                                <i data-feather="dollar-sign"></i>
+                                <span> Reportes Financieros </span>
+                            </a>
+                        </li>
+                    @endif
 
                     <li class="menu-title mt-2">Modulos Docentes Cepre</li>
                     {{-- ============================== --}}
