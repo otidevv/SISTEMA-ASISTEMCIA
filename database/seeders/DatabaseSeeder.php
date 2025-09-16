@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\ModuloAcademico::class,
             \Database\Seeders\AttendanceViewPermissionSeeder::class,
             \Database\Seeders\MaterialesAcademicosPermissionsSeeder::class,
+            \Database\Seeders\ConstanciasPermissionsSeeder::class,
         ]);
     }
 
@@ -243,6 +244,8 @@ class DatabaseSeeder extends Seeder
             'attendance.export',
             'attendance.reports',
             'parentescos.view',
+            // Permisos de constancias
+            'constancias.view',
             // Permisos de horarios docentes
             'horarios-docentes.view',
             'horarios-docentes.create',
@@ -285,7 +288,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Asignar permisos al rol de estudiante
-        $permisosEstudiante = ['attendance.view'];
+        $permisosEstudiante = ['attendance.view', 'constancias.view'];
 
         $permisos = DB::table('permissions')
             ->whereIn('codigo', $permisosEstudiante)

@@ -350,6 +350,29 @@ Route::middleware('auth')->group(function () {
             ->name('postulacion.constancia.estado');
     });
 
+    // Rutas para constancias de estudios (accesibles para estudiantes inscritos)
+    Route::prefix('constancias/estudios')->group(function () {
+        Route::get('/generar/{inscripcion}', [App\Http\Controllers\ConstanciaEstudiosController::class, 'generarConstancia'])
+            ->name('constancias.estudios.generar')
+            ->middleware('can:constancias.generar-estudios');
+        Route::get('/ver/{constancia}', [App\Http\Controllers\ConstanciaEstudiosController::class, 'verConstancia'])
+            ->name('constancias.estudios.ver')
+            ->middleware('can:constancias.generar-estudios');
+        Route::post('/subir-firmada/{inscripcion}', [App\Http\Controllers\ConstanciaEstudiosController::class, 'subirConstanciaFirmada'])
+            ->name('constancias.estudios.subir-firmada')
+            ->middleware('can:constancias.generar-estudios');
+    });
+
+    // Rutas para constancias de vacante (accesibles para estudiantes inscritos)
+    Route::prefix('constancias/vacante')->group(function () {
+        Route::get('/generar/{inscripcion}', [App\Http\Controllers\ConstanciaVacanteController::class, 'generarConstancia'])
+            ->name('constancias.vacante.generar')
+            ->middleware('can:constancias.generar-vacante');
+        Route::post('/subir-firmada/{inscripcion}', [App\Http\Controllers\ConstanciaVacanteController::class, 'subirConstanciaFirmada'])
+            ->name('constancias.vacante.subir-firmada')
+            ->middleware('can:constancias.generar-vacante');
+    });
+
     Route::middleware('can:carreras.view')->group(function () {
         Route::get('/carreras', [App\Http\Controllers\CarreraController::class, 'index'])->name('carreras.index');
         Route::get('/carreras/create', [App\Http\Controllers\CarreraController::class, 'create'])->name('carreras.create')->middleware('can:carreras.create');
@@ -468,15 +491,17 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [App\Http\Controllers\ReportesFinancierosController::class, 'index'])
                 ->name('index')
                 ->middleware('can:reportes.financieros.ver');
-    
+
             Route::get('/exportar', [App\Http\Controllers\ReportesFinancierosController::class, 'exportarExcel'])
                 ->name('exportar')
                 ->middleware('can:reportes.financieros.exportar');
-    
+
             Route::get('/voucher/{postulacionId}', [App\Http\Controllers\ReportesFinancierosController::class, 'descargarVoucher'])
                 ->name('descargar-voucher')
                 ->middleware('can:reportes.financieros.ver');
         });
+
+
 
 });
 
@@ -692,3 +717,28 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
 Route::resource('horarios-docentes', HorarioDocenteController::class)->middleware('auth');
 
 Route::get('api/consulta/{dni}', [App\Http\Controllers\ApiProxyController::class, 'consultaDNI']);
+
+// Rutas para gestión de constancias
+Route::middleware('auth')->group(function () {
+    Route::get('/constancias', [App\Http\Controllers\ConstanciaController::class, 'index'])
+        ->name('constancias.index');
+    Route::get('/constancias/estadisticas', [App\Http\Controllers\ConstanciaController::class, 'estadisticas'])
+        ->name('constancias.estadisticas');
+    Route::get('/constancias/estudiante/{estudiante}', [App\Http\Controllers\ConstanciaController::class, 'getByEstudiante'])
+        ->name('constancias.by-estudiante');
+    Route::delete('/constancias/{constancia}', [App\Http\Controllers\ConstanciaController::class, 'eliminar'])
+        ->name('constancias.eliminar')
+        ->middleware('can:constancias.eliminar');
+});
+
+// Rutas públicas para validación de constancias
+Route::get('/constancias/validar/{codigo}', [App\Http\Controllers\ConstanciaEstudiosController::class, 'validarConstancia'])
+    ->name('constancias.validar');
+
+// API para obtener inscripciones disponibles para constancias
+Route::middleware('auth')->group(function () {
+    Route::get('/json/inscripciones', [App\Http\Controllers\ConstanciaController::class, 'getInscripcionesDisponibles'])
+        ->name('json.inscripciones');
+    Route::get('/json/ciclos-disponibles', [App\Http\Controllers\ConstanciaController::class, 'getCiclosDisponibles'])
+        ->name('json.ciclos-disponibles');
+});

@@ -729,6 +729,29 @@
                         </li>
                     @endif
 
+                    <!-- Módulo Constancias -->
+                    @if (Auth::user()->hasPermission('constancias.generar-estudios') ||
+                            Auth::user()->hasPermission('constancias.generar-vacante'))
+                        <li>
+                            <a href="#sidebarConstancias" data-bs-toggle="collapse">
+                                <i data-feather="file-text"></i>
+                                <span> Constancias </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarConstancias">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('constancias.index') }}">Ver Mis Constancias</a></li>
+                                    @if (Auth::user()->hasPermission('constancias.generar-estudios'))
+                                        <li><a href="{{ route('constancias.estudios.generar', ['inscripcion' => 1]) }}">Constancia de Estudios</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('constancias.generar-vacante'))
+                                        <li><a href="{{ route('constancias.vacante.generar', ['inscripcion' => 1]) }}">Constancia de Vacante</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
                     <!-- ✅ MÓDULO ANUNCIOS - CÓDIGOS CORRECTOS CON GUIONES BAJOS -->
                     @if (Auth::user()->hasPermission('announcements_view') ||
                             Auth::user()->hasPermission('announcements_create') ||
