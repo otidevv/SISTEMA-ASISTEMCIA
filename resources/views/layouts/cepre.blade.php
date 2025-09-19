@@ -15,6 +15,9 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('assets_cepre/img/favicon.svg') }}">
 
+    <!-- Tailwind (con Vite) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
     <!-- CSS -->
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/font-awesome.css') }}">
@@ -31,7 +34,7 @@
 </head>
 
 <body>
-    <!-- Preloader opcional (si deseas mostrarlo en todas las páginas) -->
+    <!-- Preloader opcional -->
     @yield('preloader')
 
     <!-- Contenido principal -->
@@ -54,47 +57,46 @@
     <script src="{{ asset('assets_cepre/js/main.js') }}"></script>
 
     @stack('js')
+
     <!-- Script para el apartado de noticias facebook -->
     <script>
-          const carousel = document.getElementById("facebookCarousel");
-          const indicators = document.querySelectorAll(".indicator-dot");
-          let current = 0;
-          const cards = carousel.children.length;
-        
-          function updateIndicator() {
+        const carousel = document.getElementById("facebookCarousel");
+        const indicators = document.querySelectorAll(".indicator-dot");
+        let current = 0;
+        const cards = carousel.children.length;
+
+        function updateIndicator() {
             indicators.forEach((dot, i) => {
-              dot.classList.toggle("bg-secondary", i === current);
-              dot.classList.toggle("bg-light", i !== current);
+                dot.classList.toggle("bg-secondary", i === current);
+                dot.classList.toggle("bg-light", i !== current);
             });
-          }
-        
-          function scrollToCard(index) {
+        }
+
+        function scrollToCard(index) {
             const cardWidth = carousel.children[0].offsetWidth + 16; // ancho + gap
             carousel.style.transform = `translateX(-${index * cardWidth}px)`;
             current = index;
             updateIndicator();
-          }
-        
-          function nextSlide() {
+        }
+
+        function nextSlide() {
             current = (current + 1) % cards;
             scrollToCard(current);
-          }
-        
-          function prevSlide() {
+        }
+
+        function prevSlide() {
             current = (current - 1 + cards) % cards;
             scrollToCard(current);
-          }
-        
-          setInterval(() => nextSlide(), 5000);
-        
-          window.addEventListener("resize", () => scrollToCard(current));
-        </script>
+        }
+
+        setInterval(() => nextSlide(), 5000);
+
+        window.addEventListener("resize", () => scrollToCard(current));
+    </script>
     <div id="fb-root"></div>
     <script async defer crossorigin="anonymous"
-      src="https://connect.facebook.net/es_ES/sdk.js#xfbml=1&version=v18.0"
-      nonce="CEPREUNAMAD">
+        src="https://connect.facebook.net/es_ES/sdk.js#xfbml=1&version=v18.0"
+        nonce="CEPREUNAMAD">
     </script>
-
 </body>
-
 </html>

@@ -737,7 +737,7 @@ Route::get('/constancias/validar/{codigo}', [App\Http\Controllers\ConstanciaEstu
 
 // API para obtener inscripciones disponibles para constancias
 Route::middleware('auth')->group(function () {
-    Route::get('/json/inscripciones', [App\Http\Controllers\ConstanciaController::class, 'getInscripcionesDisponibles'])
+        Route::get('/json/constancias/inscripciones-disponibles', [App\Http\Controllers\ConstanciaController::class, 'getInscripcionesDisponibles'])
         ->name('json.inscripciones');
     Route::get('/json/ciclos-disponibles', [App\Http\Controllers\ConstanciaController::class, 'getCiclosDisponibles'])
         ->name('json.ciclos-disponibles');

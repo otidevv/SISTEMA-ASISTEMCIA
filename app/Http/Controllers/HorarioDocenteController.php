@@ -80,9 +80,9 @@ class HorarioDocenteController extends Controller
         // Validación de conflictos de horarios
         $this->validateScheduleConflicts($request);
 
-        HorarioDocente::create($validatedData);
+        $horario = HorarioDocente::create($validatedData);
 
-        return redirect()->route('horarios-docentes.index')
+        return redirect()->route('horarios-docentes.index', ['ciclo_id' => $horario->ciclo_id])
             ->with('success', 'Horario asignado correctamente.');
     }
 
@@ -127,7 +127,7 @@ class HorarioDocenteController extends Controller
         $horario = HorarioDocente::findOrFail($id);
         $horario->update($validatedData);
 
-        return redirect()->route('horarios-docentes.index')
+        return redirect()->route('horarios-docentes.index', ['ciclo_id' => $horario->ciclo_id])
             ->with('success', 'Horario actualizado correctamente.');
     }
 
@@ -243,48 +243,66 @@ class HorarioDocenteController extends Controller
     {
         $horaInicio = Carbon::createFromFormat('H:i', $request->hora_inicio);
         $horaFin = Carbon::createFromFormat('H:i', $request->hora_fin);
-        
+
         // 1. Verificar conflicto de DOCENTE en el mismo día/hora/turno y ciclo
-        $conflictoDocente = HorarioDocente::where('docente_id', $request->docente_id)
+        $conflictoDocente = HorarioDocente::with('aula', 'curso')
+            ->where('docente_id', $request->docente_id)
             ->where('ciclo_id', $request->ciclo_id)
             ->where('dia_semana', $request->dia_semana)
             ->where('turno', $request->turno)
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio, $horaFin) {
-                    $q->where('hora_inicio', '<', $horaFin->format('H:i'))
-                      ->where('hora_fin', '>', $horaInicio->format('H:i'));
+                    $q->whereTime('hora_inicio', '<', $horaFin)
+                      ->whereTime('hora_fin', '>', $horaInicio);
                 });
             })
             ->when($excludeId, function ($query, $excludeId) {
                 return $query->where('id', '!=', $excludeId);
             })
-            ->exists();
+            ->first();
 
         if ($conflictoDocente) {
+            $message = sprintf(
+                'Este docente ya tiene un horario asignado en el Aula %s con el curso %s de %s a %s (ID de horario: %d).',
+                $conflictoDocente->aula->nombre ?? 'N/A',
+                $conflictoDocente->curso->nombre ?? 'N/A',
+                Carbon::parse($conflictoDocente->hora_inicio)->format('H:i'),
+                Carbon::parse($conflictoDocente->hora_fin)->format('H:i'),
+                $conflictoDocente->id
+            );
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'docente_id' => 'Este docente ya tiene un horario asignado en este día, turno y horario dentro del mismo ciclo.',
+                'docente_id' => $message,
             ]);
         }
 
         // 2. Verificar conflicto de AULA en el mismo día/hora/turno y ciclo
-        $conflictoAula = HorarioDocente::where('aula_id', $request->aula_id)
+        $conflictoAula = HorarioDocente::with('docente', 'curso')
+            ->where('aula_id', $request->aula_id)
             ->where('ciclo_id', $request->ciclo_id)
             ->where('dia_semana', $request->dia_semana)
             ->where('turno', $request->turno)
             ->where(function ($query) use ($horaInicio, $horaFin) {
                 $query->where(function ($q) use ($horaInicio, $horaFin) {
-                    $q->where('hora_inicio', '<', $horaFin->format('H:i'))
-                      ->where('hora_fin', '>', $horaInicio->format('H:i'));
+                    $q->whereTime('hora_inicio', '<', $horaFin)
+                      ->whereTime('hora_fin', '>', $horaInicio);
                 });
             })
             ->when($excludeId, function ($query, $excludeId) {
                 return $query->where('id', '!=', $excludeId);
             })
-            ->exists();
+            ->first();
 
         if ($conflictoAula) {
+            $message = sprintf(
+                'El aula ya está ocupada por el docente %s con el curso %s en el horario de %s a %s (ID de horario: %d).',
+                $conflictoAula->docente->name ?? 'N/A',
+                $conflictoAula->curso->nombre ?? 'N/A',
+                Carbon::parse($conflictoAula->hora_inicio)->format('H:i'),
+                Carbon::parse($conflictoAula->hora_fin)->format('H:i'),
+                $conflictoAula->id
+            );
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'aula_id' => 'Esta aula ya está ocupada en este día, turno y horario dentro del mismo ciclo.',
+                'aula_id' => $message,
             ]);
         }
 

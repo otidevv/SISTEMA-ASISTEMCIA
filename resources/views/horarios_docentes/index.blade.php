@@ -205,24 +205,24 @@
                             <tbody id="horariosTableBody">
                                 @forelse($horarios ?? [] as $horario)
                                 <tr class="horario-row-item"
-                                    data-docente="{{ $horario->docente->nombre_completo ?? '' }}"
-                                    data-curso="{{ $horario->curso->nombre ?? '' }}"
-                                    data-aula="{{ $horario->aula->nombre ?? '' }}"
+                                    data-docente="{{ optional($horario->docente)->nombre_completo ?? '' }}"
+                                    data-curso="{{ optional($horario->curso)->nombre ?? '' }}"
+                                    data-aula="{{ optional($horario->aula)->nombre ?? '' }}"
                                     data-tipo="{{ strtolower($horario->tipo ?? '') }}"
                                     data-dia="{{ strtolower($horario->dia_semana ?? '') }}">
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-2" data-bg-color>
-                                                <span class="text-white fw-bold">{{ substr($horario->docente->nombre_completo ?? 'N', 0, 1) }}</span>
+                                                <span class="text-white fw-bold">{{ substr(optional($horario->docente)->nombre_completo ?? 'N', 0, 1) }}</span>
                                             </div>
                                             <div>
-                                                <h6 class="mb-0 fs-14">{{ $horario->docente->nombre_completo ?? 'Sin asignar' }}</h6>
-                                                <small class="text-muted">{{ $horario->docente->especialidad ?? '' }}</small>
+                                                <h6 class="mb-0 fs-14">{{ optional($horario->docente)->nombre_completo ?? 'Sin asignar' }}</h6>
+                                                <small class="text-muted">{{ optional($horario->docente)->especialidad ?? '' }}</small>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
-                                        <h6 class="mb-0 fs-14">{{ $horario->curso->nombre ?? 'Sin curso' }}</h6>
+                                        <h6 class="mb-0 fs-14">{{ optional($horario->curso)->nombre ?? 'Sin curso' }}</h6>
                                         <span class="badge bg-primary-lighten text-primary">{{ ucfirst($horario->tipo ?? 'N/A') }}</span>
                                     </td>
                                     <td>
@@ -230,7 +230,7 @@
                                         <small class="text-muted">{{ \Carbon\Carbon::parse($horario->hora_inicio)->format('h:i A') }} - {{ \Carbon\Carbon::parse($horario->hora_fin)->format('h:i A') }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge bg-info-lighten text-info fs-12"><i class="mdi mdi-door-open me-1"></i>{{ $horario->aula->nombre ?? 'N/A' }}</span>
+                                        <span class="badge bg-info-lighten text-info fs-12"><i class="mdi mdi-door-open me-1"></i>{{ optional($horario->aula)->nombre ?? 'N/A' }}</span>
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('horarios-docentes.edit', $horario->id) }}" class="btn btn-warning btn-sm" title="Editar"><i class="mdi mdi-pencil"></i></a>
@@ -251,6 +251,11 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    <div class="d-flex justify-content-center mt-3">
+                        {{ $horarios->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>
