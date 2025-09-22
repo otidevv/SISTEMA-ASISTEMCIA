@@ -231,9 +231,25 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         // Determinar estado basado en registros biométricos
         if ($entradaBiometrica && $salidaBiometrica) {
             $estadoTexto = 'COMPLETADA';
-            // Calcular horas reales
-            $minutosDictados = Carbon::parse($salidaBiometrica->fecha_registro)->diffInMinutes(Carbon::parse($entradaBiometrica->fecha_registro));
+            
+            // Lógica mejorada para el cálculo de horas dictadas
+            $horaEntradaMarcada = Carbon::parse($entradaBiometrica->fecha_registro);
+            $horaSalidaMarcada = Carbon::parse($salidaBiometrica->fecha_registro);
+
+            // La hora de inicio efectiva es la más tardía entre la programada y la marcada.
+            $inicioEfectivo = $horaEntradaMarcada->greaterThan($horarioInicioHoy) ? $horaEntradaMarcada : $horarioInicioHoy;
+
+            // La hora de fin efectiva es la más temprana entre la programada y la marcada.
+            $finEfectivo = $horaSalidaMarcada->lessThan($horarioFinHoy) ? $horaSalidaMarcada : $horarioFinHoy;
+
+            // Calcular la diferencia en minutos, asegurándose de que no sea negativa.
+            if ($finEfectivo->greaterThan($inicioEfectivo)) {
+                $minutosDictados = $finEfectivo->diffInMinutes($inicioEfectivo);
+            } else {
+                $minutosDictados = 0;
+            }
             $horasDictadas = round($minutosDictados / 60, 2);
+
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'INCOMPLETA';

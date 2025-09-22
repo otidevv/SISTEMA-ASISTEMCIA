@@ -910,7 +910,7 @@ class AsistenciaDocenteController extends Controller
                 $horaRegistro = Carbon::parse($r->fecha_registro); 
                 return $horaRegistro->between(
                     $horarioInicioHoy->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS),
-                    $horarioInicioHoy->copy()->addMinutes(30)
+                    $horarioInicioHoy->copy()->addMinutes(120)
                 );
             })
             ->sortBy('fecha_registro')
@@ -947,8 +947,41 @@ class AsistenciaDocenteController extends Controller
         // Determinar estado
         if ($entradaBiometrica && $salidaBiometrica) {
             $estadoTexto = 'COMPLETADA';
-            $minutosDictados = Carbon::parse($salidaBiometrica->fecha_registro)->diffInMinutes(Carbon::parse($entradaBiometrica->fecha_registro));
+            $entradaCarbon = Carbon::parse($entradaBiometrica->fecha_registro);
+            $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
+
+            // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
+            $duracionBruta = $entradaCarbon->diffInMinutes($salidaCarbon);
+
+            // Receso de Mañana
+            $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
+            $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
+            $minutosRecesoManana = 0;
+            if ($entradaCarbon < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
+                $superposicionInicio = $entradaCarbon->max($recesoMananaInicio);
+                $superposicionFin = $salidaCarbon->min($recesoMananaFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
+            }
+
+            // Receso de Tarde
+            $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
+            $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
+            $minutosRecesoTarde = 0;
+            if ($entradaCarbon < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
+                $superposicionInicio = $entradaCarbon->max($recesoTardeInicio);
+                $superposicionFin = $salidaCarbon->min($recesoTardeFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
+            }
+
+            $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
+            // --- FIN DE LA LÓGICA DE RECESO ---
+
             $horasDictadas = round($minutosDictados / 60, 2);
+
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'INCOMPLETA';

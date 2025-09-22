@@ -155,8 +155,6 @@ class DashboardController extends Controller
             
             $data['constanciaSubida'] = $constanciaSubida;
 
-            $data['constanciaSubida'] = $constanciaSubida;
-
             // Información del estudiante
             $data['esEstudiante'] = true;
         }
@@ -166,16 +164,13 @@ class DashboardController extends Controller
             try {
                 $data['esProfesor'] = true;
                 
-                // Obtener la fecha seleccionada del request, o usar la fecha actual por defecto
                 $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
                 $data['fechaSeleccionada'] = $fechaSeleccionada;
                 
                 $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
                 
-                // NUEVO: Obtener ciclo activo para calcular tarifa
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
                 
-                // Obtener horarios del profesor para la fecha seleccionada
                 $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
                     ->where('dia_semana', $diaSemanaSeleccionada)
                     ->when($cicloActivo, function ($query, $ciclo) {
@@ -185,116 +180,117 @@ class DashboardController extends Controller
                     ->orderBy('hora_inicio')
                     ->get();
                 
-                // Obtener registros del biométrico para la fecha seleccionada
                 $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
                     ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
                     ->orderBy('fecha_registro')
                     ->get();
 
-                $horasDelDia = 0;
+                $totalMinutosNetosHoy = 0;
                 $sesionesPendientes = 0;
 
-                // NUEVO: Obtener tarifa por hora desde la base de datos
                 $tarifaPorHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
                 $data['tarifa_por_hora'] = $tarifaPorHora;
 
-                $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$horasDelDia, $user, &$sesionesPendientes, $fechaSeleccionada) {
+                $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$totalMinutosNetosHoy, $user, &$sesionesPendientes, $fechaSeleccionada) {
                     $horaInicio = Carbon::parse($horario->hora_inicio);
                     $horaFin = Carbon::parse($horario->hora_fin);
 
-                    // Para el cálculo de estados en la UI
                     $momentoActualComparacion = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay();
-
-                    // Combinar la fecha seleccionada con las horas del horario
                     $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute, $horaInicio->second);
                     $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
 
-                    // Buscar entrada válida (15 min antes hasta 30 min después del inicio)
                     $entrada = $registrosDelDia
-                    ->filter(function($r) use ($horarioInicioHoy) {
-                        $horaRegistro = Carbon::parse($r->fecha_registro);
-                        return $horaRegistro->between(
-                            $horarioInicioHoy->copy()->subMinutes(15),
-                            $horarioInicioHoy->copy()->addMinutes(30)
-                        );
-                    })
-                    ->sortBy('fecha_registro')
-                    ->first();
+                        ->filter(function($r) use ($horarioInicioHoy) {
+                            $horaRegistro = Carbon::parse($r->fecha_registro);
+                            return $horaRegistro->between(
+                                $horarioInicioHoy->copy()->subMinutes(15),
+                                $horarioInicioHoy->copy()->addMinutes(120)
+                            );
+                        })
+                        ->sortBy('fecha_registro')
+                        ->first();
 
-                    // Buscar salida válida (15 min antes hasta 60 min después del final)
                     $salida = $registrosDelDia
-                    ->filter(function($r) use ($horarioFinHoy) {
-                        $horaRegistro = Carbon::parse($r->fecha_registro);
-                        return $horaRegistro->between(
-                            $horarioFinHoy->copy()->subMinutes(15),
-                            $horarioFinHoy->copy()->addMinutes(60)
-                        );
-                    })
-                    ->sortByDesc('fecha_registro')
-                    ->first();
-                    
-                    // Calcular horas trabajadas para la fecha seleccionada
-                    if ($entrada && $salida) {
-                        $hEntrada = Carbon::parse($entrada->fecha_registro);
-                        $hSalida = Carbon::parse($salida->fecha_registro);
-                        if ($hSalida->greaterThan($hEntrada)) {
-                            $horasDelDia += $hSalida->diffInMinutes($hEntrada) / 60;
-                        }
-                    }
+                        ->filter(function($r) use ($horarioFinHoy) {
+                            $horaRegistro = Carbon::parse($r->fecha_registro);
+                            return $horaRegistro->between(
+                                $horarioFinHoy->copy()->subMinutes(15),
+                                $horarioFinHoy->copy()->addMinutes(60)
+                            );
+                        })
+                        ->sortByDesc('fecha_registro')
+                        ->first();
 
-                    // Buscar asistencia docente (tema desarrollado) para la fecha seleccionada
                     $asistencia = AsistenciaDocente::where('docente_id', $user->id)
                         ->where('horario_id', $horario->id)
                         ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
                         ->first();
 
-                    // Determinar estados para la UI
                     $dentroDelHorario = $momentoActualComparacion->between($horarioInicioHoy, $horarioFinHoy);
                     $claseTerminada = $momentoActualComparacion->greaterThan($horarioFinHoy);
                     $tieneRegistros = $entrada && $salida;
-                    
-                    // Lógica para determinar si se puede registrar tema
-                    $puedeRegistrarTema = false;
-                    if ($asistencia) {
-                        // Ya tiene tema registrado, puede editar
-                        $puedeRegistrarTema = true;
-                    } elseif ($claseTerminada && $tieneRegistros) {
-                        // Clase terminada y tiene ambos registros
-                        $puedeRegistrarTema = true;
-                    } elseif ($fechaSeleccionada->isToday() && $dentroDelHorario && $entrada) {
-                        // Está dentro del horario HOY y tiene entrada
-                        $puedeRegistrarTema = true;
-                    }
 
-                    // Contar sesiones pendientes
+                    $puedeRegistrarTema = $asistencia || ($claseTerminada && $tieneRegistros) || ($fechaSeleccionada->isToday() && $dentroDelHorario && $entrada);
+
                     if ($claseTerminada && !$asistencia && $tieneRegistros) {
                         $sesionesPendientes++;
                     }
 
-                    // NUEVO: Información avanzada de la sesión
                     $tiempoInfo = $this->calcularInfoTiempo($horarioInicioHoy, $horarioFinHoy, $momentoActualComparacion, $fechaSeleccionada);
                     
-                    // Progreso de clase si está en curso
                     $progresoClase = 0;
                     if ($dentroDelHorario && $fechaSeleccionada->isToday()) {
                         $totalMinutos = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
                         $minutosTranscurridos = $horarioInicioHoy->diffInMinutes($momentoActualComparacion);
-                        $progresoClase = round(($minutosTranscurridos / $totalMinutos) * 100);
+                        $progresoClase = $totalMinutos > 0 ? round(($minutosTranscurridos / $totalMinutos) * 100) : 0;
                     }
                     
-                    // Duración y eficiencia
                     $duracionProgramada = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
-                    $duracionReal = null;
-                    $eficiencia = null;
+                    $duracionReal = 0;
                     
-                    if ($entrada && $salida) {
+                    if ($tieneRegistros) {
                         $entradaCarbon = Carbon::parse($entrada->fecha_registro);
                         $salidaCarbon = Carbon::parse($salida->fecha_registro);
-                        $duracionReal = $entradaCarbon->diffInMinutes($salidaCarbon);
-                        $eficiencia = round(($duracionReal / $duracionProgramada) * 100);
+                        
+                        // El inicio efectivo es el más tardío entre la hora programada y la hora de entrada.
+                        $inicioEfectivo = $entradaCarbon->max($horarioInicioHoy);
+                        
+                        // El fin efectivo es el más temprano entre la hora programada y la hora de salida.
+                        $finEfectivo = $salidaCarbon->min($horarioFinHoy);
+
+                        if ($finEfectivo > $inicioEfectivo) {
+                            $duracionBruta = $inicioEfectivo->diffInMinutes($finEfectivo);
+
+                            // Descuento de recesos
+                            $recesoMananaInicio = $fechaSeleccionada->copy()->setTime(10, 0, 0);
+                            $recesoMananaFin = $fechaSeleccionada->copy()->setTime(10, 30, 0);
+                            $minutosRecesoManana = 0;
+                            if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                                $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
+                                $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                                if ($superposicionFin > $superposicionInicio) {
+                                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                                }
+                            }
+
+                            $recesoTardeInicio = $fechaSeleccionada->copy()->setTime(18, 0, 0);
+                            $recesoTardeFin = $fechaSeleccionada->copy()->setTime(18, 30, 0);
+                            $minutosRecesoTarde = 0;
+                            if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                                $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
+                                $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                                if ($superposicionFin > $superposicionInicio) {
+                                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                                }
+                            }
+
+                            $duracionReal = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
+                            $totalMinutosNetosHoy += $duracionReal;
+                        }
                     }
 
-                    // Calcular tardanza
+                    $eficiencia = $duracionProgramada > 0 && $duracionReal > 0 ? round(($duracionReal / $duracionProgramada) * 100) : 0;
+
                     $minutosTardanza = 0;
                     $dentroTolerancia = true;
                     if ($entrada) {
@@ -325,17 +321,17 @@ class DashboardController extends Controller
                     ];
                 });
 
-                // ASEGURAR QUE TODAS LAS VARIABLES SE ASIGNEN CORRECTAMENTE
-                $data['horasHoy'] = round($horasDelDia, 2);
-                $data['horariosDelDia'] = $horariosDelDiaConDetalles;
-                $data['sesionesHoy'] = $horariosDelDia->count(); // ←← ESTA ES LA VARIABLE QUE FALTABA
-                $data['sesionesPendientes'] = $sesionesPendientes;
+                $horas = floor($totalMinutosNetosHoy / 60);
+                $minutos = $totalMinutosNetosHoy % 60;
+                $data['horasHoy'] = "{$horas}h {$minutos}m";
 
-                // CORREGIDO: Calcular pago estimado del día mejorado con tarifa real
-                $pagoEstimadoHoy = $this->calcularPagoEstimadoMejorado($user->id, $fechaSeleccionada, $horariosDelDia, $tarifaPorHora);
-                $data['pagoEstimadoHoy'] = $pagoEstimadoHoy;
+                $totalHorasNetas = $totalMinutosNetosHoy / 60;
+                $data['pagoEstimadoHoy'] = round($totalHorasNetas * $tarifaPorHora, 2);
+
+                $data['horariosDelDia'] = $horariosDelDiaConDetalles;
+                $data['sesionesHoy'] = $horariosDelDia->count();
+                $data['sesionesPendientes'] = $sesionesPendientes;
                 
-                // Calcular horas reales vs programadas
                 $horasReales = 0;
                 $horasProgramadas = 0;
                 
@@ -349,16 +345,11 @@ class DashboardController extends Controller
                 $data['horasReales'] = round($horasReales, 1);
                 $data['horasProgramadas'] = round($horasProgramadas, 1);
                 
-                // Calcular métricas de rendimiento
                 $data['eficiencia'] = $this->calcularEficienciaDocente($user->id, $fechaSeleccionada, $cicloActivo);
                 $data['puntualidad'] = $this->calcularPuntualidadDocente($user->id, $cicloActivo);
                 
-                // Resumen semanal
-                $fechaInicioSemana = Carbon::now()->subDays(6)->startOfDay();
-                $fechaFinSemana = Carbon::now()->endOfDay();
-                
                 $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
-                    ->whereBetween('fecha_hora', [$fechaInicioSemana, $fechaFinSemana])
+                    ->whereBetween('fecha_hora', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
                     ->when($cicloActivo, function ($query, $ciclo) {
                         return $query->whereHas('horario', function ($q) use ($ciclo) {
                             $q->where('ciclo_id', $ciclo->id);
@@ -380,26 +371,21 @@ class DashboardController extends Controller
                     'tendencia' => $this->calcularTendenciaSemanal($user->id)
                 ];
                 
-                // CORREGIDO: Próxima clase - asegurar que solo sea del docente actual
                 $proximaClase = $this->obtenerProximaClaseCorregida($user->id, $cicloActivo);
                 $data['proximaClase'] = $proximaClase;
                 
-                // NUEVO: Sistema de notificaciones mejorado
                 $notificaciones = $this->generarNotificacionesDocente($user->id, $fechaSeleccionada, $sesionesPendientes, $proximaClase, $cicloActivo);
                 $data['notificaciones'] = $notificaciones;
                 
-                // Recordatorios (mantener compatibilidad)
                 $recordatorios = $this->generarRecordatorios($sesionesPendientes, $proximaClase, $fechaSeleccionada);
                 $data['recordatorios'] = $recordatorios;
 
             } catch (\Exception $e) {
-                // ←← NUEVO: Manejo de errores para evitar fallos silenciosos
                 \Log::error('Error en dashboard de profesor: ' . $e->getMessage());
                 
-                // Asignar valores por defecto si hay error
                 $data['esProfesor'] = true;
                 $data['fechaSeleccionada'] = Carbon::today();
-                $data['horasHoy'] = 0;
+                $data['horasHoy'] = "0h 0m";
                 $data['horariosDelDia'] = collect([]);
                 $data['sesionesHoy'] = 0;
                 $data['sesionesPendientes'] = 0;
@@ -419,7 +405,6 @@ class DashboardController extends Controller
                 $data['recordatorios'] = [];
                 $data['notificaciones'] = [];
                 
-                // Mostrar error al usuario
                 $data['error_dashboard'] = 'Hubo un problema al cargar la información. Por favor, intenta nuevamente.';
             }
         }
@@ -1070,9 +1055,41 @@ class DashboardController extends Controller
             
             $horasTrabajadas = 0;
             $montoTotal = 0;
+
+            // El inicio efectivo es el más tardío entre la hora programada y la hora de entrada.
+            $inicioEfectivo = $horaEntrada->max($horarioInicioClase);
             
-            if ($horaSalida->greaterThan($horaEntrada)) {
-                $horasTrabajadas = $horaSalida->diffInMinutes($horaEntrada) / 60;
+            // El fin efectivo es el más temprano entre la hora programada y la hora de salida.
+            $finEfectivo = $horaSalida->min($horarioFinClase);
+            
+            if ($finEfectivo->greaterThan($inicioEfectivo)) {
+                $minutosBrutos = $inicioEfectivo->diffInMinutes($finEfectivo);
+
+                // Descuento de recesos
+                $recesoMananaInicio = $fechaSeleccionada->copy()->setTime(10, 0, 0);
+                $recesoMananaFin = $fechaSeleccionada->copy()->setTime(10, 30, 0);
+                $minutosRecesoManana = 0;
+                if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                    $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
+                    $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                    if ($superposicionFin > $superposicionInicio) {
+                        $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                    }
+                }
+
+                $recesoTardeInicio = $fechaSeleccionada->copy()->setTime(18, 0, 0);
+                $recesoTardeFin = $fechaSeleccionada->copy()->setTime(18, 30, 0);
+                $minutosRecesoTarde = 0;
+                if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                    $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
+                    $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                    if ($superposicionFin > $superposicionInicio) {
+                        $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                    }
+                }
+
+                $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
+                $horasTrabajadas = $minutosNetos / 60;
                 
                 // CORREGIDO: Usar tarifa desde base de datos
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
@@ -1081,7 +1098,7 @@ class DashboardController extends Controller
             } else {
                  return response()->json([
                     'success' => false,
-                    'message' => 'Los registros biométricos son inválidos (hora de salida no es mayor que la de entrada).'
+                    'message' => 'No hay tiempo de clase efectivo. La hora de entrada/salida está fuera del horario de clase o es inválida.'
                 ], 400);
             }
 
