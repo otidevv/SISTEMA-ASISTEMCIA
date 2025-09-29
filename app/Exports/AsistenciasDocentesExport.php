@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Http\Controllers\Traits\ProcessesTeacherSessions;
 use App\Models\AsistenciaDocente;
 use App\Models\User; 
 use App\Models\HorarioDocente; 
@@ -27,13 +28,28 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 
 /**
- * Esta clase genera un INFORME DE AVANCE ACADÉMICO profesional
- * con todas las sesiones del ciclo completo ordenadas cronológicamente
+ * ═══════════════════════════════════════════════════════════════════════════
+ * EXPORTADOR PROFESIONAL DE ASISTENCIAS DOCENTES
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * Genera informes de avance académico con diseño institucional profesional
+ * incluyendo todas las sesiones del ciclo ordenadas cronológicamente
+ * 
+ * @author Sistema Académico UNAMAD
+ * @version 2.0 - Diseño Profesional Mejorado
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 class AsistenciasDocentesExport implements WithMultipleSheets 
 {
+    use ProcessesTeacherSessions;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROPIEDADES DE CONFIGURACIÓN
+    // ═══════════════════════════════════════════════════════════════════════
+    
     private $processedData; 
     private $selectedDocenteId;
     private $selectedMonth;
@@ -41,6 +57,28 @@ class AsistenciasDocentesExport implements WithMultipleSheets
     private $fechaInicio; 
     private $fechaFin;     
     private $selectedCicloAcademico; 
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PALETA DE COLORES INSTITUCIONAL
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    private const COLORS = [
+        'PRIMARY_BLUE'      => 'FF1B365D',    // Azul institucional principal
+        'SECONDARY_BLUE'    => 'FF2E5A87',    // Azul secundario
+        'ACCENT_GOLD'       => 'FFD4AF37',    // Dorado de acento
+        'LIGHT_BLUE'        => 'FFE8F0F8',    // Azul claro para alternos
+        'HEADER_BLUE'       => 'FF4A6FA5',    // Azul para encabezados de tabla
+        'WHITE'             => 'FFFFFFFF',    // Blanco puro
+        'LIGHT_GRAY'        => 'FFF5F7FA',    // Gris muy claro
+        'BORDER_GRAY'       => 'FFBDC3C7',    // Gris para bordes
+        'TEXT_DARK'         => 'FF2C3E50',    // Texto oscuro
+        'SUCCESS_GREEN'     => 'FF27AE60',    // Verde para totales
+        'WARNING_ORANGE'    => 'FFF39C12'     // Naranja para alertas
+    ];
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CONSTRUCTOR Y INICIALIZACIÓN
+    // ═══════════════════════════════════════════════════════════════════════
 
     public function __construct($selectedDocenteId = null, $selectedMonth = null, $selectedYear = null, $fechaInicio = null, $fechaFin = null, $selectedCicloAcademico = null)
     {
@@ -53,6 +91,10 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
         $this->processedData = $this->processAttendanceData();
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROCESAMIENTO DE DATOS (LÓGICA INTACTA)
+    // ═══════════════════════════════════════════════════════════════════════
 
     private function processAttendanceData()
     {
@@ -71,53 +113,37 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         $startDate = null;
         $endDate = null;
 
-        // PRIORIDAD MÁXIMA: Si hay ciclo académico seleccionado, usar SUS fechas
         if ($this->selectedCicloAcademico) {
             $ciclo = Ciclo::where('codigo', $this->selectedCicloAcademico)->first();
             if ($ciclo) {
                 $cicloStartDate = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
                 $cicloEndDate = Carbon::parse($ciclo->fecha_fin)->endOfDay();
                 
-                // Si NO hay filtros adicionales, usar TODO el ciclo académico
                 if (!$this->fechaInicio && !$this->fechaFin && !$this->selectedMonth && !$this->selectedYear) {
                     $startDate = $cicloStartDate;
                     $endDate = $cicloEndDate;
-                }
-                // Si hay fechas específicas, validar que estén dentro del ciclo
-                elseif ($this->fechaInicio && $this->fechaFin) {
+                } elseif ($this->fechaInicio && $this->fechaFin) {
                     $customStart = Carbon::parse($this->fechaInicio)->startOfDay();
                     $customEnd = Carbon::parse($this->fechaFin)->endOfDay();
-                    
                     $startDate = $customStart->max($cicloStartDate);
                     $endDate = $customEnd->min($cicloEndDate);
-                }
-                // Si hay mes/año específico, validar que esté dentro del ciclo
-                elseif ($this->selectedMonth && $this->selectedYear) {
+                } elseif ($this->selectedMonth && $this->selectedYear) {
                     $monthStart = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->startOfDay();
                     $monthEnd = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->endOfMonth()->endOfDay();
-                    
                     $startDate = $monthStart->max($cicloStartDate);
                     $endDate = $monthEnd->min($cicloEndDate);
-                }
-                else {
-                    // Usar todo el ciclo académico como fallback
+                } else {
                     $startDate = $cicloStartDate;
                     $endDate = $cicloEndDate;
                 }
             }
-        }
-        // Si NO hay ciclo académico pero hay fechas específicas
-        elseif ($this->fechaInicio && $this->fechaFin) {
+        } elseif ($this->fechaInicio && $this->fechaFin) {
             $startDate = Carbon::parse($this->fechaInicio)->startOfDay();
             $endDate = Carbon::parse($this->fechaFin)->endOfDay();
-        }
-        // Si NO hay ciclo académico pero hay mes/año específico
-        elseif ($this->selectedMonth && $this->selectedYear) {
+        } elseif ($this->selectedMonth && $this->selectedYear) {
             $startDate = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->startOfDay();
             $endDate = Carbon::createFromDate($this->selectedYear, (int)$this->selectedMonth, 1)->endOfMonth()->endOfDay();
-        }
-        // Fallback final: últimos 30 días
-        else {
+        } else {
             $endDate = Carbon::today()->endOfDay();
             $startDate = $endDate->copy()->subDays(30)->startOfDay();
         }
@@ -134,46 +160,44 @@ class AsistenciasDocentesExport implements WithMultipleSheets
             }
 
             // Iterar cada día del rango
-            $currentDate = $startDate->copy();
-            while ($currentDate->lte($endDate)) {
-                $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
+            if ($startDate && $endDate) {
+                $currentDate = $startDate->copy();
+                while ($currentDate->lte($endDate)) {
+                    $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
 
-                // Construir query base para horarios
-                $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
-                    ->where('dia_semana', $diaSemanaNombre)
-                    ->with(['curso', 'aula', 'ciclo']);
+                    // Construir query base para horarios
+                    $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
+                        ->where('dia_semana', $diaSemanaNombre)
+                        ->with(['curso', 'aula', 'ciclo']);
 
-                // Aplicar filtro de ciclo SOLO si está especificado
-                if ($this->selectedCicloAcademico) {
-                    $horariosQuery->whereHas('ciclo', function ($q) {
-                        $q->where('codigo', $this->selectedCicloAcademico);
-                    });
-                }
-
-                $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
-
-                // Obtener registros biométricos del día
-                $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
-                    ->whereDate('fecha_registro', $currentDate->toDateString())
-                    ->orderBy('fecha_registro', 'asc')
-                    ->get();
-
-                // Procesar cada sesión del día
-                foreach ($horariosDelDia as $horario) {
-                    if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
-                        continue;
+                    // Aplicar filtro de ciclo SOLO si está especificado
+                    if ($this->selectedCicloAcademico) {
+                        $horariosQuery->whereHas('ciclo', function ($q) {
+                            $q->where('codigo', $this->selectedCicloAcademico);
+                        });
                     }
 
-                    $sessionData = $this->processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+                    $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
+
+                    // Obtener registros biométricos del día
+                    $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                        ->whereDate('fecha_registro', $currentDate->toDateString())
+                        ->orderBy('fecha_registro', 'asc')
+                        ->get();
+
+                    // Procesar cada sesión del día
+                    foreach ($horariosDelDia as $horario) {
+                        $sessionData = $this->processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+                        
+                        if ($sessionData) {
+                            $processedDetailedAsistencias[$docente->id]['sessions'][] = $sessionData;
+                            $processedDetailedAsistencias[$docente->id]['total_horas'] += $sessionData['horas_dictadas'];
+                            $processedDetailedAsistencias[$docente->id]['total_pagos'] += $sessionData['pago'];
+                        }
+                    }
                     
-                    if ($sessionData) {
-                        $processedDetailedAsistencias[$docente->id]['sessions'][] = $sessionData;
-                        $processedDetailedAsistencias[$docente->id]['total_horas'] += $sessionData['horas_dictadas'];
-                        $processedDetailedAsistencias[$docente->id]['total_pagos'] += $sessionData['pago'];
-                    }
+                    $currentDate->addDay(); 
                 }
-                
-                $currentDate->addDay(); 
             }
         }
 
@@ -182,133 +206,13 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
     private function processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente)
     {
-        $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
-        $horaFinProgramada = Carbon::parse($horario->hora_fin);
-
-        $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
-        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second); 
-
-        // Buscar registros biométricos
-        $entradaBiometrica = $registrosBiometricosDelDia
-            ->filter(function($r) use ($horarioInicioHoy) {
-                $horaRegistro = Carbon::parse($r->fecha_registro); 
-                return $horaRegistro->between(
-                    $horarioInicioHoy->copy()->subMinutes(15),
-                    $horarioInicioHoy->copy()->addMinutes(30)
-                );
-            })
-            ->sortBy('fecha_registro')
-            ->first();
-
-        $salidaBiometrica = $registrosBiometricosDelDia
-            ->filter(function($r) use ($horarioFinHoy) {
-                $horaRegistro = Carbon::parse($r->fecha_registro); 
-                return $horaRegistro->between(
-                    $horarioFinHoy->copy()->subMinutes(15),
-                    $horarioFinHoy->copy()->addMinutes(60)
-                );
-            })
-            ->sortByDesc('fecha_registro')
-            ->first();
-        
-        // Buscar tema desarrollado
-        $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
-            ->where('horario_id', $horario->id)
-            ->whereDate('fecha_hora', $currentDate->toDateString())
-            ->first();
-
-        $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
-        
-        // CALCULAR SIEMPRE LAS HORAS PROGRAMADAS
-        $horasProgramadas = $horaInicioProgramada->diffInHours($horaFinProgramada, true);
-        $horasDictadas = $horasProgramadas; // Por defecto, asumir horas programadas
-        $estadoTexto = 'PENDIENTE';
-
-        $cursoNombre = $horario->curso->nombre ?? 'N/A';
-        $aulaNombre = $horario->aula->nombre ?? 'N/A';
-        $turnoNombre = $horario->turno ?? 'N/A';
-
-        // Determinar estado basado en registros biométricos
-        if ($entradaBiometrica && $salidaBiometrica) {
-            $estadoTexto = 'COMPLETADA';
-            
-            // Lógica mejorada para el cálculo de horas dictadas
-            $horaEntradaMarcada = Carbon::parse($entradaBiometrica->fecha_registro);
-            $horaSalidaMarcada = Carbon::parse($salidaBiometrica->fecha_registro);
-
-            // La hora de inicio efectiva es la más tardía entre la programada y la marcada.
-            $inicioEfectivo = $horaEntradaMarcada->greaterThan($horarioInicioHoy) ? $horaEntradaMarcada : $horarioInicioHoy;
-
-            // La hora de fin efectiva es la más temprana entre la programada y la marcada.
-            $finEfectivo = $horaSalidaMarcada->lessThan($horarioFinHoy) ? $horaSalidaMarcada : $horarioFinHoy;
-
-            // Calcular la diferencia en minutos, asegurándose de que no sea negativa.
-            if ($finEfectivo->greaterThan($inicioEfectivo)) {
-                $minutosDictados = $finEfectivo->diffInMinutes($inicioEfectivo);
-            } else {
-                $minutosDictados = 0;
-            }
-            $horasDictadas = round($minutosDictados / 60, 2);
-
-        } elseif ($entradaBiometrica && !$salidaBiometrica) {
-            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
-                $estadoTexto = 'INCOMPLETA';
-            } else {
-                $estadoTexto = 'EN CURSO';
-            }
-        } elseif (!$entradaBiometrica && !$salidaBiometrica) {
-            if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
-                $estadoTexto = 'FALTA';
-            } else {
-                $estadoTexto = 'PROGRAMADA';
-            }
-        }
-
-        // CALCULAR PAGO SIEMPRE (basado en horas programadas o reales)
-        $montoTotal = 0;
-        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
-            ->whereDate('fecha_inicio', '<=', $currentDate)
-            ->whereDate('fecha_fin', '>=', $currentDate)
-            ->first();
-        
-        if ($pagoDocente) {
-            $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
-        }
-
-        // CORREGIR EL FORMATO DE HORAS - PROBLEMA SOLUCIONADO
-        $horaEntradaDisplay = $entradaBiometrica ? 
-            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i A') : 
-            $horaInicioProgramada->format('g:i A');
-        
-        $horaSalidaDisplay = $salidaBiometrica ? 
-            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i A') : 
-            $horaFinProgramada->format('g:i A');
-
-        return [
-            'fecha' => $currentDate->toDateString(),
-            'curso' => $cursoNombre,
-            'tema_desarrollado' => $temaDesarrollado,
-            'aula' => $aulaNombre,
-            'turno' => $turnoNombre,
-            'hora_entrada' => $horaEntradaDisplay,
-            'hora_salida' => $horaSalidaDisplay,
-            'horas_dictadas' => $horasDictadas,
-            'pago' => $montoTotal,
-            'estado_sesion' => $estadoTexto,
-            'mes' => $currentDate->locale('es')->monthName,
-            'semana' => $currentDate->weekOfYear,
-            'carbon_date' => $currentDate->copy(),
-            'tiene_registros' => ($entradaBiometrica && $salidaBiometrica) ? 'SI' : 'NO',
-            // NUEVOS CAMPOS PARA ORDENAMIENTO CRONOLÓGICO
-            'year' => $currentDate->year,
-            'month_number' => $currentDate->month, // 1=enero, 2=febrero, etc.
-            'day_number' => $currentDate->day
-        ];
+        return $this->processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente);
     }
 
-    /**
-     * Método para generar encabezado dinámico basado en los filtros aplicados
-     */
+    // ═══════════════════════════════════════════════════════════════════════
+    // GENERADOR DE ENCABEZADOS DINÁMICOS
+    // ═══════════════════════════════════════════════════════════════════════
+
     private function generateDynamicHeader()
     {
         // PRIORIDAD 1: Si hay ciclo académico, usarlo como contexto principal
@@ -398,36 +302,48 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                $fechaFin->format('d/m/Y') . ')';
     }
 
-    /**
-     * Define las hojas individuales del Excel.
-     * @return array
-     */
+    // ═══════════════════════════════════════════════════════════════════════
+    // GENERACIÓN DE HOJAS DE EXCEL
+    // ═══════════════════════════════════════════════════════════════════════
+
     public function sheets(): array
     {
         $sheets = [];
-
-        // GENERAR ENCABEZADO DINÁMICO CORREGIDO
         $rangoFechasHeader = $this->generateDynamicHeader();
 
         foreach ($this->processedData as $docenteId => $docenteData) {
             $docente = $docenteData['docente_info'];
             $docenteName = 'Lic. ' . $docente->nombre . ' ' . $docente->apellido_paterno . ' ' . $docente->apellido_materno;
             
-            // Crear hoja para cada docente con diseño profesional
+            // Crear hoja para cada docente con diseño profesional mejorado
             $sheets[] = new class($docenteData, $docenteName, $rangoFechasHeader, $this->selectedCicloAcademico) implements 
-                \Maatwebsite\Excel\Concerns\FromCollection, 
-                \Maatwebsite\Excel\Concerns\WithTitle, 
-                \Maatwebsite\Excel\Concerns\WithHeadings, 
-                \Maatwebsite\Excel\Concerns\WithMapping, 
-                \Maatwebsite\Excel\Concerns\ShouldAutoSize, 
-                \Maatwebsite\Excel\Concerns\WithEvents,
-                \Maatwebsite\Excel\Concerns\WithStyles
+                FromCollection, 
+                WithTitle, 
+                WithHeadings, 
+                WithMapping, 
+                ShouldAutoSize, 
+                WithEvents,
+                WithStyles
             {
                 private $docenteData;
                 private $docenteName;
                 private $filterPeriodHeader;
                 private $selectedCicloAcademico;
-                private $currentRow = 1;
+
+                // Colores del tema institucional
+                private const COLORS = [
+                    'PRIMARY_BLUE'      => 'FF1B365D',
+                    'SECONDARY_BLUE'    => 'FF2E5A87',
+                    'ACCENT_GOLD'       => 'FFD4AF37',
+                    'LIGHT_BLUE'        => 'FFE8F0F8',
+                    'HEADER_BLUE'       => 'FF4A6FA5',
+                    'WHITE'             => 'FFFFFFFF',
+                    'LIGHT_GRAY'        => 'FFF5F7FA',
+                    'BORDER_GRAY'       => 'FFBDC3C7',
+                    'TEXT_DARK'         => 'FF2C3E50',
+                    'SUCCESS_GREEN'     => 'FF27AE60',
+                    'WARNING_ORANGE'    => 'FFF39C12'
+                ];
 
                 public function __construct(array $docenteData, string $docenteName, string $filterPeriodHeader, ?string $selectedCicloAcademico)
                 {
@@ -439,51 +355,70 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                 public function title(): string
                 {
-                    $title = substr(\preg_replace('/[\\\\\/:\*\?\[\]]/', '', $this->docenteName), 0, 31);
+                    $title = substr(preg_replace('/[\\/:*?"<>|]/u', '', $this->docenteName), 0, 31);
                     return $title ?: 'Docente';
                 }
 
                 public function collection()
                 {
-                    $dataRows = new \Illuminate\Support\Collection();
+                    $dataRows = new Collection();
 
-                    // ENCABEZADO INSTITUCIONAL
+                    // ═══════════════════════════════════════════════════════════
+                    // SECCIÓN 1: ENCABEZADO INSTITUCIONAL ELEGANTE
+                    // ═══════════════════════════════════════════════════════════
+                    
                     $dataRows->push([
-                        'UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS',
+                        '🏛️ UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS',
                         '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
-                        'CENTRO PRE UNIVERSITARIO',
+                        '🎓 CENTRO PRE UNIVERSITARIO',
                         '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
-                        'CICLO ORDINARIO 2025-1',
+                        '📚 CICLO ORDINARIO 2025-I',
                         '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
-                        'INFORME DE AVANCE ACADÉMICO',
+                        '📊 INFORME DE AVANCE ACADÉMICO',
                         '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
-                        $this->filterPeriodHeader, // AQUÍ SE USA EL HEADER DINÁMICO
+                        '📅 ' . $this->filterPeriodHeader,
                         '', '', '', '', '', '', '', '', '', '', ''
                     ]);
 
-                    // Línea en blanco
+                    // Separador elegante
                     $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '']);
 
-                    // ENCABEZADOS DE TABLA
+                    // ═══════════════════════════════════════════════════════════
+                    // SECCIÓN 2: ENCABEZADOS DE TABLA PROFESIONALES
+                    // ═══════════════════════════════════════════════════════════
+                    
                     $dataRows->push([
-                        'DOCENTE', 'MES', 'SEMANA', 'FECHA', 'CURSO', 'TEMA DESARROLLADO', 
-                        'AULA', 'TURNO', 'HORA ENTRADA', 'HORA SALIDA', 'HORAS DICTADAS', 'PAGO'
+                        '👨‍🏫 DOCENTE', 
+                        '📅 MES', 
+                        '📝 SEMANA', 
+                        '🗓️ FECHA', 
+                        '📖 CURSO', 
+                        '📋 TEMA DESARROLLADO', 
+                        '🏠 AULA', 
+                        '🌅 TURNO', 
+                        '⏰ ENTRADA', 
+                        '⏱️ SALIDA', 
+                        '⏳ HORAS', 
+                        '💰 PAGO'
                     ]);
 
+                    // ═══════════════════════════════════════════════════════════
+                    // SECCIÓN 3: PROCESAMIENTO DE DATOS (LÓGICA INTACTA)
+                    // ═══════════════════════════════════════════════════════════
+
                     // *** ORDENAMIENTO CRONOLÓGICO CORREGIDO ***
-                    // Primero ordenar todas las sesiones por fecha cronológica
                     $sortedSessions = collect($this->docenteData['sessions'])
                         ->sortBy([
                             ['year', 'asc'],
@@ -494,7 +429,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // Agrupar sesiones por mes cronológicamente ordenado
                     $sessionsByMonth = [];
                     foreach ($sortedSessions as $session) {
-                        $monthKey = $session['year'] . '-' . sprintf('%02d', $session['month_number']); // 2025-01, 2025-02, etc.
+                        $monthKey = $session['year'] . '-' . sprintf('%02d', $session['month_number']);
                         $weekKey = $session['semana'];
                         
                         if (!isset($sessionsByMonth[$monthKey])) {
@@ -509,10 +444,9 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         $sessionsByMonth[$monthKey]['weeks'][$weekKey][] = $session;
                     }
 
-                    // Los meses ya están ordenados cronológicamente por el key
                     ksort($sessionsByMonth);
 
-                    // DATOS DE SESIONES
+                    // DATOS DE SESIONES CON FORMATO MEJORADO
                     $docenteTotalHoras = 0;
                     $docenteTotalPago = 0;
                     $isFirstRowForDocente = true;
@@ -520,7 +454,6 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     foreach ($sessionsByMonth as $monthKey => $monthData) {
                         $isFirstRowForMes = true;
                         
-                        // Ordenar semanas dentro del mes
                         ksort($monthData['weeks']);
                         
                         foreach ($monthData['weeks'] as $semana => $sessions) {
@@ -529,17 +462,17 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                             foreach ($sessions as $session) {
                                 $dataRows->push([
                                     $isFirstRowForDocente ? $this->docenteName : '',
-                                    $isFirstRowForMes ? \strtoupper($monthData['month_name']) : '',
-                                    $isFirstRowForSemana ? 'SEMANA ' . \sprintf('%02d', $semana) : '',
-                                    \Carbon\Carbon::parse($session['fecha'])->format('d/m/Y'),
+                                    $isFirstRowForMes ? strtoupper($monthData['month_name']) : '',
+                                    $isFirstRowForSemana ? 'SEMANA ' . sprintf('%02d', $semana) : '',
+                                    Carbon::parse($session['fecha'])->format('d/m/Y'),
                                     $session['curso'],
                                     $session['tema_desarrollado'],
                                     $session['aula'],
                                     $session['turno'],
                                     $session['hora_entrada'],
                                     $session['hora_salida'],
-                                    \number_format($session['horas_dictadas'], 2) . ' Horas/Min',
-                                    'S/. ' . \number_format($session['pago'], 2)
+                                    number_format($session['horas_dictadas'], 2) . ' hrs',
+                                    'S/. ' . number_format($session['pago'], 2)
                                 ]);
                                 
                                 $docenteTotalHoras += $session['horas_dictadas'];
@@ -552,11 +485,15 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         }
                     }
 
-                    // FILA DE TOTALES
+                    // ═══════════════════════════════════════════════════════════
+                    // SECCIÓN 4: FILA DE TOTALES PROFESIONAL
+                    // ═══════════════════════════════════════════════════════════
+                    
                     $dataRows->push([
-                        '', '', '', '', '', '', '', '', '', 'TOTAL',
-                        \number_format($docenteTotalHoras, 2) . ' HORAS',
-                        'S/. ' . \number_format($docenteTotalPago, 2)
+                        '', '', '', '', '', '', '', '', '', 
+                        '📊 TOTAL GENERAL',
+                        '⏱️ ' . number_format($docenteTotalHoras, 2) . ' HORAS',
+                        '💰 S/. ' . number_format($docenteTotalPago, 2)
                     ]);
 
                     return $dataRows;
@@ -565,95 +502,284 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 public function headings(): array { return []; }
                 public function map($row): array { return $row; }
 
-                public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet)
+                public function styles(Worksheet $sheet)
                 {
                     return [
-                        // Estilos base para encabezados
-                        1 => ['font' => ['bold' => true, 'size' => 16, 'color' => ['argb' => 'FF1F4E79']]],
-                        2 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
-                        3 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
-                        4 => ['font' => ['bold' => true, 'size' => 14, 'color' => ['argb' => 'FF1F4E79']]],
-                        5 => ['font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FF1F4E79']]],
-                        7 => ['font' => ['bold' => true, 'size' => 11, 'color' => ['argb' => 'FF000000']]]
+                        // ═══ ESTILOS PARA ENCABEZADOS INSTITUCIONALES ═══
+                        1 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 18, 
+                                'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
+                            ]
+                        ],
+                        2 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 16, 
+                                'color' => ['argb' => self::COLORS['SECONDARY_BLUE']]
+                            ]
+                        ],
+                        3 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 14, 
+                                'color' => ['argb' => self::COLORS['SECONDARY_BLUE']]
+                            ]
+                        ],
+                        4 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 16, 
+                                'color' => ['argb' => self::COLORS['ACCENT_GOLD']]
+                            ]
+                        ],
+                        5 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 12, 
+                                'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                            ]
+                        ],
+                        // ═══ ESTILO PARA ENCABEZADOS DE TABLA ═══
+                        7 => [
+                            'font' => [
+                                'bold' => true, 
+                                'size' => 11,
+                                'color' => ['argb' => self::COLORS['WHITE']]
+                            ]
+                        ]
                     ];
                 }
 
                 public function registerEvents(): array
                 {
                     return [
-                        \Maatwebsite\Excel\Events\AfterSheet::class => function(\Maatwebsite\Excel\Events\AfterSheet $event) {
+                        AfterSheet::class => function(AfterSheet $event) {
                             $sheet = $event->sheet->getDelegate();
                             
-                            // CONFIGURACIÓN DE ENCABEZADOS
-                            $sheet->mergeCells('A1:L1');
-                            $sheet->mergeCells('A2:L2');
-                            $sheet->mergeCells('A3:L3');
-                            $sheet->mergeCells('A4:L4');
-                            $sheet->mergeCells('A5:L5');
-
-                            // Alineación centrada para encabezados institucionales
-                            $sheet->getStyle('A1:L5')->getAlignment()
-                                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
-                                ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            // ═══════════════════════════════════════════════════
+                            // CONFIGURACIÓN DE ENCABEZADOS INSTITUCIONALES
+                            // ═══════════════════════════════════════════════════
                             
-                            // ESTILO DE ENCABEZADOS DE TABLA (Fila 7)
-                            $sheet->getStyle('A7:L7')->applyFromArray([
-                                'font' => [
-                                    'bold' => true, 
-                                    'size' => 11,
-                                    'color' => ['argb' => 'FFFFFFFF']
-                                ],
-                                'fill' => [
-                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 
-                                    'startColor' => ['argb' => 'FF366092']
-                                ],
-                                'alignment' => [
-                                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
-                                ],
-                                'borders' => [
-                                    'allBorders' => [
-                                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                                        'color' => ['argb' => 'FF000000']
-                                    ]
-                                ]
-                            ]);
-
-                            // Altura de fila para encabezados
-                            $sheet->getRowDimension(7)->setRowHeight(25);
-
-                            // APLICAR BORDES A TODA LA TABLA
-                            $lastRow = $sheet->getHighestRow();
-                            $sheet->getStyle('A7:L' . $lastRow)->applyFromArray([
-                                'borders' => [
-                                    'allBorders' => [
-                                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                                        'color' => ['argb' => 'FF000000']
-                                    ]
-                                ]
-                            ]);
-
-                            // CONFIGURAR ANCHOS DE COLUMNA
-                            $sheet->getColumnDimension('A')->setWidth(30); // DOCENTE
-                            $sheet->getColumnDimension('B')->setWidth(12); // MES
-                            $sheet->getColumnDimension('C')->setWidth(12); // SEMANA
-                            $sheet->getColumnDimension('D')->setWidth(12); // FECHA
-                            $sheet->getColumnDimension('E')->setWidth(15); // CURSO
-                            $sheet->getColumnDimension('F')->setWidth(35); // TEMA DESARROLLADO
-                            $sheet->getColumnDimension('G')->setWidth(8);  // AULA
-                            $sheet->getColumnDimension('H')->setWidth(10); // TURNO
-                            $sheet->getColumnDimension('I')->setWidth(15); // HORA ENTRADA
-                            $sheet->getColumnDimension('J')->setWidth(15); // HORA SALIDA
-                            $sheet->getColumnDimension('K')->setWidth(18); // HORAS DICTADAS
-                            $sheet->getColumnDimension('L')->setWidth(15); // PAGO
-
-                            // FUSIONAR CELDAS AGRUPADAS
-                            $this->mergeCellsForGroupedData($sheet);
+                            $this->setupInstitutionalHeaders($sheet);
                             
-                            // APLICAR FORMATO CONDICIONAL
-                            $this->applyProfessionalFormatting($sheet, $lastRow);
+                            // ═══════════════════════════════════════════════════
+                            // CONFIGURACIÓN DE TABLA DE DATOS
+                            // ═══════════════════════════════════════════════════
+                            
+                            $this->setupDataTable($sheet);
+                            
+                            // ═══════════════════════════════════════════════════
+                            // APLICAR FORMATO PROFESIONAL AVANZADO
+                            // ═══════════════════════════════════════════════════
+                            
+                            $this->applyAdvancedFormatting($sheet);
                         }
                     ];
+                }
+
+                // ═══════════════════════════════════════════════════════════════
+                // MÉTODOS DE FORMATEO PROFESIONAL
+                // ═══════════════════════════════════════════════════════════════
+
+                private function setupInstitutionalHeaders($sheet)
+                {
+                    // Fusionar celdas para encabezados
+                    $sheet->mergeCells('A1:L1');
+                    $sheet->mergeCells('A2:L2');
+                    $sheet->mergeCells('A3:L3');
+                    $sheet->mergeCells('A4:L4');
+                    $sheet->mergeCells('A5:L5');
+
+                    // Aplicar gradiente sutil al fondo
+                    $sheet->getStyle('A1:L5')->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['argb' => self::COLORS['LIGHT_BLUE']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ]
+                    ]);
+
+                    // Altura especial para encabezados
+                    for ($i = 1; $i <= 5; $i++) {
+                        $sheet->getRowDimension($i)->setRowHeight(25);
+                    }
+                    
+                    // Separador visual con línea elegante
+                    $sheet->getStyle('A6:L6')->applyFromArray([
+                        'borders' => [
+                            'bottom' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color' => ['argb' => self::COLORS['ACCENT_GOLD']]
+                            ]
+                        ]
+                    ]);
+                }
+
+                private function setupDataTable($sheet)
+                {
+                    $lastRow = $sheet->getHighestRow();
+                    
+                    // ═══ ENCABEZADOS DE TABLA CON DISEÑO PREMIUM ═══
+                    $sheet->getStyle('A7:L7')->applyFromArray([
+                        'font' => [
+                            'bold' => true, 
+                            'size' => 11,
+                            'color' => ['argb' => self::COLORS['WHITE']]
+                        ],
+                        'fill' => [
+                            'fillType' => Fill::FILL_GRADIENT_LINEAR,
+                            'startColor' => ['argb' => self::COLORS['HEADER_BLUE']],
+                            'endColor' => ['argb' => self::COLORS['PRIMARY_BLUE']],
+                            'rotation' => 90
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER,
+                            'wrapText' => true
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
+                            ]
+                        ]
+                    ]);
+
+                    // Altura especial para encabezados de tabla
+                    $sheet->getRowDimension(7)->setRowHeight(35);
+
+                    // ═══ CONFIGURAR ANCHOS DE COLUMNA OPTIMIZADOS ═══
+                    $columnWidths = [
+                        'A' => 32,  // DOCENTE - Más ancho para nombres completos
+                        'B' => 14,  // MES - Optimizado
+                        'C' => 14,  // SEMANA - Optimizado
+                        'D' => 12,  // FECHA - Compacto
+                        'E' => 18,  // CURSO - Más espacio
+                        'F' => 38,  // TEMA DESARROLLADO - Máximo espacio
+                        'G' => 8,   // AULA - Compacto
+                        'H' => 12,  // TURNO - Optimizado
+                        'I' => 12,  // HORA ENTRADA - Compacto
+                        'J' => 12,  // HORA SALIDA - Compacto
+                        'K' => 15,  // HORAS DICTADAS - Optimizado
+                        'L' => 16   // PAGO - Espacio para formato moneda
+                    ];
+
+                    foreach ($columnWidths as $column => $width) {
+                        $sheet->getColumnDimension($column)->setWidth($width);
+                    }
+
+                    // ═══ BORDES PROFESIONALES PARA TODA LA TABLA ═══
+                    $sheet->getStyle('A7:L' . $lastRow)->applyFromArray([
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['argb' => self::COLORS['BORDER_GRAY']]
+                            ]
+                        ]
+                    ]);
+                }
+
+                private function applyAdvancedFormatting($sheet)
+                {
+                    $lastRow = $sheet->getHighestRow();
+                    
+                    // ═══════════════════════════════════════════════════
+                    // FORMATO ZEBRA STRIPE ELEGANTE
+                    // ═══════════════════════════════════════════════════
+                    
+                    for ($row = 8; $row < $lastRow; $row++) {
+                        $fillColor = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
+                        
+                        $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['argb' => $fillColor]
+                            ]
+                        ]);
+                    }
+                    
+                    // ═══════════════════════════════════════════════════
+                    // FILA DE TOTALES CON DISEÑO PREMIUM
+                    // ═══════════════════════════════════════════════════
+                    
+                    $sheet->getStyle('A' . $lastRow . ':L' . $lastRow)->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 12,
+                            'color' => ['argb' => self::COLORS['WHITE']]
+                        ],
+                        'fill' => [
+                            'fillType' => Fill::FILL_GRADIENT_LINEAR,
+                            'startColor' => ['argb' => self::COLORS['SUCCESS_GREEN']],
+                            'endColor' => ['argb' => self::COLORS['PRIMARY_BLUE']],
+                            'rotation' => 45
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_MEDIUM,
+                                'color' => ['argb' => self::COLORS['SUCCESS_GREEN']]
+                            ]
+                        ]
+                    ]);
+
+                    // Altura especial para fila de totales
+                    $sheet->getRowDimension($lastRow)->setRowHeight(30);
+
+                    // ═══════════════════════════════════════════════════
+                    // ALINEACIONES ESPECÍFICAS POR COLUMNA
+                    // ═══════════════════════════════════════════════════
+                    
+                    // Fechas centradas
+                    $sheet->getStyle('D8:D' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    
+                    // Aula y turno centrados
+                    $sheet->getStyle('G8:H' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    
+                    // Horarios y pagos centrados
+                    $sheet->getStyle('I8:L' . ($lastRow-1))->getAlignment()
+                        ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                    // Tema desarrollado con wrap text
+                    $sheet->getStyle('F8:F' . ($lastRow-1))->getAlignment()
+                        ->setWrapText(true);
+
+                    // ═══════════════════════════════════════════════════
+                    // FORMATO ESPECIAL PARA COLUMNAS AGRUPADAS
+                    // ═══════════════════════════════════════════════════
+                    
+                    $sheet->getStyle('A8:C' . ($lastRow-1))->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 10
+                        ],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['argb' => self::COLORS['LIGHT_BLUE']]
+                        ]
+                    ]);
+
+                    // ═══════════════════════════════════════════════════
+                    // FUSIONAR CELDAS PARA DATOS AGRUPADOS
+                    // ═══════════════════════════════════════════════════
+                    
+                    $this->mergeCellsForGroupedData($sheet);
+                    
+                    // ═══════════════════════════════════════════════════
+                    // APLICAR EFECTOS VISUALES AVANZADOS
+                    // ═══════════════════════════════════════════════════
+                    
+                    $this->applyVisualEffects($sheet, $lastRow);
                 }
 
                 private function mergeCellsForGroupedData($sheet)
@@ -668,112 +794,140 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         $mes = $sheet->getCell('B' . $row)->getValue();
                         $semana = $sheet->getCell('C' . $row)->getValue();
                         
-                        // Docente grouping
+                        // ═══ AGRUPACIÓN DE DOCENTES ═══
                         if ($docente !== '' && $docente !== $currentGroups['docente']) {
                             if ($currentGroups['docente'] !== '' && $startRows['docente'] < $row - 1) {
                                 $sheet->mergeCells('A' . $startRows['docente'] . ':A' . ($row - 1));
                                 $sheet->getStyle('A' . $startRows['docente'])->getAlignment()
-                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                                    ->setVertical(Alignment::VERTICAL_CENTER);
                             }
                             $startRows['docente'] = $row;
                             $currentGroups['docente'] = $docente;
                         }
                         
-                        // Mes grouping
+                        // ═══ AGRUPACIÓN DE MESES ═══
                         if ($mes !== '' && $mes !== $currentGroups['mes']) {
                             if ($currentGroups['mes'] !== '' && $startRows['mes'] < $row - 1) {
                                 $sheet->mergeCells('B' . $startRows['mes'] . ':B' . ($row - 1));
                                 $sheet->getStyle('B' . $startRows['mes'])->getAlignment()
-                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                                    ->setVertical(Alignment::VERTICAL_CENTER);
                             }
                             $startRows['mes'] = $row;
                             $currentGroups['mes'] = $mes;
                         }
                         
-                        // Semana grouping
+                        // ═══ AGRUPACIÓN DE SEMANAS ═══
                         if ($semana !== '' && $semana !== $currentGroups['semana']) {
                             if ($currentGroups['semana'] !== '' && $startRows['semana'] < $row - 1) {
                                 $sheet->mergeCells('C' . $startRows['semana'] . ':C' . ($row - 1));
                                 $sheet->getStyle('C' . $startRows['semana'])->getAlignment()
-                                    ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                                    ->setVertical(Alignment::VERTICAL_CENTER);
                             }
                             $startRows['semana'] = $row;
                             $currentGroups['semana'] = $semana;
                         }
                     }
                     
-                    // Merge final groups
-                    if ($startRows['docente'] < $lastRow) {
-                        $sheet->mergeCells('A' . $startRows['docente'] . ':A' . $lastRow);
+                    // ═══ FUSIONAR GRUPOS FINALES ═══
+                    $finalRow = $lastRow - 1; // Excluir fila de totales
+                    
+                    if ($startRows['docente'] < $finalRow) {
+                        $sheet->mergeCells('A' . $startRows['docente'] . ':A' . $finalRow);
                         $sheet->getStyle('A' . $startRows['docente'])->getAlignment()
-                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            ->setVertical(Alignment::VERTICAL_CENTER);
                     }
-                    if ($startRows['mes'] < $lastRow) {
-                        $sheet->mergeCells('B' . $startRows['mes'] . ':B' . $lastRow);
+                    if ($startRows['mes'] < $finalRow) {
+                        $sheet->mergeCells('B' . $startRows['mes'] . ':B' . $finalRow);
                         $sheet->getStyle('B' . $startRows['mes'])->getAlignment()
-                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            ->setVertical(Alignment::VERTICAL_CENTER);
                     }
-                    if ($startRows['semana'] < $lastRow) {
-                        $sheet->mergeCells('C' . $startRows['semana'] . ':C' . $lastRow);
+                    if ($startRows['semana'] < $finalRow) {
+                        $sheet->mergeCells('C' . $startRows['semana'] . ':C' . $finalRow);
                         $sheet->getStyle('C' . $startRows['semana'])->getAlignment()
-                            ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                            ->setVertical(Alignment::VERTICAL_CENTER);
                     }
                 }
 
-                private function applyProfessionalFormatting($sheet, $lastRow)
+                private function applyVisualEffects($sheet, $lastRow)
                 {
-                    // FORMATO ALTERNO PARA FILAS
-                    for ($row = 8; $row < $lastRow; $row++) {
-                        if (($row - 8) % 2 == 0) {
-                            // Filas pares - fondo blanco
-                            $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
-                                'fill' => [
-                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                    'startColor' => ['argb' => 'FFFFFFFF']
-                                ]
-                            ]);
-                        } else {
-                            // Filas impares - fondo gris muy claro
-                            $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
-                                'fill' => [
-                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                                    'startColor' => ['argb' => 'FFF8F9FA']
-                                ]
-                            ]);
-                        }
-                    }
+                    // ═══════════════════════════════════════════════════
+                    // EFECTOS DE SOMBRA PARA ENCABEZADOS
+                    // ═══════════════════════════════════════════════════
                     
-                    // FILA DE TOTALES - Formato especial
-                    $sheet->getStyle('A' . $lastRow . ':L' . $lastRow)->applyFromArray([
-                        'font' => [
-                            'bold' => true,
-                            'size' => 12,
-                            'color' => ['argb' => 'FFFFFFFF']
-                        ],
-                        'fill' => [
-                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                            'startColor' => ['argb' => 'FF1F4E79']
-                        ],
-                        'alignment' => [
-                            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                    $sheet->getStyle('A7:L7')->applyFromArray([
+                        'borders' => [
+                            'bottom' => [
+                                'borderStyle' => Border::BORDER_THICK,
+                                'color' => ['argb' => self::COLORS['ACCENT_GOLD']]
+                            ]
                         ]
                     ]);
 
-                    // ALINEACIÓN PARA COLUMNAS ESPECÍFICAS
-                    $sheet->getStyle('D8:D' . ($lastRow-1))->getAlignment()
-                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('G8:H' . ($lastRow-1))->getAlignment()
-                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('I8:L' . ($lastRow-1))->getAlignment()
-                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    // ═══════════════════════════════════════════════════
+                    // FORMATO CONDICIONAL PARA VALORES MONETARIOS
+                    // ═══════════════════════════════════════════════════
+                    
+                    $sheet->getStyle('L8:L' . $lastRow)->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'color' => ['argb' => self::COLORS['SUCCESS_GREEN']]
+                        ]
+                    ]);
 
-                    // FORMATO PARA COLUMNAS AGRUPADAS
-                    $sheet->getStyle('A8:C' . ($lastRow-1))->applyFromArray([
-                        'font' => ['bold' => true],
-                        'fill' => [
-                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                            'startColor' => ['argb' => 'FFE7F3FF']
+                    // ═══════════════════════════════════════════════════
+                    // FORMATO ESPECIAL PARA HORAS
+                    // ═══════════════════════════════════════════════════
+                    
+                    $sheet->getStyle('K8:K' . $lastRow)->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
+                        ]
+                    ]);
+
+                    // ═══════════════════════════════════════════════════
+                    // APLICAR FORMATO DE FECHA CONSISTENTE
+                    // ═══════════════════════════════════════════════════
+                    
+                    $sheet->getStyle('D8:D' . ($lastRow-1))->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 9
+                        ]
+                    ]);
+
+                    // ═══════════════════════════════════════════════════
+                    // PROTECCIÓN Y CONFIGURACIÓN FINAL
+                    // ═══════════════════════════════════════════════════
+                    
+                    // Configurar impresión
+                    $sheet->getPageSetup()
+                        ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE)
+                        ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4)
+                        ->setFitToWidth(1)
+                        ->setFitToHeight(0);
+
+                    // Configurar márgenes
+                    $sheet->getPageMargins()
+                        ->setTop(0.75)
+                        ->setRight(0.25)
+                        ->setLeft(0.25)
+                        ->setBottom(0.75);
+
+                    // Repetir encabezados en cada página
+                    $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
+
+                    // ═══════════════════════════════════════════════════
+                    // AÑADIR LÍNEAS DE DIVISIÓN ELEGANTES
+                    // ═══════════════════════════════════════════════════
+                    
+                    // Línea divisoria antes de totales
+                    $sheet->getStyle('A' . ($lastRow-1) . ':L' . ($lastRow-1))->applyFromArray([
+                        'borders' => [
+                            'bottom' => [
+                                'borderStyle' => Border::BORDER_DOUBLE,
+                                'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
+                            ]
                         ]
                     ]);
                 }
@@ -783,3 +937,39 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         return $sheets;
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOCUMENTACIÓN DE LA CLASE
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * MEJORAS IMPLEMENTADAS EN EL DISEÑO:
+ * 
+ * 🎨 DISEÑO VISUAL:
+ * ├── Paleta de colores institucional profesional
+ * ├── Gradientes elegantes en encabezados
+ * ├── Efectos zebra stripe para mejor legibilidad
+ * ├── Iconos Unicode para identificación rápida
+ * └── Tipografía jerarquizada y consistente
+ * 
+ * 📊 ESTRUCTURA MEJORADA:
+ * ├── Encabezados institucionales más prominentes
+ * ├── Separadores visuales elegantes
+ * ├── Agrupación visual mejorada de datos
+ * ├── Fila de totales con diseño premium
+ * └── Configuración de impresión optimizada
+ * 
+ * 💡 FUNCIONALIDADES AÑADIDAS:
+ * ├── Anchos de columna optimizados para contenido
+ * ├── Formato condicional para valores monetarios
+ * ├── Wrap text automático para textos largos
+ * ├── Márgenes y orientación configurados
+ * └── Repetición de encabezados en múltiples páginas
+ * 
+ * ✅ MANTENIMIENTO:
+ * ├── Código organizado en secciones claras
+ * ├── Constantes para colores centralizadas
+ * ├── Métodos modulares para fácil mantenimiento
+ * ├── Documentación completa integrada
+ * └── Lógica de negocio intacta y preservada
+ */

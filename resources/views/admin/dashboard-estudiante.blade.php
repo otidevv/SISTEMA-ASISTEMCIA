@@ -1161,6 +1161,47 @@
     
     <!-- Cargar el JavaScript original primero -->
     <script src="{{ asset('js/dashboardestudiante/index.js') }}"></script>
+
+    @if (isset($anuncios) && $anuncios->count() > 0)
+        <!-- Modal de Anuncios -->
+        <div class="modal fade" id="anunciosModal" tabindex="-1" aria-labelledby="anunciosModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 20px; overflow: hidden; border: none;">
+                    <div class="modal-body p-0">
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 1rem; right: 1rem; z-index: 2;"></button>
+                        <div id="carouselAnuncios" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                @foreach ($anuncios as $key => $anuncio)
+                                    <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
+                                        @if ($anuncio->imagen)
+                                            <img src="{{ asset('storage/' . $anuncio->imagen) }}" class="d-block w-100" alt="{{ $anuncio->titulo }}">
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                            @if ($anuncios->count() > 1)
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselAnuncios" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselAnuncios" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var anunciosModal = new bootstrap.Modal(document.getElementById('anunciosModal'));
+                anunciosModal.show();
+            });
+        </script>
+    @endif
     
     <!-- INTEGRACIÓN COMPLETA SWEETALERT2 CON FUNCIONALIDAD EXISTENTE -->
     <script>

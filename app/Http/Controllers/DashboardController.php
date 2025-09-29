@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\ProcessesTeacherSessions;
 use App\Models\Anuncio;
 use App\Models\Inscripcion;
 use App\Models\RegistroAsistencia;
@@ -12,17 +13,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\AsistenciaDocente;
 use App\Models\HorarioDocente;
-use App\Models\PagoDocente; // NUEVO: Importar modelo PagoDocente
-use App\Models\User; // Importar modelo User
-use App\Models\Role; // Importar modelo Role
-use App\Models\Permission; // Importar modelo Permission
-use App\Models\Turno; // Importar modelo Turno
-use App\Models\Curso; // Importar modelo Curso
-use App\Models\Carrera; // ← AGREGAR ESTA LÍNEA
+use App\Models\PagoDocente; 
+use App\Models\User; 
+use App\Models\Role; 
+use App\Models\Permission; 
+use App\Models\Turno; 
+use App\Models\Curso; 
+use App\Models\Carrera;
 use App\Models\Aula; 
 
 class DashboardController extends Controller
 {
+    use ProcessesTeacherSessions;
+
     /**
      * Muestra el dashboard principal basado en el rol del usuario.
      * Permite a los profesores seleccionar una fecha para ver sus horarios y temas.
@@ -192,47 +195,35 @@ class DashboardController extends Controller
                 $data['tarifa_por_hora'] = $tarifaPorHora;
 
                 $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$totalMinutosNetosHoy, $user, &$sesionesPendientes, $fechaSeleccionada) {
+                    // Llama a la lógica centralizada desde el trait
+                    $sessionDetails = $this->processTeacherSessionLogic($horario, $fechaSeleccionada, $registrosDelDia, $user);
+
+                    if (!$sessionDetails) {
+                        return null;
+                    }
+
+                    // --- Lógica específica de la vista del Dashboard ---
                     $horaInicio = Carbon::parse($horario->hora_inicio);
                     $horaFin = Carbon::parse($horario->hora_fin);
-
                     $momentoActualComparacion = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay();
                     $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute, $horaInicio->second);
                     $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
 
-                    $entrada = $registrosDelDia
-                        ->filter(function($r) use ($horarioInicioHoy) {
-                            $horaRegistro = Carbon::parse($r->fecha_registro);
-                            return $horaRegistro->between(
-                                $horarioInicioHoy->copy()->subMinutes(15),
-                                $horarioInicioHoy->copy()->addMinutes(120)
-                            );
-                        })
-                        ->sortBy('fecha_registro')
-                        ->first();
-
-                    $salida = $registrosDelDia
-                        ->filter(function($r) use ($horarioFinHoy) {
-                            $horaRegistro = Carbon::parse($r->fecha_registro);
-                            return $horaRegistro->between(
-                                $horarioFinHoy->copy()->subMinutes(15),
-                                $horarioFinHoy->copy()->addMinutes(60)
-                            );
-                        })
-                        ->sortByDesc('fecha_registro')
-                        ->first();
+                    $dentroDelHorario = $momentoActualComparacion->between($horarioInicioHoy, $horarioFinHoy);
+                    $claseTerminada = $momentoActualComparacion->greaterThan($horarioFinHoy);
 
                     $asistencia = AsistenciaDocente::where('docente_id', $user->id)
                         ->where('horario_id', $horario->id)
                         ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
                         ->first();
+                    
+                    if($asistencia) {
+                        $asistencia->tema_desarrollado = $sessionDetails['tema_desarrollado'];
+                    }
 
-                    $dentroDelHorario = $momentoActualComparacion->between($horarioInicioHoy, $horarioFinHoy);
-                    $claseTerminada = $momentoActualComparacion->greaterThan($horarioFinHoy);
-                    $tieneRegistros = $entrada && $salida;
+                    $puedeRegistrarTema = $asistencia || ($claseTerminada && $sessionDetails['tiene_registros']) || ($fechaSeleccionada->isToday() && $dentroDelHorario && $sessionDetails['hora_entrada'] === '--');
 
-                    $puedeRegistrarTema = $asistencia || ($claseTerminada && $tieneRegistros) || ($fechaSeleccionada->isToday() && $dentroDelHorario && $entrada);
-
-                    if ($claseTerminada && !$asistencia && $tieneRegistros) {
+                    if ($claseTerminada && !$asistencia && $sessionDetails['tiene_registros']) {
                         $sesionesPendientes++;
                     }
 
@@ -246,72 +237,23 @@ class DashboardController extends Controller
                     }
                     
                     $duracionProgramada = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
-                    $duracionReal = 0;
-                    
-                    if ($tieneRegistros) {
-                        $entradaCarbon = Carbon::parse($entrada->fecha_registro);
-                        $salidaCarbon = Carbon::parse($salida->fecha_registro);
-                        
-                        // El inicio efectivo es el más tardío entre la hora programada y la hora de entrada.
-                        $inicioEfectivo = $entradaCarbon->max($horarioInicioHoy);
-                        
-                        // El fin efectivo es el más temprano entre la hora programada y la hora de salida.
-                        $finEfectivo = $salidaCarbon->min($horarioFinHoy);
-
-                        if ($finEfectivo > $inicioEfectivo) {
-                            $duracionBruta = $inicioEfectivo->diffInMinutes($finEfectivo);
-
-                            // Descuento de recesos
-                            $recesoMananaInicio = $fechaSeleccionada->copy()->setTime(10, 0, 0);
-                            $recesoMananaFin = $fechaSeleccionada->copy()->setTime(10, 30, 0);
-                            $minutosRecesoManana = 0;
-                            if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
-                                $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
-                                $superposicionFin = $finEfectivo->min($recesoMananaFin);
-                                if ($superposicionFin > $superposicionInicio) {
-                                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
-                                }
-                            }
-
-                            $recesoTardeInicio = $fechaSeleccionada->copy()->setTime(18, 0, 0);
-                            $recesoTardeFin = $fechaSeleccionada->copy()->setTime(18, 30, 0);
-                            $minutosRecesoTarde = 0;
-                            if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
-                                $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
-                                $superposicionFin = $finEfectivo->min($recesoTardeFin);
-                                if ($superposicionFin > $superposicionInicio) {
-                                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
-                                }
-                            }
-
-                            $duracionReal = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
-                            $totalMinutosNetosHoy += $duracionReal;
-                        }
-                    }
+                    $duracionReal = $sessionDetails['horas_dictadas'] * 60;
+                    $totalMinutosNetosHoy += $duracionReal;
 
                     $eficiencia = $duracionProgramada > 0 && $duracionReal > 0 ? round(($duracionReal / $duracionProgramada) * 100) : 0;
-
-                    $minutosTardanza = 0;
-                    $dentroTolerancia = true;
-                    if ($entrada) {
-                        $horaEntradaReal = Carbon::parse($entrada->fecha_registro);
-                        $tolerancia = $horarioInicioHoy->copy()->addMinutes(5);
-                        if ($horaEntradaReal->gt($tolerancia)) {
-                            $minutosTardanza = $horaEntradaReal->diffInMinutes($tolerancia);
-                            $dentroTolerancia = false;
-                        }
-                    }
+                    
+                    $dentroTolerancia = $sessionDetails['minutos_tardanza'] == 0;
 
                     return [
                         'horario' => $horario,
-                        'hora_entrada_registrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i A') : null,
-                        'hora_salida_registrada' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i A') : null,
+                        'hora_entrada_registrada' => $sessionDetails['hora_entrada'] === '--' ? null : $sessionDetails['hora_entrada'],
+                        'hora_salida_registrada' => $sessionDetails['hora_salida'] === '--' ? null : $sessionDetails['hora_salida'],
                         'asistencia' => $asistencia,
                         'puede_registrar_tema' => $puedeRegistrarTema,
                         'dentro_horario' => $dentroDelHorario,
                         'clase_terminada' => $claseTerminada,
-                        'tiene_registros' => $tieneRegistros,
-                        'minutos_tardanza' => $minutosTardanza > 0 ? $minutosTardanza : null,
+                        'tiene_registros' => $sessionDetails['tiene_registros'],
+                        'minutos_tardanza' => $sessionDetails['minutos_tardanza'] > 0 ? $sessionDetails['minutos_tardanza'] : null,
                         'dentro_tolerancia' => $dentroTolerancia,
                         'tiempo_info' => $tiempoInfo,
                         'progreso_clase' => $progresoClase,
@@ -319,7 +261,7 @@ class DashboardController extends Controller
                         'duracion_real' => $duracionReal,
                         'eficiencia' => $eficiencia
                     ];
-                });
+                })->filter();
 
                 $horas = floor($totalMinutosNetosHoy / 60);
                 $minutos = $totalMinutosNetosHoy % 60;
@@ -682,7 +624,7 @@ class DashboardController extends Controller
         $puntualidad = $this->calcularPuntualidadDocente($docenteId, $cicloActivo);
 
         if ($eficiencia < 70 || $puntualidad < 80) {
-            $mensaje = "Tu rendimiento semanal: Eficiencia {$eficiencia}%, Puntualidad {$puntualidad}%.";
+            $mensaje = "Tu rendimiento semanal: Eficiencia {$eficiencia}%, Puntualidad {$puntualidad}%";
             if ($eficiencia < 70) $mensaje .= " Considera revisar tu gestión del tiempo en clase.";
             if ($puntualidad < 80) $mensaje .= " Recuerda llegar puntual a tus sesiones.";
 

@@ -1182,62 +1182,45 @@
     </div>
 </div>
 
+@if (isset($anuncios) && $anuncios->count() > 0)
 <!-- Modal de Anuncios -->
-<div class="modal fade" id="modalAnuncios" tabindex="-1" aria-labelledby="modalAnunciosLabel" aria-hidden="true">
+<div class="modal fade" id="anunciosModal" tabindex="-1" aria-labelledby="anunciosModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalAnunciosLabel"><i class="mdi mdi-bullhorn-variant-outline me-2"></i>Anuncios Importantes</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted">Por favor, tome un momento para revisar las siguientes directrices sobre el registro de asistencia y temas.</p>
-                <ul class="mt-3">
-                    <li>
-                        <i class="mdi mdi-clock-alert-outline announcement-icon"></i>
-                        <div>
-                            <strong class="d-block">Tolerancia de 5 Minutos</strong>
-                            Se permite un máximo de 5 minutos de tolerancia para el registro de su hora de entrada. Pasado este tiempo, se considerará tardanza.
-                        </div>
-                    </li>
-                    <li>
-                        <i class="mdi mdi-login-variant announcement-icon"></i>
-                        <div>
-                            <strong class="d-block">Registro de Entrada y Salida</strong>
-                            Es obligatorio registrar tanto su hora de entrada como su hora de salida para que las horas de clase sean contabilizadas correctamente.
-                        </div>
-                    </li>
-                    <li>
-                        <i class="mdi mdi-book-edit-outline announcement-icon"></i>
-                        <div>
-                            <strong class="d-block">Registro del Tema Desarrollado</strong>
-                            No olvide registrar el tema desarrollado al finalizar cada sesión. Este paso es crucial para el seguimiento académico y la validación de su trabajo.
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="action-button" data-bs-dismiss="modal">
-                    <i class="mdi mdi-check-circle-outline me-1"></i>
-                    <span>Entendido</span>
-                </button>
+        <div class="modal-content" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 20px; overflow: hidden; border: none;">
+            <div class="modal-body p-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 1rem; right: 1rem; z-index: 1056;"></button>
+                <div id="carouselAnuncios" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        @foreach ($anuncios as $key => $anuncio)
+                            <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
+                                @if ($anuncio->imagen)
+                                    <img src="{{ asset('storage/' . $anuncio->imagen) }}" class="d-block w-100" alt="{{ $anuncio->titulo }}">
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                    @if ($anuncios->count() > 1)
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselAnuncios" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselAnuncios" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 </div>
+@endif
 
 @endsection
 
 @push('js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Mostrar modal de anuncios una vez por sesión
-        if (!sessionStorage.getItem('anunciosVistos')) {
-            const modalAnuncios = new bootstrap.Modal(document.getElementById('modalAnuncios'));
-            modalAnuncios.show();
-            sessionStorage.setItem('anunciosVistos', 'true');
-        }
-
         // Reloj en tiempo real
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
@@ -1462,4 +1445,12 @@
         document.querySelector('.modal-body').scrollTop = 0;
     }
 </script>
+@if (isset($anuncios) && $anuncios->count() > 0)
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var anunciosModal = new bootstrap.Modal(document.getElementById('anunciosModal'));
+        anunciosModal.show();
+    });
+</script>
+@endif
 @endpush
