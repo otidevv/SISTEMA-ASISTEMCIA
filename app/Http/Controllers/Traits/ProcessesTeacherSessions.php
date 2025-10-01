@@ -77,21 +77,30 @@ trait ProcessesTeacherSessions
             $entradaCarbon = Carbon::parse($entradaBiometrica->fecha_registro);
             $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
 
-            // El inicio efectivo es el más tardío entre la hora programada y la hora de entrada.
-            $inicioEfectivo = $entradaCarbon->max($horarioInicioHoy);
+            // Determinar la hora de inicio efectiva para el cálculo, respetando la tolerancia de tardanza.
+            $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_ENTRADA_TARDE_MINUTOS);
             
+            $effectiveStartTime;
+            // Si la entrada es ANTES o DENTRO del umbral de tardanza, se usa la hora de inicio programada.
+            if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
+                $effectiveStartTime = $horarioInicioHoy;
+            } else {
+                // Si la entrada es DESPUÉS del umbral, se usa la hora de entrada real (se aplica descuento).
+                $effectiveStartTime = $entradaCarbon;
+            }
+
             // El fin efectivo es el más temprano entre la hora programada y la hora de salida.
             $finEfectivo = $salidaCarbon->min($horarioFinHoy);
 
-            if ($finEfectivo > $inicioEfectivo) {
-                $duracionBruta = $inicioEfectivo->diffInMinutes($finEfectivo);
+            if ($finEfectivo > $effectiveStartTime) {
+                $duracionBruta = $effectiveStartTime->diffInMinutes($finEfectivo);
 
                 // Descuento de recesos
                 $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
                 $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
                 $minutosRecesoManana = 0;
-                if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
-                    $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
+                if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                    $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
                     $superposicionFin = $finEfectivo->min($recesoMananaFin);
                     if ($superposicionFin > $superposicionInicio) {
                         $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
@@ -101,8 +110,8 @@ trait ProcessesTeacherSessions
                 $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
                 $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
                 $minutosRecesoTarde = 0;
-                if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
-                    $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
+                if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                    $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
                     $superposicionFin = $finEfectivo->min($recesoTardeFin);
                     if ($superposicionFin > $superposicionInicio) {
                         $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);

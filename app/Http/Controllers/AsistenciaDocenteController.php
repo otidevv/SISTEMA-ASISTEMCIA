@@ -951,7 +951,19 @@ class AsistenciaDocenteController extends Controller
             $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
 
             // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
-            $duracionBruta = $entradaCarbon->diffInMinutes($salidaCarbon);
+            // Determinar la hora de inicio efectiva para el cálculo, respetando la tolerancia de tardanza.
+            $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_TARDE_MINUTOS);
+            
+            $effectiveStartTime;
+            // Si la entrada es ANTES o DENTRO del umbral de tardanza, se usa la hora de inicio programada.
+            if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
+                $effectiveStartTime = $horarioInicioHoy;
+            } else {
+                // Si la entrada es DESPUÉS del umbral, se usa la hora de entrada real (se aplica descuento).
+                $effectiveStartTime = $entradaCarbon;
+            }
+            
+            $duracionBruta = $effectiveStartTime->diffInMinutes($salidaCarbon);
 
             // Receso de Mañana
             $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);

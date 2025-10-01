@@ -24,7 +24,7 @@
                                 </a>
 
                                 <!-- Tabs para Login y Registro -->
-                                <ul class="nav nav-pills nav-justified mb-3" id="authTabs" role="tablist">
+                                <!--<ul class="nav nav-pills nav-justified mb-3" id="authTabs" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active" id="login-tab" data-bs-toggle="pill"
                                                 data-bs-target="#login" type="button" role="tab">
@@ -46,8 +46,8 @@
                                             </svg>
                                             Registrarse
                                         </button>
-                                    </li>
-                                </ul>
+                                    </li> 
+                                </ul>-->
                             </div>
 
                             <!-- Alertas de Error de Laravel -->
