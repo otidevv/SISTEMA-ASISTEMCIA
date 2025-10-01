@@ -9,7 +9,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 
+{{-- Flatpickr CSS --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <style>
+    /* Estilos para resaltar días con clases en Flatpickr */
+    .flatpickr-day.has-clases {
+        background-color: var(--primary-light) !important;
+        color: var(--primary-text) !important;
+        border-color: var(--primary-color) !important;
+        font-weight: bold;
+    }
+    .flatpickr-day.has-clases:hover {
+        background-color: var(--primary-color) !important;
+        color: #fff !important;
+    }
+
     /* -------------------------------------------------------------------------- */
     /* Variables de Diseño Avanzado                                                */
     /* -------------------------------------------------------------------------- */
@@ -879,8 +894,8 @@
                             <small class="text-muted">({{ $fechaSeleccionada->diffForHumans() }})</small>
                         @endif
                     </h5>
-                    <form method="GET" action="{{ route('dashboard') }}" class="d-flex align-items-center gap-2">
-                        <input type="date" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
+                    <form method="GET" action="{{ route('dashboard') }}" id="form-agenda" class="d-flex align-items-center gap-2">
+                        <input type="text" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
                         <button type="submit" class="action-button outline btn-sm">
                             <i class="mdi mdi-magnify"></i>
                             <span>Ver</span>
@@ -1219,6 +1234,8 @@
 @endsection
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Reloj en tiempo real
@@ -1234,6 +1251,24 @@
                 });
             }, 1000);
         }
+
+        // NUEVO: Inicialización de Flatpickr
+        const diasConClases = @json($diasConClases ?? []);
+        flatpickr("#fecha-agenda", {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            defaultDate: "{{ $fechaSeleccionada->format('Y-m-d') }}",
+            onDayCreate: function(dObj, dStr, fp, dayElem){
+                const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
+                if (diasConClases.includes(dateStr)) {
+                    dayElem.classList.add("has-clases");
+                }
+            },
+            onChange: function(selectedDates, dateStr, instance) {
+                // Enviar el formulario automáticamente al cambiar la fecha
+                document.getElementById('form-agenda').submit();
+            }
+        });
 
         // NUEVO: Countdown timer para próxima clase
         const countdownTimer = document.getElementById('countdown-timer');

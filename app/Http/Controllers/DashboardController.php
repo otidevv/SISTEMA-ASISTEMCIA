@@ -315,6 +315,29 @@ class DashboardController extends Controller
                 
                 $proximaClase = $this->obtenerProximaClaseCorregida($user->id, $cicloActivo);
                 $data['proximaClase'] = $proximaClase;
+
+                // NUEVO: Obtener todos los días con clases en el mes para el calendario
+                $diasConClases = [];
+                if ($cicloActivo) {
+                    $diasSemanaConClase = HorarioDocente::where('docente_id', $user->id)
+                        ->where('ciclo_id', $cicloActivo->id)
+                        ->distinct()
+                        ->pluck('dia_semana')
+                        ->map(function ($dia) {
+                            return strtolower($dia);
+                        })
+                        ->toArray();
+
+                    $inicioMes = $fechaSeleccionada->copy()->startOfMonth();
+                    $finMes = $fechaSeleccionada->copy()->endOfMonth();
+
+                    for ($date = $inicioMes; $date->lte($finMes); $date->addDay()) {
+                        if (in_array(strtolower($date->locale('es')->dayName), $diasSemanaConClase)) {
+                            $diasConClases[] = $date->format('Y-m-d');
+                        }
+                    }
+                }
+                $data['diasConClases'] = $diasConClases;
                 
                 $notificaciones = $this->generarNotificacionesDocente($user->id, $fechaSeleccionada, $sesionesPendientes, $proximaClase, $cicloActivo);
                 $data['notificaciones'] = $notificaciones;
@@ -686,7 +709,7 @@ class DashboardController extends Controller
         if ($sesionesPendientes > 0) {
             $recordatorios[] = [
                 'tipo' => 'warning',
-                'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . "."
+                'mensaje' => "{$sesionesPendientes} sesión" . ($sesionesPendientes > 1 ? 'es' : '') . " pendiente" . ($sesionesPendientes > 1 ? 's' : '') . " de completar el tema para el " . $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') . ".",
             ];
         }
         
