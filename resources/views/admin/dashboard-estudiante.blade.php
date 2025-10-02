@@ -851,6 +851,54 @@
                                             </div>
                                         @endif
                                     @endif
+
+                                    {{-- INICIO: Detalle de Asistencias y Faltas --}}
+                                    <div class="section-divider"></div>
+                                    <div class="row mt-4">
+                                        <div class="col-lg-6">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-success text-white">
+                                                    <h6 class="card-title mb-0"><i class="mdi mdi-calendar-check-outline me-2"></i>Fechas de Asistencia</h6>
+                                                </div>
+                                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                                    @if (!empty($asistencias))
+                                                        <ul class="list-group list-group-flush">
+                                                            @foreach ($asistencias as $fecha)
+                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                    <span>{{ \Carbon\Carbon::parse($fecha)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
+                                                                    <span class="badge bg-success rounded-pill"><i class="mdi mdi-check"></i></span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <p class="text-muted text-center mt-3">No se han registrado asistencias hasta la fecha.</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-danger text-white">
+                                                    <h6 class="card-title mb-0"><i class="mdi mdi-calendar-remove-outline me-2"></i>Fechas de Faltas</h6>
+                                                </div>
+                                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                                    @if (!empty($faltas))
+                                                        <ul class="list-group list-group-flush">
+                                                            @foreach ($faltas as $fecha)
+                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                                    <span>{{ \Carbon\Carbon::parse($fecha)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
+                                                                    <span class="badge bg-danger rounded-pill"><i class="mdi mdi-close"></i></span>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <p class="text-muted text-center mt-3">¡Felicidades! No tienes faltas registradas.</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{-- FIN: Detalle de Asistencias y Faltas --}}
                                 </div>
                             </div>
                         </div>

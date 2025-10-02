@@ -220,6 +220,7 @@ class InscripcionEstudianteController extends Controller
                 return response()->json([
                     'success' => true,
                     'inscrito' => true,
+                    'ciclo' => $cicloActivo, // <-- AGREGADO
                     'inscripcion' => [
                         'id' => $postulacion->id,
                         'codigo' => $postulacion->codigo_postulante,
@@ -243,6 +244,7 @@ class InscripcionEstudianteController extends Controller
                 return response()->json([
                     'success' => true,
                     'inscrito' => true,
+                    'ciclo' => $cicloActivo, // <-- AGREGADO
                     'inscripcion' => [
                         'id' => $inscripcion->id,
                         'codigo' => $inscripcion->codigo_inscripcion,

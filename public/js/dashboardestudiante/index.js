@@ -11,17 +11,18 @@ $(document).ready(function() {
         $.ajax({
             url: '/json/inscripciones-estudiante/verificar',
             type: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    if (response.inscrito) {
-                        inscripcionActual = response.inscripcion;
-                        mostrarInscripcionActual();
-                    } else {
-                        cargarCicloActivo();
-                    }
-                }
-            },
-            error: function() {
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.inscrito) {
+                                cicloActivo = response.ciclo; // <-- AGREGADO
+                                mostrarInfoCiclo(); // <-- AGREGADO
+                                inscripcionActual = response.inscripcion;
+                                mostrarInscripcionActual();
+                            } else {
+                                cargarCicloActivo();
+                            }
+                        }
+                    },            error: function() {
                 mostrarError('Error al verificar el estado de inscripción');
             }
         });

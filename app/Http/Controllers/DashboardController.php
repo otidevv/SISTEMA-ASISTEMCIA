@@ -138,6 +138,47 @@ class DashboardController extends Controller
                 $data['inscripcionActiva'] = $inscripcionActiva;
                 $data['infoAsistencia'] = $infoAsistencia;
                 $data['primerRegistro'] = $primerRegistro;
+
+                // --- INICIO: Lógica para obtener fechas de asistencia y faltas ---
+                $asistencias = [];
+                $faltas = [];
+                $dias_habiles_list = [];
+
+                if ($primerRegistro) {
+                    $fechaInicioConteo = Carbon::parse($primerRegistro->fecha_registro)->startOfDay(); // <-- CORRECCIÓN
+                    $fechaFinCiclo = Carbon::parse($ciclo->fecha_fin)->startOfDay();
+                    $hoy = Carbon::now()->startOfDay();
+
+                    // Determinar el rango de fechas a procesar (desde el primer registro hasta hoy, sin pasar del fin del ciclo)
+                    $fechaFinProcesamiento = min($hoy, $fechaFinCiclo);
+
+                    // Obtener todos los días hábiles en el rango
+                    $fechaActual = $fechaInicioConteo->copy();
+                    while ($fechaActual <= $fechaFinProcesamiento) {
+                        if ($fechaActual->isWeekday()) {
+                            $dias_habiles_list[] = $fechaActual->toDateString();
+                        }
+                        $fechaActual->addDay();
+                    }
+
+                    // Obtener todas las fechas de asistencia del estudiante en el ciclo
+                    $registrosAsistencia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                        ->whereBetween('fecha_registro', [$fechaInicioConteo, $fechaFinProcesamiento->copy()->endOfDay()])
+                        ->select(DB::raw('DATE(fecha_registro) as fecha'))
+                        ->distinct()
+                        ->get()
+                        ->pluck('fecha')
+                        ->toArray();
+                    
+                    $asistencias = $registrosAsistencia;
+
+                    // Comparar días hábiles con asistencias para encontrar las faltas
+                    $faltas = array_diff($dias_habiles_list, $asistencias);
+                }
+
+                $data['asistencias'] = $asistencias;
+                $data['faltas'] = $faltas;
+                // --- FIN: Lógica para obtener fechas de asistencia y faltas ---
             }
 
             // NUEVO: Determinar si el estudiante ha completado el proceso (constancia subida)
