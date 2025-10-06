@@ -99,6 +99,10 @@ class DashboardController extends Controller
                         $ciclo->fecha_primer_examen,
                         $ciclo
                     );
+                    $fechasPrimerExamen = $this->getFechasAsistenciaPeriodo($user->numero_documento, $primerRegistro->fecha_registro, $ciclo->fecha_primer_examen);
+                    $infoAsistencia['primer_examen']['asistencias'] = $fechasPrimerExamen['asistencias'];
+                    $infoAsistencia['primer_examen']['faltas'] = $fechasPrimerExamen['faltas'];
+
 
                     // Segundo Examen (si existe fecha)
                     if ($ciclo->fecha_segundo_examen) {
@@ -111,6 +115,9 @@ class DashboardController extends Controller
                             $ciclo->fecha_segundo_examen,
                             $ciclo
                         );
+                        $fechasSegundoExamen = $this->getFechasAsistenciaPeriodo($user->numero_documento, $inicioSegundo, $ciclo->fecha_segundo_examen);
+                        $infoAsistencia['segundo_examen']['asistencias'] = $fechasSegundoExamen['asistencias'];
+                        $infoAsistencia['segundo_examen']['faltas'] = $fechasSegundoExamen['faltas'];
                     }
 
                     // Tercer Examen (si existe fecha)
@@ -124,6 +131,9 @@ class DashboardController extends Controller
                             $ciclo->fecha_tercer_examen,
                             $ciclo
                         );
+                        $fechasTercerExamen = $this->getFechasAsistenciaPeriodo($user->numero_documento, $inicioTercero, $ciclo->fecha_tercer_examen);
+                        $infoAsistencia['tercer_examen']['asistencias'] = $fechasTercerExamen['asistencias'];
+                        $infoAsistencia['tercer_examen']['faltas'] = $fechasTercerExamen['faltas'];
                     }
 
                     // Asistencia total del ciclo
@@ -133,6 +143,15 @@ class DashboardController extends Controller
                         min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)), // Usar fecha actual si el ciclo no ha terminado
                         $ciclo
                     );
+                    
+                    // --- Lógica para obtener fechas de asistencia y faltas para el ciclo completo ---
+                    $fechasCicloCompleto = $this->getFechasAsistenciaPeriodo(
+                        $user->numero_documento,
+                        $primerRegistro->fecha_registro,
+                        min(Carbon::now(), Carbon::parse($ciclo->fecha_fin))
+                    );
+                    $data['asistencias'] = $fechasCicloCompleto['asistencias'];
+                    $data['faltas'] = $fechasCicloCompleto['faltas'];
                 }
 
                 $data['inscripcionActiva'] = $inscripcionActiva;
@@ -1147,6 +1166,53 @@ class DashboardController extends Controller
                 'message' => 'Error al registrar: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Obtiene las fechas de asistencia y falta para un período específico.
+     */
+    private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fechaFin)
+    {
+        $asistencias = [];
+        $faltas = [];
+        $dias_habiles_list = [];
+
+        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaFinCarbon = Carbon::parse($fechaFin)->startOfDay();
+        $hoy = Carbon::now()->startOfDay();
+
+        // La fecha final para el cálculo no puede ser futura
+        $fechaFinCalculo = min($hoy, $fechaFinCarbon);
+
+        // Solo procesar si el inicio no es en el futuro
+        if ($fechaInicioCarbon > $hoy) {
+            return ['asistencias' => [], 'faltas' => []];
+        }
+
+        // Obtener todos los días hábiles en el rango
+        $fechaActual = $fechaInicioCarbon->copy();
+        while ($fechaActual <= $fechaFinCalculo) {
+            if ($fechaActual->isWeekday()) {
+                $dias_habiles_list[] = $fechaActual->toDateString();
+            }
+            $fechaActual->addDay();
+        }
+
+        // Obtener todas las fechas de asistencia del estudiante en el período
+        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [$fechaInicioCarbon, $fechaFinCalculo->copy()->endOfDay()])
+            ->select(DB::raw('DATE(fecha_registro) as fecha'))
+            ->distinct()
+            ->get()
+            ->pluck('fecha')
+            ->toArray();
+        
+        $asistencias = $registrosAsistencia;
+
+        // Comparar días hábiles con asistencias para encontrar las faltas
+        $faltas = array_diff($dias_habiles_list, $asistencias);
+
+        return ['asistencias' => array_values($asistencias), 'faltas' => array_values($faltas)];
     }
 
     /**

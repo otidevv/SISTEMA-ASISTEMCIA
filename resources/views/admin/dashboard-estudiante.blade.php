@@ -851,54 +851,6 @@
                                             </div>
                                         @endif
                                     @endif
-
-                                    {{-- INICIO: Detalle de Asistencias y Faltas --}}
-                                    <div class="section-divider"></div>
-                                    <div class="row mt-4">
-                                        <div class="col-lg-6">
-                                            <div class="card h-100">
-                                                <div class="card-header bg-success text-white">
-                                                    <h6 class="card-title mb-0"><i class="mdi mdi-calendar-check-outline me-2"></i>Fechas de Asistencia</h6>
-                                                </div>
-                                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                                                    @if (!empty($asistencias))
-                                                        <ul class="list-group list-group-flush">
-                                                            @foreach ($asistencias as $fecha)
-                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                    <span>{{ \Carbon\Carbon::parse($fecha)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
-                                                                    <span class="badge bg-success rounded-pill"><i class="mdi mdi-check"></i></span>
-                                                                </li>
-                                                            @endforeach
-                                                        </ul>
-                                                    @else
-                                                        <p class="text-muted text-center mt-3">No se han registrado asistencias hasta la fecha.</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="card h-100">
-                                                <div class="card-header bg-danger text-white">
-                                                    <h6 class="card-title mb-0"><i class="mdi mdi-calendar-remove-outline me-2"></i>Fechas de Faltas</h6>
-                                                </div>
-                                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                                                    @if (!empty($faltas))
-                                                        <ul class="list-group list-group-flush">
-                                                            @foreach ($faltas as $fecha)
-                                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                                    <span>{{ \Carbon\Carbon::parse($fecha)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
-                                                                    <span class="badge bg-danger rounded-pill"><i class="mdi mdi-close"></i></span>
-                                                                </li>
-                                                            @endforeach
-                                                        </ul>
-                                                    @else
-                                                        <p class="text-muted text-center mt-3">¡Felicidades! No tienes faltas registradas.</p>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {{-- FIN: Detalle de Asistencias y Faltas --}}
                                 </div>
                             </div>
                         </div>
@@ -999,6 +951,16 @@
                                                 </div>
                                             @endif
                                         @endif
+                                        <div class="text-center mt-3">
+                                            <button type="button" class="btn btn-primary btn-sm" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#detalleAsistenciaModal" 
+                                                    data-periodo="Primera Evaluación"
+                                                    data-asistencias='{{ json_encode($infoAsistencia['primer_examen']['asistencias'] ?? []) }}'
+                                                    data-faltas='{{ json_encode($infoAsistencia['primer_examen']['faltas'] ?? []) }}'>
+                                                <i class="mdi mdi-format-list-bulleted me-1"></i> Ver Detalle
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1029,6 +991,16 @@
                                                 </div>
                                                 <h6 class="metric-label">Asistencia Actual</h6>
                                             </div>
+                                            <div class="text-center mt-3">
+                                                <button type="button" class="btn btn-primary btn-sm" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#detalleAsistenciaModal" 
+                                                        data-periodo="Segunda Evaluación"
+                                                        data-asistencias='{{ json_encode($infoAsistencia['segundo_examen']['asistencias'] ?? []) }}'
+                                                        data-faltas='{{ json_encode($infoAsistencia['segundo_examen']['faltas'] ?? []) }}'>
+                                                    <i class="mdi mdi-format-list-bulleted me-1"></i> Ver Detalle
+                                                </button>
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -1058,6 +1030,16 @@
                                                     {{ $infoAsistencia['tercer_examen']['porcentaje_asistencia_actual'] ?? $infoAsistencia['tercer_examen']['porcentaje_asistencia'] }}%
                                                 </div>
                                                 <h6 class="metric-label">Asistencia Actual</h6>
+                                            </div>
+                                            <div class="text-center mt-3">
+                                                <button type="button" class="btn btn-primary btn-sm" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#detalleAsistenciaModal" 
+                                                        data-periodo="Tercera Evaluación"
+                                                        data-asistencias='{{ json_encode($infoAsistencia['tercer_examen']['asistencias'] ?? []) }}'
+                                                        data-faltas='{{ json_encode($infoAsistencia['tercer_examen']['faltas'] ?? []) }}'>
+                                                    <i class="mdi mdi-format-list-bulleted me-1"></i> Ver Detalle
+                                                </button>
                                             </div>
                                         @endif
                                     </div>
@@ -1109,6 +1091,25 @@
             @endif
         </div>
     </div>
+
+    {{-- INICIO: Modal para Detalles de Asistencia --}}
+    <div class="modal fade" id="detalleAsistenciaModal" tabindex="-1" aria-labelledby="detalleAsistenciaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detalleAsistenciaModalLabel">Detalle de Asistencia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                    {{-- El contenido se llenará dinámicamente con JavaScript --}}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- FIN: Modal para Detalles de Asistencia --}}
 
     <!-- Modales Institucionales (mantenidos como fallback) -->
     <!-- Modal de confirmación -->
@@ -1209,6 +1210,57 @@
     
     <!-- Cargar el JavaScript original primero -->
     <script src="{{ asset('js/dashboardestudiante/index.js') }}"></script>
+
+    {{-- Script para la modal de detalle de asistencia --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var detalleAsistenciaModal = document.getElementById('detalleAsistenciaModal');
+            detalleAsistenciaModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                var periodo = button.getAttribute('data-periodo');
+                var asistencias = JSON.parse(button.getAttribute('data-asistencias'));
+                var faltas = JSON.parse(button.getAttribute('data-faltas'));
+                
+                var modalTitle = detalleAsistenciaModal.querySelector('.modal-title');
+                var modalBody = detalleAsistenciaModal.querySelector('.modal-body');
+                
+                modalTitle.textContent = 'Detalle de Asistencia - ' + periodo;
+                
+                // Limpiar contenido anterior
+                modalBody.innerHTML = '';
+
+                // Asistencias
+                var asistenciasHtml = '<h5><i class="mdi mdi-check-circle text-success"></i> Asistencias (' + asistencias.length + ')</h5>';
+                if (asistencias && asistencias.length > 0) {
+                    asistenciasHtml += '<ul class="list-group list-group-flush mb-3">';
+                    asistencias.forEach(function(fecha) {
+                        var date = new Date(fecha + 'T00:00:00');
+                        var formattedDate = date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                        asistenciasHtml += `<li class="list-group-item">${formattedDate}</li>`;
+                    });
+                    asistenciasHtml += '</ul>';
+                } else {
+                    asistenciasHtml += '<p class="text-muted">No hay asistencias registradas para este período.</p>';
+                }
+                modalBody.innerHTML += asistenciasHtml;
+
+                // Faltas
+                var faltasHtml = '<hr><h5><i class="mdi mdi-close-circle text-danger"></i> Faltas (' + faltas.length + ')</h5>';
+                if (faltas && faltas.length > 0) {
+                    faltasHtml += '<ul class="list-group list-group-flush">';
+                    faltas.forEach(function(fecha) {
+                        var date = new Date(fecha + 'T00:00:00');
+                        var formattedDate = date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                        faltasHtml += `<li class="list-group-item">${formattedDate}</li>`;
+                    });
+                    faltasHtml += '</ul>';
+                } else {
+                    faltasHtml += '<p class="text-muted">No se han registrado faltas para este período.</p>';
+                }
+                modalBody.innerHTML += faltasHtml;
+            });
+        });
+    </script>
 
     @if (isset($anuncios) && $anuncios->count() > 0)
         <!-- Modal de Anuncios -->
