@@ -235,6 +235,70 @@ class ConstanciaPostulacionController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Subir constancia firmada por un administrador
+     */
+    public function subirConstanciaFirmadaAdmin(Request $request, $postulacionId)
+    {
+        try {
+            if (!Auth::user()->hasPermission('postulaciones.subir-constancia-admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para realizar esta acción'
+                ], 403);
+            }
+
+            $request->validate([
+                'documento_constancia_admin' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120' // Max 5MB
+            ]);
+            
+            $postulacion = Postulacion::findOrFail($postulacionId);
+            
+            // Subir archivo
+            if ($request->hasFile('documento_constancia_admin')) {
+                // Eliminar documento anterior si existe
+                if ($postulacion->constancia_firmada_path && Storage::disk('public')->exists($postulacion->constancia_firmada_path)) {
+                    Storage::disk('public')->delete($postulacion->constancia_firmada_path);
+                }
+                
+                // Generar nombre único para el archivo
+                $archivo = $request->file('documento_constancia_admin');
+                $extension = $archivo->getClientOriginalExtension();
+                $codigoPostulante = $postulacion->codigo_postulante ?: $postulacion->id;
+                $nombreArchivo = 'constancia_' . $codigoPostulante . '_' . time() . '.' . $extension;
+                
+                // Guardar nuevo documento
+                $path = $archivo->storeAs(
+                    'constancias/' . $postulacion->ciclo_id,
+                    $nombreArchivo,
+                    'public'
+                );
+                
+                $postulacion->constancia_firmada_path = $path;
+                $postulacion->constancia_firmada = true;
+                $postulacion->fecha_constancia_subida = now();
+                $postulacion->save();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Constancia firmada subida exitosamente por el administrador'
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo subir el archivo'
+            ], 400);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error al subir constancia por admin: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el archivo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     
     /**
      * Verificar si todos los documentos están completos

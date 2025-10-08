@@ -2034,6 +2034,30 @@
             </div>
         </div>
     </div>
+    <!-- Modal para subir constancia firmada (Admin) -->
+    <div class="modal fade" id="uploadConstanciaAdminModal" tabindex="-1" aria-labelledby="uploadConstanciaAdminModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadConstanciaAdminModalLabel">Subir Constancia Firmada</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadConstanciaAdminForm" enctype="multipart/form-data">
+                        <input type="hidden" id="postulacion-id-admin-upload" name="postulacion_id">
+                        <div class="mb-3">
+                            <label for="documento_constancia_admin" class="form-label">Seleccionar archivo PDF o imagen</label>
+                            <input class="form-control" type="file" id="documento_constancia_admin" name="documento_constancia_admin" accept=".pdf,.jpg,.jpeg,.png" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmUploadConstanciaAdmin">Subir</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('modals')

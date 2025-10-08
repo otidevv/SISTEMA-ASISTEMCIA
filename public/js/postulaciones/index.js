@@ -86,22 +86,20 @@ function initDataTable() {
             },
             {
                 data: null,
-                render: function(data) {
-                    // Mostrar estado de constancia y botones de acción
+                render: function(data, type, row) {
                     let html = '<div class="d-flex align-items-center gap-2">';
-                    
-                    // Estado de constancia
-                    html += data.constancia_estado;
-                    
-                    // Botones de acción según el estado
-                    if (data.constancia_firmada) {
-                        // Si tiene constancia firmada, mostrar botón para verla
-                        html += ' <button class="btn btn-sm btn-success view-constancia-firmada" data-id="' + data.id + '" title="Ver constancia firmada">';
-                        html += '<i class="uil uil-file-check-alt"></i></button>';
-                    } else if (data.constancia_generada) {
-                        // Si tiene constancia generada pero no firmada, mostrar botón para descargarla
-                        html += ' <button class="btn btn-sm btn-info download-constancia" data-id="' + data.id + '" title="Descargar constancia">';
-                        html += '<i class="uil uil-file-download-alt"></i></button>';
+                    html += row.constancia_estado;
+
+                    if (!row.constancia_generada) {
+                        html += ' <button class="btn btn-sm btn-info generate-constancia" data-id="' + row.id + '" title="Generar constancia"><i class="uil uil-file-download-alt"></i></button>';
+                    }
+
+                    if (row.constancia_generada && !row.constancia_firmada) {
+                        html += ' <button class="btn btn-sm btn-secondary upload-constancia-admin" data-id="' + row.id + '" title="Subir constancia firmada"><i class="uil uil-upload"></i></button>';
+                    }
+
+                    if (row.constancia_firmada) {
+                        html += ' <button class="btn btn-sm btn-success view-constancia-firmada" data-id="' + row.id + '" title="Ver constancia firmada"><i class="uil uil-file-check-alt"></i></button>';
                     }
                     
                     html += '</div>';
@@ -251,17 +249,35 @@ function setupEventHandlers() {
             }
         });
     });
+
+    // Generar constancia
+    $(document).on('click', '.generate-constancia', function() {
+        const id = $(this).data('id');
+        const btn = $(this);
+
+        const newWindow = window.open(default_server + '/postulacion/constancia/generar/' + id, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') { 
+            toastr.warning('El navegador bloqueó la ventana emergente. Por favor, permita las ventanas emergentes para este sitio.', 'Aviso de Pop-up');
+            return;
+        }
+
+        // Para evitar que el usuario pierda la fila, actualizamos la UI manualmente.
+        // La recarga completa se hará cuando suba el archivo firmado.
+        toastr.success('Constancia generada. La fila se actualizará para permitir la subida del documento firmado.');
+
+        // Actualizar la data de la fila en DataTables
+        const row = table.row(btn.closest('tr'));
+        const rowData = row.data();
+        rowData.constancia_generada = true;
+        
+        // Invalidar la fila para que DataTables la redibuje con los nuevos datos
+        row.invalidate().draw(false);
+    });
     
     // Ver constancia firmada
     $(document).on('click', '.view-constancia-firmada', function() {
         const id = $(this).data('id');
         window.open(default_server + '/postulacion/constancia/ver/' + id, '_blank');
-    });
-    
-    // Descargar constancia generada
-    $(document).on('click', '.download-constancia', function() {
-        const id = $(this).data('id');
-        window.open(default_server + '/postulacion/constancia/generar/' + id, '_blank');
     });
     
     // Confirmar rechazo
@@ -346,6 +362,47 @@ function setupEventHandlers() {
     $('.modal').on('hidden.bs.modal', function() {
         $(this).find('form')[0]?.reset();
         currentPostulacionId = null;
+    });
+
+    // Subir constancia (admin)
+    $(document).on('click', '.upload-constancia-admin', function() {
+        const id = $(this).data('id');
+        currentPostulacionId = id;
+        $('#postulacion-id-admin-upload').val(id);
+        $('#uploadConstanciaAdminModal').modal('show');
+    });
+
+    // Confirmar subida de constancia (admin)
+    $('#confirmUploadConstanciaAdmin').on('click', function() {
+        const form = $('#uploadConstanciaAdminForm')[0];
+        const formData = new FormData(form);
+        const postulacionId = $('#postulacion-id-admin-upload').val();
+
+        if (!formData.get('documento_constancia_admin').name) {
+            toastr.error('Debe seleccionar un archivo');
+            return;
+        }
+
+        $.ajax({
+            url: default_server + "/postulacion/constancia/subir-admin/" + postulacionId,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    $('#uploadConstanciaAdminModal').modal('hide');
+                    table.ajax.reload();
+                } else {
+                    toastr.error(response.message || 'Error al subir la constancia');
+                }
+            },
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'Error al subir la constancia';
+                toastr.error(errorMsg);
+            }
+        });
     });
 }
 

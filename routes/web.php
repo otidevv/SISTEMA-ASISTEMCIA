@@ -344,6 +344,8 @@ Route::middleware('auth')->group(function () {
             ->name('postulacion.constancia.generar');
         Route::post('/subir/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'subirConstanciaFirmada'])
             ->name('postulacion.constancia.subir');
+        Route::post('/subir-admin/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'subirConstanciaFirmadaAdmin'])
+            ->name('postulacion.constancia.subir-admin');
         Route::get('/ver/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'verConstanciaFirmada'])
             ->name('postulacion.constancia.ver');
         Route::get('/estado/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'estadoConstancia'])
