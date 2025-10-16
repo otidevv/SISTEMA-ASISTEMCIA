@@ -3,7 +3,6 @@
 @section('title', 'Dashboard Estudiante - CEPRE UNAMAD')
 
 @push('css')
-    <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
     
     <style>
@@ -640,36 +639,34 @@
 @section('content')
     <div class="container-fluid">
         <div class="dashboard-estudiante-container">
-            <!-- Header Institucional -->
-            <div class="institutional-header">
+            <div class="institutional-header tw-transition-all tw-duration-300 hover:tw-shadow-2xl">
                 <div class="institutional-breadcrumb">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Portal</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" class="tw-transition-colors hover:tw-text-white">Portal</a></li>
                         <li class="breadcrumb-item active">Dashboard Estudiantil</li>
                     </ol>
                 </div>
                 
                 <div class="institutional-brand">
-                    <div class="cepre-logo">
+                    <div class="cepre-logo tw-transition-transform hover:tw-scale-110 hover:tw-rotate-6">
                         C
                     </div>
                     <div class="institutional-info">
-                        <h2>CEPRE UNAMAD</h2>
+                        <h2 class="tw-tracking-tight">CEPRE UNAMAD</h2>
                         <p class="subtitle">Centro de Estudios Preuniversitarios</p>
                         <p class="institutional-motto">"Forjando el futuro académico de la región"</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Información del estudiante -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card student-welcome">
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-md-8">
-                                    <h3 class="mb-1">¡Bienvenido, {{ Auth::user()->nombre }}!</h3>
-                                    <p class="mb-0">
+                                    <h3 class="mb-1 tw-tracking-tighter">¡Bienvenido, {{ Auth::user()->nombre }}!</h3>
+                                    <p class="mb-0 tw-max-w-3xl">
                                         @if (Auth::user()->hasRole('postulante'))
                                             Tu camino hacia la universidad comienza aquí. Inscríbete en el ciclo actual para iniciar tu preparación académica de excelencia.
                                         @else
@@ -678,10 +675,10 @@
                                     </p>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <div id="ciclo-info" class="cycle-info">
+                                    <div id="ciclo-info" class="cycle-info tw-transition-all hover:tw-shadow-lg hover:tw-border-white/50">
                                         <div class="loading-container">
                                             <div class="cepre-spinner"></div>
-                                            <div class="loading-text">Cargando información del ciclo...</div>
+                                            <div class="loading-text">Cargando ciclo...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -696,12 +693,12 @@
                 <div class="row mb-4">
                     <div class="col-12">
                         <div class="alert alert-info" role="alert">
-                            <h4 class="alert-heading mb-3">
+                            <h4 class="alert-heading mb-3 tw-flex tw-items-center">
                                 <i class="mdi mdi-bell-outline me-2"></i>Comunicados Institucionales
                             </h4>
                             <div class="section-divider"></div>
                             @foreach ($notifications as $notification)
-                                <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white rounded-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white rounded-3 tw-shadow-sm hover:tw-shadow-md tw-transition">
                                     <div>
                                         <h6 class="mb-1 fw-bold text-primary">{{ $notification->data['titulo'] ?? 'Comunicado Importante' }}</h6>
                                         <p class="mb-1">{{ $notification->data['message'] }}</p>
@@ -719,12 +716,11 @@
 
             {{-- SECCIÓN 1: PROCESO DE POSTULACIÓN/INSCRIPCIÓN --}}
             @if (!isset($constanciaSubida) || !$constanciaSubida)
-                <!-- Estado de Postulación -->
                 <div class="row mb-4">
                     <div class="col-12">
                         <div id="contenedor-postulacion" class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">
+                                <h5 class="card-title mb-0 tw-flex tw-items-center">
                                     <i class="mdi mdi-file-document-outline me-2"></i>Estado de tu Postulación Académica
                                 </h5>
                             </div>
@@ -740,12 +736,10 @@
                     </div>
                 </div>
 
-                <!-- Formulario de inscripción -->
                 <div class="row">
                     <div class="col-12">
                         <div id="contenedor-inscripcion">
-                            <!-- Se llenará dinámicamente -->
-                        </div>
+                            </div>
                     </div>
                 </div>
 
@@ -757,32 +751,32 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">
+                                <h5 class="card-title mb-0 tw-flex tw-items-center">
                                     <i class="mdi mdi-school me-2"></i>Información de Inscripción Académica
                                 </h5>
                             </div>
                             <div class="card-body">
                                 <div class="row g-4">
                                     <div class="col-md-3">
-                                        <div class="metrics-card">
+                                        <div class="metrics-card tw-transition-transform hover:tw-scale-105">
                                             <h6 class="metric-label">Ciclo Académico</h6>
                                             <div class="metric-number" style="font-size: 1.8rem;">{{ $inscripcionActiva->ciclo->nombre }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="metrics-card">
+                                        <div class="metrics-card tw-transition-transform hover:tw-scale-105">
                                             <h6 class="metric-label">Carrera Profesional</h6>
                                             <div class="metric-number" style="font-size: 1.8rem;">{{ $inscripcionActiva->carrera->nombre }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="metrics-card">
+                                        <div class="metrics-card tw-transition-transform hover:tw-scale-105">
                                             <h6 class="metric-label">Turno de Estudios</h6>
                                             <div class="metric-number" style="font-size: 1.8rem;">{{ $inscripcionActiva->turno->nombre }}</div>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <div class="metrics-card">
+                                        <div class="metrics-card tw-transition-transform hover:tw-scale-105">
                                             <h6 class="metric-label">Aula Asignada</h6>
                                             <div class="metric-number" style="font-size: 1.8rem;">{{ $inscripcionActiva->aula->codigo }}</div>
                                             <small class="text-muted">{{ $inscripcionActiva->aula->nombre }}</small>
@@ -800,7 +794,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title mb-0">
+                                    <h5 class="card-title mb-0 tw-flex tw-items-center">
                                         <i class="mdi mdi-calendar-check me-2"></i>Control de Asistencia Académica
                                     </h5>
                                 </div>
@@ -861,7 +855,7 @@
                         {{-- Primer Examen --}}
                         @if (isset($infoAsistencia['primer_examen']))
                             <div class="col-lg-4 mb-3">
-                                <div class="card border @if ($infoAsistencia['primer_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['primer_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100">
+                                <div class="card border @if ($infoAsistencia['primer_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['primer_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100 tw-group">
                                     <div class="card-header @if ($infoAsistencia['primer_examen']['estado'] == 'inhabilitado') bg-danger @elseif($infoAsistencia['primer_examen']['estado'] == 'amonestado') bg-warning @else bg-success @endif text-white">
                                         <h5 class="card-title mb-0">Primera Evaluación</h5>
                                         <small class="fw-medium">{{ \Carbon\Carbon::parse($inscripcionActiva->ciclo->fecha_primer_examen)->format('d/m/Y') }}</small>
@@ -966,10 +960,10 @@
                             </div>
                         @endif
 
-                        {{-- Segundo y Tercer Examen (estructura similar condensada) --}}
+                        {{-- Segundo Examen --}}
                         @if (isset($infoAsistencia['segundo_examen']))
                             <div class="col-lg-4 mb-3">
-                                <div class="card border @if ($infoAsistencia['segundo_examen']['estado'] == 'pendiente') border-secondary @elseif($infoAsistencia['segundo_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['segundo_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100">
+                                <div class="card border @if ($infoAsistencia['segundo_examen']['estado'] == 'pendiente') border-secondary @elseif($infoAsistencia['segundo_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['segundo_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100 tw-group">
                                     <div class="card-header @if ($infoAsistencia['segundo_examen']['estado'] == 'pendiente') bg-secondary @elseif($infoAsistencia['segundo_examen']['estado'] == 'inhabilitado') bg-danger @elseif($infoAsistencia['segundo_examen']['estado'] == 'amonestado') bg-warning @else bg-success @endif text-white">
                                         <h5 class="card-title mb-0">Segunda Evaluación</h5>
                                         <small class="fw-medium">{{ \Carbon\Carbon::parse($inscripcionActiva->ciclo->fecha_segundo_examen)->format('d/m/Y') }}</small>
@@ -985,12 +979,88 @@
                                                 <small class="text-muted">Comenzará después de la primera evaluación</small>
                                             </div>
                                         @else
-                                            <div class="text-center mb-3">
+                                            {{-- INICIO DE CÓDIGO CORREGIDO --}}
+                                            <div class="text-center mb-4">
                                                 <div class="metric-number @if ($infoAsistencia['segundo_examen']['estado'] == 'inhabilitado') text-danger @elseif($infoAsistencia['segundo_examen']['estado'] == 'amonestado') text-warning @else text-success @endif" style="font-size: 3rem;">
                                                     {{ $infoAsistencia['segundo_examen']['porcentaje_asistencia_actual'] ?? $infoAsistencia['segundo_examen']['porcentaje_asistencia'] }}%
                                                 </div>
                                                 <h6 class="metric-label">Asistencia Actual</h6>
+                                                @if ($infoAsistencia['segundo_examen']['es_proyeccion'])
+                                                    <small class="text-muted">({{ $infoAsistencia['segundo_examen']['dias_habiles_transcurridos'] }} de {{ $infoAsistencia['segundo_examen']['dias_habiles'] }} días)</small>
+                                                @endif
                                             </div>
+
+                                            <div class="mb-4">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Días asistidos:</span>
+                                                    <span class="fw-bold text-success">{{ $infoAsistencia['segundo_examen']['dias_asistidos'] }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Faltas actuales:</span>
+                                                    <span class="fw-bold text-danger">{{ $infoAsistencia['segundo_examen']['dias_falta'] }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Límite amonestación:</span>
+                                                    <span class="fw-bold text-warning">{{ $infoAsistencia['segundo_examen']['limite_amonestacion'] }} faltas</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-medium">Límite inhabilitación:</span>
+                                                    <span class="fw-bold text-danger">{{ $infoAsistencia['segundo_examen']['limite_inhabilitacion'] }} faltas</span>
+                                                </div>
+                                            </div>
+
+                                            @if ($infoAsistencia['segundo_examen']['estado'] == 'inhabilitado')
+                                                <div class="alert alert-danger mb-3">
+                                                    <i class="mdi mdi-close-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['segundo_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @elseif($infoAsistencia['segundo_examen']['estado'] == 'amonestado')
+                                                <div class="alert alert-warning mb-3">
+                                                    <i class="mdi mdi-alert-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['segundo_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-success mb-3">
+                                                    <i class="mdi mdi-check-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['segundo_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @endif
+
+                                            {{-- Estado de rendición --}}
+                                            @if (isset($infoAsistencia['segundo_examen']) && $infoAsistencia['segundo_examen']['estado'] != 'pendiente')
+                                                @php
+                                                    $fechaExamen = \Carbon\Carbon::parse($inscripcionActiva->ciclo->fecha_segundo_examen);
+                                                    $examenYaPaso = \Carbon\Carbon::now()->greaterThan($fechaExamen);
+                                                @endphp
+                                                
+                                                @if ($infoAsistencia['segundo_examen']['puede_rendir'])
+                                                    @if ($infoAsistencia['segundo_examen']['estado'] == 'regular')
+                                                        <div class="alert alert-success text-center fw-bold">
+                                                            @if ($examenYaPaso)
+                                                                <i class="mdi mdi-check-circle-outline me-2"></i>Rendiste este examen sin restricciones.
+                                                            @else
+                                                                <i class="mdi mdi-check-circle-outline me-2"></i>Habilitado para rendir el examen.
+                                                            @endif
+                                                        </div>
+                                                    @elseif ($infoAsistencia['segundo_examen']['estado'] == 'amonestado')
+                                                        <div class="alert alert-warning text-center fw-bold">
+                                                            @if ($examenYaPaso)
+                                                                <i class="mdi mdi-alert-outline me-2"></i>Rendiste el examen con amonestación por inasistencias.
+                                                            @else
+                                                                <i class="mdi mdi-alert-outline me-2"></i>Habilitado con amonestación por faltas.
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @else
+                                                    <div class="alert alert-danger text-center fw-bold">
+                                                        @if ($examenYaPaso)
+                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Inhabilitado para rendir este examen.
+                                                        @else
+                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Riesgo de inhabilitación por faltas.
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            @endif
                                             <div class="text-center mt-3">
                                                 <button type="button" class="btn btn-primary btn-sm" 
                                                         data-bs-toggle="modal" 
@@ -1001,15 +1071,17 @@
                                                     <i class="mdi mdi-format-list-bulleted me-1"></i> Ver Detalle
                                                 </button>
                                             </div>
+                                            {{-- FIN DE CÓDIGO CORREGIDO --}}
                                         @endif
                                     </div>
                                 </div>
                             </div>
                         @endif
-
+                        
+                        {{-- Tercer Examen --}}
                         @if (isset($infoAsistencia['tercer_examen']))
                             <div class="col-lg-4 mb-3">
-                                <div class="card border @if ($infoAsistencia['tercer_examen']['estado'] == 'pendiente') border-secondary @elseif($infoAsistencia['tercer_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['tercer_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100">
+                                <div class="card border @if ($infoAsistencia['tercer_examen']['estado'] == 'pendiente') border-secondary @elseif($infoAsistencia['tercer_examen']['estado'] == 'inhabilitado') border-danger @elseif($infoAsistencia['tercer_examen']['estado'] == 'amonestado') border-warning @else border-success @endif h-100 tw-group">
                                     <div class="card-header @if ($infoAsistencia['tercer_examen']['estado'] == 'pendiente') bg-secondary @elseif($infoAsistencia['tercer_examen']['estado'] == 'inhabilitado') bg-danger @elseif($infoAsistencia['tercer_examen']['estado'] == 'amonestado') bg-warning @else bg-success @endif text-white">
                                         <h5 class="card-title mb-0">Tercera Evaluación</h5>
                                         <small class="fw-medium">{{ \Carbon\Carbon::parse($inscripcionActiva->ciclo->fecha_tercer_examen)->format('d/m/Y') }}</small>
@@ -1025,12 +1097,88 @@
                                                 <small class="text-muted">Comenzará después de la segunda evaluación</small>
                                             </div>
                                         @else
-                                            <div class="text-center mb-3">
+                                            {{-- INICIO DE CÓDIGO CORREGIDO --}}
+                                            <div class="text-center mb-4">
                                                 <div class="metric-number @if ($infoAsistencia['tercer_examen']['estado'] == 'inhabilitado') text-danger @elseif($infoAsistencia['tercer_examen']['estado'] == 'amonestado') text-warning @else text-success @endif" style="font-size: 3rem;">
                                                     {{ $infoAsistencia['tercer_examen']['porcentaje_asistencia_actual'] ?? $infoAsistencia['tercer_examen']['porcentaje_asistencia'] }}%
                                                 </div>
                                                 <h6 class="metric-label">Asistencia Actual</h6>
+                                                @if ($infoAsistencia['tercer_examen']['es_proyeccion'])
+                                                    <small class="text-muted">({{ $infoAsistencia['tercer_examen']['dias_habiles_transcurridos'] }} de {{ $infoAsistencia['tercer_examen']['dias_habiles'] }} días)</small>
+                                                @endif
                                             </div>
+
+                                            <div class="mb-4">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Días asistidos:</span>
+                                                    <span class="fw-bold text-success">{{ $infoAsistencia['tercer_examen']['dias_asistidos'] }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Faltas actuales:</span>
+                                                    <span class="fw-bold text-danger">{{ $infoAsistencia['tercer_examen']['dias_falta'] }}</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span class="fw-medium">Límite amonestación:</span>
+                                                    <span class="fw-bold text-warning">{{ $infoAsistencia['tercer_examen']['limite_amonestacion'] }} faltas</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="fw-medium">Límite inhabilitación:</span>
+                                                    <span class="fw-bold text-danger">{{ $infoAsistencia['tercer_examen']['limite_inhabilitacion'] }} faltas</span>
+                                                </div>
+                                            </div>
+
+                                            @if ($infoAsistencia['tercer_examen']['estado'] == 'inhabilitado')
+                                                <div class="alert alert-danger mb-3">
+                                                    <i class="mdi mdi-close-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['tercer_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @elseif($infoAsistencia['tercer_examen']['estado'] == 'amonestado')
+                                                <div class="alert alert-warning mb-3">
+                                                    <i class="mdi mdi-alert-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['tercer_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-success mb-3">
+                                                    <i class="mdi mdi-check-circle me-2"></i>
+                                                    <strong>{{ $infoAsistencia['tercer_examen']['mensaje'] }}</strong>
+                                                </div>
+                                            @endif
+
+                                            {{-- Estado de rendición --}}
+                                            @if (isset($infoAsistencia['tercer_examen']) && $infoAsistencia['tercer_examen']['estado'] != 'pendiente')
+                                                @php
+                                                    $fechaExamen = \Carbon\Carbon::parse($inscripcionActiva->ciclo->fecha_tercer_examen);
+                                                    $examenYaPaso = \Carbon\Carbon::now()->greaterThan($fechaExamen);
+                                                @endphp
+                                                
+                                                @if ($infoAsistencia['tercer_examen']['puede_rendir'])
+                                                    @if ($infoAsistencia['tercer_examen']['estado'] == 'regular')
+                                                        <div class="alert alert-success text-center fw-bold">
+                                                            @if ($examenYaPaso)
+                                                                <i class="mdi mdi-check-circle-outline me-2"></i>Rendiste este examen sin restricciones.
+                                                            @else
+                                                                <i class="mdi mdi-check-circle-outline me-2"></i>Habilitado para rendir el examen.
+                                                            @endif
+                                                        </div>
+                                                    @elseif ($infoAsistencia['tercer_examen']['estado'] == 'amonestado')
+                                                        <div class="alert alert-warning text-center fw-bold">
+                                                            @if ($examenYaPaso)
+                                                                <i class="mdi mdi-alert-outline me-2"></i>Rendiste el examen con amonestación por inasistencias.
+                                                            @else
+                                                                <i class="mdi mdi-alert-outline me-2"></i>Habilitado con amonestación por faltas.
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                @else
+                                                    <div class="alert alert-danger text-center fw-bold">
+                                                        @if ($examenYaPaso)
+                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Inhabilitado para rendir este examen.
+                                                        @else
+                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Riesgo de inhabilitación por faltas.
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            @endif
                                             <div class="text-center mt-3">
                                                 <button type="button" class="btn btn-primary btn-sm" 
                                                         data-bs-toggle="modal" 
@@ -1041,6 +1189,7 @@
                                                     <i class="mdi mdi-format-list-bulleted me-1"></i> Ver Detalle
                                                 </button>
                                             </div>
+                                            {{-- FIN DE CÓDIGO CORREGIDO --}}
                                         @endif
                                     </div>
                                 </div>
@@ -1052,7 +1201,7 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="alert alert-info">
-                                <h5 class="alert-heading mb-3">
+                                <h5 class="alert-heading mb-3 tw-flex tw-items-center">
                                     <i class="mdi mdi-information-outline me-2"></i>Reglamento Académico - Control de Asistencia
                                 </h5>
                                 <div class="row">
@@ -1080,7 +1229,7 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="alert alert-warning">
-                                <h4 class="alert-heading mb-3">
+                                <h4 class="alert-heading mb-3 tw-flex tw-items-center">
                                     <i class="mdi mdi-alert-outline me-2"></i>Control de Asistencia Académica
                                 </h4>
                                 <p class="mb-0">Aún no tienes registros de asistencia en este ciclo académico. Tu control de asistencia comenzará a partir de tu primer registro en el sistema biométrico de la institución.</p>
@@ -1111,8 +1260,6 @@
     </div>
     {{-- FIN: Modal para Detalles de Asistencia --}}
 
-    <!-- Modales Institucionales (mantenidos como fallback) -->
-    <!-- Modal de confirmación -->
     <div class="modal fade" id="confirmModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -1141,7 +1288,6 @@
         </div>
     </div>
 
-    <!-- Modal para subir constancia firmada -->
     <div class="modal fade" id="subirConstanciaModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -1205,10 +1351,8 @@
 @endsection
 
 @push('scripts')
-    <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
     
-    <!-- Cargar el JavaScript original primero -->
     <script src="{{ asset('js/dashboardestudiante/index.js') }}"></script>
 
     {{-- Script para la modal de detalle de asistencia --}}
@@ -1263,7 +1407,6 @@
     </script>
 
     @if (isset($anuncios) && $anuncios->count() > 0)
-        <!-- Modal de Anuncios -->
         <div class="modal fade" id="anunciosModal" tabindex="-1" aria-labelledby="anunciosModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 20px; overflow: hidden; border: none;">
@@ -1303,7 +1446,6 @@
         </script>
     @endif
     
-    <!-- INTEGRACIÓN COMPLETA SWEETALERT2 CON FUNCIONALIDAD EXISTENTE -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Iniciando integración SweetAlert2 con CEPRE UNAMAD');
@@ -1398,7 +1540,6 @@
             function crearHTMLResumen(datos, documentos) {
                 return `
                     <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
-                        <!-- INFORMACIÓN ACADÉMICA -->
                         <div style="margin-bottom: 2rem;">
                             <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e91e63;">
                                 <span style="font-size: 1.3rem; margin-right: 0.5rem; color: #e91e63;">🎓</span>
@@ -1437,7 +1578,6 @@
                             </div>
                         </div>
 
-                        <!-- INFORMACIÓN DE PAGO -->
                         ${(datos.recibo || datos.fecha || datos.matricula || datos.ensenanza) ? `
                         <div style="margin-bottom: 2rem;">
                             <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #00bcd4;">
@@ -1483,7 +1623,6 @@
                         </div>
                         ` : ''}
 
-                        <!-- DOCUMENTOS ADJUNTOS -->
                         ${Object.keys(documentos).length > 0 ? `
                         <div style="margin-bottom: 2rem;">
                             <div style="display: flex; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #8bc34a;">
@@ -1504,7 +1643,6 @@
                         </div>
                         ` : ''}
                         
-                        <!-- MENSAJE DE CONFIRMACIÓN -->
                         <div style="padding: 1rem; background: #d1ecf1; border-radius: 6px; border-left: 4px solid #00bcd4;">
                             <small style="color: #0c5460; font-weight: 500;">
                                 ✓ Verifique que todos los datos sean correctos. Una vez confirmada la postulación, será enviada para revisión y aprobación por parte de la administración académica.
@@ -1528,13 +1666,12 @@
                     `,
                     html: `
                         <div style="text-align: left; margin-top: 1rem;">
-                            <!-- Alerta de atención -->
                             <div style="background: linear-gradient(135deg, rgba(0, 188, 212, 0.15) 0%, rgba(0, 188, 212, 0.08) 100%); 
-                                       border: 2px solid #00bcd4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
-                                       display: flex; align-items: flex-start; gap: 1rem;">
+                                        border: 2px solid #00bcd4; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+                                        display: flex; align-items: flex-start; gap: 1rem;">
                                 <div style="background: #00bcd4; color: white; width: 40px; height: 40px; border-radius: 50%;
-                                           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-                                           box-shadow: 0 4px 16px rgba(0, 188, 212, 0.3); font-size: 1.2rem;">ℹ️</div>
+                                            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+                                            box-shadow: 0 4px 16px rgba(0, 188, 212, 0.3); font-size: 1.2rem;">ℹ️</div>
                                 <div>
                                     <h6 style="color: #1a237e; font-weight: 700; margin-bottom: 0.5rem; font-size: 1.1rem;">¡Atención Estudiante!</h6>
                                     <p style="color: #455a64; margin: 0; font-weight: 500; line-height: 1.6;">
@@ -1544,34 +1681,32 @@
                                 </div>
                             </div>
                             
-                            <!-- Pasos a seguir -->
                             <div style="margin-bottom: 1.5rem;">
                                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; padding: 0.8rem;
-                                           background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
+                                            background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
                                     <div style="background: linear-gradient(135deg, #e91e63 0%, #1a237e 100%); color: white; 
-                                               width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
-                                               justify-content: center; font-weight: 700; font-size: 0.8rem;">1</div>
+                                                width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
+                                                justify-content: center; font-weight: 700; font-size: 0.8rem;">1</div>
                                     <span style="color: #1a237e; font-weight: 600;">Verifique sus datos personales y académicos</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; padding: 0.8rem;
-                                           background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
+                                            background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
                                     <div style="background: linear-gradient(135deg, #e91e63 0%, #1a237e 100%); color: white; 
-                                               width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
-                                               justify-content: center; font-weight: 700; font-size: 0.8rem;">2</div>
+                                                width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
+                                                justify-content: center; font-weight: 700; font-size: 0.8rem;">2</div>
                                     <span style="color: #1a237e; font-weight: 600;">Confirme la carrera y turno seleccionado</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; padding: 0.8rem;
-                                           background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
+                                            background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid rgba(26, 35, 126, 0.1);">
                                     <div style="background: linear-gradient(135deg, #e91e63 0%, #1a237e 100%); color: white; 
-                                               width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
-                                               justify-content: center; font-weight: 700; font-size: 0.8rem;">3</div>
+                                                width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; 
+                                                justify-content: center; font-weight: 700; font-size: 0.8rem;">3</div>
                                     <span style="color: #1a237e; font-weight: 600;">Proceda con la confirmación final</span>
                                 </div>
                             </div>
 
-                            <!-- Resumen de inscripción -->
                             <div style="background: linear-gradient(135deg, rgba(139, 195, 74, 0.1) 0%, rgba(139, 195, 74, 0.05) 100%); 
-                                       border: 2px solid #8bc34a; border-radius: 12px; padding: 1.5rem;">
+                                        border: 2px solid #8bc34a; border-radius: 12px; padding: 1.5rem;">
                                 <h6 style="color: #1a237e; font-weight: 700; margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center;">
                                     <span style="font-size: 1.3rem; color: #8bc34a; margin-right: 0.5rem;">📋</span> Resumen de Inscripción
                                 </h6>
