@@ -145,7 +145,17 @@
                                     <li><a href="{{ route('postulacion-unificada.create') }}">Nueva Postulación Completa</a></li>
                                 @endif
                                 @if (Auth::user()->hasPermission('postulaciones.reports'))
-                                    <li><a href="#">Reportes</a></li>
+                                    <li>
+                                        <a href="#sidebarPostulacionesReportes" data-bs-toggle="collapse">
+                                            Reportes <span class="menu-arrow"></span>
+                                        </a>
+                                        <div class="collapse" id="sidebarPostulacionesReportes">
+                                            <ul class="nav-second-level">
+                                                <li><a href="{{ route('postulaciones.reportes.completos') }}">Reportes Completos</a></li>
+                                                <li><a href="{{ route('postulaciones.reportes.resumen') }}">Resúmenes por Carrera/Aula</a></li>
+                                            </ul>
+                                        </div>
+                                    </li>
                                 @endif
                                 @if (Auth::user()->hasPermission('postulaciones.statistics'))
                                     <li><a href="#">Estadísticas</a></li>

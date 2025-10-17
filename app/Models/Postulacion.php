@@ -110,6 +110,11 @@ class Postulacion extends Model
         return $this->belongsTo(CentroEducativo::class);
     }
 
+    public function inscripcion()
+    {
+        return $this->hasOne(Inscripcion::class, 'codigo_inscripcion', 'codigo_postulante');
+    }
+
     // Scopes
     public function scopePendientes($query)
     {

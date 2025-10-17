@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\PostulacionesCompletoExport;
+use App\Exports\PostulacionesResumenExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PostulacionController extends Controller
 {
@@ -1150,5 +1153,57 @@ class PostulacionController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Mostrar la vista de reportes completos de postulaciones
+     */
+    public function reportesCompletos()
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reports')) {
+            abort(403, 'No tienes permisos para ver reportes de postulaciones');
+        }
+
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
+        $turnos = Turno::where('estado', true)->orderBy('nombre')->get();
+
+        return view('postulaciones.reportes.completos', compact('ciclos', 'carreras', 'turnos'));
+    }
+
+    /**
+     * Mostrar la vista de reportes resumen de postulaciones
+     */
+    public function reportesResumen()
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reports')) {
+            abort(403, 'No tienes permisos para ver reportes de postulaciones');
+        }
+
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
+        $turnos = Turno::where('estado', true)->orderBy('nombre')->get();
+        $aulas = Aula::where('estado', true)->orderBy('nombre')->get();
+
+        return view('postulaciones.reportes.resumen', compact('ciclos', 'carreras', 'turnos', 'aulas'));
+    }
+
+    public function exportarReporteCompleto(Request $request)
+    {
+        $ciclo_id = $request->input('ciclo_id');
+        $carrera_id = $request->input('carrera_id');
+        $turno_id = $request->input('turno_id');
+
+        return Excel::download(new PostulacionesCompletoExport($ciclo_id, $carrera_id, $turno_id), 'postulaciones.xlsx');
+    }
+
+    public function exportarReporteResumen(Request $request)
+    {
+        $ciclo_id = $request->input('ciclo_id');
+        $carrera_id = $request->input('carrera_id');
+        $turno_id = $request->input('turno_id');
+        $aula_id = $request->input('aula_id');
+
+        return Excel::download(new PostulacionesResumenExport($ciclo_id, $carrera_id, $turno_id, $aula_id), 'postulaciones_resumen.xlsx');
     }
 }

@@ -499,7 +499,17 @@
                                 <ul class="nav-second-level">
                                     <li><a href="{{ route('postulaciones.index') }}">Ver Postulaciones</a></li>
                                     @if (Auth::user()->hasPermission('postulaciones.reports'))
-                                        <li><a href="#">Reportes</a></li>
+                                        <li>
+                                            <a href="#sidebarPostulacionesReportes" data-bs-toggle="collapse">
+                                                Reportes <span class="menu-arrow"></span>
+                                            </a>
+                                            <div class="collapse" id="sidebarPostulacionesReportes">
+                                                <ul class="nav-second-level">
+                                                    <li><a href="{{ route('postulaciones.reportes.completos') }}">Reporte Completo</a></li>
+                                                    <li><a href="{{ route('postulaciones.reportes.resumen') }}">Reporte Resumido</a></li>
+                                                </ul>
+                                            </div>
+                                        </li>
                                     @endif
                                     @if (Auth::user()->hasPermission('postulaciones.statistics'))
                                         <li><a href="#">Estadísticas</a></li>

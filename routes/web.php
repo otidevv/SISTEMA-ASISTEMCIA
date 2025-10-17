@@ -307,6 +307,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
         Route::post('/postulaciones/crear-desde-admin', [PostulacionController::class, 'crearDesdeAdmin'])->name('postulaciones.crearDesdeAdmin')->middleware('can:postulaciones.create');
+
+        // Reportes de postulaciones
+        Route::get('/postulaciones/reportes/completos', [PostulacionController::class, 'reportesCompletos'])->name('postulaciones.reportes.completos')->middleware('can:postulaciones.reports');
+        Route::get('/postulaciones/reportes/resumen', [PostulacionController::class, 'reportesResumen'])->name('postulaciones.reportes.resumen')->middleware('can:postulaciones.reports');
+
+        // Exportar reportes
+        Route::post('/postulaciones/reportes/completos/exportar', [PostulacionController::class, 'exportarReporteCompleto'])->name('postulaciones.reportes.completos.exportar')->middleware('can:postulaciones.export');
+        Route::post('/postulaciones/reportes/resumen/exportar', [PostulacionController::class, 'exportarReporteResumen'])->name('postulaciones.reportes.resumen.exportar')->middleware('can:postulaciones.export');
     });
     
     // ✅ NUEVA FUNCIONALIDAD: Postulación Unificada - Para uso administrativo (Admin, Secretaria, Coordinador)
