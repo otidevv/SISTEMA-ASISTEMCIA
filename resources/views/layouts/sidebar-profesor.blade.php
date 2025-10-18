@@ -96,6 +96,16 @@
                     </li>
                 @endcan
 
+                <!-- Módulo Boletines -->
+                @can('boletines.view')
+                <li>
+                    <a href="{{ route('boletines.index') }}">
+                        <i class="mdi mdi-notebook-check-outline"></i>
+                        <span> Boletines Académicos </span>
+                    </a>
+                </li>
+                @endcan
+
                 <!-- Pagos -->
                 @can('pagos-docentes.view')
                 <li>

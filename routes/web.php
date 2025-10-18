@@ -511,6 +511,14 @@ Route::middleware('auth')->group(function () {
                 ->middleware('can:reportes.financieros.ver');
         });
 
+    // Boletines
+    Route::prefix('boletines')->name('boletines.')->middleware('auth')->group(function () {
+        Route::get('/', [App\Http\Controllers\BoletinController::class, 'index'])->name('index')->middleware('can:boletines.view');
+        Route::get('/data', [App\Http\Controllers\BoletinController::class, 'getData'])->name('data')->middleware('can:boletines.view');
+        Route::post('/marcar', [App\Http\Controllers\BoletinController::class, 'marcarEntrega'])->name('marcar')->middleware('can:boletines.manage');
+    });
+
+
 
 
 });

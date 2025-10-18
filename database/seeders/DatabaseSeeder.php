@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\MaterialesAcademicosPermissionsSeeder::class,
             \Database\Seeders\ConstanciasPermissionsSeeder::class,
             \Database\Seeders\PostulacionConstanciaPermissionsSeeder::class,
+            \Database\Seeders\BoletinPermissionsSeeder::class,
         ]);
     }
 

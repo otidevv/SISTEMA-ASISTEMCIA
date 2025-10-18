@@ -175,14 +175,24 @@
                         </a>
                         <div class="collapse" id="sidebarMaterial">
                             <ul class="nav-second-level">
-                                <li><a href="{{ route('material-academico.ver') }}">Listar Materiales</a></li>
+                                <li><a href="{{ route('materiales-academicos.index') }}">Listar Materiales</a></li>
                                 @if (Auth::user()->hasPermission('material-academico.crear'))
-                                    <li><a href="{{ route('material-academico.crear') }}">Nuevo Material</a></li>
+                                    <li><a href="{{ route('materiales-academicos.crear') }}">Nuevo Material</a></li>
                                 @endif
                             </ul>
                         </div>
                     </li>
                 @endif
+
+                <!-- Módulo Boletines -->
+                @can('boletines.view')
+                    <li>
+                        <a href="{{ route('boletines.index') }}">
+                            <i data-feather="archive"></i>
+                            <span> Boletines Académicos </span>
+                        </a>
+                    </li>
+                @endcan
 
                 <!-- Nueva Postulación Unificada - Para estudiantes/postulantes -->
                 @if (Auth::user()->hasPermission('postulaciones.create-unified'))

@@ -382,6 +382,13 @@
                     </a>
 
                     <!-- item-->
+                    @can('boletines.view')
+                    <a href="{{ route('boletines.index') }}" class="dropdown-item">
+                        <i class="uil uil-archive-alt me-1"></i><span>Boletines Académicos</span>
+                    </a>
+                    @endcan
+
+                    <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
                         <i class="uil uil-cog me-1"></i><span>Configuración</span>
                     </a>
