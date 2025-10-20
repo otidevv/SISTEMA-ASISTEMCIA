@@ -95,6 +95,11 @@
                 <!-- Sección de Tabla de Datos -->
                 <div class="card">
                     <div class="card-body">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button type="button" id="export-button" class="btn btn-success" style="display: none;">
+                                <i class="bx bxs-file-excel me-1"></i> Exportar a Excel
+                            </button>
+                        </div>
                         <div id="table-container">
                             <div id="table-placeholder" class="text-center py-5">
                                 <!-- Initial placeholder content is set by JS -->
@@ -133,6 +138,7 @@
             let dataTable;
             const $table = $('#boletines-table');
             const $placeholder = $('#table-placeholder');
+            const $exportButton = $('#export-button');
 
             function showPlaceholder(icon, title, message) {
                 $placeholder.html(`
@@ -143,6 +149,7 @@
                     </div>
                 `).show();
                 $table.hide();
+                $exportButton.hide();
                 if (dataTable) {
                     dataTable.destroy();
                     $('#boletines-table thead, #boletines-table tbody').empty();
@@ -191,6 +198,7 @@
                     beforeSend: function() {
                         $placeholder.hide();
                         $table.hide();
+                        $exportButton.hide();
                         Swal.fire({
                             title: 'Cargando Datos...',
                             text: 'Por favor espere.',
@@ -205,6 +213,7 @@
                         if (response.data && response.data.length > 0) {
                             $placeholder.hide();
                             $table.show();
+                            $exportButton.show();
 
                             const cursos = response.cursos;
                             const data = response.data;
@@ -271,12 +280,31 @@
                 });
             }
 
+            $exportButton.on('click', function() {
+                const cicloId = $('#ciclo_id').val();
+                const aulaId = $('#aula_id').val();
+                const tipoExamen = $('#tipo_examen').val();
+
+                if (!cicloId || !aulaId || !tipoExamen) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Atención',
+                        text: 'Por favor, seleccione un ciclo, un aula y un tipo de examen para exportar.',
+                        confirmButtonColor: '#556ee6'
+                    });
+                    return;
+                }
+
+                const exportUrl = `{{ route("boletines.exportar") }}?ciclo_id=${cicloId}&aula_id=${aulaId}&tipo_examen=${tipoExamen}`;
+                window.location.href = exportUrl;
+            });
+
             // Evento para marcar entrega
             $('#boletines-table').on('change', '.entrega-checkbox', function() {
                 const checkbox = $(this);
                 const inscripcionId = checkbox.data('inscripcion-id');
                 const cursoId = checkbox.data('curso-id');
-                const entregado = checkbox.is(':checked');
+                const entregado = checkbox.is(':checked') ? 1 : 0;
                 const tipoExamen = $('#tipo_examen').val();
 
                 checkbox.prop('disabled', true);
@@ -308,7 +336,7 @@
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'No se pudo guardar el cambio.',
+                                text: response.message || 'No se pudo guardar el cambio.',
                                 confirmButtonColor: '#556ee6'
                             });
                             checkbox.prop('checked', !entregado);
