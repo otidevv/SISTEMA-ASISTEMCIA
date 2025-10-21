@@ -73,36 +73,78 @@ class BoletinController extends Controller
 
     public function marcarEntrega(Request $request)
     {
-        try {
-            $validatedData = $request->validate([
-                'inscripcion_id' => 'required|exists:inscripciones,id',
-                'curso_id' => 'required|exists:cursos,id',
-                'tipo_examen' => 'required|string|max:255',
-                'entregado' => 'required|boolean',
-            ]);
+        // Validar que tipo_examen siempre esté presente
+        $request->validate(['tipo_examen' => 'required|string|max:255']);
+        $tipo_examen = $request->input('tipo_examen');
 
-            BoletinEntrega::updateOrCreate(
-                [
-                    'inscripcion_id' => $validatedData['inscripcion_id'],
-                    'curso_id' => $validatedData['curso_id'],
-                    'tipo_examen' => $validatedData['tipo_examen'],
-                ],
-                [
-                    'entregado' => $validatedData['entregado'],
-                    'fecha_entrega' => $validatedData['entregado'] ? now() : null,
-                ]
-            );
+        // Lógica para manejar entregas en lote
+        if ($request->has('entregas') && is_array($request->input('entregas'))) {
 
-            return response()->json(['success' => true]);
-        } catch (ValidationException $e) {
-            // Laravel maneja esto automáticamente, pero lo dejamos para claridad
-            return response()->json(['success' => false, 'message' => 'Datos de entrada no válidos.', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            // Log del error para futura referencia
-            Log::error('Error al marcar entrega de boletín: ' . $e->getMessage());
+            $rules = [
+                'entregas' => 'present|array',
+                'entregas.*.inscripcion_id' => 'required|exists:inscripciones,id',
+                'entregas.*.curso_id' => 'required|exists:cursos,id',
+                'entregas.*.entregado' => 'required|boolean',
+            ];
+    
+            $validator = validator($request->all(), $rules);
 
-            // Respuesta genérica para el usuario
-            return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado en el servidor.'], 500);
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'message' => 'Datos de entrada no válidos.', 'errors' => $validator->errors()], 422);
+            }
+
+            $entregas = $request->input('entregas');
+
+            DB::beginTransaction();
+            try {
+                foreach ($entregas as $entrega) {
+                    BoletinEntrega::updateOrCreate(
+                        [
+                            'inscripcion_id' => $entrega['inscripcion_id'],
+                            'curso_id' => $entrega['curso_id'],
+                            'tipo_examen' => $tipo_examen,
+                        ],
+                        [
+                            'entregado' => $entrega['entregado'],
+                            'fecha_entrega' => $entrega['entregado'] ? now() : null,
+                        ]
+                    );
+                }
+                DB::commit();
+                return response()->json(['success' => true, 'message' => 'Cambios guardados correctamente.']);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Error al marcar entregas de boletín en lote: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado al guardar los cambios.'], 500);
+            }
+        } else {
+            // Lógica para una sola entrega
+            try {
+                $validatedData = $request->validate([
+                    'inscripcion_id' => 'required|exists:inscripciones,id',
+                    'curso_id' => 'required|exists:cursos,id',
+                    'entregado' => 'required|boolean',
+                ]);
+
+                BoletinEntrega::updateOrCreate(
+                    [
+                        'inscripcion_id' => $validatedData['inscripcion_id'],
+                        'curso_id' => $validatedData['curso_id'],
+                        'tipo_examen' => $tipo_examen,
+                    ],
+                    [
+                        'entregado' => $validatedData['entregado'],
+                        'fecha_entrega' => $validatedData['entregado'] ? now() : null,
+                    ]
+                );
+
+                return response()->json(['success' => true]);
+            } catch (ValidationException $e) {
+                return response()->json(['success' => false, 'message' => 'Datos de entrada no válidos.', 'errors' => $e->errors()], 422);
+            } catch (\Exception $e) {
+                Log::error('Error al marcar entrega de boletín: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado en el servidor.'], 500);
+            }
         }
     }
 
