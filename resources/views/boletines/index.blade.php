@@ -828,6 +828,34 @@
                         </button>
                     </div>
                 </form>
+
+                <hr class="my-4">
+
+                <div id="attendance-marker-section" style="display: none;">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3 col-sm-6">
+                            <label for="fecha_asistencia" class="form-label fw-bold">Fecha de Asistencia</label>
+                            <input type="date" id="fecha_asistencia" name="fecha_asistencia" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <label for="curso_asistencia_id" class="form-label fw-bold">Aplicar a Curso</label>
+                            <select id="curso_asistencia_id" class="form-select">
+                                <option value="all">Todos los Cursos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <button type="button" id="pre-mark-attendance-button" class="btn btn-info w-100 d-flex align-items-center justify-content-center text-white">
+                                <i class="fas fa-user-check me-2"></i> Pre-marcar Asistentes
+                            </button>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                             <div class="alert alert-secondary p-2 mb-0" role="alert" style="font-size: 0.85rem;">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Use el filtro "Aplicar a Curso" para marcar una sola columna.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -894,6 +922,9 @@
             $saveButton: $('#save-changes-button'),
             $changesCount: $('#changes-count'),
             $filterForm: $('#filter-form'),
+            $attendanceMarkerSection: $('#attendance-marker-section'),
+            $preMarkAttendanceButton: $('#pre-mark-attendance-button'),
+            $cursoAsistenciaSelect: $('#curso_asistencia_id'),
             $statElements: {
                 total: $('#stat-total-students'),
                 entregados: $('#stat-entregados'),
@@ -913,7 +944,7 @@
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
-            timer: 2500,
+            timer: 3000,
             timerProgressBar: true,
             didOpen: (toast) => {
                 toast.addEventListener('mouseenter', Swal.stopTimer);
@@ -932,8 +963,6 @@
             update() {
                 if (!DashboardState.dataTable) return;
 
-                // Usamos rows({ page: 'all' }) para obtener todos los datos, incluyendo los no visibles
-                // Usamos rows({ search: 'applied' }) para obtener solo los datos filtrados por el buscador
                 const rows = DashboardState.dataTable.rows({ search: 'applied' });
                 const $checkboxes = rows.nodes().to$().find('.entrega-checkbox');
                 
@@ -979,6 +1008,7 @@
                 
                 DOMElements.$table.hide();
                 DOMElements.$exportButton.hide();
+                DOMElements.$attendanceMarkerSection.hide(); // Ocultar sección de asistencia
                 this.hideChangeButton();
                 
                 if (DashboardState.dataTable) {
@@ -1074,7 +1104,6 @@
                     });
 
                     if (response.success) {
-                        // Actualizar el estado 'defaultChecked' de los checkboxes guardados
                         Object.keys(DashboardState.changes).forEach(key => {
                             const $cb = $(`.entrega-checkbox[data-key="${key}"]`);
                             if ($cb.length) {
@@ -1195,7 +1224,6 @@
             },
 
             initialize() {
-                // Inicializar defaultChecked para rastrear cambios
                 $('.entrega-checkbox').each(function() {
                     this.defaultChecked = this.checked;
                 });
@@ -1222,14 +1250,14 @@
                             className: 'control',
                             orderable: false,
                             targets: 0,
-                            responsivePriority: 2 // El control siempre visible
+                            responsivePriority: 2
                         },
                         { 
-                            responsivePriority: 1, // El nombre del estudiante es la prioridad más alta
+                            responsivePriority: 1,
                             targets: 1
                         },
                         {
-                            responsivePriority: 10001, // Forzar a las columnas de cursos a colapsar
+                            responsivePriority: 10001,
                             targets: '_all' 
                         }
                     ],
@@ -1253,7 +1281,7 @@
                 DashboardState.currentFilters = { cicloId, aulaId, tipoExamen };
 
                 try {
-                    UIModule.showLoading('Cargando Datos...', 'Por favor espere. Puede tardar un momento si la lista es grande.');
+                    UIModule.showLoading('Cargando Datos...', 'Por favor espere.');
 
                     const response = await $.ajax({
                         url: '{{ route("boletines.data") }}',
@@ -1297,6 +1325,13 @@
                 DOMElements.$placeholder.hide();
                 DOMElements.$table.show();
                 DOMElements.$exportButton.show();
+                DOMElements.$attendanceMarkerSection.fadeIn(300);
+
+                const $cursoSelect = DOMElements.$cursoAsistenciaSelect;
+                $cursoSelect.html('<option value="all">Todos los Cursos</option>'); // Reset
+                response.cursos.forEach(curso => {
+                    $cursoSelect.append(`<option value="${curso.id}">${TableModule.escapeHtml(curso.nombre)}</option>`);
+                });
 
                 $('#boletines-table thead').html(TableModule.buildHeader(response.cursos));
                 $('#boletines-table tbody').html(TableModule.buildBody(response.data));
@@ -1353,13 +1388,13 @@
         // ==========================================
         // EVENTOS DE CHECKBOXES
         // ==========================================
-        DOMElements.$table.on('change', '.entrega-checkbox', function(e) {
+        DOMElements.$table.on('change', '.entrega-checkbox', function(e, isBulkChange = false) {
             const $cb = $(this);
-            // Comprobar si es un evento de cambio "manual" o por selección masiva
-            const isBulkChange = !e.originalEvent; 
 
-            // Lógica para guardar directamente si NO es una acción masiva
-            // NOTA: Para una mejor UX/rendimiento, la acción masiva ahora usa el botón "Guardar Cambios"
+            if (!isBulkChange && !e.originalEvent) {
+                 isBulkChange = true;
+            }
+
             if (!isBulkChange) {
                 UIModule.flashCell($cb.parent());
                 const dataToSend = {
@@ -1382,12 +1417,11 @@
                             Toast.fire({ icon: 'success', title: response.message });
                         } else {
                             Swal.fire('Error', response.message || 'No se pudo guardar.', 'error');
-                            // Revertir el estado del checkbox
                             $cb.prop('checked', !$cb.is(':checked'));
                         }
                     },
                     error: () => {
-                        Swal.fire('Error', 'Problema de comunicación con el servidor. Intente de nuevo.', 'error');
+                        Swal.fire('Error', 'Problema de comunicación con el servidor.', 'error');
                         $cb.prop('checked', !$cb.is(':checked'));
                     },
                     complete: () => {
@@ -1396,7 +1430,6 @@
                     }
                 });
             } else {
-                // Lógica de seguimiento de cambios para acciones masivas
                 const key = $cb.data('key');
                 const originalState = $cb[0].defaultChecked;
                 const currentState = $cb.is(':checked');
@@ -1414,36 +1447,96 @@
             }
         });
 
-        // Seleccionar todos (master)
         DOMElements.$table.on('change', '#select-all-master', function() {
             const isChecked = $(this).is(':checked');
             const rows = DashboardState.dataTable.rows({ search: 'applied' }).nodes();
-            
-            // Las columnas de cursos se marcarán
             const dataCheckboxes = $(rows).find('.entrega-checkbox');
-            dataCheckboxes.prop('checked', isChecked);
-            dataCheckboxes.trigger('change', [true]); // Pasar un argumento para indicar que es masivo
-
-            // Las cabeceras de columna también se marcan/desmarcan
-            $('.select-all-col').prop('checked', isChecked);
+            dataCheckboxes.prop('checked', isChecked).trigger('change', [true]);
+            $('.select-all-col, .select-all-row').prop('checked', isChecked);
         });
 
-        // Seleccionar columna
         DOMElements.$table.on('change', '.select-all-col', function() {
             const cursoId = $(this).data('curso-id');
             const isChecked = $(this).is(':checked');
-            
             const cbs = DashboardState.dataTable.rows({ search: 'applied' }).nodes().to$()
                 .find(`.entrega-checkbox[data-curso-id="${cursoId}"]`);
-                
-            cbs.prop('checked', isChecked).trigger('change', [true]); // Pasar un argumento para indicar que es masivo
+            cbs.prop('checked', isChecked).trigger('change', [true]);
         });
 
-        // Seleccionar fila
         DOMElements.$table.on('change', '.select-all-row', function() {
             const isChecked = $(this).is(':checked');
             const cbs = $(this).closest('tr').find('.entrega-checkbox');
-            cbs.prop('checked', isChecked).trigger('change', [true]); // Pasar un argumento para indicar que es masivo
+            cbs.prop('checked', isChecked).trigger('change', [true]);
+        });
+
+        // ==========================================
+        // EVENTOS DE ASISTENCIA (NUEVO)
+        // ==========================================
+        DOMElements.$preMarkAttendanceButton.on('click', async function() {
+            const $btn = $(this);
+            const fecha = $('#fecha_asistencia').val();
+            const cursoId = DOMElements.$cursoAsistenciaSelect.val();
+            const { cicloId, aulaId } = DashboardState.currentFilters;
+
+            if (!fecha) {
+                Swal.fire('Atención', 'Por favor, seleccione una fecha de asistencia.', 'warning');
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando...');
+
+            try {
+                const response = await $.ajax({
+                    url: '{{ route("boletines.asistentes") }}',
+                    type: 'GET',
+                    data: {
+                        fecha: fecha,
+                        ciclo_id: cicloId,
+                        aula_id: aulaId
+                    }
+                });
+
+                if (response.success && response.asistentes) {
+                    const studentIds = response.asistentes;
+                    if (studentIds.length === 0) {
+                        Toast.fire({ icon: 'info', title: 'No se encontraron asistencias para esa fecha.' });
+                        return;
+                    }
+
+                    let changesApplied = 0;
+                    const rows = DashboardState.dataTable.rows({ search: 'applied' }).nodes();
+                    
+                    studentIds.forEach(inscripcionId => {
+                        let $checkboxes;
+                        if (cursoId === 'all') {
+                            $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"]`);
+                        } else {
+                            $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"][data-curso-id="${cursoId}"]`);
+                        }
+                        
+                        $checkboxes.each(function() {
+                            const $cb = $(this);
+                            if (!$cb.is(':checked')) {
+                                $cb.prop('checked', true).trigger('change', [true]);
+                                changesApplied++;
+                            }
+                        });
+                    });
+
+                    if (changesApplied > 0) {
+                        Toast.fire({ icon: 'success', title: `Se pre-marcaron entregas para ${studentIds.length} asistente(s).` });
+                    } else {
+                        Toast.fire({ icon: 'info', title: 'Los alumnos asistentes ya tenían las entregas marcadas.' });
+                    }
+                } else {
+                    throw new Error(response.message || 'No se pudo obtener la lista de asistentes.');
+                }
+
+            } catch (error) {
+                Swal.fire('Error', error.message || 'Ocurrió un problema de comunicación.', 'error');
+            } finally {
+                $btn.prop('disabled', false).html('<i class="fas fa-user-check me-2"></i> Pre-marcar Asistentes');
+            }
         });
 
         // ==========================================
@@ -1466,7 +1559,6 @@
                 return;
             }
 
-            // Realiza la descarga, no se necesita AJAX/Loading aquí
             window.location.href = `{{ route("boletines.exportar") }}?ciclo_id=${cicloId}&aula_id=${aulaId}&tipo_examen=${tipoExamen}`;
         });
 

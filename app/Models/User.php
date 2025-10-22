@@ -244,6 +244,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
 
     /**
+     * Get the attendance records for the user.
+     */
+    public function asistencias()
+    {
+        return $this->hasMany(RegistroAsistencia::class, 'nro_documento', 'numero_documento');
+    }
+
+    /**
      * Obtener los horarios del docente
      */
     public function horarios()

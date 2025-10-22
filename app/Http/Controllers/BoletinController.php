@@ -71,6 +71,34 @@ class BoletinController extends Controller
         return response()->json(['data' => $data, 'cursos' => $cursos]);
     }
 
+    public function getAsistentes(Request $request)
+    {
+        $request->validate([
+            'fecha' => 'required|date_format:Y-m-d',
+            'ciclo_id' => 'required|exists:ciclos,id',
+            'aula_id' => 'required|exists:aulas,id',
+        ]);
+
+        try {
+            $fecha = $request->input('fecha');
+            $ciclo_id = $request->input('ciclo_id');
+            $aula_id = $request->input('aula_id');
+
+            $asistentes = Inscripcion::where('ciclo_id', $ciclo_id)
+                ->where('aula_id', $aula_id)
+                ->whereHas('estudiante.asistencias', function ($query) use ($fecha) {
+                    $query->whereDate('fecha_registro', $fecha);
+                })
+                ->pluck('id');
+
+            return response()->json(['success' => true, 'asistentes' => $asistentes]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener asistentes para boletines: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ocurrió un error al obtener los asistentes.'], 500);
+        }
+    }
+
     public function marcarEntrega(Request $request)
     {
         // Validar que tipo_examen siempre esté presente

@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Asistencia</title>
+    <title>Reporte de Asistencia Individual</title>
     <style>
+        /* BASE Y FUENTES */
         * {
             margin: 0;
             padding: 0;
@@ -13,262 +14,185 @@
         }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 12px;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-size: 11px;
             line-height: 1.5;
-            color: #2c3e50;
-            margin: 20px;
-            background-color: #f8f9fa;
+            color: #1a1a1a; /* Negro para texto principal */
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
             background-color: white;
-            padding: 35px 45px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            border: 1px solid #e0e0e0; /* Borde general para estructura */
         }
 
+        /* ENCABEZADO */
         .header {
             text-align: center;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #34495e;
+            border-bottom: 4px solid #2c3e50; /* Gris Azulado Oscuro */
         }
 
         .header h1 {
             color: #2c3e50;
-            font-size: 26px;
-            margin-bottom: 8px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
+            font-size: 30px;
+            margin-bottom: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .header h2 {
-            color: #495057;
+            color: #333333;
             font-size: 18px;
-            font-weight: 400;
-            margin-bottom: 8px;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
 
         .header .date {
-            color: #6c757d;
-            font-size: 13px;
+            color: #666666;
+            font-size: 12px;
             margin-top: 8px;
         }
 
+        /* INFORMACIÓN DEL ESTUDIANTE */
         .info-section {
-            margin-bottom: 25px;
-            background-color: #f8f9fa;
-            padding: 18px 22px;
-            border-radius: 6px;
-            border-left: 3px solid #3498db;
+            margin-bottom: 30px;
+            background-color: #f4f6f9; /* Fondo muy claro */
+            padding: 20px;
+            border-radius: 0;
+            border-top: 2px solid #34495e; /* Gris Azulado Secundario */
+            border-bottom: 2px solid #e0e0e0;
         }
 
         .info-section h3 {
-            color: #2c3e50;
+            color: #34495e;
             font-size: 16px;
-            margin-bottom: 12px;
-            font-weight: 600;
+            margin-bottom: 15px;
+            font-weight: 700;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #cccccc;
         }
 
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 8px 15px;
         }
 
         .info-item {
             display: flex;
-            align-items: baseline;
+            align-items: center;
         }
 
         .info-label {
             font-weight: 600;
-            color: #495057;
+            color: #4a4a4a;
             margin-right: 8px;
             min-width: 140px;
             font-size: 11px;
+            text-transform: uppercase;
         }
 
         .info-value {
-            color: #2c3e50;
+            color: #1a1a1a;
             flex: 1;
             font-size: 12px;
-        }
-
-        .summary-section {
-            margin-bottom: 30px;
-        }
-
-        .summary-section h3 {
-            color: #2c3e50;
-            font-size: 18px;
-            margin-bottom: 18px;
-            font-weight: 600;
-        }
-
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .summary-card {
-            text-align: center;
-            padding: 18px 8px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border: 1.5px solid #e9ecef;
-            transition: all 0.2s;
-        }
-
-        .summary-card h4 {
-            font-size: 28px;
-            margin-bottom: 4px;
-            font-weight: 700;
-        }
-
-        .summary-card p {
-            font-size: 11px;
-            color: #6c757d;
             font-weight: 500;
         }
-
-        .summary-card.success {
-            border-color: #28a745;
-            background-color: #d4edda;
-        }
-
-        .summary-card.success h4 {
-            color: #155724;
-        }
-
-        .summary-card.warning {
-            border-color: #ffc107;
-            background-color: #fff3cd;
-        }
-
-        .summary-card.warning h4 {
-            color: #856404;
-        }
-
-        .summary-card.danger {
-            border-color: #dc3545;
-            background-color: #f8d7da;
-        }
-
-        .summary-card.danger h4 {
-            color: #721c24;
-        }
-
-        .exam-section {
-            margin-bottom: 30px;
-        }
-
+        
+        /* --- TARJETAS DE EXAMEN (Ahora son BLOQUES de DATA) --- */
         .exam-section h3 {
-            color: #2c3e50;
+            color: #1a1a1a;
             font-size: 18px;
-            margin-bottom: 18px;
-            font-weight: 600;
+            margin-bottom: 20px;
+            font-weight: 700;
+            border-bottom: 1px solid #dcdcdc; 
+            padding-bottom: 5px;
         }
 
         .exam-card {
-            border: 1.5px solid #dee2e6;
-            border-radius: 6px;
-            margin-bottom: 18px;
+            border-radius: 0;
+            margin-bottom: 25px; /* Mayor separación entre bloques */
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #dcdcdc; 
         }
 
-        .exam-card.success {
-            border-color: #28a745;
-        }
-
-        .exam-card.warning {
-            border-color: #ffc107;
-        }
-
-        .exam-card.danger {
-            border-color: #dc3545;
-        }
-
+        /* Encabezados de Bloque */
         .exam-header {
-            background-color: #f8f9fa;
-            padding: 12px 18px;
+            padding: 10px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-weight: 700;
+            background-color: #34495e; /* Gris Azulado Secundario */
+            color: white;
         }
-
+        
         .exam-header h4 {
             margin: 0;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
-        .exam-header.success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .exam-header.warning {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .exam-header.danger {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
+        /* Estilos condicionales para encabezado */
+        .exam-header.success { background-color: #e6ffe6; color: #155724; border-bottom: 2px solid #28a745; }
+        .exam-header.warning { background-color: #fff8e1; color: #856404; border-bottom: 2px solid #ffc107; }
+        .exam-header.danger { background-color: #ffe8e8; color: #721c24; border-bottom: 2px solid #dc3545; }
 
         .exam-body {
-            padding: 18px;
+            padding: 0; /* El padding se maneja dentro de la tabla KPI */
+            background-color: white;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 18px;
+        /* Tabla para KPIs (Diseño de Auditoría/Reporte Ejecutivo) */
+        .kpi-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-
-        .stat-item {
+        .kpi-table th {
+            background-color: #f4f6f9; /* Fondo muy claro */
+            color: #4a4a4a;
+            padding: 8px 10px;
             text-align: center;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 4px;
-        }
-
-        .stat-value {
-            font-size: 22px;
+            border: 1px solid #e0e0e0;
             font-weight: 700;
-            color: #2c3e50;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .kpi-table td {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .kpi-value {
+            font-size: 18px;
+            font-weight: 800;
         }
 
-        .stat-detail {
-            font-size: 11px;
-            color: #6c757d;
-            margin-top: 2px;
+        /* Barra de Progreso */
+        .progress-bar-container {
+            padding: 0 18px 18px 18px;
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
         }
-
         .progress-bar {
             width: 100%;
-            height: 22px;
+            height: 15px; /* Aún más delgado */
             background-color: #e9ecef;
-            border-radius: 11px;
+            border-radius: 10px; 
             overflow: hidden;
-            margin: 16px 0;
-            position: relative;
+            margin: 10px 0;
+            border: 1px solid #cccccc;
         }
 
         .progress-fill {
@@ -277,82 +201,119 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
-            font-size: 11px;
-            transition: width 0.3s;
+            font-weight: 700;
+            font-size: 9px;
         }
 
-        .progress-fill.success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
+        .progress-fill.success { background-color: #28a745; }
+        .progress-fill.warning { background-color: #ffc107; }
+        .progress-fill.danger { background-color: #dc3545; }
 
-        .progress-fill.warning {
-            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-        }
-
-        .progress-fill.danger {
-            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-        }
-
+        /* Alerta Final */
         .alert {
             padding: 12px 18px;
+            margin: 0; 
+            border-radius: 0;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .alert.success { background-color: #e8f5e9; color: #155724; }
+        .alert.danger { background-color: #ffe8e8; color: #721c24; }
+        
+        /* Contador de Mes (Detalle) */
+        .detalle-mes-header {
+            margin-bottom: 5px;
+            padding: 8px 15px;
+            background-color: #f7f7f7;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .detalle-mes-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #004d4d;
+            font-weight: 700;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .contador-asistencias {
+            display: flex;
+            gap: 10px;
+            font-size: 11px;
+        }
+
+        .contador-item {
+            padding: 4px 10px;
             border-radius: 4px;
-            margin-top: 12px;
             font-weight: 600;
-            text-align: center;
-            font-size: 13px;
+            border: 1px solid;
+            background-color: #ffffff;
         }
 
-        .alert.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .alert.danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
+        .contador-asistidos { color: #28a745; border-color: #28a745; }
+        .contador-faltas { color: #dc3545; border-color: #dc3545; }
+        
+        /* TABLA DE DETALLE */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 12px;
+            margin-top: 0;
         }
 
         table th {
-            background-color: #f8f9fa;
-            padding: 10px 12px;
-            text-align: left;
-            border: 1px solid #dee2e6;
+            background-color: #34495e; /* Gris Azulado Secundario */
+            color: white;
+            padding: 7px 6px;
+            text-align: center;
+            border: 1px solid #2c3e50;
             font-weight: 600;
-            color: #495057;
             font-size: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
         }
 
         table td {
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
+            padding: 6px 8px; 
+            border: 1px solid #e0e0e0;
             font-size: 11px;
-            color: #2c3e50;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        /* Zebra Striping */
+        table tbody tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        
+        tr.falta-row {
+            background-color: #ffe8e8 !important; /* Asegurar que la falta se vea */
         }
 
+        tr.falta-row td {
+            color: #721c24;
+        }
+
+        .falta-text {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .sin-registro {
+            color: #9c7800;
+            font-style: italic;
+        }
+        
+        /* Footer */
         .footer {
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #dee2e6;
+            border-top: 1px solid #e0e0e0;
             text-align: center;
             font-size: 10px;
-            color: #6c757d;
+            color: #666666;
             line-height: 1.6;
         }
 
@@ -364,89 +325,30 @@
             display: inline-block;
             padding: 3px 8px;
             font-size: 9px;
-            font-weight: 600;
-            border-radius: 3px;
-            background-color: #6c757d;
+            font-weight: 700;
+            border-radius: 4px;
+            background-color: #666666;
             color: white;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
         }
 
         .dias-info {
             display: inline-block;
-            font-size: 12px;
-            color: #495057;
+            font-size: 10px;
+            color: white; /* Blanco para alto contraste en encabezado oscuro */
             font-weight: 600;
-            background-color: rgba(0, 0, 0, 0.05);
-            padding: 3px 8px;
+            background-color: transparent;
+            border: 1px solid white;
+            padding: 3px 6px;
             border-radius: 3px;
-            margin-left: 4px;
         }
 
+        /* Estilos de impresión */
         @media print {
-            body {
-                margin: 0;
-                background-color: white;
-            }
-
             .container {
-                box-shadow: none;
                 padding: 15px;
-                max-width: 100%;
+                border: none;
             }
-
-            .page-break {
-                page-break-after: always;
-            }
-        }
-
-        tr.falta-row {
-            background-color: #ffe4e4;
-        }
-
-        tr.falta-row td {
-            color: #721c24;
-        }
-
-        .falta-text {
-            color: #dc3545;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .sin-registro {
-            color: #dc3545;
-            font-style: italic;
-        }
-
-        /* Contador de resumen */
-        .resumen-mes {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .contador-asistencias {
-            display: flex;
-            gap: 20px;
-            font-size: 12px;
-        }
-
-        .contador-item {
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .contador-asistidos {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .contador-faltas {
-            background-color: #f8d7da;
-            color: #721c24;
         }
     </style>
 </head>
@@ -454,13 +356,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>REPORTE DE ASISTENCIA</h1>
-            <h2>{{ $ciclo->nombre }}</h2>
+            <h1>REPORTE DE ASISTENCIA INDIVIDUAL</h1>
+            <h2>CICLO: {{ $ciclo->nombre }}</h2>
             <p class="date">Generado el: {{ $fecha_generacion }}</p>
         </div>
+        
 
+        <!-- SECCIÓN DE INFORMACIÓN DEL ESTUDIANTE -->
         <div class="info-section">
-            <h3>Información del Estudiante</h3>
+            <h3>Datos del Estudiante</h3>
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">Código de Inscripción:</span>
@@ -472,7 +376,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">Nombre Completo:</span>
-                    <span class="info-value">{{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }}
+                    <span class="info-value" style="font-weight: 700;">{{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }}
                         {{ $estudiante->apellido_materno }}</span>
                 </div>
                 <div class="info-item">
@@ -492,19 +396,24 @@
 
         @if (isset($info_asistencia) && !empty($info_asistencia))
 
+            <!-- SECCIÓN DE INFORMACIÓN POR EXAMEN (ACUMULADO) -->
             <div class="exam-section">
-                <h3>Información por Examen</h3>
-
+                <h3>Resumen de Asistencia Acumulada por Examen</h3>
+                
+                <!-- PRIMER EXAMEN -->
                 @if (isset($info_asistencia['primer_examen']))
-                    <div
-                        class="exam-card {{ $info_asistencia['primer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['primer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                        <div
-                            class="exam-header {{ $info_asistencia['primer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['primer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                            <h4>Primer Examen -
+                    @php
+                        $condicion = $info_asistencia['primer_examen']['condicion'];
+                        $class = $condicion == 'Regular' ? 'success' : ($condicion == 'Amonestado' ? 'warning' : 'danger');
+                        $puedeRendir = $info_asistencia['primer_examen']['puede_rendir'] == 'SÍ';
+                    @endphp
+                    <div class="exam-card">
+                        <div class="exam-header {{ $class }}">
+                            <h4>PRIMER EXAMEN - FECHA:
                                 {{ \Carbon\Carbon::parse($ciclo->fecha_primer_examen)->format('d/m/Y') }}</h4>
                             <div>
                                 @if ($info_asistencia['primer_examen']['es_proyeccion'] ?? false)
-                                    <span class="badge">Proyección</span>
+                                    <span class="badge">PROYECCIÓN</span>
                                 @endif
                                 <span class="dias-info">
                                     A/F/T:
@@ -514,48 +423,71 @@
                         </div>
 
                         <div class="exam-body">
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <div class="stat-label">Asistencia</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['primer_examen']['dias_asistidos'] }}
-                                        días</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Faltas</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['primer_examen']['porcentaje_falta'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['primer_examen']['dias_falta'] }} días
-                                    </div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Estado</div>
-                                    <div class="stat-value" style="font-size: 16px;">
-                                        {{ $info_asistencia['primer_examen']['condicion'] }}</div>
+                            <table class="kpi-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asistencia</th>
+                                        <th>Faltas</th>
+                                        <th>Días (Asist. / Falta)</th>
+                                        <th>Estado</th>
+                                        <th>Puede Rendir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="kpi-value" style="color: #28a745;">
+                                                {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}%</div>
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value" style="color: #dc3545;">
+                                                {{ $info_asistencia['primer_examen']['porcentaje_falta'] }}%</div>
+                                        </td>
+                                        <td>
+                                            {{ $info_asistencia['primer_examen']['dias_asistidos'] }} / 
+                                            {{ $info_asistencia['primer_examen']['dias_falta'] }}
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value kpi-value-small" style="font-weight: 700; color: {{ $class == 'success' ? '#28a745' : ($class == 'warning' ? '#ffc107' : '#dc3545') }};">
+                                                {{ $info_asistencia['primer_examen']['condicion'] }}</div>
+                                        </td>
+                                        <td style="font-weight: 700; color: {{ $puedeRendir ? '#28a745' : '#dc3545' }};">
+                                            {{ $info_asistencia['primer_examen']['puede_rendir'] }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="progress-bar-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill {{ $class }}"
+                                    style="width: {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}%">
+                                    {{ $info_asistencia['primer_examen']['porcentaje_asistencia'] }}% ASISTENCIA
                                 </div>
                             </div>
-
-
-
-                            <div
-                                class="alert {{ $info_asistencia['primer_examen']['puede_rendir'] == 'SÍ' ? 'success' : 'danger' }}">
-                                <strong>{{ $info_asistencia['primer_examen']['puede_rendir'] == 'SÍ' ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
-                            </div>
+                        </div>
+                        
+                        <div class="alert {{ $puedeRendir ? 'success' : 'danger' }}">
+                            <strong>{{ $puedeRendir ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
                         </div>
                     </div>
                 @endif
-
+                
+                <!-- SEGUNDO EXAMEN -->
                 @if (isset($info_asistencia['segundo_examen']) && $info_asistencia['segundo_examen']['condicion'] != 'Pendiente')
-                    <div
-                        class="exam-card {{ $info_asistencia['segundo_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['segundo_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                        <div
-                            class="exam-header {{ $info_asistencia['segundo_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['segundo_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                            <h4>Segundo Examen -
+                    @php
+                        $condicion = $info_asistencia['segundo_examen']['condicion'];
+                        $class = $condicion == 'Regular' ? 'success' : ($condicion == 'Amonestado' ? 'warning' : 'danger');
+                        $puedeRendir = $info_asistencia['segundo_examen']['puede_rendir'] == 'SÍ';
+                    @endphp
+                    <div class="exam-card">
+                        <div class="exam-header {{ $class }}">
+                            <h4>SEGUNDO EXAMEN - FECHA:
                                 {{ \Carbon\Carbon::parse($ciclo->fecha_segundo_examen)->format('d/m/Y') }}</h4>
                             <div>
                                 @if ($info_asistencia['segundo_examen']['es_proyeccion'] ?? false)
-                                    <span class="badge">Proyección</span>
+                                    <span class="badge">PROYECCIÓN</span>
                                 @endif
                                 <span class="dias-info">
                                     A/F/T:
@@ -565,53 +497,71 @@
                         </div>
 
                         <div class="exam-body">
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <div class="stat-label">Asistencia</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['segundo_examen']['porcentaje_asistencia'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['segundo_examen']['dias_asistidos'] }}
-                                        días</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Faltas</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['segundo_examen']['porcentaje_falta'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['segundo_examen']['dias_falta'] }}
-                                        días</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Estado</div>
-                                    <div class="stat-value" style="font-size: 16px;">
-                                        {{ $info_asistencia['segundo_examen']['condicion'] }}</div>
-                                </div>
-                            </div>
+                            <table class="kpi-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asistencia</th>
+                                        <th>Faltas</th>
+                                        <th>Días (Asist. / Falta)</th>
+                                        <th>Estado</th>
+                                        <th>Puede Rendir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="kpi-value" style="color: #28a745;">
+                                                {{ $info_asistencia['segundo_examen']['porcentaje_asistencia'] }}%</div>
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value" style="color: #dc3545;">
+                                                {{ $info_asistencia['segundo_examen']['porcentaje_falta'] }}%</div>
+                                        </td>
+                                        <td>
+                                            {{ $info_asistencia['segundo_examen']['dias_asistidos'] }} / 
+                                            {{ $info_asistencia['segundo_examen']['dias_falta'] }}
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value kpi-value-small" style="font-weight: 700; color: {{ $class == 'success' ? '#28a745' : ($class == 'warning' ? '#ffc107' : '#dc3545') }};">
+                                                {{ $info_asistencia['segundo_examen']['condicion'] }}</div>
+                                        </td>
+                                        <td style="font-weight: 700; color: {{ $puedeRendir ? '#28a745' : '#dc3545' }};">
+                                            {{ $info_asistencia['segundo_examen']['puede_rendir'] }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
+                        <div class="progress-bar-container">
                             <div class="progress-bar">
-                                <div class="progress-fill {{ $info_asistencia['segundo_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['segundo_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}"
+                                <div class="progress-fill {{ $class }}"
                                     style="width: {{ $info_asistencia['segundo_examen']['porcentaje_asistencia'] }}%">
-                                    {{ $info_asistencia['segundo_examen']['porcentaje_asistencia'] }}%
+                                    {{ $info_asistencia['segundo_examen']['porcentaje_asistencia'] }}% ASISTENCIA
                                 </div>
                             </div>
+                        </div>
 
-                            <div
-                                class="alert {{ $info_asistencia['segundo_examen']['puede_rendir'] == 'SÍ' ? 'success' : 'danger' }}">
-                                <strong>{{ $info_asistencia['segundo_examen']['puede_rendir'] == 'SÍ' ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
-                            </div>
+                        <div class="alert {{ $puedeRendir ? 'success' : 'danger' }}">
+                            <strong>{{ $puedeRendir ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
                         </div>
                     </div>
                 @endif
 
+                <!-- TERCER EXAMEN -->
                 @if (isset($info_asistencia['tercer_examen']) && $info_asistencia['tercer_examen']['condicion'] != 'Pendiente')
-                    <div
-                        class="exam-card {{ $info_asistencia['tercer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['tercer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                        <div
-                            class="exam-header {{ $info_asistencia['tercer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['tercer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}">
-                            <h4>Tercer Examen -
+                    @php
+                        $condicion = $info_asistencia['tercer_examen']['condicion'];
+                        $class = $condicion == 'Regular' ? 'success' : ($condicion == 'Amonestado' ? 'warning' : 'danger');
+                        $puedeRendir = $info_asistencia['tercer_examen']['puede_rendir'] == 'SÍ';
+                    @endphp
+                    <div class="exam-card">
+                        <div class="exam-header {{ $class }}">
+                            <h4>TERCER EXAMEN - FECHA:
                                 {{ \Carbon\Carbon::parse($ciclo->fecha_tercer_examen)->format('d/m/Y') }}</h4>
                             <div>
                                 @if ($info_asistencia['tercer_examen']['es_proyeccion'] ?? false)
-                                    <span class="badge">Proyección</span>
+                                    <span class="badge">PROYECCIÓN</span>
                                 @endif
                                 <span class="dias-info">
                                     A/F/T:
@@ -621,54 +571,69 @@
                         </div>
 
                         <div class="exam-body">
-                            <div class="stats-grid">
-                                <div class="stat-item">
-                                    <div class="stat-label">Asistencia</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['tercer_examen']['porcentaje_asistencia'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['tercer_examen']['dias_asistidos'] }}
-                                        días</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Faltas</div>
-                                    <div class="stat-value">
-                                        {{ $info_asistencia['tercer_examen']['porcentaje_falta'] }}%</div>
-                                    <div class="stat-detail">{{ $info_asistencia['tercer_examen']['dias_falta'] }} días
-                                    </div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-label">Estado</div>
-                                    <div class="stat-value" style="font-size: 16px;">
-                                        {{ $info_asistencia['tercer_examen']['condicion'] }}</div>
-                                </div>
-                            </div>
+                            <table class="kpi-table">
+                                <thead>
+                                    <tr>
+                                        <th>Asistencia</th>
+                                        <th>Faltas</th>
+                                        <th>Días (Asist. / Falta)</th>
+                                        <th>Estado</th>
+                                        <th>Puede Rendir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="kpi-value" style="color: #28a745;">
+                                                {{ $info_asistencia['tercer_examen']['porcentaje_asistencia'] }}%</div>
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value" style="color: #dc3545;">
+                                                {{ $info_asistencia['tercer_examen']['porcentaje_falta'] }}%</div>
+                                        </td>
+                                        <td>
+                                            {{ $info_asistencia['tercer_examen']['dias_asistidos'] }} / 
+                                            {{ $info_asistencia['tercer_examen']['dias_falta'] }}
+                                        </td>
+                                        <td>
+                                            <div class="kpi-value kpi-value-small" style="font-weight: 700; color: {{ $class == 'success' ? '#28a745' : ($class == 'warning' ? '#ffc107' : '#dc3545') }};">
+                                                {{ $info_asistencia['tercer_examen']['condicion'] }}</div>
+                                        </td>
+                                        <td style="font-weight: 700; color: {{ $puedeRendir ? '#28a745' : '#dc3545' }};">
+                                            {{ $info_asistencia['tercer_examen']['puede_rendir'] }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
+                        <div class="progress-bar-container">
                             <div class="progress-bar">
-                                <div class="progress-fill {{ $info_asistencia['tercer_examen']['condicion'] == 'Regular' ? 'success' : ($info_asistencia['tercer_examen']['condicion'] == 'Amonestado' ? 'warning' : 'danger') }}"
+                                <div class="progress-fill {{ $class }}"
                                     style="width: {{ $info_asistencia['tercer_examen']['porcentaje_asistencia'] }}%">
-                                    {{ $info_asistencia['tercer_examen']['porcentaje_asistencia'] }}%
+                                    {{ $info_asistencia['tercer_examen']['porcentaje_asistencia'] }}% ASISTENCIA
                                 </div>
                             </div>
+                        </div>
 
-                            <div
-                                class="alert {{ $info_asistencia['tercer_examen']['puede_rendir'] == 'SÍ' ? 'success' : 'danger' }}">
-                                <strong>{{ $info_asistencia['tercer_examen']['puede_rendir'] == 'SÍ' ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
-                            </div>
+                        <div class="alert {{ $puedeRendir ? 'success' : 'danger' }}">
+                            <strong>{{ $puedeRendir ? 'PUEDE RENDIR EL EXAMEN' : 'NO PUEDE RENDIR EL EXAMEN' }}</strong>
                         </div>
                     </div>
                 @endif
             </div>
 
+            <!-- DETALLE DE ASISTENCIAS POR MES -->
             @if (isset($detalle_asistencias) && count($detalle_asistencias) > 0)
                 <div class="page-break"></div>
 
-                <div class="header">
-                    <h2>Detalle de Asistencias por Mes</h2>
+                <div class="header" style="border-bottom: none; margin-bottom: 25px; padding-bottom: 0;">
+                    <h2 style="font-weight: 700; color: #34495e; border-bottom: 1px dashed #dee2e6; padding-bottom: 10px;">DETALLE DE ASISTENCIAS POR MES</h2>
                 </div>
 
                 @foreach ($detalle_asistencias as $mesKey => $mes)
-                    <div class="info-section" style="margin-bottom: 20px;">
-                        <div class="resumen-mes">
+                    <div class="info-section" style="margin-bottom: 25px; background-color: #ffffff; border: 1px solid #e0e0e0; padding: 0;">
+                        <div class="detalle-mes-header">
                             <h3>{{ $mes['mes'] }} {{ $mes['anio'] }}</h3>
                             <div class="contador-asistencias">
                                 <span class="contador-item contador-asistidos">
@@ -703,9 +668,9 @@
                                         </td>
                                         <td style="text-align: center;">
                                             @if ($registro['asistio'])
-                                                <span style="color: #28a745; font-weight: 600;"> Asistió</span>
+                                                <span style="color: #28a745; font-weight: 600;">Asistió</span>
                                             @else
-                                                <span style="color: #dc3545; font-weight: 600;"> Falta</span>
+                                                <span style="color: #dc3545; font-weight: 600;">Falta</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -716,20 +681,17 @@
                 @endforeach
             @endif
         @else
-            <div class="alert warning">
+            <div class="alert warning" style="background-color: #fff8e1; color: #856404; border: 1px solid #ffc107; font-size: 14px;">
                 <strong>Sin registros de asistencia</strong>
-                <p>El estudiante aún no tiene registros de asistencia en este ciclo.</p>
+                <p style="font-weight: 400; margin-top: 5px;">El estudiante aún no tiene registros de asistencia en este ciclo.</p>
             </div>
         @endif
 
         <div class="footer">
-            <p><strong>Información Importante:</strong></p>
-            <p>Las clases se imparten de Lunes a Viernes | Límite de amonestación:
-                {{ $ciclo->porcentaje_amonestacion }}% | Límite de inhabilitación:
-                {{ $ciclo->porcentaje_inhabilitacion }}%</p>
-            <p>A/F/T = Asistidos/Faltas/Total días hábiles</p>
-            <p><strong>Notas sobre registros:</strong></p>
-            <p>Este es un documento generado automáticamente por el sistema de gestión académica.</p>
+            <p><strong>Información de Políticas de Asistencia:</strong></p>
+            <p>Límite de amonestación: **{{ $ciclo->porcentaje_amonestacion }}%** de inasistencias. | Límite de inhabilitación: **{{ $ciclo->porcentaje_inhabilitacion }}%** de inasistencias.</p>
+            <p>A/F/T = Días Asistidos / Días de Falta / Total de Días Hábiles en el periodo.</p>
+            <p style="margin-top: 10px;">Documento generado automáticamente por el sistema de gestión académica.</p>
         </div>
     </div>
 </body>

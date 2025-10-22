@@ -515,6 +515,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('boletines')->name('boletines.')->middleware('auth')->group(function () {
         Route::get('/', [App\Http\Controllers\BoletinController::class, 'index'])->name('index')->middleware('can:boletines.view');
         Route::get('/data', [App\Http\Controllers\BoletinController::class, 'getData'])->name('data')->middleware('can:boletines.view');
+        Route::get('/asistentes', [App\Http\Controllers\BoletinController::class, 'getAsistentes'])->name('asistentes')->middleware('can:boletines.view');
         Route::post('/marcar', [App\Http\Controllers\BoletinController::class, 'marcarEntrega'])->name('marcar')->middleware('can:boletines.manage');
         Route::get('/exportar', [App\Http\Controllers\BoletinController::class, 'exportar'])->name('exportar')->middleware('can:boletines.view');
     });
