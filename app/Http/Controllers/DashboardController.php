@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\AsistenciaDocente;
 use App\Models\HorarioDocente;
 use App\Models\PagoDocente; 
@@ -49,18 +50,24 @@ class DashboardController extends Controller
             ->take(5) // Limitar a los 5 más recientes
             ->get();
 
-        // Información común para todos los usuarios
+        // Información común para todos los usuarios (cacheada)
         $data['user'] = $user;
-        $data['totalUsuarios'] = User::count();
-        $data['totalEstudiantes'] = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'estudiante');
-        })->count();
-        $data['totalProfesores'] = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'profesor');
-        })->count();
-        $data['totalPadres'] = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'padre');
-        })->count();
+        $cacheKey = 'dashboard.contadores_generales';
+        $contadores = Cache::remember($cacheKey, 600, function () {
+            return [
+                'totalUsuarios' => User::count(),
+                'totalEstudiantes' => User::whereHas('roles', function ($query) {
+                    $query->where('nombre', 'estudiante');
+                })->count(),
+                'totalProfesores' => User::whereHas('roles', function ($query) {
+                    $query->where('nombre', 'profesor');
+                })->count(),
+                'totalPadres' => User::whereHas('roles', function ($query) {
+                    $query->where('nombre', 'padre');
+                })->count()
+            ];
+        });
+        $data = array_merge($data, $contadores);
 
         $data['ultimosRegistrosAsistencia'] = RegistroAsistencia::with('usuario')
         ->orderBy('fecha_registro', 'desc')
@@ -532,47 +539,52 @@ class DashboardController extends Controller
         } elseif ($user->hasRole('padre')) {
             return view('admin.dashboard-padre', $data);
         } else {
-            // Estadísticas generales (para administradores)
+            // Estadísticas generales (para administradores) - Optimizadas con cache
             if ($user->hasRole('admin') || $user->hasPermission('dashboard.admin')) {
                 // Ciclo activo
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
 
                 if ($cicloActivo) {
-                    // Estadísticas del ciclo activo
+                    // Estadísticas del ciclo activo (cacheadas)
                     $data['cicloActivo'] = $cicloActivo;
                     $data['totalInscripciones'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
                         ->where('estado_inscripcion', 'activo')
                         ->count();
 
-                    // Estadísticas de asistencia general
-                    $data['estadisticasAsistencia'] = $this->obtenerEstadisticasGenerales($cicloActivo);
+                    // Estadísticas de asistencia general (cacheadas)
+                    $statsCacheKey = 'dashboard.admin.stats.' . $cicloActivo->id;
+                    $data['estadisticasAsistencia'] = Cache::remember($statsCacheKey, 600, function () use ($cicloActivo) {
+                        return $this->obtenerEstadisticasGenerales($cicloActivo);
+                    });
                 }
 
-                // Carreras activas
-                $data['totalCarreras'] = Carrera::where('estado', true)->count();
+                // Cache datos administrativos estáticos
+                $adminCacheKey = 'dashboard.admin.contadores';
+                $adminData = Cache::remember($adminCacheKey, 300, function () {
+                    return [
+                        'totalCarreras' => Carrera::where('estado', true)->count(),
+                        'totalAulas' => Aula::where('estado', true)->count(),
+                        'totalAdministradores' => User::whereHas('roles', function ($query) {
+                            $query->where('nombre', 'administrador');
+                        })->count(),
+                        'totalRoles' => Role::count(),
+                        'totalPermisos' => Permission::count(),
+                        'totalCiclos' => Ciclo::count(),
+                        'totalTurnos' => Turno::where('estado', true)->count(),
+                        'totalCursos' => Curso::where('estado', true)->count(),
+                        'totalAnuncios' => Anuncio::count(),
+                        'totalHorariosDocentes' => HorarioDocente::count(),
+                        'totalPagosDocentes' => PagoDocente::count(),
+                        'totalAsistenciaDocente' => AsistenciaDocente::count(),
+                        'totalInscripcionesGeneral' => Inscripcion::count()
+                    ];
+                });
+                $data = array_merge($data, $adminData);
 
-                // Aulas
-                $data['totalAulas'] = Aula::where('estado', true)->count();
-
-                $data['totalAdministradores'] = User::whereHas('roles', function ($query) {
-                    $query->where('nombre', 'administrador');
-                })->count();
-                $data['totalRoles'] = Role::count();
-                $data['totalPermisos'] = Permission::count();
-                $data['totalCiclos'] = Ciclo::count();
-                $data['totalTurnos'] = Turno::where('estado', true)->count();
-                $data['totalCursos'] = Curso::where('estado', true)->count();
-                $data['totalAnuncios'] = Anuncio::count();
-                $data['totalHorariosDocentes'] = HorarioDocente::count();
-                $data['totalPagosDocentes'] = PagoDocente::count();
-                $data['totalAsistenciaDocente'] = AsistenciaDocente::count();
-                $data['totalInscripcionesGeneral'] = Inscripcion::count();
-
-                // Asistencia de estudiantes para hoy
+                // Asistencia de estudiantes para hoy (datos en tiempo real, no cacheados)
                 $today = Carbon::today();
                 $data['asistenciaHoy'] = [
                     'total_registros' => RegistroAsistencia::whereDate('fecha_registro', $today)->count(),
-                    // Asumiendo que 'estado' en RegistroAsistencia puede ser 'presente' o 'ausente'
                     'presentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
                                     ->where('estado', 'presente')
                                     ->count(),

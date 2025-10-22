@@ -734,8 +734,6 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     });
 });
 
-Route::resource('horarios-docentes', HorarioDocenteController::class)->middleware('auth');
-
 Route::get('api/consulta/{dni}', [App\Http\Controllers\ApiProxyController::class, 'consultaDNI']);
 
 // Rutas para gestión de constancias

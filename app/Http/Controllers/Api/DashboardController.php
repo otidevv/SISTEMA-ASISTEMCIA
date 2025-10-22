@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\AsistenciaDocente;
 use App\Models\HorarioDocente;
 use App\Models\PagoDocente;
@@ -31,24 +32,29 @@ class DashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
-            $data = [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'numero_documento' => $user->numero_documento
-                ],
-                'totalUsuarios' => User::count(),
-                'totalEstudiantes' => User::whereHas('roles', function ($query) {
-                    $query->where('nombre', 'estudiante');
-                })->count(),
-                'totalProfesores' => User::whereHas('roles', function ($query) {
-                    $query->where('nombre', 'profesor');
-                })->count(),
-                'totalPadres' => User::whereHas('roles', function ($query) {
-                    $query->where('nombre', 'padre');
-                })->count()
+
+            // Cache datos estáticos por 10 minutos
+            $data = Cache::remember('dashboard.datos_generales', 600, function () {
+                return [
+                    'totalUsuarios' => User::count(),
+                    'totalEstudiantes' => User::whereHas('roles', function ($query) {
+                        $query->where('nombre', 'estudiante');
+                    })->count(),
+                    'totalProfesores' => User::whereHas('roles', function ($query) {
+                        $query->where('nombre', 'profesor');
+                    })->count(),
+                    'totalPadres' => User::whereHas('roles', function ($query) {
+                        $query->where('nombre', 'padre');
+                    })->count()
+                ];
+            });
+
+            // Datos del usuario (no cacheados)
+            $data['user'] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'numero_documento' => $user->numero_documento
             ];
 
             return response()->json($data);
@@ -116,37 +122,41 @@ class DashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            
+
             if (!$user->hasRole('admin') && !$user->hasPermission('dashboard.admin')) {
                 return response()->json(['error' => 'No autorizado'], 403);
             }
 
             $cicloActivo = Ciclo::where('es_activo', true)->first();
-            
-            $data = [
-                'cicloActivo' => $cicloActivo,
-                'totalInscripciones' => $cicloActivo ? 
-                    Inscripcion::where('ciclo_id', $cicloActivo->id)
-                        ->where('estado_inscripcion', 'activo')
-                        ->count() : 0,
-                'totalCarreras' => Carrera::where('estado', true)->count(),
-                'totalAulas' => Aula::where('estado', true)->count(),
-                'totalAdministradores' => User::whereHas('roles', function ($query) {
-                    $query->where('nombre', 'administrador');
-                })->count(),
-                'totalRoles' => Role::count(),
-                'totalPermisos' => Permission::count(),
-                'totalCiclos' => Ciclo::count(),
-                'totalTurnos' => Turno::where('estado', true)->count(),
-                'totalCursos' => Curso::where('estado', true)->count(),
-                'totalAnuncios' => Anuncio::count(),
-                'totalHorariosDocentes' => HorarioDocente::count(),
-                'totalPagosDocentes' => PagoDocente::count(),
-                'totalAsistenciaDocente' => AsistenciaDocente::count(),
-                'totalInscripcionesGeneral' => Inscripcion::count()
-            ];
 
-            // Asistencia de hoy
+            // Cache datos administrativos por 5 minutos (menos tiempo ya que son más críticos)
+            $cacheKey = 'dashboard.admin.' . ($cicloActivo ? $cicloActivo->id : 'no_ciclo');
+            $data = Cache::remember($cacheKey, 300, function () use ($cicloActivo) {
+                return [
+                    'cicloActivo' => $cicloActivo,
+                    'totalInscripciones' => $cicloActivo ?
+                        Inscripcion::where('ciclo_id', $cicloActivo->id)
+                            ->where('estado_inscripcion', 'activo')
+                            ->count() : 0,
+                    'totalCarreras' => Carrera::where('estado', true)->count(),
+                    'totalAulas' => Aula::where('estado', true)->count(),
+                    'totalAdministradores' => User::whereHas('roles', function ($query) {
+                        $query->where('nombre', 'administrador');
+                    })->count(),
+                    'totalRoles' => Role::count(),
+                    'totalPermisos' => Permission::count(),
+                    'totalCiclos' => Ciclo::count(),
+                    'totalTurnos' => Turno::where('estado', true)->count(),
+                    'totalCursos' => Curso::where('estado', true)->count(),
+                    'totalAnuncios' => Anuncio::count(),
+                    'totalHorariosDocentes' => HorarioDocente::count(),
+                    'totalPagosDocentes' => PagoDocente::count(),
+                    'totalAsistenciaDocente' => AsistenciaDocente::count(),
+                    'totalInscripcionesGeneral' => Inscripcion::count()
+                ];
+            });
+
+            // Asistencia de hoy (no cacheada, datos en tiempo real)
             $today = Carbon::today();
             $data['asistenciaHoy'] = [
                 'total_registros' => RegistroAsistencia::whereDate('fecha_registro', $today)->count(),
@@ -158,9 +168,12 @@ class DashboardController extends Controller
                                 ->count(),
             ];
 
-            // Estadísticas del ciclo activo
+            // Estadísticas del ciclo activo (cacheadas por 10 minutos)
             if ($cicloActivo) {
-                $data['estadisticasAsistencia'] = $this->obtenerEstadisticasGenerales($cicloActivo);
+                $statsCacheKey = 'dashboard.admin.stats.' . $cicloActivo->id;
+                $data['estadisticasAsistencia'] = Cache::remember($statsCacheKey, 600, function () use ($cicloActivo) {
+                    return $this->obtenerEstadisticasGenerales($cicloActivo);
+                });
             }
 
             return response()->json($data);

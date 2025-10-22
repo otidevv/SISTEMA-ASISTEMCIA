@@ -83,34 +83,32 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadDashboardData() {
         const startTime = Date.now();
         console.log('Iniciando carga del dashboard...');
-        
+
         try {
             // Show loading
             document.getElementById('dashboard-loading').style.display = 'block';
             document.getElementById('dashboard-content').style.display = 'none';
-            
-            // Load general data
-            console.log('Cargando datos generales...');
-            await loadGeneralData();
-            console.log(`Datos generales cargados en ${Date.now() - startTime}ms`);
-            
-            // Load specific sections
-            console.log('Cargando secciones específicas...');
-            await Promise.all([
+
+            // Load all data in parallel for better performance
+            console.log('Cargando todos los datos en paralelo...');
+            const promises = [
+                loadGeneralData(),
                 loadAnuncios(),
                 checkAndLoadAdminData()
-            ]);
-            console.log(`Todas las secciones cargadas en ${Date.now() - startTime}ms`);
-            
+            ];
+
+            await Promise.all(promises);
+            console.log(`Todos los datos cargados en paralelo en ${Date.now() - startTime}ms`);
+
             // Hide loading and show content
             document.getElementById('dashboard-loading').style.display = 'none';
             document.getElementById('dashboard-content').style.display = 'block';
-            
+
             console.log(`Dashboard completamente cargado en ${Date.now() - startTime}ms`);
-            
+
         } catch (error) {
             console.error('Error loading dashboard:', error);
-            document.getElementById('dashboard-loading').innerHTML = 
+            document.getElementById('dashboard-loading').innerHTML =
                 '<div class="alert alert-danger">Error al cargar el dashboard. Por favor, recarga la página.</div>';
         }
     }
