@@ -1901,18 +1901,16 @@
                         <div class="col-md-3">
                             <label for="filter-ciclo">Ciclo:</label>
                             <select id="filter-ciclo" class="form-select">
-                                <option value="">Todos los ciclos</option>
+                                <option value="" selected>Todos</option>
                                 @foreach($ciclos as $ciclo)
-                                    <option value="{{ $ciclo->id }}" {{ $ciclo->es_activo ? 'selected' : '' }}>
-                                        {{ $ciclo->nombre }} {{ $ciclo->es_activo ? '(Activo)' : '' }}
-                                    </option>
+                                    <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="filter-estado">Estado:</label>
                             <select id="filter-estado" class="form-select">
-                                <option value="">Todos</option>
+                                <option value="" selected>Todos</option>
                                 <option value="pendiente">Pendiente</option>
                                 <option value="aprobado">Aprobado</option>
                                 <option value="rechazado">Rechazado</option>
@@ -1922,7 +1920,7 @@
                         <div class="col-md-3">
                             <label for="filter-carrera">Carrera:</label>
                             <select id="filter-carrera" class="form-select">
-                                <option value="">Todas las carreras</option>
+                                <option value="" selected>Todos</option>
                                 @foreach($carreras as $carrera)
                                     <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
                                 @endforeach
@@ -1941,32 +1939,60 @@
                         <div class="col-md-3">
                             <div class="card bg-warning text-white">
                                 <div class="card-body p-3">
-                                    <h5 class="mb-1">Pendientes</h5>
-                                    <h3 id="stat-pendientes">0</h3>
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-circle bg-warning text-white me-3">
+                                            <i class="uil uil-clock"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Pendientes</h5>
+                                            <h3 id="stat-pendientes">0</h3>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-success text-white">
                                 <div class="card-body p-3">
-                                    <h5 class="mb-1">Aprobadas</h5>
-                                    <h3 id="stat-aprobadas">0</h3>
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-circle bg-success text-white me-3">
+                                            <i class="uil uil-check-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Aprobadas</h5>
+                                            <h3 id="stat-aprobadas">0</h3>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-danger text-white">
                                 <div class="card-body p-3">
-                                    <h5 class="mb-1">Rechazadas</h5>
-                                    <h3 id="stat-rechazadas">0</h3>
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-circle bg-danger text-white me-3">
+                                            <i class="uil uil-times-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Rechazadas</h5>
+                                            <h3 id="stat-rechazadas">0</h3>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card bg-info text-white">
                                 <div class="card-body p-3">
-                                    <h5 class="mb-1">Observadas</h5>
-                                    <h3 id="stat-observadas">0</h3>
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-circle bg-info text-white me-3">
+                                            <i class="uil uil-exclamation-circle"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-1">Observadas</h5>
+                                            <h3 id="stat-observadas">0</h3>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2210,17 +2236,13 @@
                                 <div class="mb-3">
                                     <label for="edit-approved-ciclo" class="form-label">Ciclo</label>
                                     <select class="form-select" id="edit-approved-ciclo" name="ciclo_id" required>
-                                        @foreach($ciclos as $ciclo)
-                                            <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
-                                        @endforeach
+                                        <!-- Opciones cargadas vía AJAX -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-approved-carrera" class="form-label">Carrera</label>
                                     <select class="form-select" id="edit-approved-carrera" name="carrera_id" required>
-                                        @foreach($carreras as $carrera)
-                                            <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
-                                        @endforeach
+                                        <!-- Opciones cargadas vía AJAX -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -2641,6 +2663,3 @@
         </div>
     </div>
 @endpush
-
-
-

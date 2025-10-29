@@ -527,6 +527,12 @@ Route::middleware('auth')->group(function () {
 
 // Agrega el prefijo 'json' para todas las rutas de API
 Route::middleware(['auth'])->prefix('json')->group(function () {
+    // Rutas para filtros
+    Route::prefix('filters')->group(function () {
+        Route::get('/ciclos', [App\Http\Controllers\Api\FilterController::class, 'getCiclos'])->name('api.filters.ciclos');
+        Route::get('/carreras', [App\Http\Controllers\Api\FilterController::class, 'getCarreras'])->name('api.filters.carreras');
+    });
+
     
     // ==========================================
     // RUTAS PARA GESTIÓN DE SESIÓN (NUEVO)

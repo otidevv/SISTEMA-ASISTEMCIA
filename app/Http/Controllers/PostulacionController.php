@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Exports\PostulacionesCompletoExport;
 use App\Exports\PostulacionesResumenExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class PostulacionController extends Controller
 {
@@ -30,12 +32,13 @@ class PostulacionController extends Controller
             abort(403, 'No tienes permisos para ver postulaciones');
         }
 
+        $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+        // Obtener ciclos y carreras activos para precargar los filtros
         $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
         $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
-        $turnos = Turno::where('estado', true)->orderBy('nombre')->get();
-        $centrosEducativos = CentroEducativo::orderBy('cen_edu')->get();
 
-        return view('postulaciones.index', compact('ciclos', 'carreras', 'turnos', 'centrosEducativos'));
+        return view('postulaciones.index', compact('cicloActivo', 'ciclos', 'carreras'));
     }
 
     /**
@@ -48,58 +51,64 @@ class PostulacionController extends Controller
         }
 
         try {
-            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno']);
+            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+                ->select('postulaciones.*');
 
-            // Filtros opcionales
-            if ($request->ciclo_id) {
-                $query->where('ciclo_id', $request->ciclo_id);
+            // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
+            $cicloId = $request->input('ciclo_id');
+            if (empty($cicloId)) {
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                // Si hay un ciclo activo, usamos su ID. Si no, usamos un ID inválido para no devolver nada.
+                $cicloId = $cicloActivo ? $cicloActivo->id : -1; 
             }
-            if ($request->estado) {
+
+            $query->where('ciclo_id', $cicloId);
+
+            // Otros filtros
+            if ($request->filled('estado')) {
                 $query->where('estado', $request->estado);
             }
-            if ($request->carrera_id) {
+            if ($request->filled('carrera_id')) {
                 $query->where('carrera_id', $request->carrera_id);
             }
 
-            $postulaciones = $query->orderBy('created_at', 'desc')->get();
-
-            $data = $postulaciones->map(function ($postulacion) {
-                $actions = $this->generarAcciones($postulacion);
-                
-                return [
-                    'id' => $postulacion->id,
-                    'codigo' => $postulacion->codigo_postulante,
-                    'estudiante' => $postulacion->estudiante->nombre . ' ' . 
-                                   $postulacion->estudiante->apellido_paterno . ' ' . 
-                                   $postulacion->estudiante->apellido_materno,
-                    'dni' => $postulacion->estudiante->numero_documento ?? 'N/A',
-                    'email' => $postulacion->estudiante->email,
-                    'ciclo' => $postulacion->ciclo->nombre,
-                    'carrera' => $postulacion->carrera->nombre,
-                    'turno' => $postulacion->turno->nombre,
-                    'tipo_inscripcion' => $postulacion->tipo_inscripcion,
-                    'fecha_postulacion' => $postulacion->fecha_postulacion->format('d/m/Y H:i'),
-                    'estado' => $postulacion->estado,
-                    'documentos_verificados' => $postulacion->documentos_verificados,
-                    'pago_verificado' => $postulacion->pago_verificado,
-                    'numero_recibo' => $postulacion->numero_recibo,
-                    'monto_total' => $postulacion->monto_total_pagado,
-                    'constancia_generada' => $postulacion->constancia_generada,
-                    'constancia_firmada' => $postulacion->constancia_firmada,
-                    'constancia_estado' => $this->generarEstadoConstancia($postulacion),
-                    'actions' => $actions
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $data
-            ]);
+            return DataTables::of($query)
+                ->addColumn('actions', function ($postulacion) {
+                    return $this->generarAcciones($postulacion);
+                })
+                ->addColumn('estudiante_nombre', function ($postulacion) {
+                    return $postulacion->estudiante?->nombre . ' ' . 
+                           $postulacion->estudiante?->apellido_paterno . ' ' . 
+                           $postulacion->estudiante?->apellido_materno;
+                })
+                ->addColumn('dni', function ($postulacion) {
+                    return $postulacion->estudiante?->numero_documento ?? 'N/A';
+                })
+                ->addColumn('email', function ($postulacion) {
+                    return $postulacion->estudiante?->email;
+                })
+                ->addColumn('ciclo_nombre', function ($postulacion) {
+                    return $postulacion->ciclo?->nombre;
+                })
+                ->addColumn('carrera_nombre', function ($postulacion) {
+                    return $postulacion->carrera?->nombre;
+                })
+                ->addColumn('turno_nombre', function ($postulacion) {
+                    return $postulacion->turno?->nombre;
+                })
+                ->editColumn('fecha_postulacion', function ($postulacion) {
+                    return $postulacion->fecha_postulacion ? $postulacion->fecha_postulacion->format('d/m/Y H:i') : '';
+                })
+                ->addColumn('constancia_estado_html', function ($postulacion) {
+                    return $this->generarEstadoConstancia($postulacion);
+                })
+                ->rawColumns(['actions', 'constancia_estado_html'])
+                ->make(true);
 
         } catch (\Exception $e) {
+            Log::error('Error en PostulacionController@listar: ' . $e->getMessage() . ' Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
             return response()->json([
-                'success' => false,
-                'message' => 'Error al cargar postulaciones: ' . $e->getMessage()
+                'error' => 'Error al cargar postulaciones. Por favor, revise los logs del sistema.'
             ], 500);
         }
     }
@@ -115,7 +124,7 @@ class PostulacionController extends Controller
 
         try {
             $postulacion = Postulacion::with([
-                'estudiante.parentescos.padre', // Eager load parentescos and their associated 'padre' (User)
+                'estudiante.parentescos.padre', // Eager load parentescos and their associated 'padre' (User) 
                 'ciclo',
                 'carrera',
                 'turno',
@@ -430,7 +439,7 @@ class PostulacionController extends Controller
         $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
         
         // 2. Construir la consulta base para aulas con el conteo de inscripciones activas
-        $baseQuery = Aula::activas()->withCount(['inscripciones' => function ($query) {
+        $baseQuery = Aula::activas()->withCount(['inscripciones' => function ($query) { 
             $query->where('estado_inscripcion', 'activo')
                   ->whereHas('ciclo', function ($subQuery) {
                       $subQuery->where('es_activo', true);
@@ -472,7 +481,7 @@ class PostulacionController extends Controller
         }
         
         // 6. Ordenar para llenado progresivo
-        $aulas = $aulas->sortBy(function ($aula) {
+        $aulas = $aulas->sortBy(function ($aula) { 
             // Primero, por el número de inscritos activos (ascendente)
             // Segundo, por el nombre del aula (alfabético)
             return [$aula->inscripciones_count, $aula->nombre];
