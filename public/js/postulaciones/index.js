@@ -863,6 +863,24 @@ function loadApprovedPostulationForEdit(id) {
                     $('#edit-approved-telefono').val(data.estudiante.telefono);
                     $('#edit-approved-email').val(data.estudiante.email);
 
+                    // Llenar datos del padre
+                    if (data.padre) {
+                        $('#edit-approved-padre-nombre').val(data.padre.nombre);
+                        $('#edit-approved-padre-apellido-paterno').val(data.padre.apellido_paterno);
+                        $('#edit-approved-padre-apellido-materno').val(data.padre.apellido_materno);
+                        $('#edit-approved-padre-dni').val(data.padre.numero_documento);
+                        $('#edit-approved-padre-telefono').val(data.padre.telefono);
+                    }
+
+                    // Llenar datos de la madre
+                    if (data.madre) {
+                        $('#edit-approved-madre-nombre').val(data.madre.nombre);
+                        $('#edit-approved-madre-apellido-paterno').val(data.madre.apellido_paterno);
+                        $('#edit-approved-madre-apellido-materno').val(data.madre.apellido_materno);
+                        $('#edit-approved-madre-dni').val(data.madre.numero_documento);
+                        $('#edit-approved-madre-telefono').val(data.madre.telefono);
+                    }
+
                     // Llenar datos académicos
                     $('#edit-approved-ciclo').val(data.postulacion.ciclo_id);
                     $('#edit-approved-carrera').val(data.postulacion.carrera_id);
@@ -1033,7 +1051,17 @@ function saveApprovedPostulationChanges() {
         numero_recibo: $('#edit-approved-recibo').val(),
         monto_matricula: $('#edit-approved-matricula').val(),
         monto_ensenanza: $('#edit-approved-ensenanza').val(),
-        observacion_cambio: $('#edit-approved-observacion').val()
+        observacion_cambio: $('#edit-approved-observacion').val(),
+        padre_nombre: $('#edit-approved-padre-nombre').val(),
+        padre_apellido_paterno: $('#edit-approved-padre-apellido-paterno').val(),
+        padre_apellido_materno: $('#edit-approved-padre-apellido-materno').val(),
+        padre_dni: $('#edit-approved-padre-dni').val(),
+        padre_telefono: $('#edit-approved-padre-telefono').val(),
+        madre_nombre: $('#edit-approved-madre-nombre').val(),
+        madre_apellido_paterno: $('#edit-approved-madre-apellido-paterno').val(),
+        madre_apellido_materno: $('#edit-approved-madre-apellido-materno').val(),
+        madre_dni: $('#edit-approved-madre-dni').val(),
+        madre_telefono: $('#edit-approved-madre-telefono').val(),
     };
 
     // Validar observación

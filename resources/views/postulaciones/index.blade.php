@@ -2273,6 +2273,56 @@
 
                         <div class="row">
                             <div class="col-12">
+                                <h6 class="text-muted mb-3">Datos de los Padres</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="edit-approved-padre-dni" class="form-label">DNI del Padre</label>
+                                    <input type="text" class="form-control" id="edit-approved-padre-dni" name="padre_dni" maxlength="8">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-padre-nombre" class="form-label">Nombres del Padre</label>
+                                    <input type="text" class="form-control" id="edit-approved-padre-nombre" name="padre_nombre">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-padre-apellido-paterno" class="form-label">Apellido Paterno del Padre</label>
+                                    <input type="text" class="form-control" id="edit-approved-padre-apellido-paterno" name="padre_apellido_paterno">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-padre-apellido-materno" class="form-label">Apellido Materno del Padre</label>
+                                    <input type="text" class="form-control" id="edit-approved-padre-apellido-materno" name="padre_apellido_materno">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-padre-telefono" class="form-label">Teléfono del Padre</label>
+                                    <input type="text" class="form-control" id="edit-approved-padre-telefono" name="padre_telefono">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="edit-approved-madre-dni" class="form-label">DNI de la Madre</label>
+                                    <input type="text" class="form-control" id="edit-approved-madre-dni" name="madre_dni" maxlength="8">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-madre-nombre" class="form-label">Nombres de la Madre</label>
+                                    <input type="text" class="form-control" id="edit-approved-madre-nombre" name="madre_nombre">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-madre-apellido-paterno" class="form-label">Apellido Paterno de la Madre</label>
+                                    <input type="text" class="form-control" id="edit-approved-madre-apellido-paterno" name="madre_apellido_paterno">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-madre-apellido-materno" class="form-label">Apellido Materno de la Madre</label>
+                                    <input type="text" class="form-control" id="edit-approved-madre-apellido-materno" name="madre_apellido_materno">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-approved-madre-telefono" class="form-label">Teléfono de la Madre</label>
+                                    <input type="text" class="form-control" id="edit-approved-madre-telefono" name="madre_telefono">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
                                 <h6 class="text-muted mb-3">Información de Pago</h6>
                             </div>
                             <div class="col-md-4">

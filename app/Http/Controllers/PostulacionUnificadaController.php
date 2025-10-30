@@ -116,18 +116,18 @@ class PostulacionUnificadaController extends Controller
             'padre_nombre' => 'required|string|max:100',
             'padre_apellido_paterno' => 'required|string|max:100',
             'padre_apellido_materno' => 'nullable|string|max:100',
-            'padre_dni' => 'required|string|size:8|unique:users,numero_documento',
+            'padre_dni' => 'required|string|size:8',
             'padre_telefono' => 'required|string|max:15',
-            'padre_email' => 'nullable|email|unique:users,email',
+            'padre_email' => 'nullable|email',
             'padre_ocupacion' => 'nullable|string|max:100',
 
             // Datos de la madre
             'madre_nombre' => 'required|string|max:100',
             'madre_apellido_paterno' => 'required|string|max:100',
             'madre_apellido_materno' => 'nullable|string|max:100',
-            'madre_dni' => 'required|string|size:8|unique:users,numero_documento',
+            'madre_dni' => 'required|string|size:8',
             'madre_telefono' => 'required|string|max:15',
-            'madre_email' => 'nullable|email|unique:users,email',
+            'madre_email' => 'nullable|email',
             'madre_ocupacion' => 'nullable|string|max:100',
 
             // Datos académicos
@@ -193,42 +193,38 @@ class PostulacionUnificadaController extends Controller
                 $estudiante->assignRole('Postulante');
             }
             
-            // 2. Crear usuario padre
-            $padre = User::firstOrCreate(
-                ['numero_documento' => $request->padre_dni],
-                [
-                    'username' => 'padre_' . $request->padre_dni,
-                    'email' => $request->padre_email ?: 'padre_' . $request->padre_dni . '@temp.com',
-                    'password_hash' => Hash::make(Str::random(12)), // Password temporal
-                    'nombre' => $request->padre_nombre,
-                    'apellido_paterno' => $request->padre_apellido_paterno,
-                    'apellido_materno' => $request->padre_apellido_materno,
-                    'telefono' => $request->padre_telefono,
-                    'tipo_documento' => 'DNI',
-                    'estado' => true
-                ]
-            );
+            // 2. Crear o actualizar usuario padre
+            $padre = User::firstOrNew(['numero_documento' => $request->padre_dni]);
+            $padre->fill([
+                'username' => $padre->exists ? $padre->username : 'padre_' . $request->padre_dni,
+                'email' => $request->padre_email ?: 'padre_' . $request->padre_dni . '@temp.com',
+                'password_hash' => $padre->exists ? $padre->password_hash : Hash::make(Str::random(12)), // Password temporal
+                'nombre' => $request->padre_nombre,
+                'apellido_paterno' => $request->padre_apellido_paterno,
+                'apellido_materno' => $request->padre_apellido_materno,
+                'telefono' => $request->padre_telefono,
+                'tipo_documento' => 'DNI',
+                'estado' => true
+            ])->save();
 
             // Asignar rol de padre
             if (!$padre->hasRole('Padre')) {
                 $padre->assignRole('Padre');
             }
 
-            // 3. Crear usuario madre
-            $madre = User::firstOrCreate(
-                ['numero_documento' => $request->madre_dni],
-                [
-                    'username' => 'madre_' . $request->madre_dni,
-                    'email' => $request->madre_email ?: 'madre_' . $request->madre_dni . '@temp.com',
-                    'password_hash' => Hash::make(Str::random(12)), // Password temporal
-                    'nombre' => $request->madre_nombre,
-                    'apellido_paterno' => $request->madre_apellido_paterno,
-                    'apellido_materno' => $request->madre_apellido_materno,
-                    'telefono' => $request->madre_telefono,
-                    'tipo_documento' => 'DNI',
-                    'estado' => true
-                ]
-            );
+            // 3. Crear o actualizar usuario madre
+            $madre = User::firstOrNew(['numero_documento' => $request->madre_dni]);
+            $madre->fill([
+                'username' => $madre->exists ? $madre->username : 'madre_' . $request->madre_dni,
+                'email' => $request->madre_email ?: 'madre_' . $request->madre_dni . '@temp.com',
+                'password_hash' => $madre->exists ? $madre->password_hash : Hash::make(Str::random(12)), // Password temporal
+                'nombre' => $request->madre_nombre,
+                'apellido_paterno' => $request->madre_apellido_paterno,
+                'apellido_materno' => $request->madre_apellido_materno,
+                'telefono' => $request->madre_telefono,
+                'tipo_documento' => 'DNI',
+                'estado' => true
+            ])->save();
 
             // Asignar rol de madre
             if (!$madre->hasRole('Madre')) {
@@ -565,6 +561,7 @@ class PostulacionUnificadaController extends Controller
      */
     private function storePostulacionExistente(Request $request)
     {
+        DB::beginTransaction();
         try {
             // Validar solo los campos necesarios para postulación existente
             $validator = Validator::make($request->all(), [
@@ -577,7 +574,19 @@ class PostulacionUnificadaController extends Controller
                 'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'certificado_estudios' => 'required|mimes:pdf|max:5120',
                 'voucher_pago' => 'required|mimes:pdf|max:5120',
-                'dni_pdf' => 'nullable|mimes:pdf|max:5120'
+                'dni_pdf' => 'nullable|mimes:pdf|max:5120',
+
+                // Datos del padre (pueden ser opcionales si ya existen)
+                'padre_nombre' => 'nullable|string|max:100',
+                'padre_apellido_paterno' => 'nullable|string|max:100',
+                'padre_dni' => 'nullable|string|size:8',
+                'padre_telefono' => 'nullable|string|max:15',
+
+                // Datos de la madre (pueden ser opcionales si ya existen)
+                'madre_nombre' => 'nullable|string|max:100',
+                'madre_apellido_paterno' => 'nullable|string|max:100',
+                'madre_dni' => 'nullable|string|size:8',
+                'madre_telefono' => 'nullable|string|max:15',
             ]);
             
             if ($validator->fails()) {
@@ -587,69 +596,78 @@ class PostulacionUnificadaController extends Controller
                 ], 422);
             }
             
-            // Verificar que el usuario existe y tiene los permisos correctos
             $estudiante = User::find($request->estudiante_id);
             if (!$estudiante) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuario no encontrado'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Usuario no encontrado'], 404);
+            }
+
+            // Procesar y guardar padres
+            if ($request->filled('padre_dni')) {
+                $padre = User::firstOrCreate(
+                    ['numero_documento' => $request->padre_dni],
+                    [
+                        'nombre' => $request->padre_nombre,
+                        'apellido_paterno' => $request->padre_apellido_paterno,
+                        'apellido_materno' => $request->padre_apellido_materno ?? ''
+                    ]
+                );
+                Parentesco::updateOrCreate(
+                    ['estudiante_id' => $estudiante->id, 'padre_id' => $padre->id],
+                    ['tipo_parentesco' => 'padre']
+                );
+            }
+
+            if ($request->filled('madre_dni')) {
+                $madre = User::firstOrCreate(
+                    ['numero_documento' => $request->madre_dni],
+                    [
+                        'nombre' => $request->madre_nombre,
+                        'apellido_paterno' => $request->madre_apellido_paterno,
+                        'apellido_materno' => $request->madre_apellido_materno ?? ''
+                    ]
+                );
+                Parentesco::updateOrCreate(
+                    ['estudiante_id' => $estudiante->id, 'padre_id' => $madre->id],
+                    ['tipo_parentesco' => 'madre']
+                );
             }
             
-            // Verificar ciclo activo
             $cicloActivo = Ciclo::activo()->first();
             if (!$cicloActivo) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No hay ciclo activo para postulaciones'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'No hay ciclo activo para postulaciones'], 400);
             }
             
-            // Verificar si ya tiene postulación en este ciclo
             $postulacionExistente = Postulacion::where('estudiante_id', $estudiante->id)
                 ->where('ciclo_id', $cicloActivo->id)
                 ->first();
                 
             if ($postulacionExistente) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ya existe una postulación para este ciclo'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Ya existe una postulación para este ciclo'], 400);
             }
             
-            // Crear la postulación
-            $postulacion = new Postulacion();
+            $postulacion = new Postulacion($request->only([
+                'carrera_id', 'turno_id', 'tipo_inscripcion', 'colegio_procedencia', 'año_egreso'
+            ]));
+
             $postulacion->estudiante_id = $estudiante->id;
             $postulacion->ciclo_id = $cicloActivo->id;
-            $postulacion->carrera_id = $request->carrera_id;
-            $postulacion->turno_id = $request->turno_id;
-            $postulacion->tipo_inscripcion = $request->tipo_inscripcion;
             $postulacion->estado = 'pendiente';
             $postulacion->fecha_postulacion = now();
             $postulacion->codigo_postulante = 'POST-' . date('Y') . '-' . str_pad(Postulacion::count() + 1, 5, '0', STR_PAD_LEFT);
-            $postulacion->colegio_procedencia = $request->colegio_procedencia;
-            $postulacion->año_egreso = $request->año_egreso;
             $postulacion->creado_por = Auth::id();
             
             // Guardar documentos
             if ($request->hasFile('foto')) {
-                $fotoPath = $request->file('foto')->store('postulaciones/fotos', 'public');
-                $postulacion->foto = $fotoPath;
+                $postulacion->foto = $request->file('foto')->store('postulaciones/fotos', 'public');
             }
-            
             if ($request->hasFile('dni_pdf')) {
-                $dniPath = $request->file('dni_pdf')->store('postulaciones/documentos', 'public');
-                $postulacion->dni_pdf = $dniPath;
+                $postulacion->dni_pdf = $request->file('dni_pdf')->store('postulaciones/documentos', 'public');
             }
-            
             if ($request->hasFile('certificado_estudios')) {
-                $certificadoPath = $request->file('certificado_estudios')->store('postulaciones/documentos', 'public');
-                $postulacion->certificado_estudios = $certificadoPath;
+                $postulacion->certificado_estudios = $request->file('certificado_estudios')->store('postulaciones/documentos', 'public');
             }
-            
             if ($request->hasFile('voucher_pago')) {
-                $voucherPath = $request->file('voucher_pago')->store('postulaciones/documentos', 'public');
-                $postulacion->voucher_pago = $voucherPath;
+                $postulacion->voucher_pago = $request->file('voucher_pago')->store('postulaciones/documentos', 'public');
             }
             
             $postulacion->save();
@@ -685,6 +703,9 @@ class PostulacionUnificadaController extends Controller
                 ->first();
             
             if ($postulante) {
+                // Obtener padres/apoderados
+                $padres = Parentesco::with('padre')->where('estudiante_id', $postulante->id)->get();
+
                 return response()->json([
                     'success' => true,
                     'postulante' => [
@@ -697,7 +718,18 @@ class PostulacionUnificadaController extends Controller
                         'telefono' => $postulante->telefono,
                         'fecha_nacimiento' => $postulante->fecha_nacimiento,
                         'genero' => $postulante->genero,
-                        'direccion' => $postulante->direccion
+                        'direccion' => $postulante->direccion,
+                        'padres' => $padres->map(function ($p) {
+                            return [
+                                'id' => $p->padre->id,
+                                'nombre' => $p->padre->nombre,
+                                'apellido_paterno' => $p->padre->apellido_paterno,
+                                'apellido_materno' => $p->padre->apellido_materno,
+                                'numero_documento' => $p->padre->numero_documento,
+                                'telefono' => $p->padre->telefono,
+                                'tipo_parentesco' => $p->tipo_parentesco,
+                            ];
+                        })
                     ]
                 ]);
             }

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Inscripcion;
 use App\Models\Aula;
 use App\Models\CentroEducativo;
+use App\Models\Parentesco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class PostulacionController extends Controller
             $cicloId = $request->input('ciclo_id');
             if (empty($cicloId)) {
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
-                // Si hay un ciclo activo, usamos su ID. Si no, usamos un ID inválido para no devolver nada.
+                // Si hay un ciclo activo, usamos su ID. Si no, usamos un ID inválido para no devolver nada. 
                 $cicloId = $cicloActivo ? $cicloActivo->id : -1; 
             }
 
@@ -750,13 +751,20 @@ class PostulacionController extends Controller
         }
 
         try {
-            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+            $postulacion = Postulacion::with(['estudiante.parentescos.padre', 'ciclo', 'carrera', 'turno'])
                 ->findOrFail($id);
             
             // Buscar la inscripción asociada si existe
             $inscripcion = Inscripcion::where('estudiante_id', $postulacion->estudiante_id)
                 ->where('ciclo_id', $postulacion->ciclo_id)
                 ->first();
+
+            // Extraer datos del padre y la madre
+            $padre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Padre')->first();
+            $madre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Madre')->first();
+
+            $padreData = $padre && $padre->padre ? $padre->padre->toArray() : null;
+            $madreData = $madre && $madre->padre ? $madre->padre->toArray() : null;
 
             return response()->json([
                 'success' => true,
@@ -767,7 +775,9 @@ class PostulacionController extends Controller
                             'nombre' => $postulacion->centroEducativo->cen_edu
                         ] : null
                     ]),
-                    'inscripcion' => $inscripcion
+                    'inscripcion' => $inscripcion,
+                    'padre' => $padreData,
+                    'madre' => $madreData
                 ]
             ]);
 
@@ -784,6 +794,8 @@ class PostulacionController extends Controller
      */
     public function actualizarAprobada(Request $request, $id)
     {
+        Log::info('actualizarAprobada method called');
+        // dd($request->all()); // Removed dd as it's not needed for the final output
         if (!Auth::user()->hasPermission('postulaciones.edit')) {
             return response()->json(['error' => 'Sin permisos para editar'], 403);
         }
@@ -803,7 +815,21 @@ class PostulacionController extends Controller
             'numero_recibo' => 'nullable|string|max:50',
             'monto_matricula' => 'nullable|numeric|min:0',
             'monto_ensenanza' => 'nullable|numeric|min:0',
-            'observacion_cambio' => 'required|string|min:10'
+            'observacion_cambio' => 'required|string|min:10',
+
+            // Datos del padre (pueden ser opcionales si ya existen)
+            'padre_nombre' => 'nullable|string|max:100',
+            'padre_apellido_paterno' => 'nullable|string|max:100',
+            'padre_apellido_materno' => 'nullable|string|max:100',
+            'padre_dni' => 'nullable|string|size:8',
+            'padre_telefono' => 'nullable|string|max:15',
+
+            // Datos de la madre (pueden ser opcionales si ya existen)
+            'madre_nombre' => 'nullable|string|max:100',
+            'madre_apellido_paterno' => 'nullable|string|max:100',
+            'madre_apellido_materno' => 'nullable|string|max:100',
+            'madre_dni' => 'nullable|string|size:8',
+            'madre_telefono' => 'nullable|string|max:15',
         ]);
 
         DB::beginTransaction();
@@ -822,6 +848,91 @@ class PostulacionController extends Controller
             $estudiante->telefono = $request->telefono;
             $estudiante->email = $request->email;
             $estudiante->save();
+
+            // Procesar y guardar padres
+            if ($request->filled('padre_dni')) {
+                $padre = User::updateOrCreate(
+                    ['numero_documento' => $request->padre_dni],
+                    [
+                        'username' => $request->padre_dni,
+                        'email' => $request->padre_dni . '@cepre.unamad.edu.pe',
+                        'password_hash' => bcrypt($request->padre_dni),
+                        'nombre' => $request->padre_nombre,
+                        'apellido_paterno' => $request->padre_apellido_paterno,
+                        'apellido_materno' => $request->padre_apellido_materno,
+                        'telefono' => $request->padre_telefono,
+                        'tipo_documento' => 'DNI',
+                        'estado' => true
+                    ]
+                );
+                
+                if ($padre->wasRecentlyCreated) {
+                    $padre->assignRole('padre');
+                }
+
+                // Limpiar y actualizar parentesco para 'Padre'
+                $parentescosPadre = Parentesco::where('estudiante_id', $estudiante->id)
+                                              ->where('tipo_parentesco', 'Padre')
+                                              ->get();
+
+                if ($parentescosPadre->isNotEmpty()) {
+                    $parentescoPrincipal = $parentescosPadre->first();
+                    $idsToDelete = $parentescosPadre->slice(1)->pluck('id');
+                    if ($idsToDelete->isNotEmpty()) {
+                        Parentesco::destroy($idsToDelete);
+                    }
+                    $parentescoPrincipal->padre_id = $padre->id;
+                    $parentescoPrincipal->save();
+                } else {
+                    Parentesco::create([
+                        'estudiante_id' => $estudiante->id,
+                        'tipo_parentesco' => 'Padre',
+                        'padre_id' => $padre->id
+                    ]);
+                }
+            }
+
+            if ($request->filled('madre_dni')) {
+                $madre = User::updateOrCreate(
+                    ['numero_documento' => $request->madre_dni],
+                    [
+                        'username' => $request->madre_dni,
+                        'email' => $request->madre_dni . '@cepre.unamad.edu.pe',
+                        'password_hash' => bcrypt($request->madre_dni),
+                        'nombre' => $request->madre_nombre,
+                        'apellido_paterno' => $request->madre_apellido_paterno,
+                        'apellido_materno' => $request->madre_apellido_materno,
+                        'telefono' => $request->madre_telefono,
+                        'tipo_documento' => 'DNI',
+                        'estado' => true
+                    ]
+                );
+
+                if ($madre->wasRecentlyCreated) {
+                    $madre->assignRole('padre');
+                }
+
+                // Limpiar y actualizar parentesco para 'Madre'
+                $parentescosMadre = Parentesco::where('estudiante_id', $estudiante->id)
+                                              ->where('tipo_parentesco', 'Madre')
+                                              ->get();
+
+                if ($parentescosMadre->isNotEmpty()) {
+                    $parentescoPrincipal = $parentescosMadre->first();
+                    $idsToDelete = $parentescosMadre->slice(1)->pluck('id');
+                    if ($idsToDelete->isNotEmpty()) {
+                        Parentesco::destroy($idsToDelete);
+                    }
+                    $parentescoPrincipal->padre_id = $madre->id;
+                    $parentescoPrincipal->save();
+                } else {
+                    Parentesco::create([
+                        'estudiante_id' => $estudiante->id,
+                        'tipo_parentesco' => 'Madre',
+                        'padre_id' => $madre->id
+                    ]);
+                }
+            }
             
             // Actualizar datos de la postulación
             $postulacion->codigo_postulante = $request->codigo_postulante;
@@ -870,6 +981,7 @@ class PostulacionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error al actualizar postulación aprobada: ' . $e->getMessage() . ' Archivo: ' . $e->getFile() . ' Línea: ' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar: ' . $e->getMessage()
