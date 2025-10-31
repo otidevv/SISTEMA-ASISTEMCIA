@@ -9,31 +9,37 @@ use Illuminate\Support\Facades\Storage;
 
 class ConstanciaController extends Controller
 {
-    /**
-     * Mostrar lista de constancias del usuario
-     */
     public function index()
     {
         $user = Auth::user();
 
-        // Obtener constancias del usuario (como estudiante o generadas por él)
-        $constancias = DB::table('constancias_generadas')
+        // Obtener constancias
+        $query = DB::table('constancias_generadas')
             ->join('inscripciones', 'constancias_generadas.inscripcion_id', '=', 'inscripciones.id')
-            ->join('users', 'constancias_generadas.estudiante_id', '=', 'users.id')
+            ->join('users as estudiante_user', 'constancias_generadas.estudiante_id', '=', 'estudiante_user.id') // Alias for student user
             ->join('ciclos', 'inscripciones.ciclo_id', '=', 'ciclos.id')
             ->join('carreras', 'inscripciones.carrera_id', '=', 'carreras.id')
-            ->where(function($query) use ($user) {
-                $query->where('constancias_generadas.estudiante_id', $user->id)
-                      ->orWhere('constancias_generadas.generado_por', $user->id);
-            })
-            ->select(
+            ->leftJoin('users as generador_user', 'constancias_generadas.generado_por', '=', 'generador_user.id'); // Join for generator user
+
+        // Si el usuario no es admin y no tiene permiso para ver todas, filtrar por sus constancias
+        if (!$user->hasRole('admin') && !$user->hasPermission('constancias.view')) {
+            $query->where(function($q) use ($user) {
+                $q->where('constancias_generadas.estudiante_id', $user->id)
+                  ->orWhere('constancias_generadas.generado_por', $user->id);
+            });
+        }
+
+        $constancias = $query->select(
                 'constancias_generadas.*',
                 'inscripciones.id as inscripcion_id',
-                'users.nombre',
-                'users.apellido_paterno',
-                'users.apellido_materno',
+                'estudiante_user.nombre as estudiante_nombre',
+                'estudiante_user.apellido_paterno as estudiante_apellido_paterno',
+                'estudiante_user.apellido_materno as estudiante_apellido_materno',
                 'ciclos.nombre as ciclo_nombre',
-                'carreras.nombre as carrera_nombre'
+                'carreras.nombre as carrera_nombre',
+                'generador_user.nombre as generador_nombre', // Select generator's name
+                'generador_user.apellido_paterno as generador_apellido_paterno', // Select generator's paternal surname
+                'generador_user.apellido_materno as generador_apellido_materno' // Select generator's maternal surname
             )
             ->orderBy('constancias_generadas.created_at', 'desc')
             ->get();
@@ -41,14 +47,19 @@ class ConstanciaController extends Controller
         // Transformar los resultados para que sean más fáciles de usar en la vista
         $constancias = $constancias->map(function($constancia) {
             $constancia->estudiante = (object) [
-                'nombre' => $constancia->nombre,
-                'apellido_paterno' => $constancia->apellido_paterno,
-                'apellido_materno' => $constancia->apellido_materno
+                'nombre' => $constancia->estudiante_nombre,
+                'apellido_paterno' => $constancia->estudiante_apellido_paterno,
+                'apellido_materno' => $constancia->estudiante_apellido_materno
             ];
             $constancia->inscripcion = (object) [
                 'id' => $constancia->inscripcion_id,
                 'ciclo' => (object) ['nombre' => $constancia->ciclo_nombre],
                 'carrera' => (object) ['nombre' => $constancia->carrera_nombre]
+            ];
+            $constancia->generador = (object) [
+                'nombre' => $constancia->generador_nombre,
+                'apellido_paterno' => $constancia->generador_apellido_paterno,
+                'apellido_materno' => $constancia->generador_apellido_materno
             ];
             return $constancia;
         });
@@ -64,7 +75,7 @@ class ConstanciaController extends Controller
         $user = Auth::user();
 
         // Verificar permisos
-        if ($user->id !== $estudianteId && !$user->hasRole('admin')) {
+        if ($user->id != $estudianteId && !$user->hasRole('admin') && !$user->hasPermission('constancias.view')) {
             abort(403, 'No tienes permiso para ver estas constancias');
         }
 
@@ -225,17 +236,7 @@ class ConstanciaController extends Controller
                 return response()->json(['error' => 'Constancia no encontrada'], 404);
             }
 
-            // Verificar permisos
-            if (!$user->hasRole('admin') && !$user->hasPermission('constancias.eliminar')) {
-                return response()->json(['error' => 'No tienes permisos para eliminar esta constancia'], 403);
-            }
-
-            // Si no es admin, verificar que la constancia le pertenece o la generó
-            if (!$user->hasRole('admin')) {
-                if ($constancia->estudiante_id !== $user->id && $constancia->generado_por !== $user->id) {
-                    return response()->json(['error' => 'No tienes permisos para eliminar esta constancia'], 403);
-                }
-            }
+            // La autorización se maneja con el middleware 'can:constancias.eliminar'
 
             // Eliminar archivo si existe
             if ($constancia->constancia_firmada_path && Storage::disk('public')->exists($constancia->constancia_firmada_path)) {

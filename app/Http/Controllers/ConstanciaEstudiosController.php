@@ -53,6 +53,11 @@ class ConstanciaEstudiosController extends Controller
                 $qrCode = ''; // Fallback si QR falla
             }
 
+            // ✅ Configurar fecha en español con primera letra mayúscula
+            Carbon::setLocale('es');
+            setlocale(LC_TIME, 'es_PE.UTF-8', 'es_ES.UTF-8', 'Spanish');
+            $fecha = ucfirst(Carbon::now()->translatedFormat('d \d\e F \d\e Y'));
+
             // Preparar datos para la vista
             $data = [
                 'inscripcion' => $inscripcion,
@@ -66,7 +71,7 @@ class ConstanciaEstudiosController extends Controller
                 'qr_code' => $qrCode,
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'lugar' => 'Puerto Maldonado',
-                'fecha' => Carbon::now()->format('d \d\e F \d\e Y'),
+                'fecha' => $fecha, // 👈 fecha traducida y capitalizada
                 'pie_linea1' => 'UNAMAD: Parque científico Tecnológico sostenible con Investigación e Innovación',
                 'pie_linea2' => 'Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 917061893 — 975844977',
                 'pie_linea3' => 'CEPRE-UNAMAD CEL: 993110927'
@@ -116,7 +121,7 @@ class ConstanciaEstudiosController extends Controller
 
             // Verificar permisos
             $user = Auth::user();
-            if ($user->id !== $constancia->estudiante_id && !$user->hasRole('admin')) {
+            if ($user->id !== $constancia->estudiante_id && !$user->hasRole('admin') && !$user->hasPermission('constancias.subir-firmada')) {
                 abort(403, 'No tienes permiso para subir constancias para esta inscripción');
             }
 
@@ -205,8 +210,14 @@ class ConstanciaEstudiosController extends Controller
             $inscripcion = Inscripcion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])
                 ->findOrFail($constancia->inscripcion_id);
 
+            // Obtener el usuario que generó la constancia
+            $generador = User::find($constancia->generado_por);
+
             // Generar el PDF usando los datos almacenados
             $datos = json_decode($constancia->datos, true);
+
+            Carbon::setLocale('es');
+            $fecha = ucfirst(Carbon::parse($constancia->created_at)->translatedFormat('d \d\e F \d\e Y'));
 
             $pdf = PDF::loadView('pdf.constancia-estudios', [
                 'inscripcion' => $inscripcion,
@@ -219,8 +230,9 @@ class ConstanciaEstudiosController extends Controller
                 'codigo_verificacion' => $constancia->codigo_verificacion,
                 'qr_code' => $datos['qr_code'] ?? '',
                 'fecha_generacion' => Carbon::parse($constancia->created_at)->format('d/m/Y H:i'),
-                'fecha' => Carbon::parse($constancia->created_at)->format('d \d\e F \d\e Y'),
+                'fecha' => $fecha,
                 'lugar' => $datos['lugar'] ?? 'Puerto Maldonado',
+                'generador' => $generador, // Pass the generator user to the view
             ]);
 
             return $pdf->stream('constancia-estudios-' . $constancia->numero_constancia . '.pdf');
