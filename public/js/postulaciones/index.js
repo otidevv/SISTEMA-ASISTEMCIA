@@ -118,7 +118,7 @@ function initDataTable() {
         },
         drawCallback: function() {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
-            // Aquí se podrían recalcular las estadísticas si fuera necesario con otra llamada AJAX
+            loadStatistics();
         }
     });
 }
@@ -666,25 +666,31 @@ function deletePostulacion(id) {
 }
 
 function loadStatistics() {
-    // Esta función se actualizará cuando se recargue la tabla
-}
+    const params = {
+        ciclo_id: $('#filter-ciclo').val(),
+        carrera_id: $('#filter-carrera').val(),
+        estado: $('#filter-estado').val(),
+    };
 
-function updateStatistics(data) {
-    let pendientes = 0, aprobadas = 0, rechazadas = 0, observadas = 0;
-    
-    data.forEach(function(item) {
-        switch(item.estado) {
-            case 'pendiente': pendientes++; break;
-            case 'aprobado': aprobadas++; break;
-            case 'rechazado': rechazadas++; break;
-            case 'observado': observadas++; break;
+    $.ajax({
+        url: '/json/postulaciones/stats',
+        type: 'GET',
+        data: params,
+        success: function(response) {
+            updateStatistics(response);
+        },
+        error: function(xhr) {
+            console.error('Error al cargar estadísticas:', xhr.responseText);
+            toastr.error('No se pudieron cargar las estadísticas.');
         }
     });
-    
-    $('#stat-pendientes').text(pendientes);
-    $('#stat-aprobadas').text(aprobadas);
-    $('#stat-rechazadas').text(rechazadas);
-    $('#stat-observadas').text(observadas);
+}
+
+function updateStatistics(stats) {
+    $('#stat-pendientes').text(stats.pendiente || 0);
+    $('#stat-aprobadas').text(stats.aprobado || 0);
+    $('#stat-rechazadas').text(stats.rechazado || 0);
+    $('#stat-observadas').text(stats.observado || 0);
 }
 
 function loadDocumentsForEdit(id) {

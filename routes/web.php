@@ -613,6 +613,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
     // API Postulaciones
     Route::prefix('postulaciones')->group(function () {
         Route::get('/', [PostulacionController::class, 'listar']);
+        Route::get('/stats', [PostulacionController::class, 'getStats']);
         Route::get('/mi-postulacion-actual', [PostulacionController::class, 'miPostulacionActual']);
         Route::post('/crear', [PostulacionController::class, 'crearDesdeAdmin']); // Nueva ruta para crear desde admin
         Route::get('/{id}', [PostulacionController::class, 'show']);

@@ -1901,9 +1901,9 @@
                         <div class="col-md-3">
                             <label for="filter-ciclo">Ciclo:</label>
                             <select id="filter-ciclo" class="form-select">
-                                <option value="" selected>Todos</option>
+                                <option value="">Todos</option>
                                 @foreach($ciclos as $ciclo)
-                                    <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                                    <option value="{{ $ciclo->id }}" {{ $cicloActivo && $ciclo->id == $cicloActivo->id ? 'selected' : '' }}>{{ $ciclo->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>

@@ -1327,4 +1327,45 @@ class PostulacionController extends Controller
 
         return Excel::download(new PostulacionesResumenExport($ciclo_id, $carrera_id, $turno_id, $aula_id), 'postulaciones_resumen.xlsx');
     }
+
+    public function getStats(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.view')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $query = Postulacion::query();
+
+            // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
+            $cicloId = $request->input('ciclo_id');
+            if (empty($cicloId)) {
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $cicloId = $cicloActivo ? $cicloActivo->id : -1;
+            }
+
+            $query->where('ciclo_id', $cicloId);
+
+            // Otros filtros
+            if ($request->filled('carrera_id')) {
+                $query->where('carrera_id', $request->carrera_id);
+            }
+
+            $stats = $query->select('estado', DB::raw('count(*) as total'))
+                        ->groupBy('estado')
+                        ->pluck('total', 'estado')
+                        ->all();
+
+            $stats['pendiente'] = $stats['pendiente'] ?? 0;
+            $stats['aprobado'] = $stats['aprobado'] ?? 0;
+            $stats['rechazado'] = $stats['rechazado'] ?? 0;
+            $stats['observado'] = $stats['observado'] ?? 0;
+
+            return response()->json($stats);
+
+        } catch (\Exception $e) {
+            Log::error('Error en PostulacionController@getStats: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al cargar estadísticas.'], 500);
+        }
+    }
 }
