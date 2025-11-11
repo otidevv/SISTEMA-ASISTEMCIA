@@ -7,10 +7,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.30/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         /* Paleta de colores institucional basada en el logo CEPRE UNAMAD */
@@ -24,138 +27,115 @@
             --cepre-light-gray: #f8f9fa;
             --cepre-dark-gray: #455a64;
             --cepre-shadow: rgba(26, 35, 126, 0.15);
-        }
-
-        /* Estilos originales mantenidos */
-        .badge-estado-pendiente { background-color: #ffc107; color: #000; }
-        .badge-estado-aprobado { background-color: #28a745; color: #fff; }
-        .badge-estado-rechazado { background-color: #dc3545; color: #fff; }
-        .badge-estado-observado { background-color: #17a2b8; color: #fff; }
-        .document-list { list-style: none; padding: 0; }
-        .document-list li { padding: 5px 0; }
-        .document-list .text-success { color: #28a745; }
-        .document-list .text-danger { color: #dc3545; }
-        .voucher-details {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-        .edit-documents {
-            transition: all 0.3s ease;
-        }
-        .edit-documents:hover {
-            transform: scale(1.05);
-        }
-        #editDocumentsModal .card {
-            border: 1px solid #dee2e6;
-            transition: box-shadow 0.3s ease;
-        }
-        #editDocumentsModal .card:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        #editDocumentsModal .doc-file-input {
-            margin-top: 10px;
-        }
-        #documents-container .card-title {
-            color: #495057;
-            font-weight: 600;
-            margin-bottom: 15px;
+            /* Colores para Dark Mode (guiados por tu imagen de asistencia) */
+            --cepre-dark-bg: #293142;
+            --cepre-dark-card: #364053;
+            --cepre-dark-text: #eef2f7;
         }
         
-        /* Estilos para los nuevos modales */
-        .hover-card {
-            transition: all 0.3s ease;
-            border-width: 2px !important;
+        /* Estilos base para usar la fuente Inter y fondo */
+        body {
+            font-family: 'Inter', sans-serif !important; 
+            background-color: #f4f7f9;
         }
-        .hover-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        
+        /* Contenedores principales de la página (APLICAMOS ESTÉTICA EXTERNA) */
+        .cepre-content-card {
+            border-radius: 1.5rem !important; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
         }
-        #modalSeleccionTipo .card.selected {
-            background-color: #f0f8ff;
-            border-color: #007bff !important;
-            border-width: 3px !important;
+        
+        /* ========================================================= */
+        /* SOLUCIÓN MODO OSCURO (Dark Mode) */
+        /* ========================================================= */
+        body[data-layout-mode="dark"] .cepre-content-card {
+            background-color: var(--cepre-dark-card) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            border: none;
         }
-       
-        /* Estilos institucionales CEPRE para formularios */
-        .cepre-form-container {
-            background: linear-gradient(135deg, #f8f9fa 0%, #eceff1 100%);
-            border-radius: 20px;
-            padding: 2rem;
+        body[data-layout-mode="dark"] .border-b.border-gray-200 {
+            border-color: #4a5468 !important;
+        }
+        body[data-layout-mode="dark"] .cepre-content-card h4, 
+        body[data-layout-mode="dark"] .cepre-content-card h3, 
+        body[data-layout-mode="dark"] .cepre-content-card p, 
+        body[data-layout-mode="dark"] .cepre-content-card .form-label, 
+        body[data-layout-mode="dark"] .cepre-content-card .text-gray-700, 
+        body[data-layout-mode="dark"] .cepre-content-card .text-gray-600,
+        body[data-layout-mode="dark"] .cepre-content-card .text-muted,
+        body[data-layout-mode="dark"] .cepre-content-card .header-title {
+            color: var(--cepre-dark-text) !important;
+        }
+        body[data-layout-mode="dark"] .cepre-stat-card * {
+            color: var(--cepre-dark-text) !important;
+        }
+        body[data-layout-mode="dark"] .form-select, 
+        body[data-layout-mode="dark"] .form-control {
+            background-color: #4a5468 !important; 
+            border-color: #5a6374 !important;
+            color: var(--cepre-dark-text) !important;
+        }
+        body[data-layout-mode="dark"] .form-select option {
+            background-color: #364053 !important; 
+            color: var(--cepre-dark-text) !important;
+        }
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr td {
+            color: var(--cepre-dark-text) !important;
+            background-color: transparent !important; 
         }
 
-        .cepre-form-container .form-select,
-        .cepre-form-container .form-control {
-            border: 2px solid #e1e5e9;
-            border-radius: 16px;
-            padding: 1rem 1.5rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.95);
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        .cepre-form-container .form-select:focus,
-        .cepre-form-container .form-control:focus {
-            border-color: var(--cepre-cyan);
-            box-shadow: 0 0 0 0.25rem rgba(0, 188, 212, 0.15);
-            background: white;
-            transform: translateY(-2px);
-        }
-
-        .cepre-form-container .form-label {
-            font-weight: 700;
-            color: var(--cepre-navy);
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            letter-spacing: -0.2px;
-        }
-
-        /* Botón de inscripción institucional */
-        .btn-cepre-inscribir {
-            background: linear-gradient(135deg, #ff1976 0%, #0d47a1 100%);
-            border: 2px solid #ff1976;
-            color: white !important;
-            font-weight: 700;
-            padding: 1.5rem 4rem;
-            border-radius: 50px;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+        /* Estilo para tarjetas de estadísticas (cepre-stat-card) */
+        .cepre-stat-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(255, 25, 118, 0.4);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            border-left: 5px solid;
+            padding: 1rem;
+            color: #333 !important;
         }
-
-        .btn-cepre-inscribir:hover,
-        .btn-cepre-inscribir:focus,
-        .btn-cepre-inscribir:active {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 16px 48px rgba(255, 25, 118, 0.6);
-            color: white !important;
-            background: linear-gradient(135deg, #e91e63 0%, #1a237e 100%);
-            border-color: #e91e63;
+        body[data-layout-mode="dark"] .cepre-stat-card {
+             background-color: var(--cepre-dark-card) !important;
+             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
-
-        .btn-cepre-inscribir::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.8s;
+        .cepre-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-
-        .btn-cepre-inscribir:hover::before {
-            left: 100%;
+        
+        /* Estilos para encabezados de modal (mantenidos de Bootstrap con colores CEPRE) */
+        .modal-header.cepre-bg-gradient {
+            background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%) !important;
         }
-
-        /* Loading spinner institucional */
+        .modal-header.cepre-bg-navy {
+            background-color: var(--cepre-navy) !important;
+            color: white;
+        }
+        .modal-header.cepre-bg-cyan {
+            background-color: var(--cepre-cyan) !important;
+            color: white;
+        }
+        
+        /* Íconos de las Tarjetas de Estadísticas */
+        .stat-icon {
+            font-size: 2.5rem; /* 40px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-icon-container {
+            width: 55px; /* Contenedor para el ícono */
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: white; /* Asegurar que el ícono sea blanco por defecto */
+        }
+        /* Estilo del spinner institucional */
         .cepre-spinner {
             width: 60px;
             height: 60px;
@@ -163,142 +143,139 @@
             border-left: 4px solid var(--cepre-magenta);
             border-radius: 50%;
             animation: cepreSpinAnimation 1s linear infinite;
+            margin: 0 auto;
         }
-
         @keyframes cepreSpinAnimation {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* SweetAlert2 personalizado */
-        .swal2-popup {
-            border-radius: 20px !important;
-            font-family: inherit !important;
-        }
-
-        .swal2-title {
-            color: var(--cepre-navy) !important;
-            font-weight: 700 !important;
-        }
-
-        .swal2-confirm {
-            background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%) !important;
-            border-radius: 12px !important;
-            padding: 0.8rem 2rem !important;
-            font-weight: 600 !important;
-            color: white !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-            border: none !important;
-        }
-
-        .swal2-cancel {
-            background: linear-gradient(135deg, var(--cepre-dark-gray) 0%, #607d8b 100%) !important;
-            border-radius: 12px !important;
-            padding: 0.8rem 2rem !important;
-            font-weight: 600 !important;
-            color: white !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-            border: none !important;
+        /* ========================================================= */
+        /* WIZARD HORIZONTAL MODERNIZADO (SOLUCIÓN FINAL) */
+        /* ========================================================= */
+        
+        #modalRegistroNuevo .modal-content {
+            flex-direction: column; /* Volvemos a columna para ocupar todo el ancho */
+            max-width: 1200px;
+            margin: auto;
         }
         
-        /* Asegurar visibilidad del texto en botones */
-        .btn-cepre-inscribir i,
-        .btn-cepre-inscribir span,
-        .btn-cepre-inscribir * {
-            color: white !important;
-        }
-
-        /* ========= NUEVOS ESTILOS PARA WIZARD DE REGISTRO ========= */
-        .registration-wizard .wizard-progress-container {
-            position: relative;
+        .registration-wizard {
             display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        /* 1. Barra de progreso HORIZONTAL */
+        .registration-wizard .wizard-progress-container {
+            width: 100%; /* Ocupar todo el ancho */
+            flex-direction: row; /* Horizontal */
             justify-content: space-between;
-            margin-bottom: 2.5rem;
-            padding: 0 1rem;
+            padding: 1.5rem 2rem;
+            margin-bottom: 0;
+            border-bottom: 1px solid #dee2e6; /* Separador debajo del wizard */
+            border-right: none;
+            background-color: #f8f9fa;
         }
-
+        body[data-layout-mode="dark"] .registration-wizard .wizard-progress-container {
+            border-bottom-color: #4a5468 !important;
+            background-color: var(--cepre-dark-card) !important;
+        }
         .registration-wizard .step-indicator {
+            flex-grow: 1;
+            padding: 0 0.5rem;
             text-align: center;
-            flex: 1;
-            position: relative;
+            transition: none;
         }
-
+        .registration-wizard .step-indicator:not(:last-child) {
+            margin-right: 2rem; /* Espacio entre pasos */
+        }
+        
+        /* Círculo e Ícono (Diseño horizontal limpio) */
         .registration-wizard .step-circle {
+            position: relative;
+            transform: none;
+            left: auto;
+            margin: 0 auto 0.5rem; /* Centrado horizontalmente, espacio inferior */
             width: 50px;
             height: 50px;
-            border-radius: 50%;
-            background: #e9ecef;
-            border: 3px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            position: relative;
-            transition: all 0.4s ease;
-            font-size: 1.5rem;
-            color: #6c757d;
+            border: 2px solid #ccc;
+            background-color: white;
+            transition: background-color 0.3s, border-color 0.3s;
         }
-
         .registration-wizard .step-indicator.active .step-circle {
-            background-color: var(--cepre-magenta);
-            border-color: var(--cepre-magenta);
+            border-color: var(--cepre-cyan);
+            background-color: var(--cepre-cyan);
             color: white;
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(233, 30, 99, 0.5);
+            transform: none;
+            box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
         }
-
         .registration-wizard .step-indicator.completed .step-circle {
             background-color: var(--cepre-green);
             border-color: var(--cepre-green);
             color: white;
         }
 
+        /* Etiqueta (Texto) - Debajo del círculo */
         .registration-wizard .step-label {
-            font-size: 0.875rem;
-            font-weight: 500;
+            margin-left: 0;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: #6c757d;
+            transform: none;
+            position: relative;
+            top: auto;
+            left: auto;
+            width: auto;
         }
-
         .registration-wizard .step-indicator.active .step-label {
-            color: var(--cepre-magenta);
-            font-weight: 700;
+            color: var(--cepre-cyan);
         }
-        
         .registration-wizard .step-indicator.completed .step-label {
-            color: var(--cepre-green);
-        }
-
-        .registration-wizard .progress-line {
-            position: absolute;
-            top: 25px;
-            left: 50%;
-            right: -50%;
-            height: 4px;
-            background: #dee2e6;
-            z-index: -1;
-            transition: background-color 0.4s ease;
+            color: var(--cepre-navy);
         }
         
-        .registration-wizard .step-indicator:first-child .progress-line {
-             left: 50%;
+        /* Línea de Conexión (Horizontal) */
+        .registration-wizard .step-indicator:not(:last-child) {
+            /* Contenedor para el paso y la línea */
+            position: relative;
+            display: flex;
+            align-items: center;
         }
-
+        .registration-wizard .step-indicator .progress-line {
+            display: block; /* Hacemos visible la línea para conexión horizontal */
+            position: absolute;
+            top: 25px; 
+            left: 50px; /* Inicio de la línea después del círculo */
+            right: -2rem; /* Termina antes del siguiente paso */
+            height: 4px;
+            background: #e0e0e0;
+            z-index: 1;
+            transform: translateY(-50%);
+            width: calc(100% - 70px); /* Ajustar el ancho de la línea */
+        }
         .registration-wizard .step-indicator:last-child .progress-line {
             display: none;
         }
-        
         .registration-wizard .step-indicator.completed .progress-line {
-            background: linear-gradient(90deg, var(--cepre-green), var(--cepre-magenta));
+            background: var(--cepre-green);
         }
 
-        .registration-wizard .step-indicator.active .progress-line {
-            background: linear-gradient(90deg, var(--cepre-green), #dee2e6);
+        /* 2. Contenido del Formulario (Alineación y Pasos) */
+        #formRegistroNuevo {
+            flex-grow: 1; /* Ocupar el espacio restante */
+            padding: 2rem; /* Padding interno */
         }
 
-        /* Animaciones para el wizard */
+        .wizard-step {
+            min-height: 500px;
+            padding: 0; /* Quitamos padding duplicado */
+        }
+
+        /* REGLA CRÍTICA PARA EL WIZARD: Ocultar pasos inactivos */
         .wizard-step {
             display: none;
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.5s ease-in-out; 
         }
 
         .wizard-step.active {
@@ -306,63 +283,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        #modalRegistroNuevo .modal-body {
-            background-color: #f8f9fa;
-        }
-
-        #modalRegistroNuevo .step-content-card {
-            background-color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            padding: 2rem;
-        }
-        
-        #modalRegistroNuevo .form-label {
-            font-weight: 600;
-            color: #495057;
-        }
-
-        #modalRegistroNuevo .btn-outline-primary {
-            border-color: #ced4da;
-        }
-
-        #modalRegistroNuevo .confirmation-summary .card {
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        #modalRegistroNuevo .confirmation-summary .card-header {
-            border-top-left-radius: 1rem;
-            border-top-right-radius: 1rem;
-        }
-        #modalRegistroNuevo .confirmation-summary p {
-            margin-bottom: 0.5rem;
-        }
-        #modalRegistroNuevo .confirmation-summary p strong {
-            color: var(--cepre-navy);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .btn-cepre-inscribir {
-                padding: 1.2rem 2.5rem;
-                font-size: 1rem;
-            }
-            .registration-wizard .step-circle {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2rem;
-            }
-            .registration-wizard .step-label {
-                font-size: 0.75rem;
-            }
-            .registration-wizard .progress-line {
-                top: 20px;
-            }
+        /* Alineación de inputs */
+        .wizard-step .step-content-card .row > div {
+             padding-left: 0.75rem !important;
+             padding-right: 0.75rem !important;
+             margin-bottom: 1rem; /* Espacio más compacto */
         }
     </style>
 @endpush
@@ -494,58 +423,36 @@
             }
             
             // ============================================
-            // EVENT LISTENERS PARA REGISTRO DE NUEVOS POSTULANTES
+            // Funciones del WIZARD (Mantenidas)
             // ============================================
             
-            // ============================================
-            // EVENT LISTENERS PARA WIZARD DE REGISTRO COMPLETO
-            // ============================================
-            
-            // Event listeners para consultar RENIEC
             document.getElementById('btnConsultarReniecNuevo').addEventListener('click', consultarReniecRegistro);
             document.getElementById('btnConsultarReniecPadre').addEventListener('click', consultarReniecPadre);
             document.getElementById('btnConsultarReniecMadre').addEventListener('click', consultarReniecMadre);
             
-            // Event listeners para actualizar contadores en tiempo real
             const formRegistro = document.getElementById('formRegistroNuevo');
-            formRegistro.addEventListener('input', function(e) {
-                // Determinar el paso actual y actualizar su contador
-                actualizarContadorCamposPaso(wizardCurrentStep);
-            });
-            formRegistro.addEventListener('change', function(e) {
-                actualizarContadorCamposPaso(wizardCurrentStep);
-            });
-            
-            // Validación de contraseñas en tiempo real
+            formRegistro.addEventListener('input', function(e) { actualizarContadorCamposPaso(wizardCurrentStep); });
+            formRegistro.addEventListener('change', function(e) { actualizarContadorCamposPaso(wizardCurrentStep); });
             document.getElementById('nuevo_password_confirmation').addEventListener('input', validarPasswordsRegistro);
+            formRegistro.addEventListener('submit', function(e) { e.preventDefault(); });
             
-            // Prevenir submit directo del formulario (se maneja con los botones del wizard)
-            formRegistro.addEventListener('submit', function(e) {
-                e.preventDefault();
-            });
-            
-            // Variables globales para el formulario integrado
             let cicloActivo = null;
             let colegioSeleccionado = null;
             let currentFormData = null;
             
-            // Función para cargar el formulario completo - Integrado con dashboard
             function loadFormularioCompleto(tipo) {
                 const modalPostulacion = new bootstrap.Modal(modalNuevaPostulacion);
                 const container = document.getElementById('postulacion-form-container');
                 const titulo = document.getElementById('tituloModalPostulacion');
                 
-                // Actualizar título según el tipo
                 if (tipo === 'nuevo') {
                     titulo.textContent = 'Nueva Postulación - Registro y Datos Completos';
                 } else {
                     titulo.textContent = 'Nueva Postulación - ' + (postulanteData ? postulanteData.nombre : 'Postulante Existente');
                 }
                 
-                // Mostrar modal
                 modalPostulacion.show();
                 
-                // Mostrar loading
                 container.innerHTML = `
                     <div class="text-center py-4">
                         <div class="cepre-spinner"></div>
@@ -553,7 +460,6 @@
                     </div>
                 `;
                 
-                // Cargar datos necesarios para el formulario
                 Promise.all([
                     fetch('{{ url("/json/inscripciones-estudiante/ciclo-activo") }}').then(r => r.json()),
                     fetch('{{ url("/json/inscripciones-estudiante/departamentos") }}').then(r => r.json())
@@ -572,11 +478,9 @@
                 });
             }
             
-            // Función para generar el formulario completo directamente
             function generarFormularioDirecto(tipo, cicloData, departamentosData) {
                 const container = document.getElementById('postulacion-form-container');
                 
-                // Generar opciones para los selectores
                 let carrerasOptions = '<option value="">Seleccione una carrera...</option>';
                 cicloData.carreras.forEach(carrera => {
                     const vacantesText = carrera.vacantes_disponibles === 'Sin límite' ?
@@ -601,7 +505,7 @@
                     departamentosOptions += `<option value="${depto}">${depto}</option>`;
                 });
 
-                // Generar HTML del formulario completo con estilo CEPRE
+                // Generar HTML del formulario completo con estilo CEPRE (Usando el código original del usuario)
                 container.innerHTML = `
                     <div class="cepre-form-container">
                         <div class="card border-0 shadow-sm">
@@ -670,7 +574,7 @@
                                         <div class="col-md-8 mb-3">
                                             <label class="form-label">Nombre del Colegio <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="buscar_colegio"
-                                                   placeholder="Escriba el nombre del colegio..." disabled>
+                                                     placeholder="Escriba el nombre del colegio..." disabled>
                                             <div id="sugerencias-colegios" class="list-group mt-1" style="max-height: 200px; overflow-y: auto;"></div>
                                         </div>
 
@@ -698,7 +602,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Voucher de Pago <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="voucher_pago" name="voucher_pago"
-                                                   accept=".pdf,.jpg,.jpeg,.png" required>
+                                                     accept=".pdf,.jpg,.jpeg,.png" required>
                                             <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                                         </div>
 
@@ -706,7 +610,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Certificado de Estudios <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="certificado_estudios" name="certificado_estudios"
-                                                   accept=".pdf,.jpg,.jpeg,.png" required>
+                                                     accept=".pdf,.jpg,.jpeg,.png" required>
                                             <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                                         </div>
 
@@ -714,7 +618,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Carta de Compromiso <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="carta_compromiso" name="carta_compromiso"
-                                                   accept=".pdf,.jpg,.jpeg,.png" required>
+                                                     accept=".pdf,.jpg,.jpeg,.png" required>
                                             <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                                         </div>
 
@@ -722,7 +626,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Constancia de Estudios <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="constancia_estudios" name="constancia_estudios"
-                                                   accept=".pdf,.jpg,.jpeg,.png" required>
+                                                     accept=".pdf,.jpg,.jpeg,.png" required>
                                             <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                                         </div>
 
@@ -730,7 +634,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">DNI <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="dni_documento" name="dni_documento"
-                                                   accept=".pdf,.jpg,.jpeg,.png" required>
+                                                     accept=".pdf,.jpg,.jpeg,.png" required>
                                             <small class="text-muted">PDF, JPG o PNG (Max: 5MB)</small>
                                         </div>
 
@@ -738,7 +642,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Foto Carnet <span class="text-danger">*</span></label>
                                             <input type="file" class="form-control" id="foto_carnet" name="foto_carnet"
-                                                   accept=".jpg,.jpeg,.png" required>
+                                                     accept=".jpg,.jpeg,.png" required>
                                             <small class="text-muted">JPG o PNG (Max: 2MB)</small>
                                         </div>
 
@@ -751,7 +655,7 @@
                                         <div class="col-md-6 mb-3" style="display: none;" id="campo-numero-recibo">
                                             <label class="form-label">Número de Recibo <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="numero_recibo" name="numero_recibo"
-                                                   placeholder="Ej: 002-0001234" value="002-000" required>
+                                                     placeholder="Ej: 002-0001234" value="002-000" required>
                                         </div>
 
                                         <!-- Fecha de Emisión -->
@@ -772,7 +676,7 @@
                                                 <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-matricula flex-grow-1" data-value="50">S/ 50</button>
                                             </div>
                                             <input type="number" class="form-control" id="monto_matricula" name="monto_matricula"
-                                                   step="0.01" min="0" placeholder="0.00" required>
+                                                     step="0.01" min="0" placeholder="0.00" required>
                                         </div>
 
                                         <!-- Monto Enseñanza -->
@@ -787,7 +691,7 @@
                                                 <button type="button" class="btn btn-outline-secondary btn-sm btn-block btn-ensenanza flex-grow-1" data-value="525">S/ 525</button>
                                             </div>
                                             <input type="number" class="form-control" id="monto_ensenanza" name="monto_ensenanza"
-                                                   step="0.01" min="0" placeholder="0.00" required>
+                                                     step="0.01" min="0" placeholder="0.00" required>
                                         </div>
 
                                         <!-- Subtotal -->
@@ -1414,6 +1318,7 @@
                     crearCuentaUsuario();
                 } else if (wizardCurrentStep === 4) {
                     // En paso 4, enviar postulación
+                    // Esta función ya no se usa, el formulario interno lo hace
                     enviarPostulacionCompleta();
                 } else if (wizardCurrentStep < wizardTotalSteps) {
                     // Navegar al siguiente paso
@@ -1489,7 +1394,7 @@
                 btnIcon.className = 'bi bi-chevron-right ms-1';
                 nextBtn.className = 'btn btn-primary';
             }
-             // Ocultar botones en el paso 4, ya que el formulario interno tiene su propio submit
+            // Ocultar botones en el paso 4, ya que el formulario interno tiene su propio submit
             if (wizardCurrentStep === 4) {
                 prevBtn.style.display = 'none';
                 nextBtn.style.display = 'none';
@@ -1635,12 +1540,7 @@
                 },
                 body: JSON.stringify({ dni: dni })
             })
-            .then(response => {
-                if (response.status === 419) {
-                    throw new Error('Token CSRF expirado. Por favor, recargue la página.');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     autocompletarDatos(data.data || data, tipo);
@@ -1651,8 +1551,11 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                toastr.error('Error al consultar RENIEC');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    text: 'No se pudo conectar con el servidor.'
+                });
             })
             .finally(() => {
                 // Restaurar botón
@@ -1892,162 +1795,158 @@
     </div>
     <!-- end page title -->
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <!-- Filtros -->
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="filter-ciclo">Ciclo:</label>
-                            <select id="filter-ciclo" class="form-select">
-                                <option value="">Todos</option>
-                                @foreach($ciclos as $ciclo)
-                                    <option value="{{ $ciclo->id }}" {{ $cicloActivo && $ciclo->id == $cicloActivo->id ? 'selected' : '' }}>{{ $ciclo->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="filter-estado">Estado:</label>
-                            <select id="filter-estado" class="form-select">
-                                <option value="" selected>Todos</option>
-                                <option value="pendiente">Pendiente</option>
-                                <option value="aprobado">Aprobado</option>
-                                <option value="rechazado">Rechazado</option>
-                                <option value="observado">Observado</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="filter-carrera">Carrera:</label>
-                            <select id="filter-carrera" class="form-select">
-                                <option value="" selected>Todos</option>
-                                @foreach($carreras as $carrera)
-                                    <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label>&nbsp;</label>
-                            <button type="button" class="btn btn-primary d-block w-100" id="btn-filtrar">
-                                <i class="bi bi-funnel-fill me-1"></i> Filtrar
-                            </button>
-                        </div>
+    <!-- CONTENEDOR PRINCIPAL: Ahora solo aplicamos estética externa y Dark Mode aquí -->
+    <div class="card cepre-content-card">
+        <div class="card-body p-4">
+            
+            <!-- OPCIONES DE FILTRADO -->
+            <div class="pb-3 border-b border-gray-200">
+                <h4 class="header-title mt-0 mb-3" style="font-size: 1.25rem; font-weight: 700;">Opciones de Filtrado</h4>
+                
+                <div class="row mb-3 g-3">
+                    <!-- Filtros: Usamos la estructura original de Bootstrap -->
+                    <div class="col-md-3">
+                        <label for="filter-ciclo" class="form-label text-sm font-semibold text-gray-700">Ciclo:</label>
+                        <select id="filter-ciclo" class="form-select">
+                            <option value="">Todos</option>
+                            @foreach($ciclos as $ciclo)
+                                <option value="{{ $ciclo->id }}" {{ $cicloActivo && $ciclo->id == $cicloActivo->id ? 'selected' : '' }}>{{ $ciclo->nombre }}</option>
+                            @endforeach
+                        </select>
                     </div>
+                    <div class="col-md-3">
+                        <label for="filter-estado" class="form-label text-sm font-semibold text-gray-700">Estado:</label>
+                        <select id="filter-estado" class="form-select">
+                            <option value="" selected>Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="aprobado">Aprobado</option>
+                            <option value="rechazado">Rechazado</option>
+                            <option value="observado">Observado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-carrera" class="form-label text-sm font-semibold text-gray-700">Carrera:</label>
+                        <select id="filter-carrera" class="form-select">
+                            <option value="" selected>Todos</option>
+                            @foreach($carreras as $carrera)
+                                <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary d-block w-100" id="btn-filtrar">
+                            <i class="bi bi-funnel-fill me-1"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Estadísticas rápidas -->
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="icon-circle bg-warning text-white me-3">
-                                            <i class="uil uil-clock"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Pendientes</h5>
-                                            <h3 id="stat-pendientes">0</h3>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- Estadísticas rápidas -->
+            <div class="row pt-4 g-3">
+                <!-- Pendientes -->
+                <div class="col-md-3">
+                    <div class="cepre-stat-card" style="border-left-color: #ffc107;">
+                        <div class="d-flex align-items-center p-2">
+                            <div class="stat-icon-container me-3" style="background-color: #ffc107;">
+                                <i class="bi bi-timer stat-icon" style="color: black !important;"></i>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="icon-circle bg-success text-white me-3">
-                                            <i class="uil uil-check-circle"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Aprobadas</h5>
-                                            <h3 id="stat-aprobadas">0</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-danger text-white">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="icon-circle bg-danger text-white me-3">
-                                            <i class="uil uil-times-circle"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Rechazadas</h5>
-                                            <h3 id="stat-rechazadas">0</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body p-3">
-                                    <div class="d-flex align-items-center">
-                                        <div class="icon-circle bg-info text-white me-3">
-                                            <i class="uil uil-exclamation-circle"></i>
-                                        </div>
-                                        <div>
-                                            <h5 class="mb-1">Observadas</h5>
-                                            <h3 id="stat-observadas">0</h3>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-500">Pendientes</p>
+                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-pendientes">0</h3>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Botón Nueva Postulación Unificada -->
-                    @if (Auth::user()->hasPermission('postulaciones.create-unified'))
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="header-title mt-0 mb-0">Lista de Postulaciones</h4>
-                                <button type="button" class="btn btn-success btn-lg" id="btn-nueva-postulacion-unificada">
-                                    <i class="bi bi-person-plus-fill me-2"></i>
-                                    Nueva Postulación Completa
-                                </button>
+                </div>
+                <!-- Aprobadas -->
+                <div class="col-md-3">
+                    <div class="cepre-stat-card" style="border-left-color: #28a745;">
+                        <div class="d-flex align-items-center p-2">
+                            <div class="stat-icon-container me-3" style="background-color: #28a745;">
+                                <i class="bi bi-check2-circle stat-icon" style="color: white !important;"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-500">Aprobadas</p>
+                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-aprobadas">263</h3>
                             </div>
                         </div>
                     </div>
-                    @else
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <h4 class="header-title mt-0 mb-3">Lista de Postulaciones</h4>
+                </div>
+                <!-- Rechazadas -->
+                <div class="col-md-3">
+                    <div class="cepre-stat-card" style="border-left-color: #dc3545;">
+                        <div class="d-flex align-items-center p-2">
+                            <div class="stat-icon-container me-3" style="background-color: #dc3545;">
+                                <i class="bi bi-x-circle stat-icon" style="color: white !important;"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-500">Rechazadas</p>
+                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-rechazadas">0</h3>
+                            </div>
                         </div>
                     </div>
-                    @endif
+                </div>
+                <!-- Observadas -->
+                <div class="col-md-3">
+                    <div class="cepre-stat-card" style="border-left-color: #17a2b8;">
+                        <div class="d-flex align-items-center p-2">
+                            <div class="stat-icon-container me-3" style="background-color: #17a2b8;">
+                                <i class="bi bi-eye-fill stat-icon" style="color: white !important;"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-500">Observadas</p>
+                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-observadas">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Tabla de postulaciones -->
-                    <div class="row">
-                        <div class="col-12">
-                            @if (session('success'))
-                                <div class="alert alert-success">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
+            <!-- Contenedor de la Tabla -->
+            <div class="pt-5 border-t border-gray-200 mt-5">
+                <!-- Título y Botón -->
+                @if (Auth::user()->hasPermission('postulaciones.create-unified'))
+                <div class="d-flex justify-content-between align-items-center pb-3">
+                    <h4 class="header-title mt-0 mb-0" style="font-size: 1.25rem; font-weight: 700;">LISTA DE POSTULACIONES</h4>
+                    <button type="button" class="btn btn-success btn-lg" id="btn-nueva-postulacion-unificada">
+                        <i class="bi bi-person-plus-fill me-2"></i>
+                        Nueva Postulación Completa
+                    </button>
+                </div>
+                @else
+                <h4 class="header-title mt-0 mb-3" style="font-size: 1.25rem; font-weight: 700;">LISTA DE POSTULACIONES</h4>
+                @endif
 
-                            @if (session('error'))
-                                <div class="alert alert-danger">
-                                    {{ session('error') }}
-                                </div>
-                            @endif
+                <!-- Mensajes de sesión -->
+                @if (session('success'))
+                    <div class="alert alert-success mt-3 rounded-xl" role="alert">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
+                @if (session('error'))
+                    <div class="alert alert-danger mt-3 rounded-xl" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                <!-- Tabla de postulaciones (DataTables) -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="table-responsive">
                             <table id="postulaciones-datatable" class="table dt-responsive nowrap w-100">
-                                <thead>
+                                <thead class="bg-light border-bottom border-gray-200">
                                     <tr>
-                                        <th>Código</th>
-                                        <th>Estudiante</th>
-                                        <th>DNI</th>
-                                        <th>Carrera</th>
-                                        <th>Turno</th>
-                                        <th>Tipo</th>
-                                        <th>Fecha</th>
-                                        <th>Estado</th>
-                                        <th>Verificación</th>
-                                        <th>Constancia</th>
-                                        <th>Acciones</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Código</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Estudiante</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">DNI</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Carrera</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Turno</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Tipo</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Fecha</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Estado</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Verificación</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Constancia</th>
+                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2058,28 +1957,29 @@
                     </div>
                 </div>
             </div>
+            
         </div>
     </div>
-    <!-- Modal para subir constancia firmada (Admin) -->
+    <!-- Modal para subir constancia firmada (Admin) - Mantenido en Bootstrap -->
     <div class="modal fade" id="uploadConstanciaAdminModal" tabindex="-1" aria-labelledby="uploadConstanciaAdminModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header cepre-bg-navy rounded-t-xl">
                     <h5 class="modal-title" id="uploadConstanciaAdminModalLabel">Subir Constancia Firmada</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="uploadConstanciaAdminForm" enctype="multipart/form-data">
                         <input type="hidden" id="postulacion-id-admin-upload" name="postulacion_id">
                         <div class="mb-3">
-                            <label for="documento_constancia_admin" class="form-label">Seleccionar archivo PDF o imagen</label>
-                            <input class="form-control" type="file" id="documento_constancia_admin" name="documento_constancia_admin" accept=".pdf,.jpg,.jpeg,.png" required>
+                            <label for="documento_constancia_admin" class="form-label font-semibold">Seleccionar archivo PDF o imagen</label>
+                            <input class="form-control rounded-lg" type="file" id="documento_constancia_admin" name="documento_constancia_admin" accept=".pdf,.jpg,.jpeg,.png" required>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmUploadConstanciaAdmin">Subir</button>
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-lg" id="confirmUploadConstanciaAdmin">Subir</button>
                 </div>
             </div>
         </div>
@@ -2087,45 +1987,156 @@
 @endsection
 
 @push('modals')
-    <!-- Modal para Ver Detalle -->
+    <!-- Modal para Ver Detalle (Mantenido en Bootstrap) -->
     <div class="modal fade" id="viewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="viewModalLabel">Detalle de Postulación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header cepre-bg-navy rounded-t-xl">
+                    <!-- CORRECCIÓN APLICADA AQUÍ: Aseguramos text-white -->
+                    <h5 class="modal-title text-white" id="viewModalLabel">Detalle de Postulación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="viewModalBody">
-                    <!-- El contenido se cargará dinámicamente -->
+                    <!-- 
+                        PLANTILLA DE CONTENIDO MODERNO PARA ser inyectado por tu JS (Ejemplo):
+                    -->
+                    <div id="detalle-content">
+                        <!-- 1. Sección de Datos de Postulación -->
+                        <div class="detail-section">
+                            <h4 class="detail-section-title">
+                                <i class="bi bi-calendar-check-fill me-2 text-primary"></i> Información General
+                            </h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <strong>Código de Postulación:</strong>
+                                    <span id="detalle-codigo">200003</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Ciclo:</strong>
+                                    <span id="detalle-ciclo">Ciclo Ordinario 2025-2</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Fecha de Registro:</strong>
+                                    <span id="detalle-fecha">09/09/2025</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Estado Actual:</strong>
+                                    <span id="detalle-estado" class="badge bg-success">APROBADO</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Sección de Datos del Estudiante -->
+                        <div class="detail-section">
+                            <h4 class="detail-section-title">
+                                <i class="bi bi-person-circle me-2 text-info"></i> Datos del Estudiante
+                            </h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <strong>Nombre Completo:</strong>
+                                    <span id="detalle-nombre">TREYCI ROSARIO MAYTA DURAND</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>DNI/Documento:</strong>
+                                    <span id="detalle-dni">62531429 (DNI)</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Correo Electrónico:</strong>
+                                    <span id="detalle-email">treyci.mayta@example.com</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Teléfono:</strong>
+                                    <span id="detalle-telefono">987654321</span>
+                                </div>
+                                <div class="detail-item col-span-full">
+                                    <strong>Dirección:</strong>
+                                    <span id="detalle-direccion">Av. Los Girasoles N° 123, Madre de Dios</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 3. Sección de Datos Académicos -->
+                        <div class="detail-section">
+                            <h4 class="detail-section-title">
+                                <i class="bi bi-mortarboard-fill me-2 text-warning"></i> Opciones Académicas
+                            </h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <strong>Carrera Postulada:</strong>
+                                    <span id="detalle-carrera">ENFERMERÍA</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Turno Seleccionado:</strong>
+                                    <span id="detalle-turno">Mañana</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Tipo de Inscripción:</strong>
+                                    <span id="detalle-tipo">Postulante Regular</span>
+                                </div>
+                                <div class="detail-item col-span-full">
+                                    <strong>Colegio de Procedencia:</strong>
+                                    <span id="detalle-colegio">IEP Señor de los Milagros - Puerto Maldonado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Sección de Documentos y Archivos -->
+                        <div class="detail-section" style="border-bottom: none;">
+                            <h4 class="detail-section-title">
+                                <i class="bi bi-file-earmark-check-fill me-2" style="color: var(--cepre-green);"></i> Archivos y Documentos
+                            </h4>
+                            <p class="text-sm text-muted mb-3">Haga click para previsualizar/descargar documentos.</p>
+                            <div class="row g-2">
+                                <!-- Elemento de Documento (Ejemplo) -->
+                                <div class="col-md-4">
+                                    <a href="#" class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between rounded-lg">
+                                        Voucher de Pago <i class="bi bi-download ms-2"></i>
+                                    </a>
+                                </div>
+                                <!-- Elemento de Documento (Ejemplo) -->
+                                <div class="col-md-4">
+                                    <a href="#" class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between rounded-lg">
+                                        Certificado de Estudios <i class="bi bi-download ms-2"></i>
+                                    </a>
+                                </div>
+                                <!-- Elemento de Documento (Ejemplo) -->
+                                <div class="col-md-4">
+                                    <a href="#" class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between rounded-lg">
+                                        DNI <i class="bi bi-download ms-2"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Rechazar -->
+    <!-- Modal para Rechazar (Mantenido en Bootstrap) -->
     <div class="modal fade" id="rejectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header bg-danger text-white rounded-t-xl" style="background-color: #dc3545;">
                     <h5 class="modal-title" id="rejectModalLabel">Rechazar Postulación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="rejectForm">
                         <input type="hidden" id="reject-id" name="id">
                         <div class="mb-3">
-                            <label for="reject-motivo" class="form-label">Motivo del Rechazo <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="reject-motivo" name="motivo" rows="4" required 
+                            <label for="reject-motivo" class="form-label font-semibold">Motivo del Rechazo <span class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-lg" id="reject-motivo" name="motivo" rows="4" required 
                                 placeholder="Ingrese el motivo del rechazo (mínimo 10 caracteres)"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="confirmReject">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-lg" id="confirmReject">
                         <i class="bi bi-x-circle-fill me-1"></i> Rechazar
                     </button>
                 </div>
@@ -2133,27 +2144,27 @@
         </div>
     </div>
 
-    <!-- Modal para Observar -->
+    <!-- Modal para Observar (Mantenido en Bootstrap) -->
     <div class="modal fade" id="observeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="observeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title" id="observeModalLabel">Observar Postulación</h5>
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header bg-warning rounded-t-xl" style="background-color: #ffc107;">
+                    <h5 class="modal-title text-gray-900" id="observeModalLabel">Observar Postulación</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="observeForm">
                         <input type="hidden" id="observe-id" name="id">
                         <div class="mb-3">
-                            <label for="observe-observaciones" class="form-label">Observaciones <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="observe-observaciones" name="observaciones" rows="4" required 
+                            <label for="observe-observaciones" class="form-label font-semibold">Observaciones <span class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-lg" id="observe-observaciones" name="observaciones" rows="4" required 
                                 placeholder="Ingrese las observaciones (mínimo 10 caracteres)"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-warning" id="confirmObserve">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning rounded-lg" id="confirmObserve">
                         <i class="bi bi-eye-fill me-1"></i> Marcar con Observaciones
                     </button>
                 </div>
@@ -2161,22 +2172,22 @@
         </div>
     </div>
 
-    <!-- Modal de Confirmación para Eliminar -->
+    <!-- Modal de Confirmación para Eliminar (Mantenido en Bootstrap) -->
     <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header bg-danger text-white rounded-t-xl" style="background-color: #dc3545;">
                     <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>¿Está seguro de que desea eliminar esta postulación?</p>
-                    <p class="text-danger">Esta acción no se puede deshacer y eliminará todos los documentos asociados.</p>
+                    <p class="text-lg">¿Está seguro de que desea eliminar esta postulación?</p>
+                    <p class="text-danger font-semibold">Esta acción no se puede deshacer y eliminará todos los documentos asociados.</p>
                     <input type="hidden" id="delete-id">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger rounded-lg" id="confirmDelete">
                         <i class="bi bi-trash-fill me-1"></i> Eliminar
                     </button>
                 </div>
@@ -2184,86 +2195,86 @@
         </div>
     </div>
 
-    <!-- Modal para Editar Postulación Aprobada -->
+    <!-- Modal para Editar Postulación Aprobada (Mantenido en Bootstrap) -->
     <div class="modal fade" id="editApprovedModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="editApprovedModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header cepre-bg-cyan rounded-t-xl">
                     <h5 class="modal-title" id="editApprovedModalLabel">Editar Postulación Aprobada</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="editApprovedForm">
                         <input type="hidden" id="edit-approved-id" name="id">
                         
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle-fill"></i> 
-                            <strong>Atención:</strong> Esta postulación ya ha sido aprobada. Los cambios que realice también actualizarán la inscripción asociada.
+                        <div class="alert alert-warning border-l-4 border-warning rounded-lg mb-4" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> 
+                            <strong class="text-warning-dark">Atención:</strong> Esta postulación ya ha sido aprobada. Los cambios que realice también actualizarán la inscripción asociada.
                         </div>
 
-                        <div class="row">
+                        <div class="row g-4">
                             <div class="col-md-6">
-                                <h6 class="text-muted mb-3">Datos del Estudiante</h6>
+                                <h6 class="text-lg font-semibold text-gray-600 mb-3 border-bottom pb-2">Datos del Estudiante</h6>
                                 <div class="mb-3">
-                                    <label for="edit-approved-dni" class="form-label">DNI</label>
-                                    <input type="text" class="form-control" id="edit-approved-dni" name="dni" maxlength="8" readonly>
+                                    <label for="edit-approved-dni" class="form-label font-semibold">DNI</label>
+                                    <input type="text" class="form-control rounded-lg bg-light" id="edit-approved-dni" name="dni" maxlength="8" readonly>
                                     <small class="text-muted">El DNI no puede ser modificado</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-nombre" class="form-label">Nombres</label>
-                                    <input type="text" class="form-control" id="edit-approved-nombre" name="nombre" required>
+                                    <label for="edit-approved-nombre" class="form-label font-semibold">Nombres</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-nombre" name="nombre" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-apellido-paterno" class="form-label">Apellido Paterno</label>
-                                    <input type="text" class="form-control" id="edit-approved-apellido-paterno" name="apellido_paterno" required>
+                                    <label for="edit-approved-apellido-paterno" class="form-label font-semibold">Apellido Paterno</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-apellido-paterno" name="apellido_paterno" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-apellido-materno" class="form-label">Apellido Materno</label>
-                                    <input type="text" class="form-control" id="edit-approved-apellido-materno" name="apellido_materno" required>
+                                    <label for="edit-approved-apellido-materno" class="form-label font-semibold">Apellido Materno</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-apellido-materno" name="apellido_materno" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-telefono" class="form-label">Teléfono</label>
-                                    <input type="text" class="form-control" id="edit-approved-telefono" name="telefono">
+                                    <label for="edit-approved-telefono" class="form-label font-semibold">Teléfono</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-telefono" name="telefono">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="edit-approved-email" name="email" required>
+                                    <label for="edit-approved-email" class="form-label font-semibold">Email</label>
+                                    <input type="email" class="form-control rounded-lg" id="edit-approved-email" name="email" required>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <h6 class="text-muted mb-3">Datos Académicos</h6>
+                                <h6 class="text-lg font-semibold text-gray-600 mb-3 border-bottom pb-2">Datos Académicos</h6>
                                 <div class="mb-3">
-                                    <label for="edit-approved-ciclo" class="form-label">Ciclo</label>
-                                    <select class="form-select" id="edit-approved-ciclo" name="ciclo_id" required>
+                                    <label for="edit-approved-ciclo" class="form-label font-semibold">Ciclo</label>
+                                    <select class="form-select rounded-lg" id="edit-approved-ciclo" name="ciclo_id" required>
                                         <!-- Opciones cargadas vía AJAX -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-carrera" class="form-label">Carrera</label>
-                                    <select class="form-select" id="edit-approved-carrera" name="carrera_id" required>
+                                    <label for="edit-approved-carrera" class="form-label font-semibold">Carrera</label>
+                                    <select class="form-select rounded-lg" id="edit-approved-carrera" name="carrera_id" required>
                                         <!-- Opciones cargadas vía AJAX -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-turno" class="form-label">Turno</label>
-                                    <select class="form-select" id="edit-approved-turno" name="turno_id" required>
+                                    <label for="edit-approved-turno" class="form-label font-semibold">Turno</label>
+                                    <select class="form-select rounded-lg" id="edit-approved-turno" name="turno_id" required>
                                         <!-- Los turnos se cargarán dinámicamente -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-aula" class="form-label">Aula Asignada</label>
-                                    <select class="form-select" id="edit-approved-aula" name="aula_id">
+                                    <label for="edit-approved-aula" class="form-label font-semibold">Aula Asignada</label>
+                                    <select class="form-select rounded-lg" id="edit-approved-aula" name="aula_id">
                                         <!-- Las aulas se cargarán dinámicamente -->
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-codigo" class="form-label">Código de Postulante</label>
-                                    <input type="text" class="form-control" id="edit-approved-codigo" name="codigo_postulante">
+                                    <label for="edit-approved-codigo" class="form-label font-semibold">Código de Postulante</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-codigo" name="codigo_postulante">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-approved-tipo" class="form-label">Tipo de Inscripción</label>
-                                    <select class="form-select" id="edit-approved-tipo" name="tipo_inscripcion" required>
+                                    <label for="edit-approved-tipo" class="form-label font-semibold">Tipo de Inscripción</label>
+                                    <select class="form-select rounded-lg" id="edit-approved-tipo" name="tipo_inscripcion" required>
                                         <option value="postulante">Postulante</option>
                                         <option value="reforzamiento">Reforzamiento</option>
                                     </select>
@@ -2271,90 +2282,58 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="text-muted mb-3">Datos de los Padres</h6>
+                        <h6 class="text-lg font-semibold text-gray-600 mt-6 mb-3 border-bottom pb-2">Datos de Padres (Opcional)</h6>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="text-md font-medium text-primary mb-2">Padre</h6>
+                                <div class="mb-3"><label for="edit-approved-padre-dni" class="form-label text-sm">DNI del Padre</label><input type="text" class="form-control rounded-lg" id="edit-approved-padre-dni" name="padre_dni" maxlength="8"></div>
+                                <div class="mb-3"><label for="edit-approved-padre-nombre" class="form-label text-sm">Nombres del Padre</label><input type="text" class="form-control rounded-lg" id="edit-approved-padre-nombre" name="padre_nombre"></div>
+                                <div class="mb-3"><label for="edit-approved-padre-apellido-paterno" class="form-label text-sm">Apellido Paterno del Padre</label><input type="text" class="form-control rounded-lg" id="edit-approved-padre-apellido-paterno" name="padre_apellido_paterno"></div>
+                                <div class="mb-3"><label for="edit-approved-padre-apellido-materno" class="form-label text-sm">Apellido Materno del Padre</label><input type="text" class="form-control rounded-lg" id="edit-approved-padre-apellido-materno" name="padre_apellido_materno"></div>
+                                <div class="mb-3"><label for="edit-approved-padre-telefono" class="form-label text-sm">Teléfono del Padre</label><input type="text" class="form-control rounded-lg" id="edit-approved-padre-telefono" name="padre_telefono"></div>
                             </div>
                             <div class="col-md-6">
+                                <h6 class="text-md font-medium text-primary mb-2">Madre</h6>
+                                <div class="mb-3"><label for="edit-approved-madre-dni" class="form-label text-sm">DNI de la Madre</label><input type="text" class="form-control rounded-lg" id="edit-approved-madre-dni" name="madre_dni" maxlength="8"></div>
+                                <div class="mb-3"><label for="edit-approved-madre-nombre" class="form-label text-sm">Nombres de la Madre</label><input type="text" class="form-control rounded-lg" id="edit-approved-madre-nombre" name="madre_nombre"></div>
+                                <div class="mb-3"><label for="edit-approved-madre-apellido-paterno" class="form-label text-sm">Apellido Paterno de la Madre</label><input type="text" class="form-control rounded-lg" id="edit-approved-madre-apellido-paterno" name="madre_apellido_paterno"></div>
+                                <div class="mb-3"><label for="edit-approved-madre-apellido-materno" class="form-label text-sm">Apellido Materno de la Madre</label><input type="text" class="form-control rounded-lg" id="edit-approved-madre-apellido-materno" name="madre_apellido_materno"></div>
+                                <div class="mb-3"><label for="edit-approved-madre-telefono" class="form-label text-sm">Teléfono de la Madre</label><input type="text" class="form-control rounded-lg" id="edit-approved-madre-telefono" name="madre_telefono"></div>
+                            </div>
+                        </div>
+
+                        <h6 class="text-lg font-semibold text-gray-600 mt-6 mb-3 border-bottom pb-2">Información de Pago</h6>
+                        <div class="row g-4">
+                            <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="edit-approved-padre-dni" class="form-label">DNI del Padre</label>
-                                    <input type="text" class="form-control" id="edit-approved-padre-dni" name="padre_dni" maxlength="8">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-padre-nombre" class="form-label">Nombres del Padre</label>
-                                    <input type="text" class="form-control" id="edit-approved-padre-nombre" name="padre_nombre">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-padre-apellido-paterno" class="form-label">Apellido Paterno del Padre</label>
-                                    <input type="text" class="form-control" id="edit-approved-padre-apellido-paterno" name="padre_apellido_paterno">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-padre-apellido-materno" class="form-label">Apellido Materno del Padre</label>
-                                    <input type="text" class="form-control" id="edit-approved-padre-apellido-materno" name="padre_apellido_materno">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-padre-telefono" class="form-label">Teléfono del Padre</label>
-                                    <input type="text" class="form-control" id="edit-approved-padre-telefono" name="padre_telefono">
+                                    <label for="edit-approved-recibo" class="form-label font-semibold">N° Recibo</label>
+                                    <input type="text" class="form-control rounded-lg" id="edit-approved-recibo" name="numero_recibo">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="edit-approved-madre-dni" class="form-label">DNI de la Madre</label>
-                                    <input type="text" class="form-control" id="edit-approved-madre-dni" name="madre_dni" maxlength="8">
+                                    <label for="edit-approved-matricula" class="form-label font-semibold">Monto Matrícula (S/.)</label>
+                                    <input type="number" step="0.01" class="form-control rounded-lg" id="edit-approved-matricula" name="monto_matricula">
                                 </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="edit-approved-madre-nombre" class="form-label">Nombres de la Madre</label>
-                                    <input type="text" class="form-control" id="edit-approved-madre-nombre" name="madre_nombre">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-madre-apellido-paterno" class="form-label">Apellido Paterno de la Madre</label>
-                                    <input type="text" class="form-control" id="edit-approved-madre-apellido-paterno" name="madre_apellido_paterno">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-madre-apellido-materno" class="form-label">Apellido Materno de la Madre</label>
-                                    <input type="text" class="form-control" id="edit-approved-madre-apellido-materno" name="madre_apellido_materno">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-approved-madre-telefono" class="form-label">Teléfono de la Madre</label>
-                                    <input type="text" class="form-control" id="edit-approved-madre-telefono" name="madre_telefono">
+                                    <label for="edit-approved-ensenanza" class="form-label font-semibold">Monto Enseñanza (S/.)</label>
+                                    <input type="number" step="0.01" class="form-control rounded-lg" id="edit-approved-ensenanza" name="monto_ensenanza">
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="text-muted mb-3">Información de Pago</h6>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="edit-approved-recibo" class="form-label">N° Recibo</label>
-                                    <input type="text" class="form-control" id="edit-approved-recibo" name="numero_recibo">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="edit-approved-matricula" class="form-label">Monto Matrícula (S/.)</label>
-                                    <input type="number" step="0.01" class="form-control" id="edit-approved-matricula" name="monto_matricula">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="edit-approved-ensenanza" class="form-label">Monto Enseñanza (S/.)</label>
-                                    <input type="number" step="0.01" class="form-control" id="edit-approved-ensenanza" name="monto_ensenanza">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="edit-approved-observacion" class="form-label">Observación del cambio <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="edit-approved-observacion" name="observacion_cambio" rows="3" required
+                        <div class="mb-3 mt-4">
+                            <label for="edit-approved-observacion" class="form-label font-semibold">Observación del cambio <span class="text-danger">*</span></label>
+                            <textarea class="form-control rounded-lg" id="edit-approved-observacion" name="observacion_cambio" rows="3" required
                                 placeholder="Explique brevemente el motivo de la modificación"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="saveApprovedChanges">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-lg" id="saveApprovedChanges">
                         <i class="bi bi-save-fill me-1"></i> Guardar Cambios
                     </button>
                 </div>
@@ -2362,39 +2341,39 @@
         </div>
     </div>
 
-    <!-- Modal para Editar Documentos -->
+    <!-- Modal para Editar Documentos (Mantenido en Bootstrap) -->
     <div class="modal fade" id="editDocumentsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="editDocumentsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+            <div class="modal-content rounded-xl shadow-lg">
+                <div class="modal-header cepre-bg-navy rounded-t-xl">
                     <h5 class="modal-title" id="editDocumentsModalLabel">Editar Documentos del Postulante</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="editDocumentsForm" enctype="multipart/form-data">
                         <input type="hidden" id="edit-docs-postulacion-id">
                         
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle-fill"></i> 
-                            Puede reemplazar los documentos subidos por el postulante. Solo suba los documentos que desea cambiar.
+                        <div class="alert alert-info border-l-4 border-info rounded-lg mb-4" role="alert">
+                            <i class="bi bi-info-circle-fill text-info me-2"></i> 
+                            <strong class="text-info-dark">Puede reemplazar</strong> los documentos subidos por el postulante. Solo suba los documentos que desea cambiar.
                         </div>
 
-                        <div class="row" id="documents-container">
+                        <div class="row g-4" id="documents-container">
                             <!-- Los documentos se cargarán dinámicamente aquí -->
                         </div>
 
-                        <div class="mt-3">
-                            <div class="form-group">
-                                <label for="edit-docs-observacion">Observación del cambio:</label>
-                                <textarea class="form-control" id="edit-docs-observacion" rows="3" 
+                        <div class="mt-4">
+                            <div class="mb-3">
+                                <label for="edit-docs-observacion" class="form-label font-semibold">Observación del cambio:</label>
+                                <textarea class="form-control rounded-lg" id="edit-docs-observacion" rows="3" 
                                     placeholder="Explique brevemente por qué se están modificando los documentos"></textarea>
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="saveDocumentChanges">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary rounded-lg" id="saveDocumentChanges">
                         <i class="bi bi-save-fill me-1"></i> Guardar Cambios
                     </button>
                 </div>
@@ -2402,40 +2381,40 @@
         </div>
     </div>
 
-    <!-- Modal de Selección Tipo de Usuario -->
+    <!-- Modal de Selección Tipo de Usuario (Mantenido en Bootstrap) -->
     <div class="modal fade" id="modalSeleccionTipo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalSeleccionTipoLabel" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalSeleccionTipoLabel">
+            <div class="modal-content rounded-xl shadow-2xl">
+                <div class="modal-header cepre-bg-navy rounded-t-xl">
+                    <h5 class="modal-title text-white" id="modalSeleccionTipoLabel">
                         <i class="bi bi-person-check-fill me-2"></i>
                         ¿Cómo desea realizar la postulación?
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100 border-primary hover-card" id="btnPostulanteNuevo" style="cursor: pointer;">
-                                <div class="card-body text-center">
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border border-success hover-card cursor-pointer rounded-xl" id="btnPostulanteNuevo">
+                                <div class="card-body text-center p-4">
                                     <div class="mb-3">
-                                        <i class="bi bi-person-plus-fill" style="font-size: 48px; color: #28a745;"></i>
+                                        <i class="bi bi-person-plus-fill text-success" style="font-size: 48px;"></i>
                                     </div>
-                                    <h5 class="card-title">Soy Postulante Nuevo</h5>
-                                    <p class="card-text text-muted small">
+                                    <h5 class="card-title font-bold text-lg text-gray-800">Soy Postulante Nuevo</h5>
+                                    <p class="card-text text-muted text-sm mt-2">
                                         Primera vez postulando. Necesito crear una cuenta nueva.
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100 border-info hover-card" id="btnPostulanteExistente" style="cursor: pointer;">
-                                <div class="card-body text-center">
+                        <div class="col-md-6">
+                            <div class="card h-100 border border-info hover-card cursor-pointer rounded-xl" id="btnPostulanteExistente">
+                                <div class="card-body text-center p-4">
                                     <div class="mb-3">
-                                        <i class="bi bi-person-bounding-box" style="font-size: 48px; color: #17a2b8;"></i>
+                                        <i class="bi bi-person-bounding-box text-info" style="font-size: 48px;"></i>
                                     </div>
-                                    <h5 class="card-title">Ya Tengo Cuenta</h5>
-                                    <p class="card-text text-muted small">
+                                    <h5 class="card-title font-bold text-lg text-gray-800">Ya Tengo Cuenta</h5>
+                                    <p class="card-text text-muted text-sm mt-2">
                                         Soy postulante recurrente o ya tengo cuenta creada.
                                     </p>
                                 </div>
@@ -2447,45 +2426,45 @@
         </div>
     </div>
 
-    <!-- Modal de Búsqueda de Postulante Existente -->
+    <!-- Modal de Búsqueda de Postulante Existente (Mantenido en Bootstrap) -->
     <div class="modal fade" id="modalBuscarPostulante" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalBuscarPostulanteLabel" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
+            <div class="modal-content rounded-xl shadow-2xl">
+                <div class="modal-header cepre-bg-cyan rounded-t-xl">
                     <h5 class="modal-title" id="modalBuscarPostulanteLabel">
                         <i class="bi bi-search me-2"></i>
                         Buscar Postulante Existente
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill"></i>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-l-4 border-info rounded-lg mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill text-info me-2"></i>
                         Ingrese el DNI del postulante para continuar con la postulación.
                     </div>
                     <form id="formBuscarPostulante">
                         <div class="mb-3">
-                            <label for="dniPostulanteExistente" class="form-label">DNI del Postulante <span class="text-danger">*</span></label>
+                            <label for="dniPostulanteExistente" class="form-label font-semibold">DNI del Postulante <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="text" class="form-control" id="dniPostulanteExistente" 
-                                       maxlength="8" pattern="[0-9]{8}" required 
-                                       placeholder="Ingrese el DNI">
-                                <button class="btn btn-primary" type="button" id="btnBuscarPorDNI">
+                                <input type="text" class="form-control rounded-start p-3" id="dniPostulanteExistente" 
+                                        maxlength="8" pattern="[0-9]{8}" required 
+                                        placeholder="Ingrese el DNI">
+                                <button class="btn btn-primary p-3 rounded-end" type="button" id="btnBuscarPorDNI">
                                     <i class="bi bi-search"></i> Buscar
                                 </button>
                             </div>
                             <div class="invalid-feedback">Ingrese un DNI válido de 8 dígitos</div>
                         </div>
-                        <div id="resultadoBusqueda" style="display: none;">
+                        <div id="resultadoBusqueda" class="mt-4" style="display: none;">
                             <!-- Los resultados de búsqueda se mostrarán aquí -->
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btnVolverSeleccion">
+                <div class="modal-footer bg-light rounded-b-xl">
+                    <button type="button" class="btn btn-secondary rounded-lg" id="btnVolverSeleccion">
                         <i class="bi bi-arrow-left me-1"></i> Volver
                     </button>
-                    <button type="button" class="btn btn-primary" id="btnContinuarPostulacion" style="display: none;" disabled>
+                    <button type="button" class="btn btn-primary rounded-lg" id="btnContinuarPostulacion" style="display: none;">
                         <i class="bi bi-arrow-right me-1"></i> Continuar con Postulación
                     </button>
                 </div>
@@ -2493,30 +2472,28 @@
         </div>
     </div>
 
-    <!-- Modal para Nueva Postulación Unificada (Se usará para ambos flujos) -->
+    <!-- Modal para Nueva Postulación Unificada (Mantenido en Bootstrap) -->
     <div class="modal fade" id="nuevaPostulacionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="nuevaPostulacionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+            <div class="modal-content rounded-xl shadow-2xl">
+                <div class="modal-header cepre-bg-navy rounded-t-xl">
                     <h5 class="modal-title" id="nuevaPostulacionModalLabel">
                         <i class="bi bi-person-plus-fill me-2"></i>
                         <span id="tituloModalPostulacion">Nueva Postulación Completa</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                <div class="modal-body p-0" style="max-height: 75vh; overflow-y: auto;">
                     <div id="postulacion-form-container">
                         <!-- El formulario se cargará aquí dinámicamente -->
-                        <div class="text-center py-4" id="loadingContainer">
-                            <div class="spinner-border text-success" role="status">
-                                <span class="visually-hidden">Cargando formulario...</span>
-                            </div>
-                            <p class="mt-2 text-muted">Cargando formulario de postulación...</p>
+                        <div class="text-center py-8" id="loadingContainer">
+                            <div class="cepre-spinner"></div>
+                            <p class="mt-3 text-gray-600">Cargando formulario de postulación...</p>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer bg-light rounded-b-xl">
+                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg me-1"></i> Cerrar
                     </button>
                 </div>
@@ -2524,35 +2501,35 @@
         </div>
     </div>
 
-    <!-- ===== MODAL MEJORADO: Registro Completo - Nuevo Postulante ===== -->
+    <!-- ===== MODAL MEJORADO: Registro Completo - Nuevo Postulante ===== (Estructura Horizontal) -->
     <div class="modal fade" id="modalRegistroNuevo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="modalRegistroNuevoLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%);">
-                    <h5 class="modal-title text-white" id="modalRegistroNuevoLabel">
+            <div class="modal-content rounded-2xl shadow-2xl">
+                <div class="modal-header text-white rounded-t-2xl cepre-bg-gradient">
+                    <h5 class="modal-title text-white font-bold text-xl" id="modalRegistroNuevoLabel">
                         <i class="bi bi-person-plus-fill me-2"></i>Registro Completo - Nuevo Postulante
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-0">
                     <div class="registration-wizard">
                         
-                        <!-- Nuevo Wizard Progress Bar -->
+                        <!-- 1. Barra de progreso HORIZONTAL -->
                         <div class="wizard-progress-container">
                             <div class="step-indicator active" data-step="1">
                                 <div class="step-circle"><i class="bi bi-person-vcard"></i></div>
-                                <div class="step-label">Postulante</div>
                                 <div class="progress-line"></div>
+                                <div class="step-label">Postulante</div>
                             </div>
                             <div class="step-indicator" data-step="2">
                                 <div class="step-circle"><i class="bi bi-people"></i></div>
-                                <div class="step-label">Padres</div>
                                 <div class="progress-line"></div>
+                                <div class="step-label">Padres</div>
                             </div>
                             <div class="step-indicator" data-step="3">
                                 <div class="step-circle"><i class="bi bi-shield-check"></i></div>
-                                <div class="step-label">Confirmación</div>
                                 <div class="progress-line"></div>
+                                <div class="step-label">Confirmación</div>
                             </div>
                             <div class="step-indicator" data-step="4">
                                 <div class="step-circle"><i class="bi bi-mortarboard"></i></div>
@@ -2560,23 +2537,25 @@
                             </div>
                         </div>
 
-                        <!-- Formulario de Registro -->
-                        <form id="formRegistroNuevo" class="needs-validation" novalidate>
+                        <!-- 2. Contenido del formulario (Scrollable) -->
+                        <form id="formRegistroNuevo" class="needs-validation" novalidate style="flex-grow: 1; overflow-y: auto; padding: 2rem;">
                             @csrf
                             
                             <!-- PASO 1: Datos Personales del Postulante -->
                             <div class="wizard-step active" data-step="1">
                                 <div class="step-content-card">
-                                    <h4 class="mb-3 text-center" style="color: var(--cepre-navy);">Datos Personales del Postulante</h4>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
+                                    <h4 class="mb-4 text-2xl font-bold text-center" style="color: var(--cepre-navy);">Datos Personales del Postulante</h4>
+                                    <!-- APLICAMOS G-4 para mejor espaciado -->
+                                    <div class="row g-4">
+                                        <!-- GRUPO 1: Documentos -->
+                                        <div class="col-md-6">
                                             <label for="nuevo_tipo_documento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
                                             <select class="form-select" id="nuevo_tipo_documento" name="tipo_documento" required>
                                                 <option value="DNI" selected>DNI</option>
                                                 <option value="CE">Carnet de Extranjería</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="col-md-6">
                                             <label for="nuevo_numero_documento" class="form-label">Número Documento <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="nuevo_numero_documento" name="numero_documento" maxlength="8" pattern="[0-9]{8}" required>
@@ -2584,27 +2563,27 @@
                                             </div>
                                             <small class="form-text text-muted">Consulte RENIEC para autocompletar</small>
                                         </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
+                                    
+                                        <!-- GRUPO 2: Nombres y Apellidos (3 Columnas) -->
+                                        <div class="col-md-4">
                                             <label for="nuevo_nombre" class="form-label">Nombres <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="nuevo_nombre" name="nombre" required>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_apellido_paterno" class="form-label">Apellido Paterno <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="nuevo_apellido_paterno" name="apellido_paterno" required>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_apellido_materno" class="form-label">Apellido Materno <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control" id="nuevo_apellido_materno" name="apellido_materno" required>
                                         </div>
-                                    </div>
-                                     <div class="row">
-                                        <div class="col-md-4 mb-3">
+                                    
+                                        <!-- GRUPO 3: Nacimiento, Género, Teléfono (3 Columnas) -->
+                                        <div class="col-md-4">
                                             <label for="nuevo_fecha_nacimiento" class="form-label">Fecha Nacimiento <span class="text-danger">*</span></label>
                                             <input type="date" class="form-control" id="nuevo_fecha_nacimiento" name="fecha_nacimiento" max="{{ date('Y-m-d', strtotime('-14 years')) }}" required>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_genero" class="form-label">Género <span class="text-danger">*</span></label>
                                             <select class="form-select" id="nuevo_genero" name="genero" required>
                                                 <option value="">Seleccione...</option>
@@ -2612,28 +2591,30 @@
                                                 <option value="F">Femenino</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_telefono" class="form-label">Teléfono/Celular <span class="text-danger">*</span></label>
                                             <input type="tel" class="form-control" id="nuevo_telefono" name="telefono" pattern="[0-9]{9}" maxlength="9" required>
                                         </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="nuevo_direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="nuevo_direccion" name="direccion" required>
-                                    </div>
-                                     <div class="row">
-                                        <div class="col-md-4 mb-3">
+                                    
+                                        <!-- GRUPO 4: Dirección (Full width) -->
+                                        <div class="col-12">
+                                            <label for="nuevo_direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="nuevo_direccion" name="direccion" required>
+                                        </div>
+                                        
+                                        <!-- GRUPO 5: Credenciales (3 Columnas) -->
+                                        <div class="col-md-4">
                                             <label for="nuevo_email" class="form-label">Correo Electrónico <span class="text-danger">*</span></label>
                                             <input type="email" class="form-control" id="nuevo_email" name="email" required>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_password" class="form-label">Contraseña <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <input type="password" class="form-control" id="nuevo_password" name="password" minlength="8" required>
                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('nuevo_password', this)"><i class="bi bi-eye-fill"></i></button>
                                             </div>
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="col-md-4">
                                             <label for="nuevo_password_confirmation" class="form-label">Confirmar Contraseña <span class="text-danger">*</span></label>
                                             <input type="password" class="form-control" id="nuevo_password_confirmation" name="password_confirmation" minlength="8" required>
                                             <div class="invalid-feedback">Las contraseñas no coinciden</div>
@@ -2646,28 +2627,39 @@
                             <div class="wizard-step" data-step="2">
                                 <div class="step-content-card">
                                     <h4 class="mb-4 text-center" style="color: var(--cepre-navy);">Datos de Padres y/o Tutores</h4>
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <h5 class="text-primary mb-3">Datos del Padre</h5>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3"><label for="padre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="padre_tipo_doc" name="padre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
-                                                <div class="col-md-6 mb-3"><label for="padre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="padre_numero_doc" name="padre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecPadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                    <!-- APLICAMOS G-4 para mejor espaciado y estructura de dos columnas principales -->
+                                    <div class="row g-4">
+                                        
+                                        <div class="col-lg-6 border-end">
+                                            <h5 class="text-primary mb-4">Datos del Padre</h5>
+                                            <div class="row g-3">
+                                                <!-- Fila Documento Padre -->
+                                                <div class="col-md-6"><label for="padre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="padre_tipo_doc" name="padre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
+                                                <div class="col-md-6"><label for="padre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="padre_numero_doc" name="padre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecPadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                                <!-- Fila Nombres Padre -->
+                                                <div class="col-12"><label for="padre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="padre_nombre" name="padre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
+                                                <!-- Fila Apellidos Padre -->
+                                                <div class="col-12"><label for="padre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label><input type="text" class="form-control" id="padre_apellidos" name="padre_apellidos" required><div class="invalid-feedback">Ingrese los apellidos</div></div>
+                                                <!-- Fila Contacto Padre -->
+                                                <div class="col-md-6"><label for="padre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label><input type="tel" class="form-control" id="padre_telefono" name="padre_telefono" pattern="[0-9]{9}" maxlength="9" required><div class="invalid-feedback">Ingrese un teléfono</div></div>
+                                                <div class="col-md-6"><label for="padre_email" class="form-label">Correo Electrónico</label><input type="email" class="form-control" id="padre_email" name="padre_email"></div>
                                             </div>
-                                            <div class="mb-3"><label for="padre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="padre_nombre" name="padre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
-                                            <div class="mb-3"><label for="padre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label><input type="text" class="form-control" id="padre_apellidos" name="padre_apellidos" required><div class="invalid-feedback">Ingrese los apellidos</div></div>
-                                            <div class="mb-3"><label for="padre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label><input type="tel" class="form-control" id="padre_telefono" name="padre_telefono" pattern="[0-9]{9}" maxlength="9" required><div class="invalid-feedback">Ingrese un teléfono</div></div>
-                                            <div class="mb-3"><label for="padre_email" class="form-label">Correo Electrónico</label><input type="email" class="form-control" id="padre_email" name="padre_email"></div>
                                         </div>
+                                        
                                         <div class="col-lg-6">
-                                            <h5 class="text-primary mb-3">Datos de la Madre</h5>
-                                             <div class="row">
-                                                <div class="col-md-6 mb-3"><label for="madre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="madre_tipo_doc" name="madre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
-                                                <div class="col-md-6 mb-3"><label for="madre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="madre_numero_doc" name="madre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecMadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                            <h5 class="text-primary mb-4">Datos de la Madre</h5>
+                                            <div class="row g-3">
+                                                <!-- Fila Documento Madre -->
+                                                <div class="col-md-6"><label for="madre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="madre_tipo_doc" name="madre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
+                                                <div class="col-md-6"><label for="madre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="madre_numero_doc" name="madre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecMadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                                <!-- Fila Nombres Madre -->
+                                                <div class="col-12"><label for="madre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="madre_nombre" name="madre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
+                                                <!-- Fila Apellidos Madre -->
+                                                <div class="col-12"><label for="madre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label><input type="text" class="form-control" id="madre_apellidos" name="madre_apellidos" required><div class="invalid-feedback">Ingrese los apellidos</div></div>
+                                                <!-- Fila Contacto Madre -->
+                                                <div class="col-md-6"><label for="madre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label><input type="tel" class="form-control" id="madre_telefono" name="madre_telefono" pattern="[0-9]{9}" maxlength="9" required><div class="invalid-feedback">Ingrese un teléfono</div></div>
+                                                <div class="col-md-6"><label for="madre_email" class="form-label">Correo Electrónico</label><input type="email" class="form-control" id="madre_email" name="madre_email"></div>
                                             </div>
-                                            <div class="mb-3"><label for="madre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="madre_nombre" name="madre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
-                                            <div class="mb-3"><label for="madre_apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label><input type="text" class="form-control" id="madre_apellidos" name="madre_apellidos" required><div class="invalid-feedback">Ingrese los apellidos</div></div>
-                                            <div class="mb-3"><label for="madre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label><input type="tel" class="form-control" id="madre_telefono" name="madre_telefono" pattern="[0-9]{9}" maxlength="9" required><div class="invalid-feedback">Ingrese un teléfono</div></div>
-                                            <div class="mb-3"><label for="madre_email" class="form-label">Correo Electrónico</label><input type="email" class="form-control" id="madre_email" name="madre_email"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -2675,25 +2667,27 @@
 
                             <!-- PASO 3: Confirmación -->
                             <div class="wizard-step" data-step="3">
-                                 <div class="step-content-card">
-                                     <h4 class="mb-4 text-center" style="color: var(--cepre-navy);">Confirmación de Datos</h4>
-                                     <div id="confirmationSummaryWizard" class="mb-4"></div>
-                                     <div class="form-check">
-                                         <input class="form-check-input" type="checkbox" id="nuevo_terms" name="terms" required>
-                                         <label class="form-check-label" for="nuevo_terms">
-                                             Acepto los <a href="#" class="text-primary">términos y condiciones</a> y la <a href="#" class="text-primary">política de privacidad</a>.
-                                         </label>
-                                         <div class="invalid-feedback">Debe aceptar los términos para continuar.</div>
-                                     </div>
-                                 </div>
+                                <div class="step-content-card">
+                                    <h4 class="mb-4 text-2xl font-bold text-center" style="color: var(--cepre-navy);">Confirmación de Datos</h4>
+                                    <div id="confirmationSummaryWizard" class="mb-4"></div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="nuevo_terms" name="terms" required>
+                                        <label class="form-check-label" for="nuevo_terms">
+                                            Acepto los <a href="#" class="text-primary">términos y condiciones</a> y la <a href="#" class="text-primary">política de privacidad</a>.
+                                        </label>
+                                        <div class="invalid-feedback">Debe aceptar los términos para continuar.</div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- PASO 4: Formulario de Postulación -->
                             <div class="wizard-step" data-step="4">
                                 <div id="formularioPostulacionContainer">
                                     <div class="text-center py-4">
-                                        <div class="cepre-spinner"></div>
-                                        <p class="mt-3 text-muted">Preparando formulario de postulación...</p>
+                                        <div class="spinner-border text-success" role="status">
+                                            <span class="visually-hidden">Cargando formulario...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Cargando formulario de postulación...</p>
                                     </div>
                                 </div>
                             </div>
