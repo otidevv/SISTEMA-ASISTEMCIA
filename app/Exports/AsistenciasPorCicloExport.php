@@ -6,12 +6,14 @@ use App\Models\Inscripcion;
 use App\Models\RegistroAsistencia;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithStyles; // AGREGAR ESTA LÍNEA
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet; // AGREGAR ESTA LÍNEA
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithStyles AQUÍ
+class AsistenciasPorCicloExport implements WithMultipleSheets
 {
     protected $cicloId;
 
@@ -20,9 +22,64 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
         $this->cicloId = $cicloId;
     }
 
-    public function view(): View
+    public function sheets(): array
     {
-        $inscripciones = Inscripcion::with(['estudiante', 'aula', 'ciclo', 'carrera', 'turno'])
+        $sheets = [];
+        
+        // Obtener todas las inscripciones procesadas
+        $inscripciones = $this->obtenerInscripcionesProcesadas();
+        $ciclo = \App\Models\Ciclo::find($this->cicloId);
+        
+        // Hoja 1: Reporte General
+        $sheets[] = new AsistenciasPorCicloGeneralSheet($inscripciones, $ciclo);
+        
+        // Determinar el examen vigente (actual o próximo)
+        $hoy = Carbon::now();
+        $examenVigente = null;
+        
+        if ($ciclo->fecha_primer_examen && Carbon::parse($ciclo->fecha_primer_examen)->isFuture()) {
+            $examenVigente = 'primer_examen';
+        } elseif ($ciclo->fecha_segundo_examen && Carbon::parse($ciclo->fecha_segundo_examen)->isFuture()) {
+            $examenVigente = 'segundo_examen';
+        } elseif ($ciclo->fecha_tercer_examen && Carbon::parse($ciclo->fecha_tercer_examen)->isFuture()) {
+            $examenVigente = 'tercer_examen';
+        } else {
+            // Si todos los exámenes pasaron, usar el último
+            if ($ciclo->fecha_tercer_examen) {
+                $examenVigente = 'tercer_examen';
+            } elseif ($ciclo->fecha_segundo_examen) {
+                $examenVigente = 'segundo_examen';
+            } else {
+                $examenVigente = 'primer_examen';
+            }
+        }
+        
+        // Filtrar estudiantes inhabilitados en el examen vigente
+        $inhabilitados = $inscripciones->filter(function($inscripcion) use ($examenVigente) {
+            if (!$examenVigente) return false;
+            return strpos($inscripcion[$examenVigente]['condicion'], 'Inhabilitado') !== false;
+        });
+        
+        // Si hay inhabilitados, crear hojas por aula y turno
+        if ($inhabilitados->isNotEmpty()) {
+            // Agrupar por aula y turno
+            $gruposPorAulaTurno = $inhabilitados->groupBy(function($inscripcion) {
+                return $inscripcion['aula'] . '|' . $inscripcion['turno'];
+            });
+            
+            // Crear una hoja por cada combinación de aula-turno
+            foreach ($gruposPorAulaTurno as $key => $estudiantes) {
+                list($aula, $turno) = explode('|', $key);
+                $sheets[] = new InhabilitadosPorAulaTurnoSheet($estudiantes, $ciclo, $aula, $turno);
+            }
+        }
+        
+        return $sheets;
+    }
+    
+    private function obtenerInscripcionesProcesadas()
+    {
+        return Inscripcion::with(['estudiante', 'aula', 'ciclo', 'carrera', 'turno'])
             ->where('ciclo_id', $this->cicloId)
             ->where('estado_inscripcion', 'activo')
             ->get()
@@ -30,7 +87,6 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
                 $estudiante = $inscripcion->estudiante;
                 $ciclo = $inscripcion->ciclo;
 
-                // Obtener el primer registro de asistencia
                 $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
                     ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
                     ->orderBy('fecha_registro')
@@ -47,7 +103,6 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
                     'primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : 'Sin registro'
                 ];
 
-                // Si no hay primer registro, todos los exámenes están sin datos
                 if (!$primerRegistro) {
                     $data['primer_examen'] = $this->getExamenVacio();
                     $data['segundo_examen'] = $this->getExamenVacio();
@@ -56,7 +111,6 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
                     return $data;
                 }
 
-                // Calcular asistencia para cada examen
                 // Primer Examen
                 if ($ciclo->fecha_primer_examen) {
                     $data['primer_examen'] = $this->calcularAsistenciaExamen(
@@ -105,28 +159,15 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
 
                 return $data;
             });
-
-        // Obtener información del ciclo para el encabezado
-        $ciclo = \App\Models\Ciclo::find($this->cicloId);
-
-        return view('exports.asistencias-por-ciclo', [
-            'inscripciones' => $inscripciones,
-            'ciclo' => $ciclo,
-            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s')
-        ]);
     }
 
     private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
     {
         $hoy = Carbon::now();
-        // IMPORTANTE: Usar startOfDay para la fecha de inicio
         $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
         $fechaExamenCarbon = Carbon::parse($fechaExamen)->endOfDay();
-
-        // Si el examen aún no ha llegado, calcular hasta el final del día de hoy
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
 
-        // Si la fecha de inicio es futura, no calcular aún
         if ($fechaInicioCarbon > $hoy) {
             return [
                 'dias_habiles' => 0,
@@ -139,7 +180,6 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             ];
         }
 
-        // Calcular días hábiles - IMPORTANTE: usar endOfDay para incluir el día completo
         $diasHabilesTotales = $this->contarDiasHabiles(
             $fechaInicioCarbon->format('Y-m-d'),
             $fechaExamenCarbon->format('Y-m-d')
@@ -150,68 +190,30 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             $fechaFinCalculo->format('Y-m-d')
         );
 
-        // DEBUG: Ver exactamente qué rango estamos usando
-        \Log::info("DEBUG Rango de búsqueda", [
-            'documento' => $numeroDocumento,
-            'fecha_inicio_original' => $fechaInicio,
-            'fecha_inicio_carbon' => $fechaInicioCarbon->format('Y-m-d H:i:s'),
-            'fecha_fin_calculo' => $fechaFinCalculo->format('Y-m-d H:i:s'),
-            'dias_habiles_transcurridos' => $diasHabilesTranscurridos
-        ]);
-
-        // Obtener días con asistencia - usar DATE para agrupar por día
-        $registrosQuery = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-            ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon,
-                $fechaFinCalculo
-            ])
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [$fechaInicioCarbon, $fechaFinCalculo])
             ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct();
+            ->distinct()
+            ->get()
+            ->pluck('fecha');
 
-        // DEBUG: Ver la consulta SQL exacta
-        \Log::info("SQL Query", [
-            'sql' => $registrosQuery->toSql(),
-            'bindings' => $registrosQuery->getBindings()
-        ]);
-
-        $registros = $registrosQuery->get()->pluck('fecha');
-
-        // Contar asistencias en días hábiles
         $diasConAsistencia = 0;
-        $fechasContadas = [];
-
         foreach ($registros as $fecha) {
             $fechaCarbon = Carbon::parse($fecha);
-
-            // Solo contar días hábiles (lunes a viernes)
             if ($fechaCarbon->isWeekday()) {
                 $diasConAsistencia++;
-                $fechasContadas[] = $fecha . ' (' . $fechaCarbon->format('l') . ')';
             }
         }
 
-        // DEBUG: Mostrar todas las fechas encontradas
-        \Log::info("DEBUG Asistencias encontradas", [
-            'total_registros' => $registros->count(),
-            'dias_habiles_con_asistencia' => $diasConAsistencia,
-            'fechas_con_asistencia' => $fechasContadas
-        ]);
-
-        // Calcular faltas
         $diasFalta = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-
-        // Calcular porcentajes sobre el total de días del período
         $porcentajeAsistencia = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-
         $porcentajeFalta = $diasHabilesTotales > 0 ?
             round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
 
-        // Calcular límites
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
 
-        // Determinar condición
         $condicion = 'Regular';
         $puedeRendir = 'SÍ';
 
@@ -240,14 +242,12 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
         return $resultado;
     }
 
-    // También asegúrate de que el método contarDiasHabiles sea inclusivo
     private function contarDiasHabiles($fechaInicio, $fechaFin)
     {
         $inicio = Carbon::parse($fechaInicio)->startOfDay();
         $fin = Carbon::parse($fechaFin)->startOfDay();
         $dias = 0;
 
-        // IMPORTANTE: usar <= para incluir ambos días (inicio y fin)
         while ($inicio <= $fin) {
             if ($inicio->isWeekday()) {
                 $dias++;
@@ -258,23 +258,12 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
         return $dias;
     }
 
-    // También debes actualizar el método calcularAsistenciaExamenPdf con los mismos cambios
-    private function calcularAsistenciaExamenPdf($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
-    {
-        // Usar exactamente la misma lógica que calcularAsistenciaExamen
-        return $this->calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo);
-    }
-
-
-
     private function getSiguienteDiaHabil($fecha)
     {
         $dia = Carbon::parse($fecha)->addDay();
-
         while (!$dia->isWeekday()) {
             $dia->addDay();
         }
-
         return $dia;
     }
 
@@ -290,18 +279,104 @@ class AsistenciasPorCicloExport implements FromView, WithStyles // AGREGAR WithS
             'puede_rendir' => '-'
         ];
     }
+}
 
-    // AGREGAR ESTE MÉTODO AL FINAL DE LA CLASE
+// HOJA 1: Reporte General (tu vista actual)
+class AsistenciasPorCicloGeneralSheet implements FromView, WithTitle, WithStyles
+{
+    protected $inscripciones;
+    protected $ciclo;
+    
+    public function __construct($inscripciones, $ciclo)
+    {
+        $this->inscripciones = $inscripciones;
+        $this->ciclo = $ciclo;
+    }
+    
+    public function view(): View
+    {
+        return view('exports.asistencias-por-ciclo', [
+            'inscripciones' => $this->inscripciones,
+            'ciclo' => $this->ciclo,
+            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s')
+        ]);
+    }
+    
+    public function title(): string
+    {
+        return 'Reporte General';
+    }
+    
     public function styles(Worksheet $sheet)
     {
-        // Asumiendo que los datos empiezan en la fila 4
         $ultimaFila = $sheet->getHighestRow();
-
-        // Desactivar wrap text para las columnas de % Asist.
         $sheet->getStyle('I4:I' . $ultimaFila)->getAlignment()->setWrapText(false);
         $sheet->getStyle('N4:N' . $ultimaFila)->getAlignment()->setWrapText(false);
         $sheet->getStyle('S4:S' . $ultimaFila)->getAlignment()->setWrapText(false);
+        return [];
+    }
+}
 
+// HOJAS ADICIONALES: Inhabilitados por Aula y Turno (SIN VISTA BLADE)
+class InhabilitadosPorAulaTurnoSheet implements FromView, WithTitle, WithStyles
+{
+    protected $estudiantes;
+    protected $ciclo;
+    protected $aula;
+    protected $turno;
+    
+    public function __construct($estudiantes, $ciclo, $aula, $turno)
+    {
+        $this->estudiantes = $estudiantes;
+        $this->ciclo = $ciclo;
+        $this->aula = $aula;
+        $this->turno = $turno;
+    }
+    
+    public function view(): View
+    {
+        // Generar HTML directamente sin archivo blade separado
+        $html = $this->generarHtmlInhabilitados();
+        
+        return view('exports.asistencias-por-ciclo', [
+            'inscripciones' => $this->estudiantes,
+            'ciclo' => $this->ciclo,
+            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s'),
+            // Variables adicionales para personalizar el encabezado
+            'es_reporte_inhabilitados' => true,
+            'aula_filtro' => $this->aula,
+            'turno_filtro' => $this->turno
+        ]);
+    }
+    
+    private function generarHtmlInhabilitados()
+    {
+        // Este método está aquí por si necesitas personalización futura
+        return '';
+    }
+    
+    public function title(): string
+    {
+        // Limitar a 31 caracteres (límite de Excel)
+        $title = 'Inhab-' . substr($this->aula, 0, 10) . '-' . substr($this->turno, 0, 10);
+        return substr($title, 0, 31);
+    }
+    
+    public function styles(Worksheet $sheet)
+    {
+        $ultimaFila = $sheet->getHighestRow();
+        
+        // Encabezados en negrita y con fondo rojo para inhabilitados
+        $sheet->getStyle('A1:Y1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:Y1')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('c62828');
+        $sheet->getStyle('A1:Y1')->getFont()->getColor()->setRGB('FFFFFF');
+            
+        // Centrar texto
+        $sheet->getStyle('A1:Y' . $ultimaFila)->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            
         return [];
     }
 }

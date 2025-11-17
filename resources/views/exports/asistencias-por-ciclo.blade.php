@@ -16,13 +16,30 @@
     <thead>
         <tr>
             <th colspan="25"
-                style="text-align: center; font-size: 16px; font-weight: bold; background-color: #2c3e50; color: white;">
-                REPORTE DE ASISTENCIAS - {{ $ciclo->nombre }}
+                style="text-align: center; font-size: 16px; font-weight: bold; background-color: {{ isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados ? '#c62828' : '#2c3e50' }}; color: white;">
+                @if(isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados)
+                    ESTUDIANTES INHABILITADOS - {{ $aula_filtro }} - {{ $turno_filtro }}
+                    @if(isset($examen_vigente))
+                        @if($examen_vigente == 'primer_examen')
+                            - PRIMER EXAMEN
+                        @elseif($examen_vigente == 'segundo_examen')
+                            - SEGUNDO EXAMEN
+                        @elseif($examen_vigente == 'tercer_examen')
+                            - TERCER EXAMEN
+                        @endif
+                    @endif
+                @else
+                    REPORTE DE ASISTENCIAS - {{ $ciclo->nombre }}
+                @endif
             </th>
         </tr>
         <tr>
-            <th colspan="25" style="text-align: center; background-color: #ecf0f1;">
-                Generado el: {{ $fecha_generacion }}
+            <th colspan="25" style="text-align: center; background-color: {{ isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados ? '#ffcdd2' : '#ecf0f1' }};">
+                @if(isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados)
+                    Ciclo: {{ $ciclo->nombre }} | Generado el: {{ $fecha_generacion }}
+                @else
+                    Generado el: {{ $fecha_generacion }}
+                @endif
             </th>
         </tr>
         <tr>
@@ -229,17 +246,23 @@
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="25" style="text-align: left; background-color: #ecf0f1; padding: 10px;">
-                <strong>Leyenda:</strong>
-                <br>• A/F/T = Asistidos/Faltas/Total días hábiles
-                <br>• <span style="color: #2e7d32;">Regular</span> = Asistencia adecuada |
-                <span style="color: #f57c00;">Amonestado</span> = Más del {{ $ciclo->porcentaje_amonestacion }}% de
-                faltas |
-                <span style="color: #c62828;">Inhabilitado</span> = Más del {{ $ciclo->porcentaje_inhabilitacion }}% de
-                faltas
-                <br>• <strong>(Proyección)</strong> = Estado calculado asumiendo que no habrá más asistencias hasta el
-                examen
-                <br>• <strong>Porcentaje Actual</strong> = Calculado sobre los días transcurridos hasta hoy
+            <td colspan="25" style="text-align: left; background-color: {{ isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados ? '#ffebee' : '#ecf0f1' }}; padding: 10px;">
+                @if(isset($es_reporte_inhabilitados) && $es_reporte_inhabilitados)
+                    <strong>⚠️ ATENCIÓN:</strong> Esta hoja contiene únicamente estudiantes INHABILITADOS del aula <strong>{{ $aula_filtro }}</strong> turno <strong>{{ $turno_filtro }}</strong>
+                    <br><strong>Total de inhabilitados:</strong> {{ $inscripciones->count() }}
+                    <br>• <span style="color: #c62828;">Inhabilitado</span> = Más del {{ $ciclo->porcentaje_inhabilitacion }}% de faltas
+                @else
+                    <strong>Leyenda:</strong>
+                    <br>• A/F/T = Asistidos/Faltas/Total días hábiles
+                    <br>• <span style="color: #2e7d32;">Regular</span> = Asistencia adecuada |
+                    <span style="color: #f57c00;">Amonestado</span> = Más del {{ $ciclo->porcentaje_amonestacion }}% de
+                    faltas |
+                    <span style="color: #c62828;">Inhabilitado</span> = Más del {{ $ciclo->porcentaje_inhabilitacion }}% de
+                    faltas
+                    <br>• <strong>(Proyección)</strong> = Estado calculado asumiendo que no habrá más asistencias hasta el
+                    examen
+                    <br>• <strong>Porcentaje Actual</strong> = Calculado sobre los días transcurridos hasta hoy
+                @endif
             </td>
         </tr>
     </tfoot>

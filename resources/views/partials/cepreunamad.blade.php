@@ -1,2705 +1,2007 @@
- <!-- Preloader Start -->
-         <div id="preloader" class="preloader">
-            <div class="animation-preloader">
-                <div class="edu-preloader-icon"> 
-                    <img src="{{ asset('assets_cepre/IMG/preloader.gif') }}" alt="">              
-                </div>
-                <div class="txt-loading">
-                    <span data-text-preloader="C" class="letters-loading">
-                        C
-                    </span>
-                    <span data-text-preloader="E" class="letters-loading">
-                        E
-                    </span>
-                    <span data-text-preloader="P" class="letters-loading">
-                        P
-                    </span>
-                    <span data-text-preloader="R" class="letters-loading">
-                        R
-                    </span>
-                    <span data-text-preloader="e" class="letters-loading">
-                        E
-                    </span>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEPRE UNAMAD - Centro Pre Universitario Interactivo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Carga de Three.js para el fondo 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* ==================================== */
+        /* 1. Variables y Reset Global */
+        /* ==================================== */
+        :root {
+            --verde-cepre: #A4C639;
+            --magenta-unamad: #E6007E;
+            --cyan-acento: #00A0E3;
+            --azul-oscuro: #2C5F7C;
+            --verde-claro: #C8D92F;
+            --fondo-cursos: #f7f7f7;
+        }
 
-                    <span data-text-preloader="U" class="letters-loading">
-                        U
-                    </span>
-                    <span data-text-preloader="N" class="letters-loading">
-                        N
-                    </span>
-                    <span data-text-preloader="A" class="letters-loading">
-                        A
-                    </span>
-                    <span data-text-preloader="M" class="letters-loading">
-                        M
-                    </span>
-                    <span data-text-preloader="A" class="letters-loading">
-                        A
-                    </span>
-                    <span data-text-preloader="D" class="letters-loading">
-                        D
-                    </span>
-                </div>
-                <p class="text-center">Cargando...</p>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden; 
+            background-color: #f0f2f5;
+        }
+        
+        /* Aseguramos que los contenedores no excedan el ancho del viewport */
+        section, header, footer, div {
+            max-width: 100vw;
+        }
+
+        /* ==================================== */
+        /* 2. Keyframes (Animaciones) */
+        /* ==================================== */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes shake { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes ripple { 0% { box-shadow: 0 0 0 0 rgba(164, 198, 57, 0.7); } 100% { box-shadow: 0 0 0 20px rgba(164, 198, 57, 0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes rainbow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInContent { 
+            0% { opacity: 0; transform: translateY(30px); } 
+            100% { opacity: 1; transform: translateY(0); } 
+        }
+        /* Animación de latido para el asistente virtual */
+        @keyframes softPulse { 0% { box-shadow: 0 0 0 0 rgba(0, 160, 227, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 160, 227, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 160, 227, 0); } }
+        /* Animación para la burbuja de notificación */
+        @keyframes bubbleInOut {
+            0% { opacity: 0; transform: scale(0.8) translateX(20px); }
+            10% { opacity: 1; transform: scale(1) translateX(0); }
+            90% { opacity: 1; transform: scale(1) translateX(0); }
+            100% { opacity: 0; transform: scale(0.8) translateX(20px); }
+        }
+        /* Animación de parpadeo de bombilla (nueva) */
+        @keyframes lightbulbBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ==================================== */
+        /* 3. Top Bar y Header */
+        /* ==================================== */
+        .top-bar {
+            background: linear-gradient(135deg, var(--verde-cepre) 0%, var(--verde-claro) 100%);
+            color: white;
+            padding: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .top-bar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .help-desk {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .help-desk i {
+            color: var(--magenta-unamad);
+            animation: shake 2s ease-in-out infinite;
+        }
+
+        .info-links {
+             display: flex; /* Asegura que se muestren en desktop */
+             gap: 20px;
+        }
+        .info-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 5px 0;
+        }
+        .info-links a:hover { color: var(--cyan-acento); transform: translateY(-2px); }
+
+        /* Header Principal */
+        .main-header {
+            background: white;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            height: 60px;
+            transition: transform 0.3s;
+        }
+        .logo:hover {
+            transform: scale(1.05) rotate(-2deg);
+        }
+
+        /* Menú de Navegación */
+        .nav-menu {
+            display: flex;
+            gap: 25px;
+            list-style: none;
+            align-items: center;
+        }
+        .nav-menu a {
+            color: var(--azul-oscuro);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            position: relative;
+            padding: 5px 0;
+            transition: all 0.3s;
+        }
+        .nav-menu a:hover { color: var(--verde-cepre); transform: translateY(-2px); }
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--magenta-unamad), var(--cyan-acento));
+            transition: width 0.3s;
+            border-radius: 2px;
+        }
+        .nav-menu a:hover::after { width: 100%; }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+        .btn span { position: relative; z-index: 2; }
+        .btn-primary { background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro)); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c); color: white; }
+        .btn-primary:hover, .btn-secondary:hover { transform: translateY(-3px); }
+
+        .search-icon {
+            font-size: 20px;
+            color: var(--azul-oscuro);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        /* ==================================== */
+        /* 4. Hero Section (MODIFICADO PARA CARRUSEL) */
+        /* ==================================== */
+        .hero-section {
+            background: var(--azul-oscuro); 
+            min-height: 650px; 
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0; /* padding se manejará en el contenido del slide */
+        }
+        
+        /* Contenedor para el Canvas 3D (Fondo estático) */
+        #hero-canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Fondo */
+            opacity: 1.0; 
+        }
+        
+        /* El overlay se mantiene para el color base */
+        .hero-bg-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(44, 95, 124, 0.2); 
+            backdrop-filter: blur(0);
+            z-index: 1; 
+        }
+
+        /* --- CAROUSEL STYLES --- */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100%; /* Ocupa todo el espacio de .hero-section */
+            overflow: hidden;
+            z-index: 2; /* Sobre el fondo 3D */
+        }
+
+        .carousel-slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .carousel-slide {
+            min-width: 100%; /* Cada slide ocupa el 100% del contenedor */
+            box-sizing: border-box;
+            padding: 60px 0; /* Reemplaza el padding original del .hero-section */
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px; 
+            align-items: center;
+            position: relative;
+            width: 100%;
+            /* Animación de entrada para el contenido */
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .carousel-slide.active .hero-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* --- NAVEGACIÓN (FLECHAS) --- */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            z-index: 3;
+            font-size: 24px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.3s;
+            backdrop-filter: blur(3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .carousel-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .prev-nav { left: 30px; }
+        .next-nav { right: 30px; }
+        
+        /* --- PUNTOS (DOTS) --- */
+        .carousel-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .dot.active {
+            background-color: var(--verde-cepre);
+            border: 2px solid white;
+            transform: scale(1.2);
+        }
+        /* --- FIN CAROUSEL STYLES --- */
+
+
+        .hero-text { color: white; text-align: left; }
+        
+        .hero-subtitle { 
+            /* ESTILO CURSIVO Y RESALTADO */
+            font-family: cursive; 
+            font-size: 28px; 
+            color: var(--cyan-acento); 
+            margin-bottom: 15px;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .hero-title { 
+            font-size: 58px; 
+            font-weight: 800; 
+            line-height: 1.1; 
+            margin-bottom: 15px;
+            /* EFECTO 3D Y BRILLO PARA EL TÍTULO */
+            color: white;
+            text-shadow: 
+                0 0 5px rgba(255,255,255,0.5), /* Sombra blanca sutil */
+                2px 2px var(--verde-cepre), 
+                4px 4px var(--cyan-acento),
+                6px 6px var(--azul-oscuro); /* Profundidad */
+            transition: text-shadow 0.3s;
+        }
+        
+        /* Interacción: Hace que el título brille un poco más al hacer hover */
+        .hero-title:hover {
+            text-shadow: 
+                0 0 15px rgba(255,255,255,0.8), 
+                2px 2px var(--verde-cepre), 
+                4px 4px var(--cyan-acento),
+                6px 6px var(--azul-oscuro); 
+        }
+
+        .hero-title span {
+            /* Mantiene el gradiente y el bounce solo para la palabra clave */
+            background: linear-gradient(90deg, var(--verde-cepre), var(--verde-claro), var(--cyan-acento));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+            text-shadow: none; /* Elimina la sombra 3D del span para que se vea el gradiente */
+        }
+
+        .hero-image-wrapper {
+            position: relative; 
+            padding: 0; 
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.4s ease-in-out;
+            cursor: pointer;
+            overflow: hidden; 
+            min-height: 400px; 
+            background-color: var(--azul-oscuro);
+        }
+        
+        /* INTERACTIVIDAD HERO: Mueve la imagen y el badge al hacer hover */
+        .hero-image-wrapper:hover {
+            transform: scale(1.02); 
+        }
+
+        .hero-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px; 
+            box-shadow: none; 
+            transition: all 0.4s ease-in-out;
+            display: block; 
+        }
+        
+        .hero-image-wrapper:hover .hero-image {
+            transform: scale(1.05); 
+            filter: brightness(1.05);
+        }
+        
+        /* --- CAJA DE ESTADÍSTICAS RECTANGULAR Y MODERNA --- */
+        .stats-badge {
+            position: absolute;
+            bottom: 20px; 
+            left: 20px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.95));
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            text-align: center;
+            border-top: 4px solid var(--magenta-unamad);
+            max-width: 250px;
+            transition: transform 0.4s ease-in-out, box-shadow 0.4s;
+            transform: none; 
+            width: auto; 
+            height: auto; 
+            display: block;
+            box-sizing: border-box; 
+        }
+        
+        .stats-badge > * {
+            transform: none; 
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
+
+        .hero-image-wrapper:hover .stats-badge {
+            /* Se eleva y se mueve sutilmente en el hover de la imagen */
+            transform: translate(0, -10px) scale(1.05); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .stats-badge p {
+            font-size: 14px;
+            color: var(--azul-oscuro);
+            font-weight: 600;
+        }
+
+        .stats-badge h2 {
+            background: linear-gradient(135deg, var(--verde-cepre), var(--cyan-acento));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 38px;
+            font-weight: 900;
+            margin: 5px 0;
+        }
+        /* --- FIN CAJA DE ESTADÍSTICAS --- */
+
+        .video-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--magenta-unamad);
+            font-size: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+        .video-btn::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--magenta-unamad);
+            animation: ripple 2s infinite;
+        }
+
+        /* ==================================== */
+        /* 14. Asistente Flotante (Avatar) */
+        /* ==================================== */
+        #floating-assistant {
+            position: fixed;
+            bottom: 100px; /* Separado del botón ScrollTop */
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--cyan-acento), #00bfff);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(0, 160, 227, 0.5);
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            animation: softPulse 2s infinite;
+        }
+        #floating-assistant:hover {
+            transform: scale(1.1);
+            animation: none;
+            box-shadow: 0 8px 20px rgba(0, 160, 227, 0.8);
+        }
+        /* Nueva animación de parpadeo para el icono de la bombilla */
+        #floating-assistant i {
+            animation: lightbulbBlink 1.5s ease-in-out infinite;
+        }
+        
+        /* Burbuja de Notificación */
+        #assistant-bubble {
+            position: fixed;
+            bottom: 110px; /* Alineado verticalmente con el asistente */
+            right: 100px; /* Separado del asistente */
+            background: white;
+            color: var(--azul-oscuro);
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 200px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1500;
+            opacity: 0; /* Inicialmente oculto */
+            pointer-events: none; /* No interfiere con clics */
+            animation: bubbleInOut 5s ease-in-out 1s forwards; /* Muestra por 5s después de 1s */
+        }
+        #assistant-bubble::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            bottom: 15px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid white;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+        }
+
+
+        /* Ajuste de posición en móvil para no colisionar con el botón ScrollTop */
+        @media (max-width: 768px) {
+            #floating-assistant {
+                bottom: 90px;
+                right: 15px;
+            }
+            #assistant-bubble {
+                bottom: 100px;
+                right: 80px;
+                max-width: 150px;
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+            #assistant-bubble::after {
+                bottom: 10px;
+            }
+        }
+        
+        /* ==================================== */
+        /* 5. Marquee */
+        /* ==================================== */
+        .marquee-section {
+            background: linear-gradient(90deg, var(--verde-cepre), var(--verde-claro), var(--cyan-acento), var(--verde-cepre));
+            background-size: 200% 100%;
+            animation: rainbow 5s linear infinite;
+            padding: 15px 0;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .marquee-content {
+            display: flex;
+            animation: scroll 30s linear infinite;
+            width: 200%; 
+        }
+        .marquee-content:hover { animation-play-state: paused; }
+
+        .marquee-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 40px;
+            white-space: nowrap;
+            font-weight: 700;
+            color: white;
+            transition: transform 0.3s;
+        }
+        .marquee-item i { animation: bounce 1s ease-in-out infinite; }
+
+        /* ==================================== */
+        /* 6. Secciones Generales y Títulos */
+        /* ==================================== */
+        .courses-section, .teachers-section, .stats-section {
+            padding: 80px 0;
+        }
+        
+        .courses-section {
+            background: var(--fondo-cursos);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .section-title h6 { color: var(--magenta-unamad); text-transform: uppercase; letter-spacing: 2px; }
+        .section-title h2 { font-size: 42px; font-weight: 800; color: var(--azul-oscuro); }
+
+        /* ==================================== */
+        /* 7. Courses Section (Cursos) */
+        /* ==================================== */
+        .courses-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .course-card {
+            background: white; 
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08); 
+            transition: all 0.3s;
+            border-top: 4px solid var(--verde-cepre);
+            cursor: pointer;
+        }
+        .course-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(164, 198, 57, 0.2);
+        }
+
+        /* Configuración de colores de las tarjetas de curso */
+        .course-card:nth-child(2) { border-top-color: var(--magenta-unamad); }
+        .course-card:nth-child(3) { border-top-color: var(--cyan-acento); }
+        .course-card:nth-child(4) { border-top-color: var(--azul-oscuro); }
+        .course-card:nth-child(5) { border-top-color: var(--magenta-unamad); }
+        .course-card:nth-child(6) { border-top-color: var(--cyan-acento); }
+
+        .course-card:nth-child(1) .course-icon { background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro)); }
+        .course-card:nth-child(2) .course-icon { background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c); }
+        .course-card:nth-child(3) .course-icon { background: linear-gradient(135deg, var(--cyan-acento), #00bfff); }
+        .course-card:nth-child(4) .course-icon { background: linear-gradient(135deg, var(--azul-oscuro), #3a7fa2); }
+        .course-card:nth-child(5) .course-icon { background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c); }
+        .course-card:nth-child(6) .course-icon { background: linear-gradient(135deg, var(--cyan-acento), #00bfff); }
+
+        .course-icon { padding: 40px; text-align: center; color: white; }
+        .course-icon i { font-size: 48px; transition: transform 0.5s; }
+        .course-card:hover .course-icon i { transform: scale(1.1) rotateY(360deg); }
+
+        .course-content { padding: 25px; }
+        .course-content h3 { color: var(--azul-oscuro); }
+        .course-content p { color: #666; font-weight: 600; }
+
+        /* ==================================== */
+        /* 8. Stats Section (Estadísticas) */
+        /* ==================================== */
+        .stats-section {
+            background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro));
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-box {
+            text-align: center;
+            background: rgba(255,255,255,0.15);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .stat-box i { font-size: 48px; margin-bottom: 20px; }
+        .stat-box h3 { font-size: 48px; font-weight: 900; }
+
+        /* ==================================== */
+        /* 9. Teachers Section (Docentes) */
+        /* ==================================== */
+        .teachers-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .teacher-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border-top: 4px solid var(--verde-cepre);
+            cursor: pointer;
+        }
+        .teacher-card:hover { transform: translateY(-8px); }
+
+        .teacher-image { width: 100%; height: 300px; overflow: hidden; }
+        .teacher-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .teacher-card:hover .teacher-image img { transform: scale(1.1); }
+        .teacher-info { padding: 25px; text-align: center; }
+        .teacher-info h4 { color: var(--azul-oscuro); }
+        .teacher-info p { color: var(--magenta-unamad); }
+
+
+        /* ==================================== */
+        /* 10. CTA Banner (Ingreso Directo) */
+        /* ==================================== */
+        .cta-banner { 
+            margin-top: 40px; 
+            overflow: hidden; 
+            background: var(--azul-oscuro); 
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .cta-banner-content { 
+            position: relative; 
+            z-index: 1; 
+            text-align: center; 
+            color: white; 
+            max-width: 900px; 
+            margin: 0 auto;
+            padding: 0 30px;
+        }
+        .cta-banner-content h2 { 
+            font-size: 48px; 
+            font-weight: 800; 
+            margin-bottom: 30px; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Botón de CTA estilizado */
+        .btn-cyan-cta {
+            background: linear-gradient(135deg, var(--cyan-acento), #00bfff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 160, 227, 0.5);
+            padding: 15px 35px;
+            font-size: 16px;
+            border-radius: 50px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .btn-cyan-cta:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 160, 227, 0.7);
+        }
+
+        /* ==================================== */
+        /* 10.5 Contact Bar (Integrado y Limpio) */
+        /* ==================================== */
+        .contact-bar {
+            background: white; 
+            padding: 40px 0;
+            color: var(--azul-oscuro);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .contact-bar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .contact-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .contact-bar-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--magenta-unamad); 
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .contact-bar-icon i {
+            color: white;
+            font-size: 20px;
+        }
+        
+        .contact-bar-right {
+            text-align: right;
+        }
+
+        .contact-bar-right h3 {
+            font-size: 32px;
+            font-weight: 800;
+            margin: 5px 0 0 0;
+            color: var(--magenta-unamad);
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+
+        /* ==================================== */
+        /* 11. Footer */
+        /* ==================================== */
+        footer {
+            background: linear-gradient(135deg, var(--azul-oscuro), #1a3d52);
+            padding: 60px 0 0 0;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--verde-cepre), var(--magenta-unamad), var(--cyan-acento), var(--verde-cepre));
+            background-size: 200% 100%;
+            animation: rainbow 3s linear infinite;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        /* Estilos de Logo */
+        .footer-logo { 
+            height: 60px; 
+            margin-bottom: 20px;
+            filter: brightness(0) invert(1); 
+            transition: transform 0.3s;
+        }
+        .footer-logo:hover { transform: scale(1.05) rotate(2deg); }
+
+        /* Títulos */
+        .footer-column h3 { 
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            display: inline-block;
+            position: relative;
+            color: var(--verde-cepre);
+        }
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--verde-cepre), var(--cyan-acento));
+            border-radius: 2px;
+        }
+        
+        /* Enlaces */
+        .footer-column ul { list-style: none; padding: 0; margin: 0; }
+        .footer-column ul li { margin-bottom: 10px; transition: all 0.3s; }
+        .footer-column ul li:hover { transform: translateX(5px); }
+        .footer-column ul li a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            position: relative;
+            padding-left: 20px;
+            display: block;
+        }
+        .footer-column ul li a::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            color: var(--magenta-unamad);
+            font-size: 10px;
+            top: 4px;
+        }
+        .footer-column ul li a:hover::before { opacity: 1; }
+        .footer-column ul li a:hover { color: var(--cyan-acento); }
+
+        /* Redes Sociales */
+        .social-links { display: flex; gap: 10px; margin-top: 20px; }
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.3s;
+        }
+        .social-links a:hover { transform: translateY(-5px) rotate(360deg); background: var(--verde-cepre); }
+        
+        /* Botones del Footer */
+        .footer-buttons { display: flex; flex-direction: column; gap: 10px; }
+        .footer-buttons a {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            font-size: 13px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer-buttons a::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.1); /* Brillo interno */
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+            z-index: 0;
+        }
+        .footer-buttons a:hover::before { width: 300px; height: 300px; }
+        .footer-buttons a:hover { border-color: var(--verde-cepre); transform: scale(1.03); }
+        .footer-buttons a span { position: relative; z-index: 1; }
+
+
+        .copyright {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding: 25px 0;
+            text-align: center;
+        }
+
+        /* ==================================== */
+        /* 12. Modals */
+        /* ==================================== */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 2000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 30px;
+            border-radius: 15px;
+            border-top: 5px solid var(--verde-cepre);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+        
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .close-button:hover, .close-button:focus {
+            color: var(--magenta-unamad);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* ==================================== */
+        /* 13. Responsive Design y Móvil */
+        /* ==================================== */
+        /* Menú Móvil (Toggle) */
+        .menu-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; transition: all 0.3s; }
+        .menu-toggle span { width: 30px; height: 3px; background: var(--azul-oscuro); border-radius: 2px; transition: all 0.3s; }
+        .nav-menu.active {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 90px; 
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 999;
+            align-items: flex-start;
+        }
+        
+        @media (max-width: 1024px) {
+            /* General Responsive Changes (Tablet View) */
+            .top-bar-content { flex-direction: column; text-align: center; }
+            /* Corrección: Ocultar enlaces de la Top Bar en tablet/móvil para evitar desbordamiento */
+            .info-links { display: none; } 
+
+            .hero-content { 
+                grid-template-columns: 1fr; 
+                text-align: center;
+                gap: 20px;
+            }
+            .hero-text { order: 1; text-align: center; }
+            .hero-title { font-size: 48px; }
+            .nav-menu { display: none; }
+            .menu-toggle { display: flex; }
+            
+            /* Flechas de Navegación del Carrusel */
+            .prev-nav { left: 10px; padding: 10px; }
+            .next-nav { right: 10px; padding: 10px; }
+
+            /* Cuadrículas */
+            .courses-grid, .teachers-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+            .stats-container { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+            
+            /* Hero Image/Badge */
+            .stats-badge {
+                position: static; 
+                margin: 20px auto 0; 
+                max-width: 90%;
+                transform: none; 
+                width: auto;
+                height: auto;
+                padding: 20px;
+                display: block; 
+            }
+             .stats-badge > * { transform: none; margin: 5px 0; }
+            .hero-image-wrapper:hover .stats-badge { transform: scale(1.05) translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+            
+            /* CTA/Contact */
+            .cta-banner-content h2 { font-size: 36px; }
+            .contact-bar-content { flex-direction: column; }
+            .contact-bar-right { text-align: center; }
+            .footer-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            /* Mobile View (Smartphone) */
+            /* Corrección: Ajustar el logo y los botones para que quepan */
+            .header-content { padding: 10px 15px; } 
+            .logo { height: 45px; }
+            .header-buttons { gap: 5px; }
+
+            .hero-title { font-size: 36px; }
+            .hero-subtitle { font-size: 24px; }
+            .hero-description { font-size: 16px; }
+            
+            .header-buttons { width: auto; justify-content: flex-end; }
+            .btn { width: auto; padding: 10px 15px; font-size: 13px; }
+            .hero-buttons { width: 100%; flex-direction: column; gap: 15px; }
+            
+            /* Cuadrículas */
+            .courses-grid, .teachers-grid, .stats-container { grid-template-columns: 1fr; gap: 20px; }
+
+            /* CTA/Contact */
+            .cta-banner-content h2 { font-size: 28px; }
+            .contact-bar-content { align-items: center; }
+            .contact-bar-right h3 { font-size: 28px; }
+            .footer-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Botón Scroll Top visible solo si está en JS */
+        #scrollTop { 
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 5px 15px rgba(230, 0, 126, 0.4);
+            transition: all 0.3s;
+            animation: bounce 2s ease-in-out infinite;
+            display: none; 
+            justify-content: center;
+            align-items: center;
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- Custom Modal Structure -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('infoModal')">&times;</span>
+            <h3 id="modalTitle" style="color: var(--azul-oscuro); margin-bottom: 10px;">Detalle de Interacción</h3>
+            <p id="modalBody" style="font-size: 16px; color: #555;"></p>
+            <button class="btn btn-secondary" style="margin-top: 20px; width: auto;" onclick="closeModal('infoModal')">Cerrar</button>
+        </div>
+    </div>
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="top-bar-content">
+            <div class="help-desk">
+                <i class="fas fa-phone-alt"></i>
+                <span><strong>HELP DESK:</strong> +51 974 122 813</span>
             </div>
-            <div class="loader">
-                <div class="row">
-                    <div class="col-3 loader-section section-left">
-                        <div class="bg"></div>
-                    </div>
-                    <div class="col-3 loader-section section-left">
-                        <div class="bg"></div>
-                    </div>
-                    <div class="col-3 loader-section section-right">
-                        <div class="bg"></div>
-                    </div>
-                    <div class="col-3 loader-section section-right">
-                        <div class="bg"></div>
-                    </div>
+            <div class="info-links">
+                <a href="#"><i class="fas fa-graduation-cap"></i> Estudiantes</a>
+                <a href="#"><i class="fas fa-chalkboard-teacher"></i> Docentes</a>
+                <a href="#"><i class="fas fa-user-graduate"></i> Alumni</a>
+                <a href="#"><i class="fas fa-flask"></i> Investigación</a>
+                <a href="#"><i class="fas fa-users"></i> Comunidad</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <!-- RUTA DINÁMICA RESTAURADA -->
+            <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/ffffff/2C5F7C?text=CEPRE';" alt="CEPRE UNAMAD" class="logo">
+
+            <nav>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#cursos">Cursos</a></li>
+                    <li><a href="#eventos">Eventos</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-buttons">
+                <i class="search-icon fas fa-search"></i>
+                <!-- RUTA DINÁMICA RESTAURADA -->
+                <a href="{{ route('login') }}" class="btn btn-primary">
+                    <i class="far fa-user"></i>
+                    <span>Consultar Asistencia</span>
+                </a>
+                <div class="menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- Back To Top start -->
-        <button id="back-top" class="back-to-top">
-            <i class="fas fa-long-arrow-up"></i>
-        </button>
-
-        <!-- Marquee Section Start -->
-        <div class="marquee-section style-header">
-            <div class="mycustom-marque header-marque theme-blue-bg">
-                <div class="scrolling-wrap">
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Offcanvas Area Start -->
-        <div class="fix-area">
-            <div class="offcanvas__info">
-                <div class="offcanvas__wrapper">
-                    <div class="offcanvas__content">
-                        <div class="offcanvas__top mb-5 d-flex justify-content-between align-items-center">
-                            <div class="offcanvas__logo">
-                                <a href="index.html">
-                                    <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" alt="logo-img">
-                                </a>
-                            </div>
-                            <div class="offcanvas__close">
-                                <button>
-                                <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <h3 class="offcanvas-title">Bienvenido CEPRE UNAMAD!</h3>
-                        <p>"Tu futuro universitario empieza aquí. Recibe la mejor formación y alcanza tu meta de ingresar a la UNAMAD."</p>
-                        <div class="social-icon d-flex align-items-center">
-                            <a href="#"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#"><i class="fab fa-twitter"></i></a>
-                            <a href="#"><i class="fab fa-youtube"></i></a>
-                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        </div>
-                        <div class="mobile-menu fix mb-3"></div>
-                        <div class="offcanvas__contact">
-                            <h3>Información</h3>
-                            <ul class="contact-list">
-                                <li>
-                                    <span>
-                                        Ubicanos:
-                                    </span>
-                                    Centro Pre Universitario de la UNAMAD 2do Piso
-                                    Av. Dos de Mayo N° 960
-                                    Madre de Dios - Perú
-                                    Puerto Maldonado - Tambopata - Tambopata
-                                </li>
-                                <li>
-                                    <span>
-                                        Call Us:
-                                    </span>
-                                    <a href="tel:+00012345688">+000 123 456 88</a>
-                                </li>
-                                <li>
-                                    <span>
-                                        Email:
-                                    </span>
-                                    <a href="mailto:supportedus@gmail.com">supportedus@gmail.com</a>
-                                </li>
-                            </ul>
-                            <div class="offcanvas-button">
-                                <a href="sign-in.html" class="theme-btn style-2"><i class="far fa-user"></i> Admin</a>
-                                <a href="register.html" class="theme-btn yellow-btn">Enroll Now</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="offcanvas__overlay"></div>
-
-        <!-- Header Section Start -->
-        <header class="header-section-2">
-            <div class="container">
-                <div class="header-top">
-                    <a href="index.html" class="top-logo">
-                        <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" alt="img">
-                    </a>
-                    <div class="category-oneadjust gap-6 d-flex align-items-center">
-                        <div class="icon">
-                            <img src="{{ asset('assets_cepre/img/logo/dot.png') }}" alt="img">
-                        </div>
-                        <select name="cate" class="category">
-                            <option value="1">
-                                Category
-                            </option>
-                            <option value="1">
-                                Web Design
-                            </option>
-                            <option value="1">
-                                Web Development
-                            </option>
-                            <option value="1">
-                                Graphic Design
-                            </option>
-                            <option value="1">
-                                Software Eng
-                            </option>
-                        </select>
-                        <form action="#" class="search-toggle-box d-md-block">
-                            <div class="input-area">
-                                <input type="text" placeholder="Search courses.........">
-                                <button class="cmn-btn">
-                                    <i class="far fa-search"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div id="header-sticky" class="header-2">
-                <div class="container">
-                    <div class="mega-menu-wrapper">
-                        <div class="header-main">
-                            <a href="index.html" class="header-logo">
-                                <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" alt="logo-img">
-                            </a>
-                            <div class="header-left">
-                                <div class="mean__menu-wrapper">
-                                    <div class="main-menu">
-                                        <nav id="mobile-menu">
-                                            <ul>
-                                                <li class="has-dropdown menu-thumb">
-                                                    <a href="index.html">
-                                                        <span class="head-icon"><i class="fas fa-home-lg"></i></span>
-                                                        Home
-                                                        <i class="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <ul class="submenu has-homemenu">
-                                                        <li>
-                                                            <div class="homemenu-items">
-                                                                <div class="row">
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb">
-                                                                           <a href="index.html">
-                                                                                <img src="{{ asset('assets_cepre/img/header/home-1.jpg') }}" alt="img">
-                                                                           </a>
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                               <a href="index.html">
-                                                                                    Education
-                                                                               </a>
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <a href="index-2.html">
-                                                                                <img src="{{ asset('assets_cepre/img/header/home-2.jpg') }}" alt="img">
-                                                                           </a>
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                <a href="index-2.html">
-                                                                                    Online Course
-                                                                                </a>
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <a href="index-3.html">
-                                                                                <img src="{{ asset('assets_cepre/img/header/home-3.jpg') }}" alt="img">
-                                                                           </a>
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                <a href="index-3.html">
-                                                                                    University
-                                                                                </a>
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <a href="index-4.html">
-                                                                                <img src="{{ asset('assets_cepre/img/header/home-4.jpg') }}" alt="img">
-                                                                           </a>
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                <a href="index-4.html">
-                                                                                    Kindergarten
-                                                                                </a>
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <a href="index-5.html">
-                                                                                <img src="{{ asset('assets_cepre/img/header/home-5.jpg') }}" alt="img">
-                                                                           </a>
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                <a href="index-5.html">
-                                                                                    Business Coach
-                                                                                </a>
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <img src="{{ asset('assets_cepre/img/header/home-6.jpg') }}" alt="img">
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                Coming Soon
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <img src="{{ asset('assets_cepre/img/header/home-6.jpg') }}" alt="img">
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                Coming Soon
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-lg-3 homemenu">
-                                                                        <div class="homemenu-thumb mb-15">
-                                                                            <img src="{{ asset('assets_cepre/img/header/home-6.jpg') }}" alt="img">
-                                                                        </div>
-                                                                        <div class="homemenu-content text-center">
-                                                                            <h4 class="homemenu-title">
-                                                                                Coming Soon
-                                                                            </h4>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                                <li class="has-dropdown active d-xl-none">
-                                                    <a href="instructor.html" class="border-none">
-                                                    Home
-                                                    </a>
-                                                    <ul class="submenu">
-                                                        <li><a href="index.html">Education</a></li>
-                                                        <li><a href="index-2.html">Online Course</a></li>
-                                                        <li><a href="index-3.html">University</a></li>
-                                                        <li><a href="index-4.html">Kindergarten</a></li>
-                                                        <li><a href="index-5.html">Business Coach</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html">
-                                                        <span class="head-icon"><i class="fas fa-book"></i></span>
-                                                        Cursos
-                                                        <i class="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <ul class="submenu">
-                                                        <li><a href="courses.html">Courses</a></li>
-                                                        <li><a href="courses-grid.html">Courses Grid</a></li>
-                                                        <li><a href="courses-list.html">Courses List</a></li>
-                                                        <li><a href="courses-details.html">Courses Details 01</a></li>
-                                                        <li><a href="courses-details-2.html">Courses Details 02</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <a href="event-details.html">
-                                                        <span class="head-icon"><i class="fas fa-gift"></i></span>
-                                                        Eventos
-                                                        <i class="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <ul class="submenu">
-                                                        <li><a href="event.html">event</a></li>
-                                                        <li><a href="event-details.html">event Details</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li class="has-dropdown">
-                                                    <a href="news-details.html">
-                                                        <span class="head-icon"><i class="fas fa-file-alt"></i></span>
-                                                        Pages
-                                                        <i class="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <ul class="submenu">
-                                                         <li><a href="#">Sobre el CEPRE</a></li>
-                                                         <li><a href="#">Nuestros Docentes</a></li>
-                                                         <li><a href="#">Plan Académico</a></li>
-                                                         <li class="has-dropdown">
-                                                             <a href="#">
-                                                                 Recursos Académicos
-                                                                 <i class="fas fa-angle-right"></i>
-                                                             </a>
-                                                             <ul class="submenu">
-                                                                 <li><a href="#">Material en Cuadrícula</a></li>
-                                                                 <li><a href="#">Material en Lista</a></li>
-                                                                 <li><a href="#">Vista Izquierda</a></li>
-                                                                 <li><a href="#">Vista Derecha</a></li>
-                                                                 <li><a href="#">Detalle del Recurso</a></li>
-                                                                 <li><a href="#">Mi Carrito</a></li>
-                                                                 <li><a href="#">Finalizar Pedido</a></li>
-                                                             </ul>
-                                                         </li>
-                                                         <li><a href="#">Galería</a></li>
-                                                         <li><a href="#">Planes y Tarifas</a></li>
-                                                         <li><a href="#">Preguntas Frecuentes</a></li>
-                                                         <li class="has-dropdown">
-                                                             <a href="#">
-                                                                 Portal del Estudiante
-                                                                 <i class="fas fa-angle-right"></i>
-                                                             </a>
-                                                             <ul class="submenu">
-                                                                 <li><a href="{{ route('login') }}">Iniciar Sesión</a></li>
-                                                                 <li><a href="{{ route('register') }}">Registrarse</a></li>
-                                                                 <li><a href="#">Página No Encontrada</a></li>
-                                                             </ul>
-                                                         </li>
-                                                     </ul>
-
-                                                </li>
-                                                <li>
-                                                    <a href="news.html">
-                                                        <span class="head-icon"><i class="fas fa-layer-group"></i></span>
-                                                        Blog
-                                                        <i class="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <ul class="submenu">
-                                                        <li><a href="news.html">Blog</a></li>
-                                                        <li><a href="news-details.html">Blog Details</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li>
-                                                    <a href="contact.html">
-                                                        <span class="head-icon"><i class="fas fa-phone-rotary"></i></span>
-                                                        Contacto
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="header-right d-flex justify-content-end align-items-center">
-                                <div class="icon-items">
-                                    <i class="fas fa-user"></i>
-                                    <h6><a href="sign-in.html">Admin</a></h6>
-                                </div>
-                                <div class="header-button">
-                                    <a href="{{ route('login') }}" class="theme-btn style-2"><i class="far fa-user"></i> Consultar Asistencia</a>
-                                </div>
-                                <div class="header__hamburger d-xl-none my-auto">
-                                    <div class="sidebar__toggle">
-                                        <i class="fas fa-bars"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-       
-        <!-- Hero Section Start -->
-        <section class="hero-section hero-2 fix">
-            <div class="container">
-                <div class="row g-4">
-                    <div class="col-lg-6">
-                        <div class="hero-content">
-                            <h1 class="wow fadeInUp" data-wow-delay=".3s">
-                                "Docentes Expertos, 
-                                Tu Éxito Asegurado"
-                                <span>Cepre Unamad<img src="{{ asset('assets_cepre/img/hero/bar-shape-2.png') }}" alt="shape-img"></span>
+    <!-- Hero Section con Carrusel -->
+    <section class="hero-section" id="inicio">
+        <!-- Contenedor para el Canvas de Partículas 3D (Fondo estático) -->
+        <div id="hero-canvas-container"></div>
+        <div class="hero-bg-overlay"></div>
+        
+        <!-- Contenedor del Carrusel -->
+        <div class="carousel-container">
+            <div class="carousel-slides" id="carouselSlides">
+                
+                <!-- SLIDE 1: Éxito (Original) -->
+                <div class="carousel-slide active">
+                    <div class="hero-content">
+                        <div class="hero-text">
+                            <p class="hero-subtitle">Bienvenido a la Universidad</p>
+                            <h1 class="hero-title">
+                                CEPRE UNAMAD Tu<br>
+                                Camino Al <span>Éxito</span>
                             </h1>
-                            <p class="wow fadeInUp" data-wow-delay=".5s">
-                                ¡Prepárate para Ingresar a la UNAMAD 
-                                con los Mejores Docentes y Metodologías!
+                            <p class="hero-description">
+                                ¡Prepárate para Ingresar a la UNAMAD con los Mejores Docentes y Metodologías de Enseñanza! Contamos con más de 15 cursos especializados y un equipo académico de excelencia.
                             </p>
-                            <div class="hero-button">
-                                <a href="{{ route('login') }}" class="theme-btn style-2"><i class="far fa-user"></i> Consultar Asistencia</a>
-                                <span class="button-text wow fadeInUp" data-wow-delay=".5s">
-                                    <a href="https://www.youtube.com/watch?v=A-UUk9qOEao" class="video-btn video-popup">
-                                        <i class="fas fa-play"></i>
-                                    </a>
-                                    <span class="ms-3 d-line">Play Video</span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="hero-image-items">
-                            <div class="hero-image">
-                                <img src="{{ asset('assets_cepre/img/portada/portada.png') }}" alt="img" class="wow img-custom-anim-left" data-wow-duration="1.5s" data-wow-delay="0.5s">
-                                <div class="hero-shape">
-                                    <img src="{{ asset('assets_cepre/img/hero/hero-shape.png') }}" alt="img" class="wow img-custom-anim-top" data-wow-duration="1.5s" data-wow-delay="0.2s">
-                                </div>
-                                <div class="counter-box float-bob-y">
-                                    <p>Ingresantes Cepre</p>
-                                    <h2><span class="odometer" data-count="1000">00</span>+</h2>
-                                    <p>MATRICULATE Ya!</p>
+                            <div class="hero-buttons">
+                                <a href="#cursos" class="btn btn-primary">
+                                    <i class="fas fa-book"></i>
+                                    <span>EXPLORAR PROGRAMAS</span>
+                                </a>
+                                <!-- RUTA DINÁMICA RESTAURADA -->
+                                <a href="{{ route('register') }}" class="btn btn-secondary">
+                                    <i class="fas fa-edit"></i>
+                                    <span>APLICAR AHORA</span>
+                                </a>
+                                <div class="video-btn" onclick="showModal('videoModal')">
+                                    <i class="fas fa-play"></i>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Top Category Section Start -->
-        <section class="top-category-section-2 pb-0 section-padding fix footer-bg">
-            <div class="circle-shape">
-                <img src="{{ asset('assets_cepre/img/circle-shape.png') }}" alt="img">
-            </div>
-            <div class="container">
-                <div class="section-title text-center">
-                    <h6 class="text-white wow fadeInUp">
-                        CURSOS CEPRE UNAMAD
-                    </h6>
-                    <h2 class="text-white wow fadeInUp" data-wow-delay=".3s">
-                        Preparación exclusiva en:
-                    </h2>
-                </div>
-                <div class="top-category-wrapper-2 mt-4 mt-md-0">
-                    <div class="row">
-                        <div class="col-xl-4 col-lg-6">
-                            <div class="top-category-left-items mb-5 mb-lg-0">
-                                <div class="row g-0">
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                                        <div class="top-category-box border-left-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Razonamiento Verbal</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".4s">
-                                        <div class="top-category-box border-left-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Lenguaje y literatura</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".6s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Comprension Lectora</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Biología</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Álgebra</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Geometría</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Trigonometría</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-left-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Física</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-4 col-lg-6">
-                            <div class="courses-image mb-5 mb-lg-0">
-                                <img src="{{ asset('assets_cepre/img/portada/cursos.png') }}" alt="img" width="450" height="920" class="wow img-custom-anim-left">
-                                <div class="bg-shape">
-                                    <img src="{{ asset('assets_cepre/img/boy-bg-shape.png') }}" alt="img">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-4 col-lg-6">
-                            <div class="top-category-left-items">
-                                <div class="row g-0">
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                                        <div class="top-category-box border-right-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Anatomía</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".6s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-graphic-design"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Razonamiento Matemático</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Aritmética</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Química</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Historia y Geografía</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Economía</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Educación Cívica</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                                        <div class="top-category-box border-right-none border-bottom-none border-top-none">
-                                            <a href="courses.html">
-                                                <div class="icon">
-                                                    <i class="flaticon-coding"></i>
-                                                </div>
-                                                <div class="content">
-                                                    <h6>Psicología</h6>
-                                                    <p>(03) Boletines</p>
-                                                </div>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="hero-image-wrapper">
+                            <!-- RUTA DINÁMICA RESTAURADA -->
+                            <img src="{{ asset('assets_cepre/img/portada/portada.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/A4C639?text=CEPRE+UNAMAD+Slide+1';" alt="Estudiantes CEPRE UNAMAD" class="hero-image">
+                            <div class="stats-badge">
+                                <p>Ingresantes CEPRE</p>
+                                <h2>1000+</h2>
+                                <p>¡MATRICÚLATE YA!</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="category-bottom-title wow fadeInUp" data-wow-delay=".3s">
-                    <h3>¡Somos los Únicos en otorgarte tu INGRESO DIRECTO a la Universidad!</h3>
-                    <a href="courses-details.html" class="theme-btn hover-white">¡Inscribite ya!</a>
-                </div>
-            </div>
-            <div class="mycustom-marque">
-                <div class="scrolling-wrap style-2">
-                    <div class="comm">
-                        <div class="cmn-textslide stroke-text">Cepre</div>
-                        <div class="cmn-textslide stroke-text">Unamad</div>
-                    </div>
-                    <div class="comm">
-                        <div class="cmn-textslide stroke-text">Cepre</div>
-                        <div class="cmn-textslide stroke-text">Unamad</div>
-                    </div>
-                    <div class="comm">
-                        <div class="cmn-textslide stroke-text">Cepre</div>
-                        <div class="cmn-textslide stroke-text">Unamad</div>
-                    </div>
-                    <div class="comm">
-                        <div class="cmn-textslide stroke-text">Cepre</div>
-                        <div class="cmn-textslide stroke-text">Unamad</div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- Popular Courses Section Start -->
-        <section class="popular-courses-section fix section-padding section-bg">
-            <div class="container">
-                <div class="section-title-area align-items-end">
-                    <div class="section-title">
-                        <h6 class="wow fadeInUp">
-                            Docentes
-                        </h6>
-                        <h2 class="wow fadeInUp" data-wow-delay=".3s">🎓 Nuestro Equipo Docente</h2>
+                <!-- SLIDE 2: Ingreso Directo -->
+                <div class="carousel-slide">
+                    <div class="hero-content">
+                        <div class="hero-text">
+                            <p class="hero-subtitle">Modalidad Exclusiva CEPRE</p>
+                            <h1 class="hero-title" style="--verde-cepre: var(--magenta-unamad); --cyan-acento: var(--verde-claro);">
+                                Tu Ingreso <span>Directo</span><br>
+                                a la UNAMAD
+                            </h1>
+                            <p class="hero-description">
+                                Asegura tu vacante con nuestro proceso de ingreso directo. Estudia con nosotros y olvídate de la preocupación del examen de admisión general.
+                            </p>
+                            <div class="hero-buttons">
+                                <a href="#" class="btn btn-primary">
+                                    <i class="fas fa-certificate"></i>
+                                    <span>VER REGLAMENTO</span>
+                                </a>
+                                <a href="{{ route('register') }}" class="btn btn-secondary" style="background: linear-gradient(135deg, var(--verde-cepre), var(--cyan-acento));">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>PRÓXIMAS FECHAS</span>
+                                </a>
+                                <div class="video-btn" onclick="showModal('videoModal')">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hero-image-wrapper">
+                            <img src="{{ asset('assets_cepre/img/portada/portada2.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/E6007E?text=INGRESO+DIRECTO';" alt="Ingreso Directo UNAMAD" class="hero-image">
+                            <div class="stats-badge" style="border-top-color: var(--verde-cepre);">
+                                <p>Costo Total</p>
+                                <h2>S/. 1,150</h2>
+                                <p>¡TODO INCLUIDO!</p>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="nav">
-                        <li class="nav-item wow fadeInUp" data-wow-delay=".2s">
-                            <a href="#All" data-bs-toggle="tab" class="nav-link active">
-                                to
-                            </a>
-                        </li>
-                        <li class="nav-item wow fadeInUp" data-wow-delay=".4s">
-                            <a href="#Design" data-bs-toggle="tab" class="nav-link">
-                                Design
-                            </a>
-                        </li>
-                        <li class="nav-item wow fadeInUp" data-wow-delay=".6s">
-                            <a href="#Business" data-bs-toggle="tab" class="nav-link">
-                                Business
-                            </a>
-                        </li>
-                        <li class="nav-item wow fadeInUp" data-wow-delay=".8s">
-                            <a href="#Marketing" data-bs-toggle="tab" class="nav-link">
-                                Marketing
-                            </a>
-                        </li>
+                </div>
+
+                <!-- SLIDE 3: Docentes Expertos -->
+                <div class="carousel-slide">
+                    <div class="hero-content">
+                        <div class="hero-text">
+                            <p class="hero-subtitle">Calidad Académica Asegurada</p>
+                            <h1 class="hero-title" style="--verde-cepre: var(--cyan-acento); --cyan-acento: var(--magenta-unamad);">
+                                Docentes <span>Expertos</span><br>
+                                a tu Disposición
+                            </h1>
+                            <p class="hero-description">
+                                Contamos con la plana docente más experimentada y comprometida de la región, enfocada en maximizar tu potencial y asegurar tu ingreso.
+                            </p>
+                            <div class="hero-buttons">
+                                <a href="#nosotros" class="btn btn-primary">
+                                    <i class="fas fa-users"></i>
+                                    <span>CONOCE AL EQUIPO</span>
+                                </a>
+                                <a href="{{ route('register') }}" class="btn btn-secondary">
+                                    <i class="fas fa-comment-dots"></i>
+                                    <span>SOLICITAR INFO</span>
+                                </a>
+                                <div class="video-btn" onclick="showModal('videoModal')">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hero-image-wrapper">
+                            <img src="{{ asset('assets_cepre/img/portada/portada3.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/00A0E3?text=DOCENTES';" alt="Docentes expertos" class="hero-image">
+                            <div class="stats-badge">
+                                <p>Cursos Especializados</p>
+                                <h2>18</h2>
+                                <p>¡EMPIEZA HOY!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Navegación del Carrusel -->
+        <button class="carousel-nav prev-nav" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="carousel-nav next-nav" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
+        
+        <!-- Puntos de Paginación -->
+        <div class="carousel-dots" id="carouselDots">
+            <!-- Los puntos se inyectan aquí por JavaScript -->
+        </div>
+
+    </section>
+
+    <!-- Marquee -->
+    <div class="marquee-section">
+        <div class="marquee-content">
+            <div class="marquee-item"><i class="fas fa-graduation-cap"></i> Educación de calidad</div>
+            <div class="marquee-item"><i class="fas fa-university"></i> CEPRE UNAMAD</div>
+            <div class="marquee-item"><i class="fas fa-door-open"></i> Inscripciones abiertas</div>
+            <div class="marquee-item"><i class="fas fa-chalkboard-teacher"></i> Docentes expertos</div>
+            <div class="marquee-item"><i class="fas fa-book"></i> Más de 15 cursos</div>
+            <div class="marquee-item"><i class="fas fa-tag"></i> S/. 1,150.00</div>
+            <div class="marquee-item"><i class="fas fa-trophy"></i> Ingreso directo garantizado</div>
+            <div class="marquee-item"><i class="fas fa-graduation-cap"></i> Educación de calidad</div>
+            <div class="marquee-item"><i class="fas fa-university"></i> CEPRE UNAMAD</div>
+            <div class="marquee-item"><i class="fas fa-door-open"></i> Inscripciones abiertas</div>
+            <div class="marquee-item"><i class="fas fa-chalkboard-teacher"></i> Docentes expertos</div>
+            <div class="marquee-item"><i class="fas fa-book"></i> Más de 15 cursos</div>
+            <div class="marquee-item"><i class="fas fa-tag"></i> S/. 1,150.00</div>
+            <div class="marquee-item"><i class="fas fa-trophy"></i> Ingreso directo garantizado</div>
+        </div>
+    </div>
+
+    <!-- Courses Section -->
+    <section class="courses-section" id="cursos">
+        <div class="section-title">
+            <h6>NUESTROS CURSOS</h6>
+            <h2>Preparación Exclusiva en:</h2>
+        </div>
+        <div class="courses-grid">
+            <div class="course-card animate-on-scroll" data-info="Matemática avanzada y resolución de problemas.">
+                <div class="course-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Razonamiento Matemático</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+            <div class="course-card animate-on-scroll" data-info="Habilidades de comprensión lectora y análisis.">
+                <div class="course-icon">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Razonamiento Verbal</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+            <div class="course-card animate-on-scroll" data-info="Leyes de la física y ejercicios prácticos.">
+                <div class="course-icon">
+                    <i class="fas fa-atom"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Física</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+            <div class="course-card animate-on-scroll" data-info="Estructura molecular y reacciones químicas.">
+                <div class="course-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Química</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+            <div class="course-card animate-on-scroll" data-info="Genética, ecosistemas y procesos biológicos.">
+                <div class="course-icon">
+                    <i class="fas fa-dna"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Biología</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+            <div class="course-card animate-on-scroll" data-info="Fundamentos de ecuaciones y funciones.">
+                <div class="course-icon">
+                    <i class="fas fa-square-root-alt"></i>
+                </div>
+                <div class="course-content">
+                    <h3>Álgebra</h3>
+                    <p>03 Boletines | 12 Sesiones</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-box animate-on-scroll">
+                <i class="fas fa-users"></i>
+                <h3 class="counter" data-target="1250">0</h3>
+                <p>Estudiantes Matriculados</p>
+            </div>
+            <div class="stat-box animate-on-scroll">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <h3 class="counter" data-target="25">0</h3>
+                <p>Docentes Expertos</p>
+            </div>
+            <div class="stat-box animate-on-scroll">
+                <i class="fas fa-trophy"></i>
+                <h3 class="counter" data-target="1000">0</h3>
+                <p>Ingresantes a UNAMAD</p>
+            </div>
+            <div class="stat-box animate-on-scroll">
+                <i class="fas fa-book"></i>
+                <h3 class="counter" data-target="18">0</h3>
+                <p>Cursos Disponibles</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Teachers Section -->
+    <section class="teachers-section" id="nosotros">
+        <div class="section-title">
+            <h6>NUESTRO EQUIPO</h6>
+            <h2>Docentes con Trayectoria</h2>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card animate-on-scroll">
+                <div class="teacher-image">
+                    <!-- RUTA DINÁMICA RESTAURADA -->
+                    <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+1';" alt="Ing. Juan Pérez">
+                </div>
+                <div class="teacher-info">
+                    <h4>Ing. Juan Pérez</h4>
+                    <p>Docente de Matemática</p>
+                </div>
+            </div>
+            <div class="teacher-card animate-on-scroll">
+                <div class="teacher-image">
+                    <!-- RUTA DINÁMICA RESTAURADA -->
+                    <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+2';" alt="Lic. María García">
+                </div>
+                <div class="teacher-info">
+                    <h4>Lic. María García</h4>
+                    <p>Docente de Lenguaje</p>
+                </div>
+            </div>
+            <div class="teacher-card animate-on-scroll">
+                <div class="teacher-image">
+                    <!-- RUTA DINÁMICA RESTAURADA -->
+                    <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+3';" alt="Dr. Carlos López">
+                </div>
+                <div class="teacher-info">
+                    <h4>Dr. Carlos López</h4>
+                    <p>Docente de Química</p>
+                </div>
+            </div>
+            <div class="teacher-card animate-on-scroll">
+                <div class="teacher-image">
+                    <!-- RUTA DINÁMICA RESTAURADA -->
+                    <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+4';" alt="Ing. Ana Torres">
+                </div>
+                <div class="teacher-info">
+                    <h4>Ing. Ana Torres</h4>
+                    <p>Docente de Física</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="cta-banner">
+        <div class="cta-banner-content">
+            <h2>¡SOMOS LOS <span style="color:var(--cyan-acento); text-shadow: none;">ÚNICOS</span> EN OTORGARTE INGRESO DIRECTO A LA UNAMAD!</h2>
+            <a href="#" class="btn-cyan-cta" style="margin-top: 20px;">
+                <i class="fas fa-info-circle"></i>
+                <span>VER MÁS DETALLES DE INGRESO</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Contact Bar (Ahora más limpia y separada) -->
+    <section class="contact-bar" id="contacto">
+        <div class="contact-bar-content">
+            <div class="contact-bar-left">
+                <div class="contact-bar-icon">
+                    <i class="fas fa-phone-alt"></i>
+                </div>
+                <div>
+                    <p style="margin: 0; font-size: 16px; opacity: 0.9; color: var(--azul-oscuro);">Si tienes preguntas, solicita una consulta</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: var(--azul-oscuro);">con nuestro asesor educativo.</p>
+                </div>
+            </div>
+            <div class="contact-bar-right">
+                <p style="margin: 0; font-size: 14px; opacity: 0.9; color: var(--azul-oscuro);">USA NUESTRA LÍNEA 24H</p>
+                <h3>+51 974 122 813</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-grid">
+                <!-- Logo & Info -->
+                <div class="footer-column animate-on-scroll">
+                    <!-- RUTA DINÁMICA RESTAURADA -->
+                    <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/2C5F7C/ffffff?text=LOGO';" alt="CEPRE UNAMAD" class="footer-logo" style="filter: brightness(0) invert(1);">
+                    <p style="font-size: 14px; line-height: 1.6; opacity: 0.9; margin-bottom: 20px;">
+                        Centro Pre Universitario de la UNAMAD<br>
+                        Av. Dos de Mayo N° 960<br>
+                        Puerto Maldonado - Tambopata<br>
+                        Madre de Dios - Perú
+                    </p>
+                    <div>
+                        <p style="font-weight: 600; margin-bottom: 10px; color: var(--verde-cepre);">Redes Sociales</p>
+                        <div class="social-links">
+                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-twitter"></i></a>
+                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-instagram"></i></a>
+                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admissions -->
+                <div class="footer-column animate-on-scroll" style="transition-delay: 0.1s;">
+                    <h3>Admisiones</h3>
+                    <ul>
+                        <li><a href="#">Cómo Postular</a></li>
+                        <li><a href="#">Cronograma</a></li>
+                        <li><a href="#">Requisitos</a></li>
+                        <li><a href="#">Elegibilidad</a></li>
+                        <li><a href="#">Estructura de Costos</a></li>
+                        <li><a href="#">Becas</a></li>
                     </ul>
                 </div>
-                <div class="tab-content">
-                    <div id="All" class="tab-pane fade show active">
-                        <div class="row">
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>                    
-                    <div id="Business" class="tab-pane fade">
-                        <div class="row">
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xl-4 col-lg-6 col-md-6">
-                                <div class="courses-card-main-items">
-                                    <div class="courses-card-items style-2">
-                                        <div class="courses-image">
-                                            <img src="{{ asset('assets_cepre/img/portada/profesor.png') }}" alt="img">
-                                            <h3 class="courses-title"></h3>
-                                            <h4 class="topic-title"></h4>
-                                            <div class="arrow-items">
-                                                <div class="GlidingArrow">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a1.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay1">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a2.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay2">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a3.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay3">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a4.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay4">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a5.png') }}" alt="img">
-                                                </div>
-                                                <div class="GlidingArrow delay5">
-                                                    <img src="{{ asset('assets_cepre/img/courses/a6.png') }}" alt="img">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="courses-content">
-                                            <ul class="post-cat">
-                                                <li>
-                                                    <a href="courses.html">Docente Ordinario</a>
-                                                </li>
-                                                <li>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </li>
-                                            </ul>
-                                            <h3>
-                                                <a href="courses-details.html">
-                                                    📚Razonamiento Matemático
-                                                </a>
-                                            </h3>
-                                            <div class="client-items">
-                                                <div class="client-img bg-cover" style="background-image: url('assets/img/courses/client-1.png');"></div>
-                                                <p>👨‍🏫 "Ing. Juan Pérez Gómez"</p>
-                                            </div>
-                                            <ul class="post-class">
-                                                <li>
-                                                    <i class="far fa-books"></i>
-                                                    secciones
-                                                </li>
-                                                <li>
-                                                    <i class="far fa-user"></i>
-                                                    50 Estudiantes
-                                                </li>
-                                                <li>
-                                                    <a href="courses-details.html" class="theme-btn">Más Información</a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
+                <!-- Quick Links -->
+                <div class="footer-column animate-on-scroll" style="transition-delay: 0.2s;">
+                    <h3>Enlaces Rápidos</h3>
+                    <ul>
+                        <li><a href="#">Prensa & Media</a></li>
+                        <li><a href="#">Portal de Alumni</a></li>
+                        <li><a href="#">Boletines</a></li>
+                        <li><a href="#">Departamentos</a></li>
+                        <li><a href="#">Directorio</a></li>
+                        <li><a href="#">Carreras</a></li>
+                    </ul>
+                </div>
+
+                <!-- Additional Links & Botones -->
+                <div class="footer-column animate-on-scroll" style="transition-delay: 0.3s;">
+                    <h3>Enlaces Adicionales</h3>
+                    <ul>
+                        <li><a href="#">Casa Abierta</a></li>
+                        <li><a href="#">Escuela de Verano</a></li>
+                        <li><a href="#">Eventos 2024</a></li>
+                        <li><a href="#">Foro Académico</a></li>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                    </ul>
+                    
+                    <div class="footer-buttons" style="margin-top: 20px;">
+                        <!-- RUTA DINÁMICA RESTAURADA -->
+                        <a href="{{ route('register') }}"><span>POSTULAR</span></a>
+                        <a href="#"><span>VISITAR</span></a>
+                        <a href="#"><span>CARRERAS</span></a>
+                        <a href="#"><span>CONTACTO</span></a>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Marquee Section Start -->
-        <div class="marquee-section">
-            <div class="mycustom-marque theme-blue-bg">
-                <div class="scrolling-wrap">
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                </div>
+            <!-- Copyright -->
+            <div class="copyright">
+                <p>Copyright © 2024 CEPRE UNAMAD. Todos los derechos reservados.</p>
             </div>
         </div>
+    </footer>
 
-        <!-- Event Section Start -->
-        <section class="event-section fix section-padding section-bg pb-0">
-            <div class="container">
-                <div class="section-title text-center">
-                    <h6 class="wow fadeInUp">
-                        Próximos eventos
-                    </h6>
-                    <h2 class="wow fadeInUp" data-wow-delay=".3s">Maratones Exclusivas</h2>
-                </div>
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="event-box-items wow fadeInUp">
-                            <div class="accordion-single active">
-                                <div class="header-area">
-                                    <div class="accordion-btn">
-                                        <div class="content-items">
-                                            <div class="post-date">
-                                                26 de enero, 2025
-                                            </div>
-                                            <div class="content">
-                                                <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
-                                            </div>
-                                        </div>
-                                        <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
-                                        </div>
-                                        <ul class="button-list">
-                                            <li>
-                                                <i class="far fa-map-marker-alt"></i>
-                                                Cepre Unamad
-                                            </li>
-                                            <li>
-                                                <a href="event-details.html" class="theme-btn">Inscribirse</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="event-box-items wow fadeInUp" data-wow-delay=".2s">
-                            <div class="accordion-single">
-                                <div class="header-area">
-                                    <div class="accordion-btn">
-                                        <div class="content-items">
-                                            <div class="post-date">
-                                                14 de septiembre, ----
-                                            </div>
-                                            <div class="content">
-                                                <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
-                                            </div>
-                                        </div>
-                                        <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
-                                        </div>
-                                        <ul class="button-list">
-                                            <li>
-                                                <i class="far fa-map-marker-alt"></i>
-                                                Cepre Unamad
-                                            </li>
-                                            <li>
-                                                <a href="event-details.html" class="theme-btn">Inscribirse</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="event-box-items wow fadeInUp" data-wow-delay=".4s">
-                            <div class="accordion-single">
-                                <div class="header-area">
-                                    <div class="accordion-btn">
-                                        <div class="content-items">
-                                            <div class="post-date">
-                                                14 de septiembre, ----
-                                            </div>
-                                            <div class="content">
-                                                <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
-                                            </div>
-                                        </div>
-                                        <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
-                                        </div>
-                                        <ul class="button-list">
-                                            <li>
-                                                <i class="far fa-map-marker-alt"></i>
-                                                Cepre Unamad
-                                            </li>
-                                            <li>
-                                                <a href="event-details.html" class="theme-btn">Inscribirse</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="event-box-items wow fadeInUp" data-wow-delay=".6s">
-                            <div class="accordion-single">
-                                <div class="header-area">
-                                    <div class="accordion-btn">
-                                        <div class="content-items">
-                                            <div class="post-date">
-                                                14 de septiembre, ----
-                                            </div>
-                                            <div class="content">
-                                                <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
-                                            </div>
-                                        </div>
-                                        <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
-                                        </div>
-                                        <ul class="button-list">
-                                            <li>
-                                                <i class="far fa-map-marker-alt"></i>
-                                                Cepre Unamad
-                                            </li>
-                                            <li>
-                                                <a href="event-details.html" class="theme-btn">Inscribirse</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="event-box-items wow fadeInUp" data-wow-delay=".8s">
-                            <div class="accordion-single">
-                                <div class="header-area">
-                                    <div class="accordion-btn">
-                                        <div class="content-items">
-                                            <div class="post-date">
-                                                14 de septiembre, ----
-                                            </div>
-                                            <div class="content">
-                                                <h5><a href="event-details.html">MARATON EXCLUSIVO CEPRE UNAMAD CURSOS - 📚Razonamiento Matematico</a></h5>
-                                            </div>
-                                        </div>
-                                        <div class="event-image">
-                                            <img src="{{ asset('assets_cepre/img/event/maraton.jpg') }}" alt="img">
-                                        </div>
-                                        <ul class="button-list">
-                                            <li>
-                                                <i class="far fa-map-marker-alt"></i>
-                                                Cepre Unamad
-                                            </li>
-                                            <li>
-                                                <a href="event-details.html" class="theme-btn">Inscribirse</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="event-button text-center mt-5 wow fadeInUp" data-wow-delay=".3s">
-                    <a href="event.html" class="theme-btn yellow-btn">Ver todo los eventos</a>
-                </div>
-            </div>
-            <div class="mycustom-marque style-two">
-                <div class="scrolling-wrap style-2">
-                    <div class="comm">
-                        <div class="cmn-textslide stroke-text">Cepre </div>
-                        <div class="cmn-textslide stroke-text">Unamad </div>
-                        <div class="cmn-textslide stroke-text">Eventos </div>
-                        <div class="cmn-textslide stroke-text">Maratones</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Burbuja de Notificación (Nueva) -->
+    <div id="assistant-bubble">
+        ¡Pregúntale a nuestro asistente!
+    </div>
+    
+    <!-- Asistente Flotante (Avatar Guía - Ícono actualizado) -->
+    <button id="floating-assistant" onclick="showModal('assistantModal')">
+        <i class="fas fa-lightbulb"></i>
+    </button>
+    
+    <!-- Scroll to Top Button -->
+    <button id="scrollTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
-        <!-- Sección informacion de matriculados -->
-        <section class="choose-us-section choose-bg fix section-padding pt-0">
-            <div class="container-fluid">
-                <div class="choose-us-wrapper">
-                    <div class="row g-4 align-items-center">
-                        <div class="col-xxl-5 col-xl-6">
-                            <div class="section-title mb-0">
-                                <h6 class="yellow-text wow fadeInUp">
-                                    Cepre Unamad
-                                </h6>
-                                <h2 class="text-white wow fadeInUp" data-wow-delay=".3s">
-                                    Excelencia en el aprendizaje
-                                </h2>
-                            </div>
-                        </div>
-                        <div class="col-xxl-4 col-xl-6">
-                            <div class="choose-us-counter-items">
-                                <div class="row g-4">
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".3s">
-                                        <div class="choose-us-counter-box">
-                                            <div class="icon">
-                                                <i class="flaticon-success"></i>
-                                            </div>
-                                            <div class="content">
-                                                <h2>+<span class="odometer" data-count="1200">00</span></h2>
-                                                <p>Estudiantes Matriculados</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".5s">
-                                        <div class="choose-us-counter-box style-2">
-                                            <div class="icon">
-                                                <i class="flaticon-instructor"></i>
-                                            </div>
-                                            <div class="content">
-                                                <h2>+<span class="odometer" data-count="20">00</span></h2>
-                                                <p>Docentes de trayectoria</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xxl-3 col-xl-4">
-                            <div class="choose-us-image">
-                                <img src="{{ asset('assets_cepre/img/portada/portada.png') }}" alt="img" width="420" height="400" class="wow img-custom-anim-left">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <script>
+        // --- Referencias DOM ---
+        const menuToggle = document.querySelector('.menu-toggle');
+        const navMenu = document.querySelector('.nav-menu');
+        const header = document.querySelector('.main-header');
+        const infoModal = document.getElementById('infoModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
 
-        <!-- Team Section Start -->
-        <section class="team-section fix section-padding pt-0">
-           <div class="container">
-                <div class="section-title text-center">
-                    <h6 class="wow fadeInUp">
-                        Conozca a nuestros profesores
-                    </h6>
-                    <h2 class="wow fadeInUp" data-wow-delay=".3s">Contamos con profesores con experiencia</h2>
-                </div>
-                <div class="row">
-                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                        <div class="team-box-items style-2">
-                            <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
-                                <div class="social-profile">
-                                    <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
-                                    <ul>
-                                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="team-content">
-                                <h4>
-                                    <a href="instructor-details.html">Rolando N. Gordon</a>
-                                </h4>
-                                <p>Docente ordinario</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".4s">
-                        <div class="team-box-items style-2">
-                            <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
-                                <div class="social-profile">
-                                    <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
-                                    <ul>
-                                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="team-content">
-                                <h4>
-                                    <a href="instructor-details.html">Rolando N. Gordon</a>
-                                </h4>
-                                <p>Docente ordinario</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".6s">
-                        <div class="team-box-items style-2">
-                            <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
-                                <div class="social-profile">
-                                    <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
-                                    <ul>
-                                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="team-content">
-                                <h4>
-                                    <a href="instructor-details.html">Rolando N. Gordon</a>
-                                </h4>
-                                <p>Docente ordinario</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".8s">
-                        <div class="team-box-items style-2">
-                            <div class="team-image">
-                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}" alt="img">
-                                <div class="social-profile">
-                                    <span class="plus-btn"><i class="fas fa-share-alt"></i></span>
-                                    <ul>
-                                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="team-content">
-                                <h4>
-                                    <a href="instructor-details.html">Rolando N. Gordon</a>
-                                </h4>
-                                <p>Docente ordinario</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-           </div>
-        </section>
+        // ====================================
+        // CARRUSEL (HERO SECTION) LOGIC
+        // ====================================
+        let currentSlide = 0;
+        let slides;
+        let totalSlides;
+        let slidesContainer;
+        let dotsContainer;
+        let slideInterval;
+        const autoPlayTime = 5000; // 5 segundos
 
-        <!-- seccion de slogan cepre -->
-        <div class="certificate-text wow fadeInUp" data-wow-delay=".3s">
-            <h3>¡Somos los ÚNICOS en otorgarte tu INGRESO DIRECTO! </h3>
-            <a href="register.html" class="theme-btn">Matriculate ahora</a>
-        </div>
+        function initCarousel() {
+            slides = document.querySelectorAll('.carousel-slide');
+            totalSlides = slides.length;
+            slidesContainer = document.getElementById('carouselSlides');
+            dotsContainer = document.getElementById('carouselDots');
+            
+            if (!slidesContainer) return;
 
-        <!-- seccion Cursos en vivo -->
-        <section class="live-courses-section section-padding">
-            <div class="container">
-                <div class="section-title text-center">
-                    <h6 class="wow fadeInUp">
-                        Cursos en vivo
-                    </h6>
-                    <h2 class="wow fadeInUp" data-wow-delay=".3s">
-                        Desbloquea conocimientos en tiempo real <br>
-                        Inscríbete en nuestros cursos en vivo
-                    </h2>
-                </div>
-                <div class="swiper live-courses-slider">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <div class="live-courses-main-items">
-                                <div class="live-courses-items  bg-cover" style="background-image: url('assets/img/live-courses/bg-1.jpg');">
-                                    <div class="live-courses-content">
-                                        <h3>
-                                            <span>Figma Basic</span>
-                                            to Advance
-                                        </h3>
-                                        <div class="icon">
-                                            <img src="{{ asset('assets_cepre/img/live-courses/figma.png') }}" alt="img">
-                                        </div>
-                                    </div>
-                                    <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
-                                    </div>
-                                </div>
-                                <div class="content">
-                                    <div class="client-img bg-cover" style="background-image: url('assets/img/live-courses/client-1.png');"></div>
-                                    <h4><a href="courses-details.html">Figma Basic to Advance</a></h4>
-                                    <ul class="list">
-                                        <li>
-                                            <i class="fal fa-user-clock"></i>
-                                            Kevin
-                                        </li>
-                                        <li>
-                                            <i class="far fa-clock"></i>
-                                            3 meses
-                                        </li>
-                                        <li>
-                                            <i class="far fa-user"></i>
-                                            +50 Estudiantes
-                                        </li>
-                                    </ul>
-                                    <a href="courses-details.html" class="theme-btn">Únase a la clase en vivo</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div class="live-courses-main-items">
-                                <div class="live-courses-items  bg-cover" style="background-image: url('assets/img/live-courses/bg-2.jpg');">
-                                    <div class="live-courses-content">
-                                        <h3>
-                                            <span>Basic HTML</span>
-                                            to WordPress
-                                        </h3>
-                                        <div class="icon">
-                                            <img src="{{ asset('assets_cepre/img/live-courses/wp.png') }}" alt="img">
-                                        </div>
-                                    </div>
-                                    <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
-                                    </div>
-                                </div>
-                                <div class="content">
-                                    <div class="client-img bg-cover" style="background-image: url('assets/img/live-courses/client-2.png');"></div>
-                                    <h4><a href="courses-details.html">Basic HTML To WordPress</a></h4>
-                                    <ul class="list">
-                                        <li>
-                                            <i class="fal fa-user-clock"></i>
-                                            Kevin
-                                        </li>
-                                        <li>
-                                            <i class="far fa-clock"></i>
-                                            3 meses
-                                        </li>
-                                        <li>
-                                            <i class="far fa-user"></i>
-                                            +50 Estudiantes
-                                        </li>
-                                    </ul>
-                                    <a href="courses-details.html" class="theme-btn">Únase a la clase en vivo</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div class="live-courses-main-items">
-                                <div class="live-courses-items  bg-cover" style="background-image: url('assets/img/live-courses/bg-3.jpg');">
-                                    <div class="live-courses-content">
-                                        <h3>
-                                            <span>Advance </span>
-                                            Motion Design
-                                        </h3>
-                                        <div class="icon">
-                                            <img src="{{ asset('assets_cepre/img/live-courses/fi.png') }}" alt="img">
-                                        </div>
-                                    </div>
-                                    <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
-                                    </div>
-                                </div>
-                                <div class="content">
-                                    <div class="client-img bg-cover" style="background-image: url('assets/img/live-courses/client-3.png');"></div>
-                                    <h4><a href="courses-details.html">Advance Motion Design</a></h4>
-                                    <ul class="list">
-                                        <li>
-                                            <i class="fal fa-user-clock"></i>
-                                            Kevin
-                                        </li>
-                                        <li>
-                                            <i class="far fa-clock"></i>
-                                            3 meses
-                                        </li>
-                                        <li>
-                                            <i class="far fa-user"></i>
-                                            +50 Estudiantes
-                                        </li>
-                                    </ul>
-                                    <a href="courses-details.html" class="theme-btn">Únase a la clase en vivo</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div class="live-courses-main-items">
-                                <div class="live-courses-items  bg-cover" style="background-image: url('assets/img/live-courses/bg-2.jpg');">
-                                    <div class="live-courses-content">
-                                        <h3>
-                                            <span>Basic HTML</span>
-                                            to WordPress
-                                        </h3>
-                                        <div class="icon">
-                                            <img src="{{ asset('assets_cepre/img/live-courses/wp.png') }}" alt="img">
-                                        </div>
-                                    </div>
-                                    <div class="live-courses-image">
-                                        <img src="{{ asset('assets_cepre/img/live-courses/cursos.jpg') }}" alt="img">
-                                    </div>
-                                </div>
-                                <div class="content">
-                                    <div class="client-img bg-cover" style="background-image: url('assets/img/live-courses/client-1.png');"></div>
-                                    <h4><a href="courses-details.html">Basic HTML To WordPress</a></h4>
-                                    <ul class="list">
-                                        <li>
-                                            <i class="fal fa-user-clock"></i>
-                                            Kevin
-                                        </li>
-                                        <li>
-                                            <i class="far fa-clock"></i>
-                                            3 meses
-                                        </li>
-                                        <li>
-                                            <i class="far fa-user"></i>
-                                            +50 Estudiantes
-                                        </li>
-                                    </ul>
-                                    <a href="courses-details.html" class="theme-btn">Únase a la clase en vivo</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="swiper-dot text-center pt-5">
-                        <div class="dot"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
+            createDots();
+            showSlide(currentSlide);
+            startAutoPlay();
+        }
 
-        <!-- seccion de publicida horizontal -->
-        <div class="marquee-section">
-            <div class="mycustom-marque theme-blue-bg">
-                <div class="scrolling-wrap">
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Testimonial Section Start -->
-        <section class="testimonial-section fix section-padding">
-            <div class="container">
-                <div class="testimonial-wrapper">
-                    <div class="row g-4 justify-content-between">
-                        <div class="col-xxl-6 col-xl-6 col-lg-6">
-                            <div class="testimonial-content">
-                                <div class="section-title">
-                                    <h6 class="wow fadeInUp">
-                                        Reseñas de estudiantes
-                                    </h6>
-                                    <h2 class="wow fadeInUp" data-wow-delay=".3s">
-                                        Los estudiantes dicen sobre Cepre Unamad
-                                    </h2>
-                                </div>
-                                <div class="swiper testimonial-slider-2 mt-3 mt-md-0">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <div class="content">
-                                                <div class="icon-top">
-                                                    <div class="icon">
-                                                        <i class="flaticon-double-quotes"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="star">
-                                                    <span>La mejor calidad</span>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </div>
-                                                <h3>
-                                                    "El Contenido Del Curso Fue Fácil De Seguir Y Los Instructores Estaban Disponibles Para Responder Preguntas."
-                                                </h3>
-                                                <div class="client-info">
-                                                    <h4>Richard C. Andre</h4>
-                                                    <p>Estudiante Cepre</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <div class="content">
-                                                <div class="icon-top">
-                                                    <div class="icon">
-                                                        <i class="flaticon-double-quotes"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="star">
-                                                    <span>La mejor calidad</span>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </div>
-                                                <h3>
-                                                    "El Contenido Del Curso Fue Fácil De Seguir Y Los Instructores Estaban Disponibles Para Responder Preguntas."
-                                                </h3>
-                                                <div class="client-info">
-                                                    <h4>Richard C. Andre</h4>
-                                                    <p>Estudiante Cepre</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <div class="content">
-                                                <div class="icon-top">
-                                                    <div class="icon">
-                                                        <i class="flaticon-double-quotes"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="star">
-                                                    <span>La mejor calidad</span>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </div>
-                                                <h3>
-                                                    "El Contenido Del Curso Fue Fácil De Seguir Y Los Instructores Estaban Disponibles Para Responder Preguntas."
-                                                </h3>
-                                                <div class="client-info">
-                                                    <h4>Richard C. Andre</h4>
-                                                    <p>Estudiante Cepre</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <div class="content">
-                                                <div class="icon-top">
-                                                    <div class="icon">
-                                                        <i class="flaticon-double-quotes"></i>
-                                                    </div>
-                                                </div>
-                                                <div class="star">
-                                                    <span>La mejor calidad</span>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                    <i class="fas fa-star"></i>
-                                                </div>
-                                                <h3>
-                                                    "El Contenido Del Curso Fue Fácil De Seguir Y Los Instructores Estaban Disponibles Para Responder Preguntas."
-                                                </h3>
-                                                <div class="client-info">
-                                                    <h4>Richard C. Andre</h4>
-                                                    <p>Estudiante Cepre</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="swiper-dot pt-5 ps-1">
-                                        <div class="dot"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xxl-4 col-xl-5 col-lg-5 d-none d-md-block">
-                            <div class="testimonial-image-items">
-                                <div class="box-shape">
-                                    <img src="{{ asset('assets_cepre/img/testimonial/box-shape.png') }}" alt="img">
-                                </div>
-                                <div class="row g-4">
-                                    <div class="col-md-6 col-sm-6">
-                                        <div class="client-img-1 bg-cover" style="background-image: url('assets/img/testimonial/01.jpg');"></div>
-                                        <div class="client-img-2 bg-cover" style="background-image: url('assets/img/testimonial/02.jpg');"></div>
-                                        <div class="client-img-3 bg-cover" style="background-image: url('assets/img/testimonial/03.jpg');"></div>
-                                    </div>
-                                    <div class="col-md-6 col-sm-6">
-                                        <div class="client-img-4 bg-cover" style="background-image: url('assets/img/testimonial/04.jpg');"></div>
-                                        <div class="client-img-5 bg-cover" style="background-image: url('assets/img/testimonial/05.jpg');"></div>
-                                        <div class="client-img-6 bg-cover" style="background-image: url('assets/img/testimonial/06.jpg');"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Faq Section Start -->
-        <section class="faq-section fix section-padding pt-0">
-            <div class="container">
-                <div class="faq-wrapper">
-                    <div class="row g-4 align-items-center">
-                        <div class="col-lg-6">
-                            <div class="faq-image-items">
-                                <div class="row g-4 align-items-center">
-                                    <div class="col-md-6 d-none d-md-block">
-                                        <div class="faq-image wow img-custom-anim-left">
-                                            <img src="{{ asset('assets_cepre/img/faq/01.jpg') }}" alt="img">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="faq-image style-2 d-none d-md-block wow img-custom-anim-top" data-wow-duration="1.5s" data-wow-delay="0.3s">
-                                            <img src="{{ asset('assets_cepre/img/faq/02.jpg') }}" alt="img">
-                                        </div>
-                                        <div class="faq-image wow img-custom-anim-bottom" data-wow-duration="1.5s" data-wow-delay="0.5s">
-                                            <img src="{{ asset('assets_cepre/img/faq/03.jpg') }}" alt="img">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="faq-content">
-                                <div class="section-title">
-                                    <h6 class="wow fadeInUp">
-                                        Pregunta y respuesta
-                                    </h6>
-                                    <h2 class="wow fadeInUp" data-wow-delay=".3s">
-                                        Preguntas frecuentes?
-                                    </h2>
-                                </div>
-                                <div class="faq-items mb-0 mt-4 mt-md-0">
-                                    <div class="accordion" id="accordionExample">
-                                        <div class="accordion-item wow fadeInUp" data-wow-delay=".2s">
-                                            <h2 class="accordion-header" id="headingOne">
-                                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                                    Como postulo a Cepre Unamad?
-                                                </button>
-                                            </h2>
-                                            <div id="collapseOne" class="accordion-collapse collapse show"
-                                                aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                                <div class="accordion-body">
-                                                    <p>
-                                                        Ofrecemos una amplia gama de programas de pregrado, posgrado y profesionales en diversos campos, incluidas ciencias, negocios e ingeniería.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="accordion-item wow fadeInUp" data-wow-delay=".4s">
-                                            <h2 class="accordion-header" id="headingTwo">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                                    Cuales son los requisitos?
-                                                </button>
-                                            </h2>
-                                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
-                                                data-bs-parent="#accordionExample">
-                                                <div class="accordion-body">
-                                                    <p>
-                                                        Ofrecemos una amplia gama de programas de pregrado, posgrado y profesionales en diversos campos, incluidas ciencias, negocios e ingeniería.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="accordion-item wow fadeInUp" data-wow-delay=".6s">
-                                            <h2 class="accordion-header" id="headingthree">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#collapsethree" aria-expanded="false"
-                                                    aria-controls="collapsethree">
-                                                    Cuantas vacantes ofrecen?
-                                                </button>
-                                            </h2>
-                                            <div id="collapsethree" class="accordion-collapse collapse"
-                                                aria-labelledby="headingthree" data-bs-parent="#accordionExample">
-                                                <div class="accordion-body">
-                                                    <p>
-                                                        Ofrecemos una amplia gama de programas de pregrado, posgrado y profesionales en diversos campos, incluidas ciencias, negocios e ingeniería.
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="accordion-item mb-0 wow fadeInUp" data-wow-delay=".8s">
-                                            <h2 class="accordion-header" id="headingfour">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                                    data-bs-target="#collapsefour" aria-expanded="false"
-                                                    aria-controls="collapsefour">
-                                                    Que turnos ofrece?
-                                                </button>
-                                            </h2>
-                                            <div id="collapsefour" class="accordion-collapse collapse"
-                                                aria-labelledby="headingfour" data-bs-parent="#accordionExample">
-                                                <div class="accordion-body">
-                                                    <p>
-                                                        Ofrecemos una amplia gama de programas de pregrado, posgrado y profesionales en diversos campos, incluidas ciencias, negocios e ingeniería.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-                </section>
-        
-        <!-- Sección de Noticias y Blog -->
-        <section class="news-section fix section-padding section-bg">
-          <div class="container">
-            <div class="section-title text-center mb-5">
-              <h6 class="text-primary">Noticias y Blog</h6>
-              <h2 class="fw-bold">Últimas Noticias y Artículos</h2>
-            </div>
-        
-            <div class="position-relative">
-              <!-- Carrusel -->
-              <div class="carousel-wrapper mx-auto overflow-hidden" style="max-width: 100%; width: 100%;">
-                <div id="facebookCarousel" class="d-flex gap-3" style="transition: transform 0.5s ease;">
-                  <!-- Tarjeta 1 -->
-                  <div class="fb-card flex-shrink-0" style="width: 340px;">
-                    <div class="fb-page"
-                      data-href="https://www.facebook.com/unamad.oficial"
-                      data-tabs="timeline"
-                      data-width="340"
-                      data-height="500"
-                      data-small-header="false"
-                      data-adapt-container-width="true"
-                      data-hide-cover="false"
-                      data-show-facepile="true"></div>
-                  </div>
-                  <!-- Tarjeta 2 -->
-                  <div class="fb-card flex-shrink-0" style="width: 340px;">
-                    <div class="fb-page"
-                      data-href="https://www.facebook.com/CentroPreuniversitarioUnamad/?locale=es_LA"
-                      data-tabs="timeline"
-                      data-width="340"
-                      data-height="500"
-                      data-small-header="false"
-                      data-adapt-container-width="true"
-                      data-hide-cover="false"
-                      data-show-facepile="true"></div>
-                  </div>
-                  <!-- Tarjeta 3 --> 
-                  <div class="fb-card flex-shrink-0" style="width: 340px;">
-                    <div class="fb-page"
-                      data-href="https://www.facebook.com/p/ADMISION-UNAMAD-100057438618593/?locale=es_LA"
-                      data-tabs="timeline"
-                      data-width="340"
-                      data-height="500"
-                      data-small-header="false"
-                      data-adapt-container-width="true"
-                      data-hide-cover="false"
-                      data-show-facepile="true"></div>
-                  </div>
-                  <!-- Tarjeta 4 --> 
-                  <div class="fb-card flex-shrink-0" style="width: 340px;">
-                    <div class="fb-page"
-                      data-href="https://www.facebook.com/GobiernoRegionalMDD/?locale=es_LA"
-                      data-tabs="timeline"
-                      data-width="340"
-                      data-height="500"
-                      data-small-header="false"
-                      data-adapt-container-width="true"
-                      data-hide-cover="false"
-                      data-show-facepile="true"></div>
-                  </div>
-                </div>
-              </div>
-        
-              <!-- Controles -->
-              <div class="d-flex justify-content-between mt-4 px-3">
-                <button onclick="prevSlide()" class="btn btn-outline-dark rounded-circle shadow-sm">
-                  <i class="fas fa-chevron-left"></i>
-                </button>
-                <button onclick="nextSlide()" class="btn btn-outline-dark rounded-circle shadow-sm">
-                  <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
-        
-              <!-- Indicadores -->
-              <div class="d-flex justify-content-center mt-3 gap-2" id="carouselIndicators">
-                <span class="indicator-dot bg-secondary rounded-circle" style="width: 12px; height: 12px;"></span>
-                <span class="indicator-dot bg-light rounded-circle" style="width: 12px; height: 12px;"></span>
-                <span class="indicator-dot bg-light rounded-circle" style="width: 12px; height: 12px;"></span>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        <!-- Estilo adicional -->
-        <style>
-          .indicator-dot {
-            transition: background-color 0.3s;
-          }
-        
-          @media (max-width: 767px) {
-            .carousel-wrapper {
-              max-width: 340px !important;
-              margin: 0 auto;
+        function createDots() {
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.classList.add('dot');
+                dot.setAttribute('data-slide-index', i);
+                dot.onclick = () => showSlide(i);
+                dotsContainer.appendChild(dot);
             }
-          }
-        </style>     
-        <!-- Marquee Section Start -->
-        <div class="marquee-section">
-            <div class="mycustom-marque theme-blue-bg">
-                <div class="scrolling-wrap">
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                    <<div class="comm">
-                        <div></div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Educación de calidad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Cepre Unamad</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Inscripciones abiertas!</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Docentes con experiencia</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Mas de 12 cursos</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Precio S/. 1,150.00</div>
-                        <div class="cmn-textslide"><i class="flaticon-mortarboard"></i> Infraestructura de calidad</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        }
 
-        <!-- Footer Section Start -->
-        <footer class="footer-section fix footer-bg">
-            <div class="big-circle">
-                <img src="{{ asset('assets_cepre/img/footer/big-circle.png') }}" alt="img">
-            </div>
-            <div class="circle-shape-2">
-                <img src="{{ asset('assets_cepre/img/footer/circle-2.png') }}" alt="img">
-            </div>
-            <div class="Vector-shape-2">
-                <img src="{{ asset('assets_cepre/img/footer/Vector-2.png') }}" alt="img">
-            </div>
-            <div class="container">
-                <div class="footer-banner-items">
-                    <div class="row g-4">
-                        <div class="col-lg-6">
-                            <div class="footer-banner">
-                                <div class="content">
-                                    <h3 class="wow fadeInUp">Become a Instructors?</h3>
-                                    <p class="wow fadeInUp" data-wow-delay=".3s">
-                                        Becoming an instructor requires the combination of expertise, passion.
-                                    </p>
-                                    <a href="register.html" class="theme-btn wow fadeInUp" data-wow-delay=".5s">Get Started</a>
-                                </div>
-                                <div class="thumb">
-                                    <img src="{{ asset('assets_cepre/img/boy-img-2.png') }}" alt="img" class="wow fadeInUp"  data-wow-delay="0.7s">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="footer-banner style-2">
-                                <div class="content">
-                                    <h3 class="wow fadeInUp">Quieres ser estudiante?</h3>
-                                    <p class="wow fadeInUp" data-wow-delay=".3s">
-                                        Ven y unete con nosotros.
-                                    </p>
-                                    <a href="register.html" class="theme-btn wow fadeInUp" data-wow-delay=".5s">Get Started</a>
-                                </div>
-                                <div class="thumb">
-                                    <img src="{{ asset('assets_cepre/img/boy-img-3.png') }}" alt="img" class="wow img-custom-anim-left" data-wow-duration="1.5s" data-wow-delay="0.3s">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-widget-wrapper">
-                    <div class="row">
-                        <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".2s">
-                            <div class="single-footer-widget">
-                                <div class="widget-head">
-                                    <a href="index.html">
-                                        <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" alt="img">
-                                    </a>
-                                </div>
-                                <div class="footer-content">
-                                    <p>
-                                        La educación es la base del crecimiento personal y social, empoderando a los individuos con conocimiento.
-                                    </p>
-                                    <div class="social-icon">
-                                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                                        <a href="#"><i class="fab fa-instagram"></i></a>
-                                        <a href="#"><i class="fab fa-dribbble"></i></a>
-                                        <a href="#"><i class="fab fa-behance"></i></a>
-                                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".4s">
-                            <div class="single-footer-widget">
-                                <div class="widget-head">
-                                   <h3>Plataformas Online</h3>
-                                </div>
-                                <ul class="list-area">
-                                    <li><a href="courses.html">Coursera</a></li>
-                                    <li><a href="courses.html">MasterClass</a></li>
-                                    <li><a href="courses.html">Skillshare</a></li>
-                                    <li><a href="courses.html">LinkedIn Learning</a></li>
-                                    <li><a href="courses.html">FutureLearn</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".6s">
-                            <div class="single-footer-widget">
-                                <div class="widget-head">
-                                   <h3>Enlace Rapido</h3>
-                                </div>
-                                <ul class="list-area">
-                                    <li><a href="about.html">Sobre nosotros</a></li>
-                                    <li><a href="instructor.html">Docentes</a></li>
-                                    <li><a href="courses.html">Cursos</a></li>
-                                    <li><a href="contact.html">Reseñas de estudiantes</a></li>
-                                    <li><a href="faq.html">Preguntas frecuentes</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-lg-4 col-md-6 ps-lg-5 wow fadeInUp" data-wow-delay=".8s">
-                            <div class="single-footer-widget">
-                                <div class="widget-head">
-                                   <h3>Contáctenos</h3>
-                                </div>
-                                <div class="footer-content">
-                                    <ul class="contact-info">
-                                        <li>
-                                            Av. Dos de mayo N° 960, 
-                                            Puerto Maldonado
-                                        </li>
-                                        <li>
-                                            <a href="cepreunamad@unamad.edu.pe" class="link">cepreunamad@unamad.edu.pe</a>
-                                        </li>
-                                        <li>
-                                            <a href="tel:+51974122813">+51 974122813</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-bottom style-2">
-                    <p>Copyright © <a href="index.html">Cepre Unamad 2025</a>, Todos los derechos reservados.</p>
-                </div>
-            </div>
-        </footer>
+        function showSlide(index) {
+            // Reiniciar autoplay cada vez que se cambia de slide manualmente
+            clearInterval(slideInterval);
+            startAutoPlay();
+
+            if (index >= totalSlides) {
+                currentSlide = 0;
+            } else if (index < 0) {
+                currentSlide = totalSlides - 1;
+            } else {
+                currentSlide = index;
+            }
+
+            const offset = -currentSlide * 100;
+            slidesContainer.style.transform = `translateX(${offset}%)`;
+
+            // Actualizar clase 'active' para el efecto de animación
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+
+            // Actualizar dots
+            document.querySelectorAll('.dot').forEach((dot, i) => {
+                dot.classList.remove('active');
+                if (i === currentSlide) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        function changeSlide(n) {
+            showSlide(currentSlide + n);
+        }
+
+        function startAutoPlay() {
+            slideInterval = setInterval(() => {
+                showSlide(currentSlide + 1);
+            }, autoPlayTime);
+        }
+
+        // ====================================
+        // 1. Funcionalidad del Menú Móvil
+        // ====================================
+        function toggleMobileMenu() {
+            menuToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+
+            if (navMenu.classList.contains('active')) {
+                const headerHeight = header.offsetHeight;
+                navMenu.style.top = `${headerHeight}px`;
+            }
+        }
+        
+        menuToggle.addEventListener('click', toggleMobileMenu);
+
+        // Cierra el menú móvil al hacer clic en un enlace de navegación
+        document.querySelectorAll('.nav-menu a').forEach(anchor => {
+            anchor.addEventListener('click', function () {
+                if (window.innerWidth <= 1024 && navMenu.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            });
+        });
+
+        window.addEventListener('resize', () => {
+             if (window.innerWidth > 1024) {
+                navMenu.classList.remove('active');
+                menuToggle.classList.remove('active');
+             }
+        });
+        
+        // ====================================
+        // 2. Animación de Contadores
+        // ====================================
+        const counters = document.querySelectorAll('.counter');
+        const speed = 250; 
+
+        function startCounterAnimation(counter) {
+            const updateCount = () => {
+                const target = +counter.getAttribute('data-target');
+                const count = +counter.innerText;
+                const inc = target / speed;
+
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + inc);
+                    setTimeout(updateCount, 1);
+                } else {
+                    counter.innerText = target + '+';
+                }
+            };
+            updateCount();
+        }
+
+        const counterObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    startCounterAnimation(entry.target);
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 }); 
+
+        counters.forEach(counter => {
+            counterObserver.observe(counter);
+        });
+
+        // ====================================
+        // 3. Animación al Scroll (Fade In)
+        // ====================================
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const scrollObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            scrollObserver.observe(el);
+        });
+
+        document.querySelectorAll('.footer-column').forEach(el => {
+            scrollObserver.observe(el);
+        });
+
+
+        // ====================================
+        // 4. Botón Scroll to Top
+        // ====================================
+        const scrollTopBtn = document.getElementById('scrollTop');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.style.display = 'flex'; // Usar flex para centrar el ícono
+            } else {
+                scrollTopBtn.style.display = 'none';
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        
+        // ====================================
+        // 5. Control de Modals
+        // ====================================
+        function showModal(type, title = '', body = '') {
+            if (type === 'videoModal') {
+                modalTitle.textContent = '¡Video Promocional!';
+                modalBody.innerHTML = 'Aquí iría el video de presentación del CEPRE UNAMAD. Por ahora, imagina un video inspirador sobre el camino al éxito.';
+            } else if (type === 'courseInfo') {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = '<strong>Información Adicional:</strong> ' + body;
+            } else if (type === 'assistantModal') {
+                // Título actualizado con la bombilla
+                modalTitle.textContent = '💡 Asistente Virtual CEPRE';
+                modalBody.innerHTML = '<p>¡Hola! Soy el asistente virtual de la CEPRE UNAMAD. Estoy aquí para guiarte en tu camino al éxito.</p><p><strong>¿Qué te gustaría saber hoy?</strong></p><ul><li>Requisitos de Admisión</li><li>Horarios y Costos</li><li>Programas de Estudio</li></ul>';
+            }
+            infoModal.style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        window.addEventListener('click', function(event) {
+             if (event.target === infoModal) {
+                 closeModal('infoModal');
+             }
+        });
+
+        // Asignar función de modal a tarjetas de curso y botón de video
+        document.querySelectorAll('.course-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const courseName = this.querySelector('h3').textContent;
+                const courseInfo = this.getAttribute('data-info');
+                showModal('courseInfo', courseName, courseInfo);
+            });
+        });
+
+        // Asignar modal a los botones del footer
+        document.querySelectorAll('.footer-buttons a').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal('courseInfo', this.querySelector('span').textContent.toUpperCase(), 
+                    `Has hecho clic en el botón de acción para ${this.querySelector('span').textContent}. ¡Excelente iniciativa!`);
+            });
+        });
+
+        // ====================================
+        // 6. Inicialización 3D y Carga
+        // ====================================
+        let scene, camera, renderer, particles, particleMaterial, particleCount;
+        let container = document.getElementById('hero-canvas-container');
+
+        // Inicialización de la escena 3D
+        function initThreeJS() {
+            if (!container) return;
+            
+            // Escena
+            scene = new THREE.Scene();
+            scene.background = null; // Fondo transparente
+            
+            // Cámara
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 1, 1000);
+            camera.position.z = 5;
+
+            // Renderizador
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // Partículas - MODIFICADO para más densidad y tamaño
+            particleCount = 750; // Aumentado de 500
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+            
+            const color1 = new THREE.Color(0x00a0e3); // Cyan
+            const color2 = new THREE.Color(0xa4c639); // Verde
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Posiciones aleatorias en un cubo
+                positions.push(
+                    (Math.random() - 0.5) * 20, // x
+                    (Math.random() - 0.5) * 20, // y
+                    (Math.random() - 0.5) * 20  // z
+                );
+                
+                // Color interpolado o fijo
+                const color = (Math.random() > 0.5) ? color1 : color2;
+                colors.push(color.r, color.g, color.b);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            // Material - MODIFICADO para más visibilidad y suavidad
+            particleMaterial = new THREE.PointsMaterial({
+                size: 0.1, // Aumentado de 0.05
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.8 // Reducido ligeramente para un look más suave
+            });
+
+            particles = new THREE.Points(geometry, particleMaterial);
+            scene.add(particles);
+
+            // Manejar resize
+            window.addEventListener('resize', onWindowResize, false);
+            
+            animate();
+        }
+        
+        function onWindowResize() {
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Bucle de animación
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotación sutil
+            if (particles) {
+                particles.rotation.x += 0.0005;
+                particles.rotation.y += 0.001;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Inicializar al cargar la ventana
+        window.onload = function() {
+            // Inicializar Three.js después de que el DOM esté listo
+            initThreeJS();
+            
+            // Inicializar el carrusel
+            initCarousel();
+
+            // Mostrar el cuerpo después de la inicialización
+            document.body.style.opacity = '1';
+
+            // Click listener para el botón de video (asegura que funciona)
+             document.querySelector('.video-btn').addEventListener('click', function() {
+                 showModal('videoModal');
+             });
+        };
+    </script>
+</body>
+</html>
