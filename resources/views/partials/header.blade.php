@@ -946,6 +946,30 @@
                         </li>
                     @endif
 
+                    {{-- ============================== --}}
+                    {{-- Módulo: Tarjetas Pre Universitario --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('tarjetas-preuni.view'))
+                        <li>
+                            <a href="#sidebarTarjetasPreuni" data-bs-toggle="collapse">
+                                <i data-feather="credit-card"></i>
+                                <span> Tarjetas Pre Universitario </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarTarjetasPreuni">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('tarjetas-preuni.index') }}">Ver Tarjetas</a></li>
+                                    @if (Auth::user()->hasPermission('tarjetas-preuni.generate'))
+                                        <li><a href="{{ route('tarjetas-preuni.index') }}#generar">Generar Tarjetas</a></li>
+                                    @endif
+                                    @if (Auth::user()->hasPermission('tarjetas-preuni.print'))
+                                        <li><a href="{{ route('tarjetas-preuni.index') }}#imprimir">Imprimir Tarjetas</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
 
 
                     <li class="menu-title mt-2">Configuración</li>

@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\ReniecController;
 use App\Http\Controllers\PostulacionController;
 use App\Http\Controllers\PostulacionUnificadaController;
 use App\Http\Controllers\MaterialAcademicoController;
+use App\Http\Controllers\TarjetasController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -520,8 +521,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/exportar', [App\Http\Controllers\BoletinController::class, 'exportar'])->name('exportar')->middleware('can:boletines.view');
     });
 
+    // Tarjetas Pre Universitario
+    Route::get('/tarjetas-preuni', function () {
+        return view('tarjetas.index');
+    })->name('tarjetas-preuni.index');
 
-
+    // API para Tarjetas Pre Universitario
+    Route::get('/api/tarjetas-preuni', [TarjetasController::class, 'obtenerPostulantes'])->name('api.tarjetas-preuni');
+    Route::post('/tarjetas/exportar-pdf', [TarjetasController::class, 'exportarPDF'])->name('tarjetas.exportar-pdf');
 
 });
 

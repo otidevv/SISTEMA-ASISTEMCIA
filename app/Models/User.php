@@ -252,6 +252,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the postulaciones for the user.
+     */
+    public function postulaciones()
+    {
+        return $this->hasMany(Postulacion::class, 'estudiante_id');
+    }
+
+    /**
      * Obtener los horarios del docente
      */
     public function horarios()

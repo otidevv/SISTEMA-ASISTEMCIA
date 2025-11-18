@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ReniecController;
 use App\Http\Controllers\PostulacionUnificadaController;
+use App\Http\Controllers\TarjetasController;
 
 // Dashboard API endpoints - Using web auth
 Route::middleware(['web', 'auth'])->group(function () {
