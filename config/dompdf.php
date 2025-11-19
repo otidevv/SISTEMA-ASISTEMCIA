@@ -281,7 +281,13 @@ return [
          *
          * @var array|null
          */
-        'allowed_remote_hosts' => null,
+        'allowed_remote_hosts' => [
+            'upload.wikimedia.org',
+            'cdn.pixabay.com',
+            'localhost',
+            '127.0.0.1',
+            parse_url(config('app.url'), PHP_URL_HOST) // Host de la aplicación
+        ],
 
         /**
          * A ratio applied to the fonts height to be more like browsers' line height

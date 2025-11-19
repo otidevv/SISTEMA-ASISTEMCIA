@@ -7,21 +7,20 @@ use App\Models\Inscripcion;
 use App\Models\Ciclo;
 use App\Models\Postulacion;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Http; // NECESARIO para descargar la foto
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class TarjetasController extends Controller
 {
     public function obtenerPostulantes(Request $request)
     {
         try {
-            // Obtener el ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
 
             if (!$cicloActivo) {
                 return response()->json(['error' => 'No hay un ciclo activo configurado.'], 404);
             }
 
-            // Obtener las inscripciones del ciclo activo que también tienen una postulación aprobada
             $inscripciones = Inscripcion::with(['estudiante', 'carrera', 'aula'])
                 ->where('ciclo_id', $cicloActivo->id)
                 ->where('estado_inscripcion', 'activo')
@@ -31,13 +30,12 @@ class TarjetasController extends Controller
                 ->get();
 
             if ($inscripciones->isEmpty()) {
-                // Si no hay inscritos, podría ser un ciclo de postulantes, buscar postulantes aprobados
                 $postulantesAprobados = Postulacion::with(['estudiante', 'carrera', 'ciclo'])
                     ->where('ciclo_id', $cicloActivo->id)
                     ->where('estado', 'aprobado')
                     ->get();
 
-                if($postulantesAprobados->isEmpty()){
+                if ($postulantesAprobados->isEmpty()) {
                     return response()->json([]);
                 }
 
@@ -47,22 +45,20 @@ class TarjetasController extends Controller
                     return [
                         'nombres' => $postulacion->estudiante->nombre . ' ' . $postulacion->estudiante->apellido_paterno,
                         'carrera' => $postulacion->carrera->nombre,
-                        'aula' => 'POR ASIGNAR', // Los postulantes puros no tienen aula asignada aún
+                        'aula' => 'POR ASIGNAR',
                         'codigo' => $postulacion->codigo_postulante,
                         'grupo' => 'POR ASIGNAR',
                         'tema' => $tema,
                         'foto' => $postulacion->foto_path ? asset('storage/' . $postulacion->foto_path) : null,
+                        'foto_path' => $postulacion->foto_path,
                     ];
                 });
                 return response()->json($data);
             }
 
             $temas = ['P', 'Q', 'R'];
-
             $postulantes = $inscripciones->map(function ($inscripcion) use ($temas) {
-                // Asignar un tema aleatorio
                 $tema = $temas[array_rand($temas)];
-
                 $postulacion = Postulacion::where('estudiante_id', $inscripcion->estudiante_id)
                                           ->where('ciclo_id', $inscripcion->ciclo_id)
                                           ->first();
@@ -72,9 +68,10 @@ class TarjetasController extends Controller
                     'carrera' => $inscripcion->carrera->nombre,
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'codigo' => $postulacion ? $postulacion->codigo_postulante : $inscripcion->codigo_inscripcion,
-                    'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A', // Asumiendo que grupo es el aula
+                    'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'tema' => $tema,
                     'foto' => $postulacion && $postulacion->foto_path ? asset('storage/' . $postulacion->foto_path) : null,
+                    'foto_path' => $postulacion ? $postulacion->foto_path : null,
                 ];
             });
 
@@ -86,15 +83,10 @@ class TarjetasController extends Controller
         }
     }
 
-    /**
-     * Exporta las tarjetas a PDF, incluyendo la conversión de fotos a Base64.
-     */
     public function exportarPDF(Request $request)
     {
-        // SOLUCIÓN 1: Aumentar el tiempo máximo de ejecución de PHP
-        set_time_limit(300); // 5 minutos
-        // SOLUCIÓN 2: Aumentar el límite de memoria para evitar fallos durante el renderizado de CSS/imágenes
-        ini_set('memory_limit', '512M'); // CRÍTICO: 512MB de memoria
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
 
         $request->validate([
             'postulantes' => 'required|array',
@@ -104,35 +96,45 @@ class TarjetasController extends Controller
             'postulantes.*.codigo' => 'required|string',
             'postulantes.*.grupo' => 'required|string',
             'postulantes.*.tema' => 'required|string',
-            'postulantes.*.foto' => 'nullable|string'
+            'postulantes.*.foto' => 'nullable|string',
+            'postulantes.*.foto_path' => 'nullable|string',
         ]);
 
         $postulantes = $request->postulantes;
         $tarjetasData = [];
 
-        // PASO DE PRUEBA: Desactivar la descarga de imágenes para verificar el renderizado del texto.
+        \Log::info('Procesando ' . count($postulantes) . ' postulantes para PDF');
+
+        // Usar un placeholder de 1x1 pixel transparente como fallback definitivo.
+        // Esto evita cualquier dependencia del sistema de archivos para el placeholder.
+        $placeholderBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
         foreach ($postulantes as $postulante) {
-            $postulanteData = (array) $postulante; 
-            
-            // *** MANTENER ESTO COMO NULL PARA LA PRUEBA DE TEXTO ***
-            $base64Image = null; 
-            
-            /*
-            // CÓDIGO ORIGINAL (DESACTIVADO PARA PRUEBA DE TEXTO)
-            $fotoUrl = $postulanteData['foto'] ?? null;
-            if ($fotoUrl) {
-                try {
-                    $response = Http::timeout(15)->get($fotoUrl); 
-                    if ($response->successful()) {
-                        $imageData = $response->body();
-                        $mime = $response->header('Content-Type') ?? 'image/jpeg'; 
+            $postulanteData = (array) $postulante;
+            $base64Image = null;
+            $fotoPath = $postulanteData['foto_path'] ?? null;
+
+            // 1. Intentar cargar la foto desde el almacenamiento local
+            if ($fotoPath) {
+                $fullPath = storage_path('app/public/' . $fotoPath);
+                if (file_exists($fullPath)) {
+                    try {
+                        $imageData = file_get_contents($fullPath);
+                        $mime = mime_content_type($fullPath);
                         $base64Image = 'data:' . $mime . ';base64,' . base64_encode($imageData);
+                    } catch (\Exception $e) {
+                        \Log::warning('Fallo al leer foto desde storage: ' . $fullPath . '. Error: ' . $e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    \Log::warning('Fallo al procesar foto para PDF: ' . $fotoUrl . ' Error: ' . $e->getMessage());
+                } else {
+                    \Log::warning('Archivo de foto no encontrado en: ' . $fullPath . ' para: ' . $postulanteData['nombres']);
                 }
             }
-            */
+
+            // 2. Si no se pudo cargar la foto, usar el placeholder
+            if (!$base64Image) {
+                $base64Image = $placeholderBase64;
+                \Log::info('Usando placeholder para: ' . $postulanteData['nombres']);
+            }
 
             $tarjetasData[] = [
                 'nombres' => $postulanteData['nombres'],
@@ -141,19 +143,22 @@ class TarjetasController extends Controller
                 'codigo' => $postulanteData['codigo'],
                 'grupo' => $postulanteData['grupo'],
                 'tema' => $postulanteData['tema'],
-                // Se pasa NULL para la foto en la vista
-                'foto' => $base64Image, 
+                'foto' => $base64Image,
             ];
         }
 
+        \Log::info('Datos preparados para PDF: ' . count($tarjetasData) . ' tarjetas');
+        $viewPath = 'tarjetas.pdf';
+        \Log::info('Generando PDF con vista: ' . $viewPath);
 
-        // Generar PDF
-        // La vista es 'tarjetas.pdf' (resources/views/tarjetas/pdf.blade.php)
-        $viewPath = 'tarjetas.pdf'; 
-
-        $pdf = Pdf::loadView($viewPath, ['tarjetas' => $tarjetasData])
-            ->setPaper('a4', 'portrait');
-
-        return $pdf->download('etiquetas_examen_preuni_' . date('YmdHis') . '.pdf');
+        try {
+            $pdf = Pdf::loadView($viewPath, ['tarjetas' => $tarjetasData])
+                ->setPaper('a4', 'portrait');
+            \Log::info('PDF generado exitosamente');
+            return $pdf->download('etiquetas_examen_preuni_' . date('YmdHis') . '.pdf');
+        } catch (\Exception $e) {
+            \Log::error('Error al generar PDF: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al generar PDF: ' . $e->getMessage()], 500);
+        }
     }
 }

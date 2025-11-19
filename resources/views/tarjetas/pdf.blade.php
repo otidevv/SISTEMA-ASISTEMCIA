@@ -2,146 +2,235 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Etiquetas de Examen - UNAMAD</title>
-    <!-- Carga Font Awesome (ICONOS) - Necesario para la foto placeholder -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
         /* Variables y configuración de color principal */
         :root {
-            --color-unama-blue: #0A3C59; /* Azul Oscuro Institucional */
+            --color-unama-blue: #0A3C59;
             --color-tema-p: #0d6efd;
             --color-tema-q: #198754;
             --color-tema-r: #ffc107;
         }
         
-        /* ------------------------------------------------ */
-        /* CONFIGURACIÓN BASE Y PÁGINA A4 (CRUCIAL PARA PDF)*/
-        /* ------------------------------------------------ */
+        /* CONFIGURACIÓN BASE Y PÁGINA A4 HORIZONTAL */
         @page {
-            size: A4;
-            margin: 0.5cm; /* Márgenes de la hoja */
+            size: A4 landscape;
+            margin: 8mm;
         }
-        body {
-            font-family: Arial, sans-serif;
+        
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
             font-weight: 500;
-        }
-
-        /* ------------------------------------------------ */
-        /* LÍNEAS DE CORTE Y CONTENEDOR */
-        /* ------------------------------------------------ */
-        .tarjetas-container {
-            overflow: hidden; 
-        }
-
-        .tarjeta-wrapper {
-            position: relative;
-            /* Margen total por tarjeta (8.5cm + 0.3cm) x (5.5cm + 0.3cm) */
-            width: 8.8cm;
-            height: 5.8cm;
-            float: left; /* CRUCIAL: Usar flotante para disposición en el PDF */
-            margin: 0; 
-            page-break-inside: avoid;
-        }
-
-        /* ------------------------------------------------ */
-        /* Estilos de la TARJETA (Diseño Final basado en tablas) */
-        /* ------------------------------------------------ */
-
-        .tarjeta {
-            width: 8.5cm;
-            height: 5.5cm;
-            border: 1px solid #000; /* Línea de corte visible */
-            position: absolute; 
-            top: 1.5mm; /* Margen de corte */
-            left: 1.5mm; /* Margen de corte */
-            padding: 0;
-            
-            font-size: 10px;
-            border-radius: 0.65rem;
-            overflow: hidden;
-            background-color: #fff;
-        }
-
-        /* Colores y Franjas Laterales */
-        .franja-tema {
-            width: 15px;
-            height: 100%;
-            float: left; 
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        .tarjeta-p .franja-tema { background-color: var(--color-tema-p); }
-        .tarjeta-q .franja-tema { background-color: var(--color-tema-q); }
-        .tarjeta-r .franja-tema { background-color: var(--color-tema-r); }
-        .tarjeta-p { color: white; }
-        .tarjeta-q { color: white; }
-        .tarjeta-r { color: #1f2937; } 
+
+        /* CONTENEDOR PRINCIPAL */
+        .tarjetas-container {
+            width: 100%;
+        }
+
+        /* FILA DE TARJETAS (3 por fila en A4 horizontal) */
+        .tarjeta-fila {
+            width: 100%;
+            margin-bottom: 0;
+            page-break-inside: avoid;
+        }
+
+        /* WRAPPER CON LÍNEAS DE CORTE - MÁS ANCHO */
+        .tarjeta-wrapper {
+            display: inline-block;
+            width: 9.3cm;
+            height: 6.2cm;
+            vertical-align: top;
+            position: relative;
+            page-break-inside: avoid;
+            margin-right: 2mm;
+        }
+        
+        .tarjeta-wrapper:nth-child(3n) {
+            margin-right: 0;
+        }
+
+        /* LÍNEAS DE CORTE (Esquinas) */
+        .linea-corte {
+            position: absolute;
+            background-color: #666;
+        }
+        
+        /* Líneas horizontales */
+        .linea-corte-h {
+            height: 0.5px;
+            width: 8mm;
+        }
+        
+        /* Líneas verticales */
+        .linea-corte-v {
+            width: 0.5px;
+            height: 8mm;
+        }
+        
+        /* Posiciones de las líneas */
+        .corte-tl-h { top: 0; left: 0; }
+        .corte-tl-v { top: 0; left: 0; }
+        .corte-tr-h { top: 0; right: 0; }
+        .corte-tr-v { top: 0; right: 0; }
+        .corte-bl-h { bottom: 0; left: 0; }
+        .corte-bl-v { bottom: 0; left: 0; }
+        .corte-br-h { bottom: 0; right: 0; }
+        .corte-br-v { bottom: 0; right: 0; }
+
+        /* TARJETA BASE - MUCHO MÁS ANCHA */
+        .tarjeta {
+            width: 9cm;
+            height: 5.8cm;
+            border: 1px dashed #999;
+            margin: 2mm;
+            padding: 0;
+            font-size: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #fff;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Franja de Color Lateral - EXTRA ANCHA */
+        .franja-tema {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 35px;
+            height: 100%;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .tarjeta-p .franja-tema { background-color: #0d6efd; }
+        .tarjeta-q .franja-tema { background-color: #198754; }
+        .tarjeta-r .franja-tema { background-color: #ffc107; }
+
+        /* INDICADOR DE TEMA EN LA FRANJA - EXTRA GRANDE */
+        .tema-indicator {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 35px;
+            transform: translateY(-50%);
+            text-align: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .tema-indicator .tema-letra {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            display: block;
+        }
+        
+        .tema-indicator .tema-label {
+            font-size: 8px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            display: block;
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
 
         /* Contenedor principal de datos */
         .contenido-principal {
-            width: calc(100% - 15px); 
+            margin-left: 35px;
             height: 100%;
-            float: left; 
             position: relative;
         }
         
         /* 1. HEADER INSTITUCIONAL */
         .header-institucional {
-            background-color: var(--color-unama-blue);
+            background-color: #0A3C59;
             color: white;
-            padding: 3px 8px;
-            height: 20px;
+            padding: 4px 10px;
+            height: 22px;
             line-height: 1.2;
             font-size: 7px;
             font-weight: 700;
             overflow: hidden;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .header-institucional img { 
+        
+        .header-institucional .logo-container {
             float: left;
+            margin-right: 5px;
+        }
+        
+        .header-institucional img { 
             height: 14px; 
             width: 14px; 
-            object-fit: contain; 
             background-color: white; 
             border-radius: 50%; 
-            padding: 1px; 
-            margin-right: 4px;
+            padding: 1px;
+            display: block;
         }
-        .header-institucional .ciclo { float: right; margin-top: 3px; }
+        
+        .header-institucional .texto-header {
+            float: left;
+            margin-top: 3px;
+            line-height: 1.1;
+        }
+        
+        .header-institucional .ciclo { 
+            float: right; 
+            margin-top: 3px;
+            font-size: 7.5px;
+        }
 
-        /* 2. UBICACIÓN CLAVE (USANDO TABLA) */
+        /* 2. UBICACIÓN CLAVE (TABLA) */
         .ubicacion-clave-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Mantiene ancho fijo */
             margin-top: 2px;
         }
+        
         .ubicacion-clave-table td {
             text-align: center;
             vertical-align: top;
             padding: 2px 0;
+            width: 50%;
         }
+        
         .ubicacion-clave-table .separator {
             border-left: 1px solid #d1d5db;
         }
 
-        .ubicacion-clave-table span { 
+        .ubicacion-clave-table .label { 
             color: #9ca3af; 
             font-weight: 800; 
             font-size: 8px; 
             display: block; 
             line-height: 1; 
             margin-bottom: 2px; 
+            letter-spacing: 0.3px;
         }
+        
         .ubicacion-clave-table .aula { 
             font-weight: 900; 
             font-size: 32px; 
             line-height: 1; 
             color: #dc2626; 
         }
+        
         .ubicacion-clave-table .codigo { 
             font-weight: 900; 
             font-size: 20px; 
@@ -149,146 +238,180 @@
             color: #1f2937; 
         }
 
-
-        /* 3. IDENTIFICACIÓN FOTOGRÁFICA Y DETALLES (USANDO TABLA) */
+        /* 3. IDENTIFICACIÓN FOTOGRÁFICA (TABLA) */
         .identificacion-detalle-table {
             width: 100%;
             background-color: #f3f4f6;
             border-collapse: collapse;
-            table-layout: fixed;
-            height: 85px;
+            margin-top: 2px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .identificacion-detalle-table .foto-cell {
-            width: 85px; /* Ancho fijo para la foto y margen */
+            width: 85px;
             padding: 4px 0 4px 8px;
-            text-align: left;
             vertical-align: top;
         }
+        
         .identificacion-detalle-table .datos-cell {
-            padding: 4px 8px 4px 0;
+            padding: 4px 8px 4px 4px;
             vertical-align: top;
         }
         
         .identificacion-detalle-table img {
             width: 75px; 
             height: 75px; 
-            object-fit: cover;
-            border-radius: 0.25rem;
+            border-radius: 4px;
             border: 2px solid #60a5fa;
+            display: block;
         }
 
-        .datos-postulante span { color: #9ca3af; font-size: 8px; display: block; text-transform: uppercase; line-height: 1.1; }
+        .datos-postulante .label { 
+            color: #9ca3af; 
+            font-size: 8px; 
+            display: block; 
+            text-transform: uppercase; 
+            line-height: 1.1;
+            margin-bottom: 2px;
+            font-weight: 700;
+        }
 
         .nombre-postulante {
             font-weight: 800;
-            font-size: 0.7rem; 
-            line-height: 1.1; 
-            height: 1.5rem; 
-            overflow: hidden;
+            font-size: 11px; 
+            line-height: 1.2; 
             color: #1f2937;
+            margin-bottom: 2px;
+            max-height: 28px;
+            overflow: hidden;
         }
         
         .carrera-postulante {
             font-weight: 600; 
-            font-size: 0.65rem; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 10px; 
             color: #1d4ed8; 
-            margin-top: 2px;
+            line-height: 1.25;
+            max-height: 26px;
+            overflow: hidden;
         }
 
-        /* Footer (Última fila de la tabla) */
-        .footer-grupo-tema td {
+        /* Footer */
+        .footer-grupo-tema {
             font-size: 8px;
-            font-weight: 600;
-            padding: 2px 8px;
+            font-weight: 700;
+            padding: 4px 8px;
             border-top: 1px solid #d1d5db;
             text-align: center;
-            clear: both; 
+            background-color: #f3f4f6;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .footer-grupo-tema strong { color: #1f2937; }
-
+        
+        .footer-grupo-tema strong { 
+            color: #1f2937; 
+            font-weight: 800;
+        }
+        
+        /* Utilidades de limpieza */
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
     </style>
 </head>
 <body>
     <div class="tarjetas-container">
-        <!-- Itera sobre los datos proporcionados por el controlador -->
-        @foreach($tarjetas as $tarjeta)
-        <div class="tarjeta-wrapper">
-            
+        @foreach($tarjetas as $index => $tarjeta)
             @php
-                // Asegura la clase CSS para el tema
                 $claseTema = 'tarjeta-' . strtolower($tarjeta['tema'] ?? 'r');
-                // URL de la foto: DEBE ser una URL Base64 o una URL absoluta PÚBLICA.
-                $fotoSrc = $tarjeta['foto'] ?? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png';
+                $fotoSrc = $tarjeta['foto'] ?? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                
+                // Abrir nueva fila cada 3 tarjetas (horizontal)
+                $abrirFila = ($index % 3 == 0);
+                $cerrarFila = ($index % 3 == 2) || ($index == count($tarjetas) - 1);
             @endphp
 
-            <div class="tarjeta {{ $claseTema }}">
-                <!-- Franja de Color Vertical (Tema) -->
-                <div class="franja-tema"></div>
+            @if($abrirFila)
+                <div class="tarjeta-fila clearfix">
+            @endif
 
-                <div class="contenido-principal">
-                    
-                    <!-- 1. HEADER INSTITUCIONAL -->
-                    <div class="header-institucional" style="background-color: var(--color-unama-blue);">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/UNAMAD_LOGO.png/200px-UNAMAD_LOGO.png" alt="UNAMAD Logo"/>
-                        <div style="float: left; margin-top: 3px;">
-                            UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS<br>
-                            CENTRO PRE UNIVERSITARIO
+            <div class="tarjeta-wrapper">
+                <!-- LÍNEAS DE CORTE (8 líneas, 4 esquinas) -->
+                <div class="linea-corte linea-corte-h corte-tl-h"></div>
+                <div class="linea-corte linea-corte-v corte-tl-v"></div>
+                <div class="linea-corte linea-corte-h corte-tr-h"></div>
+                <div class="linea-corte linea-corte-v corte-tr-v"></div>
+                <div class="linea-corte linea-corte-h corte-bl-h"></div>
+                <div class="linea-corte linea-corte-v corte-bl-v"></div>
+                <div class="linea-corte linea-corte-h corte-br-h"></div>
+                <div class="linea-corte linea-corte-v corte-br-v"></div>
+
+                <div class="tarjeta {{ $claseTema }}">
+                    <!-- Franja de Color Vertical con TEMA EXTRA GRANDE -->
+                    <div class="franja-tema">
+                        <div class="tema-indicator">
+                            <span class="tema-letra">{{ $tarjeta['tema'] ?? 'R' }}</span>
+                            <span class="tema-label">TEMA</span>
                         </div>
-                        <div class="ciclo">CICLO 2024-II</div>
                     </div>
 
-                    <!-- CONTENEDOR DE DATOS PRINCIPALES (TABLA) -->
-                    <table class="ubicacion-clave-table">
-                        <tbody>
-                            <!-- Fila de Aula y Código -->
+                    <div class="contenido-principal">
+                        
+                        <!-- 1. HEADER INSTITUCIONAL -->
+                        <div class="header-institucional clearfix">
+                            <div class="logo-container">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/UNAMAD_LOGO.png/200px-UNAMAD_LOGO.png" alt="UNAMAD"/>
+                            </div>
+                            <div class="texto-header">
+                                UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS<br>
+                                CENTRO PRE UNIVERSITARIO
+                            </div>
+                            <div class="ciclo">CICLO 2024-II</div>
+                        </div>
+
+                        <!-- 2. UBICACIÓN CLAVE -->
+                        <table class="ubicacion-clave-table">
                             <tr>
-                                <td style="width: 50%;">
-                                    <span>AULA / ROOM</span>
+                                <td>
+                                    <span class="label">AULA / ROOM</span>
                                     <div class="aula">{{ $tarjeta['aula'] ?? '---' }}</div>
                                 </td>
-                                <td class="separator" style="width: 50%;">
-                                    <span>CÓDIGO / CODE</span>
+                                <td class="separator">
+                                    <span class="label">CÓDIGO / CODE</span>
                                     <div class="codigo">{{ $tarjeta['codigo'] ?? '---' }}</div>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
+                        </table>
 
-                    <!-- 3. IDENTIFICACIÓN FOTOGRÁFICA Y DETALLES (USANDO TABLA) -->
-                    <table class="identificacion-detalle-table">
-                        <tbody>
+                        <!-- 3. IDENTIFICACIÓN FOTOGRÁFICA -->
+                        <table class="identificacion-detalle-table">
                             <tr>
-                                <!-- Celda para la FOTO -->
                                 <td class="foto-cell" rowspan="2">
-                                    <img
-                                        src="{{ $fotoSrc }}"
-                                        alt="Foto del estudiante"
-                                    />
+                                    <img src="{{ $fotoSrc }}" alt="Foto"/>
                                 </td>
-                                <!-- Celda para los DATOS -->
                                 <td class="datos-cell">
                                     <div class="datos-postulante">
-                                        <span>Postulante</span>
+                                        <span class="label">Postulante</span>
                                         <div class="nombre-postulante">{{ $tarjeta['nombres'] ?? 'SIN NOMBRE' }}</div>
                                         <div class="carrera-postulante">{{ $tarjeta['carrera'] ?? 'SIN CARRERA' }}</div>
                                     </div>
                                 </td>
                             </tr>
-                            <!-- Fila para el Footer de Grupo/Tema -->
-                            <tr class="footer-grupo-tema">
-                                <td colspan="2">
-                                    <strong>GRUPO:</strong> {{ $tarjeta['grupo'] ?? '---' }} | <strong>TEMA ASIGNADO:</strong> {{ $tarjeta['tema'] ?? '---' }}
+                            <tr>
+                                <td class="footer-grupo-tema">
+                                    <strong>GRUPO:</strong> {{ $tarjeta['grupo'] ?? '---' }} | <strong>TEMA:</strong> {{ $tarjeta['tema'] ?? '---' }}
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            @if($cerrarFila)
+                </div>
+            @endif
         @endforeach
     </div>
 </body>
