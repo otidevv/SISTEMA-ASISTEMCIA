@@ -7,6 +7,7 @@ use App\Models\Inscripcion;
 use App\Models\Ciclo;
 use App\Models\Postulacion;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Http; // NECESARIO para descargar la foto
 
 class TarjetasController extends Controller
 {
@@ -85,8 +86,16 @@ class TarjetasController extends Controller
         }
     }
 
+    /**
+     * Exporta las tarjetas a PDF, incluyendo la conversión de fotos a Base64.
+     */
     public function exportarPDF(Request $request)
     {
+        // SOLUCIÓN 1: Aumentar el tiempo máximo de ejecución de PHP
+        set_time_limit(300); // 5 minutos
+        // SOLUCIÓN 2: Aumentar el límite de memoria para evitar fallos durante el renderizado de CSS/imágenes
+        ini_set('memory_limit', '512M'); // CRÍTICO: 512MB de memoria
+
         $request->validate([
             'postulantes' => 'required|array',
             'postulantes.*.nombres' => 'required|string',
@@ -99,24 +108,52 @@ class TarjetasController extends Controller
         ]);
 
         $postulantes = $request->postulantes;
+        $tarjetasData = [];
 
-        // Preparar datos para la vista PDF
-        $tarjetasData = collect($postulantes)->map(function ($postulante) {
-            return [
-                'nombres' => $postulante['nombres'],
-                'carrera' => $postulante['carrera'],
-                'aula' => $postulante['aula'],
-                'codigo' => $postulante['codigo'],
-                'grupo' => $postulante['grupo'],
-                'tema' => $postulante['tema'],
-                'foto' => $postulante['foto'] ?? null,
+        // PASO DE PRUEBA: Desactivar la descarga de imágenes para verificar el renderizado del texto.
+        foreach ($postulantes as $postulante) {
+            $postulanteData = (array) $postulante; 
+            
+            // *** MANTENER ESTO COMO NULL PARA LA PRUEBA DE TEXTO ***
+            $base64Image = null; 
+            
+            /*
+            // CÓDIGO ORIGINAL (DESACTIVADO PARA PRUEBA DE TEXTO)
+            $fotoUrl = $postulanteData['foto'] ?? null;
+            if ($fotoUrl) {
+                try {
+                    $response = Http::timeout(15)->get($fotoUrl); 
+                    if ($response->successful()) {
+                        $imageData = $response->body();
+                        $mime = $response->header('Content-Type') ?? 'image/jpeg'; 
+                        $base64Image = 'data:' . $mime . ';base64,' . base64_encode($imageData);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Fallo al procesar foto para PDF: ' . $fotoUrl . ' Error: ' . $e->getMessage());
+                }
+            }
+            */
+
+            $tarjetasData[] = [
+                'nombres' => $postulanteData['nombres'],
+                'carrera' => $postulanteData['carrera'],
+                'aula' => $postulanteData['aula'],
+                'codigo' => $postulanteData['codigo'],
+                'grupo' => $postulanteData['grupo'],
+                'tema' => $postulanteData['tema'],
+                // Se pasa NULL para la foto en la vista
+                'foto' => $base64Image, 
             ];
-        });
+        }
+
 
         // Generar PDF
-        $pdf = Pdf::loadView('tarjetas.pdf', ['tarjetas' => $tarjetasData])
+        // La vista es 'tarjetas.pdf' (resources/views/tarjetas/pdf.blade.php)
+        $viewPath = 'tarjetas.pdf'; 
+
+        $pdf = Pdf::loadView($viewPath, ['tarjetas' => $tarjetasData])
             ->setPaper('a4', 'portrait');
 
-        return $pdf->download('tarjetas_preuni_' . date('YmdHis') . '.pdf');
+        return $pdf->download('etiquetas_examen_preuni_' . date('YmdHis') . '.pdf');
     }
 }

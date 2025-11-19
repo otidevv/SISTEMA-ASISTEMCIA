@@ -31,12 +31,19 @@ class TarjetasPreuniPermissionsSeeder extends Seeder
                 'nombre' => 'Imprimir tarjetas pre universitario',
                 'descripcion' => 'Permite imprimir tarjetas pre universitario',
                 'modulo' => 'tarjetas-preuni'
+            ],
+            // 👈 ¡ESTE ES EL PERMISO QUE FALTA!
+            [ 
+                'codigo' => 'tarjetas-preuni.exportar-pdf', // O el nombre que uses en la ruta
+                'nombre' => 'Exportar tarjetas pre universitario a PDF',
+                'descripcion' => 'Permite exportar a PDF la lista o detalles de tarjetas pre universitario',
+                'modulo' => 'tarjetas-preuni'
             ]
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(
-                ['nombre' => $permission['nombre']],
+                ['codigo' => $permission['codigo']],
                 $permission
             );
         }
