@@ -529,6 +529,17 @@ Route::middleware('auth')->group(function () {
     // API para Tarjetas Pre Universitario
     Route::get('/api/tarjetas-preuni', [TarjetasController::class, 'obtenerPostulantes'])->name('api.tarjetas-preuni');
     Route::post('/tarjetas/exportar-pdf', [TarjetasController::class, 'exportarPDF'])->name('tarjetas.exportar-pdf');
+    
+    // NUEVAS RUTAS PARA GESTIÓN DE EXAMEN
+    Route::get('/api/tarjetas/edificio', [TarjetasController::class, 'getEdificioData'])->name('api.tarjetas.edificio');
+    Route::post('/api/tarjetas/distribuir-aleatorio', [TarjetasController::class, 'generarDistribucionAleatoria'])->name('api.tarjetas.distribuir');
+    Route::post('/api/tarjetas/guardar-docente', [TarjetasController::class, 'guardarDistribucionDocente'])->name('api.tarjetas.guardar-docente');
+    
+    // CRUD Aulas y Detalle
+    Route::get('/api/tarjetas/aula/{id}', [TarjetasController::class, 'getAulaDetalle'])->name('api.tarjetas.aula-detalle');
+    Route::post('/api/tarjetas/aula', [TarjetasController::class, 'guardarAula'])->name('api.tarjetas.guardar-aula');
+    Route::post('/api/tarjetas/piso', [TarjetasController::class, 'guardarPisoCompleto'])->name('api.tarjetas.guardar-piso');
+    Route::delete('/api/tarjetas/aula/{id}', [TarjetasController::class, 'eliminarAula'])->name('api.tarjetas.eliminar-aula');
 
 });
 
