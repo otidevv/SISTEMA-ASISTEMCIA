@@ -1272,7 +1272,7 @@
                             <img src="{{ asset('assets_cepre/img/portada/portada.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/A4C639?text=CEPRE+UNAMAD+Slide+1';" alt="Estudiantes CEPRE UNAMAD" class="hero-image">
                             <div class="stats-badge">
                                 <p>Ingresantes CEPRE</p>
-                                <h2>1000+</h2>
+                                <h2>+1000</h2>
                                 <p>¡MATRICÚLATE YA!</p>
                             </div>
                         </div>
@@ -1307,7 +1307,7 @@
                         </div>
 
                         <div class="hero-image-wrapper">
-                            <img src="{{ asset('assets_cepre/img/portada/portada2.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/E6007E?text=INGRESO+DIRECTO';" alt="Ingreso Directo UNAMAD" class="hero-image">
+                            <img src="{{ asset('assets_cepre/img/portada/estudiante.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/E6007E?text=INGRESO+DIRECTO';" alt="Ingreso Directo UNAMAD" class="hero-image">
                             <div class="stats-badge" style="border-top-color: var(--verde-cepre);">
                                 <p>Costo Total</p>
                                 <h2>S/. 1,150</h2>
@@ -1345,7 +1345,7 @@
                         </div>
 
                         <div class="hero-image-wrapper">
-                            <img src="{{ asset('assets_cepre/img/portada/portada3.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/00A0E3?text=DOCENTES';" alt="Docentes expertos" class="hero-image">
+                            <img src="{{ asset('assets_cepre/img/portada/docentes.png') }}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/00A0E3?text=DOCENTES';" alt="Docentes expertos" class="hero-image">
                             <div class="stats-badge">
                                 <p>Cursos Especializados</p>
                                 <h2>18</h2>
