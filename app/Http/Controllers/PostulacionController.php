@@ -52,7 +52,7 @@ class PostulacionController extends Controller
         }
 
         try {
-            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
                 ->select('postulaciones.*');
 
             // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
@@ -74,6 +74,29 @@ class PostulacionController extends Controller
             }
 
             return DataTables::of($query)
+                ->filter(function ($query) use ($request) {
+                    if ($search = $request->input('search.value')) {
+                        $query->where(function ($q) use ($search) {
+                            $q->whereHas('estudiante', function ($q2) use ($search) {
+                                $q2->where('nombre', 'like', "%{$search}%")
+                                   ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                                   ->orWhere('apellido_materno', 'like', "%{$search}%")
+                                   ->orWhere('numero_documento', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('carrera', function ($q3) use ($search) {
+                                $q3->where('nombre', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('turno', function ($q4) use ($search) {
+                                $q4->where('nombre', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('centroEducativo', function ($q5) use ($search) {
+                                $q5->where('cen_edu', 'like', "%{$search}%");
+                            })
+                            ->orWhere('codigo_postulante', 'like', "%{$search}%")
+                            ->orWhere('estado', 'like', "%{$search}%");
+                        });
+                    }
+                })
                 ->addColumn('actions', function ($postulacion) {
                     return $this->generarAcciones($postulacion);
                 })

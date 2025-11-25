@@ -101,78 +101,59 @@ class BoletinController extends Controller
 
     public function marcarEntrega(Request $request)
     {
-        // Validar que tipo_examen siempre esté presente
-        $request->validate(['tipo_examen' => 'required|string|max:255']);
-        $tipo_examen = $request->input('tipo_examen');
+        $validatedData = $request->validate([
+            'tipo_examen' => 'required|string|max:255',
+            'entregas_json' => 'required|json',
+        ]);
 
-        // Lógica para manejar entregas en lote
-        if ($request->has('entregas') && is_array($request->input('entregas'))) {
+        $tipo_examen = $validatedData['tipo_examen'];
+        $entregas = json_decode($validatedData['entregas_json'], true);
 
-            $rules = [
-                'entregas' => 'present|array',
-                'entregas.*.inscripcion_id' => 'required|exists:inscripciones,id',
-                'entregas.*.curso_id' => 'required|exists:cursos,id',
-                'entregas.*.entregado' => 'required|boolean',
-            ];
-    
-            $validator = validator($request->all(), $rules);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($entregas)) {
+            return response()->json(['success' => false, 'message' => 'El formato de las entregas es inválido.'], 422);
+        }
 
-            if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => 'Datos de entrada no válidos.', 'errors' => $validator->errors()], 422);
-            }
+        // To use Laravel's validator, we need to wrap our array
+        $payload = ['entregas' => $entregas];
+        $rules = [
+            'entregas' => 'present|array|min:1',
+            'entregas.*.inscripcion_id' => 'required|exists:inscripciones,id',
+            'entregas.*.curso_id' => 'required|exists:cursos,id',
+            'entregas.*.entregado' => 'required|boolean',
+        ];
 
-            $entregas = $request->input('entregas');
+        $validator = validator($payload, $rules);
 
-            DB::beginTransaction();
-            try {
-                foreach ($entregas as $entrega) {
-                    BoletinEntrega::updateOrCreate(
-                        [
-                            'inscripcion_id' => $entrega['inscripcion_id'],
-                            'curso_id' => $entrega['curso_id'],
-                            'tipo_examen' => $tipo_examen,
-                        ],
-                        [
-                            'entregado' => $entrega['entregado'],
-                            'fecha_entrega' => $entrega['entregado'] ? now() : null,
-                        ]
-                    );
-                }
-                DB::commit();
-                return response()->json(['success' => true, 'message' => 'Cambios guardados correctamente.']);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Error al marcar entregas de boletín en lote: ' . $e->getMessage());
-                return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado al guardar los cambios.'], 500);
-            }
-        } else {
-            // Lógica para una sola entrega
-            try {
-                $validatedData = $request->validate([
-                    'inscripcion_id' => 'required|exists:inscripciones,id',
-                    'curso_id' => 'required|exists:cursos,id',
-                    'entregado' => 'required|boolean',
-                ]);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Datos de entrega inválidos.', 'errors' => $validator->errors()], 422);
+        }
 
+        $validatedEntregas = $validator->validated()['entregas'];
+
+        DB::beginTransaction();
+        try {
+            foreach ($validatedEntregas as $entrega) {
                 BoletinEntrega::updateOrCreate(
                     [
-                        'inscripcion_id' => $validatedData['inscripcion_id'],
-                        'curso_id' => $validatedData['curso_id'],
+                        'inscripcion_id' => $entrega['inscripcion_id'],
+                        'curso_id' => $entrega['curso_id'],
                         'tipo_examen' => $tipo_examen,
                     ],
                     [
-                        'entregado' => $validatedData['entregado'],
-                        'fecha_entrega' => $validatedData['entregado'] ? now() : null,
+                        'entregado' => $entrega['entregado'],
+                        'fecha_entrega' => $entrega['entregado'] ? now() : null,
                     ]
                 );
-
-                return response()->json(['success' => true]);
-            } catch (ValidationException $e) {
-                return response()->json(['success' => false, 'message' => 'Datos de entrada no válidos.', 'errors' => $e->errors()], 422);
-            } catch (\Exception $e) {
-                Log::error('Error al marcar entrega de boletín: ' . $e->getMessage());
-                return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado en el servidor.'], 500);
             }
+            DB::commit();
+            
+            $message = count($validatedEntregas) > 1 ? 'Cambios guardados correctamente.' : 'Cambio guardado correctamente.';
+            return response()->json(['success' => true, 'message' => $message]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al marcar entregas de boletín: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Ocurrió un error inesperado al guardar los cambios.'], 500);
         }
     }
 

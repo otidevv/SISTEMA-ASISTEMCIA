@@ -294,10 +294,12 @@
                             </div>
                             
                             <div class="d-flex" style="gap: 12px">
+                                <button id="pdf-btn" class="btn btn-danger" disabled>
+                                    <i class="fas fa-file-pdf mr-2"></i> Exportar PDF
+                                </button>
                                 <button id="print-btn" class="btn btn-success" disabled>
                                     <i class="fas fa-print mr-2"></i> Imprimir
                                 </button>
-                                <!-- PDF Button removed as requested by user flow simplification, or keep if needed -->
                             </div>
                         </div>
                         
@@ -491,14 +493,14 @@
 
         const API_URLS = {
             CARGAR_DATOS: '{{ url('api/tarjetas-preuni') }}',
-            EXPORTAR_PDF: '{{ route("tarjetas.exportar-pdf") }}',
-            EDIFICIO_DATA: '{{ route("api.tarjetas.edificio") }}',
-            DISTRIBUIR: '{{ route("api.tarjetas.distribuir") }}',
-            GUARDAR_DOCENTE: '{{ route("api.tarjetas.guardar-docente") }}',
-            AULA_DETALLE: '{{ url("api/tarjetas/aula") }}', // + /{id}
-            GUARDAR_AULA: '{{ route("api.tarjetas.guardar-aula") }}',
-            GUARDAR_PISO: '{{ route("api.tarjetas.guardar-piso") }}',
-            ELIMINAR_AULA: '{{ url("api/tarjetas/aula") }}' // + /{id}
+            EXPORTAR_PDF: '{{ url("tarjetas/exportar-pdf") }}',
+            EDIFICIO_DATA: '{{ url("api/tarjetas/edificio") }}',
+            DISTRIBUIR: '{{ url("api/tarjetas/distribuir-aleatorio") }}',
+            GUARDAR_DOCENTE: '{{ url("api/tarjetas/guardar-docente") }}',
+            AULA_DETALLE: '{{ url("api/tarjetas/aula") }}', 
+            GUARDAR_AULA: '{{ url("api/tarjetas/aula") }}',
+            GUARDAR_PISO: '{{ url("api/tarjetas/piso") }}',
+            ELIMINAR_AULA: '{{ url("api/tarjetas/aula") }}' 
         };
 
         // Estado Global
@@ -879,6 +881,14 @@
                 tarjetasContainer.innerHTML = state.postulantes.map(crearTarjetaHTML).join('');
             }
 
+            // Habilitar/Deshabilitar botones según datos
+            const hasData = state.postulantes.length > 0;
+            const printBtn = document.getElementById('print-btn');
+            const pdfBtn = document.getElementById('pdf-btn');
+            
+            if (printBtn) printBtn.disabled = !hasData;
+            if (pdfBtn) pdfBtn.disabled = !hasData;
+
             // Renderizar Tabla Distribución
             renderDistribucionTabla(state.postulantes);
 
@@ -947,6 +957,39 @@
             if (view === 'building') document.getElementById('edificio-container').classList.remove('d-none');
         }
 
+        async function exportarPDF() {
+            if (state.postulantes.length === 0) {
+                Swal.fire('Atención', 'No hay datos para exportar', 'warning');
+                return;
+            }
+            
+            state.isLoading = true;
+            updateLoadingUI(true);
+
+            try {
+                const response = await axios.post(API_URLS.EXPORTAR_PDF, {
+                    postulantes: state.postulantes
+                }, {
+                    responseType: 'blob'
+                });
+
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', 'etiquetas_examen.pdf');
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'No se pudo generar el PDF', 'error');
+            } finally {
+                state.isLoading = false;
+                updateLoadingUI(false);
+            }
+        }
+
         function imprimir() {
             document.body.classList.remove('print-cards', 'print-list');
             if (state.currentView === 'cards') document.body.classList.add('print-cards');
@@ -957,6 +1000,7 @@
         window.onload = function() {
             document.getElementById('load-btn').addEventListener('click', cargarDatos);
             document.getElementById('print-btn').addEventListener('click', imprimir);
+            document.getElementById('pdf-btn').addEventListener('click', exportarPDF);
             
             document.getElementById('view-cards-btn').addEventListener('click', () => switchView('cards'));
             document.getElementById('view-list-btn').addEventListener('click', () => switchView('list'));

@@ -8,6 +8,8 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
     <style>
         /* ============================================
@@ -833,25 +835,25 @@
 
                 <div id="attendance-marker-section" style="display: none;">
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-md-4">
                             <label for="fecha_asistencia" class="form-label fw-bold">Fecha de Asistencia</label>
                             <input type="date" id="fecha_asistencia" name="fecha_asistencia" class="form-control" value="{{ date('Y-m-d') }}">
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <label for="curso_asistencia_id" class="form-label fw-bold">Aplicar a Curso</label>
-                            <select id="curso_asistencia_id" class="form-select">
-                                <option value="all">Todos los Cursos</option>
+                        <div class="col-md-4">
+                            <label for="curso_asistencia_id" class="form-label fw-bold">Aplicar a Curso(s)</label>
+                            <select id="curso_asistencia_id" class="form-select" multiple="multiple">
+                                {{-- JS Populated --}}
                             </select>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <button type="button" id="pre-mark-attendance-button" class="btn btn-info w-100 d-flex align-items-center justify-content-center text-white">
-                                <i class="fas fa-user-check me-2"></i> Pre-marcar Asistentes
-                            </button>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                             <div class="alert alert-secondary p-2 mb-0" role="alert" style="font-size: 0.85rem;">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Use el filtro "Aplicar a Curso" para marcar una sola columna.
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="button" id="pre-mark-attendance-button" class="btn btn-info w-100 d-flex align-items-center justify-content-center text-white" title="Marcar entrega a los alumnos que asistieron en la fecha seleccionada.">
+                                    <i class="fas fa-user-check me-2"></i> Marcar
+                                </button>
+                                <button type="button" id="unmark-attendance-button" class="btn btn-warning w-100 d-flex align-items-center justify-content-center text-white" title="Desmarcar entrega a los alumnos que asistieron en la fecha seleccionada.">
+                                    <i class="fas fa-user-times me-2"></i> Desmarcar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -896,6 +898,7 @@
 @push('js')
     {{-- Dependencias de JS --}}
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
@@ -1087,14 +1090,14 @@
                 if (!this.hasChanges()) return;
 
                 const dataToSend = {
-                    entregas: Object.values(DashboardState.changes),
-                    tipo_examen: $('#tipo_examen').val()
+                    entregas_json: JSON.stringify(Object.values(DashboardState.changes)),
+                    tipo_examen: DashboardState.currentFilters.tipoExamen
                 };
 
                 try {
                     UIModule.showLoading(
                         'Guardando Cambios...', 
-                        `Se guardarán ${dataToSend.entregas.length} registro(s).`
+                        `Se guardarán ${ChangesModule.getCount()} registro(s).`
                     );
 
                     const response = await $.ajax({
@@ -1124,10 +1127,25 @@
                         throw new Error(response.message || 'Error al guardar');
                     }
                 } catch (error) {
+                    let errorMessage = 'Ocurrió un problema de comunicación.';
+                    if (error.responseJSON && error.responseJSON.message) {
+                        errorMessage = error.responseJSON.message;
+                    } else if (error.status) {
+                        errorMessage = `Error del servidor: ${error.status} ${error.statusText}. Revise la consola del navegador (F12) para más detalles.`;
+                        console.error("AJAX Error Details:", {
+                            status: error.status,
+                            statusText: error.statusText,
+                            responseText: error.responseText,
+                            responseJSON: error.responseJSON
+                        });
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+
                     Swal.fire({
                         icon: 'error',
                         title: 'Error al Guardar',
-                        text: error.message || 'Ocurrió un problema de comunicación.',
+                        text: errorMessage,
                         confirmButtonText: 'Entendido'
                     });
                 }
@@ -1139,6 +1157,9 @@
         // ==========================================
         const TableModule = {
             destroy() {
+                if (DOMElements.$cursoAsistenciaSelect.data('select2')) {
+                    DOMElements.$cursoAsistenciaSelect.select2('destroy');
+                }
                 if (DashboardState.dataTable) {
                     DashboardState.dataTable.destroy();
                     DashboardState.dataTable = null;
@@ -1241,7 +1262,7 @@
                         searchPlaceholder: "Buscar estudiante..."
                     },
                     destroy: true,
-                    pageLength: 25,
+                    pageLength: 100,
                     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
                     order: [[1, 'asc']],
                     columnDefs: [
@@ -1277,11 +1298,13 @@
             async load(cicloId, aulaId, tipoExamen) {
                 if (DashboardState.isLoading) return;
                 
-                DashboardState.isLoading = true;
-                DashboardState.currentFilters = { cicloId, aulaId, tipoExamen };
-
-                try {
-                    UIModule.showLoading('Cargando Datos...', 'Por favor espere.');
+                                DashboardState.isLoading = true;
+                
+                                DashboardState.currentFilters = { cicloId, aulaId, tipoExamen };
+                
+                        
+                
+                                try {                    UIModule.showLoading('Cargando Datos...', 'Por favor espere.');
 
                     const response = await $.ajax({
                         url: '{{ route("boletines.data") }}',
@@ -1328,9 +1351,42 @@
                 DOMElements.$attendanceMarkerSection.fadeIn(300);
 
                 const $cursoSelect = DOMElements.$cursoAsistenciaSelect;
+                
+                const colorPalette = ['#667eea', '#764ba2', '#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#0d6efd', '#6c757d', '#198754', '#dc3545'];
+                const cursoColores = {};
+                response.cursos.forEach((curso, index) => {
+                    cursoColores[curso.id] = colorPalette[index % colorPalette.length];
+                });
+
                 $cursoSelect.html('<option value="all">Todos los Cursos</option>'); // Reset
                 response.cursos.forEach(curso => {
-                    $cursoSelect.append(`<option value="${curso.id}">${TableModule.escapeHtml(curso.nombre)}</option>`);
+                    const color = cursoColores[curso.id] || '#6c757d';
+                    $cursoSelect.append(`<option value="${curso.id}" data-color="${color}">${TableModule.escapeHtml(curso.nombre)}</option>`);
+                });
+
+                function formatCurso (curso) {
+                    if (!curso.id) { return curso.text; }
+                    // For 'Todos los Cursos', there is no element, so no data-color
+                    if (curso.id === 'all') {
+                        return $('<span><span class="badge bg-secondary">&nbsp;</span> ' + curso.text + '</span>');
+                    }
+                    const color = $(curso.element).data('color');
+                    if (!color) return curso.text;
+
+                    const $curso = $(
+                        '<span><span class="badge" style="background-color:' + color + '">&nbsp;</span> ' + curso.text + '</span>'
+                    );
+                    return $curso;
+                };
+
+                // Initialize Select2 for multi-select
+                $cursoSelect.select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Seleccione curso(s)',
+                    closeOnSelect: false,
+                    allowClear: true,
+                    templateResult: formatCurso,
+                    templateSelection: formatCurso
                 });
 
                 $('#boletines-table thead').html(TableModule.buildHeader(response.cursos));
@@ -1398,12 +1454,12 @@
             if (!isBulkChange) {
                 UIModule.flashCell($cb.parent());
                 const dataToSend = {
-                    entregas: [{
+                    entregas_json: JSON.stringify([{
                         inscripcion_id: $cb.data('inscripcion-id'),
                         curso_id: $cb.data('curso-id'),
                         entregado: $cb.is(':checked') ? 1 : 0
-                    }],
-                    tipo_examen: $('#tipo_examen').val()
+                    }]),
+                    tipo_examen: DashboardState.currentFilters.tipoExamen
                 };
 
                 $cb.prop('disabled', true);
@@ -1420,8 +1476,20 @@
                             $cb.prop('checked', !$cb.is(':checked'));
                         }
                     },
-                    error: () => {
-                        Swal.fire('Error', 'Problema de comunicación con el servidor.', 'error');
+                    error: function(error) {
+                        let errorMessage = 'Problema de comunicación con el servidor.';
+                         if (error.responseJSON && error.responseJSON.message) {
+                            errorMessage = error.responseJSON.message;
+                        } else if (error.status) {
+                            errorMessage = `Error del servidor: ${error.status} ${error.statusText}. Revise la consola del navegador para más detalles.`;
+                            console.error("AJAX Error Details:", {
+                                status: error.status,
+                                statusText: error.statusText,
+                                responseText: error.responseText,
+                                responseJSON: error.responseJSON
+                            });
+                        }
+                        Swal.fire('Error', errorMessage, 'error');
                         $cb.prop('checked', !$cb.is(':checked'));
                     },
                     complete: () => {
@@ -1472,28 +1540,35 @@
         // ==========================================
         // EVENTOS DE ASISTENCIA (NUEVO)
         // ==========================================
-        DOMElements.$preMarkAttendanceButton.on('click', async function() {
-            const $btn = $(this);
+        // Helper function for marking/unmarking attendance
+        async function applyAttendanceChange(markAsPresent) {
+            const $btn = markAsPresent ? DOMElements.$preMarkAttendanceButton : $('#unmark-attendance-button');
+            const actionText = markAsPresent ? 'Marcar' : 'Desmarcar';
+
             const fecha = $('#fecha_asistencia').val();
-            const cursoId = DOMElements.$cursoAsistenciaSelect.val();
+            const selectedCursos = DOMElements.$cursoAsistenciaSelect.val();
             const { cicloId, aulaId } = DashboardState.currentFilters;
 
             if (!fecha) {
                 Swal.fire('Atención', 'Por favor, seleccione una fecha de asistencia.', 'warning');
                 return;
             }
+            
+            if (!selectedCursos || selectedCursos.length === 0) {
+                Swal.fire('Atención', `Por favor, seleccione al menos un curso para ${actionText.toLowerCase()}.`, 'warning');
+                return;
+            }
 
-            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando...');
+            $btn.prop('disabled', true).html(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${actionText}ando...`);
+            const otherBtn = markAsPresent ? $('#unmark-attendance-button') : DOMElements.$preMarkAttendanceButton;
+            otherBtn.prop('disabled', true);
+
 
             try {
                 const response = await $.ajax({
                     url: '{{ route("boletines.asistentes") }}',
                     type: 'GET',
-                    data: {
-                        fecha: fecha,
-                        ciclo_id: cicloId,
-                        aula_id: aulaId
-                    }
+                    data: { fecha, ciclo_id: cicloId, aula_id: aulaId }
                 });
 
                 if (response.success && response.asistentes) {
@@ -1505,38 +1580,71 @@
 
                     let changesApplied = 0;
                     const rows = DashboardState.dataTable.rows({ search: 'applied' }).nodes();
+                    const applyToAll = selectedCursos.includes('all');
                     
                     studentIds.forEach(inscripcionId => {
-                        let $checkboxes;
-                        if (cursoId === 'all') {
-                            $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"]`);
+                        if (applyToAll) {
+                            const $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"]`);
+                            $checkboxes.each(function() {
+                                const $cb = $(this);
+                                if ($cb.is(':checked') !== markAsPresent) {
+                                    $cb.prop('checked', markAsPresent).trigger('change', [true]);
+                                    changesApplied++;
+                                }
+                            });
                         } else {
-                            $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"][data-curso-id="${cursoId}"]`);
+                            selectedCursos.forEach(cursoId => {
+                                const $checkboxes = $(rows).find(`.entrega-checkbox[data-inscripcion-id="${inscripcionId}"][data-curso-id="${cursoId}"]`);
+                                $checkboxes.each(function() {
+                                    const $cb = $(this);
+                                    if ($cb.is(':checked') !== markAsPresent) {
+                                        $cb.prop('checked', markAsPresent).trigger('change', [true]);
+                                        changesApplied++;
+                                    }
+                                });
+                            });
                         }
-                        
-                        $checkboxes.each(function() {
-                            const $cb = $(this);
-                            if (!$cb.is(':checked')) {
-                                $cb.prop('checked', true).trigger('change', [true]);
-                                changesApplied++;
-                            }
-                        });
                     });
 
                     if (changesApplied > 0) {
-                        Toast.fire({ icon: 'success', title: `Se pre-marcaron entregas para ${studentIds.length} asistente(s).` });
+                        const actionVerb = markAsPresent ? 'marcaron' : 'desmarcaron';
+                        Toast.fire({ icon: 'success', title: `Se ${actionVerb} entregas para ${studentIds.length} asistente(s).` });
                     } else {
-                        Toast.fire({ icon: 'info', title: 'Los alumnos asistentes ya tenían las entregas marcadas.' });
+                        const state = markAsPresent ? 'marcadas' : 'desmarcadas';
+                        Toast.fire({ icon: 'info', title: `Las entregas seleccionadas ya estaban ${state}.` });
                     }
                 } else {
                     throw new Error(response.message || 'No se pudo obtener la lista de asistentes.');
                 }
 
             } catch (error) {
-                Swal.fire('Error', error.message || 'Ocurrió un problema de comunicación.', 'error');
+                let errorMessage = 'Ocurrió un problema de comunicación.';
+                if (error.responseJSON && error.responseJSON.message) {
+                    errorMessage = error.responseJSON.message;
+                } else if (error.status) {
+                    errorMessage = `Error del servidor: ${error.status} ${error.statusText}. Revise la consola del navegador (F12) para más detalles.`;
+                    console.error("AJAX Error Details:", {
+                        status: error.status,
+                        statusText: error.statusText,
+                        responseText: error.responseText,
+                        responseJSON: error.responseJSON
+                    });
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                Swal.fire('Error', errorMessage, 'error');
             } finally {
-                $btn.prop('disabled', false).html('<i class="fas fa-user-check me-2"></i> Pre-marcar Asistentes');
+                $btn.prop('disabled', false).html(`<i class="fas ${markAsPresent ? 'fa-user-check' : 'fa-user-times'} me-2"></i> ${actionText}`);
+                otherBtn.prop('disabled', false);
             }
+        }
+
+        DOMElements.$preMarkAttendanceButton.on('click', function() {
+            applyAttendanceChange(true);
+        });
+
+        $('body').on('click', '#unmark-attendance-button', function() {
+            applyAttendanceChange(false);
         });
 
         // ==========================================
