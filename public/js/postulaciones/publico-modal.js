@@ -245,6 +245,9 @@ function loadDepartamentos() {
 }
 
 function loadProvincias(dep) {
+    console.log('=== LOAD PROVINCIAS ===');
+    console.log('Departamento seleccionado:', dep);
+
     const select = $('#provincia');
     const distSelect = $('#distrito');
 
@@ -253,32 +256,57 @@ function loadProvincias(dep) {
     if (distSelect.next().hasClass('nice-select')) { distSelect.niceSelect('destroy'); }
 
     select.html('<option value="">Cargando...</option>').prop('disabled', true);
-    distSelect.html('<option value="">Seleccione</option>').prop('disabled', true);
+    distSelect.html('<option value="">Seleccione provincia primero</option>').prop('disabled', true);
 
     select.show();
     distSelect.show();
 
     if (!dep) {
-        select.html('<option value="">Seleccione</option>');
+        console.warn('No se proporcionó departamento');
+        select.html('<option value="">Seleccione departamento primero</option>');
         return;
     }
 
-    $.get('/api/public/provincias/' + dep, function (data) {
-        if (data.success) {
+    const url = '/api/public/provincias/' + dep;
+    console.log('Llamando a API:', url);
+
+    $.get(url, function (data) {
+        console.log('Respuesta API Provincias:', data);
+
+        if (data.success && data.provincias) {
             let html = '<option value="">Seleccione</option>';
-            data.provincias.forEach(function (item) {
-                const id = (typeof item === 'object') ? item.id : item;
-                const nombre = (typeof item === 'object') ? item.nombre : item;
-                html += `<option value="${id}">${nombre}</option>`;
-            });
+
+            if (Array.isArray(data.provincias) && data.provincias.length > 0) {
+                data.provincias.forEach(function (item) {
+                    const id = (typeof item === 'object') ? item.id : item;
+                    const nombre = (typeof item === 'object') ? item.nombre : item;
+                    html += `<option value="${id}">${nombre}</option>`;
+                });
+                console.log('Provincias cargadas:', data.provincias.length);
+            } else {
+                console.warn('No se encontraron provincias para:', dep);
+                html = '<option value="">No hay provincias disponibles</option>';
+            }
+
             select.html(html).prop('disabled', false);
+            console.log('Select de provincias actualizado y habilitado');
+        } else {
+            console.error('Respuesta inválida de API:', data);
+            select.html('<option value="">Error al cargar</option>');
+            toastr.error('No se pudieron cargar las provincias');
         }
-    }).fail(function () {
-        toastr.error('Error al cargar provincias');
+    }).fail(function (xhr, status, error) {
+        console.error('Error AJAX al cargar provincias:', status, error);
+        console.error('Detalles:', xhr.responseText);
+        select.html('<option value="">Error de conexión</option>');
+        toastr.error('Error al cargar provincias: ' + error);
     });
 }
 
 function loadDistritos(dep, prov) {
+    console.log('=== LOAD DISTRITOS ===');
+    console.log('Departamento:', dep, 'Provincia:', prov);
+
     const select = $('#distrito');
 
     // Limpieza defensiva de cualquier UI enhancer
@@ -289,22 +317,44 @@ function loadDistritos(dep, prov) {
     select.show();
 
     if (!dep || !prov) {
-        select.html('<option value="">Seleccione</option>');
+        console.warn('Faltan parámetros - Dep:', dep, 'Prov:', prov);
+        select.html('<option value="">Seleccione provincia primero</option>');
         return;
     }
 
-    $.get('/api/public/distritos/' + dep + '/' + prov, function (data) {
-        if (data.success) {
+    const url = '/api/public/distritos/' + dep + '/' + prov;
+    console.log('Llamando a API:', url);
+
+    $.get(url, function (data) {
+        console.log('Respuesta API Distritos:', data);
+
+        if (data.success && data.distritos) {
             let html = '<option value="">Seleccione</option>';
-            data.distritos.forEach(function (item) {
-                const id = (typeof item === 'object') ? item.id : item;
-                const nombre = (typeof item === 'object') ? item.nombre : item;
-                html += `<option value="${id}">${nombre}</option>`;
-            });
+
+            if (Array.isArray(data.distritos) && data.distritos.length > 0) {
+                data.distritos.forEach(function (item) {
+                    const id = (typeof item === 'object') ? item.id : item;
+                    const nombre = (typeof item === 'object') ? item.nombre : item;
+                    html += `<option value="${id}">${nombre}</option>`;
+                });
+                console.log('Distritos cargados:', data.distritos.length);
+            } else {
+                console.warn('No se encontraron distritos para:', dep, prov);
+                html = '<option value="">No hay distritos disponibles</option>';
+            }
+
             select.html(html).prop('disabled', false);
+            console.log('Select de distritos actualizado y habilitado');
+        } else {
+            console.error('Respuesta inválida de API:', data);
+            select.html('<option value="">Error al cargar</option>');
+            toastr.error('No se pudieron cargar los distritos');
         }
-    }).fail(function () {
-        toastr.error('Error al cargar distritos');
+    }).fail(function (xhr, status, error) {
+        console.error('Error AJAX al cargar distritos:', status, error);
+        console.error('Detalles:', xhr.responseText);
+        select.html('<option value="">Error de conexión</option>');
+        toastr.error('Error al cargar distritos: ' + error);
     });
 }
 
@@ -747,7 +797,13 @@ function verificarPostulante(btnElement) {
                 $('#estudiante_nombre').val(response.estudiante.nombre);
                 $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
                 $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
-                $('#estudiante_fecha_nacimiento').val(response.estudiante.fecha_nacimiento);
+
+                // Convertir fecha de ISO 8601 a formato yyyy-MM-dd
+                if (response.estudiante.fecha_nacimiento) {
+                    const fechaNacimiento = response.estudiante.fecha_nacimiento.split('T')[0];
+                    $('#estudiante_fecha_nacimiento').val(fechaNacimiento);
+                }
+
                 $('#estudiante_genero').val(response.estudiante.genero);
                 $('#estudiante_telefono').val(response.estudiante.telefono);
                 $('#estudiante_direccion').val(response.estudiante.direccion);
@@ -758,8 +814,11 @@ function verificarPostulante(btnElement) {
                 $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
 
                 // NUEVO: Pre-cargar datos de padres si existen
-                if (response.padres) {
+                console.log('Verificando datos de padres:', response.padres);
+                if (response.padres && (response.padres.padre || response.padres.madre)) {
                     precargarDatosPadres(response.padres);
+                } else {
+                    console.warn('No hay datos de padres disponibles en la respuesta');
                 }
 
                 // NUEVO: Pre-cargar datos académicos y archivos si existen

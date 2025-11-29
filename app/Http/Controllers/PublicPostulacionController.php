@@ -68,9 +68,10 @@ class PublicPostulacionController extends Controller
             ];
 
             foreach ($parentescos as $parentesco) {
-                if ($parentesco->tipo_parentesco === 'padre' && $parentesco->padre) {
+                $tipoLower = strtolower($parentesco->tipo_parentesco);
+                if ($tipoLower === 'padre' && $parentesco->padre) {
                     $padres['padre'] = $parentesco->padre;
-                } elseif ($parentesco->tipo_parentesco === 'madre' && $parentesco->padre) {
+                } elseif ($tipoLower === 'madre' && $parentesco->padre) {
                     $padres['madre'] = $parentesco->padre;
                 }
             }
