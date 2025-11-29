@@ -19,6 +19,8 @@
         height: 100%;
         overflow: auto;
         background-color: rgba(0, 0, 0, 0.6);
+        /* Mejoras para móviles */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling en iOS */
     }
     .modal-content {
         background-color: #fefefe;
@@ -27,6 +29,10 @@
         border: none;
         border-radius: 15px; /* Bordes más suaves */
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        /* Mejoras para móviles */
+        max-height: 95vh; /* Limitar altura en móviles */
+        overflow-y: auto; /* Permitir scroll interno */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling en iOS */
     }
 
     /* WIZARD STYLES */
@@ -131,6 +137,63 @@
     .form-control:focus, .form-select:focus {
         border-color: var(--color-principal);
         box-shadow: 0 0 0 0.25rem rgba(139, 195, 74, 0.25);
+    }
+
+    /* Estilos responsivos para móviles */
+    @media (max-width: 768px) {
+        .modal {
+            padding: 10px;
+        }
+        .modal-content {
+            margin: 2% auto;
+            padding: 20px;
+            width: 98% !important;
+            max-width: 98% !important;
+            max-height: 96vh;
+            border-radius: 10px;
+        }
+        .wizard-progress {
+            margin-bottom: 20px;
+        }
+        .step-item span {
+            font-size: 9px;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+        }
+        .form-section-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        .btn-next-prev {
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+    }
+
+    /* Estilos para pantallas muy pequeñas */
+    @media (max-width: 480px) {
+        .modal-content {
+            padding: 15px;
+            max-height: 98vh;
+        }
+        .step-item span {
+            font-size: 8px;
+        }
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+        .form-section-title {
+            font-size: 1rem;
+        }
+        .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-12 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
     }
 </style>
 

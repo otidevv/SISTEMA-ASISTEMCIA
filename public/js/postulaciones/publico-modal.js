@@ -757,9 +757,24 @@ function verificarPostulante(btnElement) {
                 $('#estudiante_password').prop('required', false).closest('.col-md-3').hide();
                 $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
 
+                // NUEVO: Pre-cargar datos de padres si existen
+                if (response.padres) {
+                    precargarDatosPadres(response.padres);
+                }
+
+                // NUEVO: Pre-cargar datos académicos y archivos si existen
+                if (response.ultima_postulacion) {
+                    if (response.ultima_postulacion.datos_academicos) {
+                        precargarDatosAcademicos(response.ultima_postulacion.datos_academicos);
+                    }
+                    if (response.ultima_postulacion.archivos) {
+                        mostrarArchivosExistentes(response.ultima_postulacion.archivos);
+                    }
+                }
+
                 swalIcon = 'success';
                 swalTitle = 'Estudiante Encontrado';
-                swalText = 'Sus datos personales se han cargado automáticamente.';
+                swalText = 'Sus datos personales, de padres y académicos se han cargado automáticamente.';
 
             } else {
                 // Estudiante nuevo: asegurar que contraseñas sean requeridas y visibles
@@ -780,7 +795,10 @@ function verificarPostulante(btnElement) {
 
                 swalIcon = 'info';
                 swalTitle = 'Postulante Nuevo';
-                swalText = 'Verificación exitosa. Complete sus datos personales y cree una contraseña.';
+                swalText = 'Consultando RENIEC para autocompletar sus datos...';
+
+                // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
+                consultarReniecEstudiante(dni);
             }
         }
 
@@ -846,6 +864,305 @@ function consultarDNIPadre(tipo) {
         $(btn).prop('disabled', false).text(originalText);
     });
 } // <--- Cierre CORRECTO de consultarDNIPadre
+
+// Nueva función para consultar RENIEC y autocompletar datos del estudiante
+function consultarReniecEstudiante(dni) {
+    console.log('Consultando RENIEC para DNI:', dni);
+
+    // Mostrar indicador de carga
+    toastr.info('Consultando RENIEC...', 'Por favor espere');
+
+    $.ajax({
+        url: '/api/reniec/consultar',
+        method: 'POST',
+        data: {
+            dni: dni,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function (response) {
+            console.log('Respuesta RENIEC:', response);
+
+            if (response.success && response.data) {
+                // Autocompletar campos con datos de RENIEC
+                $('#estudiante_nombre').val(response.data.nombres || '');
+                $('#estudiante_apellido_paterno').val(response.data.apellido_paterno || '');
+                $('#estudiante_apellido_materno').val(response.data.apellido_materno || '');
+
+                if (response.data.fecha_nacimiento) {
+                    $('#estudiante_fecha_nacimiento').val(response.data.fecha_nacimiento);
+                }
+
+                if (response.data.genero) {
+                    $('#estudiante_genero').val(response.data.genero);
+                }
+
+                if (response.data.direccion) {
+                    $('#estudiante_direccion').val(response.data.direccion);
+                }
+
+                // Mostrar mensaje de éxito
+                toastr.success('Datos cargados desde RENIEC', 'Éxito');
+
+                // Mostrar alerta informativa
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Datos Autocompletos',
+                        html: 'Se han cargado automáticamente sus datos desde RENIEC:<br><br>' +
+                            '<strong>' + response.data.nombres + ' ' +
+                            response.data.apellido_paterno + ' ' +
+                            response.data.apellido_materno + '</strong><br><br>' +
+                            'Por favor verifique y complete los datos faltantes.',
+                        confirmButtonText: 'Continuar'
+                    });
+                }
+            } else {
+                console.warn('No se encontraron datos en RENIEC');
+                toastr.warning('No se encontraron datos en RENIEC. Por favor complete manualmente.', 'Atención');
+            }
+        },
+        error: function (xhr) {
+            console.error('Error consultando RENIEC:', xhr);
+            let errorMsg = 'No se pudo consultar RENIEC. Por favor complete los datos manualmente.';
+
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+
+            toastr.warning(errorMsg, 'Advertencia');
+        }
+    });
+}
+
+// Nueva función para pre-cargar datos de padres
+function precargarDatosPadres(padres) {
+    console.log('Pre-cargando datos de padres:', padres);
+
+    let padresCargados = 0;
+
+    // Pre-cargar datos del padre si existen
+    if (padres.padre) {
+        console.log('Datos del padre encontrados:', padres.padre);
+        $('#padre_dni').val(padres.padre.numero_documento || '');
+        $('#padre_nombre').val(padres.padre.nombre || '');
+        const apellidosPadre = (padres.padre.apellido_paterno || '') + ' ' + (padres.padre.apellido_materno || '');
+        $('#padre_apellidos').val(apellidosPadre.trim());
+        $('#padre_telefono').val(padres.padre.telefono || '');
+        $('#padre_email').val(padres.padre.email || '');
+        // Nota: ocupación no está en el modelo User, se deja vacío
+        padresCargados++;
+    } else {
+        console.log('No se encontraron datos del padre');
+    }
+
+    // Pre-cargar datos de la madre si existen
+    if (padres.madre) {
+        console.log('Datos de la madre encontrados:', padres.madre);
+        $('#madre_dni').val(padres.madre.numero_documento || '');
+        $('#madre_nombre').val(padres.madre.nombre || '');
+        const apellidosMadre = (padres.madre.apellido_paterno || '') + ' ' + (padres.madre.apellido_materno || '');
+        $('#madre_apellidos').val(apellidosMadre.trim());
+        $('#madre_telefono').val(padres.madre.telefono || '');
+        $('#madre_email').val(padres.madre.email || '');
+        padresCargados++;
+    } else {
+        console.log('No se encontraron datos de la madre');
+    }
+
+    // Mostrar mensaje informativo si se cargaron datos
+    if (padresCargados > 0) {
+        const mensaje = padresCargados === 2 ? 'Datos de padre y madre cargados' :
+            padres.padre ? 'Datos del padre cargados' : 'Datos de la madre cargados';
+        toastr.success(mensaje + ' de postulación anterior', 'Datos de Padres');
+    } else {
+        console.log('No se encontraron datos de padres para pre-cargar');
+    }
+}
+
+// Nueva función para pre-cargar datos académicos (colegio, carrera, etc.)
+function precargarDatosAcademicos(datosAcademicos) {
+    console.log('Pre-cargando datos académicos:', datosAcademicos);
+
+    // Pre-cargar año de egreso
+    if (datosAcademicos.anio_egreso) {
+        $('#anio_egreso').val(datosAcademicos.anio_egreso);
+    }
+
+    // Pre-cargar carrera y turno si existen
+    if (datosAcademicos.carrera_id) {
+        $('#carrera_id').val(datosAcademicos.carrera_id);
+    }
+    if (datosAcademicos.turno_id) {
+        $('#turno_id').val(datosAcademicos.turno_id);
+    }
+    if (datosAcademicos.tipo_inscripcion) {
+        $('#tipo_inscripcion').val(datosAcademicos.tipo_inscripcion);
+    }
+
+    // Pre-cargar colegio y ubicación si existe
+    if (datosAcademicos.centro_educativo) {
+        const colegio = datosAcademicos.centro_educativo;
+
+        console.log('Cargando ubicación del colegio:', colegio);
+
+        // Si tenemos datos de ubicación, pre-cargar los selectores
+        if (colegio.departamento) {
+            // Pre-seleccionar departamento
+            $('#departamento').val(colegio.departamento);
+
+            // Cargar provincias y pre-seleccionar
+            if (colegio.provincia) {
+                loadProvincias(colegio.departamento);
+
+                // Esperar un momento para que se carguen las provincias
+                setTimeout(function () {
+                    $('#provincia').val(colegio.provincia);
+
+                    // Cargar distritos y pre-seleccionar
+                    if (colegio.distrito) {
+                        loadDistritos(colegio.departamento, colegio.provincia);
+
+                        setTimeout(function () {
+                            $('#distrito').val(colegio.distrito);
+
+                            // Habilitar búsqueda de colegio
+                            $('#buscar_colegio').prop('disabled', false);
+                            $('#btnBuscarColegio').prop('disabled', false);
+
+                            // Mostrar el colegio seleccionado
+                            $('#centro_educativo_id').val(colegio.id);
+                            $('#buscar_colegio').val(colegio.nombre);
+                            mostrarColegioSeleccionado({
+                                id: colegio.id,
+                                nombre: colegio.nombre
+                            });
+                        }, 500);
+                    }
+                }, 500);
+            }
+        } else {
+            // Si no hay datos de ubicación, solo mostrar el colegio
+            $('#centro_educativo_id').val(colegio.id);
+            $('#buscar_colegio').val(colegio.nombre);
+            mostrarColegioSeleccionado({
+                id: colegio.id,
+                nombre: colegio.nombre
+            });
+        }
+
+        toastr.success('Colegio cargado: ' + colegio.nombre, 'Datos Académicos');
+    }
+}
+
+// Nueva función para mostrar archivos existentes
+function mostrarArchivosExistentes(archivos) {
+    console.log('Mostrando archivos existentes:', archivos);
+
+    // Mapeo de campos de archivo a sus IDs en el formulario
+    const mapeoArchivos = {
+        'foto_path': 'foto',
+        'dni_path': 'dni_pdf',
+        'certificado_estudios_path': 'certificado_estudios',
+        'voucher_path': 'voucher_pago',
+        'carta_compromiso_path': 'carta_compromiso',
+        'constancia_estudios_path': 'constancia_estudios'
+    };
+
+    let archivosEncontrados = 0;
+
+    // Iterar sobre cada archivo
+    Object.keys(mapeoArchivos).forEach(function (campo) {
+        const inputId = mapeoArchivos[campo];
+        const url = archivos[campo];
+
+        if (url) {
+            archivosEncontrados++;
+
+            // Encontrar el input de archivo
+            const $input = $('#' + inputId);
+            const $container = $input.closest('.mb-3');
+
+            // Quitar el required del input (ya tiene archivo)
+            $input.prop('required', false);
+
+            // Agregar badge y botón "Ver" si no existe ya
+            if ($container.find('.archivo-existente-badge').length === 0) {
+                const badge = `
+                    <div class="archivo-existente-badge mt-2">
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-check-circle"></i> Archivo existente
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="verArchivoModal('${url}', '${inputId}')">
+                            <i class="fas fa-eye"></i> Ver archivo
+                        </button>
+                        <input type="hidden" name="${inputId}_existente" value="${url}">
+                    </div>
+                `;
+                $container.append(badge);
+            }
+        }
+    });
+
+    if (archivosEncontrados > 0) {
+        toastr.success(`${archivosEncontrados} archivo(s) encontrado(s) de postulación anterior`, 'Archivos');
+    }
+}
+
+// Nueva función para ver archivo en modal
+function verArchivoModal(url, tipo) {
+    console.log('Abriendo modal para ver archivo:', url, tipo);
+
+    // Determinar si es imagen o PDF
+    const esImagen = tipo === 'foto' || url.match(/\.(jpg|jpeg|png|gif)$/i);
+    const esPDF = url.match(/\.pdf$/i);
+
+    let contenido = '';
+    let titulo = 'Visualizar Archivo';
+
+    // Mapeo de títulos
+    const titulos = {
+        'foto': 'Foto del Estudiante',
+        'dni_pdf': 'DNI Escaneado',
+        'certificado_estudios': 'Certificado de Estudios',
+        'voucher_pago': 'Voucher de Pago',
+        'carta_compromiso': 'Carta de Compromiso',
+        'constancia_estudios': 'Constancia de Estudios'
+    };
+
+    titulo = titulos[tipo] || titulo;
+
+    if (esImagen) {
+        contenido = `<img src="${url}" class="img-fluid" alt="${titulo}" style="max-width: 100%; height: auto;">`;
+    } else if (esPDF) {
+        contenido = `<iframe src="${url}" style="width: 100%; height: 500px; border: none;"></iframe>`;
+    } else {
+        contenido = `<p>No se puede previsualizar este tipo de archivo.</p><a href="${url}" target="_blank" class="btn btn-primary">Descargar archivo</a>`;
+    }
+
+    // Crear o actualizar modal
+    if ($('#modalVisualizarArchivo').length === 0) {
+        const modalHTML = `
+            <div id="modalVisualizarArchivo" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 800px; width: 90%;">
+                    <span class="close-button" onclick="cerrarModalArchivo()" style="position: absolute; top: 15px; right: 25px; font-size: 24px; color: #6b7280; cursor: pointer;">&times;</span>
+                    <h4 id="tituloModalArchivo" style="margin-bottom: 20px;"></h4>
+                    <div id="contenedorArchivo"></div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHTML);
+    }
+
+    // Actualizar contenido y mostrar
+    $('#tituloModalArchivo').text(titulo);
+    $('#contenedorArchivo').html(contenido);
+    $('#modalVisualizarArchivo').fadeIn();
+}
+
+// Función para cerrar modal de archivo
+function cerrarModalArchivo() {
+    $('#modalVisualizarArchivo').fadeOut();
+}
 
 function generarResumen() { // <--- DEFINICIÓN CORRECTA de generarResumen
     const fields = [
@@ -1013,3 +1330,9 @@ window.generarResumen = generarResumen;
 window.submitPostulacion = submitPostulacion;
 window.buscarPagosAutomatico = buscarPagosAutomatico;
 window.habilitarBusquedaManual = habilitarBusquedaManual;
+// Nuevas funciones para pre-carga de datos
+window.precargarDatosPadres = precargarDatosPadres;
+window.precargarDatosAcademicos = precargarDatosAcademicos;
+window.mostrarArchivosExistentes = mostrarArchivosExistentes;
+window.verArchivoModal = verArchivoModal;
+window.cerrarModalArchivo = cerrarModalArchivo;

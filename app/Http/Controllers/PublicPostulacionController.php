@@ -57,9 +57,86 @@ class PublicPostulacionController extends Controller
                 ]);
             }
 
+            // Cargar datos de padres (padre y madre)
+            $parentescos = Parentesco::where('estudiante_id', $estudiante->id)
+                ->with('padre')
+                ->get();
+
+            $padres = [
+                'padre' => null,
+                'madre' => null
+            ];
+
+            foreach ($parentescos as $parentesco) {
+                if ($parentesco->tipo_parentesco === 'padre' && $parentesco->padre) {
+                    $padres['padre'] = $parentesco->padre;
+                } elseif ($parentesco->tipo_parentesco === 'madre' && $parentesco->padre) {
+                    $padres['madre'] = $parentesco->padre;
+                }
+            }
+
+            // Obtener la última postulación del estudiante (de cualquier ciclo anterior)
+            $ultimaPostulacion = Postulacion::where('estudiante_id', $estudiante->id)
+                ->with('centroEducativo')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $datosPostulacion = null;
+            if ($ultimaPostulacion) {
+                // Preparar URLs de archivos
+                $archivos = [];
+                $camposArchivo = [
+                    'foto_path',
+                    'dni_path',
+                    'certificado_estudios_path',
+                    'voucher_path',
+                    'carta_compromiso_path',
+                    'constancia_estudios_path'
+                ];
+
+                foreach ($camposArchivo as $campo) {
+                    if ($ultimaPostulacion->$campo) {
+                        // Generar URL completa del archivo
+                        $archivos[$campo] = asset('storage/' . $ultimaPostulacion->$campo);
+                    } else {
+                        $archivos[$campo] = null;
+                    }
+                }
+
+                // Preparar datos del centro educativo con ubicación
+                $centroEducativoData = null;
+                if ($ultimaPostulacion->centroEducativo) {
+                    $ce = $ultimaPostulacion->centroEducativo;
+                    $centroEducativoData = [
+                        'id' => $ce->id,
+                        'nombre' => $ce->cen_edu ?? $ce->nombre ?? 'Sin nombre',
+                        'nivel' => $ce->d_niv_mod ?? $ce->nivel ?? null,
+                        'direccion' => $ce->dir_cen ?? $ce->direccion ?? null,
+                        // Datos de ubicación
+                        'departamento' => $ce->d_dpto ?? null,
+                        'provincia' => $ce->d_prov ?? null,
+                        'distrito' => $ce->d_dist ?? null
+                    ];
+                }
+
+                $datosPostulacion = [
+                    'archivos' => $archivos,
+                    'datos_academicos' => [
+                        'centro_educativo_id' => $ultimaPostulacion->centro_educativo_id,
+                        'centro_educativo' => $centroEducativoData,
+                        'anio_egreso' => $ultimaPostulacion->anio_egreso,
+                        'carrera_id' => $ultimaPostulacion->carrera_id,
+                        'turno_id' => $ultimaPostulacion->turno_id,
+                        'tipo_inscripcion' => $ultimaPostulacion->tipo_inscripcion
+                    ]
+                ];
+            }
+
             return response()->json([
                 'status' => 'recurrent',
                 'estudiante' => $estudiante,
+                'padres' => $padres,
+                'ultima_postulacion' => $datosPostulacion,
                 'message' => 'Estudiante encontrado. Sus datos serán cargados.'
             ]);
         }
