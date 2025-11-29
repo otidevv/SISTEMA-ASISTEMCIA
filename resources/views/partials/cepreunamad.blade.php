@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEPRE UNAMAD - Centro Pre Universitario Interactivo</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- Carga de Three.js para el fondo 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -1167,6 +1162,23 @@
             align-items: center;
         }
         
+        /* Fix para Nice Select en Modal */
+        .nice-select {
+            background-color: #fff !important;
+            color: #333 !important;
+            border: 1px solid #ced4da !important;
+        }
+        .nice-select .list {
+            background-color: #fff !important;
+            color: #333 !important;
+        }
+        .nice-select .option {
+            color: #333 !important;
+        }
+        .nice-select .option:hover, .nice-select .option.selected {
+            background-color: #f0f0f0 !important;
+        }
+        
     </style>
 </head>
 <body>
@@ -1257,9 +1269,9 @@
                                     <span>EXPLORAR PROGRAMAS</span>
                                 </a>
                                 <!-- RUTA DINÁMICA RESTAURADA -->
-                                <a href="{{ route('register') }}" class="btn btn-secondary">
+                                <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary">
                                     <i class="fas fa-edit"></i>
-                                    <span>APLICAR AHORA</span>
+                                    <span>POSTULAR AHORA</span>
                                 </a>
                                 <div class="video-btn" onclick="showModal('videoModal')">
                                     <i class="fas fa-play"></i>
@@ -1638,6 +1650,20 @@
         </div>
     </footer>
 
+    <!-- Incluir Modal de Postulación -->
+    @include('partials.postulacion-modal')
+
+    <script>
+        // Función para abrir el modal de postulación (llamada desde botones de la página)
+        function openPostulacionModal() {
+            document.getElementById('postulacionModal').style.display = 'flex';
+            // La función showStep() está definida en publico-modal.js
+            if (typeof showStep === 'function') {
+                showStep(1);
+            }
+        }
+    </script>
+
     <!-- Burbuja de Notificación (Nueva) -->
     <div id="assistant-bubble">
         ¡Pregúntale a nuestro asistente!
@@ -2003,5 +2029,23 @@
              });
         };
     </script>
-</body>
-</html>
+    <!-- jQuery (Required for Select2, Nice Select, Toastr) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Custom JS for Public Modal -->
+    <script src="{{ asset('js/postulaciones/publico-modal.js') }}?v={{ time() }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Select2 logic moved to publico-modal.js
+        });
+    </script>

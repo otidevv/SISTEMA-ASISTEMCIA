@@ -19,6 +19,7 @@ class Postulacion extends Model
         'turno_id',
         'tipo_inscripcion',
         'centro_educativo_id',
+        'anio_egreso',  // Año de egreso del colegio
         // Documentos - campos actualizados según las migraciones
         'voucher_path',  // Cambiado de voucher_pago_path
         'certificado_estudios_path',

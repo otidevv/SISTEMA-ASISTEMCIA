@@ -146,6 +146,17 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
 });
 
+// Postulación Pública (Accesible para todos, incluso logueados para pruebas)
+Route::post('/postulacion/check-postulante', [App\Http\Controllers\PublicPostulacionController::class, 'checkPostulante'])->name('public.postulacion.check');
+Route::post('/postulacion/validate-payment', [App\Http\Controllers\PublicPostulacionController::class, 'validatePayment'])->name('public.postulacion.validate-payment');
+Route::post('/postulacion/store', [App\Http\Controllers\PublicPostulacionController::class, 'store'])->name('public.postulacion.store');
+
+// API Ubigeo y Colegios (Público)
+Route::get('/api/public/departamentos', [App\Http\Controllers\PublicPostulacionController::class, 'getDepartamentos']);
+Route::get('/api/public/provincias/{departamento}', [App\Http\Controllers\PublicPostulacionController::class, 'getProvincias']);
+Route::get('/api/public/distritos/{departamento}/{provincia}', [App\Http\Controllers\PublicPostulacionController::class, 'getDistritos']);
+Route::post('/api/public/buscar-colegios', [App\Http\Controllers\PublicPostulacionController::class, 'buscarColegios']);
+
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
     // Verificación de email - página de aviso

@@ -1,0 +1,22 @@
+/* Fix para SweetAlert2 sobre modal de Bootstrap */
+.swal-overlay-fix {
+    z-index: 10000 !important;
+}
+
+.swal2-container {
+    z-index: 10000 !important;
+}
+
+/* Asegurar que el backdrop de SweetAlert esté sobre el modal */
+.swal2-container.swal2-backdrop-show {
+    z-index: 9999 !important;
+}
+
+/* Fix para modal de Bootstrap */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}

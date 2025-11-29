@@ -570,7 +570,7 @@ class PostulacionUnificadaController extends Controller
                 'turno_id' => 'required|exists:turnos,id',
                 'tipo_inscripcion' => 'required|in:postulante,reforzamiento',
                 'colegio_procedencia' => 'required|string|max:255',
-                'año_egreso' => 'required|integer|min:1990|max:' . date('Y'),
+                'anio_egreso' => 'required|integer|min:1990|max:' . date('Y'),
                 'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
                 'certificado_estudios' => 'required|mimes:pdf|max:5120',
                 'voucher_pago' => 'required|mimes:pdf|max:5120',
@@ -646,7 +646,7 @@ class PostulacionUnificadaController extends Controller
             }
             
             $postulacion = new Postulacion($request->only([
-                'carrera_id', 'turno_id', 'tipo_inscripcion', 'colegio_procedencia', 'año_egreso'
+                'carrera_id', 'turno_id', 'tipo_inscripcion', 'colegio_procedencia', 'anio_egreso'
             ]));
 
             $postulacion->estudiante_id = $estudiante->id;
@@ -830,7 +830,7 @@ class PostulacionUnificadaController extends Controller
                 'carrera_id' => 'required|exists:carreras,id',
                 'turno_id' => 'required|exists:turnos,id',
                 'colegio_procedencia' => 'required|string|max:255',
-                'año_egreso' => 'required|integer|min:1990|max:' . date('Y'),
+                'anio_egreso' => 'required|integer|min:1990|max:' . date('Y'),
                 
                 // Documentos
                 'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048',
@@ -942,7 +942,7 @@ class PostulacionUnificadaController extends Controller
             $postulacion->fecha_postulacion = now();
             $postulacion->codigo_postulante = 'POST-' . date('Y') . '-' . str_pad(Postulacion::count() + 1, 5, '0', STR_PAD_LEFT);
             $postulacion->colegio_procedencia = $request->colegio_procedencia;
-            $postulacion->año_egreso = $request->año_egreso;
+            $postulacion->anio_egreso = $request->anio_egreso;
             $postulacion->creado_por = Auth::id();
             $postulacion->save();
             
