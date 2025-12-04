@@ -293,6 +293,529 @@
              padding-right: 0.75rem !important;
              margin-bottom: 1rem; /* Espacio más compacto */
         }
+
+        /* ========================================================= */
+        /* COLORES DE FILAS SEGÚN ESTADO DE POSTULACIÓN */
+        /* ========================================================= */
+        
+        /* Fila Pendiente - Amarillo suave */
+        #postulaciones-datatable tbody tr.estado-pendiente {
+            background-color: #fff9e6 !important;
+            border-left: 4px solid #ffc107;
+        }
+        #postulaciones-datatable tbody tr.estado-pendiente:hover {
+            background-color: #fff3cd !important;
+        }
+        
+        /* Fila Aprobado - Verde suave */
+        #postulaciones-datatable tbody tr.estado-aprobado {
+            background-color: #e8f5e9 !important;
+            border-left: 4px solid #28a745;
+        }
+        #postulaciones-datatable tbody tr.estado-aprobado:hover {
+            background-color: #d4edda !important;
+        }
+        
+        /* Fila Rechazado - Rojo suave */
+        #postulaciones-datatable tbody tr.estado-rechazado {
+            background-color: #ffebee !important;
+            border-left: 4px solid #dc3545;
+        }
+        #postulaciones-datatable tbody tr.estado-rechazado:hover {
+            background-color: #f8d7da !important;
+        }
+        
+        /* Fila Observado - Naranja suave */
+        #postulaciones-datatable tbody tr.estado-observado {
+            background-color: #fff3e0 !important;
+            border-left: 4px solid #ff9800;
+        }
+        #postulaciones-datatable tbody tr.estado-observado:hover {
+            background-color: #ffe0b2 !important;
+        }
+        
+        /* Modo Oscuro - Ajustes para las filas con color */
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-pendiente {
+            background-color: rgba(255, 193, 7, 0.15) !important;
+            border-left-color: #ffc107;
+        }
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-pendiente:hover {
+            background-color: rgba(255, 193, 7, 0.25) !important;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-aprobado {
+            background-color: rgba(40, 167, 69, 0.15) !important;
+            border-left-color: #28a745;
+        }
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-aprobado:hover {
+            background-color: rgba(40, 167, 69, 0.25) !important;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-rechazado {
+            background-color: rgba(220, 53, 69, 0.15) !important;
+            border-left-color: #dc3545;
+        }
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-rechazado:hover {
+            background-color: rgba(220, 53, 69, 0.25) !important;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-observado {
+            background-color: rgba(255, 152, 0, 0.15) !important;
+            border-left-color: #ff9800;
+        }
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-observado:hover {
+            background-color: rgba(255, 152, 0, 0.25) !important;
+        }
+        
+        /* Transición suave para hover */
+        #postulaciones-datatable tbody tr {
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        /* ========================================================= */
+        /* BADGES DE ESTADO EN LA COLUMNA */
+        /* ========================================================= */
+        
+        /* Badge Pendiente */
+        .badge-estado-pendiente {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            font-size: 0.75rem;
+        }
+        
+        /* Badge Aprobado */
+        .badge-estado-aprobado {
+            background-color: #28a745 !important;
+            color: #fff !important;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            font-size: 0.75rem;
+        }
+        
+        /* Badge Rechazado */
+        .badge-estado-rechazado {
+            background-color: #dc3545 !important;
+            color: #fff !important;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            font-size: 0.75rem;
+        }
+        
+        /* Badge Observado */
+        .badge-estado-observado {
+            background-color: #ff9800 !important;
+            color: #fff !important;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            font-size: 0.75rem;
+        }
+        
+        /* Modo Oscuro - Badges mantienen sus colores */
+        body[data-layout-mode="dark"] .badge-estado-pendiente,
+        body[data-layout-mode="dark"] .badge-estado-aprobado,
+        body[data-layout-mode="dark"] .badge-estado-rechazado,
+        body[data-layout-mode="dark"] .badge-estado-observado {
+            opacity: 0.95;
+        }
+
+        /* ========================================================= */
+        /* DISEÑO FORMAL Y CORPORATIVO PARA DATATABLE */
+        /* ========================================================= */
+        
+        /* Contenedor de la tabla - estilo corporativo */
+        .dataTables_wrapper {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            padding: 0;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        body[data-layout-mode="dark"] .dataTables_wrapper {
+            background: var(--cepre-dark-card);
+            border-color: #4a5468;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Tabla principal - diseño formal */
+        #postulaciones-datatable {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            font-size: 0.875rem;
+            margin: 0 !important;
+        }
+        
+        /* Encabezado de la tabla - estilo corporativo azul marino */
+        #postulaciones-datatable thead th {
+            background: #1e3a8a !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            padding: 1rem 1rem !important;
+            border-bottom: 2px solid #1e40af !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            white-space: nowrap;
+            text-align: left;
+        }
+        
+        #postulaciones-datatable thead th:last-child {
+            border-right: none !important;
+        }
+        
+        /* Iconos de ordenamiento - estilo formal */
+        #postulaciones-datatable thead th.sorting:after,
+        #postulaciones-datatable thead th.sorting_asc:after,
+        #postulaciones-datatable thead th.sorting_desc:after {
+            opacity: 0.7;
+            font-size: 0.75em;
+            color: #ffffff;
+        }
+        
+        /* Cuerpo de la tabla - diseño limpio */
+        #postulaciones-datatable tbody td {
+            padding: 0.875rem 1rem !important;
+            vertical-align: middle !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            border-right: 1px solid #f3f4f6 !important;
+            font-size: 0.875rem;
+            color: #1f2937;
+            background: #ffffff;
+        }
+        
+        #postulaciones-datatable tbody td:last-child {
+            border-right: none !important;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody td {
+            border-bottom-color: #4a5468 !important;
+            border-right-color: #3a4556 !important;
+            color: var(--cepre-dark-text);
+        }
+        
+        /* Filas alternas - estilo zebra formal */
+        #postulaciones-datatable tbody tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr:nth-child(even) td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Efecto hover - sutil y profesional */
+        #postulaciones-datatable tbody tr:hover td {
+            background: #f3f4f6 !important;
+            cursor: pointer;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        /* Código de postulante - estilo formal */
+        #postulaciones-datatable tbody td:first-child {
+            font-weight: 700;
+            color: #1e3a8a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.8125rem;
+        }
+        
+        body[data-layout-mode="dark"] #postulaciones-datatable tbody td:first-child {
+            color: #60a5fa;
+        }
+        
+        /* Botones de acción - diseño corporativo */
+        #postulaciones-datatable .btn-group {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+        
+        #postulaciones-datatable .btn-sm {
+            padding: 0.375rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            transition: all 0.15s ease-in-out;
+            border: 1px solid transparent;
+        }
+        
+        #postulaciones-datatable .btn-sm:hover {
+            opacity: 0.85;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Badges - diseño formal y sobrio */
+        #postulaciones-datatable .badge {
+            padding: 0.35em 0.65em;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid transparent;
+        }
+        
+        /* Controles de DataTables - estilo formal */
+        .dataTables_length,
+        .dataTables_filter {
+            padding: 1rem 1.25rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        body[data-layout-mode="dark"] .dataTables_length,
+        body[data-layout-mode="dark"] .dataTables_filter {
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom-color: #4a5468;
+        }
+        
+        .dataTables_length {
+            float: left;
+        }
+        
+        .dataTables_filter {
+            float: right;
+        }
+        
+        .dataTables_length label,
+        .dataTables_filter label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        
+        body[data-layout-mode="dark"] .dataTables_length label,
+        body[data-layout-mode="dark"] .dataTables_filter label {
+            color: var(--cepre-dark-text);
+        }
+        
+        .dataTables_length select,
+        .dataTables_filter input {
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            padding: 0.375rem 0.75rem;
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            background: #ffffff;
+        }
+        
+        .dataTables_length select:focus,
+        .dataTables_filter input:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+        }
+        
+        /* Información de paginación - estilo formal */
+        .dataTables_info {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+            padding: 1rem 1.25rem;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        body[data-layout-mode="dark"] .dataTables_info {
+            color: #9ca3af;
+            background: rgba(255, 255, 255, 0.02);
+            border-top-color: #4a5468;
+        }
+        
+        /* Paginación - diseño corporativo formal */
+        .dataTables_paginate {
+            padding: 1rem 1.25rem;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        body[data-layout-mode="dark"] .dataTables_paginate {
+            background: rgba(255, 255, 255, 0.02);
+            border-top-color: #4a5468;
+        }
+        
+        .pagination {
+            margin: 0;
+            gap: 0.25rem;
+        }
+        
+        .pagination .page-link {
+            border: 1px solid #d1d5db;
+            color: #374151;
+            padding: 0.5rem 0.875rem;
+            border-radius: 3px;
+            font-weight: 500;
+            transition: all 0.15s ease-in-out;
+            margin: 0 2px;
+            background: #ffffff;
+        }
+        
+        .pagination .page-link:hover {
+            background-color: #1e3a8a;
+            border-color: #1e3a8a;
+            color: #ffffff;
+        }
+        
+        .pagination .page-item.active .page-link {
+            background: #1e3a8a;
+            border-color: #1e3a8a;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+        
+        /* Mensaje de procesamiento - estilo formal */
+        .dataTables_processing {
+            background: #1e3a8a !important;
+            color: white !important;
+            border: 1px solid #1e40af !important;
+            border-radius: 3px !important;
+            padding: 1rem 2rem !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2) !important;
+        }
+        
+        /* ========================================================= */
+        /* ESTILOS RESPONSIVE PARA LA TABLA */
+        /* ========================================================= */
+        
+        /* Reducir padding del card para dar más espacio a la tabla */
+        .cepre-content-card .card-body {
+            padding: 0.75rem !important;
+        }
+        
+        /* Tabla usa todo el ancho disponible */
+        .dataTables_wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        /* Tabla responsive que se ajusta al contenedor */
+        #postulaciones-datatable {
+            width: 100% !important;
+            table-layout: auto;
+        }
+        
+        /* Ajustar tamaño de fuente y padding según pantalla */
+        #postulaciones-datatable tbody td,
+        #postulaciones-datatable thead th {
+            font-size: 0.75rem !important;
+            padding: 0.5rem 0.35rem !important;
+            white-space: nowrap;
+        }
+        
+        /* Código de postulante más compacto */
+        #postulaciones-datatable tbody td:first-child {
+            font-size: 0.7rem !important;
+        }
+        
+        /* Badges más compactos */
+        #postulaciones-datatable .badge {
+            padding: 0.2em 0.4em !important;
+            font-size: 0.6rem !important;
+            white-space: nowrap;
+        }
+        
+        /* Botones de acción más compactos */
+        #postulaciones-datatable .btn-sm {
+            padding: 0.2rem 0.3rem !important;
+            font-size: 0.65rem !important;
+        }
+        
+        #postulaciones-datatable .btn-sm i {
+            font-size: 0.75rem;
+        }
+        
+        /* Grupo de botones más compacto */
+        #postulaciones-datatable .btn-group {
+            gap: 0.15rem !important;
+        }
+        
+        /* Controles de DataTables más compactos */
+        .dataTables_length,
+        .dataTables_filter,
+        .dataTables_info,
+        .dataTables_paginate {
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .dataTables_length label,
+        .dataTables_filter label {
+            font-size: 0.8rem !important;
+        }
+        
+        .dataTables_length select,
+        .dataTables_filter input {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Paginación más compacta */
+        .pagination .page-link {
+            padding: 0.35rem 0.6rem !important;
+            font-size: 0.75rem !important;
+        }
+        
+        /* Para pantallas grandes (desktop) - todo debe caber sin scroll */
+        @media (min-width: 1200px) {
+            #postulaciones-datatable tbody td,
+            #postulaciones-datatable thead th {
+                font-size: 0.8rem !important;
+                padding: 0.6rem 0.4rem !important;
+            }
+            
+            #postulaciones-datatable .badge {
+                font-size: 0.65rem !important;
+            }
+            
+            #postulaciones-datatable .btn-sm {
+                font-size: 0.7rem !important;
+                padding: 0.25rem 0.35rem !important;
+            }
+        }
+        
+        /* Para pantallas medianas (tablets) */
+        @media (max-width: 1199px) and (min-width: 768px) {
+            #postulaciones-datatable tbody td,
+            #postulaciones-datatable thead th {
+                font-size: 0.7rem !important;
+                padding: 0.5rem 0.3rem !important;
+            }
+        }
+        
+        /* Para pantallas pequeñas (móviles) - permitir scroll horizontal */
+        @media (max-width: 767px) {
+            .dataTables_wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            #postulaciones-datatable {
+                min-width: 800px; /* Ancho mínimo solo en móviles */
+            }
+            
+            #postulaciones-datatable tbody td,
+            #postulaciones-datatable thead th {
+                font-size: 0.7rem !important;
+                padding: 0.5rem 0.25rem !important;
+            }
+            
+            .cepre-content-card .card-body {
+                padding: 0.5rem !important;
+            }
+        }
     </style>
 @endpush
 

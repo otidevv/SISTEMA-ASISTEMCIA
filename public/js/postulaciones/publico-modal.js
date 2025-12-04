@@ -84,20 +84,41 @@ $(document).ready(function () {
         verificarPostulante(this);
     });
 
-    // Búsqueda de colegio
-    $('#btnBuscarColegio').on('click', buscarColegios);
-    // Evento keyup para la búsqueda en tiempo real
-    $('#buscar_colegio').on('keyup', function () {
-        const searchTerm = $(this).val();
-        if (searchTerm.length >= 2 || searchTerm.length === 0) { // Search if 2+ chars or empty (to clear results)
-            buscarColegios();
-        } else {
-            $('#sugerencias-colegios').empty(); // Limpiar sugerencias si no hay suficientes caracteres
-        }
+    // Búsqueda de colegio con debounce
+    let searchTimeout = null;
+
+    $('#btnBuscarColegio').off('click').on('click', function () {
+        buscarColegios();
     });
-    $('#buscar_colegio').on('keypress', function (e) {
+
+    // Evento keyup con debounce de 300ms
+    $('#buscar_colegio').off('keyup').on('keyup', function () {
+        const searchTerm = $(this).val();
+
+        // Limpiar timeout anterior
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Si hay menos de 2 caracteres, limpiar resultados
+        if (searchTerm.length < 2 && searchTerm.length > 0) {
+            $('#sugerencias-colegios').empty();
+            return;
+        }
+
+        // Aplicar debounce de 300ms
+        searchTimeout = setTimeout(function () {
+            buscarColegios();
+        }, 300);
+    });
+
+    $('#buscar_colegio').off('keypress').on('keypress', function (e) {
         if (e.which === 13) {
             e.preventDefault();
+            // Limpiar timeout si existe
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
             buscarColegios();
         }
     });
@@ -107,9 +128,19 @@ function buscarColegios() {
     const termino = $('#buscar_colegio').val();
     // Solo buscar si el término tiene al menos 2 caracteres o si el campo está vacío al seleccionar un distrito
     if (termino.length < 2 && termino.length !== 0) {
-        $('#sugerencias-colegios').empty(); // Limpiar sugerencias si no hay suficientes caracteres
+        $('#sugerencias-colegios').empty();
         return;
     }
+
+    // Mostrar indicador de carga
+    $('#sugerencias-colegios').html(`
+        <div class="list-group-item text-center">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <span>Buscando colegios...</span>
+        </div>
+    `);
 
     $.ajax({
         url: '/api/public/buscar-colegios',
@@ -123,56 +154,126 @@ function buscarColegios() {
         },
         success: function (response) {
             if (response.success) {
-                mostrarSugerenciasColegios(response.colegios);
+                mostrarSugerenciasColegios(response.colegios, termino);
+            } else {
+                $('#sugerencias-colegios').html(`
+                    <div class="list-group-item text-center text-muted">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        No se pudieron cargar los colegios
+                    </div>
+                `);
             }
         },
         error: function (xhr) {
             console.error('Error buscando colegios:', xhr);
+            $('#sugerencias-colegios').html(`
+                <div class="list-group-item text-center text-danger">
+                    <i class="fas fa-times-circle me-2"></i>
+                    Error al buscar colegios. Por favor, intente nuevamente.
+                </div>
+            `);
             toastr.error('Error al buscar colegios');
         }
     });
 }
 
-function mostrarSugerenciasColegios(colegios) {
+function mostrarSugerenciasColegios(colegios, termino = '') {
     let html = '';
+
     if (colegios.length === 0) {
-        html = '<div class="list-group-item">No se encontraron colegios</div>';
+        html = `
+            <div class="list-group-item text-center">
+                <i class="fas fa-search me-2"></i>
+                No se encontraron colegios
+                <br>
+                <small class="text-muted">Intente con otro término de búsqueda</small>
+            </div>
+        `;
     } else {
         colegios.forEach(colegio => {
+            // Resaltar término de búsqueda en el nombre
+            let nombreResaltado = colegio.nombre;
+            if (termino && termino.length >= 2) {
+                const regex = new RegExp(`(${termino})`, 'gi');
+                nombreResaltado = colegio.nombre.replace(regex, '<span style="background-color: rgba(255, 215, 0, 0.3); font-weight: 600; padding: 0 2px; border-radius: 2px;">$1</span>');
+            }
+
             html += `
                 <a href="#" class="list-group-item list-group-item-action seleccionar-colegio"
-                    data-id="${colegio.id}" data-nombre="${colegio.nombre}">
-                    <strong>${colegio.nombre}</strong>
-                    ${colegio.nivel ? `<br><small>Nivel: ${colegio.nivel}</small>` : ''}
-                    ${colegio.direccion ? `<br><small>${colegio.direccion}</small>` : ''}
+                    data-id="${colegio.id}" data-nombre="${colegio.nombre}"
+                    style="transition: all 0.2s ease; border-left: 3px solid transparent;">
+                    <strong>${nombreResaltado}</strong>
+                    ${colegio.nivel ? `<br><small class="text-muted"><i class="fas fa-graduation-cap me-1"></i>Nivel: ${colegio.nivel}</small>` : ''}
+                    ${colegio.direccion ? `<br><small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>${colegio.direccion}</small>` : ''}
                 </a>
             `;
         });
     }
+
     $('#sugerencias-colegios').html(html);
 
-    // Evento para seleccionar colegio
-    $('.seleccionar-colegio').on('click', function (e) {
+    // IMPORTANTE: Usar event delegation para evitar duplicados
+    // Primero removemos cualquier handler previo
+    $(document).off('click', '.seleccionar-colegio');
+
+    // Luego agregamos el nuevo handler usando delegación
+    $(document).on('click', '.seleccionar-colegio', function (e) {
         e.preventDefault();
+
         const colegioSeleccionado = {
             id: $(this).data('id'),
             nombre: $(this).data('nombre')
         };
+
         mostrarColegioSeleccionado(colegioSeleccionado);
         $('#sugerencias-colegios').empty();
+
+        // Feedback visual
+        toastr.success('Colegio seleccionado correctamente', 'Éxito', {
+            timeOut: 2000,
+            positionClass: 'toast-bottom-right'
+        });
     });
+
+    // Agregar hover effects con CSS inline
+    $('.seleccionar-colegio').hover(
+        function () {
+            $(this).css({
+                'background-color': '#f0f8ff',
+                'border-left-color': '#00bcd4',
+                'transform': 'translateX(5px)'
+            });
+        },
+        function () {
+            $(this).css({
+                'background-color': '',
+                'border-left-color': 'transparent',
+                'transform': ''
+            });
+        }
+    );
 }
 
 function mostrarColegioSeleccionado(colegio) {
-    $('#nombre-colegio-seleccionado').text(colegio.nombre);
+    $('#nombre-colegio-seleccionado').html(`
+        <i class="fas fa-school me-2 text-success"></i>
+        <strong>${colegio.nombre}</strong>
+    `);
     $('#colegio-seleccionado').show();
-    $('#buscar_colegio').val(colegio.nombre);
+    $('#buscar_colegio').val('').attr('placeholder', 'Colegio seleccionado: ' + colegio.nombre);
     $('#centro_educativo_id').val(colegio.id);
+
+    // Deshabilitar búsqueda hasta que se cambie
+    $('#buscar_colegio').prop('disabled', true);
+    $('#btnBuscarColegio').prop('disabled', true);
 }
 
 function ocultarColegioSeleccionado() {
     $('#colegio-seleccionado').hide();
     $('#centro_educativo_id').val('');
+    $('#buscar_colegio').val('').attr('placeholder', 'Buscar colegio...').prop('disabled', false);
+    $('#btnBuscarColegio').prop('disabled', false);
+    $('#sugerencias-colegios').empty();
 }
 
 function loadDepartamentos() {
@@ -185,13 +286,14 @@ function loadDepartamentos() {
         return;
     }
 
-    select.html('<option value="">Cargando...</option>');
+    // Mostrar el select inmediatamente con opción por defecto
+    select.html('<option value="">Seleccione departamento</option>').show();
 
     $.get('/api/public/departamentos', function (data) {
         console.log('Respuesta API Departamentos:', data);
 
         if (data.success) {
-            let html = '<option value="">Seleccione</option>';
+            let html = '<option value="">Seleccione departamento</option>';
 
             // Verificar si es array u objeto
             const lista = data.departamentos;
@@ -209,31 +311,18 @@ function loadDepartamentos() {
                 });
             }
 
-            select.html(html);
-            select.show(); // Asegurar que sea visible
-
-            console.log('Departamentos renderizados (Nativo)');
+            select.html(html).show();
+            console.log('Departamentos cargados correctamente');
         } else {
             console.error('API reportó error:', data.message);
-            select.html('<option value="">Error al cargar</option>');
-            // Eliminando defensivamente cualquier duplicado de UI enhancer
-            if (select.next().hasClass('nice-select')) {
-                select.niceSelect('destroy');
-            }
-            select.show();
+            select.html('<option value="">Error al cargar</option>').show();
             toastr.error('Error al cargar departamentos: ' + (data.message || 'Desconocido'));
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.error('Error AJAX Departamentos:', textStatus, errorThrown);
-        console.error('Respuesta:', jqXHR.responseText);
-        select.html('<option value="">Error de conexión</option>');
-        if (select.next().hasClass('nice-select')) {
-            select.niceSelect('destroy');
-        }
-        select.show();
+        select.html('<option value="">Error de conexión</option>').show();
         toastr.error('Error de conexión al cargar departamentos');
 
-        // Debugging extra solicitado por el usuario
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
@@ -245,116 +334,54 @@ function loadDepartamentos() {
 }
 
 function loadProvincias(dep) {
-    console.log('=== LOAD PROVINCIAS ===');
-    console.log('Departamento seleccionado:', dep);
-
     const select = $('#provincia');
     const distSelect = $('#distrito');
 
-    // Limpieza defensiva de cualquier UI enhancer
-    if (select.next().hasClass('nice-select')) { select.niceSelect('destroy'); }
-    if (distSelect.next().hasClass('nice-select')) { distSelect.niceSelect('destroy'); }
-
-    select.html('<option value="">Cargando...</option>').prop('disabled', true);
-    distSelect.html('<option value="">Seleccione provincia primero</option>').prop('disabled', true);
-
-    select.show();
-    distSelect.show();
+    select.html('<option value="">Seleccione provincia</option>').prop('disabled', true).show();
+    distSelect.html('<option value="">Seleccione distrito</option>').prop('disabled', true).show();
 
     if (!dep) {
-        console.warn('No se proporcionó departamento');
         select.html('<option value="">Seleccione departamento primero</option>');
         return;
     }
 
-    const url = '/api/public/provincias/' + dep;
-    console.log('Llamando a API:', url);
-
-    $.get(url, function (data) {
-        console.log('Respuesta API Provincias:', data);
-
-        if (data.success && data.provincias) {
-            let html = '<option value="">Seleccione</option>';
-
-            if (Array.isArray(data.provincias) && data.provincias.length > 0) {
-                data.provincias.forEach(function (item) {
-                    const id = (typeof item === 'object') ? item.id : item;
-                    const nombre = (typeof item === 'object') ? item.nombre : item;
-                    html += `<option value="${id}">${nombre}</option>`;
-                });
-                console.log('Provincias cargadas:', data.provincias.length);
-            } else {
-                console.warn('No se encontraron provincias para:', dep);
-                html = '<option value="">No hay provincias disponibles</option>';
-            }
-
-            select.html(html).prop('disabled', false);
-            console.log('Select de provincias actualizado y habilitado');
-        } else {
-            console.error('Respuesta inválida de API:', data);
-            select.html('<option value="">Error al cargar</option>');
-            toastr.error('No se pudieron cargar las provincias');
+    $.get('/api/public/provincias/' + dep, function (data) {
+        if (data.success) {
+            let html = '<option value="">Seleccione provincia</option>';
+            data.provincias.forEach(function (item) {
+                const id = (typeof item === 'object') ? item.id : item;
+                const nombre = (typeof item === 'object') ? item.nombre : item;
+                html += `<option value="${id}">${nombre}</option>`;
+            });
+            select.html(html).prop('disabled', false).show();
         }
-    }).fail(function (xhr, status, error) {
-        console.error('Error AJAX al cargar provincias:', status, error);
-        console.error('Detalles:', xhr.responseText);
-        select.html('<option value="">Error de conexión</option>');
-        toastr.error('Error al cargar provincias: ' + error);
+    }).fail(function () {
+        toastr.error('Error al cargar provincias');
     });
 }
 
 function loadDistritos(dep, prov) {
-    console.log('=== LOAD DISTRITOS ===');
-    console.log('Departamento:', dep, 'Provincia:', prov);
-
     const select = $('#distrito');
 
-    // Limpieza defensiva de cualquier UI enhancer
-    if (select.next().hasClass('nice-select')) { select.niceSelect('destroy'); }
-
-    select.html('<option value="">Cargando...</option>').prop('disabled', true);
-
-    select.show();
+    select.html('<option value="">Seleccione distrito</option>').prop('disabled', true).show();
 
     if (!dep || !prov) {
-        console.warn('Faltan parámetros - Dep:', dep, 'Prov:', prov);
         select.html('<option value="">Seleccione provincia primero</option>');
         return;
     }
 
-    const url = '/api/public/distritos/' + dep + '/' + prov;
-    console.log('Llamando a API:', url);
-
-    $.get(url, function (data) {
-        console.log('Respuesta API Distritos:', data);
-
-        if (data.success && data.distritos) {
-            let html = '<option value="">Seleccione</option>';
-
-            if (Array.isArray(data.distritos) && data.distritos.length > 0) {
-                data.distritos.forEach(function (item) {
-                    const id = (typeof item === 'object') ? item.id : item;
-                    const nombre = (typeof item === 'object') ? item.nombre : item;
-                    html += `<option value="${id}">${nombre}</option>`;
-                });
-                console.log('Distritos cargados:', data.distritos.length);
-            } else {
-                console.warn('No se encontraron distritos para:', dep, prov);
-                html = '<option value="">No hay distritos disponibles</option>';
-            }
-
-            select.html(html).prop('disabled', false);
-            console.log('Select de distritos actualizado y habilitado');
-        } else {
-            console.error('Respuesta inválida de API:', data);
-            select.html('<option value="">Error al cargar</option>');
-            toastr.error('No se pudieron cargar los distritos');
+    $.get('/api/public/distritos/' + dep + '/' + prov, function (data) {
+        if (data.success) {
+            let html = '<option value="">Seleccione distrito</option>';
+            data.distritos.forEach(function (item) {
+                const id = (typeof item === 'object') ? item.id : item;
+                const nombre = (typeof item === 'object') ? item.nombre : item;
+                html += `<option value="${id}">${nombre}</option>`;
+            });
+            select.html(html).prop('disabled', false).show();
         }
-    }).fail(function (xhr, status, error) {
-        console.error('Error AJAX al cargar distritos:', status, error);
-        console.error('Detalles:', xhr.responseText);
-        select.html('<option value="">Error de conexión</option>');
-        toastr.error('Error al cargar distritos: ' + error);
+    }).fail(function () {
+        toastr.error('Error al cargar distritos');
     });
 }
 
@@ -797,13 +824,7 @@ function verificarPostulante(btnElement) {
                 $('#estudiante_nombre').val(response.estudiante.nombre);
                 $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
                 $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
-
-                // Convertir fecha de ISO 8601 a formato yyyy-MM-dd
-                if (response.estudiante.fecha_nacimiento) {
-                    const fechaNacimiento = response.estudiante.fecha_nacimiento.split('T')[0];
-                    $('#estudiante_fecha_nacimiento').val(fechaNacimiento);
-                }
-
+                $('#estudiante_fecha_nacimiento').val(response.estudiante.fecha_nacimiento);
                 $('#estudiante_genero').val(response.estudiante.genero);
                 $('#estudiante_telefono').val(response.estudiante.telefono);
                 $('#estudiante_direccion').val(response.estudiante.direccion);
@@ -814,11 +835,8 @@ function verificarPostulante(btnElement) {
                 $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
 
                 // NUEVO: Pre-cargar datos de padres si existen
-                console.log('Verificando datos de padres:', response.padres);
-                if (response.padres && (response.padres.padre || response.padres.madre)) {
+                if (response.padres) {
                     precargarDatosPadres(response.padres);
-                } else {
-                    console.warn('No hay datos de padres disponibles en la respuesta');
                 }
 
                 // NUEVO: Pre-cargar datos académicos y archivos si existen

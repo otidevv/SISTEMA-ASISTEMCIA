@@ -6,71 +6,237 @@
     <!-- Font Awesome (for original search icon) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        /* Paleta de colores y variables */
+        /* ========================================================= */
+        /* DISEÑO FORMAL Y CORPORATIVO - MÓDULO DE ASISTENCIA */
+        /* ========================================================= */
+        
+        /* Paleta de colores corporativa */
         :root {
-            --primary-gradient: linear-gradient(135deg, #4f32c2 0%, #7367f0 100%);
-            --success-gradient: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
-            --warning-gradient: linear-gradient(135deg, #ff9f43 0%, #ff8b1b 100%);
-            --info-gradient: linear-gradient(135deg, #00cfe8 0%, #1ce1ff 100%);
-            --primary-glow: 0 0 20px rgba(115, 103, 240, 0.4);
+            --corporate-blue: #1e3a8a;
+            --corporate-blue-dark: #1e40af;
+            --corporate-gray: #f9fafb;
+            --corporate-border: #d1d5db;
+            --corporate-text: #1f2937;
         }
 
-        /* --- TARJETAS DE ESTADÍSTICAS --- */
+        /* --- TARJETAS DE ESTADÍSTICAS FORMALES --- */
         .tilebox-one {
-            border: none; border-radius: 0.75rem; transition: all 0.3s ease; overflow: hidden; color: white;
+            border: 1px solid var(--corporate-border);
+            border-radius: 4px;
+            transition: all 0.15s ease;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .tilebox-one:hover {
-            transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .tilebox-one .card-body { position: relative; z-index: 2; padding: 1.25rem; }
-        .tilebox-one .mdi { font-size: 2.5rem; transition: all 0.3s ease; opacity: 0.3; }
-        .tilebox-one:hover .mdi { transform: scale(1.2) rotate(-10deg); }
-        .tilebox-one h2, .tilebox-one h6 { color: white; margin: 0; }
-        .tilebox-one h6 { opacity: 0.8; font-size: 0.9rem; }
-        .tilebox-one h2 { font-size: 1.75rem; font-weight: 700; }
+        .tilebox-one .card-body {
+            position: relative;
+            z-index: 2;
+            padding: 1.25rem;
+            border-left: 4px solid var(--corporate-blue);
+        }
+        .tilebox-one .mdi {
+            font-size: 2rem;
+            opacity: 0.15;
+            color: var(--corporate-blue);
+        }
+        .tilebox-one h2, .tilebox-one h6 {
+            color: var(--corporate-text);
+            margin: 0;
+        }
+        .tilebox-one h6 {
+            opacity: 0.7;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .tilebox-one h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--corporate-blue);
+        }
         
-        /* --- BOTONES Y UI --- */
+        /* --- BOTONES FORMALES --- */
         .btn-primary-gradient {
-            background-image: var(--primary-gradient); border: none; color: white !important; transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(115, 103, 240, 0.5);
+            background: var(--corporate-blue);
+            border: 1px solid var(--corporate-blue);
+            color: white !important;
+            transition: all 0.15s ease;
+            box-shadow: none;
         }
         .btn-primary-gradient:hover {
-            transform: translateY(-2px); box-shadow: var(--primary-glow); color: white !important;
+            background: var(--corporate-blue-dark);
+            border-color: var(--corporate-blue-dark);
+            opacity: 0.9;
         }
 
-        /* --- TABLA PROFESIONAL --- */
+        /* --- TABLA FORMAL Y CORPORATIVA --- */
+        .table-responsive {
+            border: 1px solid var(--corporate-border);
+            border-radius: 4px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        
         .table-light thead th {
-            background: #2a3042; color: #b4b7c1; border-bottom: 2px solid var(--bs-primary);
+            background: var(--corporate-blue) !important;
+            color: #ffffff !important;
+            border-bottom: 2px solid var(--corporate-blue-dark) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            padding: 1rem !important;
         }
-        .table-light th.sortable { cursor: pointer; position: relative; }
-        .table-light th.sortable:hover { background-color: #323950; color: #fff; }
-        .sort-indicator { display: inline-block; width: 16px; height: 16px; margin-left: 5px; opacity: 0.6; vertical-align: middle; }
-        .sort-indicator::after { font-family: 'Material Design Icons'; font-size: 16px; line-height: 1; }
-        th[data-sort-direction="asc"] .sort-indicator::after { content: "\F005D"; } /* mdi-arrow-up */
-        th[data-sort-direction="desc"] .sort-indicator::after { content: "\F0045"; } /* mdi-arrow-down */
-        .asistencia-row-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); background-color: #f8f9fe; }
+        
+        .table-light thead th:last-child {
+            border-right: none !important;
+        }
+        
+        .table-light th.sortable {
+            cursor: pointer;
+            position: relative;
+        }
+        .table-light th.sortable:hover {
+            background-color: var(--corporate-blue-dark) !important;
+        }
+        
+        .sort-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+            opacity: 0.7;
+            vertical-align: middle;
+        }
+        .sort-indicator::after {
+            font-family: 'Material Design Icons';
+            font-size: 16px;
+            line-height: 1;
+            color: #ffffff;
+        }
+        th[data-sort-direction="asc"] .sort-indicator::after { content: "\F005D"; }
+        th[data-sort-direction="desc"] .sort-indicator::after { content: "\F0045"; }
+        
+        /* Cuerpo de tabla - estilo zebra formal */
+        .table tbody td {
+            padding: 0.875rem 1rem !important;
+            vertical-align: middle !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            border-right: 1px solid #f3f4f6 !important;
+            font-size: 0.875rem;
+            color: var(--corporate-text);
+        }
+        
+        .table tbody td:last-child {
+            border-right: none !important;
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background: var(--corporate-gray);
+        }
+        
+        .asistencia-row-item:hover {
+            background-color: #f3f4f6 !important;
+            cursor: pointer;
+        }
 
-        /* --- AVATARES Y BADGES --- */
-        .avatar-sm { width: 36px; height: 36px; font-size: 0.9rem; }
-        .avatar-sm[data-bg-color] { color: white; }
+        /* --- AVATARES FORMALES --- */
+        .avatar-sm {
+            width: 36px;
+            height: 36px;
+            font-size: 0.9rem;
+            background: var(--corporate-blue);
+        }
+        .avatar-sm[data-bg-color] {
+            color: white;
+        }
 
         /* --- BÚSQUEDA CON SUGERENCIAS --- */
         .search-container { position: relative; }
         .suggestions-dropdown {
-            position: absolute; top: 100%; left: 0; right: 0; background: white;
-            border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 0.375rem 0.375rem;
-            max-height: 300px; overflow-y: auto; display: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1050;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--corporate-border);
+            border-top: none;
+            border-radius: 0 0 3px 3px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1050;
         }
-        .suggestion-item { padding: 10px 15px; cursor: pointer; transition: background-color 0.2s ease; border-bottom: 1px solid #f1f3f4; }
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+            border-bottom: 1px solid #f1f3f4;
+        }
         .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover, .suggestion-item.active { background-color: #f8f9fa; }
+        .suggestion-item:hover, .suggestion-item.active {
+            background-color: var(--corporate-gray);
+        }
 
-        /* ========= MEJORA DE PAGINACIÓN ========= */
+        /* --- PAGINACIÓN FORMAL --- */
         .pagination {
-            --bs-pagination-padding-y: 0.3rem;      /* Reduce el padding vertical */
-            --bs-pagination-padding-x: 0.6rem;      /* Reduce el padding horizontal */
-            --bs-pagination-font-size: 0.875rem;    /* Reduce el tamaño de la fuente */
+            margin: 0;
+            gap: 0.25rem;
+        }
+        .pagination .page-link {
+            border: 1px solid var(--corporate-border);
+            color: var(--corporate-text);
+            padding: 0.5rem 0.875rem;
+            border-radius: 3px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            margin: 0 2px;
+            background: #ffffff;
+        }
+        .pagination .page-link:hover {
+            background-color: var(--corporate-blue);
+            border-color: var(--corporate-blue);
+            color: #ffffff;
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--corporate-blue);
+            border-color: var(--corporate-blue);
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        /* Badges formales */
+        .badge {
+            padding: 0.35em 0.65em;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Modo oscuro */
+        body[data-layout-mode="dark"] .tilebox-one {
+            background: #364053;
+            border-color: #4a5468;
+        }
+        body[data-layout-mode="dark"] .tilebox-one h2,
+        body[data-layout-mode="dark"] .tilebox-one h6 {
+            color: #eef2f7;
+        }
+        body[data-layout-mode="dark"] .table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        body[data-layout-mode="dark"] .table tbody td {
+            color: #eef2f7;
+            border-bottom-color: #4a5468 !important;
+            border-right-color: #3a4556 !important;
         }
     </style>
 @endpush
@@ -100,10 +266,10 @@
 
     <!-- Estadísticas -->
     <div class="row">
-        <div class="col-md-3"><div class="card tilebox-one" style="background: var(--info-gradient);"><div class="card-body"><i class="mdi mdi-format-list-numbered float-end"></i><h6>Total Registros</h6><h2 id="stat-total">{{ $registros->total() }}</h2></div></div></div>
-        <div class="col-md-3"><div class="card tilebox-one" style="background: var(--success-gradient);"><div class="card-body"><i class="mdi mdi-login-variant float-end"></i><h6>Entradas</h6><h2 id="stat-entradas">{{ $registros->where('tipo_asistencia', 'entrada')->count() }}</h2></div></div></div>
-        <div class="col-md-3"><div class="card tilebox-one" style="background: var(--warning-gradient);"><div class="card-body"><i class="mdi mdi-logout-variant float-end"></i><h6>Salidas</h6><h2 id="stat-salidas">{{ $registros->where('tipo_asistencia', 'salida')->count() }}</h2></div></div></div>
-        <div class="col-md-3"><div class="card tilebox-one" style="background: var(--primary-gradient);"><div class="card-body"><i class="mdi mdi-account-group-outline float-end"></i><h6>Estudiantes Únicos</h6><h2 id="stat-estudiantes">{{ $registros->pluck('nro_documento')->unique()->count() }}</h2></div></div></div>
+        <div class="col-md-3"><div class="card tilebox-one"><div class="card-body"><i class="mdi mdi-format-list-numbered float-end"></i><h6>Total Registros</h6><h2 id="stat-total">{{ $registros->total() }}</h2></div></div></div>
+        <div class="col-md-3"><div class="card tilebox-one"><div class="card-body"><i class="mdi mdi-login-variant float-end"></i><h6>Entradas</h6><h2 id="stat-entradas">{{ $registros->where('tipo_asistencia', 'entrada')->count() }}</h2></div></div></div>
+        <div class="col-md-3"><div class="card tilebox-one"><div class="card-body"><i class="mdi mdi-logout-variant float-end"></i><h6>Salidas</h6><h2 id="stat-salidas">{{ $registros->where('tipo_asistencia', 'salida')->count() }}</h2></div></div></div>
+        <div class="col-md-3"><div class="card tilebox-one"><div class="card-body"><i class="mdi mdi-account-group-outline float-end"></i><h6>Estudiantes Únicos</h6><h2 id="stat-estudiantes">{{ $registros->pluck('nro_documento')->unique()->count() }}</h2></div></div></div>
     </div>
 
     <div class="card">
@@ -140,6 +306,9 @@
                             <th class="sortable" data-sort="fecha"><i class="mdi mdi-calendar-clock-outline me-1"></i>Fecha y Hora<span class="sort-indicator"></span></th>
                             <th><i class="mdi mdi-swap-horizontal-bold me-1"></i>Tipo</th>
                             <th><i class="mdi mdi-check-decagram-outline me-1"></i>Dispositivo</th>
+                            <th class="text-center"><i class="mdi mdi-check-all me-1"></i>Asistencias</th>
+                            <th class="text-center"><i class="mdi mdi-close-circle-outline me-1"></i>Faltas</th>
+                            <th class="text-center"><i class="mdi mdi-school-outline me-1"></i>Habilitado</th>
                             <th><i class="mdi mdi-list-status me-1"></i>Estado</th>
                             <th class="text-center"><i class="mdi mdi-cogs me-1"></i>Acciones</th>
                         </tr>
@@ -161,6 +330,32 @@
                                 <td>{{ \Carbon\Carbon::parse($registro->fecha_registro)->format('d/m/Y h:i:s A') }}</td>
                                 <td>{{ $registro->tipo_verificacion_texto }}</td>
                                 <td>{{ $registro->sn_dispositivo ?: 'N/A' }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-success">{{ $registro->total_asistencias ?? 0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger">{{ $registro->total_faltas ?? 0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    @php
+                                        $estado = $registro->estado_habilitacion ?? 'regular';
+                                        $puedeRendir = $registro->puede_rendir ?? true;
+                                        $diasHabiles = $registro->dias_habiles_totales ?? 0;
+                                    @endphp
+                                    @if($estado === 'inhabilitado')
+                                        <span class="badge bg-danger" title="Faltas: {{ $registro->total_faltas }} | Límite inhab: {{ $registro->limite_inhabilitacion }} | Días hábiles: {{ $diasHabiles }}">
+                                            <i class="mdi mdi-close-circle"></i> INHABILITADO
+                                        </span>
+                                    @elseif($estado === 'amonestado')
+                                        <span class="badge bg-warning text-dark" title="Faltas: {{ $registro->total_faltas }} | Límite amon: {{ $registro->limite_amonestacion }} | Límite inhab: {{ $registro->limite_inhabilitacion }} | Días hábiles: {{ $diasHabiles }}">
+                                            <i class="mdi mdi-alert"></i> AMONESTADO
+                                        </span>
+                                    @else
+                                        <span class="badge bg-success" title="Faltas: {{ $registro->total_faltas }} | Límite amon: {{ $registro->limite_amonestacion }} | Días hábiles: {{ $diasHabiles }}">
+                                            <i class="mdi mdi-check-circle"></i> HABILITADO
+                                        </span>
+                                    @endif
+                                </td>
                                 <td>
                                     <span class="badge {{ $registro->estado ? 'bg-success-lighten text-success' : 'bg-danger-lighten text-danger' }}">
                                         {{ $registro->estado ? 'Activo' : 'Inactivo' }}
@@ -173,7 +368,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center py-4"><i class="mdi mdi-archive-alert-outline fs-2 text-muted"></i><h5 class="mt-2">No se encontraron registros</h5></td></tr>
+                            <tr><td colspan="9" class="text-center py-4"><i class="mdi mdi-archive-alert-outline fs-2 text-muted"></i><h5 class="mt-2">No se encontraron registros</h5></td></tr>
                         @endforelse
                     </tbody>
                 </table>

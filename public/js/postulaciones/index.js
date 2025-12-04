@@ -10,18 +10,18 @@ $.ajaxSetup({
 let table;
 let currentPostulacionId = null;
 
-$(document).ready(function() {
+$(document).ready(function () {
     console.log('Postulaciones JS cargado');
-    
+
     // Inicializar Select2 para filtros
     initFilterSelects();
 
     // Inicializar DataTables
     initDataTable();
-    
+
     // Cargar estadísticas iniciales
     loadStatistics();
-    
+
     // Configurar eventos
     setupEventHandlers();
 });
@@ -34,13 +34,28 @@ function initDataTable() {
     table = $('#postulaciones-datatable').DataTable({
         processing: true,
         serverSide: true, // Habilitar server-side processing
+        destroy: true, // Permite reinicializar la tabla y cancelar solicitudes Ajax pendientes
         ajax: {
             url: "/json/postulaciones",
             type: 'GET',
-            data: function(d) {
+            data: function (d) {
                 d.ciclo_id = $('#filter-ciclo').val();
                 d.estado = $('#filter-estado').val();
                 d.carrera_id = $('#filter-carrera').val();
+            },
+            error: function (xhr, error, code) {
+                // Ignorar errores de solicitudes abortadas (ocurre cuando se actualiza rápidamente)
+                if (xhr.statusText === 'abort') {
+                    console.log('Solicitud Ajax anterior cancelada (normal al actualizar rápido)');
+                    return;
+                }
+                console.error('Error Ajax en DataTables:', error, code);
+                console.error('Respuesta del servidor:', xhr.responseText);
+
+                // Solo mostrar error si no es un abort
+                if (error !== 'abort') {
+                    toastr.error('Error al cargar las postulaciones. Por favor, intente nuevamente.');
+                }
             }
         },
         columns: [
@@ -49,21 +64,22 @@ function initDataTable() {
             { data: 'dni', name: 'estudiante.numero_documento' },
             { data: 'carrera_nombre', name: 'carrera.nombre' },
             { data: 'turno_nombre', name: 'turno.nombre' },
-            { 
+            {
                 data: 'tipo_inscripcion',
                 name: 'tipo_inscripcion',
-                render: function(data) {
-                    return data === 'postulante' ? 
-                        '<span class="badge bg-primary">Postulante</span>' : 
+                render: function (data) {
+                    return data === 'postulante' ?
+                        '<span class="badge bg-primary">Postulante</span>' :
                         '<span class="badge bg-info">Reforzamiento</span>';
                 }
             },
             { data: 'fecha_postulacion', name: 'fecha_postulacion' },
-            { 
+            {
                 data: 'estado',
                 name: 'estado',
-                render: function(data) {
-                    let badgeClass = 'badge-estado-' + data;
+                render: function (data) {
+                    const estadoLower = data ? data.toLowerCase() : 'pendiente';
+                    let badgeClass = 'badge-estado-' + estadoLower;
                     return '<span class="badge ' + badgeClass + '">' + data.toUpperCase() + '</span>';
                 }
             },
@@ -72,14 +88,14 @@ function initDataTable() {
                 name: 'verificacion',
                 orderable: false,
                 searchable: false,
-                render: function(data) {
+                render: function (data) {
                     let html = '<div class="d-flex gap-1">';
-                    let docIcon = data.documentos_verificados ? 
-                        '<i class="uil uil-check-circle text-success"></i>' : 
+                    let docIcon = data.documentos_verificados ?
+                        '<i class="uil uil-check-circle text-success"></i>' :
                         '<i class="uil uil-times-circle text-danger"></i>';
                     html += '<span title="Documentos">' + docIcon + '</span>';
-                    let payIcon = data.pago_verificado ? 
-                        '<i class="uil uil-money-bill text-success"></i>' : 
+                    let payIcon = data.pago_verificado ?
+                        '<i class="uil uil-money-bill text-success"></i>' :
                         '<i class="uil uil-money-bill-slash text-danger"></i>';
                     html += '<span title="Pago">' + payIcon + '</span>';
                     html += '</div>';
@@ -116,7 +132,25 @@ function initDataTable() {
             emptyTable: "No hay postulaciones disponibles",
             loadingRecords: "Cargando..."
         },
-        drawCallback: function() {
+        rowCallback: function (row, data) {
+            // Aplicar clase según el estado de la postulación
+            const estado = data.estado ? data.estado.toLowerCase() : '';
+
+            // Remover clases previas de estado
+            $(row).removeClass('estado-pendiente estado-aprobado estado-rechazado estado-observado');
+
+            // Agregar clase según el estado actual
+            if (estado === 'pendiente') {
+                $(row).addClass('estado-pendiente');
+            } else if (estado === 'aprobado') {
+                $(row).addClass('estado-aprobado');
+            } else if (estado === 'rechazado') {
+                $(row).addClass('estado-rechazado');
+            } else if (estado === 'observado') {
+                $(row).addClass('estado-observado');
+            }
+        },
+        drawCallback: function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
             loadStatistics();
         }
@@ -125,84 +159,84 @@ function initDataTable() {
 
 function setupEventHandlers() {
     // Filtrar
-    $('#btn-filtrar').on('click', function() {
+    $('#btn-filtrar').on('click', function () {
         table.ajax.reload();
     });
-    
+
     // Ver detalle
-    $(document).on('click', '.view-postulacion', function() {
+    $(document).on('click', '.view-postulacion', function () {
         const id = $(this).data('id');
         viewPostulacion(id);
     });
-    
+
     // Verificar documentos
-    $(document).on('click', '.verify-docs', function() {
+    $(document).on('click', '.verify-docs', function () {
         const id = $(this).data('id');
         const verified = $(this).data('verified') == 1 ? false : true;
         verifyDocuments(id, verified);
     });
-    
+
     // Verificar pago
-    $(document).on('click', '.verify-payment', function() {
+    $(document).on('click', '.verify-payment', function () {
         const id = $(this).data('id');
         const verified = $(this).data('verified') == 1 ? false : true;
         verifyPayment(id, verified);
     });
-    
+
     // Observar
-    $(document).on('click', '.observe-postulacion', function() {
+    $(document).on('click', '.observe-postulacion', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#observe-id').val(id);
         $('#observeModal').modal('show');
     });
-    
+
     // Rechazar
-    $(document).on('click', '.reject-postulacion', function() {
+    $(document).on('click', '.reject-postulacion', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#reject-id').val(id);
         $('#rejectModal').modal('show');
     });
-    
+
     // Eliminar
-    $(document).on('click', '.delete-postulacion', function() {
+    $(document).on('click', '.delete-postulacion', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#delete-id').val(id);
         $('#deleteModal').modal('show');
     });
-    
+
     // Aprobar postulación
-    $(document).on('click', '.approve-postulacion', function() {
+    $(document).on('click', '.approve-postulacion', function () {
         const id = $(this).data('id');
         const btn = $(this);
-        
+
         // Confirmar la acción
         if (!confirm('¿Está seguro de aprobar esta postulación? Se creará una inscripción y se asignará un aula automáticamente.')) {
             return;
         }
-        
+
         // Deshabilitar el botón mientras se procesa
         btn.prop('disabled', true);
         btn.html('<i class="spinner-border spinner-border-sm"></i> Procesando...');
-        
+
         $.ajax({
             url: "/json/postulaciones/" + id + "/aprobar",
             type: 'POST',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     toastr.success(response.message);
-                    
+
                     // Si hay información adicional, mostrarla
                     if (response.data) {
-                        toastr.info('Código de inscripción: ' + response.data.codigo_inscripcion + 
-                                   '<br>Aula asignada: ' + response.data.aula + 
-                                   '<br>Capacidad disponible restante: ' + response.data.aula_capacidad_disponible, 
-                                   'Detalles de la inscripción', 
-                                   {timeOut: 8000, extendedTimeOut: 3000, escapeHtml: false});
+                        toastr.info('Código de inscripción: ' + response.data.codigo_inscripcion +
+                            '<br>Aula asignada: ' + response.data.aula +
+                            '<br>Capacidad disponible restante: ' + response.data.aula_capacidad_disponible,
+                            'Detalles de la inscripción',
+                            { timeOut: 8000, extendedTimeOut: 3000, escapeHtml: false });
                     }
-                    
+
                     // Recargar la tabla
                     table.ajax.reload();
                 } else {
@@ -212,9 +246,9 @@ function setupEventHandlers() {
                     btn.html('<i class="uil uil-check-circle"></i>');
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 let errorMsg = 'Error al aprobar la postulación';
-                
+
                 if (xhr.status === 400 || xhr.status === 403) {
                     const response = xhr.responseJSON;
                     errorMsg = response.message || response.error || errorMsg;
@@ -228,7 +262,7 @@ function setupEventHandlers() {
                     btn.html('<i class="uil uil-check-circle"></i>');
                     return;
                 }
-                
+
                 toastr.error(errorMsg);
                 // Restaurar el botón
                 btn.prop('disabled', false);
@@ -238,12 +272,12 @@ function setupEventHandlers() {
     });
 
     // Generar constancia
-    $(document).on('click', '.generate-constancia', function() {
+    $(document).on('click', '.generate-constancia', function () {
         const id = $(this).data('id');
         const btn = $(this);
 
         const newWindow = window.open('/postulacion/constancia/generar/' + id, '_blank');
-        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') { 
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
             toastr.warning('El navegador bloqueó la ventana emergente. Por favor, permita las ventanas emergentes para este sitio.', 'Aviso de Pop-up');
             return;
         }
@@ -256,19 +290,19 @@ function setupEventHandlers() {
         const row = table.row(btn.closest('tr'));
         const rowData = row.data();
         rowData.constancia_generada = true;
-        
+
         // Invalidar la fila para que DataTables la redibuje con los nuevos datos
         row.invalidate().draw(false);
     });
-    
+
     // Ver constancia firmada
-    $(document).on('click', '.view-constancia-firmada', function() {
+    $(document).on('click', '.view-constancia-firmada', function () {
         const id = $(this).data('id');
         window.open('/postulacion/constancia/ver/' + id, '_blank');
     });
-    
+
     // Confirmar rechazo
-    $('#confirmReject').on('click', function() {
+    $('#confirmReject').on('click', function () {
         const motivo = $('#reject-motivo').val();
         if (motivo.length < 10) {
             toastr.error('El motivo debe tener al menos 10 caracteres');
@@ -276,9 +310,9 @@ function setupEventHandlers() {
         }
         rejectPostulacion(currentPostulacionId, motivo);
     });
-    
+
     // Confirmar observación
-    $('#confirmObserve').on('click', function() {
+    $('#confirmObserve').on('click', function () {
         const observaciones = $('#observe-observaciones').val();
         if (observaciones.length < 10) {
             toastr.error('Las observaciones deben tener al menos 10 caracteres');
@@ -286,42 +320,42 @@ function setupEventHandlers() {
         }
         observePostulacion(currentPostulacionId, observaciones);
     });
-    
+
     // Confirmar eliminación
-    $('#confirmDelete').on('click', function() {
+    $('#confirmDelete').on('click', function () {
         deletePostulacion(currentPostulacionId);
     });
-    
+
     // Editar documentos
-    $(document).on('click', '.edit-documents', function() {
+    $(document).on('click', '.edit-documents', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#edit-docs-postulacion-id').val(id);
         loadDocumentsForEdit(id);
         $('#editDocumentsModal').modal('show');
     });
-    
+
     // Guardar cambios de documentos
-    $('#saveDocumentChanges').on('click', function() {
+    $('#saveDocumentChanges').on('click', function () {
         saveDocumentChanges();
     });
-    
+
     // Editar postulación aprobada
-    $(document).on('click', '.edit-approved', function() {
+    $(document).on('click', '.edit-approved', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#edit-approved-id').val(id);
         loadApprovedPostulationForEdit(id);
         $('#editApprovedModal').modal('show');
     });
-    
+
     // Guardar cambios de postulación aprobada
-    $('#saveApprovedChanges').on('click', function() {
+    $('#saveApprovedChanges').on('click', function () {
         saveApprovedPostulationChanges();
     });
-    
+
     // Evento de cambio de carrera para cargar turnos
-    $('#edit-approved-carrera').on('change', function() {
+    $('#edit-approved-carrera').on('change', function () {
         const carreraId = $(this).val();
         const cicloId = $('#edit-approved-ciclo').val();
         if (carreraId && cicloId) {
@@ -331,9 +365,9 @@ function setupEventHandlers() {
             loadTurnosForCarrera(carreraId, cicloId);
         }
     });
-    
+
     // Evento de cambio de turno para cargar aulas
-    $('#edit-approved-turno').on('change', function() {
+    $('#edit-approved-turno').on('change', function () {
         const turnoId = $(this).val();
         const carreraId = $('#edit-approved-carrera').val();
         const cicloId = $('#edit-approved-ciclo').val();
@@ -344,15 +378,15 @@ function setupEventHandlers() {
             $('#edit-approved-aula').html('<option value="">Primero seleccione un turno</option>');
         }
     });
-    
+
     // Limpiar formularios al cerrar modales
-    $('.modal').on('hidden.bs.modal', function() {
+    $('.modal').on('hidden.bs.modal', function () {
         $(this).find('form')[0]?.reset();
         currentPostulacionId = null;
     });
 
     // Subir constancia (admin)
-    $(document).on('click', '.upload-constancia-admin', function() {
+    $(document).on('click', '.upload-constancia-admin', function () {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#postulacion-id-admin-upload').val(id);
@@ -360,7 +394,7 @@ function setupEventHandlers() {
     });
 
     // Confirmar subida de constancia (admin)
-    $('#confirmUploadConstanciaAdmin').on('click', function() {
+    $('#confirmUploadConstanciaAdmin').on('click', function () {
         const form = $('#uploadConstanciaAdminForm')[0];
         const formData = new FormData(form);
         const postulacionId = $('#postulacion-id-admin-upload').val();
@@ -376,7 +410,7 @@ function setupEventHandlers() {
             data: formData,
             processData: false,
             contentType: false,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     toastr.success(response.message);
                     $('#uploadConstanciaAdminModal').modal('hide');
@@ -385,7 +419,7 @@ function setupEventHandlers() {
                     toastr.error(response.message || 'Error al subir la constancia');
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 const errorMsg = xhr.responseJSON?.message || 'Error al subir la constancia';
                 toastr.error(errorMsg);
             }
@@ -397,15 +431,15 @@ function viewPostulacion(id) {
     $.ajax({
         url: "/json/postulaciones/" + id,
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 const data = response.data;
                 const postulacion = data.postulacion;
                 const documentos = data.documentos;
                 const inscripcion = data.inscripcion; // Definir inscripcion aquí
-                
+
                 let html = '<div class="row">';
-                
+
                 // Información del estudiante
                 html += '<div class="col-md-6">';
                 html += '<h5>Información del Estudiante</h5>';
@@ -418,8 +452,8 @@ function viewPostulacion(id) {
                 }
                 html += '</div>';
                 html += '<table class="table table-sm">';
-                html += '<tr><td><strong>Nombre:</strong></td><td>' + postulacion.estudiante.nombre + ' ' + 
-                        postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</td></tr>';
+                html += '<tr><td><strong>Nombre:</strong></td><td>' + postulacion.estudiante.nombre + ' ' +
+                    postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</td></tr>';
                 html += '<tr><td><strong>DNI:</strong></td><td>' + (postulacion.estudiante.numero_documento || 'N/A') + '</td></tr>';
                 html += '<tr><td><strong>Email:</strong></td><td>' + (postulacion.estudiante.email || 'N/A') + '</td></tr>';
                 html += '<tr><td><strong>Teléfono:</strong></td><td>' + (postulacion.estudiante.telefono || 'N/A') + '</td></tr>';
@@ -447,7 +481,7 @@ function viewPostulacion(id) {
                 }
                 html += '</table>';
                 html += '</div>';
-                
+
                 // Información de la postulación
                 html += '<div class="col-md-6">';
                 html += '<h5>Información de la Postulación</h5>';
@@ -457,15 +491,15 @@ function viewPostulacion(id) {
                 html += '<tr><td><strong>Carrera:</strong></td><td>' + postulacion.carrera.nombre + '</td></tr>';
                 html += '<tr><td><strong>Turno:</strong></td><td>' + postulacion.turno.nombre + '</td></tr>';
                 html += '<tr><td><strong>Tipo:</strong></td><td>' + postulacion.tipo_inscripcion + '</td></tr>';
-                html += '<tr><td><strong>Estado:</strong></td><td><span class="badge badge-estado-' + 
-                        postulacion.estado + '"> ' + postulacion.estado.toUpperCase() + '</span></td></tr>';
+                html += '<tr><td><strong>Estado:</strong></td><td><span class="badge badge-estado-' +
+                    postulacion.estado + '"> ' + postulacion.estado.toUpperCase() + '</span></td></tr>';
                 // Mostrar aula si la postulación está aprobada y hay inscripción
                 if (inscripcion && inscripcion.aula) {
                     html += '<tr><td><strong>Aula Asignada:</strong></td><td>' + inscripcion.aula.nombre + '</td></tr>';
                 }
                 html += '</table>';
                 html += '</div>';
-                
+
                 // Documentos
                 html += '<div class="col-md-6">';
                 html += '<h5>Documentos Subidos ';
@@ -473,25 +507,25 @@ function viewPostulacion(id) {
                 html += '<i class="uil uil-edit"></i> Editar</button>';
                 html += '</h5>';
                 html += '<ul class="document-list">';
-                
+
                 for (let key in documentos) {
                     const doc = documentos[key];
                     if (doc.existe) {
-                        html += '<li><i class="uil uil-check-circle text-success"></i> ' + doc.nombre + 
-                               ' <a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-primary">Ver</a></li>';
+                        html += '<li><i class="uil uil-check-circle text-success"></i> ' + doc.nombre +
+                            ' <a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-primary">Ver</a></li>';
                     } else {
                         html += '<li><i class="uil uil-times-circle text-danger"></i> ' + doc.nombre + ' (No subido)</li>';
                     }
                 }
-                
+
                 html += '</ul>';
                 html += '</div>';
-                
+
                 // Información de la constancia
                 html += '<div class="col-md-6">';
                 html += '<h5>Constancia de Inscripción</h5>';
                 html += '<div class="p-3 bg-light rounded">';
-                
+
                 if (postulacion.constancia_firmada) {
                     html += '<p class="text-success"><i class="uil uil-check-circle"></i> <strong>Constancia firmada y subida</strong></p>';
                     html += '<p>Fecha subida: ' + postulacion.fecha_constancia_subida + '</p>';
@@ -506,10 +540,10 @@ function viewPostulacion(id) {
                     html += '<p class="text-secondary"><i class="uil uil-times-circle"></i> <strong>Constancia no generada</strong></p>';
                     html += '<p>El postulante aún no ha generado su constancia de inscripción.</p>';
                 }
-                
+
                 html += '</div>';
                 html += '</div>';
-                
+
                 // Información del voucher
                 if (postulacion.numero_recibo) {
                     html += '<div class="col-md-6">';
@@ -532,7 +566,7 @@ function viewPostulacion(id) {
                     html += '</div>';
                     html += '</div>';
                 }
-                
+
                 // Observaciones o motivo de rechazo
                 if (postulacion.observaciones) {
                     html += '<div class="col-12 mt-3">';
@@ -542,7 +576,7 @@ function viewPostulacion(id) {
                     html += '</div>';
                     html += '</div>';
                 }
-                
+
                 if (postulacion.motivo_rechazo) {
                     html += '<div class="col-12 mt-3">';
                     html += '<div class="alert alert-danger">';
@@ -551,14 +585,14 @@ function viewPostulacion(id) {
                     html += '</div>';
                     html += '</div>';
                 }
-                
+
                 html += '</div>';
-                
+
                 $('#viewModalBody').html(html);
                 $('#viewModal').modal('show');
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al cargar el detalle de la postulación');
         }
     });
@@ -569,13 +603,13 @@ function verifyDocuments(id, verified) {
         url: "/json/postulaciones/" + id + "/verificar-documentos",
         type: 'POST',
         data: { verificado: verified },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 table.ajax.reload();
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al verificar documentos');
         }
     });
@@ -586,13 +620,13 @@ function verifyPayment(id, verified) {
         url: "/json/postulaciones/" + id + "/verificar-pago",
         type: 'POST',
         data: { verificado: verified },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 table.ajax.reload();
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al verificar pago');
         }
     });
@@ -603,14 +637,14 @@ function rejectPostulacion(id, motivo) {
         url: "/json/postulaciones/" + id + "/rechazar",
         type: 'POST',
         data: { motivo: motivo },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#rejectModal').modal('hide');
                 table.ajax.reload();
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
@@ -628,14 +662,14 @@ function observePostulacion(id, observaciones) {
         url: "/json/postulaciones/" + id + "/observar",
         type: 'POST',
         data: { observaciones: observaciones },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#observeModal').modal('hide');
                 table.ajax.reload();
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
@@ -652,14 +686,14 @@ function deletePostulacion(id) {
     $.ajax({
         url: "/json/postulaciones/" + id,
         type: 'DELETE',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#deleteModal').modal('hide');
                 table.ajax.reload();
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al eliminar la postulación');
         }
     });
@@ -676,10 +710,10 @@ function loadStatistics() {
         url: '/json/postulaciones/stats',
         type: 'GET',
         data: params,
-        success: function(response) {
+        success: function (response) {
             updateStatistics(response);
         },
-        error: function(xhr) {
+        error: function (xhr) {
             console.error('Error al cargar estadísticas:', xhr.responseText);
             toastr.error('No se pudieron cargar las estadísticas.');
         }
@@ -697,11 +731,11 @@ function loadDocumentsForEdit(id) {
     $.ajax({
         url: "/json/postulaciones/" + id,
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 const documentos = response.data.documentos;
                 let html = '';
-                
+
                 // Mapeo de tipos de documento a sus nombres descriptivos
                 const docTypes = {
                     'dni': 'DNI del Postulante',
@@ -712,30 +746,30 @@ function loadDocumentsForEdit(id) {
                     'constancia_estudios': 'Constancia de Estudios',
                     'constancia_firmada': 'Constancia Firmada'
                 };
-                
+
                 for (let key in documentos) {
                     const doc = documentos[key];
                     const docName = docTypes[key] || doc.nombre;
-                    
+
                     html += '<div class="col-md-6 mb-3">';
                     html += '<div class="card">';
                     html += '<div class="card-body">';
                     html += '<h6 class="card-title">' + docName + '</h6>';
-                    
+
                     if (doc.existe) {
                         html += '<p class="text-success"><i class="uil uil-check-circle"></i> Documento actual subido</p>';
                         html += '<a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-info mb-2">Ver documento actual</a>';
                         html += '<div class="form-group">';
                         html += '<label>Reemplazar con nuevo archivo:</label>';
                         html += '<input type="file" class="form-control doc-file-input" data-doc-type="' + key + '" ';
-                        
+
                         // Establecer el tipo de archivo aceptado según el documento
                         if (key === 'foto') {
                             html += 'accept="image/*"';
                         } else {
                             html += 'accept=".pdf,.jpg,.jpeg,.png"';
                         }
-                        
+
                         html += '>';
                         html += '<small class="text-muted">Deje vacío si no desea cambiar este documento</small>';
                         html += '</div>';
@@ -744,26 +778,26 @@ function loadDocumentsForEdit(id) {
                         html += '<div class="form-group">';
                         html += '<label>Subir archivo:</label>';
                         html += '<input type="file" class="form-control doc-file-input" data-doc-type="' + key + '" ';
-                        
+
                         if (key === 'foto') {
                             html += 'accept="image/*"';
                         } else {
                             html += 'accept=".pdf,.jpg,.jpeg,.png"';
                         }
-                        
+
                         html += '>';
                         html += '</div>';
                     }
-                    
+
                     html += '</div>';
                     html += '</div>';
                     html += '</div>';
                 }
-                
+
                 $('#documents-container').html(html);
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al cargar los documentos');
         }
     });
@@ -773,15 +807,15 @@ function saveDocumentChanges() {
     const formData = new FormData();
     const postulacionId = $('#edit-docs-postulacion-id').val();
     const observacion = $('#edit-docs-observacion').val();
-    
+
     // Agregar observación si existe
     if (observacion) {
         formData.append('observacion', observacion);
     }
-    
+
     // Agregar archivos seleccionados
     let hasFiles = false;
-    $('.doc-file-input').each(function() {
+    $('.doc-file-input').each(function () {
         const file = this.files[0];
         if (file) {
             const docType = $(this).data('doc-type');
@@ -789,46 +823,46 @@ function saveDocumentChanges() {
             hasFiles = true;
         }
     });
-    
+
     if (!hasFiles) {
         toastr.warning('No ha seleccionado ningún archivo para actualizar');
         return;
     }
-    
+
     // Deshabilitar botón mientras se procesa
     const btn = $('#saveDocumentChanges');
     btn.prop('disabled', true);
     btn.html('<i class="spinner-border spinner-border-sm"></i> Guardando...');
-    
+
     $.ajax({
         url: "/json/postulaciones/" + postulacionId + "/actualizar-documentos",
         type: 'POST',
         data: formData,
         processData: false,
         contentType: false,
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success('Documentos actualizados correctamente');
                 $('#editDocumentsModal').modal('hide');
-                
+
                 // Recargar el modal de detalle si está abierto
                 if ($('#viewModal').hasClass('show')) {
                     viewPostulacion(postulacionId);
                 }
-                
+
                 // Recargar la tabla
                 table.ajax.reload();
             } else {
                 toastr.error(response.message || 'Error al actualizar los documentos');
             }
-            
+
             // Restaurar botón
             btn.prop('disabled', false);
             btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
         },
-        error: function(xhr) {
+        error: function (xhr) {
             let errorMsg = 'Error al actualizar los documentos';
-            
+
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
@@ -840,7 +874,7 @@ function saveDocumentChanges() {
             } else {
                 toastr.error(errorMsg);
             }
-            
+
             // Restaurar botón
             btn.prop('disabled', false);
             btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
@@ -850,11 +884,11 @@ function saveDocumentChanges() {
 
 // Función para cargar datos de postulación aprobada para editar
 function loadApprovedPostulationForEdit(id) {
-    $.when(loadCiclosForEdit(), loadCarrerasForEdit()).done(function() {
+    $.when(loadCiclosForEdit(), loadCarrerasForEdit()).done(function () {
         $.ajax({
             url: "/json/postulaciones/" + id + "/editar-aprobada",
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     const data = response.data;
 
@@ -898,7 +932,7 @@ function loadApprovedPostulationForEdit(id) {
                     loadTurnosForCarrera(data.postulacion.carrera_id, data.postulacion.ciclo_id, data.postulacion.turno_id, false);
 
                     // Cargar aulas directamente con el turno y aula seleccionados
-                    setTimeout(function() {
+                    setTimeout(function () {
                         loadAulasForTurno(data.postulacion.turno_id, data.postulacion.carrera_id, data.postulacion.ciclo_id, aulaActual);
                     }, 500);
 
@@ -908,7 +942,7 @@ function loadApprovedPostulationForEdit(id) {
                     $('#edit-approved-ensenanza').val(data.postulacion.monto_ensenanza);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 toastr.error('Error al cargar los datos de la postulación');
                 $('#editApprovedModal').modal('hide');
             }
@@ -925,16 +959,16 @@ function loadTurnosForCarrera(carreraId, cicloId, selectedTurnoId = null, trigge
             carrera_id: carreraId,
             ciclo_id: cicloId
         },
-        success: function(response) {
+        success: function (response) {
             let html = '<option value="">Seleccione un turno</option>';
             if (response.data && response.data.length > 0) {
-                response.data.forEach(function(turno) {
+                response.data.forEach(function (turno) {
                     const selected = selectedTurnoId == turno.id ? 'selected' : '';
                     html += '<option value="' + turno.id + '" ' + selected + '>' + turno.nombre + '</option>';
                 });
             }
             $('#edit-approved-turno').html(html);
-            
+
             // Solo trigger change si se indica explícitamente
             if (selectedTurnoId && triggerChange) {
                 $('#edit-approved-turno').trigger('change');
@@ -949,7 +983,7 @@ function loadAulasForTurno(turnoId, carreraId, cicloId, selectedAulaId = null) {
         $('#edit-approved-aula').html('<option value="">Primero seleccione un turno</option>');
         return;
     }
-    
+
     $.ajax({
         url: "/json/aulas/disponibles",
         type: 'GET',
@@ -958,29 +992,29 @@ function loadAulasForTurno(turnoId, carreraId, cicloId, selectedAulaId = null) {
             carrera_id: carreraId,
             ciclo_id: cicloId
         },
-        success: function(response) {
+        success: function (response) {
             let html = '<option value="">Seleccione un aula</option>';
             let aulaEncontrada = false;
-            
+
             if (response.data && response.data.length > 0) {
-                response.data.forEach(function(aula) {
+                response.data.forEach(function (aula) {
                     const selected = selectedAulaId && selectedAulaId == aula.id ? 'selected' : '';
                     if (selected) aulaEncontrada = true;
                     const capacidadInfo = ' (Capacidad: ' + aula.capacidad_disponible + '/' + aula.capacidad + ')';
                     html += '<option value="' + aula.id + '" ' + selected + '>' + aula.nombre + capacidadInfo + '</option>';
                 });
             }
-            
+
             // Si el aula seleccionada no está en la lista (porque está llena), agregarla como opción deshabilitada
             if (selectedAulaId && !aulaEncontrada) {
                 // Hacer una petición adicional para obtener el nombre del aula actual
                 $.ajax({
                     url: "/json/aulas/" + selectedAulaId,
                     type: 'GET',
-                    success: function(aulaResponse) {
+                    success: function (aulaResponse) {
                         if (aulaResponse.success && aulaResponse.data) {
-                            html = '<option value="' + selectedAulaId + '" selected>' + 
-                                   aulaResponse.data.nombre + ' (Aula actual - Sin capacidad disponible)</option>' + html;
+                            html = '<option value="' + selectedAulaId + '" selected>' +
+                                aulaResponse.data.nombre + ' (Aula actual - Sin capacidad disponible)</option>' + html;
                             $('#edit-approved-aula').html(html);
                         }
                     }
@@ -988,13 +1022,13 @@ function loadAulasForTurno(turnoId, carreraId, cicloId, selectedAulaId = null) {
             } else {
                 $('#edit-approved-aula').html(html);
             }
-            
+
             // Si hay un aula seleccionada, mantenerla
             if (selectedAulaId) {
                 $('#edit-approved-aula').val(selectedAulaId);
             }
         },
-        error: function() {
+        error: function () {
             $('#edit-approved-aula').html('<option value="">Error al cargar aulas</option>');
         }
     });
@@ -1005,16 +1039,16 @@ function loadCiclosForEdit() {
     return $.ajax({
         url: "/json/ciclos",
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 let html = '<option value="">Seleccione un ciclo</option>';
-                response.data.forEach(function(ciclo) {
+                response.data.forEach(function (ciclo) {
                     html += '<option value="' + ciclo.id + '">' + ciclo.nombre + '</option>';
                 });
                 $('#edit-approved-ciclo').html(html);
             }
         },
-        error: function() {
+        error: function () {
             $('#edit-approved-ciclo').html('<option value="">Error al cargar ciclos</option>');
         }
     });
@@ -1025,16 +1059,16 @@ function loadCarrerasForEdit() {
     return $.ajax({
         url: "/json/carreras",
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 let html = '<option value="">Seleccione una carrera</option>';
-                response.data.forEach(function(carrera) {
+                response.data.forEach(function (carrera) {
                     html += '<option value="' + carrera.id + '">' + carrera.nombre + '</option>';
                 });
                 $('#edit-approved-carrera').html(html);
             }
         },
-        error: function() {
+        error: function () {
             $('#edit-approved-carrera').html('<option value="">Error al cargar carreras</option>');
         }
     });
@@ -1085,7 +1119,7 @@ function saveApprovedPostulationChanges() {
         url: "/json/postulaciones/" + currentPostulacionId + "/actualizar-aprobada",
         type: 'PUT',
         data: formData,
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success('Postulación actualizada correctamente');
 
@@ -1103,7 +1137,7 @@ function saveApprovedPostulationChanges() {
             btn.prop('disabled', false);
             btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
         },
-        error: function(xhr) {
+        error: function (xhr) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {

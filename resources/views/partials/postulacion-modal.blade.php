@@ -163,16 +163,41 @@
             height: 32px;
             font-size: 13px;
         }
-        .form-section-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-        }
-        .btn-next-prev {
-            padding: 8px 20px;
-            font-size: 14px;
-        }
     }
 
+    /* Resaltar término de búsqueda */
+    .highlight-search {
+        background-color: rgba(255, 215, 0, 0.3);
+        font-weight: 600;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+    
+    /* FORZAR SELECTS NATIVOS - Eliminar cualquier estilo personalizado */
+    #postulacionModal select,
+    #postulacionModal .form-select {
+        -webkit-appearance: menulist !important;
+        -moz-appearance: menulist !important;
+        appearance: menulist !important;
+        background-image: none !important;
+        padding-right: 2rem !important;
+    }
+    
+    /* Ocultar cualquier elemento de select2 o nice-select que se genere */
+    #postulacionModal .select2-container,
+    #postulacionModal .nice-select {
+        display: none !important;
+    }
+    
+    /* Asegurar que los selects originales sean visibles */
+    #postulacionModal select.form-select,
+    #postulacionModal select.form-control {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+    }
+    
     /* Estilos para pantallas muy pequeñas */
     @media (max-width: 480px) {
         .modal-content {
