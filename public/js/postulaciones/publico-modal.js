@@ -1,6 +1,38 @@
 let currentStep = 1;
 const totalSteps = 6;
 
+// Función para lanzar confetti cuando la postulación es aprobada
+function lanzarConfetti() {
+    const duration = 3000; // 3 segundos
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 99999 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        // Lanzar confetti desde dos puntos
+        confetti(Object.assign({}, defaults, {
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        }));
+        confetti(Object.assign({}, defaults, {
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        }));
+    }, 250);
+}
+
+
 $(document).ready(function () {
     console.log('Publico Modal JS Initialized');
 
@@ -82,6 +114,24 @@ $(document).ready(function () {
     $(document).on('click', '#btn-verificar-dni', function () {
         console.log('Click en verificar DNI detectado via jQuery');
         verificarPostulante(this);
+    });
+
+    // Manejar tecla Enter en el campo de DNI para verificación
+    $(document).on('keypress', '#check_dni', function (e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault(); // Prevenir envío del formulario
+            console.log('Enter presionado en check_dni, disparando verificación');
+            $('#btn-verificar-dni').trigger('click');
+        }
+    });
+
+    // Prevenir que Enter envíe el formulario en campos de entrada (excepto textarea)
+    $(document).on('keypress', '#formPostulacionPublica input:not([type="submit"])', function (e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            console.log('Enter bloqueado en input para prevenir envío prematuro del formulario');
+            return false;
+        }
     });
 
     // Búsqueda de colegio con debounce
@@ -420,8 +470,13 @@ function nextPrev(n) {
     // Si vamos adelante, validar paso actual
     if (n == 1 && !validateForm()) return false;
 
-    // Si vamos al paso de confirmación (Paso 6), generar resumen
-    if (currentStep + n == 6) {
+    // Validación especial para el paso 2 (Padres)
+    if (n == 1 && currentStep == 2) {
+        if (!validarPadres()) return false;
+    }
+
+    // Si vamos al paso de confirmación (Paso 5 ahora, antes era 6), generar resumen
+    if (currentStep + n == 5) {
         generarResumen();
     }
 
@@ -470,7 +525,15 @@ function validarVoucher() {
                 $('#pago_feedback').html('<div class="alert alert-success"><i class="fas fa-check-circle"></i> Pago verificado correctamente</div>');
             } else {
                 toastr.error(response.message || 'No se encontraron pagos válidos');
-                $('#pago_feedback').html('<div class="alert alert-danger"><i class="fas fa-times-circle"></i> ' + (response.message || 'Pago no encontrado') + '</div>');
+                $('#pago_feedback').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle"></i> ${response.message || 'Pago no encontrado'}
+                        <hr>
+                        <button type="button" class="btn btn-warning btn-sm mt-2" onclick="mostrarIngresoManual()">
+                            <i class="fas fa-keyboard me-1"></i> Ingresar Datos Manualmente
+                        </button>
+                    </div>
+                `);
             }
         },
         error: function (xhr) {
@@ -480,7 +543,15 @@ function validarVoucher() {
                 msg = xhr.responseJSON.message;
             }
             toastr.error(msg);
-            $('#pago_feedback').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ' + msg + '</div>');
+            $('#pago_feedback').html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> ${msg}
+                    <hr>
+                    <button type="button" class="btn btn-warning btn-sm mt-2" onclick="mostrarIngresoManual()">
+                        <i class="fas fa-keyboard me-1"></i> Ingresar Datos Manualmente
+                    </button>
+                </div>
+            `);
         },
         complete: function () {
             // Restaurar el botón solo si existe, ya que este botón puede ser para la validación manual
@@ -810,10 +881,170 @@ function verificarPostulante(btnElement) {
         let swalText = response.message || 'Datos listos para continuar.';
 
         if (response.status === 'registered') {
-            swalIcon = 'warning';
-            swalTitle = 'Postulante ya Registrado';
-            // Mensaje de warning para toastr
-            toastr.warning(response.message);
+            // Preparar el HTML con información detallada
+            const postulacion = response.postulacion || {};
+
+            // Determinar el color del badge y el ícono según el estado
+            let estadoBadgeClass = 'badge bg-warning';
+            let estadoIcon = 'fas fa-clock';
+            let tituloModal = 'Postulación ya Registrada';
+            let iconoModal = 'warning';
+
+            if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                estadoBadgeClass = 'badge bg-success';
+                estadoIcon = 'fas fa-check-circle';
+                tituloModal = '¡Postulación Aprobada!';
+                iconoModal = 'success';
+            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                estadoBadgeClass = 'badge bg-danger';
+                estadoIcon = 'fas fa-times-circle';
+                tituloModal = 'Postulación Rechazada';
+                iconoModal = 'error';
+            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                estadoBadgeClass = 'badge bg-info';
+                estadoIcon = 'fas fa-exclamation-circle';
+                tituloModal = 'Postulación con Observaciones';
+                iconoModal = 'info';
+            }
+
+            // Mensajes específicos según el estado
+            let mensajeInstrucciones = '';
+            if (postulacion.estado === 'pendiente') {
+                mensajeInstrucciones = `
+                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px; color: #856404;">
+                            <i class="fas fa-hourglass-half" style="margin-right: 5px;"></i>
+                            <strong>Tu postulación está en revisión</strong>
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #856404;">
+                            El equipo administrativo está verificando tus documentos y pago. 
+                            Recibirás una notificación cuando sea aprobada o si requiere correcciones.
+                        </p>
+                    </div>
+                `;
+            } else if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                mensajeInstrucciones = `
+                    <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px; color: #155724;">
+                            <i class="fas fa-check-circle" style="margin-right: 5px;"></i>
+                            <strong>¡Felicitaciones! Tu postulación fue aprobada</strong>
+                        </p>
+                        <ol style="margin: 10px 0 0 20px; padding: 0; font-size: 13px; color: #155724;">
+                            <li style="margin-bottom: 5px;">Ingresa al <strong>Portal del Estudiante</strong></li>
+                            <li style="margin-bottom: 5px;">Descarga tu <strong>constancia de inscripción</strong></li>
+                            <li style="margin-bottom: 5px;">Revisa tu aula y horario asignados</li>
+                            <li>Prepárate para el inicio de clases</li>
+                        </ol>
+                    </div>
+                `;
+            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                mensajeInstrucciones = `
+                    <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px; color: #721c24;">
+                            <i class="fas fa-times-circle" style="margin-right: 5px;"></i>
+                            <strong>Tu postulación fue rechazada</strong>
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #721c24;">
+                            Ingresa al Portal del Estudiante para ver el motivo del rechazo. 
+                            Si deseas volver a postular, contacta con la administración.
+                        </p>
+                    </div>
+                `;
+            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                mensajeInstrucciones = `
+                    <div style="background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px; color: #055160;">
+                            <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i>
+                            <strong>Tu postulación tiene observaciones</strong>
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #055160;">
+                            Ingresa al Portal del Estudiante para ver las observaciones y 
+                            corregir los documentos o información solicitada.
+                        </p>
+                    </div>
+                `;
+            }
+
+            const htmlContent = `
+                <div style="text-align: left; padding: 10px;">
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h6 style="color: #495057; margin-bottom: 10px; font-weight: bold;">
+                            <i class="fas fa-info-circle" style="color: #0d6efd;"></i> Información de tu Postulación
+                        </h6>
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Código:</strong></td>
+                                <td style="padding: 5px 0;">${postulacion.codigo || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Estado:</strong></td>
+                                <td style="padding: 5px 0;">
+                                    <span class="${estadoBadgeClass}" style="padding: 4px 10px; border-radius: 4px; font-size: 12px;">
+                                        <i class="${estadoIcon}"></i> ${postulacion.estado_texto || 'Pendiente'}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Carrera:</strong></td>
+                                <td style="padding: 5px 0;">${postulacion.carrera || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Turno:</strong></td>
+                                <td style="padding: 5px 0;">${postulacion.turno || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Fecha:</strong></td>
+                                <td style="padding: 5px 0;">${postulacion.fecha_postulacion || 'N/A'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    ${mensajeInstrucciones}
+                    
+                    <div style="background: #e7f3ff; border-left: 4px solid #0d6efd; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0; font-size: 14px; color: #084298;">
+                            <i class="fas fa-sign-in-alt" style="margin-right: 5px;"></i>
+                            <strong>Accede al Portal del Estudiante</strong>
+                        </p>
+                        <p style="margin: 8px 0 0 0; font-size: 13px; color: #495057;">
+                            Ingresa con tu <strong>email</strong> y tu <strong>DNI como contraseña</strong> 
+                            para ver el estado completo, descargar documentos y gestionar tu información.
+                        </p>
+                    </div>
+                    
+                    <p style="font-size: 13px; color: #6c757d; margin: 10px 0 0 0; text-align: center;">
+                        <i class="fas fa-info-circle"></i> No puedes crear una nueva postulación mientras tengas una activa
+                    </p>
+                </div>
+            `;
+
+            // Mostrar SweetAlert con HTML personalizado
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: iconoModal,
+                    title: tituloModal,
+                    html: htmlContent,
+                    confirmButtonText: 'Ir al Portal',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cerrar',
+                    confirmButtonColor: '#0d6efd',
+                    cancelButtonColor: '#6c757d',
+                    width: '650px',
+                    didOpen: () => {
+                        // Si la postulación está aprobada, lanzar confetti
+                        if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                            lanzarConfetti();
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirigir al login del portal del estudiante
+                        window.location.href = '/login';
+                    }
+                });
+            } else {
+                toastr.warning('Ya tienes una postulación registrada para este ciclo.');
+            }
         } else {
             // Nuevo o Recurrente
             $('#estudiante_dni').val(dni);
@@ -877,16 +1108,16 @@ function verificarPostulante(btnElement) {
                 // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
                 consultarReniecEstudiante(dni);
             }
-        }
 
-        // Mostrar SweetAlert (excepto si ya fue manejado como 'registered' arriba)
-        if (response.status !== 'registered' && typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: swalIcon,
-                title: swalTitle,
-                text: swalText,
-                confirmButtonText: 'Continuar'
-            });
+            // Mostrar SweetAlert para casos que NO son 'registered'
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: swalIcon,
+                    title: swalTitle,
+                    text: swalText,
+                    confirmButtonText: 'Continuar'
+                });
+            }
         }
     }).fail(function (xhr) {
         console.error('Error verificar postulante:', xhr);
@@ -1369,14 +1600,14 @@ function preventSelect2Conflicts() {
     $('#buscar_colegio').off('select2:select select2:unselect');
 }
 
-// Modificar la función showStep para actualizar el DNI cuando se llega al paso 5 y validar pago
+// Modificar la función showStep para actualizar el DNI cuando se llega al paso 4 (Documentos y Pago) y validar pago
 const originalShowStep = showStep;
 
 showStep = function (n) {
     originalShowStep(n);
 
-    // Si llegamos al paso 5 (Documentos y Pago)
-    if (n === 5) {
+    // Si llegamos al paso 4 (Documentos y Pago) - ANTES ERA 5, AHORA ES 4
+    if (n === 4) {
         actualizarDNIDisplay();
         // CAMBIO CRÍTICO: Llamar a buscarPagosAutomatico() automáticamente.
         // Se añade un pequeño delay para asegurar que el DOM se haya cargado.
@@ -1385,8 +1616,8 @@ showStep = function (n) {
         }, 300);
     }
 
-    // Si llegamos al paso 4 (Académico), prevenir conflictos de Select2
-    if (n === 4) {
+    // Si llegamos al paso 3 (Académico), prevenir conflictos de Select2
+    if (n === 3) {
         preventSelect2Conflicts();
     }
 };
@@ -1413,3 +1644,287 @@ window.precargarDatosAcademicos = precargarDatosAcademicos;
 window.mostrarArchivosExistentes = mostrarArchivosExistentes;
 window.verArchivoModal = verArchivoModal;
 window.cerrarModalArchivo = cerrarModalArchivo;
+
+// ======================================================================
+// FUNCIONES PARA INGRESO MANUAL DE VOUCHER
+// ======================================================================
+
+// Mostrar formulario de ingreso manual
+function mostrarIngresoManual() {
+    document.getElementById('manual_voucher_section').style.display = 'block';
+    document.getElementById('voucher_details').style.display = 'none';
+
+    // Calcular total automáticamente cuando cambian los montos
+    const matriculaInput = document.getElementById('manual_monto_matricula');
+    const ensenanzaInput = document.getElementById('manual_monto_ensenanza');
+
+    if (matriculaInput && ensenanzaInput) {
+        matriculaInput.addEventListener('input', calcularTotalManual);
+        ensenanzaInput.addEventListener('input', calcularTotalManual);
+    }
+}
+
+// Calcular total manual
+function calcularTotalManual() {
+    const matricula = parseFloat(document.getElementById('manual_monto_matricula').value) || 0;
+    const ensenanza = parseFloat(document.getElementById('manual_monto_ensenanza').value) || 0;
+    const total = matricula + ensenanza;
+    document.getElementById('manual_total_display').textContent = total.toFixed(2);
+}
+
+// Confirmar voucher manual
+function confirmarVoucherManual() {
+    const numero = document.getElementById('manual_voucher_numero').value.trim();
+    const fecha = document.getElementById('manual_voucher_fecha').value;
+    const matricula = parseFloat(document.getElementById('manual_monto_matricula').value) || 0;
+    const ensenanza = parseFloat(document.getElementById('manual_monto_ensenanza').value) || 0;
+
+    // Validar campos
+    if (!numero) {
+        toastr.error('Por favor ingrese el número de voucher');
+        return;
+    }
+    if (!fecha) {
+        toastr.error('Por favor ingrese la fecha de emisión');
+        return;
+    }
+    if (matricula <= 0 && ensenanza <= 0) {
+        toastr.error('Por favor ingrese al menos un monto válido');
+        return;
+    }
+
+    // Llenar campos ocultos
+    document.getElementById('voucher_secuencia').value = numero;
+    document.getElementById('fecha_emision_voucher').value = fecha;
+    document.getElementById('monto_matricula').value = matricula.toFixed(2);
+    document.getElementById('monto_ensenanza').value = ensenanza.toFixed(2);
+    document.getElementById('monto_total_pagado').value = (matricula + ensenanza).toFixed(2);
+
+    // Mostrar confirmación
+    const total = matricula + ensenanza;
+    const feedbackDiv = document.getElementById('pago_feedback');
+    if (feedbackDiv) {
+        feedbackDiv.innerHTML = `
+            <div class="alert alert-success py-2 small">
+                <i class="fas fa-check-circle me-1"></i> 
+                <strong>Voucher Ingresado Manualmente:</strong> ${numero} - Total: S/. ${total.toFixed(2)}
+            </div>
+        `;
+    }
+
+    // Ocultar formulario manual
+    document.getElementById('manual_voucher_section').style.display = 'none';
+
+    toastr.success('Datos del voucher confirmados correctamente');
+}
+
+// Cancelar ingreso manual
+function cancelarVoucherManual() {
+    // Limpiar campos
+    document.getElementById('manual_voucher_numero').value = '';
+    document.getElementById('manual_voucher_fecha').value = '';
+    document.getElementById('manual_monto_matricula').value = '';
+    document.getElementById('manual_monto_ensenanza').value = '';
+    document.getElementById('manual_total_display').textContent = '0.00';
+
+    // Ocultar formulario
+    document.getElementById('manual_voucher_section').style.display = 'none';
+}
+
+// Registrar funciones como globales
+window.mostrarIngresoManual = mostrarIngresoManual;
+window.calcularTotalManual = calcularTotalManual;
+window.confirmarVoucherManual = confirmarVoucherManual;
+window.cancelarVoucherManual = cancelarVoucherManual;
+
+// ======================================================================
+// FUNCIONES PARA SWITCHES DE PADRE Y MADRE
+// ======================================================================
+
+// Toggle campos del padre
+function togglePadreFields() {
+    const tienePadre = document.getElementById('tiene_padre').checked;
+    const tieneMadre = document.getElementById('tiene_madre').checked;
+    const container = document.getElementById('padre_fields_container');
+    const inputs = container.querySelectorAll('input');
+
+    // Validar que al menos uno esté activo
+    if (!tienePadre && !tieneMadre) {
+        toastr.warning('Debe registrar al menos la información de uno de los padres');
+        document.getElementById('tiene_padre').checked = true;
+        return;
+    }
+
+    if (tienePadre) {
+        // Mostrar campos
+        container.style.display = 'block';
+    } else {
+        // Ocultar campos y limpiar valores
+        container.style.display = 'none';
+        inputs.forEach(input => {
+            input.value = '';
+            input.removeAttribute('required');
+        });
+    }
+}
+
+// Toggle campos de la madre
+function toggleMadreFields() {
+    const tienePadre = document.getElementById('tiene_padre').checked;
+    const tieneMadre = document.getElementById('tiene_madre').checked;
+    const container = document.getElementById('madre_fields_container');
+    const inputs = container.querySelectorAll('input');
+
+    // Validar que al menos uno esté activo
+    if (!tienePadre && !tieneMadre) {
+        toastr.warning('Debe registrar al menos la información de uno de los padres');
+        document.getElementById('tiene_madre').checked = true;
+        return;
+    }
+
+    if (tieneMadre) {
+        // Mostrar campos
+        container.style.display = 'block';
+    } else {
+        // Ocultar campos y limpiar valores
+        container.style.display = 'none';
+        inputs.forEach(input => {
+            input.value = '';
+            input.removeAttribute('required');
+        });
+    }
+}
+
+// Validar que al menos un padre esté registrado
+function validarPadres() {
+    const tienePadre = document.getElementById('tiene_padre').checked;
+    const tieneMadre = document.getElementById('tiene_madre').checked;
+
+    if (!tienePadre && !tieneMadre) {
+        toastr.error('Debe registrar al menos la información de uno de los padres (padre o madre)');
+        return false;
+    }
+
+    // Si tiene padre activo, validar TODOS los campos obligatorios
+    if (tienePadre) {
+        const padreDNI = document.getElementById('padre_dni').value.trim();
+        const padreNombre = document.getElementById('padre_nombre').value.trim();
+        const padreApellidos = document.getElementById('padre_apellidos').value.trim();
+        const padreTelefono = document.getElementById('padre_telefono').value.trim();
+        const padreOcupacion = document.getElementById('padre_ocupacion').value.trim();
+        const padreEmail = document.getElementById('padre_email').value.trim();
+
+        if (!padreDNI) {
+            toastr.error('Por favor ingrese el DNI del padre');
+            document.getElementById('padre_dni').focus();
+            return false;
+        }
+        if (padreDNI.length !== 8) {
+            toastr.error('El DNI del padre debe tener 8 dígitos');
+            document.getElementById('padre_dni').focus();
+            return false;
+        }
+        if (!padreNombre) {
+            toastr.error('Por favor ingrese el nombre del padre');
+            document.getElementById('padre_nombre').focus();
+            return false;
+        }
+        if (!padreApellidos) {
+            toastr.error('Por favor ingrese los apellidos del padre');
+            document.getElementById('padre_apellidos').focus();
+            return false;
+        }
+        if (!padreTelefono) {
+            toastr.error('Por favor ingrese el teléfono del padre');
+            document.getElementById('padre_telefono').focus();
+            return false;
+        }
+        if (padreTelefono.length !== 9) {
+            toastr.error('El teléfono del padre debe tener 9 dígitos');
+            document.getElementById('padre_telefono').focus();
+            return false;
+        }
+        if (!padreOcupacion) {
+            toastr.error('Por favor ingrese la ocupación del padre');
+            document.getElementById('padre_ocupacion').focus();
+            return false;
+        }
+        if (!padreEmail) {
+            toastr.error('Por favor ingrese el email del padre');
+            document.getElementById('padre_email').focus();
+            return false;
+        }
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(padreEmail)) {
+            toastr.error('Por favor ingrese un email válido para el padre');
+            document.getElementById('padre_email').focus();
+            return false;
+        }
+    }
+
+    // Si tiene madre activa, validar TODOS los campos obligatorios
+    if (tieneMadre) {
+        const madreDNI = document.getElementById('madre_dni').value.trim();
+        const madreNombre = document.getElementById('madre_nombre').value.trim();
+        const madreApellidos = document.getElementById('madre_apellidos').value.trim();
+        const madreTelefono = document.getElementById('madre_telefono').value.trim();
+        const madreOcupacion = document.getElementById('madre_ocupacion').value.trim();
+        const madreEmail = document.getElementById('madre_email').value.trim();
+
+        if (!madreDNI) {
+            toastr.error('Por favor ingrese el DNI de la madre');
+            document.getElementById('madre_dni').focus();
+            return false;
+        }
+        if (madreDNI.length !== 8) {
+            toastr.error('El DNI de la madre debe tener 8 dígitos');
+            document.getElementById('madre_dni').focus();
+            return false;
+        }
+        if (!madreNombre) {
+            toastr.error('Por favor ingrese el nombre de la madre');
+            document.getElementById('madre_nombre').focus();
+            return false;
+        }
+        if (!madreApellidos) {
+            toastr.error('Por favor ingrese los apellidos de la madre');
+            document.getElementById('madre_apellidos').focus();
+            return false;
+        }
+        if (!madreTelefono) {
+            toastr.error('Por favor ingrese el teléfono de la madre');
+            document.getElementById('madre_telefono').focus();
+            return false;
+        }
+        if (madreTelefono.length !== 9) {
+            toastr.error('El teléfono de la madre debe tener 9 dígitos');
+            document.getElementById('madre_telefono').focus();
+            return false;
+        }
+        if (!madreOcupacion) {
+            toastr.error('Por favor ingrese la ocupación de la madre');
+            document.getElementById('madre_ocupacion').focus();
+            return false;
+        }
+        if (!madreEmail) {
+            toastr.error('Por favor ingrese el email de la madre');
+            document.getElementById('madre_email').focus();
+            return false;
+        }
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(madreEmail)) {
+            toastr.error('Por favor ingrese un email válido para la madre');
+            document.getElementById('madre_email').focus();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Registrar funciones como globales
+window.togglePadreFields = togglePadreFields;
+window.toggleMadreFields = toggleMadreFields;
+window.validarPadres = validarPadres;

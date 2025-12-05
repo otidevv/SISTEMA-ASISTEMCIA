@@ -50,10 +50,29 @@ class PublicPostulacionController extends Controller
                 ->first();
 
             if ($postulacion) {
+                // Cargar relaciones para mostrar información completa
+                $postulacion->load(['carrera', 'turno']);
+                
+                // Determinar el estado legible
+                $estadoTexto = [
+                    'pendiente' => 'Pendiente de Revisión',
+                    'aprobada' => 'Aprobada',
+                    'rechazada' => 'Rechazada',
+                    'observada' => 'Observada'
+                ];
+                
                 return response()->json([
                     'status' => 'registered',
                     'message' => 'Ya tienes una postulación registrada para este ciclo.',
-                    'postulacion' => $postulacion
+                    'postulacion' => [
+                        'id' => $postulacion->id,
+                        'codigo' => $postulacion->codigo_postulante,
+                        'estado' => $postulacion->estado,
+                        'estado_texto' => $estadoTexto[$postulacion->estado] ?? ucfirst($postulacion->estado),
+                        'carrera' => $postulacion->carrera ? $postulacion->carrera->nombre : 'N/A',
+                        'turno' => $postulacion->turno ? $postulacion->turno->nombre : 'N/A',
+                        'fecha_postulacion' => $postulacion->fecha_postulacion ? $postulacion->fecha_postulacion->format('d/m/Y') : 'N/A',
+                    ]
                 ]);
             }
 
@@ -287,8 +306,9 @@ class PublicPostulacionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Postulación registrada correctamente. Su código es: ' . $postulacion->codigo_postulante,
-                'postulacion_id' => $postulacion->id
+                'message' => '¡Postulación registrada correctamente! Tu código es: ' . $postulacion->codigo_postulante . '. Para acceder al portal del estudiante, usa tu email y tu DNI como contraseña.',
+                'postulacion_id' => $postulacion->id,
+                'codigo_postulante' => $postulacion->codigo_postulante
             ]);
 
         } catch (\Exception $e) {

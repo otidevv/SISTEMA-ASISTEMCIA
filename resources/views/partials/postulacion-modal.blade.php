@@ -242,22 +242,18 @@
             </div>
             <div class="step-item" data-step="2">
                 <div class="step-circle">2</div>
-                <span>Padre</span>
+                <span>Padres</span>
             </div>
             <div class="step-item" data-step="3">
                 <div class="step-circle">3</div>
-                <span>Madre</span>
+                <span>Académico</span>
             </div>
             <div class="step-item" data-step="4">
                 <div class="step-circle">4</div>
-                <span>Académico</span>
+                <span>Docs/Pago</span>
             </div>
             <div class="step-item" data-step="5">
                 <div class="step-circle">5</div>
-                <span>Docs/Pago</span>
-            </div>
-            <div class="step-item" data-step="6">
-                <div class="step-circle">6</div>
                 <span>Confirmar</span>
             </div>
         </div>
@@ -320,96 +316,115 @@
                             <label class="form-label">Dirección</label>
                             <input type="text" class="form-control" id="estudiante_direccion" name="estudiante_direccion" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label">Email (Usuario)</label>
                             <input type="email" class="form-control" id="estudiante_email" name="estudiante_email" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="estudiante_password" name="estudiante_password" required minlength="8">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Confirmar Pass</label>
-                            <input type="password" class="form-control" id="estudiante_password_confirmation" name="estudiante_password_confirmation" required minlength="8">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> Tu contraseña será tu DNI. Podrás cambiarla después desde tu perfil.
+                            </small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Paso 2: Datos del Padre -->
+            <!-- Paso 2: Datos de Padres (Unificado) -->
             <div class="step-content" data-step="2" style="display: none;">
-                <h5 class="form-section-title">Datos del Padre</h5>
-                <div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-1"></i> Opcional si es mayor de edad, pero recomendado.</div>
+                <h5 class="form-section-title">Datos de los Padres</h5>
                 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">DNI Padre</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="padre_dni" name="padre_dni" maxlength="8" pattern="[0-9]{8}">
-                            <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('padre')">RENIEC</button>
+                <div class="alert alert-warning py-2 small mb-4">
+                    <i class="fas fa-exclamation-triangle me-1"></i> 
+                    <strong>Importante:</strong> Debe registrar al menos la información de uno de los padres (padre o madre).
+                </div>
+                
+                <!-- PADRE -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header" style="background-color: var(--color-acento); color: white;">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="tiene_padre" checked onchange="togglePadreFields()">
+                            <label class="form-check-label fw-bold" for="tiene_padre">
+                                <i class="fas fa-user-tie me-1"></i> Registrar información del Padre
+                            </label>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nombres</label>
-                        <input type="text" class="form-control" id="padre_nombre" name="padre_nombre">
+                    <div class="card-body" id="padre_fields_container">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">DNI Padre</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="padre_dni" name="padre_dni" maxlength="8" pattern="[0-9]{8}">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('padre')">RENIEC</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombres</label>
+                                <input type="text" class="form-control" id="padre_nombre" name="padre_nombre">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Apellidos</label>
+                                <input type="text" class="form-control" id="padre_apellidos" name="padre_apellidos">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="padre_telefono" name="padre_telefono" pattern="[0-9]{9}" maxlength="9">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ocupación</label>
+                                <input type="text" class="form-control" id="padre_ocupacion" name="padre_ocupacion">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="padre_email" name="padre_email">
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Apellidos</label>
-                        <input type="text" class="form-control" id="padre_apellidos" name="padre_apellidos">
+                </div>
+                
+                <!-- MADRE -->
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header" style="background-color: var(--color-secundario); color: white;">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="tiene_madre" checked onchange="toggleMadreFields()">
+                            <label class="form-check-label fw-bold" for="tiene_madre">
+                                <i class="fas fa-user me-1"></i> Registrar información de la Madre
+                            </label>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Teléfono</label>
-                        <input type="tel" class="form-control" id="padre_telefono" name="padre_telefono" pattern="[0-9]{9}" maxlength="9">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Ocupación</label>
-                        <input type="text" class="form-control" id="padre_ocupacion" name="padre_ocupacion">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="padre_email" name="padre_email">
+                    <div class="card-body" id="madre_fields_container">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">DNI Madre</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="madre_dni" name="madre_dni" maxlength="8" pattern="[0-9]{8}">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('madre')">RENIEC</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombres</label>
+                                <input type="text" class="form-control" id="madre_nombre" name="madre_nombre">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Apellidos</label>
+                                <input type="text" class="form-control" id="madre_apellidos" name="madre_apellidos">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="madre_telefono" name="madre_telefono" pattern="[0-9]{9}" maxlength="9">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ocupación</label>
+                                <input type="text" class="form-control" id="madre_ocupacion" name="madre_ocupacion">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="madre_email" name="madre_email">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Paso 3: Datos de la Madre -->
+            <!-- Paso 3: Datos Académicos -->
             <div class="step-content" data-step="3" style="display: none;">
-                <h5 class="form-section-title">Datos de la Madre</h5>
-                <div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-1"></i> Opcional si es mayor de edad, pero recomendado.</div>
-                
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">DNI Madre</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="madre_dni" name="madre_dni" maxlength="8" pattern="[0-9]{8}">
-                            <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('madre')">RENIEC</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Nombres</label>
-                        <input type="text" class="form-control" id="madre_nombre" name="madre_nombre">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Apellidos</label>
-                        <input type="text" class="form-control" id="madre_apellidos" name="madre_apellidos">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Teléfono</label>
-                        <input type="tel" class="form-control" id="madre_telefono" name="madre_telefono" pattern="[0-9]{9}" maxlength="9">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Ocupación</label>
-                        <input type="text" class="form-control" id="madre_ocupacion" name="madre_ocupacion">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="madre_email" name="madre_email">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Paso 4: Datos Académicos -->
-            <div class="step-content" data-step="4" style="display: none;">
                 <h5 class="form-section-title">Datos Académicos</h5>
                 
                 <div class="row">
@@ -438,9 +453,9 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Tipo de Inscripción</label>
                         <select class="form-select" id="tipo_inscripcion" name="tipo_inscripcion" required>
-                            <option value="Regular">Regular</option>
-                            <option value="Exonerado">Exonerado</option>
-                            <option value="Beca">Beca</option>
+                            <option value="">Seleccione</option>
+                            <option value="Postulante">Postulante</option>
+                            <option value="Reforzamiento">Reforzamiento</option>
                         </select>
                     </div>
                     <div class="col-md-12 my-3">
@@ -485,8 +500,8 @@
                 </div>
             </div>
 
-            <!-- Paso 5: Documentos y Pago -->
-            <div class="step-content" data-step="5" style="display: none;">
+            <!-- Paso 4: Documentos y Pago -->
+            <div class="step-content" data-step="4" style="display: none;">
                 <h5 class="form-section-title">Documentos y Pago</h5>
                 
                 <!-- Sección de Pago -->
@@ -526,6 +541,45 @@
                     
                     <!-- Aquí se inyecta la lista de vouchers (voucher_details) -->
                     <div id="voucher_details" style="display: none; margin-top: 10px; padding: 0 15px 15px;"></div>
+                    
+                    <!-- Opción de Ingreso Manual -->
+                    <div id="manual_voucher_section" style="display: none; margin-top: 15px; padding: 0 15px 15px;">
+                        <div class="alert alert-info py-2 small">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            <strong>Ingreso Manual:</strong> Complete los datos de su voucher de pago manualmente.
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Número de Voucher/Secuencia <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="manual_voucher_numero" placeholder="Ej: 001234567">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="manual_voucher_fecha">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Monto Matrícula (S/.) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="manual_monto_matricula" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Monto Enseñanza (S/.) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="manual_monto_ensenanza" step="0.01" min="0" placeholder="0.00">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-success py-2 small">
+                                    <strong>Total a Pagar:</strong> S/. <span id="manual_total_display">0.00</span>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <button type="button" class="btn btn-success btn-sm" onclick="confirmarVoucherManual()">
+                                    <i class="fas fa-check me-1"></i> Confirmar Datos
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="cancelarVoucherManual()">
+                                    <i class="fas fa-times me-1"></i> Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Carga de Archivos -->
@@ -558,8 +612,8 @@
                 </div>
             </div>
 
-            <!-- Paso 6: Confirmación -->
-            <div class="step-content" data-step="6" style="display: none; text-align: center;">
+            <!-- Paso 5: Confirmación -->
+            <div class="step-content" data-step="5" style="display: none; text-align: center;">
                 <i class="fas fa-check-circle" style="font-size: 50px; color: var(--color-principal); margin-bottom: 20px;"></i>
                 <h4>¡Todo listo!</h4>
                 <p>Por favor revise sus datos antes de enviar.</p>
