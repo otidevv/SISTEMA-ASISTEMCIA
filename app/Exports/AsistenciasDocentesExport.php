@@ -29,6 +29,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════
@@ -591,7 +592,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         1 => [
                             'font' => [
                                 'bold' => true, 
-                                'size' => 13, 
+                                'size' => 25, 
                                 'name' => 'Calibri',
                                 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
                             ]
@@ -599,7 +600,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         2 => [
                             'font' => [
                                 'bold' => true, 
-                                'size' => 12, 
+                                'size' => 22, 
                                 'name' => 'Calibri',
                                 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]
                             ]
@@ -607,7 +608,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         3 => [
                             'font' => [
                                 'bold' => true, 
-                                'size' => 11, 
+                                'size' => 22, 
                                 'name' => 'Calibri',
                                 'color' => ['argb' => self::COLORS['TEXT_DARK']]
                             ]
@@ -615,7 +616,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         4 => [
                             'font' => [
                                 'bold' => true, 
-                                'size' => 10, 
+                                'size' => 20, 
                                 'name' => 'Calibri',
                                 'color' => ['argb' => self::COLORS['TEXT_DARK']]
                             ]
@@ -623,7 +624,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         5 => [
                             'font' => [
                                 'bold' => false, 
-                                'size' => 9, 
+                                'size' => 19, 
                                 'name' => 'Calibri',
                                 'color' => ['argb' => self::COLORS['TEXT_DARK']]
                             ]
@@ -673,14 +674,46 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                 private function setupInstitutionalHeaders($sheet)
                 {
+                    // ═══════════════════════════════════════════════════
+                    // AGREGAR LOGOS INSTITUCIONALES COMO OVERLAY
+                    // ═══════════════════════════════════════════════════
+                    
+                    // Logo UNAMAD (izquierda) - Flotando sobre el encabezado
+                    $logoUnamad = public_path('assets/images/logo unamad constancia.png');
+                    if (file_exists($logoUnamad)) {
+                        $drawingUnamad = new Drawing();
+                        $drawingUnamad->setName('Logo UNAMAD');
+                        $drawingUnamad->setDescription('Logo UNAMAD');
+                        $drawingUnamad->setPath($logoUnamad);
+                        $drawingUnamad->setHeight(120);
+                        $drawingUnamad->setCoordinates('A1');
+                        $drawingUnamad->setOffsetX(10);
+                        $drawingUnamad->setOffsetY(5);  // Offset mínimo para que flote sobre el texto
+                        $drawingUnamad->setWorksheet($sheet);
+                    }
+                    
+                    // Logo CEPRE (derecha) - Flotando sobre el encabezado
+                    $logoCepre = public_path('assets/images/logo cepre costancia.png');
+                    if (file_exists($logoCepre)) {
+                        $drawingCepre = new Drawing();
+                        $drawingCepre->setName('Logo CEPRE');
+                        $drawingCepre->setDescription('Logo CEPRE');
+                        $drawingCepre->setPath($logoCepre);
+                        $drawingCepre->setHeight(120);
+                        $drawingCepre->setCoordinates('K1');
+                        $drawingCepre->setOffsetX(10);
+                        $drawingCepre->setOffsetY(5);  // Offset mínimo para que flote sobre el texto
+                        $drawingCepre->setWorksheet($sheet);
+                    }
+                    
                     // Fusionar celdas para encabezados
-                    $sheet->mergeCells('A1:L1');
-                    $sheet->mergeCells('A2:L2');
-                    $sheet->mergeCells('A3:L3');
-                    $sheet->mergeCells('A4:L4');
-                    $sheet->mergeCells('A5:L5');
+                    $sheet->mergeCells('A1:L1');  // Universidad
+                    $sheet->mergeCells('A2:L2');  // Centro Pre
+                    $sheet->mergeCells('A3:L3');  // Informe
+                    $sheet->mergeCells('A4:L4');  // Docente
+                    $sheet->mergeCells('A5:L5');  // Período
 
-                    // Fondo con borde elegante
+                    // Fondo con borde elegante para toda la cabecera
                     $sheet->getStyle('A1:L5')->applyFromArray([
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
@@ -698,12 +731,12 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         ]
                     ]);
 
-                    // Altura especial para encabezados
-                    $sheet->getRowDimension(1)->setRowHeight(22);
-                    $sheet->getRowDimension(2)->setRowHeight(20);
-                    $sheet->getRowDimension(3)->setRowHeight(20);
-                    $sheet->getRowDimension(4)->setRowHeight(18);
-                    $sheet->getRowDimension(5)->setRowHeight(18);
+                    // Altura especial para encabezados (sin fila dedicada a logos)
+                    $sheet->getRowDimension(1)->setRowHeight(28);  // Universidad
+                    $sheet->getRowDimension(2)->setRowHeight(28);  // Centro Pre
+                    $sheet->getRowDimension(3)->setRowHeight(25);  // Informe
+                    $sheet->getRowDimension(4)->setRowHeight(25);  // Docente
+                    $sheet->getRowDimension(5)->setRowHeight(25);  // Período
                     
                     // Línea separadora elegante con doble borde
                     $sheet->getStyle('A6:L6')->applyFromArray([
@@ -1008,7 +1041,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         ->setLeft(0.25)
                         ->setBottom(0.75);
 
-                    // Repetir encabezados en cada página
+                    // Repetir encabezados en cada página (incluye logos y encabezados)
                     $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
 
                     // ═══════════════════════════════════════════════════
