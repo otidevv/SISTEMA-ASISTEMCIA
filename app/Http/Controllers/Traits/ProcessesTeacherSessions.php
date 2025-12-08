@@ -14,6 +14,9 @@ trait ProcessesTeacherSessions
     const TOLERANCIA_VENTANA_ENTRADA_MINUTOS = 120;
     const TOLERANCIA_VENTANA_SALIDA_MINUTOS = 60;
     const TOLERANCIA_SALIDA_ANTICIPADA_MINUTOS = 15;
+    
+    // ⚡ OPTIMIZACIÓN: Cache para asistencias procesadas
+    private static $asistenciasCache = [];
 
     /**
      * Procesa una sesión de un docente para calcular estado, duración y pago.
@@ -59,11 +62,17 @@ trait ProcessesTeacherSessions
             ->sortByDesc('fecha_registro')
             ->first();
 
-        // Tema desarrollado
-        $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
-            ->where('horario_id', $horario->id)
-            ->whereDate('fecha_hora', $currentDate->toDateString())
-            ->first();
+        // ⚡ OPTIMIZACIÓN: Usar cache para asistencias procesadas
+        $cacheKey = $docente->id . '_' . $horario->id . '_' . $currentDate->toDateString();
+        
+        if (!isset(self::$asistenciasCache[$cacheKey])) {
+            self::$asistenciasCache[$cacheKey] = AsistenciaDocente::where('docente_id', $docente->id)
+                ->where('horario_id', $horario->id)
+                ->whereDate('fecha_hora', $currentDate->toDateString())
+                ->first();
+        }
+        
+        $asistenciaDocenteProcesada = self::$asistenciasCache[$cacheKey];
         $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
 
         // Inicialización de variables
@@ -119,7 +128,8 @@ trait ProcessesTeacherSessions
                 }
 
                 $minutosNetos = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
-                $horasDictadas = round(max(0, $minutosNetos) / 60, 2);
+                // NO redondear aquí para evitar acumulación de errores
+                $horasDictadas = max(0, $minutosNetos) / 60;
             }
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->isPast() || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
@@ -135,12 +145,16 @@ trait ProcessesTeacherSessions
             }
         }
 
-        // Cálculo de tardanza
+        // Cálculo de tardanza (solo se cuenta si excede la tolerancia)
+        // La tardanza representa los minutos que se están DESCONTANDO de las horas trabajadas
         if ($entradaBiometrica) {
             $horaEntradaReal = Carbon::parse($entradaBiometrica->fecha_registro);
             $tolerancia = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_ENTRADA_TARDE_MINUTOS);
+            
+            // Solo hay tardanza si llega DESPUÉS de la tolerancia
             if ($horaEntradaReal->gt($tolerancia)) {
-                $minutosTardanza = $horaEntradaReal->diffInMinutes($tolerancia);
+                // La tardanza es la diferencia entre la hora de entrada real y la hora programada
+                $minutosTardanza = $horarioInicioHoy->diffInMinutes($horaEntradaReal, true);
             }
         }
 
@@ -166,8 +180,8 @@ trait ProcessesTeacherSessions
             
             // Estado y registros
             'estado_sesion' => $estadoTexto,
-            'hora_entrada' => $entradaBiometrica ? Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i A') : '--',
-            'hora_salida' => $salidaBiometrica ? Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i A') : '--',
+            'hora_entrada' => $entradaBiometrica ? Carbon::parse($entradaBiometrica->fecha_registro)->format('H:i:s') : '--',
+            'hora_salida' => $salidaBiometrica ? Carbon::parse($salidaBiometrica->fecha_registro)->format('H:i:s') : '--',
             'tiene_registros' => $entradaBiometrica && $salidaBiometrica,
 
             // Cálculos de tiempo y pago

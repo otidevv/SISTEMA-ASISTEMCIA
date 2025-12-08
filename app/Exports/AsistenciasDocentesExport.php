@@ -82,6 +82,10 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
     public function __construct($selectedDocenteId = null, $selectedMonth = null, $selectedYear = null, $fechaInicio = null, $fechaFin = null, $selectedCicloAcademico = null)
     {
+        // ⚡ OPTIMIZACIÓN: Aumentar límites de PHP para exportaciones grandes
+        ini_set('max_execution_time', 300); // 5 minutos
+        ini_set('memory_limit', '512M');
+        
         $this->selectedDocenteId = $selectedDocenteId;
         $this->selectedMonth = $selectedMonth ? (int)$selectedMonth : null;
         $this->selectedYear = $selectedYear ? (int)$selectedYear : null;
@@ -92,8 +96,16 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         $this->processedData = $this->processAttendanceData();
     }
 
+    /**
+     * Obtener los datos procesados (para uso en el controlador de reportes)
+     */
+    public function getProcessedData()
+    {
+        return $this->processedData;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
-    // PROCESAMIENTO DE DATOS (LÓGICA INTACTA)
+    // PROCESAMIENTO DE DATOS (LÓGICA ORIGINAL RESTAURADA)
     // ═══════════════════════════════════════════════════════════════════════
 
     private function processAttendanceData()
@@ -148,7 +160,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
             $startDate = $endDate->copy()->subDays(30)->startOfDay();
         }
 
-        // 3. Procesar sesiones día por día
+        // 3. Procesar sesiones día por día (LÓGICA ORIGINAL)
         foreach ($docentes as $docente) {
             if (!isset($processedDetailedAsistencias[$docente->id])) {
                 $processedDetailedAsistencias[$docente->id] = [
@@ -161,29 +173,41 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
             // Iterar cada día del rango
             if ($startDate && $endDate) {
+                // ⚡ OPTIMIZACIÓN: Pre-cargar todos los horarios del docente de una vez
+                $todosHorariosDocente = HorarioDocente::where('docente_id', $docente->id)
+                    ->with(['curso', 'aula', 'ciclo']);
+                
+                if ($this->selectedCicloAcademico) {
+                    $todosHorariosDocente->whereHas('ciclo', function ($q) {
+                        $q->where('codigo', $this->selectedCicloAcademico);
+                    });
+                }
+                
+                $todosHorariosDocente = $todosHorariosDocente->get();
+                
+                // ⚡ OPTIMIZACIÓN: Pre-cargar todos los registros biométricos del rango
+                $todosRegistrosDocente = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                    ->whereBetween('fecha_registro', [$startDate, $endDate])
+                    ->orderBy('fecha_registro', 'asc')
+                    ->get();
+                
+                // Indexar por fecha para acceso rápido
+                $registrosPorFecha = $todosRegistrosDocente->groupBy(function($item) {
+                    return Carbon::parse($item->fecha_registro)->toDateString();
+                });
+                
                 $currentDate = $startDate->copy();
                 while ($currentDate->lte($endDate)) {
                     $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
+                    $fechaString = $currentDate->toDateString();
 
-                    // Construir query base para horarios
-                    $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
-                        ->where('dia_semana', $diaSemanaNombre)
-                        ->with(['curso', 'aula', 'ciclo']);
+                    // Filtrar horarios del día desde la colección pre-cargada
+                    $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
+                        return strtolower($horario->dia_semana) === $diaSemanaNombre;
+                    })->sortBy('hora_inicio');
 
-                    // Aplicar filtro de ciclo SOLO si está especificado
-                    if ($this->selectedCicloAcademico) {
-                        $horariosQuery->whereHas('ciclo', function ($q) {
-                            $q->where('codigo', $this->selectedCicloAcademico);
-                        });
-                    }
-
-                    $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
-
-                    // Obtener registros biométricos del día
-                    $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
-                        ->whereDate('fecha_registro', $currentDate->toDateString())
-                        ->orderBy('fecha_registro', 'asc')
-                        ->get();
+                    // Obtener registros biométricos del día desde la colección pre-cargada
+                    $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
                     // Procesar cada sesión del día
                     foreach ($horariosDelDia as $horario) {
@@ -198,8 +222,15 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     
                     $currentDate->addDay(); 
                 }
+                
+                // DEBUG: Log para ver los totales del export
+                \Log::info("EXPORT - Docente {$docente->nombre}: " . count($processedDetailedAsistencias[$docente->id]['sessions']) . " sesiones, Total horas: " . $processedDetailedAsistencias[$docente->id]['total_horas']);
             }
         }
+        
+        // DEBUG: Log del total general del export
+        $totalGeneralExport = collect($processedDetailedAsistencias)->sum('total_horas');
+        \Log::info("TOTAL GENERAL EXPORT: {$totalGeneralExport} horas");
 
         return $processedDetailedAsistencias;
     }
@@ -369,31 +400,31 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     
                     $dataRows->push([
                         '🏛️ UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS',
-                        '', '', '', '', '', '', '', '', '', '', ''
+                        '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
                         '🎓 CENTRO PRE UNIVERSITARIO',
-                        '', '', '', '', '', '', '', '', '', '', ''
+                        '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
                         '📚 CICLO ORDINARIO 2025-I',
-                        '', '', '', '', '', '', '', '', '', '', ''
+                        '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
                         '📊 INFORME DE AVANCE ACADÉMICO',
-                        '', '', '', '', '', '', '', '', '', '', ''
+                        '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
                     $dataRows->push([
                         '📅 ' . $this->filterPeriodHeader,
-                        '', '', '', '', '', '', '', '', '', '', ''
+                        '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
 
                     // Separador elegante
-                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '']);
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '', '']);
 
                     // ═══════════════════════════════════════════════════════════
                     // SECCIÓN 2: ENCABEZADOS DE TABLA PROFESIONALES
@@ -411,6 +442,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         '⏰ ENTRADA', 
                         '⏱️ SALIDA', 
                         '⏳ HORAS', 
+                        '⏱️ TARDANZA',
                         '💰 PAGO'
                     ]);
 
@@ -460,6 +492,20 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                             $isFirstRowForSemana = true;
                             
                             foreach ($sessions as $session) {
+                                // Calcular tardanza en formato MM:SS
+                                // La tardanza ya viene calculada respetando la tolerancia de 5 minutos
+                                $minutosTardanza = $session['minutos_tardanza'] ?? 0;
+                                $minutosEnteros = floor($minutosTardanza);
+                                $segundos = round(($minutosTardanza - $minutosEnteros) * 60);
+                                // Mostrar 00:00 si no hay tardanza, o MM:SS si hay tardanza
+                                $tardanzaFormateada = sprintf('%02d:%02d', $minutosEnteros, $segundos);
+                                
+                                // Convertir horas decimales a formato HH:MM
+                                $horasDictadas = $session['horas_dictadas'];
+                                $horas = floor($horasDictadas);
+                                $minutos = round(($horasDictadas - $horas) * 60);
+                                $horasFormateadas = sprintf('%02d:%02d', $horas, $minutos);
+                                
                                 $dataRows->push([
                                     $isFirstRowForDocente ? $this->docenteName : '',
                                     $isFirstRowForMes ? strtoupper($monthData['month_name']) : '',
@@ -471,7 +517,8 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                     $session['turno'],
                                     $session['hora_entrada'],
                                     $session['hora_salida'],
-                                    number_format($session['horas_dictadas'], 2) . ' hrs',
+                                    $horasFormateadas,
+                                    $tardanzaFormateada,
                                     'S/. ' . number_format($session['pago'], 2)
                                 ]);
                                 
@@ -489,10 +536,16 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // SECCIÓN 4: FILA DE TOTALES PROFESIONAL
                     // ═══════════════════════════════════════════════════════════
                     
+                    // Convertir total de horas a formato HH:MM
+                    $totalHoras = floor($docenteTotalHoras);
+                    $totalMinutos = round(($docenteTotalHoras - $totalHoras) * 60);
+                    $totalHorasFormateado = sprintf('%02d:%02d', $totalHoras, $totalMinutos);
+                    
                     $dataRows->push([
                         '', '', '', '', '', '', '', '', '', 
                         '📊 TOTAL GENERAL',
-                        '⏱️ ' . number_format($docenteTotalHoras, 2) . ' HORAS',
+                        '⏱️ ' . $totalHorasFormateado . ' HRS',
+                        '',
                         '💰 S/. ' . number_format($docenteTotalPago, 2)
                     ]);
 
@@ -586,14 +639,14 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 private function setupInstitutionalHeaders($sheet)
                 {
                     // Fusionar celdas para encabezados
-                    $sheet->mergeCells('A1:L1');
-                    $sheet->mergeCells('A2:L2');
-                    $sheet->mergeCells('A3:L3');
-                    $sheet->mergeCells('A4:L4');
-                    $sheet->mergeCells('A5:L5');
+                    $sheet->mergeCells('A1:M1');
+                    $sheet->mergeCells('A2:M2');
+                    $sheet->mergeCells('A3:M3');
+                    $sheet->mergeCells('A4:M4');
+                    $sheet->mergeCells('A5:M5');
 
                     // Aplicar gradiente sutil al fondo
-                    $sheet->getStyle('A1:L5')->applyFromArray([
+                    $sheet->getStyle('A1:M5')->applyFromArray([
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
                             'startColor' => ['argb' => self::COLORS['LIGHT_BLUE']]
@@ -610,7 +663,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     }
                     
                     // Separador visual con línea elegante
-                    $sheet->getStyle('A6:L6')->applyFromArray([
+                    $sheet->getStyle('A6:M6')->applyFromArray([
                         'borders' => [
                             'bottom' => [
                                 'borderStyle' => Border::BORDER_MEDIUM,
@@ -625,7 +678,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $lastRow = $sheet->getHighestRow();
                     
                     // ═══ ENCABEZADOS DE TABLA CON DISEÑO PREMIUM ═══
-                    $sheet->getStyle('A7:L7')->applyFromArray([
+                    $sheet->getStyle('A7:M7')->applyFromArray([
                         'font' => [
                             'bold' => true, 
                             'size' => 11,
@@ -663,10 +716,11 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         'F' => 38,  // TEMA DESARROLLADO - Máximo espacio
                         'G' => 8,   // AULA - Compacto
                         'H' => 12,  // TURNO - Optimizado
-                        'I' => 12,  // HORA ENTRADA - Compacto
-                        'J' => 12,  // HORA SALIDA - Compacto
+                        'I' => 14,  // HORA ENTRADA - Con segundos
+                        'J' => 14,  // HORA SALIDA - Con segundos
                         'K' => 15,  // HORAS DICTADAS - Optimizado
-                        'L' => 16   // PAGO - Espacio para formato moneda
+                        'L' => 12,  // TARDANZA - Formato MM:SS
+                        'M' => 16   // PAGO - Espacio para formato moneda
                     ];
 
                     foreach ($columnWidths as $column => $width) {
@@ -674,7 +728,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     }
 
                     // ═══ BORDES PROFESIONALES PARA TODA LA TABLA ═══
-                    $sheet->getStyle('A7:L' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('A7:M' . $lastRow)->applyFromArray([
                         'borders' => [
                             'allBorders' => [
                                 'borderStyle' => Border::BORDER_THIN,
@@ -695,7 +749,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     for ($row = 8; $row < $lastRow; $row++) {
                         $fillColor = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
                         
-                        $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                        $sheet->getStyle('A' . $row . ':M' . $row)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
                                 'startColor' => ['argb' => $fillColor]
@@ -707,7 +761,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FILA DE TOTALES CON DISEÑO PREMIUM
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('A' . $lastRow . ':L' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('A' . $lastRow . ':M' . $lastRow)->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'size' => 12,
@@ -746,8 +800,8 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $sheet->getStyle('G8:H' . ($lastRow-1))->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     
-                    // Horarios y pagos centrados
-                    $sheet->getStyle('I8:L' . ($lastRow-1))->getAlignment()
+                    // Horarios, tardanza y pagos centrados
+                    $sheet->getStyle('I8:M' . ($lastRow-1))->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                     // Tema desarrollado con wrap text
@@ -854,7 +908,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // EFECTOS DE SOMBRA PARA ENCABEZADOS
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('A7:L7')->applyFromArray([
+                    $sheet->getStyle('A7:M7')->applyFromArray([
                         'borders' => [
                             'bottom' => [
                                 'borderStyle' => Border::BORDER_THICK,
@@ -867,7 +921,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FORMATO CONDICIONAL PARA VALORES MONETARIOS
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('L8:L' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('M8:M' . $lastRow)->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'color' => ['argb' => self::COLORS['SUCCESS_GREEN']]
@@ -922,7 +976,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // ═══════════════════════════════════════════════════
                     
                     // Línea divisoria antes de totales
-                    $sheet->getStyle('A' . ($lastRow-1) . ':L' . ($lastRow-1))->applyFromArray([
+                    $sheet->getStyle('A' . ($lastRow-1) . ':M' . ($lastRow-1))->applyFromArray([
                         'borders' => [
                             'bottom' => [
                                 'borderStyle' => Border::BORDER_DOUBLE,

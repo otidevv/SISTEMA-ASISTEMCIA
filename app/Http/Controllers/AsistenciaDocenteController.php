@@ -252,7 +252,7 @@ class AsistenciaDocenteController extends Controller
             return $item;
         });
 
-        // 6. NUEVA LÓGICA PARA DATOS DETALLADOS - USANDO NUEVA METODOLOGÍA
+        // 6. OPTIMIZACIÓN: NUEVA LÓGICA PARA DATOS DETALLADOS - PRE-CARGA BATCH
         $processedDetailedAsistencias = [];
         
         // Obtener docentes según filtros
@@ -267,30 +267,42 @@ class AsistenciaDocenteController extends Controller
         foreach ($docentesParaProcesar as $docente) {
             $docenteSessions = [];
 
-            // Iterar día por día dentro del rango
+            // ⚡ OPTIMIZACIÓN: Pre-cargar todos los horarios del docente de una vez
+            $todosHorariosDocente = HorarioDocente::where('docente_id', $docente->id)
+                ->with(['curso', 'aula', 'ciclo']);
+            
+            if ($selectedCicloAcademico) {
+                $todosHorariosDocente->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
+                    $q->where('codigo', $selectedCicloAcademico);
+                });
+            }
+            
+            $todosHorariosDocente = $todosHorariosDocente->get();
+            
+            // ⚡ OPTIMIZACIÓN: Pre-cargar todos los registros biométricos del rango
+            $todosRegistrosDocente = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                ->whereBetween('fecha_registro', [$startDate, $endDate])
+                ->orderBy('fecha_registro', 'asc')
+                ->get();
+            
+            // Indexar por fecha para acceso rápido
+            $registrosPorFecha = $todosRegistrosDocente->groupBy(function($item) {
+                return Carbon::parse($item->fecha_registro)->toDateString();
+            });
+
+            // Iterar día por día dentro del rango (ahora sin queries)
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
                 $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
+                $fechaString = $currentDate->toDateString();
 
-                // Obtener sesiones programadas para este día
-                $horariosQuery = HorarioDocente::where('docente_id', $docente->id)
-                    ->where('dia_semana', $diaSemanaNombre)
-                    ->with(['curso', 'aula', 'ciclo']);
+                // Filtrar horarios del día desde la colección pre-cargada
+                $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
+                    return strtolower($horario->dia_semana) === $diaSemanaNombre;
+                })->sortBy('hora_inicio');
 
-                // Aplicar filtro de ciclo SOLO si está especificado
-                if ($selectedCicloAcademico) {
-                    $horariosQuery->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
-                        $q->where('codigo', $selectedCicloAcademico);
-                    });
-                }
-
-                $horariosDelDia = $horariosQuery->orderBy('hora_inicio')->get();
-
-                // Obtener registros biométricos del día
-                $registrosBiometricosDelDia = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
-                    ->whereDate('fecha_registro', $currentDate->toDateString())
-                    ->orderBy('fecha_registro', 'asc')
-                    ->get();
+                // Obtener registros biométricos del día desde la colección pre-cargada
+                $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
                 // Procesar cada sesión del día
                 foreach ($horariosDelDia as $horario) {
