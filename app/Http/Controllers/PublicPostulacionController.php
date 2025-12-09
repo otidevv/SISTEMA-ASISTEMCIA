@@ -217,12 +217,36 @@ class PublicPostulacionController extends Controller
             $estudiante = User::where('numero_documento', $request->estudiante_dni)->first();
             
             if (!$estudiante) {
+                // Verificar si el email ya existe
+                $emailExistente = User::where('email', $request->estudiante_email)->first();
+                
+                if ($emailExistente) {
+                    throw new \Exception(
+                        "El correo electrónico '{$request->estudiante_email}' ya está registrado en el sistema. " .
+                        "Si ya te postulaste anteriormente, por favor contacta con el administrador."
+                    );
+                }
+                
                 $estudiante = new User();
                 $estudiante->numero_documento = $request->estudiante_dni;
                 $estudiante->username = $this->generateUsername($request->estudiante_nombre, $request->estudiante_apellido_paterno);
                 $estudiante->password_hash = Hash::make($request->estudiante_password ?? $request->estudiante_dni);
                 $estudiante->email = $request->estudiante_email;
                 $estudiante->estado = true; // Activo como usuario, pero postulación pendiente
+            } else {
+                // Si el estudiante existe pero el email es diferente, verificar que el nuevo email no esté en uso
+                if ($estudiante->email !== $request->estudiante_email) {
+                    $emailExistente = User::where('email', $request->estudiante_email)
+                        ->where('id', '!=', $estudiante->id)
+                        ->first();
+                    
+                    if ($emailExistente) {
+                        throw new \Exception(
+                            "El correo electrónico '{$request->estudiante_email}' ya está registrado por otro usuario."
+                        );
+                    }
+                    $estudiante->email = $request->estudiante_email;
+                }
             }
             
             $estudiante->nombre = $request->estudiante_nombre;
@@ -332,39 +356,68 @@ class PublicPostulacionController extends Controller
 
         if (!$dni) return;
 
+        // Buscar padre por DNI primero
         $padre = User::where('numero_documento', $dni)->first();
 
         if (!$padre) {
-            // Separar apellidos
-            $parts = explode(' ', $apellidos, 2);
-            $paterno = $parts[0] ?? $apellidos;
-            $materno = $parts[1] ?? '';
+            // Si se proporciona email, verificar que no exista
+            if ($email) {
+                $emailExistente = User::where('email', $email)->first();
+                if ($emailExistente) {
+                    // Si el email existe, usar ese usuario como padre
+                    $padre = $emailExistente;
+                    Log::info("Usando usuario existente con email {$email} como {$tipo}");
+                }
+            }
+            
+            // Si aún no hay padre, crear uno nuevo
+            if (!$padre) {
+                // Separar apellidos
+                $parts = explode(' ', $apellidos, 2);
+                $paterno = $parts[0] ?? $apellidos;
+                $materno = $parts[1] ?? '';
 
-            $padre = User::create([
-                'username' => $this->generateUsername($nombre, $paterno),
-                'email' => $email ?? "{$tipo}_{$dni}@sistema.edu",
-                'password_hash' => Hash::make($dni),
-                'nombre' => $nombre,
-                'apellido_paterno' => $paterno,
-                'apellido_materno' => $materno,
-                'tipo_documento' => 'DNI',
-                'numero_documento' => $dni,
-                'telefono' => $telefono,
-                'ocupacion' => $ocupacion,
-                'genero' => $tipo === 'padre' ? 'M' : 'F',
-                'estado' => true
-            ]);
+                $padre = User::create([
+                    'username' => $this->generateUsername($nombre, $paterno),
+                    'email' => $email ?? "{$tipo}_{$dni}@sistema.edu",
+                    'password_hash' => Hash::make($dni),
+                    'nombre' => $nombre,
+                    'apellido_paterno' => $paterno,
+                    'apellido_materno' => $materno,
+                    'tipo_documento' => 'DNI',
+                    'numero_documento' => $dni,
+                    'telefono' => $telefono,
+                    'ocupacion' => $ocupacion,
+                    'genero' => $tipo === 'padre' ? 'M' : 'F',
+                    'estado' => true
+                ]);
 
-            if ($rolPadre) {
-                $padre->roles()->attach($rolPadre->id, ['fecha_asignacion' => now()]);
+                if ($rolPadre) {
+                    $padre->roles()->attach($rolPadre->id, ['fecha_asignacion' => now()]);
+                }
             }
         } else {
             // Actualizar datos si existen
-            $padre->update([
+            $updateData = [
                 'telefono' => $telefono,
                 'ocupacion' => $ocupacion,
-                'email' => $email ?? $padre->email
-            ]);
+            ];
+            
+            // Solo actualizar email si se proporciona y es diferente
+            if ($email && $padre->email !== $email) {
+                // Verificar que el nuevo email no esté en uso por otro usuario
+                $emailExistente = User::where('email', $email)
+                    ->where('id', '!=', $padre->id)
+                    ->first();
+                
+                if (!$emailExistente) {
+                    $updateData['email'] = $email;
+                } else {
+                    Log::warning("No se pudo actualizar email de {$tipo} porque {$email} ya está en uso");
+                }
+            }
+            
+            $padre->update($updateData);
         }
 
         // Crear Parentesco

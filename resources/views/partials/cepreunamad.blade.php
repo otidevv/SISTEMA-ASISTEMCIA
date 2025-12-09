@@ -140,13 +140,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex-wrap: nowrap;
+            gap: 15px;
         }
 
         .logo {
             height: 60px;
             transition: transform 0.3s;
+            display: block;
+            flex-shrink: 0;
         }
         .logo:hover {
             transform: scale(1.05) rotate(-2deg);
@@ -419,12 +421,14 @@
         }
 
         .hero-image {
-            max-width: 100%;
-            height: auto;
+            width: 100%;
+            height: 100%;
             border-radius: 12px; 
             box-shadow: none; 
             transition: all 0.4s ease-in-out;
-            display: block; 
+            display: block;
+            object-fit: contain;
+            object-position: center;
         }
         
         .hero-image-wrapper:hover .hero-image {
@@ -1055,13 +1059,29 @@
         /* 13. Responsive Design y Móvil */
         /* ==================================== */
         /* Menú Móvil (Toggle) */
-        .menu-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; transition: all 0.3s; }
-        .menu-toggle span { width: 30px; height: 3px; background: var(--azul-oscuro); border-radius: 2px; transition: all 0.3s; }
+        .menu-toggle { 
+            display: none; 
+            flex-direction: column; 
+            gap: 4px; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+        .menu-toggle span { 
+            width: 25px; 
+            height: 3px; 
+            background: var(--azul-oscuro); 
+            border-radius: 2px; 
+            transition: all 0.3s;
+            display: block;
+        }
         .nav-menu.active {
             display: flex;
             flex-direction: column;
             position: absolute;
-            top: 90px; 
+            top: 100%; 
             left: 0;
             right: 0;
             background: white;
@@ -1118,27 +1138,368 @@
 
         @media (max-width: 768px) {
             /* Mobile View (Smartphone) */
-            /* Corrección: Ajustar el logo y los botones para que quepan */
-            .header-content { padding: 10px 15px; } 
-            .logo { height: 45px; }
-            .header-buttons { gap: 5px; }
-
-            .hero-title { font-size: 36px; }
-            .hero-subtitle { font-size: 24px; }
-            .hero-description { font-size: 16px; }
             
-            .header-buttons { width: auto; justify-content: flex-end; }
-            .btn { width: auto; padding: 10px 15px; font-size: 13px; }
-            .hero-buttons { width: 100%; flex-direction: column; gap: 15px; }
+            /* Top Bar Mobile */
+            .top-bar-content { 
+                padding: 0 15px; 
+                flex-direction: column; 
+                text-align: center; 
+                gap: 5px;
+            }
+            .help-desk { 
+                font-size: 12px; 
+                padding: 3px 8px;
+                justify-content: center;
+                width: 100%;
+            }
             
-            /* Cuadrículas */
-            .courses-grid, .teachers-grid, .stats-container { grid-template-columns: 1fr; gap: 20px; }
+            /* Header Mobile */
+            .header-content { 
+                padding: 10px 15px; 
+                gap: 8px;
+                position: relative;
+                flex-wrap: nowrap;
+            } 
+            .logo { 
+                height: 40px;
+                flex-shrink: 0;
+            }
+            .nav-menu {
+                display: none;
+            }
+            .header-buttons { 
+                gap: 8px; 
+                width: auto; 
+                justify-content: flex-end;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            .btn { 
+                width: auto; 
+                padding: 8px 12px; 
+                font-size: 11px; 
+                gap: 4px;
+                white-space: nowrap;
+            }
+            .search-icon { 
+                font-size: 18px;
+            }
+            .menu-toggle {
+                display: flex;
+                flex-shrink: 0;
+            }
 
-            /* CTA/Contact */
-            .cta-banner-content h2 { font-size: 28px; }
-            .contact-bar-content { align-items: center; }
-            .contact-bar-right h3 { font-size: 28px; }
-            .footer-grid { grid-template-columns: 1fr; }
+            /* Hero Section Mobile */
+            .hero-section { 
+                min-height: auto; 
+                padding: 0;
+            }
+            .carousel-slide { 
+                padding: 40px 0; 
+            }
+            .hero-content { 
+                padding: 0 15px; 
+                gap: 20px;
+            }
+            .hero-title { 
+                font-size: 28px; 
+                line-height: 1.2;
+                text-shadow: 
+                    0 0 3px rgba(255,255,255,0.5), 
+                    1px 1px var(--verde-cepre), 
+                    2px 2px var(--cyan-acento),
+                    3px 3px var(--azul-oscuro);
+            }
+            .hero-title:hover {
+                text-shadow: 
+                    0 0 10px rgba(255,255,255,0.8), 
+                    1px 1px var(--verde-cepre), 
+                    2px 2px var(--cyan-acento),
+                    3px 3px var(--azul-oscuro);
+            }
+            .hero-subtitle { 
+                font-size: 18px; 
+                margin-bottom: 10px;
+            }
+            .hero-description { 
+                font-size: 14px; 
+                line-height: 1.5;
+            }
+            .hero-buttons { 
+                width: 100%; 
+                flex-direction: column; 
+                gap: 10px; 
+            }
+            .hero-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Hero Image Mobile */
+            .hero-image-wrapper { 
+                min-height: 280px;
+                max-height: 350px;
+                margin-top: 20px;
+                display: flex;
+                flex-direction: column;
+                overflow: visible;
+            }
+            .hero-image {
+                object-fit: contain;
+                max-height: 100%;
+                flex: 1;
+            }
+            .stats-badge {
+                position: static;
+                bottom: auto;
+                left: auto;
+                margin: 15px auto 0;
+                padding: 15px 20px;
+                max-width: 90%;
+                width: auto;
+                transform: none !important;
+            }
+            .stats-badge p { 
+                font-size: 12px; 
+                margin: 3px 0;
+            }
+            .stats-badge h2 { 
+                font-size: 28px;
+                margin: 5px 0;
+            }
+            .hero-image-wrapper:hover .stats-badge { 
+                transform: none !important;
+            }
+            
+            /* Carousel Navigation Mobile */
+            .carousel-nav {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+                padding: 10px;
+            }
+            .prev-nav { left: 10px; }
+            .next-nav { right: 10px; }
+            .carousel-dots { 
+                bottom: 10px; 
+                gap: 6px;
+            }
+            .dot { 
+                width: 8px; 
+                height: 8px; 
+            }
+            
+            /* Marquee Mobile */
+            .marquee-section { padding: 10px 0; }
+            .marquee-item { 
+                padding: 0 20px; 
+                font-size: 14px;
+            }
+            
+            /* Sections Mobile */
+            .courses-section, .teachers-section, .stats-section { 
+                padding: 40px 0; 
+            }
+            .section-title { 
+                margin-bottom: 30px; 
+                padding: 0 15px;
+            }
+            .section-title h6 { 
+                font-size: 12px; 
+                letter-spacing: 1px;
+            }
+            .section-title h2 { 
+                font-size: 28px; 
+                line-height: 1.3;
+            }
+            
+            /* Courses Grid Mobile */
+            .courses-grid { 
+                grid-template-columns: 1fr; 
+                gap: 20px; 
+                padding: 0 15px;
+            }
+            .course-card { 
+                margin-bottom: 10px; 
+            }
+            .course-icon { 
+                padding: 30px; 
+            }
+            .course-icon i { 
+                font-size: 36px; 
+            }
+            .course-content { 
+                padding: 20px; 
+            }
+            .course-content h3 { 
+                font-size: 18px; 
+            }
+            .course-content p { 
+                font-size: 14px; 
+            }
+            
+            /* Stats Section Mobile */
+            .stats-container { 
+                grid-template-columns: 1fr; 
+                gap: 15px; 
+                padding: 0 15px;
+            }
+            .stat-box { 
+                padding: 20px; 
+            }
+            .stat-box i { 
+                font-size: 36px; 
+                margin-bottom: 10px;
+            }
+            .stat-box h3 { 
+                font-size: 36px; 
+            }
+            .stat-box p { 
+                font-size: 14px; 
+            }
+            
+            /* Teachers Grid Mobile */
+            .teachers-grid { 
+                grid-template-columns: 1fr; 
+                gap: 20px; 
+                padding: 0 15px;
+            }
+            .teacher-card { 
+                margin-bottom: 10px; 
+            }
+            .teacher-image { 
+                height: 250px; 
+            }
+            .teacher-info { 
+                padding: 20px; 
+            }
+            .teacher-info h4 { 
+                font-size: 18px; 
+            }
+            .teacher-info p { 
+                font-size: 14px; 
+            }
+
+            /* CTA Banner Mobile */
+            .cta-banner { 
+                padding: 40px 0; 
+            }
+            .cta-banner-content { 
+                padding: 0 15px; 
+            }
+            .cta-banner-content h2 { 
+                font-size: 24px; 
+                margin-bottom: 20px;
+                line-height: 1.3;
+            }
+            .cta-banner-content p { 
+                font-size: 14px; 
+                margin-bottom: 20px;
+            }
+            .btn-cyan-cta {
+                padding: 12px 25px;
+                font-size: 14px;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Contact Bar Mobile */
+            .contact-bar { 
+                padding: 30px 0; 
+            }
+            .contact-bar-content { 
+                flex-direction: column; 
+                align-items: center; 
+                padding: 0 15px;
+                text-align: center;
+            }
+            .contact-bar-left { 
+                flex-direction: column; 
+                text-align: center;
+            }
+            .contact-bar-icon { 
+                width: 45px; 
+                height: 45px; 
+            }
+            .contact-bar-icon i { 
+                font-size: 18px; 
+            }
+            .contact-bar-right { 
+                text-align: center; 
+            }
+            .contact-bar-right h3 { 
+                font-size: 24px; 
+            }
+            .contact-bar-right p { 
+                font-size: 14px; 
+            }
+            
+            /* Footer Mobile */
+            .footer-grid { 
+                grid-template-columns: 1fr; 
+                gap: 30px;
+            }
+            .footer-content { 
+                padding: 0 15px; 
+            }
+            .footer-column h3 { 
+                font-size: 16px; 
+            }
+            .footer-column ul li a { 
+                font-size: 13px; 
+            }
+            .footer-buttons a { 
+                font-size: 12px; 
+                padding: 10px 15px;
+            }
+            .copyright { 
+                padding: 20px 15px; 
+                font-size: 12px;
+            }
+            
+            /* Modal Mobile */
+            .modal-content { 
+                width: 95%; 
+                padding: 20px; 
+                margin: 10px;
+            }
+            .modal-content h3 { 
+                font-size: 20px; 
+            }
+            .modal-content p { 
+                font-size: 14px; 
+            }
+            
+            /* Scroll Top Button Mobile */
+            #scrollTop { 
+                bottom: 20px; 
+                right: 15px; 
+                width: 45px; 
+                height: 45px;
+            }
+        }
+        
+        /* Extra Small Devices (< 480px) */
+        @media (max-width: 480px) {
+            .hero-title { 
+                font-size: 24px; 
+            }
+            .hero-subtitle { 
+                font-size: 16px; 
+            }
+            .section-title h2 { 
+                font-size: 24px; 
+            }
+            .cta-banner-content h2 { 
+                font-size: 20px; 
+            }
+            .contact-bar-right h3 { 
+                font-size: 20px; 
+            }
+            .btn { 
+                padding: 6px 10px; 
+                font-size: 11px; 
+            }
         }
         
         /* Botón Scroll Top visible solo si está en JS */
@@ -1230,7 +1591,7 @@
                 <!-- RUTA DINÁMICA RESTAURADA -->
                 <a href="{{ route('login') }}" class="btn btn-primary">
                     <i class="far fa-user"></i>
-                    <span>Consultar Asistencia</span>
+                    <span>Login</span>
                 </a>
                 <div class="menu-toggle">
                     <span></span>
