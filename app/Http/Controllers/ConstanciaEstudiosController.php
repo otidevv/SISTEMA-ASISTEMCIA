@@ -94,11 +94,20 @@ class ConstanciaEstudiosController extends Controller
             $pdf = PDF::loadView('pdf.constancia-estudios', $data);
             $pdf->setPaper('A4', 'portrait');
 
-            // Descargar el PDF
-            return $pdf->download('constancia_estudios_' . $numeroConstancia . '.pdf');
+            $filename = 'constancia_estudios_' . $numeroConstancia . '.pdf';
+            
+            // Retornar PDF para visualización inline en navegador
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Error al generar constancia de estudios: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->with('error', 'Error al generar la constancia: ' . $e->getMessage());
         }
     }
@@ -249,9 +258,9 @@ class ConstanciaEstudiosController extends Controller
     public function validarConstancia($codigoVerificacion)
     {
         try {
+            // ✅ Buscar constancia sin filtrar por tipo (acepta 'estudios' y 'vacante')
             $constancia = DB::table('constancias_generadas')
                 ->where('codigo_verificacion', $codigoVerificacion)
-                ->where('tipo', 'estudios')
                 ->first();
 
             if (!$constancia) {
@@ -265,7 +274,7 @@ class ConstanciaEstudiosController extends Controller
 
             return view('constancias.validacion', [
                 'valida' => true,
-                'tipo' => 'estudios',
+                'tipo' => $constancia->tipo, // 👈 Usar el tipo real de la constancia
                 'datos' => $datos,
                 'fecha_generacion' => $constancia->created_at,
                 'constancia_firmada' => $constancia->constancia_firmada_path ?? null

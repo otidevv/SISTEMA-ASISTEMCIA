@@ -390,6 +390,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/generar/{inscripcion}', [App\Http\Controllers\ConstanciaVacanteController::class, 'generarConstancia'])
             ->name('constancias.vacante.generar')
             ->middleware('can:constancias.generar-vacante');
+        Route::get('/ver/{constancia}', [App\Http\Controllers\ConstanciaVacanteController::class, 'verConstancia'])
+            ->name('constancias.vacante.ver')
+            ->middleware('can:constancias.generar-vacante');
         Route::post('/subir-firmada/{inscripcion}', [App\Http\Controllers\ConstanciaVacanteController::class, 'subirConstanciaFirmada'])
             ->name('constancias.vacante.subir-firmada')
             ->middleware('can:constancias.generar-vacante');

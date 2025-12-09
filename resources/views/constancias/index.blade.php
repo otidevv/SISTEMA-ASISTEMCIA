@@ -4,7 +4,7 @@
 
 <!-- NOTA: Se eliminan el CDN de Tailwind y los estilos generales para evitar conflictos con el tema Sheroyou. -->
 
-<div class="container-fluid">
+<div class="container-fluid" id="constancias-module">
     <div class="row">
         <!-- Título y Breadcrumb (Se mantiene la estructura de Sheroyou/Bootstrap) -->
         <div class="col-12">
@@ -40,6 +40,82 @@
                                     Generar Nueva Constancia
                                 </button>
                             @endif
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de Estadísticas -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card widget-flat bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="float-end">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-75">
+                                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                        </svg>
+                                    </div>
+                                    <h5 class="text-white-50 fw-normal mt-0" title="Total de Constancias">Total Generadas</h5>
+                                    <h3 class="mt-3 mb-1 text-white">{{ $constancias->count() }}</h3>
+                                    <p class="mb-0 text-white-50">
+                                        <span class="text-nowrap">Todas las constancias</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card widget-flat bg-success text-white">
+                                <div class="card-body">
+                                    <div class="float-end">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-75">
+                                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                                        </svg>
+                                    </div>
+                                    <h5 class="text-white-50 fw-normal mt-0" title="Constancias de Estudios">Estudios</h5>
+                                    <h3 class="mt-3 mb-1 text-white">{{ $constancias->where('tipo', 'estudios')->count() }}</h3>
+                                    <p class="mb-0 text-white-50">
+                                        <span class="text-nowrap">Certificados académicos</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card widget-flat bg-info text-white">
+                                <div class="card-body">
+                                    <div class="float-end">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-75">
+                                            <rect width="18" height="18" x="3" y="3" rx="2"/>
+                                            <path d="M3 9h18"/>
+                                            <path d="M9 21V9"/>
+                                        </svg>
+                                    </div>
+                                    <h5 class="text-white-50 fw-normal mt-0" title="Constancias de Vacante">Vacantes</h5>
+                                    <h3 class="mt-3 mb-1 text-white">{{ $constancias->where('tipo', 'vacante')->count() }}</h3>
+                                    <p class="mb-0 text-white-50">
+                                        <span class="text-nowrap">Certificados de vacante</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card widget-flat bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="float-end">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-75">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                            <path d="m9 12 2 2 4-4"/>
+                                        </svg>
+                                    </div>
+                                    <h5 class="text-white-50 fw-normal mt-0" title="Constancias Válidas">Válidas</h5>
+                                    <h3 class="mt-3 mb-1 text-white">{{ $constancias->count() }}</h3>
+                                    <p class="mb-0 text-white-50">
+                                        <span class="text-nowrap">Certificados activos</span>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -90,13 +166,13 @@
                                         <div class="btn-group" role="group">
                                             <!-- Botón Ver -->
                                             @if(Auth::user()->hasPermission('constancias.view'))
-                                            <a href="{{ route('constancias.estudios.ver', $constancia->id) }}"
-                                               class="btn btn-sm btn-outline-info waves-effect tooltip-trigger" 
-                                               target="_blank"
-                                               title="Ver constancia">
+                                            <button type="button"
+                                                    onclick="verConstanciaModal('{{ trim($constancia->tipo) == 'estudios' ? route('constancias.estudios.ver', $constancia->id) : route('constancias.vacante.ver', $constancia->id) }}', '{{ ucfirst($constancia->tipo) }}')"
+                                                    class="btn btn-sm btn-outline-info waves-effect tooltip-trigger" 
+                                                    title="Ver constancia">
                                                 <!-- Icono de Lucide: Eye -->
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                            </a>
+                                            </button>
                                             @endif
                                             <!-- Botón Verificar -->
                                             <a href="{{ route('constancias.validar', $constancia->codigo_verificacion) }}"
@@ -156,9 +232,9 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title flex items-center" id="generarConstanciaModalLabel">
+                <h5 class="modal-title text-white d-flex align-items-center" id="generarConstanciaModalLabel">
                     <!-- Icono de Lucide: FileText -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text mr-2 inline-block"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9h6"/><path d="M10 13h6"/><path d="M10 17h4"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text me-2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9h6"/><path d="M10 13h6"/><path d="M10 17h4"/></svg>
                     Generar Nueva Constancia
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -210,7 +286,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 mb-3">
                             <label for="ciclo-select" class="form-label fw-semibold">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5.5M12 20a4 4 0 0 0 4-4"/><path d="M16 12v-4"/></svg>
                                 Ciclo Académico
@@ -219,30 +295,27 @@
                                 <option value="">Todos los ciclos...</option>
                             </select>
                         </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="dni-search" class="form-label fw-semibold">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/><line x1="7" x2="7" y1="15" y2="17"/></svg>
-                                Buscar por DNI
-                            </label>
-                            <div class="input-group">
-                                <input type="text" id="dni-search" class="form-control" placeholder="Ingresa 8 dígitos..." maxlength="8" pattern="[0-9]{8}">
-                                <button type="button" class="btn btn-secondary waves-effect" onclick="buscarPorDNI()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                                </button>
-                            </div>
-                            <small class="text-muted">Presiona Enter para buscar</small>
-                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="inscripcion-select" class="form-label fw-semibold">
+                        <label class="form-label fw-semibold">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
-                            Seleccionar Inscripción
+                            Buscar y Seleccionar Inscripción
                         </label>
-                        <select id="inscripcion-select" class="form-select" size="8">
-                            <option value="">Selecciona una inscripción...</option>
-                        </select>
+                        
+                        <!-- Buscador -->
+                        <div class="search-wrapper mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <input type="text" id="search-inscripcion" class="form-control" placeholder="Buscar por nombre, DNI, carrera o ciclo...">
+                        </div>
+                        
+                        <!-- Lista de inscripciones -->
+                        <div id="inscripciones-list" style="max-height: 400px; overflow-y: auto;">
+                            <p class="text-muted text-center py-4">Selecciona un ciclo o busca para ver las inscripciones</p>
+                        </div>
+                        
+                        <!-- Hidden input para almacenar el ID seleccionado -->
+                        <input type="hidden" id="inscripcion-select" value="">
                     </div>
                 </div>
             </div>
@@ -415,64 +488,31 @@
 <script>
     // Se mantiene la lógica JavaScript sin cambios, ya que ahora usa las clases de Bootstrap/Sheroyou esperadas.
     
-    // Tu función mostrarNotificacion (adaptada para usar el Bootstrap Toast si está disponible en Sheroyou)
+    // Función de notificación con SweetAlert2
     function mostrarNotificacion(tipo, mensaje) {
-        let bgColor = '';
-        let icon = '';
+        const iconos = {
+            'success': 'success',
+            'error': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
         
-        // Mapeo a clases de Bootstrap
-        switch(tipo) {
-            case 'success':
-                bgColor = 'bg-success';
-                icon = 'lucide-check-circle';
-                break;
-            case 'error':
-                bgColor = 'bg-danger';
-                icon = 'lucide-alert-triangle';
-                break;
-            case 'warning':
-                bgColor = 'bg-warning';
-                icon = 'lucide-alert-octagon';
-                break;
-            case 'info':
-                bgColor = 'bg-info';
-                icon = 'lucide-info';
-                break;
-            default:
-                bgColor = 'bg-secondary';
-                icon = 'lucide-bell';
-        }
-
-        const toastHtml = `
-            <div class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i data-lucide="${icon}" class="me-2"></i>${mensaje}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
+        const titulos = {
+            'success': '¡Éxito!',
+            'error': 'Error',
+            'warning': 'Atención',
+            'info': 'Información'
+        };
         
-        let toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            // Clases de Bootstrap para posicionamiento (asumiendo Bootstrap 5+)
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            toastContainer.style.zIndex = '9999';
-            document.body.appendChild(toastContainer);
-        }
-
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = toastContainer.lastElementChild;
-        // Se asume que tu tema Sheroyou carga la librería 'lucide' o similar, o que se ha inyectado el SVG manualmente.
-        // Si no se usa Lucide, tendrás que cambiar `data-lucide` por el tag SVG completo.
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-
-        toastElement.addEventListener('hidden.bs.toast', function() {
-            toastElement.remove();
+        Swal.fire({
+            icon: iconos[tipo] || 'info',
+            title: titulos[tipo] || 'Notificación',
+            text: mensaje,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
     }
 
@@ -563,13 +603,37 @@
             },
             success: function(response) {
                 let options = '<option value="">Todos los ciclos...</option>';
+                let cicloActivoId = null;
+                
                 if (response.length > 0) {
                     response.forEach(function(ciclo) {
                         const cicloInfo = `${ciclo.nombre} (${ciclo.fecha_inicio} - ${ciclo.fecha_fin})`;
                         options += `<option value="${ciclo.id}">${cicloInfo}</option>`;
+                        
+                        // Detectar el ciclo activo (el que está en curso)
+                        const fechaInicio = new Date(ciclo.fecha_inicio);
+                        const fechaFin = new Date(ciclo.fecha_fin);
+                        const hoy = new Date();
+                        
+                        if (hoy >= fechaInicio && hoy <= fechaFin) {
+                            cicloActivoId = ciclo.id;
+                        }
                     });
+                    
+                    // Si no hay ciclo activo, seleccionar el más reciente
+                    if (!cicloActivoId && response.length > 0) {
+                        cicloActivoId = response[0].id;
+                    }
                 }
+                
                 $('#ciclo-select').html(options).prop('disabled', false);
+                
+                // Seleccionar automáticamente el ciclo activo
+                if (cicloActivoId) {
+                    $('#ciclo-select').val(cicloActivoId);
+                    // Cargar inscripciones del ciclo activo
+                    cargarInscripciones(tipoSeleccionado, null, cicloActivoId);
+                }
             },
             error: function(xhr) {
                 console.error('Error al cargar ciclos:', xhr.responseText);
@@ -579,9 +643,13 @@
         });
     }
 
-    function cargarInscripciones(tipo, dni = null, cicloId = null) {
-        $('#inscripcion-select').html('<option value="">Cargando inscripciones...</option>').prop('disabled', true);
+    // Variables globales para inscripciones
+    let todasLasInscripciones = [];
+    let inscripcionSeleccionada = null;
 
+    function cargarInscripciones(tipo, dni = null, cicloId = null) {
+        $('#inscripciones-list').html('<p class="text-muted text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Cargando inscripciones...</p>');
+        
         $.ajax({
             url: '{{ route("json.inscripciones") }}',
             method: 'GET',
@@ -594,21 +662,8 @@
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             success: function(response) {
-                let options = '<option value="">Selecciona una inscripción...</option>';
-                if (response.length > 0) {
-                    response.forEach(function(inscripcion) {
-                        const cicloInfo = `${inscripcion.ciclo.nombre}`;
-                        options += `<option value="${inscripcion.id}">
-                            ${inscripcion.estudiante.nombre} ${inscripcion.estudiante.apellido_paterno} ${inscripcion.estudiante.apellido_materno} | 
-                            DNI: ${inscripcion.estudiante.dni} | 
-                            ${inscripcion.carrera.nombre} | 
-                            Ciclo: ${cicloInfo}
-                        </option>`;
-                    });
-                } else {
-                    options = '<option value="">No se encontraron inscripciones</option>';
-                }
-                $('#inscripcion-select').html(options).prop('disabled', false);
+                todasLasInscripciones = response;
+                renderizarInscripciones(response);
             },
             error: function(xhr) {
                 console.error('Error al cargar inscripciones:', xhr.responseText);
@@ -618,77 +673,280 @@
                 } else if (xhr.status === 403) {
                     errorMsg = 'No tienes permisos para ver estas inscripciones.';
                 }
-                $('#inscripcion-select').html(`<option value="">${errorMsg}</option>`).prop('disabled', false);
+                $('#inscripciones-list').html(`<p class="text-danger text-center py-4">${errorMsg}</p>`);
                 mostrarNotificacion('error', errorMsg);
             }
         });
     }
 
-    function buscarPorDNI() {
-        const dni = $('#dni-search').val().trim();
-        if (dni.length === 8 && /^\d{8}$/.test(dni)) {
-            const cicloId = $('#ciclo-select').val();
-            cargarInscripciones(tipoSeleccionado, dni, cicloId);
-        } else {
-            mostrarNotificacion('warning', 'Por favor ingresa un DNI válido (8 dígitos numéricos)');
-            $('#dni-search').focus();
+    function renderizarInscripciones(inscripciones) {
+        if (inscripciones.length === 0) {
+            $('#inscripciones-list').html('<p class="text-muted text-center py-4">No se encontraron inscripciones</p>');
+            return;
         }
+
+        let html = '';
+        inscripciones.forEach(function(inscripcion) {
+            const isSelected = inscripcionSeleccionada === inscripcion.id ? 'selected' : '';
+            const dni = inscripcion.estudiante.numero_documento || inscripcion.estudiante.dni || 'N/A';
+            html += `
+                <div class="inscripcion-item ${isSelected}" data-id="${inscripcion.id}" onclick="seleccionarInscripcion(${inscripcion.id})">
+                    <div class="student-name">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        ${inscripcion.estudiante.nombre} ${inscripcion.estudiante.apellido_paterno} ${inscripcion.estudiante.apellido_materno}
+                    </div>
+                    <div class="student-details">
+                        <span class="me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                            DNI: ${dni}
+                        </span>
+                        <span class="me-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                            ${inscripcion.carrera.nombre}
+                        </span>
+                        <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.5"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h5.5"/></svg>
+                            ${inscripcion.ciclo.nombre}
+                        </span>
+                    </div>
+                </div>
+            `;
+        });
+        $('#inscripciones-list').html(html);
     }
+
+    function seleccionarInscripcion(id) {
+        inscripcionSeleccionada = id;
+        $('#inscripcion-select').val(id);
+        
+        // Actualizar visualización
+        $('.inscripcion-item').removeClass('selected');
+        $(`.inscripcion-item[data-id="${id}"]`).addClass('selected');
+    }
+
+    // Búsqueda en tiempo real
+    $('#search-inscripcion').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase().trim();
+        
+        if (searchTerm === '') {
+            renderizarInscripciones(todasLasInscripciones);
+            return;
+        }
+
+        const filtradas = todasLasInscripciones.filter(function(inscripcion) {
+            const nombreCompleto = `${inscripcion.estudiante.nombre} ${inscripcion.estudiante.apellido_paterno} ${inscripcion.estudiante.apellido_materno}`.toLowerCase();
+            const dni = (inscripcion.estudiante.numero_documento || inscripcion.estudiante.dni || '').toLowerCase();
+            const carrera = inscripcion.carrera.nombre.toLowerCase();
+            const ciclo = inscripcion.ciclo.nombre.toLowerCase();
+            
+            return nombreCompleto.includes(searchTerm) || 
+                   dni.includes(searchTerm) || 
+                   carrera.includes(searchTerm) || 
+                   ciclo.includes(searchTerm);
+        });
+
+        renderizarInscripciones(filtradas);
+    });
 
     $('#ciclo-select').change(function() {
         const cicloId = $(this).val();
-        const dni = $('#dni-search').val().trim();
-        cargarInscripciones(tipoSeleccionado, dni || null, cicloId);
+        cargarInscripciones(tipoSeleccionado, null, cicloId);
     });
 
-    $('#dni-search').keypress(function(e) {
-        if (e.which === 13) {
-            e.preventDefault();
-            buscarPorDNI();
-        }
-    });
 
-    function generarConstancia() {
+    async function generarConstancia() {
         const inscripcionId = $('#inscripcion-select').val();
 
         if (!inscripcionId) {
-            mostrarNotificacion('warning', 'Por favor selecciona una inscripción');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Atención',
+                text: 'Por favor selecciona una inscripción',
+                confirmButtonColor: '#3085d6'
+            });
             return;
         }
 
         let route = '';
+        let tipoTexto = '';
         if (tipoSeleccionado === 'estudios') {
             route = '{{ route("constancias.estudios.generar", ":id") }}'.replace(':id', inscripcionId);
+            tipoTexto = 'Estudios';
         } else {
             route = '{{ route("constancias.vacante.generar", ":id") }}'.replace(':id', inscripcionId);
+            tipoTexto = 'Vacante';
         }
 
-        $('#loadingModal').modal('show');
+        // Mostrar loading
+        Swal.fire({
+            title: 'Generando constancia...',
+            html: 'Por favor espera un momento',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Esperar un momento para que se genere
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Abrir PDF en ventana popup
+        const pdfWindow = window.open(route, 'Constancia', 'width=900,height=700,scrollbars=yes,resizable=yes');
         
-        setTimeout(function() {
-            window.open(route, '_blank');
-            $('#loadingModal').modal('hide');
-            $('#generarConstanciaModal').modal('hide');
-            mostrarNotificacion('success', 'Constancia generada correctamente');
-            // En un entorno real, descomentar el siguiente para recargar la lista
-            // setTimeout(function() { location.reload(); }, 1000); 
-        }, 1000);
-    }
+        // Cerrar loading
+        Swal.close();
 
-    function confirmarEliminar(constanciaId) {
-        constanciaIdEliminar = constanciaId;
-        $('#eliminarModal').modal('show');
-    }
+        // Mostrar opciones
+        const result = await Swal.fire({
+            title: `Constancia de ${tipoTexto} Generada`,
+            html: `
+                <div class="text-center">
+                    <p class="mb-3">Tu constancia ha sido generada exitosamente y se ha abierto en una nueva ventana.</p>
+                    <p class="text-muted">¿Qué deseas hacer?</p>
+                </div>
+            `,
+            icon: 'success',
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: '<i class="mdi mdi-download"></i> Descargar',
+            cancelButtonText: '<i class="mdi mdi-printer"></i> Imprimir',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#28a745',
+            showDenyButton: true,
+            denyButtonText: '<i class="mdi mdi-close"></i> Cerrar',
+            denyButtonColor: '#6c757d'
+        });
 
-    $('#confirmar-eliminar-btn').on('click', function() {
-        if (constanciaIdEliminar) {
-            eliminarConstancia(constanciaIdEliminar);
+        if (result.isConfirmed) {
+            // Descargar PDF
+            const link = document.createElement('a');
+            link.href = route;
+            link.download = `constancia_${tipoSeleccionado}.pdf`;
+            link.click();
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Descargado!',
+                text: 'La constancia se ha descargado correctamente',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            
+            // Recargar tabla después de descargar
+            setTimeout(() => location.reload(), 1000);
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            // Imprimir PDF
+            if (pdfWindow && !pdfWindow.closed) {
+                pdfWindow.print();
+            } else {
+                window.open(route, '_blank').print();
+            }
+            
+            // Recargar tabla después de imprimir
+            setTimeout(() => location.reload(), 1000);
+        } else if (result.isDenied) {
+            // Solo cerrar, recargar tabla
+            if (pdfWindow && !pdfWindow.closed) {
+                pdfWindow.close();
+            }
+            setTimeout(() => location.reload(), 500);
         }
-    });
+
+        // Cerrar modal de generación
+        $('#generarConstanciaModal').modal('hide');
+    }
+
+    // Función para ver constancia existente en ventana popup
+    async function verConstanciaModal(url, tipo) {
+        // Abrir PDF en ventana popup
+        const pdfWindow = window.open(url, 'Constancia', 'width=900,height=700,scrollbars=yes,resizable=yes');
+        
+        // Mostrar opciones
+        const result = await Swal.fire({
+            title: `Constancia de ${tipo}`,
+            html: `
+                <div class="text-center">
+                    <p class="mb-3">La constancia se ha abierto en una nueva ventana.</p>
+                    <p class="text-muted">¿Qué deseas hacer?</p>
+                </div>
+            `,
+            icon: 'info',
+            showCancelButton: true,
+            showConfirmButton: true,
+            confirmButtonText: '<i class="mdi mdi-download"></i> Descargar',
+            cancelButtonText: '<i class="mdi mdi-printer"></i> Imprimir',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#28a745',
+            showDenyButton: true,
+            denyButtonText: '<i class="mdi mdi-close"></i> Cerrar',
+            denyButtonColor: '#6c757d'
+        });
+
+        if (result.isConfirmed) {
+            // Descargar PDF
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `constancia_${tipo.toLowerCase()}.pdf`;
+            link.click();
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Descargado!',
+                text: 'La constancia se ha descargado correctamente',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            // Imprimir PDF
+            if (pdfWindow && !pdfWindow.closed) {
+                pdfWindow.print();
+            } else {
+                window.open(url, '_blank').print();
+            }
+        } else if (result.isDenied) {
+            // Cerrar ventana
+            if (pdfWindow && !pdfWindow.closed) {
+                pdfWindow.close();
+            }
+        }
+    }
+
+
+
+    async function confirmarEliminar(constanciaId) {
+        const result = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'Esta acción no se puede deshacer. La constancia será eliminada permanentemente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: '<i class="mdi mdi-delete"></i> Sí, eliminar',
+            cancelButtonText: '<i class="mdi mdi-close"></i> Cancelar',
+            reverseButtons: true
+        });
+        
+        if (result.isConfirmed) {
+            eliminarConstancia(constanciaId);
+        }
+    }
 
     function eliminarConstancia(constanciaId) {
-        $('#eliminarModal').modal('hide');
-        $('#loadingModal').modal('show');
+        // Mostrar loading
+        Swal.fire({
+            title: 'Eliminando...',
+            html: 'Por favor espera',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         $.ajax({
             url: '{{ route("constancias.eliminar", ":id") }}'.replace(':id', constanciaId),
@@ -697,14 +955,16 @@
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             success: function(response) {
-                $('#loadingModal').modal('hide');
-                mostrarNotificacion('success', 'Constancia eliminada correctamente');
-                setTimeout(function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Eliminada!',
+                    text: 'La constancia ha sido eliminada correctamente',
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
                     location.reload();
-                }, 1500);
+                });
             },
             error: function(xhr) {
-                $('#loadingModal').modal('hide');
                 console.error('Error al eliminar constancia:', xhr.responseText);
                 let errorMsg = 'Error al eliminar la constancia';
                 if (xhr.status === 403) {
@@ -712,10 +972,17 @@
                 } else if (xhr.status === 404) {
                     errorMsg = 'Constancia no encontrada';
                 }
-                mostrarNotificacion('error', errorMsg);
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errorMsg,
+                    confirmButtonColor: '#3085d6'
+                });
             }
         });
     }
+
 
     function abrirModalSubir(constanciaId, tipo) {
         $('#constancia-id').val(constanciaId);
@@ -777,4 +1044,216 @@
         });
     });
 </script>
+
+<style>
+    /* ===== Estilos Profesionales SOLO para Módulo de Constancias ===== */
+    
+    /* Mejoras para las tarjetas de estadísticas */
+    #constancias-module .widget-flat {
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    #constancias-module .widget-flat:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    #constancias-module .widget-flat .card-body {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #constancias-module .widget-flat .card-body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
+    
+    /* Mejoras para la tabla */
+    #constancias-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    #constancias-table tbody tr:hover {
+        background-color: rgba(79, 70, 229, 0.05);
+        transform: scale(1.001);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    #constancias-table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    /* Botones de acción mejorados */
+    #constancias-table .btn-group .btn {
+        transition: all 0.2s ease;
+        margin: 0 2px;
+    }
+    
+    #constancias-table .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Modal mejorado */
+    #generarConstanciaModal .modal-header.bg-primary {
+        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%) !important;
+        border-bottom: none;
+        padding: 1.5rem;
+    }
+    
+    #generarConstanciaModal .modal-content {
+        border-radius: 1rem;
+        border: none;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    #generarConstanciaModal .modal-body {
+        padding: 2rem;
+    }
+    
+    /* Tarjetas de selección en modal */
+    #generarConstanciaModal .hover-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border-radius: 0.75rem;
+    }
+    
+    #generarConstanciaModal .hover-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        border-width: 2px !important;
+    }
+    
+    #generarConstanciaModal .hover-card:hover .btn {
+        transform: scale(1.05);
+    }
+    
+    /* Animaciones */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    #constancias-module .col-xl-3:nth-child(1) .widget-flat { animation: fadeInUp 0.5s ease-out 0.1s both; }
+    #constancias-module .col-xl-3:nth-child(2) .widget-flat { animation: fadeInUp 0.5s ease-out 0.2s both; }
+    #constancias-module .col-xl-3:nth-child(3) .widget-flat { animation: fadeInUp 0.5s ease-out 0.3s both; }
+    #constancias-module .col-xl-3:nth-child(4) .widget-flat { animation: fadeInUp 0.5s ease-out 0.4s both; }
+    
+    /* Mejoras para select en modal */
+    #generarConstanciaModal .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        padding: 0.625rem 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    #generarConstanciaModal .form-select:focus {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    /* Buscador de inscripciones */
+    #search-inscripcion {
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        padding-left: 2.5rem;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+    
+    #search-inscripcion:focus {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+    
+    .search-wrapper {
+        position: relative;
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+    }
+    
+    /* Lista de inscripciones mejorada */
+    .inscripcion-item {
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .inscripcion-item:hover {
+        border-color: #4F46E5;
+        background-color: rgba(79, 70, 229, 0.05);
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .inscripcion-item.selected {
+        border-color: #4F46E5;
+        background-color: rgba(79, 70, 229, 0.1);
+        border-width: 2px;
+    }
+    
+    .inscripcion-item .student-name {
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+    }
+    
+    .inscripcion-item .student-details {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        #constancias-module .widget-flat {
+            margin-bottom: 1rem;
+        }
+        
+        #constancias-table .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        #constancias-table .btn-group .btn {
+            width: 100%;
+            margin: 0;
+        }
+    }
+</style>
+
 @endpush

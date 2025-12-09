@@ -40,6 +40,17 @@ class ConstanciaVacanteController extends Controller
                 abort(403, 'No tienes permiso para generar esta constancia');
             }
 
+            // ✅ VALIDACIÓN: Verificar si ya existe una constancia de vacante para este estudiante en este ciclo
+            $constanciaExistente = DB::table('constancias_generadas')
+                ->where('tipo', 'vacante')
+                ->where('estudiante_id', $inscripcion->estudiante_id)
+                ->where('inscripcion_id', $inscripcion->id)
+                ->first();
+
+            if ($constanciaExistente) {
+                return back()->with('error', 'Ya existe una constancia de vacante generada para este ciclo académico. Solo se permite una constancia de vacante por ciclo.');
+            }
+
             // Generar número de constancia único
             $numeroConstancia = $this->generarNumeroConstancia();
 
@@ -54,6 +65,11 @@ class ConstanciaVacanteController extends Controller
                 $qrCode = ''; // Fallback si QR falla
             }
 
+            // ✅ Configurar fecha en español con primera letra mayúscula
+            Carbon::setLocale('es');
+            setlocale(LC_TIME, 'es_PE.UTF-8', 'es_ES.UTF-8', 'Spanish');
+            $fecha = ucfirst(Carbon::now()->translatedFormat('d \\d\\e F \\d\\e Y'));
+
             // Preparar datos para la vista
             $data = [
                 'inscripcion' => $inscripcion,
@@ -66,7 +82,7 @@ class ConstanciaVacanteController extends Controller
                 'qr_code' => $qrCode,
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'lugar' => 'Puerto Maldonado',
-                'fecha' => Carbon::now()->format('d \d\e F \d\e Y')
+                'fecha' => $fecha // 👈 fecha traducida y capitalizada
             ];
 
             // Registrar en base de datos
@@ -86,11 +102,20 @@ class ConstanciaVacanteController extends Controller
             $pdf = PDF::loadView('pdf.constancia-vacante', $data);
             $pdf->setPaper('A4', 'portrait');
 
-            // Descargar el PDF
-            return $pdf->download('constancia_vacante_' . $numeroConstancia . '.pdf');
+            $filename = 'constancia_vacante_' . $numeroConstancia . '.pdf';
+            
+            // Retornar PDF para visualización inline en navegador
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                'Pragma' => 'no-cache',
+                'Expires' => '0'
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Error al generar constancia de vacante: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return back()->with('error', 'Error al generar la constancia: ' . $e->getMessage());
         }
     }
@@ -133,6 +158,65 @@ class ConstanciaVacanteController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error al subir constancia firmada: ' . $e->getMessage());
             return back()->with('error', 'Error al subir la constancia: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Ver constancia generada (PDF)
+     */
+    public function verConstancia($constanciaId)
+    {
+        try {
+            $user = Auth::user();
+
+            // Buscar la constancia
+            $constancia = DB::table('constancias_generadas')
+                ->where('id', $constanciaId)
+                ->where('tipo', 'vacante')
+                ->first();
+
+            if (!$constancia) {
+                abort(404, 'Constancia no encontrada');
+            }
+
+            // Verificar permisos (más permisivo, similar a ConstanciaEstudiosController)
+            if ($user->id !== $constancia->estudiante_id && 
+                $user->id !== $constancia->generado_por && 
+                !$user->hasRole('admin') && 
+                !$user->hasPermission('constancias.view') &&
+                !$user->hasPermission('constancias.generar-vacante')) {
+                abort(403, 'No tienes permiso para ver esta constancia');
+            }
+
+            // Obtener la inscripción
+            $inscripcion = Inscripcion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+                ->findOrFail($constancia->inscripcion_id);
+
+            // Generar el PDF usando los datos almacenados
+            $datos = json_decode($constancia->datos, true);
+
+            Carbon::setLocale('es');
+            $fecha = ucfirst(Carbon::parse($constancia->created_at)->translatedFormat('d \\d\\e F \\d\\e Y'));
+
+            $pdf = PDF::loadView('pdf.constancia-vacante', [
+                'inscripcion' => $inscripcion,
+                'estudiante' => $inscripcion->estudiante,
+                'ciclo' => $inscripcion->ciclo,
+                'carrera' => $inscripcion->carrera,
+                'turno' => $inscripcion->turno,
+                'numero_constancia' => $constancia->numero_constancia,
+                'codigo_verificacion' => $constancia->codigo_verificacion,
+                'qr_code' => $datos['qr_code'] ?? '',
+                'fecha_generacion' => Carbon::parse($constancia->created_at)->format('d/m/Y H:i'),
+                'fecha' => $fecha,
+                'lugar' => $datos['lugar'] ?? 'Puerto Maldonado',
+            ]);
+
+            return $pdf->stream('constancia-vacante-' . $constancia->numero_constancia . '.pdf');
+
+        } catch (\Exception $e) {
+            \Log::error('Error al ver constancia de vacante: ' . $e->getMessage());
+            return back()->with('error', 'Error al mostrar la constancia');
         }
     }
 
