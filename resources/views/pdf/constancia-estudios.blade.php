@@ -405,8 +405,8 @@
         <!-- Footer -->
         <div class="footer">
             <strong>UNAMAD:</strong> Parque Científico Tecnológico Sostenible con Investigación e Innovación<br>
-            Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 917061893 — 975844977<br>
-            <strong>CEPRE-UNAMAD</strong> CEL: 993110927
+            Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 993110927 — 993111037<br>
+            <strong>CEPRE-UNAMAD</strong> 
         
     </div>
 

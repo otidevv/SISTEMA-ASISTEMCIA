@@ -148,7 +148,7 @@
         }
 
         .modality-text {
-            background: #dc2626 !important;
+            background: #930E29 !important;
             color: #ffffff !important;
             padding: 8px 20px;
             border-radius: 25px;
@@ -185,12 +185,12 @@
             text-align: center;
             font-weight: bold;
             font-size: 20pt;
-            color: #dc2626;
+            color: #930E29;
             text-transform: uppercase;
             background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
             padding: 8px 12px;
             border-radius: 6px;
-            border-left: 4px solid #dc2626;
+            border-left: 4px solid #930E29;
             box-shadow: 0 3px 8px rgba(220, 38, 38, 0.15);
             letter-spacing: 0.6px;
         }
@@ -440,7 +440,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <strong>UNAMAD:</strong> Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 917061893 — 975844977 | <strong>CEPRE-UNAMAD</strong> CEL: 993110927
+            <strong>UNAMAD:</strong> Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 993110927 — 993111037 | <strong>CEPRE-UNAMAD</strong>
         </div>
     </div>
 </body>
