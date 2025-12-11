@@ -14,8 +14,8 @@ class Handle419Errors
      * 
      * This middleware prevents the "stuck on 419 page" issue by:
      * 1. Catching TokenMismatchException before it reaches the error page
-     * 2. Redirecting back with a flash message instead of showing error
-     * 3. Preventing the browser from trying to resubmit the POST request
+     * 2. Using 303 redirect to force browser to use GET instead of POST
+     * 3. Preventing the "confirm form resubmission" dialog
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -41,10 +41,13 @@ class Handle419Errors
                 ], 419);
             }
 
-            // Para peticiones normales, redirigir con mensaje
-            // Esto previene que el navegador intente reenviar el POST
-            return redirect()
-                ->to(url()->previous() ?: route('dashboard'))
+            // Para peticiones normales, usar redirect 303 (See Other)
+            // Esto FUERZA al navegador a usar GET en lugar de POST
+            // Previene el diálogo "confirmar reenvío del formulario"
+            $redirectUrl = url()->previous() ?: route('dashboard');
+            
+            return response()
+                ->redirectTo($redirectUrl, 303)
                 ->with('warning', 'Tu sesión ha expirado. Por favor, intenta nuevamente.')
                 ->with('csrf_expired', true);
         }
