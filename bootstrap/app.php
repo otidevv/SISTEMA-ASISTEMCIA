@@ -12,7 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Interceptar errores 419 CSRF y redirigir en lugar de mostrar página de error
+        // Esto previene que el navegador se quede atascado intentando reenviar el POST
+        $middleware->append(\App\Http\Middleware\Handle419Errors::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
