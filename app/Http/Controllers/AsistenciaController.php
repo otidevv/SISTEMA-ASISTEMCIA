@@ -294,11 +294,26 @@ class AsistenciaController extends Controller
     /**
      * Mostrar el formulario para editar registros de asistencia.
      */
-    /**
-     * Mostrar el formulario para editar registros de asistencia.
-     */
     public function editarIndex(Request $request)
     {
+        // Cargar datos para filtros de registro masivo y regularización
+        $ciclos = \App\Models\Ciclo::orderBy('nombre', 'desc')->get();
+        $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
+        $aulas = \App\Models\Aula::where('estado', true)->orderBy('nombre')->get();
+        $turnos = \App\Models\Turno::where('estado', true)->orderBy('orden')->get();
+        $carreras = \App\Models\Carrera::where('estado', true)->orderBy('nombre')->get();
+        
+        // Obtener estudiantes activos con inscripciones
+        $estudiantes = User::whereHas('roles', function ($query) {
+            $query->where('roles.nombre', 'estudiante');
+        })
+        ->whereHas('inscripciones', function ($query) {
+            $query->where('estado_inscripcion', 'activo');
+        })
+        ->select('id', 'numero_documento', 'nombre', 'apellido_paterno', 'apellido_materno')
+        ->orderBy('apellido_paterno')
+        ->get();
+
         // Verificar si se han enviado parámetros de búsqueda
         if ($request->has('fecha_desde') || $request->has('fecha_hasta') || $request->has('documento')) {
             // Crear la consulta base
@@ -320,11 +335,11 @@ class AsistenciaController extends Controller
             // Obtener registros paginados
             $registros = $query->orderBy('fecha_hora', 'desc')->paginate(15);
 
-            return view('asistencia.editar_index', compact('registros'));
+            return view('asistencia.editar_index', compact('registros', 'ciclos', 'cicloActivo', 'aulas', 'turnos', 'carreras', 'estudiantes'));
         }
 
         // Si no hay parámetros, mostrar solo el formulario de búsqueda
-        return view('asistencia.editar_index');
+        return view('asistencia.editar_index', compact('ciclos', 'cicloActivo', 'aulas', 'turnos', 'carreras', 'estudiantes'));
     }
 
     /**
@@ -455,5 +470,237 @@ class AsistenciaController extends Controller
             'hora_actual' => now()->timestamp,
             'registros' => $registros
         ]);
+    }
+
+    /**
+     * Obtener estudiantes filtrados por ciclo, aula, turno y carrera (AJAX)
+     */
+    public function getEstudiantesPorFiltros(Request $request)
+    {
+        try {
+            $query = User::whereHas('roles', function ($q) {
+                $q->where('roles.nombre', 'estudiante');
+            })
+            ->whereHas('inscripciones', function ($q) use ($request) {
+                $q->where('estado_inscripcion', 'activo');
+                
+                if ($request->filled('ciclo_id')) {
+                    $q->where('ciclo_id', $request->ciclo_id);
+                }
+                
+                if ($request->filled('aula_id')) {
+                    $q->where('aula_id', $request->aula_id);
+                }
+                
+                if ($request->filled('turno_id')) {
+                    $q->where('turno_id', $request->turno_id);
+                }
+                
+                if ($request->filled('carrera_id')) {
+                    $q->where('carrera_id', $request->carrera_id);
+                }
+            })
+            ->with(['inscripciones' => function ($q) use ($request) {
+                $q->where('estado_inscripcion', 'activo');
+                
+                if ($request->filled('ciclo_id')) {
+                    $q->where('ciclo_id', $request->ciclo_id);
+                }
+            }, 'inscripciones.aula', 'inscripciones.turno', 'inscripciones.carrera'])
+            ->select('id', 'numero_documento', 'nombre', 'apellido_paterno', 'apellido_materno')
+            ->orderBy('apellido_paterno')
+            ->get();
+
+            $estudiantes = $query->map(function ($estudiante) {
+                $inscripcion = $estudiante->inscripciones->first();
+                return [
+                    'numero_documento' => $estudiante->numero_documento,
+                    'nombre_completo' => trim("{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}"),
+                    'aula' => $inscripcion && $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
+                    'turno' => $inscripcion && $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
+                    'carrera' => $inscripcion && $inscripcion->carrera ? $inscripcion->carrera->nombre : 'N/A',
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'estudiantes' => $estudiantes,
+                'total' => $estudiantes->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estudiantes: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Registrar asistencias masivas para una fecha específica
+     */
+    public function registrarMasivo(Request $request)
+    {
+        $request->validate([
+            'fecha' => 'required|date',
+            'hora' => 'required',
+            'tipo_verificacion' => 'required|integer|between:0,4',
+            'ciclo_id' => 'required|exists:ciclos,id',
+            'estudiantes' => 'required|array|min:1',
+            'estudiantes.*' => 'required|string|max:20',
+        ]);
+
+        try {
+            $fechaHora = Carbon::parse($request->fecha . ' ' . $request->hora);
+            $registrados = 0;
+            $omitidos = 0;
+            $errores = [];
+
+            // Usar transacción para asegurar consistencia
+            \DB::beginTransaction();
+
+            try {
+                foreach ($request->estudiantes as $dni) {
+                    try {
+                        // Verificar si ya existe un registro para este estudiante en esta fecha y hora exacta
+                        // Permitimos múltiples registros por día pero no en la misma hora
+                        $existe = RegistroAsistencia::where('nro_documento', $dni)
+                            ->where('fecha_hora', $fechaHora)
+                            ->exists();
+
+                        if ($existe) {
+                            $omitidos++;
+                            continue;
+                        }
+
+                        // Crear el registro
+                        $registro = RegistroAsistencia::create([
+                            'nro_documento' => $dni,
+                            'fecha_hora' => $fechaHora,
+                            'tipo_verificacion' => $request->tipo_verificacion,
+                            'estado' => 1,
+                            'sn_dispositivo' => 'MASIVO',
+                            'fecha_registro' => $fechaHora,
+                        ]);
+
+                        $registrados++;
+                    } catch (\Exception $e) {
+                        // Registrar error individual pero continuar con los demás
+                        $errores[] = [
+                            'dni' => $dni,
+                            'error' => $e->getMessage()
+                        ];
+                        \Log::error("Error al registrar asistencia para DNI {$dni}: " . $e->getMessage());
+                    }
+                }
+
+                // Confirmar la transacción
+                \DB::commit();
+
+                $mensaje = "Registro masivo completado. {$registrados} registrados, {$omitidos} omitidos (duplicados).";
+                if (count($errores) > 0) {
+                    $mensaje .= " " . count($errores) . " errores.";
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => $mensaje,
+                    'registrados' => $registrados,
+                    'omitidos' => $omitidos,
+                    'errores' => count($errores),
+                    'detalles_errores' => $errores
+                ]);
+
+            } catch (\Exception $e) {
+                // Revertir la transacción en caso de error crítico
+                \DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error en registro masivo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar asistencias: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Regularizar asistencias de un estudiante en múltiples fechas
+     */
+    public function regularizarEstudiante(Request $request)
+    {
+        $request->validate([
+            'nro_documento' => 'required|string|max:20',
+            'fechas' => 'required|array|min:1',
+            'fechas.*' => 'required|date',
+            'hora' => 'required',
+            'tipo_verificacion' => 'required|integer|between:0,4',
+        ]);
+
+        try {
+            // Verificar que el estudiante existe
+            $estudiante = User::where('numero_documento', $request->nro_documento)->first();
+            
+            if (!$estudiante) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Estudiante no encontrado.'
+                ], 404);
+            }
+
+            $registrados = 0;
+            $omitidos = 0;
+            $detalles = [];
+
+            foreach ($request->fechas as $fecha) {
+                // Verificar si ya existe un registro para esta fecha
+                $existe = RegistroAsistencia::where('nro_documento', $request->nro_documento)
+                    ->whereDate('fecha_hora', $fecha)
+                    ->exists();
+
+                if ($existe) {
+                    $omitidos++;
+                    $detalles[] = [
+                        'fecha' => Carbon::parse($fecha)->format('d/m/Y'),
+                        'estado' => 'omitido',
+                        'motivo' => 'Ya existe registro'
+                    ];
+                    continue;
+                }
+
+                // Crear el registro
+                $fechaHora = Carbon::parse($fecha . ' ' . $request->hora);
+                
+                RegistroAsistencia::create([
+                    'nro_documento' => $request->nro_documento,
+                    'fecha_hora' => $fechaHora,
+                    'tipo_verificacion' => $request->tipo_verificacion,
+                    'estado' => 1,
+                    'sn_dispositivo' => 'REGULARIZACION',
+                    'fecha_registro' => $fechaHora,
+                ]);
+
+                $registrados++;
+                $detalles[] = [
+                    'fecha' => Carbon::parse($fecha)->format('d/m/Y'),
+                    'estado' => 'registrado',
+                    'motivo' => 'OK'
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Regularización completada. {$registrados} registrados, {$omitidos} omitidos.",
+                'registrados' => $registrados,
+                'omitidos' => $omitidos,
+                'detalles' => $detalles
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al regularizar asistencias: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -276,7 +276,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/asistencia/editar', [AsistenciaController::class, 'editarIndex'])->name('asistencia.editar');
         Route::get('/asistencia/{asistencia}/editar', [AsistenciaController::class, 'editar'])->name('asistencia.editar.form');
         Route::put('/asistencia/{asistencia}', [AsistenciaController::class, 'update'])->name('asistencia.update');
+        
+        // Nuevas rutas para registro masivo y regularización
+        Route::get('/asistencia/estudiantes-filtrados', [AsistenciaController::class, 'getEstudiantesPorFiltros'])->name('asistencia.estudiantes.filtrados');
+        Route::post('/asistencia/registrar-masivo', [AsistenciaController::class, 'registrarMasivo'])->name('asistencia.registrar.masivo');
+        Route::post('/asistencia/regularizar', [AsistenciaController::class, 'regularizarEstudiante'])->name('asistencia.regularizar');
     });
+
 
     Route::middleware('can:attendance.export')->group(function () {
         Route::get('/asistencia/exportar', [AsistenciaController::class, 'exportarIndex'])->name('asistencia.exportar');

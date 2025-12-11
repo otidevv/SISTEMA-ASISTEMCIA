@@ -260,6 +260,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the inscripciones for the user.
+     */
+    public function inscripciones()
+    {
+        return $this->hasMany(Inscripcion::class, 'estudiante_id');
+    }
+
+    /**
      * Obtener los horarios del docente
      */
     public function horarios()

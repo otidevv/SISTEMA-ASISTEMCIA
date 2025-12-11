@@ -1477,6 +1477,32 @@
                 width: 45px; 
                 height: 45px;
             }
+            
+            /* Floating Postular Button Mobile */
+            #floating-postular-btn {
+                bottom: 160px;
+                right: 15px;
+                min-width: 100px;
+                padding: 10px 14px;
+                gap: 3px;
+            }
+            
+            #floating-postular-btn .btn-icon {
+                font-size: 18px;
+            }
+            
+            #floating-postular-btn .btn-text {
+                font-size: 10px;
+            }
+            
+            .floating-tooltip {
+                display: none; /* Ocultar tooltip en móvil */
+            }
+            
+            .floating-badge {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
         }
         
         /* Extra Small Devices (< 480px) */
@@ -1521,6 +1547,251 @@
             display: none; 
             justify-content: center;
             align-items: center;
+        }
+        
+        /* ==================================== */
+        /* BOTÓN FLOTANTE DE POSTULACIÓN */
+        /* ==================================== */
+        #floating-postular-btn {
+            position: fixed;
+            bottom: 180px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--verde-cepre), #689f38);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            font-weight: 700;
+            animation: pulseFloat 2s ease-in-out infinite;
+            min-width: 110px;
+            overflow: visible;
+        }
+        
+        #floating-postular-btn .btn-icon {
+            font-size: 20px;
+            margin-bottom: 1px;
+        }
+        
+        #floating-postular-btn .btn-text {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+        
+        #floating-postular-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: linear-gradient(135deg, #689f38, var(--verde-cepre));
+        }
+        
+        #floating-postular-btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        /* Badge de notificación */
+        .floating-badge {
+            position: absolute;
+            top: -10px;
+            right: -20px;
+            background: var(--magenta-unamad);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(230, 0, 126, 0.5);
+            animation: badgePulse 1.5s ease-in-out infinite;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 1002;
+        }
+        
+        /* Tooltip flotante */
+        .floating-tooltip {
+            position: absolute;
+            right: 85px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--azul-oscuro);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .floating-tooltip::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid var(--azul-oscuro);
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+        }
+        
+        #floating-postular-btn:hover .floating-tooltip {
+            opacity: 1;
+            transform: translateY(-50%) translateX(-5px);
+        }
+        
+        /* Animaciones para el botón flotante */
+        @keyframes pulseFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 8px 25px rgba(139, 195, 74, 0.5);
+            }
+            50% {
+                transform: translateY(-10px) scale(1.05);
+                box-shadow: 0 15px 35px rgba(139, 195, 74, 0.7);
+            }
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @keyframes badgePulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        
+        /* ==================================== */
+        /* MEJORAS AL BOTÓN HERO "POSTULAR AHORA" */
+        /* ==================================== */
+        .btn-secondary {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        /* Efecto de brillo mejorado para botones de postulación */
+        .hero-buttons .btn-secondary {
+            box-shadow: 0 5px 20px rgba(230, 0, 126, 0.4);
+            animation: heroButtonGlow 2s ease-in-out infinite;
+        }
+        
+        .hero-buttons .btn-secondary:hover {
+            box-shadow: 0 8px 30px rgba(230, 0, 126, 0.7);
+            transform: translateY(-3px) scale(1.05);
+        }
+        
+        @keyframes heroButtonGlow {
+            0%, 100% {
+                box-shadow: 0 5px 20px rgba(230, 0, 126, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 25px rgba(230, 0, 126, 0.6);
+            }
+        }
+        
+        /* ==================================== */
+        /* ANIMACIONES INTERACTIVAS DEL MODAL */
+        /* ==================================== */
+        
+        /* Confetti con iconos académicos */
+        .confetti-icon {
+            position: fixed;
+            top: -30px;
+            z-index: 3000;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Modal bounce in animation */
+        @keyframes modalBounceIn {
+            0% {
+                transform: scale(0.3);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Sparkle effect on button click */
+        @keyframes sparkle {
+            0%, 100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.3);
+            }
+        }
+        
+        #floating-postular-btn:active {
+            animation: sparkle 0.3s ease;
         }
         
         /* Fix para Nice Select en Modal */
@@ -1591,7 +1862,7 @@
                 <!-- RUTA DINÁMICA RESTAURADA -->
                 <a href="{{ route('login') }}" class="btn btn-primary">
                     <i class="far fa-user"></i>
-                    <span>Login</span>
+                    <span>Acceso</span>
                 </a>
                 <div class="menu-toggle">
                     <span></span>
@@ -2022,6 +2293,58 @@
             if (typeof showStep === 'function') {
                 showStep(1);
             }
+            
+            // ¡ANIMACIÓN INTERACTIVA DE CONFETTI!
+            createConfetti();
+            
+            // Animación de entrada del modal
+            const modalContent = document.querySelector('#postulacionModal .modal-content');
+            if (modalContent) {
+                modalContent.style.animation = 'modalBounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+            }
+        }
+        
+        // Función para crear efecto de confetti con iconos académicos
+        function createConfetti() {
+            // Iconos académicos de FontAwesome
+            const academicIcons = [
+                'fa-graduation-cap',  // Gorro de graduación
+                'fa-book',            // Libro
+                'fa-book-open',       // Libro abierto
+                'fa-pencil-alt',      // Lápiz
+                'fa-pen',             // Pluma
+                'fa-certificate',     // Certificado
+                'fa-award',           // Premio
+                'fa-star',            // Estrella
+                'fa-bookmark'         // Marcador
+            ];
+            
+            const colors = ['#8bc34a', '#e91e63', '#03a9f4', '#ffc107', '#ff5722'];
+            const confettiCount = 30; // Reducido para mejor rendimiento
+            
+            for (let i = 0; i < confettiCount; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('i');
+                    confetti.className = 'fas ' + academicIcons[Math.floor(Math.random() * academicIcons.length)] + ' confetti-icon';
+                    
+                    // Distribución por toda la pantalla
+                    confetti.style.left = Math.random() * 100 + '%';
+                    
+                    confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.fontSize = (Math.random() * 12 + 18) + 'px'; // Tamaños 18-30px
+                    confetti.style.animationDelay = Math.random() * 0.3 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2.5) + 's'; // 2.5-4.5s
+                    
+                    // Aplicar la animación simple
+                    confetti.style.animation = `confettiFall ${confetti.style.animationDuration} linear forwards`;
+                    confetti.style.animationDelay = confetti.style.animationDelay;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    // Remover después de la animación
+                    setTimeout(() => confetti.remove(), 5000);
+                }, i * 30); // Intervalo de 30ms
+            }
         }
     </script>
 
@@ -2033,6 +2356,13 @@
     <!-- Asistente Flotante (Avatar Guía - Ícono actualizado) -->
     <button id="floating-assistant" onclick="showModal('assistantModal')">
         <i class="fas fa-lightbulb"></i>
+    </button>
+    
+    <!-- Botón Flotante de Postulación -->
+    <button id="floating-postular-btn" onclick="openPostulacionModal()" title="¡Postula Ahora!">
+        <i class="fas fa-edit btn-icon"></i>
+        <span class="btn-text">Postular</span>
+        <span class="floating-badge">¡Abierto!</span>
     </button>
     
     <!-- Scroll to Top Button -->
