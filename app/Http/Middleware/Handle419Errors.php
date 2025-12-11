@@ -44,7 +44,17 @@ class Handle419Errors
             // Para peticiones normales, usar redirect 303 (See Other)
             // Esto FUERZA al navegador a usar GET en lugar de POST
             // Previene el diálogo "confirmar reenvío del formulario"
-            $redirectUrl = url()->previous() ?: route('dashboard');
+            
+            // Determinar URL de redirección
+            $previousUrl = url()->previous();
+            
+            // Si la URL anterior es login o no existe, redirigir a login fresco
+            // Esto previene loop infinito en la página de login
+            if (!$previousUrl || str_contains($previousUrl, '/login')) {
+                $redirectUrl = route('login');
+            } else {
+                $redirectUrl = $previousUrl;
+            }
             
             return response()
                 ->redirectTo($redirectUrl, 303)
