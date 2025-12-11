@@ -157,6 +157,14 @@ Route::get('/api/public/provincias/{departamento}', [App\Http\Controllers\Public
 Route::get('/api/public/distritos/{departamento}/{provincia}', [App\Http\Controllers\PublicPostulacionController::class, 'getDistritos']);
 Route::post('/api/public/buscar-colegios', [App\Http\Controllers\PublicPostulacionController::class, 'buscarColegios']);
 
+// Endpoint para refrescar el token CSRF (accesible para usuarios autenticados)
+Route::get('/refresh-csrf', function () {
+    return response()->json([
+        'token' => csrf_token(),
+        'timestamp' => now()->toIso8601String()
+    ]);
+})->middleware('web');
+
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
     // Verificación de email - página de aviso

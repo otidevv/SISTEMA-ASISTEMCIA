@@ -270,6 +270,9 @@
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.js"></script>
     
+    <!-- CSRF Token Handler - DEBE cargarse después de jQuery y SweetAlert2 -->
+    <script src="{{ asset('js/csrf-handler.js') }}"></script>
+    
     <script>
         // Configuración global de toastr
         toastr.options = {
