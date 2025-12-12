@@ -468,7 +468,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         'TURNO', 
                         'ENTRADA', 
                         'SALIDA', 
-                        'HORAS', 
+                        'HORAS DICTADAS', 
                         'TARDANZA',
                         'PAGO',
                         ''
@@ -577,6 +577,37 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         '',
                         'S/. ' . number_format($docenteTotalPago, 2),
                         ''
+                    ]);
+
+                    // ═══════════════════════════════════════════════════════════
+                    // SECCIÓN 5: PIE DE PÁGINA CON FIRMA
+                    // ═══════════════════════════════════════════════════════════
+                    
+                    // Filas vacías de separación (más espacio para firma)
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $dataRows->push(['', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    
+                    // Fila con líneas de firma (dos líneas paralelas)
+                    $dataRows->push([
+                        '_____________________', '', '', '', '', '',
+                        '__________________________________',
+                        '', '', '', '', '', ''
+                    ]);
+                    
+                    // Fila con Vº Bº y nombre del responsable (al mismo nivel)
+                    $dataRows->push([
+                        'Vº Bº', '', '', '', '', '',
+                        'Ing. Roy Kevin Bonifacio Fernández',
+                        '', '', '', '', '', ''
+                    ]);
+                    
+                    // Fila con descripción del servicio (centrada debajo del nombre)
+                    $dataRows->push([
+                        '', '', '', '', '', '',
+                        'SERVICIO ESPECIALIZADO EN GESTIÓN DE SERVICIOS INFORMÁTICOS DEL CEPRE UNAMAD',
+                        '', '', '', '', '', ''
                     ]);
 
                     return $dataRows;
@@ -820,7 +851,15 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FORMATO ZEBRA STRIPE ELEGANTE
                     // ═══════════════════════════════════════════════════
                     
-                    for ($row = 8; $row < $lastRow; $row++) {
+                    // $lastRow ahora incluye las filas de pie de página (7 filas)
+                    // Totales: $lastRow - 7
+                    // Separadores: $lastRow - 6, -5, -4, -3
+                    // Línea firma: $lastRow - 2
+                    // Nombre: $lastRow - 1
+                    // Servicio: $lastRow
+                    $totalsRow = $lastRow - 7;
+                    
+                    for ($row = 8; $row < $totalsRow; $row++) {
                         $fillColor = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
                         
                         $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
@@ -835,7 +874,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FILA DE TOTALES FORMAL
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('A' . $lastRow . ':L' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('A' . $totalsRow . ':L' . $totalsRow)->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'size' => 10,
@@ -863,33 +902,164 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     ]);
 
                     // Altura especial para fila de totales
-                    $sheet->getRowDimension($lastRow)->setRowHeight(30);
+                    $sheet->getRowDimension($totalsRow)->setRowHeight(30);
+
+                    // ═══════════════════════════════════════════════════
+                    // PIE DE PÁGINA CON FIRMA
+                    // ═══════════════════════════════════════════════════
+                    
+                    // Fusionar celdas para la línea de firma izquierda (A a E)
+                    $sheet->mergeCells('A' . ($lastRow - 2) . ':E' . ($lastRow - 2));
+                    
+                    // Fusionar celdas para la línea de firma derecha (G a L)
+                    $sheet->mergeCells('G' . ($lastRow - 2) . ':L' . ($lastRow - 2));
+                    
+                    // Fusionar celdas para "Vº Bº" (A a E)
+                    $sheet->mergeCells('A' . ($lastRow - 1) . ':E' . ($lastRow - 1));
+                    
+                    // Fusionar celdas para el nombre del responsable (G a L)
+                    $sheet->mergeCells('G' . ($lastRow - 1) . ':L' . ($lastRow - 1));
+                    
+                    // Fusionar celdas para la descripción del servicio (G a L)
+                    $sheet->mergeCells('G' . $lastRow . ':L' . $lastRow);
+                    
+                    // Estilo para la línea de firma izquierda (Vº Bº)
+                    $sheet->getStyle('A' . ($lastRow - 2))->applyFromArray([
+                        'font' => [
+                            'bold' => false,
+                            'size' => 11,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_BOTTOM
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_NONE
+                            ]
+                        ]
+                    ]);
+                    
+                    // Estilo para la línea de firma derecha (Ingeniero)
+                    $sheet->getStyle('G' . ($lastRow - 2))->applyFromArray([
+                        'font' => [
+                            'bold' => false,
+                            'size' => 11,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_BOTTOM
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_NONE
+                            ]
+                        ]
+                    ]);
+                    
+                    // Estilo para "Vº Bº" (centrado en su área)
+                    $sheet->getStyle('A' . ($lastRow - 1))->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 11,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_NONE
+                            ]
+                        ]
+                    ]);
+                    
+                    // Estilo para el nombre del responsable (centrado)
+                    $sheet->getStyle('G' . ($lastRow - 1))->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 11,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_NONE
+                            ]
+                        ]
+                    ]);
+                    
+                    // Estilo para la descripción del servicio (centrado)
+                    $sheet->getStyle('G' . $lastRow)->applyFromArray([
+                        'font' => [
+                            'bold' => false,
+                            'size' => 9,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_NONE
+                            ]
+                        ]
+                    ]);
+                    
+                    // IMPORTANTE: Quitar todos los bordes de las filas de pie de página
+                    // Esto evita que salgan cuadrados en la impresión
+                    for ($footerRow = $lastRow - 6; $footerRow <= $lastRow; $footerRow++) {
+                        $sheet->getStyle('A' . $footerRow . ':L' . $footerRow)->applyFromArray([
+                            'borders' => [
+                                'allBorders' => [
+                                    'borderStyle' => Border::BORDER_NONE
+                                ]
+                            ]
+                        ]);
+                    }
+                    
+                    // Altura para las filas de pie de página
+                    $sheet->getRowDimension($lastRow - 2)->setRowHeight(30); // Líneas de firma
+                    $sheet->getRowDimension($lastRow - 1)->setRowHeight(20); // Vº Bº y Nombre
+                    $sheet->getRowDimension($lastRow)->setRowHeight(18);     // Servicio
 
                     // ═══════════════════════════════════════════════════
                     // ALINEACIONES ESPECÍFICAS POR COLUMNA
                     // ═══════════════════════════════════════════════════
                     
                     // Fechas centradas
-                    $sheet->getStyle('C8:C' . ($lastRow-1))->getAlignment()
+                    $sheet->getStyle('C8:C' . ($totalsRow-1))->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     
                     // Aula y turno centrados
-                    $sheet->getStyle('F8:G' . ($lastRow-1))->getAlignment()
+                    $sheet->getStyle('F8:G' . ($totalsRow-1))->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_CENTER);
                     
                     // Horarios, tardanza y pagos centrados
-                    $sheet->getStyle('H8:L' . ($lastRow-1))->getAlignment()
+                    $sheet->getStyle('H8:L' . ($totalsRow-1))->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
                     // Tema desarrollado con wrap text
-                    $sheet->getStyle('E8:E' . ($lastRow-1))->getAlignment()
+                    $sheet->getStyle('E8:E' . ($totalsRow-1))->getAlignment()
                         ->setWrapText(true);
 
                     // ═══════════════════════════════════════════════════
                     // FORMATO ESPECIAL PARA COLUMNAS AGRUPADAS
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('A8:B' . ($lastRow-1))->applyFromArray([
+                    $sheet->getStyle('A8:B' . ($totalsRow-1))->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'size' => 10
@@ -916,7 +1086,8 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 private function mergeCellsForGroupedData($sheet)
                 {
                     $lastRow = $sheet->getHighestRow();
-                    $finalRow = $lastRow - 1; // Excluir fila de totales
+                    // Excluir fila de totales y filas de pie de página (8 filas en total: 1 totales + 7 footer)
+                    $finalRow = $lastRow - 8;
                     
                     // ═══ FUSIONAR CELDAS DE MES ═══
                     $startRowMes = null;
@@ -977,6 +1148,9 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                 private function applyVisualEffects($sheet, $lastRow)
                 {
+                    // Calcular fila de totales (excluyendo las 7 filas de pie de página)
+                    $totalsRow = $lastRow - 7;
+                    
                     // ═══════════════════════════════════════════════════
                     // EFECTOS DE SOMBRA PARA ENCABEZADOS
                     // ═══════════════════════════════════════════════════
@@ -994,7 +1168,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FORMATO CONDICIONAL PARA VALORES MONETARIOS
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('L8:L' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('L8:L' . $totalsRow)->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'color' => ['argb' => self::COLORS['SUCCESS_GREEN']]
@@ -1005,7 +1179,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FORMATO ESPECIAL PARA HORAS
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('J8:J' . $lastRow)->applyFromArray([
+                    $sheet->getStyle('J8:J' . $totalsRow)->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'color' => ['argb' => self::COLORS['HEADER_BLUE']]
@@ -1016,7 +1190,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // APLICAR FORMATO DE FECHA CONSISTENTE
                     // ═══════════════════════════════════════════════════
                     
-                    $sheet->getStyle('C8:C' . ($lastRow-1))->applyFromArray([
+                    $sheet->getStyle('C8:C' . ($totalsRow-1))->applyFromArray([
                         'font' => [
                             'bold' => true,
                             'size' => 9
@@ -1049,7 +1223,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // ═══════════════════════════════════════════════════
                     
                     // Línea divisoria antes de totales
-                    $sheet->getStyle('A' . ($lastRow-1) . ':L' . ($lastRow-1))->applyFromArray([
+                    $sheet->getStyle('A' . ($totalsRow-1) . ':L' . ($totalsRow-1))->applyFromArray([
                         'borders' => [
                             'bottom' => [
                                 'borderStyle' => Border::BORDER_DOUBLE,
