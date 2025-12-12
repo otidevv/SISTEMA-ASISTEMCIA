@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\BoletinPermissionsSeeder::class,
             \Database\Seeders\TarjetasPreuniPermissionsSeeder::class,
             \Database\Seeders\TarjetasPreuniDemoSeeder::class,
+            \Database\Seeders\ResultadosExamenesPermissionsSeeder::class,
         ]);
     }
 

@@ -1852,6 +1852,7 @@
                     <li><a href="#inicio">Inicio</a></li>
                     <li><a href="#cursos">Cursos</a></li>
                     <li><a href="#eventos">Eventos</a></li>
+                    <li><a href="{{ route('resultados-examenes.public') }}">Resultados</a></li>
                     <li><a href="#nosotros">Nosotros</a></li>
                     <li><a href="#contacto">Contacto</a></li>
                 </ul>

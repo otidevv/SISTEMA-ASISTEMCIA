@@ -526,6 +526,25 @@
                         </li>
                     @endif
 
+                    <!-- Módulo Resultados de Exámenes -->
+                    @if (Auth::user()->hasPermission('resultados-examenes.view'))
+                        <li>
+                            <a href="#sidebarResultados" data-bs-toggle="collapse">
+                                <i data-feather="file-text"></i>
+                                <span> Resultados de Exámenes </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarResultados">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('resultados-examenes.index') }}">Listar Resultados</a></li>
+                                    @if (Auth::user()->hasPermission('resultados-examenes.create'))
+                                        <li><a href="{{ route('resultados-examenes.create') }}">Nuevo Resultado</a></li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
+
                     <!-- Módulo Roles - Solo visible si tiene permiso -->
                     @if (Auth::user()->hasPermission('roles.view'))
                         <li>

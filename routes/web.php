@@ -813,3 +813,46 @@ Route::middleware('auth')->group(function () {
     Route::get('/json/ciclos-disponibles', [App\Http\Controllers\ConstanciaController::class, 'getCiclosDisponibles'])
         ->name('json.ciclos-disponibles');
 });
+
+// ==========================================
+// RESULTADOS DE EXÁMENES - RUTAS
+// ==========================================
+
+// Rutas públicas para ver resultados
+Route::get('/resultados-examenes', [App\Http\Controllers\ResultadoExamenController::class, 'publicIndex'])
+    ->name('resultados-examenes.public');
+Route::get('/resultados-examenes/{id}/ver', [App\Http\Controllers\ResultadoExamenController::class, 'view'])
+    ->name('resultados-examenes.view');
+Route::get('/resultados-examenes/{id}/descargar', [App\Http\Controllers\ResultadoExamenController::class, 'download'])
+    ->name('resultados-examenes.download');
+
+// Rutas protegidas para administración
+Route::prefix('admin/resultados-examenes')->middleware(['auth'])->name('resultados-examenes.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ResultadoExamenController::class, 'index'])
+        ->name('index')
+        ->middleware('can:resultados-examenes.view');
+    
+    Route::get('/crear', [App\Http\Controllers\ResultadoExamenController::class, 'create'])
+        ->name('create')
+        ->middleware('can:resultados-examenes.create');
+    
+    Route::post('/', [App\Http\Controllers\ResultadoExamenController::class, 'store'])
+        ->name('store')
+        ->middleware('can:resultados-examenes.create');
+    
+    Route::get('/{id}/editar', [App\Http\Controllers\ResultadoExamenController::class, 'edit'])
+        ->name('edit')
+        ->middleware('can:resultados-examenes.edit');
+    
+    Route::put('/{id}', [App\Http\Controllers\ResultadoExamenController::class, 'update'])
+        ->name('update')
+        ->middleware('can:resultados-examenes.edit');
+    
+    Route::delete('/{id}', [App\Http\Controllers\ResultadoExamenController::class, 'destroy'])
+        ->name('destroy')
+        ->middleware('can:resultados-examenes.delete');
+    
+    Route::patch('/{id}/toggle-visibility', [App\Http\Controllers\ResultadoExamenController::class, 'toggleVisibility'])
+        ->name('toggle-visibility')
+        ->middleware('can:resultados-examenes.publish');
+});
