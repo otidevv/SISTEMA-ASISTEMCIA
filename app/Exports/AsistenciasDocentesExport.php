@@ -435,7 +435,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     
                     // Fila 3: Tipo de reporte
                     $dataRows->push([
-                        'INFORME DE ASISTENCIA DOCENTE',
+                        'REPORTE DE ASISTENCIA DOCENTE',
                         '', '', '', '', '', '', '', '', '', '', '', ''
                     ]);
                     
@@ -529,11 +529,13 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 // Mostrar 00:00 si no hay tardanza, o MM:SS si hay tardanza
                                 $tardanzaFormateada = sprintf('%02d:%02d', $minutosEnteros, $segundos);
                                 
-                                // Convertir horas decimales a formato HH:MM
+                                // Convertir horas decimales a formato HH:MM:SS
                                 $horasDictadas = $session['horas_dictadas'];
                                 $horas = floor($horasDictadas);
-                                $minutos = round(($horasDictadas - $horas) * 60);
-                                $horasFormateadas = sprintf('%02d:%02d', $horas, $minutos);
+                                $minutosDecimales = ($horasDictadas - $horas) * 60;
+                                $minutos = floor($minutosDecimales);
+                                $segundos = round(($minutosDecimales - $minutos) * 60);
+                                $horasFormateadas = sprintf('%02d:%02d:%02d', $horas, $minutos, $segundos);
                                 
                                 $dataRows->push([
                                     $isFirstRowForMes ? strtoupper($monthData['month_name']) : '',
@@ -565,10 +567,12 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // SECCIÓN 4: FILA DE TOTALES PROFESIONAL
                     // ═══════════════════════════════════════════════════════════
                     
-                    // Convertir total de horas a formato HH:MM
+                    // Convertir total de horas a formato HH:MM:SS
                     $totalHoras = floor($docenteTotalHoras);
-                    $totalMinutos = round(($docenteTotalHoras - $totalHoras) * 60);
-                    $totalHorasFormateado = sprintf('%02d:%02d', $totalHoras, $totalMinutos);
+                    $minutosDecimales = ($docenteTotalHoras - $totalHoras) * 60;
+                    $totalMinutos = floor($minutosDecimales);
+                    $totalSegundos = round(($minutosDecimales - $totalMinutos) * 60);
+                    $totalHorasFormateado = sprintf('%02d:%02d:%02d', $totalHoras, $totalMinutos, $totalSegundos);
                     
                     $dataRows->push([
                         '', '', '', '', '', '', '', '', 
@@ -576,6 +580,16 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         $totalHorasFormateado,
                         '',
                         'S/. ' . number_format($docenteTotalPago, 2),
+                        ''
+                    ]);
+                    
+                    // Fila con monto redondeado (sin decimales)
+                    $dataRows->push([
+                        '', '', '', '', '', '', '', '', 
+                        'MONTO REDONDEADO',
+                        '',
+                        '',
+                        'S/. ' . number_format(round($docenteTotalPago), 0),
                         ''
                     ]);
 
@@ -851,13 +865,14 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // FORMATO ZEBRA STRIPE ELEGANTE
                     // ═══════════════════════════════════════════════════
                     
-                    // $lastRow ahora incluye las filas de pie de página (7 filas)
-                    // Totales: $lastRow - 7
+                    // $lastRow ahora incluye las filas de pie de página (8 filas: 1 TOTAL + 1 MONTO REDONDEADO + 4 empty + 3 footer)
+                    // TOTAL GENERAL: $lastRow - 8
+                    // MONTO REDONDEADO: $lastRow - 7
                     // Separadores: $lastRow - 6, -5, -4, -3
                     // Línea firma: $lastRow - 2
                     // Nombre: $lastRow - 1
                     // Servicio: $lastRow
-                    $totalsRow = $lastRow - 7;
+                    $totalsRow = $lastRow - 8;
                     
                     for ($row = 8; $row < $totalsRow; $row++) {
                         $fillColor = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
@@ -903,6 +918,37 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                     // Altura especial para fila de totales
                     $sheet->getRowDimension($totalsRow)->setRowHeight(30);
+                    
+                    // ═══════════════════════════════════════════════════
+                    // FILA DE MONTO REDONDEADO
+                    // ═══════════════════════════════════════════════════
+                    
+                    $roundedRow = $totalsRow + 1;
+                    $sheet->getStyle('A' . $roundedRow . ':L' . $roundedRow)->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 10,
+                            'name' => 'Calibri',
+                            'color' => ['argb' => self::COLORS['SUCCESS_GREEN']]
+                        ],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['argb' => self::COLORS['WHITE']]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => Border::BORDER_THIN,
+                                'color' => ['argb' => self::COLORS['BORDER_GRAY']]
+                            ]
+                        ]
+                    ]);
+
+                    // Altura especial para fila de monto redondeado
+                    $sheet->getRowDimension($roundedRow)->setRowHeight(25);
 
                     // ═══════════════════════════════════════════════════
                     // PIE DE PÁGINA CON FIRMA
@@ -1020,7 +1066,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     
                     // IMPORTANTE: Quitar todos los bordes de las filas de pie de página
                     // Esto evita que salgan cuadrados en la impresión
-                    for ($footerRow = $lastRow - 6; $footerRow <= $lastRow; $footerRow++) {
+                    for ($footerRow = $lastRow - 7; $footerRow <= $lastRow; $footerRow++) {
                         $sheet->getStyle('A' . $footerRow . ':L' . $footerRow)->applyFromArray([
                             'borders' => [
                                 'allBorders' => [
@@ -1086,8 +1132,8 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 private function mergeCellsForGroupedData($sheet)
                 {
                     $lastRow = $sheet->getHighestRow();
-                    // Excluir fila de totales y filas de pie de página (8 filas en total: 1 totales + 7 footer)
-                    $finalRow = $lastRow - 8;
+                    // Excluir filas de totales y pie de página (9 filas: 1 TOTAL GENERAL + 1 MONTO REDONDEADO + 7 footer)
+                    $finalRow = $lastRow - 9;
                     
                     // ═══ FUSIONAR CELDAS DE MES ═══
                     $startRowMes = null;
@@ -1148,8 +1194,8 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                 private function applyVisualEffects($sheet, $lastRow)
                 {
-                    // Calcular fila de totales (excluyendo las 7 filas de pie de página)
-                    $totalsRow = $lastRow - 7;
+                    // Calcular fila de totales (excluyendo MONTO REDONDEADO + 7 filas de pie de página)
+                    $totalsRow = $lastRow - 8;
                     
                     // ═══════════════════════════════════════════════════
                     // EFECTOS DE SOMBRA PARA ENCABEZADOS
