@@ -75,7 +75,7 @@
         }
         
         .university-name {
-            font-size: 13pt;
+            font-size: 15pt;
             font-weight: bold;
             text-transform: uppercase;
             color: #1a365d;
@@ -441,6 +441,10 @@
         <!-- Footer -->
         <div class="footer">
             <strong>UNAMAD:</strong> Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 993110927 — 993111037 | <strong>CEPRE-UNAMAD</strong>
+            <br>
+            <span style="color: #930E29; font-weight: bold; font-size: 9pt; margin-top: 3px; display: block;">
+                ***NOTA: ESTA CONSTANCIA DE VACANTE DEBE SER SUSTITUIDO POR OTRO DOCUMENTO EMITIDO POR LA OFICINA DE ADMISION***
+            </span>
         </div>
     </div>
 </body>
