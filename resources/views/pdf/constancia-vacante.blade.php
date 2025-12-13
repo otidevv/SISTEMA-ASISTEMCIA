@@ -75,7 +75,7 @@
         }
         
         .university-name {
-            font-size: 15pt;
+            font-size: 13pt;
             font-weight: bold;
             text-transform: uppercase;
             color: #1a365d;
