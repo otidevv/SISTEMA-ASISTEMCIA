@@ -165,6 +165,9 @@ Route::get('/refresh-csrf', function () {
     ]);
 })->middleware('web');
 
+// API pública para obtener anuncios activos (para el modal de la página principal)
+Route::get('/api/anuncios/activos', [App\Http\Controllers\AnnouncementController::class, 'getActivos'])->name('api.anuncios.activos');
+
 // Rutas protegidas (requieren autenticación)
 Route::middleware('auth')->group(function () {
     // Verificación de email - página de aviso

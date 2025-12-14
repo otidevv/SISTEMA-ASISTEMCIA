@@ -1811,6 +1811,300 @@
             background-color: #f0f0f0 !important;
         }
         
+        /* ==================================== */
+        /* Results Modal */
+        /* ==================================== */
+        .results-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .results-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .results-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .results-modal-content {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10000;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .results-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--azul-oscuro);
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-modal-close:hover {
+            background: var(--magenta-unamad);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .results-modal-image {
+            width: 100%;
+            max-height: 400px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .results-modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .results-modal-image:hover img {
+            transform: scale(1.05);
+        }
+
+        .results-modal-image::after {
+            content: '👁️ Click para ver resultados completos';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .results-modal-image:hover::after {
+            opacity: 1;
+        }
+
+        .results-modal-footer {
+            padding: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        }
+
+        .results-modal-footer h3 {
+            color: var(--azul-oscuro);
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .results-modal-footer p {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .btn-view-results {
+            background: linear-gradient(135deg, var(--verde-cepre), #689f38);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(164, 198, 57, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .btn-view-results:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(164, 198, 57, 0.6);
+            color: white;
+        }
+
+        /* Floating Results Button */
+        #floating-results-btn {
+            position: fixed;
+            bottom: 180px;
+            left: 30px;
+            background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            font-weight: 700;
+            animation: pulseFloat 2s ease-in-out infinite;
+            min-width: 110px;
+            overflow: visible;
+            box-shadow: 0 5px 20px rgba(230, 0, 126, 0.4);
+        }
+
+        #floating-results-btn .btn-icon {
+            font-size: 20px;
+            margin-bottom: 1px;
+        }
+
+        #floating-results-btn .btn-text {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        #floating-results-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: linear-gradient(135deg, #ff1a8c, var(--magenta-unamad));
+            box-shadow: 0 8px 25px rgba(230, 0, 126, 0.6);
+        }
+
+        .results-badge {
+            position: absolute;
+            top: -10px;
+            right: -20px;
+            background: var(--cyan-acento);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0, 160, 227, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        /* Mobile Responsive for Results Modal */
+        @media (max-width: 768px) {
+            .results-modal-content {
+                width: 95%;
+                max-width: none;
+            }
+            
+            .results-modal-image {
+                max-height: 300px;
+            }
+            
+            .results-modal-footer h3 {
+                font-size: 20px;
+            }
+            
+            .results-modal-footer p {
+                font-size: 14px;
+            }
+            
+            #floating-results-btn {
+                bottom: 170px;
+                left: 15px;
+                min-width: 90px;
+                padding: 10px 12px;
+            }
+            
+            .carousel-nav {
+                font-size: 16px;
+            }
+        }
+        
+        /* Carousel Navigation Arrows */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10002;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--azul-oscuro);
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .carousel-nav:hover {
+            background: var(--verde-cepre);
+            color: white;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-prev {
+            left: 15px;
+        }
+
+        .carousel-next {
+            right: 15px;
+        }
+
+        .carousel-counter {
+            margin: 15px 0;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .carousel-counter span {
+            color: var(--azul-oscuro);
+            font-weight: 700;
+        }
+        
     </style>
 </head>
 <body>
@@ -2366,6 +2660,49 @@
         <span class="floating-badge">¡Abierto!</span>
     </button>
     
+    <!-- Results Modal -->
+    <div id="resultsModal" class="results-modal">
+        <div class="results-modal-overlay" onclick="closeResultsModal()"></div>
+        <div class="results-modal-content">
+            <button class="results-modal-close" onclick="closeResultsModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <!-- Carousel Navigation -->
+            <button class="carousel-nav carousel-prev" onclick="previousAnnouncement()" style="display: none;">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="carousel-nav carousel-next" onclick="nextAnnouncement()" style="display: none;">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            
+            <div class="results-modal-image" onclick="window.location.href='{{ route('resultados-examenes.public') }}'">
+                <img id="modal-announcement-image" src="" alt="Anuncio">
+            </div>
+            <div class="results-modal-footer">
+                <h3 id="modal-announcement-title">¡Resultados Publicados!</h3>
+                <p id="modal-announcement-description">Consulta los resultados de los exámenes</p>
+                
+                <!-- Carousel Counter -->
+                <div class="carousel-counter" style="display: none;">
+                    <span id="current-announcement">1</span> / <span id="total-announcements">1</span>
+                </div>
+                
+                <a href="{{ route('resultados-examenes.public') }}" class="btn-view-results">
+                    <i class="fas fa-eye"></i>
+                    Ver Resultados Completos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Results Button -->
+    <button id="floating-results-btn" onclick="openResultsModal()" title="Ver Anuncios" style="display: none;">
+        <i class="fas fa-bullhorn btn-icon"></i>
+        <span class="btn-text">Anuncios</span>
+        <span class="results-badge">Nuevo</span>
+    </button>
+    
     <!-- Scroll to Top Button -->
     <button id="scrollTop">
         <i class="fas fa-arrow-up"></i>
@@ -2743,4 +3080,158 @@
         $(document).ready(function() {
             // Select2 logic moved to publico-modal.js
         });
+        
+        // ==========================================
+        // RESULTS MODAL FUNCTIONS WITH CAROUSEL
+        // ==========================================
+        let allAnnouncements = [];
+        let currentAnnouncementIndex = 0;
+
+        // Fetch active announcements
+        async function fetchActiveAnnouncements() {
+            try {
+                const response = await fetch('/api/anuncios/activos');
+                const data = await response.json();
+                return data.length > 0 ? data : null;
+            } catch (error) {
+                console.error('Error fetching announcements:', error);
+                return null;
+            }
+        }
+
+        // Open Results Modal
+        function openResultsModal() {
+            const modal = document.getElementById('resultsModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Mark as viewed in session
+            sessionStorage.setItem('announcementViewed', 'true');
+        }
+
+        // Close Results Modal
+        function closeResultsModal() {
+            const modal = document.getElementById('resultsModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Navigate to next announcement
+        function nextAnnouncement() {
+            if (currentAnnouncementIndex < allAnnouncements.length - 1) {
+                currentAnnouncementIndex++;
+                displayCurrentAnnouncement();
+            }
+        }
+
+        // Navigate to previous announcement
+        function previousAnnouncement() {
+            if (currentAnnouncementIndex > 0) {
+                currentAnnouncementIndex--;
+                displayCurrentAnnouncement();
+            }
+        }
+
+        // Display current announcement
+        function displayCurrentAnnouncement() {
+            const announcement = allAnnouncements[currentAnnouncementIndex];
+            
+            const image = document.getElementById('modal-announcement-image');
+            const title = document.getElementById('modal-announcement-title');
+            const description = document.getElementById('modal-announcement-description');
+            const currentSpan = document.getElementById('current-announcement');
+            
+            // Set image (use placeholder if no image)
+            if (announcement.imagen) {
+                image.src = `/storage/${announcement.imagen}`;
+            } else {
+                image.src = 'https://placehold.co/600x400/2C5F7C/ffffff?text=Resultados+Disponibles';
+            }
+            
+            title.textContent = announcement.titulo;
+            description.textContent = announcement.descripcion || 'Consulta los resultados de los exámenes';
+            currentSpan.textContent = currentAnnouncementIndex + 1;
+            
+            // Update navigation buttons visibility
+            updateNavigationButtons();
+        }
+
+        // Update navigation buttons
+        function updateNavigationButtons() {
+            const prevBtn = document.querySelector('.carousel-prev');
+            const nextBtn = document.querySelector('.carousel-next');
+            
+            if (allAnnouncements.length > 1) {
+                prevBtn.style.display = currentAnnouncementIndex > 0 ? 'flex' : 'none';
+                nextBtn.style.display = currentAnnouncementIndex < allAnnouncements.length - 1 ? 'flex' : 'none';
+            } else {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+        }
+
+        // Load all announcements
+        function loadAllAnnouncements(announcements) {
+            allAnnouncements = announcements;
+            currentAnnouncementIndex = 0;
+            
+            const floatingBtn = document.getElementById('floating-results-btn');
+            const totalSpan = document.getElementById('total-announcements');
+            const counter = document.querySelector('.carousel-counter');
+            
+            // Update total count
+            totalSpan.textContent = announcements.length;
+            
+            // Show counter if more than 1 announcement
+            if (announcements.length > 1) {
+                counter.style.display = 'block';
+            }
+            
+            // Display first announcement
+            displayCurrentAnnouncement();
+            
+            // Show floating button
+            floatingBtn.style.display = 'flex';
+            
+            // Update badge text
+            const badge = floatingBtn.querySelector('.results-badge');
+            if (announcements.length > 1) {
+                badge.textContent = `${announcements.length} Nuevos`;
+            } else {
+                badge.textContent = 'Nuevo';
+            }
+        }
+
+        // Initialize results modal on page load
+        async function initResultsModal() {
+            // Fetch active announcements
+            const announcements = await fetchActiveAnnouncements();
+            
+            if (announcements) {
+                loadAllAnnouncements(announcements);
+                
+                // Auto-popup always (removed session check)
+                setTimeout(() => {
+                    openResultsModal();
+                }, 2000); // Show after 2 seconds
+            }
+            
+            // Close modal on ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeResultsModal();
+                } else if (e.key === 'ArrowLeft') {
+                    previousAnnouncement();
+                } else if (e.key === 'ArrowRight') {
+                    nextAnnouncement();
+                }
+            });
+        }
+
+        // Call initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initResultsModal);
+        } else {
+            initResultsModal();
+        }
     </script>

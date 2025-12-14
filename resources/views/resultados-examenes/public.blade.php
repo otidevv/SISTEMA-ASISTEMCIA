@@ -631,6 +631,76 @@
         }
 
         /* ==================================== */
+        /* Floating Postulation Button */
+        /* ==================================== */
+        @keyframes pulseFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.02); }
+        }
+
+        #floating-postular-btn {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--verde-cepre), #689f38);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            font-weight: 700;
+            animation: pulseFloat 2s ease-in-out infinite;
+            min-width: 110px;
+            overflow: visible;
+            box-shadow: 0 5px 20px rgba(164, 198, 57, 0.4);
+        }
+
+        #floating-postular-btn .btn-icon {
+            font-size: 20px;
+            margin-bottom: 1px;
+        }
+
+        #floating-postular-btn .btn-text {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        #floating-postular-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background: linear-gradient(135deg, #689f38, var(--verde-cepre));
+            box-shadow: 0 8px 25px rgba(164, 198, 57, 0.6);
+        }
+
+        #floating-postular-btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Badge de notificación */
+        .floating-badge {
+            position: absolute;
+            top: -10px;
+            right: -20px;
+            background: var(--magenta-unamad);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(230, 0, 126, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        /* ==================================== */
         /* Scroll to Top */
         /* ==================================== */
         #scrollTop {
@@ -662,34 +732,237 @@
         /* Responsive */
         /* ==================================== */
         @media (max-width: 768px) {
-            .results-hero h1 {
-                font-size: 36px;
+            /* Top Bar */
+            .top-bar-content {
+                padding: 0 15px;
+                gap: 8px;
             }
 
-            .ciclo-header h2 {
-                font-size: 28px;
+            .help-desk {
+                font-size: 12px;
+                gap: 5px;
             }
 
-            .results-grid {
-                grid-template-columns: 1fr;
+            .info-links {
+                display: none;
             }
 
-            .filter-group {
-                flex-direction: column;
-                align-items: stretch;
+            /* Header */
+            .header-content {
+                padding: 10px 15px;
+                flex-wrap: wrap;
             }
 
-            .filter-group select {
-                width: 100%;
+            .logo {
+                height: 45px;
             }
 
             .nav-menu {
                 display: none;
             }
 
+            .header-buttons .btn {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+
+            /* Hero Section */
+            .results-hero {
+                padding: 40px 0;
+            }
+
+            .results-hero h1 {
+                font-size: 32px;
+                text-shadow: 1px 1px var(--verde-cepre), 2px 2px var(--cyan-acento);
+            }
+
+            .results-hero p {
+                font-size: 16px;
+            }
+
+            /* Filters */
+            .filters-section {
+                padding: 20px 0;
+            }
+
+            .filters-container {
+                padding: 0 15px;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .filter-group label {
+                font-size: 14px;
+            }
+
+            .filter-group select {
+                width: 100%;
+                min-width: auto;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            /* Results Section */
+            .results-section {
+                padding: 40px 0;
+            }
+
+            .results-container {
+                padding: 0 15px;
+            }
+
+            .ciclo-group {
+                margin-bottom: 40px;
+            }
+
+            .ciclo-header {
+                padding: 20px 15px;
+                margin-bottom: 25px;
+            }
+
+            .ciclo-header h2 {
+                font-size: 24px;
+            }
+
+            .ciclo-header p {
+                font-size: 14px;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .result-card {
+                border-top-width: 3px;
+            }
+
+            .result-header {
+                padding: 20px;
+            }
+
+            .result-header i {
+                font-size: 36px;
+            }
+
+            .result-title {
+                font-size: 18px;
+            }
+
+            .result-content {
+                padding: 20px;
+            }
+
+            .result-meta {
+                gap: 15px;
+            }
+
+            .meta-item {
+                font-size: 13px;
+            }
+
+            .result-description {
+                font-size: 14px;
+            }
+
+            .result-actions {
+                gap: 8px;
+            }
+
+            .btn-view-pdf,
+            .btn-download,
+            .btn-link {
+                padding: 10px 16px;
+                font-size: 13px;
+                flex: 1;
+                justify-content: center;
+            }
+
+            /* Modal */
             .modal-content {
                 width: 95%;
                 height: 95vh;
+                border-radius: 10px;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-header h3 {
+                font-size: 18px;
+            }
+
+            .modal-close {
+                width: 35px;
+                height: 35px;
+                font-size: 24px;
+            }
+
+            /* No Results */
+            .no-results {
+                padding: 40px 20px;
+            }
+
+            .no-results i {
+                font-size: 60px;
+            }
+
+            .no-results h3 {
+                font-size: 22px;
+            }
+
+            .no-results p {
+                font-size: 14px;
+            }
+
+            /* Footer */
+            footer {
+                padding: 30px 0 15px;
+                margin-top: 40px;
+            }
+
+            .footer-content {
+                padding: 0 15px;
+            }
+
+            .footer-content p {
+                font-size: 14px;
+            }
+
+            /* Floating Buttons */
+            #floating-postular-btn {
+                bottom: 90px;
+                right: 15px;
+                min-width: 90px;
+                padding: 10px 12px;
+            }
+
+            #floating-postular-btn .btn-icon {
+                font-size: 18px;
+            }
+
+            #floating-postular-btn .btn-text {
+                font-size: 10px;
+            }
+
+            .floating-badge {
+                font-size: 8px;
+                padding: 4px 8px;
+                top: -8px;
+                right: -15px;
+            }
+
+            #scrollTop {
+                bottom: 20px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
             }
         }
     </style>
@@ -850,6 +1123,13 @@
             <p>Copyright © 2024 CEPRE UNAMAD. Todos los derechos reservados.</p>
         </div>
     </footer>
+
+    <!-- Floating Postulation Button -->
+    <a href="{{ route('home') }}#postulacion" id="floating-postular-btn" title="¡Postula Ahora!">
+        <i class="fas fa-edit btn-icon"></i>
+        <span class="btn-text">Postular</span>
+        <span class="floating-badge">¡Abierto!</span>
+    </a>
 
     <!-- Scroll to Top -->
     <button id="scrollTop">

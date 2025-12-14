@@ -252,4 +252,22 @@ class AnnouncementController extends Controller
         return redirect()->back()
                         ->with('success', "Anuncio {$status} exitosamente.");
     }
+
+    /**
+     * Obtener anuncios activos para el modal público
+     */
+    public function getActivos()
+    {
+        try {
+            $anuncios = Anuncio::publicados()
+                ->ordenadosPorPrioridad()
+                ->whereIn('tipo', ['importante', 'urgente', 'evento']) // Solo tipos relevantes
+                ->get(['id', 'titulo', 'descripcion', 'imagen', 'tipo', 'prioridad']);
+            
+            return response()->json($anuncios);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching active announcements: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
+    }
 }
