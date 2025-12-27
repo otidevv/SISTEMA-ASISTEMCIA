@@ -173,6 +173,122 @@
             gap: 10px;
         }
 
+        /* Search Button */
+        .search-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--azul-oscuro);
+            cursor: pointer;
+            padding: 8px;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .search-btn:hover {
+            color: var(--verde-cepre);
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--azul-oscuro);
+            cursor: pointer;
+            padding: 8px;
+            transition: all 0.3s;
+        }
+
+        .mobile-menu-btn:hover {
+            color: var(--verde-cepre);
+            transform: scale(1.1);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+
+        .mobile-menu-overlay.active {
+            display: block;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+            z-index: 9999;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .mobile-nav-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu-header {
+            padding: 20px;
+            background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro));
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .mobile-nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mobile-nav-menu ul li {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .mobile-nav-menu ul li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--azul-oscuro);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mobile-nav-menu ul li a:hover {
+            background: var(--fondo-cursos);
+            color: var(--verde-cepre);
+            padding-left: 30px;
+        }
+
+        .mobile-nav-menu ul li a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
         .btn {
             padding: 12px 25px;
             border-radius: 30px;
@@ -492,6 +608,9 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
         }
 
         .btn-link:hover {
@@ -505,7 +624,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 9999;
+            z-index: 99999;
             left: 0;
             top: 0;
             width: 100%;
@@ -530,6 +649,8 @@
             flex-direction: column;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideDown 0.3s;
+            position: relative;
+            z-index: 100000;
         }
 
         .modal-header {
@@ -761,9 +882,19 @@
                 display: none;
             }
 
-            .header-buttons .btn {
-                padding: 8px 15px;
-                font-size: 12px;
+            .mobile-menu-btn,
+            .search-btn {
+                display: block;
+            }
+
+            .header-buttons .btn-primary {
+                padding: 10px 18px;
+                font-size: 13px;
+                border-radius: 25px;
+            }
+
+            .header-buttons .btn-primary span {
+                display: inline;
             }
 
             /* Hero Section */
@@ -986,7 +1117,9 @@
     <!-- Header -->
     <header class="main-header">
         <div class="header-content">
-            <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/ffffff/2C5F7C?text=CEPRE';" alt="CEPRE UNAMAD" class="logo">
+            <a href="{{ route('home') }}" title="Ir a la página principal">
+                <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/ffffff/2C5F7C?text=CEPRE';" alt="CEPRE UNAMAD" class="logo">
+            </a>
 
             <nav>
                 <ul class="nav-menu">
@@ -1000,13 +1133,40 @@
             </nav>
 
             <div class="header-buttons">
+                <button class="search-btn" aria-label="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
                 <a href="{{ route('login') }}" class="btn btn-primary">
-                    <i class="far fa-user"></i>
+                    <i class="fas fa-user"></i>
                     <span>Acceso</span>
                 </a>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menú">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- Mobile Navigation Menu -->
+    <nav class="mobile-nav-menu" id="mobileNavMenu">
+        <div class="mobile-menu-header">
+            <h3 style="margin: 0; font-size: 18px;">Menú</h3>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul>
+            <li><a href="{{ route('home') }}"><i class="fas fa-home"></i> Inicio</a></li>
+            <li><a href="{{ route('home') }}#cursos"><i class="fas fa-book"></i> Cursos</a></li>
+            <li><a href="{{ route('home') }}#eventos"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
+            <li><a href="{{ route('resultados-examenes.public') }}"><i class="fas fa-trophy"></i> Resultados</a></li>
+            <li><a href="{{ route('home') }}#nosotros"><i class="fas fa-users"></i> Nosotros</a></li>
+            <li><a href="{{ route('home') }}#contacto"><i class="fas fa-envelope"></i> Contacto</a></li>
+        </ul>
+    </nav>
 
     <!-- Hero Section -->
     <section class="results-hero">
@@ -1048,7 +1208,16 @@
 
                         <div class="results-grid">
                             @foreach($resultadosCiclo as $resultado)
-                                <div class="result-card animate-on-scroll">
+                                @php
+                                    // Determine the primary action for the card
+                                    $cardAction = '';
+                                    if($resultado->tiene_pdf) {
+                                        $cardAction = "openPdfModal('" . route('resultados-examenes.view', $resultado->id) . "', '" . addslashes($resultado->nombre_examen) . "')";
+                                    } elseif($resultado->tiene_link) {
+                                        $cardAction = "window.open('" . $resultado->link_externo . "', '_blank')";
+                                    }
+                                @endphp
+                                <div class="result-card animate-on-scroll" @if($cardAction) onclick="{{ $cardAction }}" style="cursor: pointer;" @endif>
                                     <div class="result-header">
                                         <i class="fas fa-file-alt"></i>
                                         <h3 class="result-title">{{ $resultado->nombre_examen }}</h3>
@@ -1070,9 +1239,9 @@
                                             <p class="result-description">{{ $resultado->descripcion }}</p>
                                         @endif
 
-                                        <div class="result-actions">
+                                        <div class="result-actions" onclick="event.stopPropagation();">
                                             @if($resultado->tiene_pdf)
-                                                <button onclick="openPdfModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ $resultado->nombre_examen }}')" class="btn-view-pdf">
+                                                <button onclick="openPdfModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}')"; class="btn-view-pdf">
                                                     <i class="fas fa-eye"></i> Ver PDF
                                                 </button>
                                                 <a href="{{ route('resultados-examenes.download', $resultado->id) }}" class="btn-download" download>
@@ -1136,7 +1305,116 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
+    <!-- Canvas for Confetti -->
+    <canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50000; display: none;"></canvas>
+
     <script>
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileNavMenu');
+            const overlay = document.getElementById('mobileMenuOverlay');
+            
+            mobileMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Prevent body scroll when menu is open
+            if (mobileMenu.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Confetti Animation
+        function createConfetti() {
+            console.log('createConfetti function called');
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) {
+                console.error('Canvas element not found');
+                return;
+            }
+            console.log('Canvas found:', canvas);
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('Could not get canvas context');
+                return;
+            }
+            console.log('Canvas context obtained');
+            
+            try {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                canvas.style.display = 'block';
+
+                const confettiCount = 150;
+                const confetti = [];
+                const colors = ['#A4C639', '#E6007E', '#00A0E3', '#2C5F7C', '#C8D92F', '#FFD700', '#FF6B6B'];
+
+                for (let i = 0; i < confettiCount; i++) {
+                    confetti.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height - canvas.height,
+                        r: Math.random() * 6 + 4,
+                        d: Math.random() * confettiCount,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        tilt: Math.floor(Math.random() * 10) - 10,
+                        tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+                        tiltAngle: 0
+                    });
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    confetti.forEach((c, i) => {
+                        ctx.beginPath();
+                        ctx.lineWidth = c.r / 2;
+                        ctx.strokeStyle = c.color;
+                        ctx.moveTo(c.x + c.tilt + c.r / 4, c.y);
+                        ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 4);
+                        ctx.stroke();
+
+                        c.tiltAngle += c.tiltAngleIncremental;
+                        c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+                        c.x += Math.sin(c.d);
+                        c.tilt = Math.sin(c.tiltAngle - i / 3) * 15;
+
+                        if (c.y > canvas.height) {
+                            confetti[i] = {
+                                x: Math.random() * canvas.width,
+                                y: -10,
+                                r: c.r,
+                                d: c.d,
+                                color: c.color,
+                                tilt: c.tilt,
+                                tiltAngleIncremental: c.tiltAngleIncremental,
+                                tiltAngle: c.tiltAngle
+                            };
+                        }
+                    });
+                }
+
+                let animationId;
+                let duration = 4000;
+                let startTime = Date.now();
+
+                function animate() {
+                    draw();
+                    if (Date.now() - startTime < duration) {
+                        animationId = requestAnimationFrame(animate);
+                    } else {
+                        canvas.style.display = 'none';
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+
+                animate();
+            } catch (error) {
+                console.error('Error creating confetti:', error);
+            }
+        }
+
         // Scroll to top functionality
         const scrollTop = document.getElementById('scrollTop');
         
@@ -1167,14 +1445,28 @@
 
         // Modal functions
         function openPdfModal(pdfUrl, title) {
+            console.log('Opening PDF modal:', pdfUrl, title);
             const modal = document.getElementById('pdfModal');
             const viewer = document.getElementById('pdfViewer');
             const modalTitle = document.getElementById('modalTitle');
+            
+            if (!modal || !viewer || !modalTitle) {
+                console.error('Modal elements not found!');
+                return;
+            }
             
             viewer.src = pdfUrl;
             modalTitle.textContent = title;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            console.log('Modal opened successfully');
+            
+            // Trigger confetti animation
+            setTimeout(() => {
+                console.log('Triggering confetti...');
+                createConfetti();
+            }, 100);
         }
 
         function closePdfModal() {
