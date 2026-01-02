@@ -495,17 +495,7 @@ Exception $e) {
                 }
             }
 
-            return [
-                'id' => $carnet->id,
-                'codigo' => $carnet->codigo_carnet,
-                'codigo_postulante' => $codigoPostulante,
-                'estudiante_id' => str_pad($carnet->estudiante_id, 8, '0', STR_PAD_LEFT),
-                'nombre_completo' => strtoupper($carnet->nombre_completo),
-                'dni' => $carnet->estudiante->numero_documento,
-                'carrera' => strtoupper($carnet->carrera->nombre),
-                'ciclo' => $carnet->ciclo->nombre,
-                'turno' => $carnet->turno->nombre,
-            ];
+
 
             // Determinar grupo/aula dinámicamente
             $grupoDisplay = '';
