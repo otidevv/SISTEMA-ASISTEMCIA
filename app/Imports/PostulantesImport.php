@@ -60,20 +60,6 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                     return [trim($key) => $item];
                 });
 
-                // DEBUG: Log de columnas (solo primera fila)
-                if ($fila == 2) {
-                    \Log::info('Columnas recibidas en Excel:', array_keys($row->toArray()));
-                    \Log::info('Datos de padres:', [
-                        'dni_padre' => $row['dni_padre'] ?? 'NO EXISTE',
-                        'nombre_padre_completo' => $row['nombre_padre_completo'] ?? 'NO EXISTE',
-                        'celular_padre' => $row['celular_padre'] ?? 'NO EXISTE',
-                        'dni_madre' => $row['dni_madre'] ?? 'NO EXISTE',
-                        'nombre_madre_completo' => $row['nombre_madre_completo'] ?? 'NO EXISTE',
-                        'celular_madre' => $row['celular_madre'] ?? 'NO EXISTE',
-                    ]);
-                }
-
-
                 // RENIEC Integration
                 if (!empty($row['dni']) && empty($row['nombres'])) {
                     try {
@@ -254,49 +240,108 @@ class PostulantesImport implements ToCollection, WithHeadingRow
 
                     $postulacion->save();
 
-                    // PADRES
-                    if (!empty($row['dni_padre'])) {
-                        $dniP = trim($row['dni_padre']);
-                        $padre = User::firstOrNew(['numero_documento' => $dniP]);
+                    // PADRES - Crear si hay nombre o teléfono
+                    if (!empty($row['nombre_padre_completo']) || !empty($row['celular_padre'])) {
+                        $dniP = !empty($row['dni_padre']) ? trim($row['dni_padre']) : null;
+                        $nombrePadre = strtoupper(trim($row['nombre_padre_completo'] ?? 'PADRE'));
+                        $celularPadre = trim($row['celular_padre'] ?? '');
+                        
+                        // Buscar por DNI si existe, sino por teléfono, sino crear nuevo
+                        if ($dniP) {
+                            $padre = User::firstOrNew(['numero_documento' => $dniP]);
+                        } elseif ($celularPadre) {
+                            $padre = User::where('telefono', $celularPadre)
+                                ->whereHas('roles', function($q) {
+                                    $q->whereIn('nombre', ['Padre', 'padre']);
+                                })
+                                ->first();
+                            if (!$padre) {
+                                $padre = new User();
+                            }
+                        } else {
+                            $padre = new User();
+                        }
+                        
                         if (!$padre->exists) {
-                            $padre->username = $dniP;
-                            $padre->email = 'padre_' . $dniP . '@temp.com';
-                            $padre->password_hash = Hash::make($dniP);
-                            $padre->nombre = strtoupper(trim($row['nombre_padre_completo'] ?? 'PADRE'));
+                            // Generar username único
+                            if ($dniP) {
+                                $padre->username = $dniP;
+                                $padre->numero_documento = $dniP;
+                                $padre->tipo_documento = 'DNI';
+                            } else {
+                                // Usar teléfono o generar ID temporal
+                                $padre->username = $celularPadre ?: 'padre_' . uniqid();
+                                $padre->numero_documento = $celularPadre ?: null;
+                                $padre->tipo_documento = $celularPadre ? 'OTRO' : null;
+                            }
+                            
+                            $padre->email = ($dniP ?: $celularPadre ?: uniqid()) . '@padre.temp';
+                            $padre->password_hash = Hash::make($dniP ?: $celularPadre ?: '12345678');
+                            $padre->nombre = $nombrePadre;
                             $padre->apellido_paterno = ''; 
                             $padre->apellido_materno = '';
-                            $padre->telefono = trim($row['celular_padre'] ?? '');
-                            $padre->tipo_documento = 'DNI';
+                            $padre->telefono = $celularPadre;
                             $padre->estado = true;
                             $padre->save();
                             
                             $rol = Role::whereIn('nombre', ['Padre', 'padre'])->first();
                             if ($rol) $padre->assignRole($rol->nombre);
                         }
+                        
                         Parentesco::updateOrCreate(
                             ['estudiante_id' => $usuario->id, 'padre_id' => $padre->id],
                             ['tipo_parentesco' => 'Padre', 'acceso_portal' => true, 'estado' => true]
                         );
                     }
 
-                    if (!empty($row['dni_madre'])) {
-                        $dniM = trim($row['dni_madre']);
-                        $madre = User::firstOrNew(['numero_documento' => $dniM]);
+                    // MADRES - Crear si hay nombre o teléfono
+                    if (!empty($row['nombre_madre_completo']) || !empty($row['celular_madre'])) {
+                        $dniM = !empty($row['dni_madre']) ? trim($row['dni_madre']) : null;
+                        $nombreMadre = strtoupper(trim($row['nombre_madre_completo'] ?? 'MADRE'));
+                        $celularMadre = trim($row['celular_madre'] ?? '');
+                        
+                        // Buscar por DNI si existe, sino por teléfono, sino crear nuevo
+                        if ($dniM) {
+                            $madre = User::firstOrNew(['numero_documento' => $dniM]);
+                        } elseif ($celularMadre) {
+                            $madre = User::where('telefono', $celularMadre)
+                                ->whereHas('roles', function($q) {
+                                    $q->whereIn('nombre', ['Madre', 'madre']);
+                                })
+                                ->first();
+                            if (!$madre) {
+                                $madre = new User();
+                            }
+                        } else {
+                            $madre = new User();
+                        }
+                        
                         if (!$madre->exists) {
-                            $madre->username = $dniM;
-                            $madre->email = 'madre_' . $dniM . '@temp.com';
-                            $madre->password_hash = Hash::make($dniM);
-                            $madre->nombre = strtoupper(trim($row['nombre_madre_completo'] ?? 'MADRE'));
+                            // Generar username único
+                            if ($dniM) {
+                                $madre->username = $dniM;
+                                $madre->numero_documento = $dniM;
+                                $madre->tipo_documento = 'DNI';
+                            } else {
+                                // Usar teléfono o generar ID temporal
+                                $madre->username = $celularMadre ?: 'madre_' . uniqid();
+                                $madre->numero_documento = $celularMadre ?: null;
+                                $madre->tipo_documento = $celularMadre ? 'OTRO' : null;
+                            }
+                            
+                            $madre->email = ($dniM ?: $celularMadre ?: uniqid()) . '@madre.temp';
+                            $madre->password_hash = Hash::make($dniM ?: $celularMadre ?: '12345678');
+                            $madre->nombre = $nombreMadre;
                             $madre->apellido_paterno = '';
                             $madre->apellido_materno = '';
-                            $madre->telefono = trim($row['celular_madre'] ?? '');
-                            $madre->tipo_documento = 'DNI';
+                            $madre->telefono = $celularMadre;
                             $madre->estado = true;
                             $madre->save();
 
                             $rol = Role::whereIn('nombre', ['Madre', 'madre'])->first();
                             if ($rol) $madre->assignRole($rol->nombre);
                         }
+                        
                         Parentesco::updateOrCreate(
                             ['estudiante_id' => $usuario->id, 'madre_id' => $madre->id],
                             ['tipo_parentesco' => 'Madre', 'acceso_portal' => true, 'estado' => true]
