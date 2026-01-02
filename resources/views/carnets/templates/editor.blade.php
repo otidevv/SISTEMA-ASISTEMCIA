@@ -51,7 +51,7 @@
             position: absolute;
             cursor: move;
             padding: 4px 8px;
-            background: rgba(255, 255, 255, 0.9);
+            background: transparent;
             border: 2px dashed #007bff;
             border-radius: 4px;
             user-select: none;

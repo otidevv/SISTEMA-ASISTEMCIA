@@ -128,6 +128,9 @@ class CarnetTemplateEditor {
                 this.deselectAll();
             }
         });
+
+        // Movimiento con teclado (flechas)
+        document.addEventListener('keydown', (e) => this.handleKeyboardMovement(e));
     }
 
     addField(fieldName) {
@@ -187,6 +190,11 @@ class CarnetTemplateEditor {
 
         fieldElement.appendChild(label);
         fieldElement.appendChild(value);
+
+        // Aplicar estilos por defecto si existen
+        if (defaultConfig.backgroundColor && defaultConfig.backgroundColor !== 'transparent') {
+            fieldElement.style.background = defaultConfig.backgroundColor;
+        }
 
         // Agregar handles de resize
         this.addResizeHandles(fieldElement);
@@ -426,6 +434,13 @@ class CarnetTemplateEditor {
                 document.getElementById('opacityValue').textContent = (rgb[3] ? Math.round(rgb[3] * 100) : 90) + '%';
             }
         }
+
+        // Rotación
+        if (config.rotation !== undefined) {
+            document.getElementById('customRotation').value = config.rotation;
+        } else {
+            document.getElementById('customRotation').value = 0;
+        }
     }
 
     deselectAll() {
@@ -467,9 +482,18 @@ class CarnetTemplateEditor {
         } else if (property === 'fontWeight') {
             valueElement.style.fontWeight = value;
         } else if (property === 'textAlign') {
+            // Asegurar que el elemento tenga display block para que funcione el text-align
+            valueElement.style.display = 'block';
+            valueElement.style.width = '100%';
             valueElement.style.textAlign = value;
-            // También aplicar al contenedor para que se vea el efecto
-            this.selectedField.style.textAlign = value;
+
+            // También aplicar al label
+            const labelElement = this.selectedField.querySelector('.field-label');
+            if (labelElement) {
+                labelElement.style.display = 'block';
+                labelElement.style.width = '100%';
+                labelElement.style.textAlign = value;
+            }
         }
     }
 
@@ -548,6 +572,56 @@ class CarnetTemplateEditor {
         this.selectedField = null;
 
         toastr.info('Campo eliminado');
+    }
+
+    handleKeyboardMovement(e) {
+        // Solo mover si hay un campo seleccionado
+        if (!this.selectedField) return;
+
+        // Solo procesar flechas
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+
+        // Prevenir scroll de la página
+        e.preventDefault();
+
+        const fieldName = this.selectedField.dataset.field;
+        const currentLeft = parseFloat(this.selectedField.style.left) || 0;
+        const currentTop = parseFloat(this.selectedField.style.top) || 0;
+
+        // Determinar paso: 1px normal, 10px con Shift
+        const step = e.shiftKey ? 10 : 1;
+
+        let newLeft = currentLeft;
+        let newTop = currentTop;
+
+        switch (e.key) {
+            case 'ArrowUp':
+                newTop = currentTop - step;
+                break;
+            case 'ArrowDown':
+                newTop = currentTop + step;
+                break;
+            case 'ArrowLeft':
+                newLeft = currentLeft - step;
+                break;
+            case 'ArrowRight':
+                newLeft = currentLeft + step;
+                break;
+        }
+
+        // Limitar al canvas
+        const canvasWidth = this.canvas.offsetWidth;
+        const canvasHeight = this.canvas.offsetHeight;
+        const elementWidth = this.selectedField.offsetWidth;
+        const elementHeight = this.selectedField.offsetHeight;
+
+        const minVisible = 20;
+        newLeft = Math.max(-elementWidth + minVisible, Math.min(newLeft, canvasWidth - minVisible));
+        newTop = Math.max(-elementHeight + minVisible, Math.min(newTop, canvasHeight - minVisible));
+
+        // Aplicar nueva posición
+        this.selectedField.style.left = newLeft + 'px';
+        this.selectedField.style.top = newTop + 'px';
     }
 
     handleImageUpload(e) {
@@ -763,8 +837,12 @@ class CarnetTemplateEditor {
             if (config.color) value.style.color = config.color;
             if (config.fontWeight) value.style.fontWeight = config.fontWeight;
             if (config.textAlign) {
+                value.style.display = 'block';
+                value.style.width = '100%';
                 value.style.textAlign = config.textAlign;
-                fieldElement.style.textAlign = config.textAlign;
+                label.style.display = 'block';
+                label.style.width = '100%';
+                label.style.textAlign = config.textAlign;
             }
 
             // Aplicar rotación si existe
