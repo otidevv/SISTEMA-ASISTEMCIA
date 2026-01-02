@@ -24,6 +24,12 @@ class CarnetTemplateEditor {
     init() {
         this.setupCanvas();
         this.setupEventListeners();
+
+        // Cargar plantilla existente si hay datos
+        if (window.templateData && window.templateData.fondo_path) {
+            this.fondoPath = window.templateData.fondo_path;
+        }
+
         this.loadExistingTemplate();
     }
 
@@ -667,7 +673,100 @@ class CarnetTemplateEditor {
     }
 
     loadExistingTemplate() {
-        // Implementar carga de plantilla existente si es necesario
+        // Verificar si hay datos de plantilla existente
+        if (!window.templateData || !window.templateData.campos_config) {
+            return;
+        }
+
+        const templateData = window.templateData;
+
+        // Cargar fondo si existe
+        if (templateData.fondo_path) {
+            this.fondoPath = templateData.fondo_path;
+        }
+
+        // Cargar cada campo guardado
+        Object.keys(templateData.campos_config).forEach(fieldName => {
+            const config = templateData.campos_config[fieldName];
+
+            // Crear elemento del campo
+            const fieldElement = document.createElement('div');
+            fieldElement.className = 'field-element';
+            fieldElement.dataset.field = fieldName;
+
+            // Convertir coordenadas de mm a px
+            const leftPx = this.mmToPx(parseFloat(config.left));
+            const topPx = this.mmToPx(parseFloat(config.top));
+            const widthPx = config.width ? this.mmToPx(parseFloat(config.width)) : 100;
+            const heightPx = config.height ? this.mmToPx(parseFloat(config.height)) : 40;
+
+            // Aplicar posición y tamaño
+            fieldElement.style.left = leftPx + 'px';
+            fieldElement.style.top = topPx + 'px';
+            fieldElement.style.width = widthPx + 'px';
+            fieldElement.style.height = heightPx + 'px';
+
+            // Aplicar estilos de fondo si existen
+            if (config.backgroundColor && config.backgroundColor !== 'transparent') {
+                fieldElement.style.background = config.backgroundColor;
+            }
+
+            // Contenido del campo
+            const label = document.createElement('div');
+            label.className = 'field-label';
+            label.textContent = fieldName.replace(/_/g, ' ');
+
+            const value = document.createElement('div');
+            value.className = 'field-value';
+            value.textContent = this.getFieldSampleValue(fieldName);
+
+            // Aplicar estilos de texto
+            if (config.fontFamily) value.style.fontFamily = config.fontFamily;
+            if (config.fontSize) value.style.fontSize = config.fontSize;
+            if (config.color) value.style.color = config.color;
+            if (config.fontWeight) value.style.fontWeight = config.fontWeight;
+
+            fieldElement.appendChild(label);
+            fieldElement.appendChild(value);
+
+            // Agregar handles de resize
+            this.addResizeHandles(fieldElement);
+
+            // Event listeners
+            fieldElement.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('resize-handle')) {
+                    this.startResize(e, fieldElement, e.target);
+                } else {
+                    this.startDrag(e, fieldElement);
+                }
+            });
+
+            fieldElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectField(fieldElement);
+            });
+
+            // Agregar al canvas
+            this.canvas.appendChild(fieldElement);
+
+            // Guardar en fields
+            this.fields[fieldName] = {
+                element: fieldElement,
+                config: config
+            };
+
+            // Marcar como agregado en la lista
+            const listItem = document.querySelector(`#fieldList li[data-field="${fieldName}"]`);
+            if (listItem) {
+                listItem.classList.add('added');
+            }
+        });
+
+        console.log('Plantilla cargada:', Object.keys(this.fields).length, 'campos');
+    }
+
+    mmToPx(mm) {
+        return mm * this.MM_TO_PX_RATIO;
     }
 }
 

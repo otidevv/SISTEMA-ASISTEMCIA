@@ -428,5 +428,19 @@
 
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    @if(isset($template) && $template->campos_config)
+    <script>
+        // Pasar datos de plantilla existente al JavaScript
+        window.templateData = {
+            id: {{ $template->id }},
+            nombre: "{{ $template->nombre }}",
+            tipo: "{{ $template->tipo }}",
+            fondo_path: "{{ $template->fondo_path ?? '' }}",
+            campos_config: {!! json_encode($template->campos_config) !!}
+        };
+    </script>
+    @endif
+    
     <script src="{{ asset('js/carnets/template-editor.js') }}"></script>
 @endpush
