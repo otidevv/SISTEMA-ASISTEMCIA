@@ -757,6 +757,9 @@
                                     @if (Auth::user()->hasPermission('carnets.print'))
                                         <li><a href="{{ route('carnets.index') }}#imprimir">Imprimir Carnets</a></li>
                                     @endif
+                                    @if (Auth::user()->hasPermission('carnets.templates.view'))
+                                        <li><a href="{{ route('carnets.templates.index') }}">Plantillas de Carnets</a></li>
+                                    @endif
                                     @if (Auth::user()->hasPermission('carnets.reports'))
                                         <li><a href="{{ route('carnets.index') }}#reportes">Reportes</a></li>
                                     @endif

@@ -185,22 +185,22 @@
             </div>
             
             <!-- DNI -->
-            <div style="position: absolute; left: 17mm; top: 55mm; color: #003d7a; font-size: 8pt;">
+            <div style="position: absolute; left: 17mm; top: 46mm; color: #003d7a; font-size: 8pt;">
                 {{ $carnet['dni'] }}
             </div>
       
             <!-- Grupo -->
-            <div style="position: absolute; left: 22mm; top: 60mm; color: #003d7a; font-size: 8pt;">
+            <div style="position: absolute; left: 22mm; top: 51mm; color: #003d7a; font-size: 8pt;">
                 {{ $carnet['grupo'] }}
             </div>
             
             <!-- Modalidad -->
-            <div style="position: absolute; left: 30mm; top: 64.5mm; color: #003d7a; font-size: 7pt;">
+            <div style="position: absolute; left: 30mm; top: 55.5mm; color: #003d7a; font-size: 7pt;">
                 {{ strtoupper($carnet['modalidad']) }}
             </div>
             
             <!-- Carrera profesional -->
-            <div style="position: absolute; left: 45%; transform: translateX(-60%); top: 73mm; color: #003d7a; font-size: 7pt; font-weight: bold; text-align: center;">
+            <div style="position: absolute; left: 45%; transform: translateX(-60%); top: 64mm; color: #003d7a; font-size: 7pt; font-weight: bold; text-align: center;">
                 {{ strtoupper($carnet['carrera']) }}
             </div>
             

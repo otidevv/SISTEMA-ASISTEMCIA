@@ -86,6 +86,36 @@ class ModuloCarnetsSeeder extends Seeder
                 'codigo' => 'carnets.history',
                 'descripcion' => 'Permite ver historial de impresiones',
                 'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Ver Plantillas de Carnets',
+                'codigo' => 'carnets.templates.view',
+                'descripcion' => 'Permite ver plantillas de carnets',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Crear Plantillas de Carnets',
+                'codigo' => 'carnets.templates.create',
+                'descripcion' => 'Permite crear nuevas plantillas de carnets',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Editar Plantillas de Carnets',
+                'codigo' => 'carnets.templates.edit',
+                'descripcion' => 'Permite editar plantillas de carnets',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Eliminar Plantillas de Carnets',
+                'codigo' => 'carnets.templates.delete',
+                'descripcion' => 'Permite eliminar plantillas de carnets',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Activar Plantillas de Carnets',
+                'codigo' => 'carnets.templates.activate',
+                'descripcion' => 'Permite activar/desactivar plantillas de carnets',
+                'modulo' => 'carnets'
             ]
         ];
 

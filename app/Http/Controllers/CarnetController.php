@@ -357,8 +357,15 @@ Exception $e) {
             ->whereIn('id', $carnetIds)
             ->get();
 
+        // Obtener plantilla activa para postulantes
+        $template = \App\Models\CarnetTemplate::obtenerActiva('postulante');
+        
+        if (!$template) {
+            return back()->with('error', 'No hay una plantilla activa configurada. Por favor, active una plantilla en el módulo de Plantillas de Carnets.');
+        }
+
         // Preparar datos para la vista
-        $carnetsData = $carnets->map(function($carnet) {
+        $carnetsData = $carnets->map(function($carnet) use ($template) {
             // Obtener la foto del estudiante y código de postulante
             $foto = null;
             $codigoPostulante = '00000000';
@@ -392,11 +399,13 @@ Exception $e) {
                 }
             }
 
-            // Cargar fondo del carnet
-            $fondoPath = public_path('images/fondocarnet_postulante.jpg');
+            // Cargar fondo desde la plantilla
             $fondo = null;
-            if (file_exists($fondoPath)) {
-                $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fondoPath));
+            if ($template->fondo_path && \Storage::disk('public')->exists($template->fondo_path)) {
+                $fondoPath = storage_path('app/public/' . $template->fondo_path);
+                if (file_exists($fondoPath)) {
+                    $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fondoPath));
+                }
             }
 
             return [
@@ -419,9 +428,11 @@ Exception $e) {
             ];
         });
 
-        // Configurar PDF para impresora Primacy 2
-        $pdf = PDF::loadView('carnets.pdf', ['carnets' => $carnetsData])
-            ->setPaper([0, 0, 153.01, 242.65], 'portrait'); // Tamaño de tarjeta CR80 (53.98mm x 85.6mm) en vertical
+        // Usar vista dinámica con la plantilla
+        $pdf = PDF::loadView('carnets.pdf-dynamic', [
+            'carnets' => $carnetsData,
+            'template' => $template
+        ])->setPaper([0, 0, $template->ancho_mm * 2.83465, $template->alto_mm * 2.83465], 'portrait');
 
         return $pdf->download('carnets_' . date('YmdHis') . '.pdf');
     }
