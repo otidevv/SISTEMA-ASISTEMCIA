@@ -2573,6 +2573,71 @@
             </form>
         </div>
     </div>
+
+    <!-- Modal de Progreso de Importación -->
+    <div class="modal fade" id="modalProgreso" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header cepre-bg-navy">
+                    <h5 class="modal-title text-white">
+                        <i class="bi bi-hourglass-split me-2"></i>
+                        <span id="tituloProgreso">Procesando Importación...</span>
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="spinner-border text-primary" role="status" id="spinnerProgreso">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <i class="bi bi-check-circle-fill text-success d-none" style="font-size: 3rem;" id="iconoExito"></i>
+                        <i class="bi bi-exclamation-triangle-fill text-warning d-none" style="font-size: 3rem;" id="iconoAdvertencia"></i>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold">Progreso:</span>
+                            <span class="fw-bold text-primary" id="porcentajeTexto">0%</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                 role="progressbar" 
+                                 id="barraProgreso" 
+                                 style="width: 0%"
+                                 aria-valuenow="0" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                <span class="fw-bold" id="porcentajeInside">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0" id="mensajeProgreso">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span id="textoMensaje">Iniciando importación...</span>
+                    </div>
+
+                    <div id="resumenFinal" class="d-none mt-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Resumen de Importación:</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Procesados: <strong id="totalProcesados">0</strong></li>
+                                    <li><i class="bi bi-plus-circle text-primary me-2"></i>Creados: <strong id="totalCreados">0</strong></li>
+                                    <li class="d-none" id="lineaErrores"><i class="bi bi-exclamation-circle text-warning me-2"></i>Errores: <strong id="totalErrores">0</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary d-none" id="btnCerrarProgreso" data-bs-dismiss="modal">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Ver Detalle (Mantenido en Bootstrap) -->
     <div class="modal fade" id="viewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -3292,4 +3357,164 @@
             </div>
         </div>
     </div>
+
+    <script>
+    // Interceptar el formulario de importación para mostrar progreso
+    document.addEventListener('DOMContentLoaded', function() {
+        const formImportar = document.querySelector('#modalImportar form');
+        
+        if (formImportar) {
+            formImportar.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const archivo = formData.get('archivo_excel');
+                
+                if (!archivo || archivo.size === 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Por favor seleccione un archivo Excel'
+                    });
+                    return;
+                }
+                
+                // Cerrar modal de importación y abrir modal de progreso
+                const modalImportar = bootstrap.Modal.getInstance(document.getElementById('modalImportar'));
+                modalImportar.hide();
+                
+                const modalProgreso = new bootstrap.Modal(document.getElementById('modalProgreso'));
+                modalProgreso.show();
+                
+                // Resetear UI
+                resetearModalProgreso();
+                
+                // Simular progreso mientras se procesa
+                let progreso = 0;
+                const intervalo = setInterval(() => {
+                    if (progreso < 90) {
+                        progreso += Math.random() * 15;
+                        if (progreso > 90) progreso = 90;
+                        actualizarProgreso(progreso, 'Procesando filas del Excel...');
+                    }
+                }, 500);
+                
+                // Enviar formulario via AJAX
+                fetch(formImportar.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(intervalo);
+                    actualizarProgreso(100, 'Importación completada');
+                    
+                    setTimeout(() => {
+                        mostrarResultado(data);
+                    }, 500);
+                })
+                .catch(error => {
+                    clearInterval(intervalo);
+                    console.error('Error:', error);
+                    mostrarError('Ocurrió un error durante la importación. Por favor, intente nuevamente.');
+                });
+            });
+        }
+        
+        function resetearModalProgreso() {
+            document.getElementById('spinnerProgreso').classList.remove('d-none');
+            document.getElementById('iconoExito').classList.add('d-none');
+            document.getElementById('iconoAdvertencia').classList.add('d-none');
+            document.getElementById('resumenFinal').classList.add('d-none');
+            document.getElementById('btnCerrarProgreso').classList.add('d-none');
+            document.getElementById('tituloProgreso').textContent = 'Procesando Importación...';
+            actualizarProgreso(0, 'Iniciando importación...');
+        }
+        
+        function actualizarProgreso(porcentaje, mensaje) {
+            const porcentajeRedondeado = Math.round(porcentaje);
+            document.getElementById('barraProgreso').style.width = porcentajeRedondeado + '%';
+            document.getElementById('barraProgreso').setAttribute('aria-valuenow', porcentajeRedondeado);
+            document.getElementById('porcentajeTexto').textContent = porcentajeRedondeado + '%';
+            document.getElementById('porcentajeInside').textContent = porcentajeRedondeado + '%';
+            document.getElementById('textoMensaje').textContent = mensaje;
+        }
+        
+        function mostrarResultado(data) {
+            document.getElementById('spinnerProgreso').classList.add('d-none');
+            document.getElementById('barraProgreso').classList.remove('progress-bar-animated');
+            
+            const hayErrores = data.errores && data.errores.length > 0;
+            const esSimulacro = data.simulacro || false;
+            
+            if (hayErrores) {
+                document.getElementById('iconoAdvertencia').classList.remove('d-none');
+                document.getElementById('tituloProgreso').textContent = esSimulacro ? 'Simulacro Completado con Advertencias' : 'Importación Completada con Advertencias';
+                document.getElementById('mensajeProgreso').className = 'alert alert-warning mb-0';
+                document.getElementById('textoMensaje').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + data.message;
+            } else {
+                document.getElementById('iconoExito').classList.remove('d-none');
+                document.getElementById('tituloProgreso').textContent = esSimulacro ? 'Simulacro Completado Exitosamente' : 'Importación Completada Exitosamente';
+                document.getElementById('mensajeProgreso').className = 'alert alert-success mb-0';
+                document.getElementById('textoMensaje').innerHTML = '<i class="bi bi-check-circle me-2"></i>' + data.message;
+                document.getElementById('barraProgreso').classList.remove('bg-primary');
+                document.getElementById('barraProgreso').classList.add('bg-success');
+            }
+            
+            // Mostrar resumen
+            document.getElementById('totalProcesados').textContent = data.procesados || 0;
+            document.getElementById('totalCreados').textContent = data.creados || 0;
+            
+            if (hayErrores) {
+                document.getElementById('totalErrores').textContent = data.errores.length;
+                document.getElementById('lineaErrores').classList.remove('d-none');
+            }
+            
+            document.getElementById('resumenFinal').classList.remove('d-none');
+            document.getElementById('btnCerrarProgreso').classList.remove('d-none');
+            
+            // Mostrar errores detallados si existen
+            if (hayErrores) {
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Errores Encontrados',
+                        html: '<div style="max-height: 400px; overflow-y: auto; text-align: left;"><ul>' + 
+                              data.errores.map(e => '<li>' + e + '</li>').join('') + 
+                              '</ul></div>',
+                        width: '600px',
+                        confirmButtonText: 'Entendido'
+                    });
+                }, 1000);
+            }
+            
+            // Recargar tabla si no es simulacro y fue exitoso
+            if (!esSimulacro && !hayErrores) {
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        }
+        
+        function mostrarError(mensaje) {
+            document.getElementById('spinnerProgreso').classList.add('d-none');
+            document.getElementById('iconoAdvertencia').classList.remove('d-none');
+            document.getElementById('tituloProgreso').textContent = 'Error en la Importación';
+            document.getElementById('mensajeProgreso').className = 'alert alert-danger mb-0';
+            document.getElementById('textoMensaje').innerHTML = '<i class="bi bi-x-circle me-2"></i>' + mensaje;
+            document.getElementById('barraProgreso').classList.remove('bg-primary', 'progress-bar-animated');
+            document.getElementById('barraProgreso').classList.add('bg-danger');
+            document.getElementById('btnCerrarProgreso').classList.remove('d-none');
+        }
+        
+        // Resetear formulario al cerrar modal de progreso
+        document.getElementById('modalProgreso').addEventListener('hidden.bs.modal', function() {
+            document.querySelector('#modalImportar form').reset();
+        });
+    });
+    </script>
 @endpush

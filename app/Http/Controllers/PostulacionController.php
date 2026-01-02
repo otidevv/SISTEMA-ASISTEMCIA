@@ -1408,6 +1408,9 @@ class PostulacionController extends Controller
     public function importar(Request $request)
     {
         if (!Auth::user()->hasPermission('postulaciones.create')) {
+             if ($request->expectsJson()) {
+                 return response()->json(['error' => 'No tienes permisos para importar postulaciones'], 403);
+             }
              return back()->with('error', 'No tienes permisos para importar postulaciones');
         }
 
@@ -1423,7 +1426,21 @@ class PostulacionController extends Controller
             $msg = ($simulacro ? "[SIMULACRO] " : "") . "Proceso finalizado. Total procesados: " . $import->resultados['procesados'] . 
                    ". " . ($simulacro ? "Se registrarían: " : "Nuevos registrados: ") . $import->resultados['creados'] . ".";
 
-            if (count($import->resultados['errores']) > 0) {
+            $hayErrores = count($import->resultados['errores']) > 0;
+            
+            // Si es petición AJAX, devolver JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg . ($hayErrores ? ' Se encontraron algunos errores.' : ''),
+                    'procesados' => $import->resultados['procesados'],
+                    'creados' => $import->resultados['creados'],
+                    'errores' => $import->resultados['errores'],
+                    'simulacro' => $simulacro
+                ]);
+            }
+
+            if ($hayErrores) {
                 // Guardar errores en sesión para mostrarlos
                 return back()->with('warning', $msg . ' Se encontraron algunos errores.')
                              ->with('import_errors', $import->resultados['errores']);
@@ -1432,6 +1449,12 @@ class PostulacionController extends Controller
             return back()->with('success', $msg);
 
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Error crítico en importación: ' . $e->getMessage()
+                ], 500);
+            }
             return back()->with('error', 'Error crítico en importación: ' . $e->getMessage());
         }
     }
