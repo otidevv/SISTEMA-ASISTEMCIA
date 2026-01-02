@@ -343,7 +343,7 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         }
                         
                         Parentesco::updateOrCreate(
-                            ['estudiante_id' => $usuario->id, 'madre_id' => $madre->id],
+                            ['estudiante_id' => $usuario->id, 'padre_id' => $madre->id],
                             ['tipo_parentesco' => 'Madre', 'acceso_portal' => true, 'estado' => true]
                         );
                     }
