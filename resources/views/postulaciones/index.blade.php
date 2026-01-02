@@ -3848,9 +3848,13 @@
             
             // Click en la zona para abrir selector de archivos
             zone.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('btn-remove')) {
-                    fileInput.click();
-                }
+                // Si el clic viene del input file, no disparar click de nuevo (evita doble apertura)
+                if (e.target === fileInput) return;
+                
+                // Si es el botón de eliminar (o su icono), no abrir selector
+                if (e.target.classList.contains('btn-remove') || e.target.closest('.btn-remove')) return;
+
+                fileInput.click();
             });
             
             // Prevenir comportamiento por defecto del navegador
