@@ -111,6 +111,26 @@ Exception $e) {
 
     private function formatCarnetData($carnet)
     {
+        // Determinación robusta del aula/grupo
+        $aulaDisplay = 'Sin asignar';
+        if ($carnet->aula) {
+            $aulaDisplay = $carnet->aula->codigo . ' ' . $carnet->aula->nombre;
+        } else {
+            // Intentar buscar inscripción activa si no tiene aula asignada
+            $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                ->where('ciclo_id', $carnet->ciclo_id)
+                ->where('estado_inscripcion', 'activo')
+                ->whereNotNull('aula_id')
+                ->with('aula')
+                ->first();
+                
+            if ($inscripcion && $inscripcion->aula) {
+                $aulaDisplay = $inscripcion->aula->codigo . ' ' . $inscripcion->aula->nombre;
+            } elseif ($carnet->grupo) {
+                $aulaDisplay = 'Grupo ' . $carnet->grupo;
+            }
+        }
+
         return [
             'id' => $carnet->id,
             'codigo' => $carnet->codigo_carnet,
@@ -119,9 +139,7 @@ Exception $e) {
             'ciclo' => $carnet->ciclo->nombre,
             'carrera' => $carnet->carrera->nombre,
             'turno' => $carnet->turno->nombre,
-            'turno' => $carnet->turno->nombre,
-            'turno' => $carnet->turno->nombre,
-            'aula' => $carnet->aula ? $carnet->aula->codigo . ' ' . $carnet->aula->nombre : ($carnet->grupo ? 'Grupo ' . $carnet->grupo : 'Sin asignar'),
+            'aula' => $aulaDisplay,
             'fecha_emision' => $carnet->fecha_emision->format('d/m/Y'),
             'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
             'estado' => $carnet->estado,
@@ -487,15 +505,48 @@ Exception $e) {
                 'carrera' => strtoupper($carnet->carrera->nombre),
                 'ciclo' => $carnet->ciclo->nombre,
                 'turno' => $carnet->turno->nombre,
+            ];
+
+            // Determinar grupo/aula dinámicamente
+            $grupoDisplay = '';
+            if ($carnet->aula) {
+                $grupoDisplay = $carnet->aula->codigo . ' ' . $carnet->aula->nombre;
+            } else {
+                // Verificar inscripción respaldo (búsqueda dinámica)
+                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->where('estado_inscripcion', 'activo')
+                    ->whereNotNull('aula_id')
+                    ->with('aula')
+                    ->first();
+                    
+                if ($inscripcion && $inscripcion->aula) {
+                    $grupoDisplay = $inscripcion->aula->codigo . ' ' . $inscripcion->aula->nombre;
+                } elseif ($carnet->grupo) {
+                    $grupoDisplay = $carnet->grupo; 
+                    if (strlen($grupoDisplay) == 1) {
+                         $grupoDisplay = 'Grupo ' . $grupoDisplay;
+                    }
+                }
+            }
+
+            return [
+                'id' => $carnet->id,
+                'codigo' => $carnet->codigo_carnet,
+                'codigo_postulante' => $codigoPostulante,
+                'estudiante_id' => str_pad($carnet->estudiante_id, 8, '0', STR_PAD_LEFT),
+                'nombre_completo' => strtoupper($carnet->nombre_completo),
+                'dni' => $carnet->estudiante->numero_documento,
+                'carrera' => strtoupper($carnet->carrera->nombre),
+                'ciclo' => $carnet->ciclo->nombre,
                 'turno' => $carnet->turno->nombre,
-                'turno' => $carnet->turno->nombre,
-                'grupo' => $carnet->grupo ?? ($carnet->aula ? $carnet->aula->codigo . ' ' . $carnet->aula->nombre : ''),
+                'grupo' => $grupoDisplay,
                 'modalidad' => strtoupper($carnet->modalidad ?? 'PRESENCIAL'),
                 'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
                 'foto' => $foto,
                 'qr_code' => $qrCode,
                 'fondo' => $fondo,
-                'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
+                'fecha_impresion' => \Carbon\Carbon::now()->format('d/m/Y H:i')
             ];
         });
 
