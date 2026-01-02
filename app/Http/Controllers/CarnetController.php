@@ -176,7 +176,7 @@ Exception $e) {
 
             // 2. Buscar postulaciones aceptadas (para postulantes)
             $queryPostulaciones = Postulacion::where('ciclo_id', $request->ciclo_id)
-                ->where('estado_postulacion', 'aceptado');
+                ->where('estado', 'aprobado');
 
             if ($request->carrera_id) {
                 $queryPostulaciones->where('carrera_id', $request->carrera_id);
