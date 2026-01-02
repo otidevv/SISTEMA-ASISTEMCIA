@@ -36,7 +36,7 @@ class CambiarEstadoPostulaciones extends Command
 
         // Obtener ciclo
         if ($cicloOption === 'actual') {
-            $ciclo = Ciclo::where('activo', true)->first();
+            $ciclo = Ciclo::where('es_activo', true)->first();
             if (!$ciclo) {
                 $this->error('No se encontró un ciclo activo.');
                 return 1;
