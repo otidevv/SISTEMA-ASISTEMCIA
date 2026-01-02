@@ -4126,6 +4126,95 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
+        
+        // Handler para el botón "Guardar Cambios"
+        document.getElementById('saveDocumentChanges')?.addEventListener('click', function() {
+            const formData = new FormData();
+            const postulacionId = document.getElementById('edit-docs-postulacion-id').value;
+            const observacion = document.getElementById('edit-docs-observacion').value;
+            
+            // Recopilar archivos de todas las zonas de drag & drop
+            let hasFiles = false;
+            document.querySelectorAll('.drop-zone .file-input').forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    const docType = input.closest('.drop-zone').dataset.docType;
+                    formData.append(docType, input.files[0]);
+                    hasFiles = true;
+                }
+            });
+            
+            // Validar que al menos un archivo fue seleccionado
+            if (!hasFiles) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay archivos',
+                    text: 'Por favor selecciona al menos un archivo para actualizar',
+                    confirmButtonColor: '#e91e63'
+                });
+                return;
+            }
+            
+            // Agregar datos adicionales
+            formData.append('postulacion_id', postulacionId);
+            formData.append('observacion', observacion);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            
+            // Mostrar loading
+            Swal.fire({
+                title: 'Guardando documentos...',
+                html: '<div class="cepre-spinner my-3"></div>',
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
+            
+            // Enviar formulario
+            fetch('/postulaciones/update-documents', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Documentos actualizados!',
+                        text: data.message || 'Los documentos se actualizaron correctamente',
+                        confirmButtonColor: '#00bcd4'
+                    }).then(() => {
+                        // Cerrar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editDocumentsModal'));
+                        if (modal) modal.hide();
+                        
+                        // Recargar tabla si existe
+                        if (typeof window.postulacionesDataTable !== 'undefined') {
+                            window.postulacionesDataTable.ajax.reload(null, false);
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'No se pudieron actualizar los documentos',
+                        confirmButtonColor: '#e91e63'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.close();
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo conectar con el servidor',
+                    confirmButtonColor: '#e91e63'
+                });
+            });
+        });
     });
     </script>
 @endpush
