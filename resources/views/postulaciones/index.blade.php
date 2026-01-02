@@ -4186,9 +4186,14 @@
                         text: data.message || 'Los documentos se actualizaron correctamente',
                         confirmButtonColor: '#00bcd4'
                     }).then(() => {
-                        // Cerrar modal
+                        // Cerrar modal actual
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editDocumentsModal'));
                         if (modal) modal.hide();
+                        
+                        // Recargar el modal de detalle para ver la nueva foto
+                        if (typeof viewPostulacion === 'function') {
+                            viewPostulacion(postulacionId);
+                        }
                         
                         // Recargar tabla si existe
                         if (typeof window.postulacionesDataTable !== 'undefined') {
