@@ -107,42 +107,67 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                 try {
                     $dni = trim($row['dni']);
                     
-                    // USUARIO
+                    // USUARIO (Crear o Actualizar)
                     $usuario = User::firstOrNew(['numero_documento' => $dni]);
-                    if (!$usuario->exists) {
+                    $esNuevoUsuario = !$usuario->exists;
+                    
+                    // Actualizar datos básicos (siempre)
+                    if ($esNuevoUsuario) {
                         $usuario->username = $dni; 
                         $usuario->password_hash = Hash::make($dni);
-                        $usuario->nombre = strtoupper(trim($row['nombres']));
-                        $usuario->apellido_paterno = strtoupper(trim($row['apellido_paterno'] ?? ''));
-                        $usuario->apellido_materno = strtoupper(trim($row['apellido_materno'] ?? ''));
-                        
-                        $emailInput = trim($row['email'] ?? '');
-                        if (!empty($emailInput) && User::where('email', $emailInput)->exists()) {
-                            $emailInput = null;
+                    }
+                    
+                    $usuario->nombre = strtoupper(trim($row['nombres']));
+                    $usuario->apellido_paterno = strtoupper(trim($row['apellido_paterno'] ?? ''));
+                    $usuario->apellido_materno = strtoupper(trim($row['apellido_materno'] ?? ''));
+                    
+                    // Email: solo actualizar si viene en el Excel y no está en uso por otro usuario
+                    $emailInput = trim($row['email'] ?? '');
+                    if (!empty($emailInput)) {
+                        $emailEnUso = User::where('email', $emailInput)
+                            ->where('id', '!=', $usuario->id ?? 0)
+                            ->exists();
+                        if (!$emailEnUso) {
+                            $usuario->email = $emailInput;
                         }
-                        $usuario->email = !empty($emailInput) ? $emailInput : ($dni . '@sistema.local');
+                    } elseif ($esNuevoUsuario) {
+                        $usuario->email = $dni . '@sistema.local';
+                    }
 
-                        $usuario->telefono = trim($row['telefono'] ?? null);
-                        $usuario->direccion = $row['direccion'] ?? null;
-                        
-                        $fechaNac = '2000-01-01';
-                        if (!empty($row['fecha_nacimiento'])) {
-                            $val = $row['fecha_nacimiento'];
-                            try {
-                                if (is_numeric($val)) {
-                                    $fechaNac = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($val);
-                                } else {
-                                    $fechaNac = Carbon::parse($val);
-                                }
-                            } catch (\Throwable $e) { }
-                        }
-                        $usuario->fecha_nacimiento = $fechaNac;
+                    // Actualizar otros campos si vienen en el Excel
+                    if (!empty($row['telefono'])) {
+                        $usuario->telefono = trim($row['telefono']);
+                    }
+                    if (!empty($row['direccion'])) {
+                        $usuario->direccion = $row['direccion'];
+                    }
+                    
+                    // Fecha de nacimiento
+                    if (!empty($row['fecha_nacimiento'])) {
+                        $val = $row['fecha_nacimiento'];
+                        try {
+                            if (is_numeric($val)) {
+                                $usuario->fecha_nacimiento = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($val);
+                            } else {
+                                $usuario->fecha_nacimiento = Carbon::parse($val);
+                            }
+                        } catch (\Throwable $e) { }
+                    } elseif ($esNuevoUsuario) {
+                        $usuario->fecha_nacimiento = '2000-01-01';
+                    }
 
-                        $usuario->genero = strtoupper($row['genero'] ?? 'M');
-                        $usuario->tipo_documento = 'DNI';
-                        $usuario->estado = true;
-                        $usuario->save();
+                    if (!empty($row['genero'])) {
+                        $usuario->genero = strtoupper($row['genero']);
+                    } elseif ($esNuevoUsuario) {
+                        $usuario->genero = 'M';
+                    }
+                    
+                    $usuario->tipo_documento = 'DNI';
+                    $usuario->estado = true;
+                    $usuario->save();
 
+                    // Asignar rol solo si es nuevo
+                    if ($esNuevoUsuario) {
                         $rolPostulante = Role::whereIn('nombre', ['Postulante', 'postulante'])->first();
                         if ($rolPostulante) $usuario->assignRole($rolPostulante->nombre);
                     }
@@ -172,15 +197,12 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                     }
                     if (!$turnoId) $turnoId = $this->turnos->first()['id'];
 
-                    // DUPLICADO
-                    $existePostulacion = Postulacion::where('estudiante_id', $usuario->id)
+                    // BUSCAR O CREAR POSTULACIÓN
+                    $postulacionExistente = Postulacion::where('estudiante_id', $usuario->id)
                         ->where('ciclo_id', $this->cicloActivo->id)
-                        ->exists();
-
-                    if ($existePostulacion) {
-                        $this->resultados['errores'][] = "Fila $fila: El usuario $dni ya tiene una postulación en el ciclo activo.";
-                        continue;
-                    }
+                        ->first();
+                    
+                    $esNuevaPostulacion = !$postulacionExistente;
 
                     // COLEGIO (Smart)
                     $colegioId = 1;
@@ -207,15 +229,21 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         }
                     }
 
-                    // POSTULACIÓN
-                    $postulacion = new Postulacion();
-                    $postulacion->estudiante_id = $usuario->id;
-                    $postulacion->ciclo_id = $this->cicloActivo->id;
+                    // CREAR O ACTUALIZAR POSTULACIÓN
+                    if ($esNuevaPostulacion) {
+                        $postulacion = new Postulacion();
+                        $postulacion->estudiante_id = $usuario->id;
+                        $postulacion->ciclo_id = $this->cicloActivo->id;
+                        $postulacion->codigo_postulante = $nuevoCodigo;
+                        $postulacion->fecha_postulacion = now();
+                        $postulacion->estado = 'aprobado';
+                    } else {
+                        $postulacion = $postulacionExistente;
+                    }
+                    
+                    // Actualizar campos (siempre)
                     $postulacion->carrera_id = $carreraId;
                     $postulacion->turno_id = $turnoId;
-                    $postulacion->codigo_postulante = $nuevoCodigo;
-                    $postulacion->fecha_postulacion = now();
-                    $postulacion->estado = 'aprobado';
                     $postulacion->tipo_inscripcion = strtolower($row['modalidad'] ?? 'postulante');
                     $postulacion->centro_educativo_id = $colegioId;
                     $postulacion->anio_egreso = $row['anio_egreso'] ?? date('Y');
@@ -276,7 +304,9 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                     }
 
                     $this->resultados['procesados']++;
-                    $this->resultados['creados']++;
+                    if ($esNuevoUsuario || $esNuevaPostulacion) {
+                        $this->resultados['creados']++;
+                    }
 
                 } catch (\Throwable $e) {
                     $this->resultados['errores'][] = "Fila $fila: Error int - " . $e->getMessage();
