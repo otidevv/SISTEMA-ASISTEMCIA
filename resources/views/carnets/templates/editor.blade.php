@@ -405,6 +405,43 @@
                                 <small class="text-muted" id="opacityValue">90%</small>
                             </div>
                             
+                            <div class="mb-3">
+                                <label class="form-label">Alineación de Texto</label>
+                                <div class="btn-group w-100" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="alignLeft" title="Izquierda">
+                                        <i class="uil uil-align-left"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="alignCenter" title="Centro">
+                                        <i class="uil uil-align-center"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="alignRight" title="Derecha">
+                                        <i class="uil uil-align-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Rotación</label>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-rotation="0">0°</button>
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-rotation="90">90°</button>
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-rotation="180">180°</button>
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-rotation="270">270°</button>
+                                    </div>
+                                </div>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="customRotation" min="0" max="360" value="0" placeholder="Ángulo personalizado">
+                                    <span class="input-group-text">°</span>
+                                </div>
+                            </div>
+                            
                             <button type="button" class="btn btn-sm btn-danger w-100" id="removeField">
                                 <i class="uil uil-trash"></i> Eliminar Campo
                             </button>

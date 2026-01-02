@@ -102,6 +102,20 @@ class CarnetTemplateEditor {
         document.getElementById('clearBackground')?.addEventListener('click', () => this.clearFieldBackground());
         document.getElementById('removeField')?.addEventListener('click', () => this.removeSelectedField());
 
+        // Alineación de texto
+        document.getElementById('alignLeft')?.addEventListener('click', () => this.updateFieldProperty('textAlign', 'left'));
+        document.getElementById('alignCenter')?.addEventListener('click', () => this.updateFieldProperty('textAlign', 'center'));
+        document.getElementById('alignRight')?.addEventListener('click', () => this.updateFieldProperty('textAlign', 'right'));
+
+        // Rotación
+        document.querySelectorAll('[data-rotation]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const rotation = e.currentTarget.dataset.rotation;
+                this.rotateField(rotation);
+            });
+        });
+        document.getElementById('customRotation')?.addEventListener('change', (e) => this.rotateField(e.target.value));
+
         // Submit form
         document.getElementById('templateForm').addEventListener('submit', (e) => this.handleSubmit(e));
 
@@ -452,7 +466,30 @@ class CarnetTemplateEditor {
             valueElement.style.color = value;
         } else if (property === 'fontWeight') {
             valueElement.style.fontWeight = value;
+        } else if (property === 'textAlign') {
+            valueElement.style.textAlign = value;
+            // También aplicar al contenedor para que se vea el efecto
+            this.selectedField.style.textAlign = value;
         }
+    }
+
+    rotateField(degrees) {
+        if (!this.selectedField) return;
+
+        const fieldName = this.selectedField.dataset.field;
+        const rotation = parseInt(degrees) || 0;
+
+        // Aplicar rotación
+        this.selectedField.style.transform = `rotate(${rotation}deg)`;
+        this.selectedField.style.transformOrigin = 'center center';
+
+        // Guardar en config
+        this.fields[fieldName].config.rotation = rotation;
+
+        // Actualizar input personalizado
+        document.getElementById('customRotation').value = rotation;
+
+        toastr.info(`Rotación: ${rotation}°`, '', { timeOut: 1000 });
     }
 
     updateFieldBackground(color) {
@@ -725,6 +762,16 @@ class CarnetTemplateEditor {
             if (config.fontSize) value.style.fontSize = config.fontSize;
             if (config.color) value.style.color = config.color;
             if (config.fontWeight) value.style.fontWeight = config.fontWeight;
+            if (config.textAlign) {
+                value.style.textAlign = config.textAlign;
+                fieldElement.style.textAlign = config.textAlign;
+            }
+
+            // Aplicar rotación si existe
+            if (config.rotation) {
+                fieldElement.style.transform = `rotate(${config.rotation}deg)`;
+                fieldElement.style.transformOrigin = 'center center';
+            }
 
             fieldElement.appendChild(label);
             fieldElement.appendChild(value);

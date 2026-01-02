@@ -89,9 +89,15 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '11pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'bold' }};
                             color: {{ $config['color'] ?? 'white' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['codigo_postulante'] }}
                         </div>
@@ -101,10 +107,16 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? '100' }};
                             color: {{ $config['color'] ?? 'white' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
                             max-width: {{ $config['maxWidth'] ?? '40mm' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['nombre_completo'] }}
                         </div>
@@ -114,9 +126,15 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '8pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
                             color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['dni'] }}
                         </div>
@@ -126,9 +144,15 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '8pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
                             color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['grupo'] }}
                         </div>
@@ -138,9 +162,15 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
                             color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['modalidad'] }}
                         </div>
@@ -150,10 +180,16 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'bold' }};
                             color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
                             max-width: {{ $config['maxWidth'] ?? '40mm' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
                         ">
                             {{ $carnet['carrera'] }}
                         </div>
