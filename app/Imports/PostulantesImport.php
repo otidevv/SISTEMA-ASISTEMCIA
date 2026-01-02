@@ -294,7 +294,13 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         
                         Parentesco::updateOrCreate(
                             ['estudiante_id' => $usuario->id, 'padre_id' => $padre->id],
-                            ['tipo_parentesco' => 'Padre', 'acceso_portal' => true, 'estado' => true]
+                            [
+                                'tipo_parentesco' => 'Padre', 
+                                'acceso_portal' => true, 
+                                'recibe_notificaciones' => true,
+                                'contacto_emergencia' => true,
+                                'estado' => true
+                            ]
                         );
                     }
 
@@ -352,7 +358,13 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         
                         Parentesco::updateOrCreate(
                             ['estudiante_id' => $usuario->id, 'padre_id' => $madre->id],
-                            ['tipo_parentesco' => 'Madre', 'acceso_portal' => true, 'estado' => true]
+                            [
+                                'tipo_parentesco' => 'Madre', 
+                                'acceso_portal' => true, 
+                                'recibe_notificaciones' => true,
+                                'contacto_emergencia' => true,
+                                'estado' => true
+                            ]
                         );
                     }
 
