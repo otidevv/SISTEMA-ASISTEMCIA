@@ -4167,8 +4167,8 @@
                 showConfirmButton: false
             });
             
-            // Enviar formulario
-            fetch('/postulaciones/update-documents', {
+            // Enviar formulario a la ruta correcta de la API
+            fetch(`/json/postulaciones/${postulacionId}/actualizar-documentos`, {
                 method: 'POST',
                 body: formData,
                 headers: {
