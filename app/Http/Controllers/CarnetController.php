@@ -114,7 +114,7 @@ Exception $e) {
         // Determinación robusta del aula/grupo
         $aulaDisplay = 'Sin asignar';
         if ($carnet->aula) {
-            $aulaDisplay = $carnet->aula->codigo . ' ' . $carnet->aula->nombre;
+            $aulaDisplay = $carnet->aula->nombre;
         } else {
             // Intentar buscar inscripción activa si no tiene aula asignada
             $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
@@ -125,7 +125,7 @@ Exception $e) {
                 ->first();
                 
             if ($inscripcion && $inscripcion->aula) {
-                $aulaDisplay = $inscripcion->aula->codigo . ' ' . $inscripcion->aula->nombre;
+                $aulaDisplay = $inscripcion->aula->nombre;
             } elseif ($carnet->grupo) {
                 $aulaDisplay = 'Grupo ' . $carnet->grupo;
             }
@@ -239,7 +239,7 @@ Exception $e) {
                     'aula_id' => $inscripcion->aula_id,
                     'tipo_carnet' => 'estudiante',
                     'modalidad' => $inscripcion->tipo_inscripcion,
-                    'grupo' => $inscripcion->aula ? $inscripcion->aula->codigo . ' ' . $inscripcion->aula->nombre : null,
+                    'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : null,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
                     'foto_path' => $postulacion ? $postulacion->foto_path : null,
@@ -500,7 +500,7 @@ Exception $e) {
             // Determinar grupo/aula dinámicamente
             $grupoDisplay = '';
             if ($carnet->aula) {
-                $grupoDisplay = $carnet->aula->codigo . ' ' . $carnet->aula->nombre;
+                $grupoDisplay = $carnet->aula->nombre;
             } else {
                 // Verificar inscripción respaldo (búsqueda dinámica)
                 $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
@@ -511,7 +511,7 @@ Exception $e) {
                     ->first();
                     
                 if ($inscripcion && $inscripcion->aula) {
-                    $grupoDisplay = $inscripcion->aula->codigo . ' ' . $inscripcion->aula->nombre;
+                    $grupoDisplay = $inscripcion->aula->nombre;
                 } elseif ($carnet->grupo) {
                     $grupoDisplay = $carnet->grupo; 
                     if (strlen($grupoDisplay) == 1) {
