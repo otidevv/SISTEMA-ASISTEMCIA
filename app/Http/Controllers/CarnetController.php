@@ -151,29 +151,42 @@ Exception $e) {
         DB::beginTransaction();
         
         try {
-            // Buscar inscripciones que coincidan con los filtros
-            $query = Inscripcion::where('ciclo_id', $request->ciclo_id)
+            $carnetsGenerados = 0;
+            $carnetsExistentes = 0;
+            $estudiantes = collect();
+
+            // 1. Buscar inscripciones activas
+            $queryInscripciones = Inscripcion::where('ciclo_id', $request->ciclo_id)
                 ->where('estado_inscripcion', 'activo')
                 ->whereHas('estudiante.roles', function($q) {
                     $q->where('nombre', 'estudiante');
                 });
 
             if ($request->carrera_id) {
-                $query->where('carrera_id', $request->carrera_id);
+                $queryInscripciones->where('carrera_id', $request->carrera_id);
             }
             if ($request->turno_id) {
-                $query->where('turno_id', $request->turno_id);
+                $queryInscripciones->where('turno_id', $request->turno_id);
             }
             if ($request->aula_id) {
-                $query->where('aula_id', $request->aula_id);
+                $queryInscripciones->where('aula_id', $request->aula_id);
             }
 
-            $inscripciones = $query->get();
-            $carnetsGenerados = 0;
-            $carnetsExistentes = 0;
+            $inscripciones = $queryInscripciones->get();
 
+            // 2. Buscar postulaciones aceptadas (para postulantes)
+            $queryPostulaciones = Postulacion::where('ciclo_id', $request->ciclo_id)
+                ->where('estado_postulacion', 'aceptado');
+
+            if ($request->carrera_id) {
+                $queryPostulaciones->where('carrera_id', $request->carrera_id);
+            }
+
+            $postulaciones = $queryPostulaciones->get();
+
+            // Procesar inscripciones
             foreach ($inscripciones as $inscripcion) {
-                // Verificar si ya existe un carnet para este estudiante en este ciclo
+                // Verificar si ya existe un carnet
                 $carnetExistente = Carnet::where('estudiante_id', $inscripcion->estudiante_id)
                     ->where('ciclo_id', $inscripcion->ciclo_id)
                     ->first();
@@ -209,7 +222,52 @@ Exception $e) {
                     'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : null,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
-                    'foto_path' => $postulacion ? $postulacion->foto_path : null,
+                    'foto' => $postulacion ? $postulacion->foto : null,
+                    'estado' => 'activo'
+                ]);
+
+                // Generar y guardar QR
+                $qrPath = $this->generarQR($carnet->id, $qrContent);
+                $carnet->qr_code = $qrPath;
+                $carnet->save();
+
+                $carnetsGenerados++;
+            }
+
+            // Procesar postulaciones aceptadas
+            foreach ($postulaciones as $postulacion) {
+                // Verificar si ya existe un carnet
+                $carnetExistente = Carnet::where('estudiante_id', $postulacion->estudiante_id)
+                    ->where('ciclo_id', $postulacion->ciclo_id)
+                    ->first();
+
+                if ($carnetExistente) {
+                    $carnetsExistentes++;
+                    continue;
+                }
+
+                // Generar código QR
+                $codigoCarnet = Carnet::generarCodigo($postulacion->ciclo_id, $postulacion->carrera_id);
+                $qrContent = json_encode([
+                    'codigo' => $codigoCarnet,
+                    'dni' => $postulacion->estudiante->numero_documento,
+                    'estudiante' => $postulacion->estudiante->nombre . ' ' . $postulacion->estudiante->apellido_paterno
+                ]);
+
+                // Crear el carnet para postulante
+                $carnet = Carnet::create([
+                    'codigo_carnet' => $codigoCarnet,
+                    'estudiante_id' => $postulacion->estudiante_id,
+                    'ciclo_id' => $postulacion->ciclo_id,
+                    'carrera_id' => $postulacion->carrera_id,
+                    'turno_id' => $postulacion->turno_id,
+                    'aula_id' => null,
+                    'tipo_carnet' => 'postulante',
+                    'modalidad' => 'postulante',
+                    'grupo' => null,
+                    'fecha_emision' => Carbon::now(),
+                    'fecha_vencimiento' => $request->fecha_vencimiento,
+                    'foto' => $postulacion->foto,
                     'estado' => 'activo'
                 ]);
 
@@ -231,8 +289,7 @@ Exception $e) {
                 'existentes' => $carnetsExistentes
             ]);
 
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
