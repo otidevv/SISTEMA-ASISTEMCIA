@@ -39,6 +39,9 @@
         .campo {
             position: absolute;
             z-index: 1;
+            overflow: hidden;
+            word-wrap: break-word;
+            box-sizing: border-box;
         }
         
         .campo-foto img,
@@ -89,6 +92,8 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '11pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'bold' }};
@@ -107,12 +112,13 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? '40mm' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? '100' }};
                             color: {{ $config['color'] ?? 'white' }};
                             text-align: {{ $config['textAlign'] ?? 'left' }};
-                            max-width: {{ $config['maxWidth'] ?? '40mm' }};
                             @if(isset($config['rotation']) && $config['rotation'] != 0)
                             transform: rotate({{ $config['rotation'] }}deg);
                             transform-origin: top left;
@@ -126,6 +132,8 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '8pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
@@ -144,6 +152,8 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '8pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
@@ -162,6 +172,8 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'normal' }};
@@ -180,12 +192,13 @@
                         <div class="campo campo-{{ $campo }}" style="
                             left: {{ $config['left'] }};
                             top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? '40mm' }};
+                            height: {{ $config['height'] ?? 'auto' }};
                             font-family: {{ $config['fontFamily'] ?? 'Arial' }};
                             font-size: {{ $config['fontSize'] ?? '7pt' }};
                             font-weight: {{ $config['fontWeight'] ?? 'bold' }};
                             color: {{ $config['color'] ?? '#003d7a' }};
                             text-align: {{ $config['textAlign'] ?? 'left' }};
-                            max-width: {{ $config['maxWidth'] ?? '40mm' }};
                             @if(isset($config['rotation']) && $config['rotation'] != 0)
                             transform: rotate({{ $config['rotation'] }}deg);
                             transform-origin: top left;
