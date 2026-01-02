@@ -222,7 +222,7 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         $postulacion->ciclo_id = $this->cicloActivo->id;
                         $postulacion->codigo_postulante = $nuevoCodigo;
                         $postulacion->fecha_postulacion = now();
-                        $postulacion->estado = 'aprobado';
+                        $postulacion->estado = 'pendiente';
                     } else {
                         $postulacion = $postulacionExistente;
                     }
