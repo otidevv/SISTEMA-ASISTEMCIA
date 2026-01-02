@@ -60,6 +60,20 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                     return [trim($key) => $item];
                 });
 
+                // DEBUG: Log de columnas (solo primera fila)
+                if ($fila == 2) {
+                    \Log::info('Columnas recibidas en Excel:', array_keys($row->toArray()));
+                    \Log::info('Datos de padres:', [
+                        'dni_padre' => $row['dni_padre'] ?? 'NO EXISTE',
+                        'nombre_padre_completo' => $row['nombre_padre_completo'] ?? 'NO EXISTE',
+                        'celular_padre' => $row['celular_padre'] ?? 'NO EXISTE',
+                        'dni_madre' => $row['dni_madre'] ?? 'NO EXISTE',
+                        'nombre_madre_completo' => $row['nombre_madre_completo'] ?? 'NO EXISTE',
+                        'celular_madre' => $row['celular_madre'] ?? 'NO EXISTE',
+                    ]);
+                }
+
+
                 // RENIEC Integration
                 if (!empty($row['dni']) && empty($row['nombres'])) {
                     try {
