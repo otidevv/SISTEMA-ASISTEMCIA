@@ -816,6 +816,133 @@
                 padding: 0.5rem !important;
             }
         }
+
+        /* ========================================================= */
+        /* DRAG & DROP DOCUMENT UPLOAD STYLES */
+        /* ========================================================= */
+        .document-upload-card {
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone {
+            position: relative;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--cepre-cyan);
+            background-color: #e3f2fd;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--cepre-magenta);
+            background-color: #fce4ec;
+            transform: scale(1.02);
+        }
+
+        .drop-zone .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .drop-zone-content {
+            pointer-events: none;
+        }
+
+        .preview-container {
+            position: relative;
+            width: 100%;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: contain;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .pdf-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .preview-container:hover .preview-overlay {
+            opacity: 1;
+        }
+
+        .file-info {
+            margin-top: 0.75rem;
+            text-align: center;
+        }
+
+        .file-name {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+            word-break: break-all;
+        }
+
+        .file-size {
+            display: block;
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .btn-remove {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Dark mode support */
+        body[data-layout-mode="dark"] .drop-zone {
+            background-color: var(--cepre-dark-card);
+            border-color: #5a6374;
+        }
+
+        body[data-layout-mode="dark"] .drop-zone:hover {
+            background-color: #4a5468;
+            border-color: var(--cepre-cyan);
+        }
+
+        body[data-layout-mode="dark"] .file-name {
+            color: var(--cepre-dark-text);
+        }
+
+        body[data-layout-mode="dark"] .file-size {
+            color: #a0aec0;
+        }
     </style>
 @endpush
 
@@ -3010,7 +3137,191 @@
                         </div>
 
                         <div class="row g-4" id="documents-container">
-                            <!-- Los documentos se cargarán dinámicamente aquí -->
+                            <!-- Foto del Postulante -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-person-badge text-primary"></i> Foto del Postulante
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="foto" data-accept="image/*" data-max-size="5">
+                                        <input type="file" class="file-input" accept="image/*" id="input-foto">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra la foto aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 5MB - JPG, PNG</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <img class="preview-image" alt="Preview">
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DNI -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-card-text text-success"></i> DNI
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="dni" data-accept="image/*,application/pdf" data-max-size="5">
+                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-dni">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra el DNI aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 5MB - JPG, PNG, PDF</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <img class="preview-image" alt="Preview">
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Voucher de Pago -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-receipt text-warning"></i> Voucher de Pago
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="voucher" data-accept="image/*,application/pdf" data-max-size="5">
+                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-voucher">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra el voucher aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 5MB - JPG, PNG, PDF</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <img class="preview-image" alt="Preview">
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Certificado de Estudios -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-file-earmark-text text-info"></i> Certificado de Estudios
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="certificado_estudios" data-accept="application/pdf" data-max-size="10">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-certificado_estudios">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra el certificado aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 10MB - PDF</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <div class="pdf-preview">
+                                                <i class="bi bi-file-pdf-fill text-danger" style="font-size: 64px;"></i>
+                                            </div>
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Constancia de Estudios -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-file-earmark-check text-secondary"></i> Constancia de Estudios
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="constancia_estudios" data-accept="application/pdf" data-max-size="10">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-constancia_estudios">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra la constancia aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 10MB - PDF</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <div class="pdf-preview">
+                                                <i class="bi bi-file-pdf-fill text-danger" style="font-size: 64px;"></i>
+                                            </div>
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Carta Compromiso -->
+                            <div class="col-md-6">
+                                <div class="document-upload-card">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-file-earmark-ruled text-danger"></i> Carta Compromiso
+                                    </label>
+                                    <div class="drop-zone" data-doc-type="carta_compromiso" data-accept="application/pdf" data-max-size="10">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-carta_compromiso">
+                                        <div class="drop-zone-content">
+                                            <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
+                                            <p class="mb-1 fw-semibold">Arrastra la carta aquí</p>
+                                            <p class="text-muted small">o haz clic para seleccionar</p>
+                                            <p class="text-muted small">Máx. 10MB - PDF</p>
+                                        </div>
+                                        <div class="preview-container d-none">
+                                            <div class="pdf-preview">
+                                                <i class="bi bi-file-pdf-fill text-danger" style="font-size: 64px;"></i>
+                                            </div>
+                                            <div class="preview-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                                    <i class="bi bi-trash"></i> Eliminar
+                                                </button>
+                                            </div>
+                                            <div class="file-info">
+                                                <span class="file-name"></span>
+                                                <span class="file-size"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-4">
@@ -3514,6 +3825,155 @@
         // Resetear formulario al cerrar modal de progreso
         document.getElementById('modalProgreso').addEventListener('hidden.bs.modal', function() {
             document.querySelector('#modalImportar form').reset();
+        });
+    });
+    </script>
+
+    <!-- Drag & Drop Document Upload Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar drag & drop para todas las zonas
+        const dropZones = document.querySelectorAll('.drop-zone');
+        
+        dropZones.forEach(zone => {
+            const fileInput = zone.querySelector('.file-input');
+            const dropContent = zone.querySelector('.drop-zone-content');
+            const previewContainer = zone.querySelector('.preview-container');
+            const previewImage = zone.querySelector('.preview-image');
+            const fileName = zone.querySelector('.file-name');
+            const fileSize = zone.querySelector('.file-size');
+            const btnRemove = zone.querySelector('.btn-remove');
+            const docType = zone.dataset.docType;
+            const maxSize = parseInt(zone.dataset.maxSize) * 1024 * 1024; // Convertir MB a bytes
+            
+            // Click en la zona para abrir selector de archivos
+            zone.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('btn-remove')) {
+                    fileInput.click();
+                }
+            });
+            
+            // Prevenir comportamiento por defecto del navegador
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Resaltar zona cuando se arrastra archivo sobre ella
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, () => {
+                    zone.classList.add('drag-over');
+                });
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, () => {
+                    zone.classList.remove('drag-over');
+                });
+            });
+            
+            // Manejar archivo soltado
+            zone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+            
+            // Manejar archivo seleccionado
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+            
+            // Procesar archivo
+            function handleFile(file) {
+                // Validar tamaño
+                if (file.size > maxSize) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Archivo muy grande',
+                        text: `El archivo no debe superar ${zone.dataset.maxSize}MB`,
+                        confirmButtonColor: '#e91e63'
+                    });
+                    return;
+                }
+                
+                // Validar tipo
+                const acceptedTypes = zone.dataset.accept.split(',');
+                const fileType = file.type;
+                const isValid = acceptedTypes.some(type => {
+                    if (type.trim() === 'image/*') {
+                        return fileType.startsWith('image/');
+                    }
+                    return fileType === type.trim();
+                });
+                
+                if (!isValid) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tipo de archivo no válido',
+                        text: 'Por favor selecciona un archivo del tipo correcto',
+                        confirmButtonColor: '#e91e63'
+                    });
+                    return;
+                }
+                
+                // Mostrar preview
+                showPreview(file);
+            }
+            
+            // Mostrar preview del archivo
+            function showPreview(file) {
+                dropContent.classList.add('d-none');
+                previewContainer.classList.remove('d-none');
+                
+                // Actualizar información del archivo
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                
+                // Si es imagen, mostrar preview
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        previewImage.src = e.target.result;
+                        previewImage.classList.remove('d-none');
+                        const pdfPreview = zone.querySelector('.pdf-preview');
+                        if (pdfPreview) pdfPreview.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Si es PDF, mostrar icono
+                    previewImage.classList.add('d-none');
+                    const pdfPreview = zone.querySelector('.pdf-preview');
+                    if (pdfPreview) pdfPreview.classList.remove('d-none');
+                }
+            }
+            
+            // Botón para eliminar archivo
+            if (btnRemove) {
+                btnRemove.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fileInput.value = '';
+                    dropContent.classList.remove('d-none');
+                    previewContainer.classList.add('d-none');
+                    previewImage.src = '';
+                });
+            }
+            
+            // Formatear tamaño de archivo
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
         });
     });
     </script>
