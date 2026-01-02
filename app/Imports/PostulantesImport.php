@@ -246,13 +246,17 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         $nombrePadre = strtoupper(trim($row['nombre_padre_completo'] ?? 'PADRE'));
                         $celularPadre = trim($row['celular_padre'] ?? '');
                         
-                        // Buscar por DNI si existe, sino por teléfono, sino crear nuevo
+                        // Buscar por DNI, username o teléfono
                         if ($dniP) {
                             $padre = User::firstOrNew(['numero_documento' => $dniP]);
                         } elseif ($celularPadre) {
-                            $padre = User::where('telefono', $celularPadre)
-                                ->whereHas('roles', function($q) {
-                                    $q->whereIn('nombre', ['Padre', 'padre']);
+                            // Buscar por username (teléfono) o por campo teléfono
+                            $padre = User::where('username', $celularPadre)
+                                ->orWhere(function($q) use ($celularPadre) {
+                                    $q->where('telefono', $celularPadre)
+                                      ->whereHas('roles', function($r) {
+                                          $r->whereIn('nombre', ['Padre', 'padre']);
+                                      });
                                 })
                                 ->first();
                             if (!$padre) {
@@ -300,13 +304,17 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         $nombreMadre = strtoupper(trim($row['nombre_madre_completo'] ?? 'MADRE'));
                         $celularMadre = trim($row['celular_madre'] ?? '');
                         
-                        // Buscar por DNI si existe, sino por teléfono, sino crear nuevo
+                        // Buscar por DNI, username o teléfono
                         if ($dniM) {
                             $madre = User::firstOrNew(['numero_documento' => $dniM]);
                         } elseif ($celularMadre) {
-                            $madre = User::where('telefono', $celularMadre)
-                                ->whereHas('roles', function($q) {
-                                    $q->whereIn('nombre', ['Madre', 'madre']);
+                            // Buscar por username (teléfono) o por campo teléfono
+                            $madre = User::where('username', $celularMadre)
+                                ->orWhere(function($q) use ($celularMadre) {
+                                    $q->where('telefono', $celularMadre)
+                                      ->whereHas('roles', function($r) {
+                                          $r->whereIn('nombre', ['Madre', 'madre']);
+                                      });
                                 })
                                 ->first();
                             if (!$madre) {
