@@ -164,7 +164,7 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         ->exists();
 
                     if ($existePostulacion) {
-                        $this->resultados['errores'][] = "Fila $fila: El usuario $dni ya tiene postulación.";
+                        $this->resultados['errores'][] = "Fila $fila: El usuario $dni ya tiene una postulación en el ciclo activo.";
                         continue;
                     }
 
