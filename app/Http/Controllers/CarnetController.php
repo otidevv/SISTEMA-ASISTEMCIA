@@ -119,7 +119,8 @@ Exception $e) {
             'ciclo' => $carnet->ciclo->nombre,
             'carrera' => $carnet->carrera->nombre,
             'turno' => $carnet->turno->nombre,
-            'aula' => $carnet->aula->nombre ?? 'Sin asignar',
+            'turno' => $carnet->turno->nombre,
+            'aula' => $carnet->aula->nombre ?? ($carnet->grupo ? 'Grupo ' . $carnet->grupo : 'Sin asignar'),
             'fecha_emision' => $carnet->fecha_emision->format('d/m/Y'),
             'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
             'estado' => $carnet->estado,
@@ -222,7 +223,7 @@ Exception $e) {
                     'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : null,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
-                    'foto' => $postulacion ? $postulacion->foto : null,
+                    'foto_path' => $postulacion ? $postulacion->foto_path : null,
                     'estado' => 'activo'
                 ]);
 
@@ -255,6 +256,8 @@ Exception $e) {
                 ]);
 
                 // Crear el carnet para postulante
+                $grupo = $this->determinarGrupo($postulacion->carrera->nombre);
+                
                 $carnet = Carnet::create([
                     'codigo_carnet' => $codigoCarnet,
                     'estudiante_id' => $postulacion->estudiante_id,
@@ -264,10 +267,10 @@ Exception $e) {
                     'aula_id' => null,
                     'tipo_carnet' => 'postulante',
                     'modalidad' => 'postulante',
-                    'grupo' => null,
+                    'grupo' => $grupo,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
-                    'foto' => $postulacion->foto,
+                    'foto_path' => $postulacion->foto_path,
                     'estado' => 'activo'
                 ]);
 
@@ -349,6 +352,11 @@ Exception $e) {
             $codigoCarnet = Carnet::generarCodigo($request->ciclo_id, $request->carrera_id);
 
             // Crear el carnet
+            $grupo = $request->grupo;
+            if (!$request->aula_id && !$grupo && $postulacion && $postulacion->carrera) {
+                $grupo = $this->determinarGrupo($postulacion->carrera->nombre);
+            }
+
             $carnet = Carnet::create([
                 'codigo_carnet' => $codigoCarnet,
                 'estudiante_id' => $request->estudiante_id,
@@ -358,7 +366,7 @@ Exception $e) {
                 'aula_id' => $request->aula_id,
                 'tipo_carnet' => 'estudiante',
                 'modalidad' => $request->modalidad,
-                'grupo' => $request->grupo,
+                'grupo' => $grupo,
                 'fecha_emision' => Carbon::now(),
                 'fecha_vencimiento' => $request->fecha_vencimiento,
                 'foto_path' => $postulacion ? $postulacion->foto_path : null,
@@ -437,10 +445,13 @@ Exception $e) {
                 $codigoPostulante = $postulacion->codigo_postulante ?? '00000000';
                 
                 // Obtener foto
-                if ($carnet->foto) {
-                    $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $carnet->foto)));
-                } elseif ($postulacion->foto) {
-                    $fotoPath = storage_path('app/public/' . $postulacion->foto);
+                if ($carnet->foto_path) {
+                    $fotoPath = storage_path('app/public/' . $carnet->foto_path);
+                    if (file_exists($fotoPath)) {
+                        $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fotoPath));
+                    }
+                } elseif ($postulacion && $postulacion->foto_path) {
+                    $fotoPath = storage_path('app/public/' . $postulacion->foto_path);
                     if (file_exists($fotoPath)) {
                         $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fotoPath));
                     }
@@ -475,7 +486,8 @@ Exception $e) {
                 'carrera' => strtoupper($carnet->carrera->nombre),
                 'ciclo' => $carnet->ciclo->nombre,
                 'turno' => $carnet->turno->nombre,
-                'grupo' => $carnet->grupo ?? $carnet->aula->nombre ?? '',
+                'turno' => $carnet->turno->nombre,
+                'grupo' => $carnet->grupo ?? ($carnet->aula ? $carnet->aula->nombre : ''),
                 'modalidad' => strtoupper($carnet->modalidad ?? 'PRESENCIAL'),
                 'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
                 'foto' => $foto,
@@ -672,5 +684,49 @@ Exception $e) {
         }
 
         return '<div class="btn-group">' . implode(' ', $actions) . '</div>';
+    }
+    /**
+     * Determinar el grupo según el nombre de la carrera
+     */
+    private function determinarGrupo($nombreCarrera)
+    {
+        $nombreLower = strtolower($nombreCarrera);
+        
+        // Grupo A - Ingenierías
+        if (str_contains($nombreLower, 'ingenieria') || 
+            str_contains($nombreLower, 'sistemas') ||
+            str_contains($nombreLower, 'informatica') ||
+            str_contains($nombreLower, 'forestal') ||
+            str_contains($nombreLower, 'medio ambiente') ||
+            str_contains($nombreLower, 'agroindustrial')) {
+            return 'A';
+        }
+        
+        // Grupo B - Ciencias de la Salud
+        if (str_contains($nombreLower, 'medicina') ||
+            str_contains($nombreLower, 'veterinaria') ||
+            str_contains($nombreLower, 'zootecnia') ||
+            str_contains($nombreLower, 'enfermeria')) {
+            return 'B';
+        }
+        
+        // Grupo C - Ciencias Sociales y Educación
+        if (str_contains($nombreLower, 'administracion') ||
+            str_contains($nombreLower, 'negocios') ||
+            str_contains($nombreLower, 'contabilidad') ||
+            str_contains($nombreLower, 'finanzas') ||
+            str_contains($nombreLower, 'derecho') ||
+            str_contains($nombreLower, 'ciencias politicas') ||
+            str_contains($nombreLower, 'ecoturismo') ||
+            str_contains($nombreLower, 'educacion') ||
+            str_contains($nombreLower, 'primaria') ||
+            str_contains($nombreLower, 'inicial') ||
+            str_contains($nombreLower, 'especial') ||
+            str_contains($nombreLower, 'matematica') ||
+            str_contains($nombreLower, 'computacion')) {
+            return 'C';
+        }
+        
+        return null; // Si no coincide con ningún grupo
     }
 }
