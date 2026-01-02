@@ -85,7 +85,7 @@
                                         <!-- Campo Correo Electrónico -->
                                         <div class="mb-3">
                                             <label for="email" class="form-label fw-semibold text-dark">
-                                                Correo Electrónico
+                                                Correo Electrónico o DNI
                                             </label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text bg-light border-end-0 rounded-start-pill">
@@ -94,11 +94,11 @@
                                                         <polyline points="22,6 12,13 2,6"></polyline>
                                                     </svg>
                                                 </span>
-                                                <input type="email"
+                                                <input type="text"
                                                        class="form-control border-start-0 ps-0 @error('email') is-invalid @enderror"
                                                        name="email" id="email"
                                                        value="{{ old('email') }}"
-                                                       placeholder="ejemplo@unamad.edu.pe"
+                                                       placeholder="Ej: correo@ejemplo.com o DNI"
                                                        required autofocus>
                                             </div>
                                         </div>

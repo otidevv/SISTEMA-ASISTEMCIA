@@ -336,6 +336,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
         Route::post('/postulaciones/crear-desde-admin', [PostulacionController::class, 'crearDesdeAdmin'])->name('postulaciones.crearDesdeAdmin')->middleware('can:postulaciones.create');
+        
+        // Importación Masiva
+        Route::post('/postulaciones/importar', [PostulacionController::class, 'importar'])->name('postulaciones.importar')->middleware('can:postulaciones.create');
+        Route::get('/postulaciones/plantilla', [PostulacionController::class, 'descargarPlantilla'])->name('postulaciones.plantilla')->middleware('can:postulaciones.create');
 
         // Reportes de postulaciones
         Route::get('/postulaciones/reportes/completos', [PostulacionController::class, 'reportesCompletos'])->name('postulaciones.reportes.completos')->middleware('can:postulaciones.reports');

@@ -20,6 +20,8 @@ use App\Exports\PostulacionesResumenExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use App\Imports\PostulantesImport;
+use App\Exports\PostulantesTemplateExport;
 
 class PostulacionController extends Controller
 {
@@ -1389,6 +1391,48 @@ class PostulacionController extends Controller
         } catch (\Exception $e) {
             Log::error('Error en PostulacionController@getStats: ' . $e->getMessage());
             return response()->json(['error' => 'Error al cargar estadísticas.'], 500);
+        }
+    }
+
+    /**
+     * Descargar plantilla para importación masiva
+     */
+    public function descargarPlantilla()
+    {
+        return Excel::download(new PostulantesTemplateExport, 'plantilla_postulantes.xlsx');
+    }
+
+    /**
+     * Importar postulantes desde Excel
+     */
+    public function importar(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.create')) {
+             return back()->with('error', 'No tienes permisos para importar postulaciones');
+        }
+
+        $request->validate([
+            'archivo_excel' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        try {
+            $simulacro = $request->boolean('simulacro');
+            $import = new PostulantesImport($simulacro);
+            Excel::import($import, $request->file('archivo_excel'));
+            
+            $msg = ($simulacro ? "[SIMULACRO] " : "") . "Proceso finalizado. Total procesados: " . $import->resultados['procesados'] . 
+                   ". " . ($simulacro ? "Se registrarían: " : "Nuevos registrados: ") . $import->resultados['creados'] . ".";
+
+            if (count($import->resultados['errores']) > 0) {
+                // Guardar errores en sesión para mostrarlos
+                return back()->with('warning', $msg . ' Se encontraron algunos errores.')
+                             ->with('import_errors', $import->resultados['errores']);
+            }
+
+            return back()->with('success', $msg);
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error crítico en importación: ' . $e->getMessage());
         }
     }
 }

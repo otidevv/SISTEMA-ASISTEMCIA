@@ -28,18 +28,20 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'email' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
-        // En nuestra tabla de usuarios el campo de contraseña se llama 'password_hash'
-        // así que debemos ajustar las credenciales
+        $login = $request->input('email');
+        
+        // Determinar si es email o username (DNI)
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        
         $attemptCredentials = [
-            'email' => $credentials['email'],
-            'password' => $credentials['password'], // Laravel buscará en el campo definido por getAuthPassword()
+            $field => $login,
+            'password' => $request->password,
         ];
-        // dd('no autenticado gagag');
 
         if (Auth::attempt($attemptCredentials, $request->filled('remember'))) {
             $user = Auth::user();

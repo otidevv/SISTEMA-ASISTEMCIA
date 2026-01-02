@@ -2430,10 +2430,18 @@
                 @if (Auth::user()->hasPermission('postulaciones.create-unified'))
                 <div class="d-flex justify-content-between align-items-center pb-3">
                     <h4 class="header-title mt-0 mb-0" style="font-size: 1.25rem; font-weight: 700;">LISTA DE POSTULACIONES</h4>
-                    <button type="button" class="btn btn-success btn-lg" id="btn-nueva-postulacion-unificada">
-                        <i class="bi bi-person-plus-fill me-2"></i>
-                        Nueva Postulación Completa
-                    </button>
+                    <div class="d-flex gap-2">
+                        @if (Auth::user()->hasPermission('postulaciones.create'))
+                        <button type="button" class="btn btn-info btn-lg text-white" data-bs-toggle="modal" data-bs-target="#modalImportar">
+                            <i class="bi bi-file-earmark-spreadsheet-fill me-2"></i> Importar Excel
+                        </button>
+                        @endif
+                        
+                        <button type="button" class="btn btn-success btn-lg" id="btn-nueva-postulacion-unificada">
+                            <i class="bi bi-person-plus-fill me-2"></i>
+                            Nueva Postulación Completa
+                        </button>
+                    </div>
                 </div>
                 @else
                 <h4 class="header-title mt-0 mb-3" style="font-size: 1.25rem; font-weight: 700;">LISTA DE POSTULACIONES</h4>
@@ -2510,6 +2518,61 @@
 @endsection
 
 @push('modals')
+    <!-- Modal Importación Masiva -->
+    <div class="modal fade" id="modalImportar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="{{ route('postulaciones.importar') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header cepre-bg-navy">
+                        <h5 class="modal-title text-white">Importar Postulantes Masivos</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Descarga la plantilla para asegurar el formato correcto. Las columnas obligatorias son DNI, Nombres y Carrera.
+                            <br>
+                            <a href="{{ route('postulaciones.plantilla') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                <i class="bi bi-download"></i> Descargar Plantilla Excel
+                            </a>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="archivo_excel" class="form-label">Archivo Excel (.xlsx, .xls)</label>
+                            <input type="file" class="form-control" id="archivo_excel" name="archivo_excel" accept=".xlsx, .xls" required>
+                        </div>
+
+                        <div class="form-check mb-3 p-3 bg-light rounded border">
+                            <input class="form-check-input" type="checkbox" name="simulacro" id="checkSimulacro" value="1">
+                            <label class="form-check-label fw-bold text-dark" for="checkSimulacro">
+                                <i class="bi bi-shield-check text-primary me-1"></i> Modo Simulacro (Solo Validar)
+                            </label>
+                            <div class="form-text text-muted small mt-1">
+                                Verifica errores y duplicados sin realizar cambios en la base de datos.
+                            </div>
+                        </div>
+
+                        @if(session('import_errors'))
+                            <div class="alert alert-warning mt-3">
+                                <strong>Errores previos:</strong>
+                                <ul class="mb-0 small" style="max-height: 150px; overflow-y: auto;">
+                                    @foreach(session('import_errors') as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i> Procesar Importación
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- Modal para Ver Detalle (Mantenido en Bootstrap) -->
     <div class="modal fade" id="viewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
