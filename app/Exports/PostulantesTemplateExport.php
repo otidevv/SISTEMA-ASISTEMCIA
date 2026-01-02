@@ -26,6 +26,7 @@ class PostulantesTemplateExport implements FromCollection, WithHeadings, ShouldA
                 'ENFERMERIA', // carrera
                 'MAÑANA', // turno
                 'postulante', // modalidad
+                '20250001', // codigo_postulante (Opcional)
                 'COLEGIO NACIONAL', // colegio
                 '2022', // anio_egreso
                 '12345678', // dni_padre
