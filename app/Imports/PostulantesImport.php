@@ -9,7 +9,7 @@ use App\Models\Turno;
 use App\Models\Ciclo;
 use App\Models\Parentesco;
 use App\Models\CentroEducativo;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -199,11 +199,10 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                     $postulacion->ciclo_id = $this->cicloActivo->id;
                     $postulacion->carrera_id = $carreraId;
                     $postulacion->turno_id = $turnoId;
-                    $postulacion->modalidad = strtoupper($row['modalidad'] ?? 'POSTULANTE');
                     $postulacion->codigo_postulante = $nuevoCodigo;
                     $postulacion->fecha_postulacion = now();
                     $postulacion->estado = 'aprobado';
-                    $postulacion->tipo_inscripcion = 'postulante';
+                    $postulacion->tipo_inscripcion = strtolower($row['modalidad'] ?? 'postulante');
                     $postulacion->centro_educativo_id = $colegioId;
                     $postulacion->anio_egreso = $row['anio_egreso'] ?? date('Y');
                     
