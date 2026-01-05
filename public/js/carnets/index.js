@@ -10,18 +10,18 @@ $.ajaxSetup({
 let table;
 let selectedCarnets = [];
 
-$(document).ready(function() {
+$(document).ready(function () {
     console.log('Carnets JS cargado');
-    
+
     // Inicializar DataTables
     initDataTable();
-    
+
     // Cargar estadísticas iniciales
     loadStatistics();
-    
+
     // Configurar eventos
     setupEventHandlers();
-    
+
     // Establecer fecha de vencimiento predeterminada (6 meses desde hoy)
     const fechaVencimiento = new Date();
     fechaVencimiento.setMonth(fechaVencimiento.getMonth() + 6);
@@ -35,15 +35,16 @@ function initDataTable() {
         ajax: {
             url: default_server + "/json/carnets",
             type: 'GET',
-            data: function(d) {
+            data: function (d) {
                 d.ciclo_id = $('#filter-ciclo').val();
                 d.carrera_id = $('#filter-carrera').val();
                 d.turno_id = $('#filter-turno').val();
                 d.aula_id = $('#filter-aula').val();
                 d.estado = $('#filter-estado').val();
                 d.impreso = $('#filter-impreso').val();
+                d.entregado = $('#filter-entregado').val();
             },
-            dataSrc: function(json) {
+            dataSrc: function (json) {
                 // Actualizar estadísticas
                 updateStatistics(json.data);
                 return json.data;
@@ -52,11 +53,11 @@ function initDataTable() {
         columns: [
             {
                 data: null,
-                render: function(data) {
+                render: function (data) {
                     return '<div class="form-check">' +
-                           '<input type="checkbox" class="form-check-input carnet-checkbox" value="' + data.id + '">' +
-                           '<label class="form-check-label"></label>' +
-                           '</div>';
+                        '<input type="checkbox" class="form-check-input carnet-checkbox" value="' + data.id + '">' +
+                        '<label class="form-check-label"></label>' +
+                        '</div>';
                 },
                 orderable: false
             },
@@ -69,19 +70,19 @@ function initDataTable() {
             { data: 'aula' },
             { data: 'fecha_emision' },
             { data: 'fecha_vencimiento' },
-            { 
+            {
                 data: 'estado',
-                render: function(data) {
+                render: function (data) {
                     let badgeClass = 'badge-estado-' + data;
                     return '<span class="badge ' + badgeClass + '">' + data.toUpperCase() + '</span>';
                 }
             },
             {
                 data: 'impreso',
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     if (data) {
                         return '<span class="badge bg-success"><i class="uil uil-check"></i> Sí</span>' +
-                               (row.fecha_impresion ? '<br><small>' + row.fecha_impresion + '</small>' : '');
+                            (row.fecha_impresion ? '<br><small>' + row.fecha_impresion + '</small>' : '');
                     } else {
                         return '<span class="badge bg-secondary"><i class="uil uil-times"></i> No</span>';
                     }
@@ -89,7 +90,7 @@ function initDataTable() {
             },
             {
                 data: null,
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return row.actions;
                 }
             }
@@ -111,7 +112,7 @@ function initDataTable() {
             emptyTable: "No hay carnets disponibles",
             loadingRecords: "Cargando..."
         },
-        drawCallback: function() {
+        drawCallback: function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
         }
     });
@@ -119,78 +120,79 @@ function initDataTable() {
 
 function setupEventHandlers() {
     // Filtrar
-    $('#btn-filtrar').on('click', function() {
+    $('#btn-filtrar').on('click', function () {
         table.ajax.reload();
     });
-    
+
     // Limpiar filtros
-    $('#btn-limpiar-filtros').on('click', function() {
+    $('#btn-limpiar-filtros').on('click', function () {
         $('#filter-ciclo').val('');
         $('#filter-carrera').val('');
         $('#filter-turno').val('');
         $('#filter-aula').val('');
         $('#filter-estado').val('');
         $('#filter-impreso').val('');
+        $('#filter-entregado').val('');
         table.ajax.reload();
     });
-    
+
     // Seleccionar todos
-    $('#select-all').on('change', function() {
+    $('#select-all').on('change', function () {
         $('.carnet-checkbox').prop('checked', this.checked);
         updateSelectedCarnets();
     });
-    
+
     // Checkbox individual
-    $(document).on('change', '.carnet-checkbox', function() {
+    $(document).on('change', '.carnet-checkbox', function () {
         updateSelectedCarnets();
     });
-    
+
     // Generar masivo
-    $('#btn-generar-masivo').on('click', function() {
+    $('#btn-generar-masivo').on('click', function () {
         $('#generarMasivoModal').modal('show');
     });
-    
+
     // Confirmar generar masivo
-    $('#confirmGenerarMasivo').on('click', function() {
+    $('#confirmGenerarMasivo').on('click', function () {
         generarCarnetsMasivo();
     });
-    
+
     // Ver detalle
-    $(document).on('click', '.view-carnet', function() {
+    $(document).on('click', '.view-carnet', function () {
         const id = $(this).data('id');
         viewCarnetDetail(id);
     });
-    
+
     // Imprimir individual
-    $(document).on('click', '.print-carnet', function() {
+    $(document).on('click', '.print-carnet', function () {
         const id = $(this).data('id');
         printCarnets([id]);
     });
-    
+
     // Cambiar estado
-    $(document).on('click', '.change-status', function() {
+    $(document).on('click', '.change-status', function () {
         const id = $(this).data('id');
         const estadoActual = $(this).data('estado');
         openChangeStatusModal(id, estadoActual);
     });
 
     // Editar carnet
-    $(document).on('click', '.edit-carnet', function() {
+    $(document).on('click', '.edit-carnet', function () {
         const id = $(this).data('id');
         alert('Función de editar carnet (ID: ' + id + ') aún no implementada.');
         // Aquí iría la lógica para abrir un modal de edición
     });
 
     // Eliminar carnet
-    $(document).on('click', '.delete-carnet', function() {
+    $(document).on('click', '.delete-carnet', function () {
         const id = $(this).data('id');
         if (confirm('¿Está seguro de que desea anular este carnet? Esta acción no se puede deshacer.')) {
             deleteCarnet(id);
         }
     });
-    
+
     // Mostrar/ocultar motivo anulación
-    $('#nuevo-estado').on('change', function() {
+    $('#nuevo-estado').on('change', function () {
         if ($(this).val() === 'anulado') {
             $('#motivo-anulacion-group').show();
             $('#motivo-anulacion').prop('required', true);
@@ -199,42 +201,47 @@ function setupEventHandlers() {
             $('#motivo-anulacion').prop('required', false);
         }
     });
-    
+
     // Confirmar cambio de estado
-    $('#confirmChangeStatus').on('click', function() {
+    $('#confirmChangeStatus').on('click', function () {
         changeCarnetStatus();
     });
-    
+
     // Exportar PDF seleccionados
-    $('#btn-exportar-pdf').on('click', function() {
+    $('#btn-exportar-pdf').on('click', function () {
         if (selectedCarnets.length === 0) {
             toastr.warning('Debe seleccionar al menos un carnet');
             return;
         }
         exportarCarnets(selectedCarnets);
     });
-    
+
     // Marcar como impresos
-    $('#btn-marcar-impresos').on('click', function() {
+    $('#btn-marcar-impresos').on('click', function () {
         if (selectedCarnets.length === 0) {
             toastr.warning('Debe seleccionar al menos un carnet');
             return;
         }
         marcarComoImpresos(selectedCarnets);
     });
-    
+
+    // Exportar control de entregas
+    $('#btn-exportar-entregas').on('click', function () {
+        exportarControlEntregas();
+    });
+
     // Limpiar formularios al cerrar modales
-    $('.modal').on('hidden.bs.modal', function() {
+    $('.modal').on('hidden.bs.modal', function () {
         $(this).find('form')[0]?.reset();
     });
 }
 
 function updateSelectedCarnets() {
     selectedCarnets = [];
-    $('.carnet-checkbox:checked').each(function() {
+    $('.carnet-checkbox:checked').each(function () {
         selectedCarnets.push($(this).val());
     });
-    
+
     // Habilitar/deshabilitar botones según selección
     $('#btn-exportar-pdf').prop('disabled', selectedCarnets.length === 0);
     $('#btn-marcar-impresos').prop('disabled', selectedCarnets.length === 0);
@@ -248,23 +255,23 @@ function generarCarnetsMasivo() {
         aula_id: $('#masivo-aula').val(),
         fecha_vencimiento: $('#masivo-fecha-vencimiento').val()
     };
-    
+
     // Validación
     if (!formData.ciclo_id || !formData.fecha_vencimiento) {
         toastr.error('Debe seleccionar el ciclo y la fecha de vencimiento');
         return;
     }
-    
+
     // Deshabilitar botón
     const btn = $('#confirmGenerarMasivo');
     btn.prop('disabled', true);
     btn.html('<i class="spinner-border spinner-border-sm"></i> Generando...');
-    
+
     $.ajax({
         url: default_server + "/json/carnets/generar-masivo",
         type: 'POST',
         data: formData,
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#generarMasivoModal').modal('hide');
@@ -272,13 +279,13 @@ function generarCarnetsMasivo() {
             } else {
                 toastr.error(response.message || 'Error al generar carnets');
             }
-            
+
             btn.prop('disabled', false);
             btn.html('<i class="uil uil-check me-1"></i> Generar Carnets');
         },
-        error: function(xhr) {
+        error: function (xhr) {
             let errorMsg = 'Error al generar carnets';
-            
+
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
@@ -289,7 +296,7 @@ function generarCarnetsMasivo() {
             } else {
                 toastr.error(errorMsg);
             }
-            
+
             btn.prop('disabled', false);
             btn.html('<i class="uil uil-check me-1"></i> Generar Carnets');
         }
@@ -303,7 +310,7 @@ function viewCarnetDetail(id) {
     $.ajax({
         url: default_server + "/json/carnets/" + id,
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 const carnet = response.data;
                 let content = '<div class="row">';
@@ -330,7 +337,7 @@ function viewCarnetDetail(id) {
                 toastr.error(response.message || 'Error al cargar el detalle del carnet.');
             }
         },
-        error: function() {
+        error: function () {
             $('#viewCarnetBody').html('<p class="text-danger">Ocurrió un error de red.</p>');
             toastr.error('Error de red al intentar obtener los detalles del carnet.');
         }
@@ -350,17 +357,17 @@ function changeCarnetStatus() {
     const id = $('#status-carnet-id').val();
     const nuevoEstado = $('#nuevo-estado').val();
     const motivo = $('#motivo-anulacion').val();
-    
+
     if (!nuevoEstado) {
         toastr.error('Debe seleccionar un estado');
         return;
     }
-    
+
     if (nuevoEstado === 'anulado' && !motivo) {
         toastr.error('Debe ingresar el motivo de anulación');
         return;
     }
-    
+
     $.ajax({
         url: default_server + "/json/carnets/" + id + "/cambiar-estado",
         type: 'POST',
@@ -368,7 +375,7 @@ function changeCarnetStatus() {
             estado: nuevoEstado,
             motivo: motivo
         },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 $('#changeStatusModal').modal('hide');
@@ -377,7 +384,7 @@ function changeCarnetStatus() {
                 toastr.error(response.message || 'Error al cambiar estado');
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al cambiar estado del carnet');
         }
     });
@@ -387,7 +394,7 @@ function deleteCarnet(id) {
     $.ajax({
         url: default_server + "/json/carnets/" + id,
         type: 'DELETE',
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message || 'Carnet anulado exitosamente.');
                 table.ajax.reload();
@@ -395,7 +402,7 @@ function deleteCarnet(id) {
                 toastr.error(response.message || 'No se pudo anular el carnet.');
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             let errorMsg = 'Error al anular el carnet.';
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
@@ -412,23 +419,23 @@ function exportarCarnets(carnetIds) {
         'action': default_server + '/carnets/exportar-pdf',
         'target': '_blank'
     });
-    
+
     // Agregar token CSRF
     form.append($('<input>', {
         'type': 'hidden',
         'name': '_token',
         'value': $('meta[name="csrf-token"]').attr('content')
     }));
-    
+
     // Agregar IDs de carnets
-    carnetIds.forEach(function(id) {
+    carnetIds.forEach(function (id) {
         form.append($('<input>', {
             'type': 'hidden',
             'name': 'carnets[]',
             'value': id
         }));
     });
-    
+
     // Agregar al body y enviar
     form.appendTo('body').submit().remove();
 }
@@ -437,14 +444,14 @@ function marcarComoImpresos(carnetIds) {
     if (!confirm('¿Está seguro de marcar estos carnets como impresos?')) {
         return;
     }
-    
+
     $.ajax({
         url: default_server + "/json/carnets/marcar-impresos",
         type: 'POST',
         data: {
             carnets: carnetIds
         },
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 toastr.success(response.message);
                 table.ajax.reload();
@@ -455,7 +462,7 @@ function marcarComoImpresos(carnetIds) {
                 toastr.error(response.message || 'Error al marcar carnets');
             }
         },
-        error: function(xhr) {
+        error: function (xhr) {
             toastr.error('Error al marcar carnets como impresos');
         }
     });
@@ -468,13 +475,13 @@ function loadStatistics() {
 function updateStatistics(data) {
     let total = data.length;
     let activos = 0, pendientes = 0, impresos = 0;
-    
-    data.forEach(function(item) {
+
+    data.forEach(function (item) {
         if (item.estado === 'activo') activos++;
         if (!item.impreso) pendientes++;
         if (item.impreso) impresos++;
     });
-    
+
     $('#stat-total').text(total);
     $('#stat-activos').text(activos);
     $('#stat-pendientes').text(pendientes);
@@ -483,4 +490,44 @@ function updateStatistics(data) {
 
 function printCarnets(carnetIds) {
     exportarCarnets(carnetIds);
+}
+
+function exportarControlEntregas() {
+    // Crear un formulario temporal para enviar los filtros
+    const form = $('<form>', {
+        'method': 'POST',
+        'action': default_server + '/carnets/exportar-entregas'
+    });
+
+    // Agregar token CSRF
+    form.append($('<input>', {
+        'type': 'hidden',
+        'name': '_token',
+        'value': $('meta[name="csrf-token"]').attr('content')
+    }));
+
+    // Agregar filtros actuales
+    const filtros = {
+        ciclo_id: $('#filter-ciclo').val(),
+        carrera_id: $('#filter-carrera').val(),
+        turno_id: $('#filter-turno').val(),
+        aula_id: $('#filter-aula').val(),
+        entregado: $('#filter-entregado').val(),
+        impreso: $('#filter-impreso').val()
+    };
+
+    for (let key in filtros) {
+        if (filtros[key]) {
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': key,
+                'value': filtros[key]
+            }));
+        }
+    }
+
+    // Agregar al body y enviar
+    form.appendTo('body').submit().remove();
+
+    toastr.success('Generando reporte Excel...');
 }

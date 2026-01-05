@@ -377,6 +377,15 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:carnets.view')->group(function () {
         Route::get('/carnets', [CarnetController::class, 'index'])->name('carnets.index');
         Route::post('/carnets/exportar-pdf', [CarnetController::class, 'exportarPDF'])->name('carnets.exportar-pdf')->middleware('can:carnets.export');
+        
+        // Escaneo y entrega de carnets
+        Route::get('/carnets/escanear', [CarnetController::class, 'vistaEscanear'])->name('carnets.escanear')->middleware('can:carnets.scan_delivery');
+        Route::post('/carnets/escanear-qr', [CarnetController::class, 'escanearQR'])->name('carnets.escanear-qr')->middleware('can:carnets.scan_delivery');
+        Route::post('/carnets/registrar-entrega', [CarnetController::class, 'registrarEntrega'])->name('carnets.registrar-entrega')->middleware('can:carnets.scan_delivery');
+        
+        // Reportes de entrega
+        Route::post('/carnets/exportar-entregas', [CarnetController::class, 'exportarExcelEntregas'])->name('carnets.exportar-entregas')->middleware('can:carnets.export_delivery');
+        Route::get('/carnets/estadisticas-entrega', [CarnetController::class, 'estadisticasEntrega'])->name('carnets.estadisticas-entrega')->middleware('can:carnets.delivery_reports');
     });
     
     // Plantillas de Carnets - Editor visual

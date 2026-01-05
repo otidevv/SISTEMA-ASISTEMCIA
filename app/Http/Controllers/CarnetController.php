@@ -67,6 +67,9 @@ class CarnetController extends Controller
             if ($request->impreso !== null) {
                 $query->where('impreso', $request->impreso == '1');
             }
+            if ($request->entregado !== null) {
+                $query->where('entregado', $request->entregado == '1');
+            }
 
             $carnets = $query->orderBy('created_at', 'desc')->get();
 
@@ -145,6 +148,9 @@ Exception $e) {
             'estado' => $carnet->estado,
             'impreso' => $carnet->impreso,
             'fecha_impresion' => $carnet->fecha_impresion ? $carnet->fecha_impresion->format('d/m/Y H:i') : null,
+            'entregado' => $carnet->entregado,
+            'fecha_entrega' => $carnet->fecha_entrega ? $carnet->fecha_entrega->format('d/m/Y H:i') : null,
+            'estado_entrega' => $carnet->estado_entrega,
             'tiene_foto' => !empty($carnet->foto_path),
             'foto_path' => $carnet->foto_path,
             'actions' => $this->generarAcciones($carnet)
@@ -728,6 +734,222 @@ Exception $e) {
 
         return '<div class="btn-group">' . implode(' ', $actions) . '</div>';
     }
+
+    /**
+     * Vista para escanear QR y entregar carnets
+     */
+    public function vistaEscanear()
+    {
+        if (!Auth::user()->hasPermission('carnets.scan_delivery')) {
+            abort(403, 'No tienes permisos para escanear carnets');
+        }
+
+        return view('carnets.escanear');
+    }
+
+    /**
+     * Escanear QR y obtener datos del carnet
+     */
+    public function escanearQR(Request $request)
+    {
+        if (!Auth::user()->hasPermission('carnets.scan_delivery')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        $request->validate([
+            'codigo_carnet' => 'required|string'
+        ]);
+
+        try {
+            $carnet = Carnet::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula', 'entregador'])
+                ->where('codigo_carnet', $request->codigo_carnet)
+                ->first();
+
+            if (!$carnet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Carnet no encontrado. Verifique el código escaneado.'
+                ], 404);
+            }
+
+            // Verificar que el carnet esté impreso
+            if (!$carnet->impreso) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este carnet aún no ha sido impreso. Debe imprimirse antes de entregarse.'
+                ], 400);
+            }
+
+            // Verificar si ya fue entregado
+            if ($carnet->entregado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este carnet ya fue entregado el ' . 
+                                $carnet->fecha_entrega->format('d/m/Y H:i') . 
+                                ' por ' . ($carnet->entregador ? $carnet->entregador->nombre : 'N/A'),
+                    'ya_entregado' => true,
+                    'carnet' => [
+                        'codigo' => $carnet->codigo_carnet,
+                        'estudiante' => $carnet->nombre_completo,
+                        'dni' => $carnet->estudiante->numero_documento,
+                        'fecha_entrega' => $carnet->fecha_entrega->format('d/m/Y H:i'),
+                        'entregado_por' => $carnet->entregador ? $carnet->entregador->nombre . ' ' . $carnet->entregador->apellido_paterno : 'N/A'
+                    ]
+                ], 400);
+            }
+
+            // Obtener foto del estudiante
+            $fotoUrl = null;
+            if ($carnet->foto_path) {
+                $fotoUrl = asset('storage/' . $carnet->foto_path);
+            }
+
+            return response()->json([
+                'success' => true,
+                'carnet' => [
+                    'id' => $carnet->id,
+                    'codigo' => $carnet->codigo_carnet,
+                    'estudiante' => $carnet->nombre_completo,
+                    'dni' => $carnet->estudiante->numero_documento,
+                    'carrera' => $carnet->carrera->nombre,
+                    'turno' => $carnet->turno->nombre,
+                    'aula' => $carnet->aula ? $carnet->aula->nombre : 'Sin asignar',
+                    'ciclo' => $carnet->ciclo->nombre,
+                    'foto_url' => $fotoUrl,
+                    'fecha_emision' => $carnet->fecha_emision->format('d/m/Y'),
+                    'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y')
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el código QR: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Registrar entrega de carnet
+     */
+    public function registrarEntrega(Request $request)
+    {
+        if (!Auth::user()->hasPermission('carnets.scan_delivery')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        $request->validate([
+            'carnet_id' => 'required|exists:carnets,id'
+        ]);
+
+        try {
+            $carnet = Carnet::findOrFail($request->carnet_id);
+
+            // Verificar que no esté ya entregado
+            if ($carnet->entregado) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este carnet ya fue entregado anteriormente.'
+                ], 400);
+            }
+
+            // Marcar como entregado
+            $ip = $request->ip();
+            $carnet->marcarComoEntregado(Auth::id(), $ip);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Carnet entregado exitosamente',
+                'carnet' => [
+                    'codigo' => $carnet->codigo_carnet,
+                    'estudiante' => $carnet->nombre_completo,
+                    'fecha_entrega' => $carnet->fecha_entrega->format('d/m/Y H:i')
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar entrega: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Exportar Excel con control de entregas
+     */
+    public function exportarExcelEntregas(Request $request)
+    {
+        if (!Auth::user()->hasPermission('carnets.export_delivery')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $filtros = [
+                'ciclo_id' => $request->ciclo_id,
+                'carrera_id' => $request->carrera_id,
+                'turno_id' => $request->turno_id,
+                'aula_id' => $request->aula_id,
+                'entregado' => $request->entregado,
+                'impreso' => $request->impreso
+            ];
+
+            $export = new \App\Exports\CarnetsEntregaExport($filtros);
+            $filename = 'control_entregas_carnets_' . date('YmdHis') . '.xlsx';
+
+            return \Maatwebsite\Excel\Facades\Excel::download($export, $filename);
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al exportar: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Obtener estadísticas de entregas
+     */
+    public function estadisticasEntrega(Request $request)
+    {
+        if (!Auth::user()->hasPermission('carnets.delivery_reports')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $query = Carnet::query();
+
+            // Aplicar filtros si existen
+            if ($request->ciclo_id) {
+                $query->where('ciclo_id', $request->ciclo_id);
+            }
+            if ($request->carrera_id) {
+                $query->where('carrera_id', $request->carrera_id);
+            }
+
+            $total = $query->count();
+            $impresos = (clone $query)->where('impreso', true)->count();
+            $entregados = (clone $query)->where('entregado', true)->count();
+            $pendientesEntrega = (clone $query)->where('impreso', true)->where('entregado', false)->count();
+            $noImpresos = (clone $query)->where('impreso', false)->count();
+
+            return response()->json([
+                'success' => true,
+                'estadisticas' => [
+                    'total' => $total,
+                    'impresos' => $impresos,
+                    'entregados' => $entregados,
+                    'pendientes_entrega' => $pendientesEntrega,
+                    'no_impresos' => $noImpresos,
+                    'porcentaje_entrega' => $impresos > 0 ? round(($entregados / $impresos) * 100, 2) : 0
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Determinar el grupo según el nombre de la carrera
      */

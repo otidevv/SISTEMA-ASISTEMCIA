@@ -118,6 +118,18 @@
                                 <i class="uil uil-print me-1"></i> Marcar como Impresos
                             </button>
                             @endif
+                            
+                            @if(Auth::user()->hasPermission('carnets.scan_delivery'))
+                            <a href="{{ route('carnets.escanear') }}" class="btn btn-success">
+                                <i class="uil uil-qrcode-scan me-1"></i> Escanear para Entregar
+                            </a>
+                            @endif
+                            
+                            @if(Auth::user()->hasPermission('carnets.export_delivery'))
+                            <button type="button" class="btn btn-secondary" id="btn-exportar-entregas">
+                                <i class="uil uil-file-download me-1"></i> Exportar Control de Entregas
+                            </button>
+                            @endif
                         </div>
                     </div>
 
@@ -177,6 +189,14 @@
                                 <option value="">Todos</option>
                                 <option value="1">Impresos</option>
                                 <option value="0">No impresos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="filter-entregado">Entrega:</label>
+                            <select id="filter-entregado" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="1">Entregados</option>
+                                <option value="0">Pendientes</option>
                             </select>
                         </div>
                     </div>

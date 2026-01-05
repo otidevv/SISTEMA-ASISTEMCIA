@@ -116,6 +116,24 @@ class ModuloCarnetsSeeder extends Seeder
                 'codigo' => 'carnets.templates.activate',
                 'descripcion' => 'Permite activar/desactivar plantillas de carnets',
                 'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Escanear y Entregar Carnets',
+                'codigo' => 'carnets.scan_delivery',
+                'descripcion' => 'Permite escanear QR y registrar entregas de carnets',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Ver Reportes de Entregas',
+                'codigo' => 'carnets.delivery_reports',
+                'descripcion' => 'Permite ver reportes y estadísticas de entregas',
+                'modulo' => 'carnets'
+            ],
+            [
+                'nombre' => 'Exportar Control de Entregas',
+                'codigo' => 'carnets.export_delivery',
+                'descripcion' => 'Permite exportar Excel con control de entregas',
+                'modulo' => 'carnets'
             ]
         ];
 
@@ -155,7 +173,10 @@ class ModuloCarnetsSeeder extends Seeder
                     'carnets.print',
                     'carnets.export',
                     'carnets.mark_printed',
-                    'carnets.reports'
+                    'carnets.reports',
+                    'carnets.scan_delivery',
+                    'carnets.delivery_reports',
+                    'carnets.export_delivery'
                 ])
                 ->pluck('id');
             
@@ -186,7 +207,10 @@ class ModuloCarnetsSeeder extends Seeder
                     'carnets.reports',
                     'carnets.manage_status',
                     'carnets.generate_qr',
-                    'carnets.history'
+                    'carnets.history',
+                    'carnets.scan_delivery',
+                    'carnets.delivery_reports',
+                    'carnets.export_delivery'
                 ])
                 ->pluck('id');
             

@@ -30,6 +30,10 @@ class Carnet extends Model
         'impreso',
         'fecha_impresion',
         'impreso_por',
+        'entregado',
+        'fecha_entrega',
+        'entregado_por',
+        'ip_entrega',
         'observaciones'
     ];
 
@@ -37,7 +41,9 @@ class Carnet extends Model
         'fecha_emision' => 'date',
         'fecha_vencimiento' => 'date',
         'fecha_impresion' => 'datetime',
-        'impreso' => 'boolean'
+        'impreso' => 'boolean',
+        'entregado' => 'boolean',
+        'fecha_entrega' => 'datetime'
     ];
 
     /**
@@ -86,6 +92,14 @@ class Carnet extends Model
     public function impresor()
     {
         return $this->belongsTo(User::class, 'impreso_por');
+    }
+
+    /**
+     * Relación con el usuario que entregó
+     */
+    public function entregador()
+    {
+        return $this->belongsTo(User::class, 'entregado_por');
     }
 
     /**
@@ -164,6 +178,22 @@ class Carnet extends Model
     }
 
     /**
+     * Scope para carnets entregados
+     */
+    public function scopeEntregados($query)
+    {
+        return $query->where('entregado', true);
+    }
+
+    /**
+     * Scope para carnets pendientes de entrega
+     */
+    public function scopePendientesEntrega($query)
+    {
+        return $query->where('impreso', true)->where('entregado', false);
+    }
+
+    /**
      * Marcar como impreso
      */
     public function marcarComoImpreso($usuarioId)
@@ -172,6 +202,32 @@ class Carnet extends Model
         $this->fecha_impresion = Carbon::now();
         $this->impreso_por = $usuarioId;
         return $this->save();
+    }
+
+    /**
+     * Marcar como entregado
+     */
+    public function marcarComoEntregado($usuarioId, $ip = null)
+    {
+        $this->entregado = true;
+        $this->fecha_entrega = Carbon::now();
+        $this->entregado_por = $usuarioId;
+        $this->ip_entrega = $ip;
+        return $this->save();
+    }
+
+    /**
+     * Obtener estado de entrega
+     */
+    public function getEstadoEntregaAttribute()
+    {
+        if (!$this->impreso) {
+            return 'No impreso';
+        }
+        if ($this->entregado) {
+            return 'Entregado';
+        }
+        return 'Pendiente entrega';
     }
 
     /**
