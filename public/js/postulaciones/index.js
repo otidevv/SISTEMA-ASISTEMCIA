@@ -32,6 +32,7 @@ function initFilterSelects() {
 
 function initDataTable() {
     table = $('#postulaciones-datatable').DataTable({
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         processing: true,
         serverSide: true, // Habilitar server-side processing
         destroy: true, // Permite reinicializar la tabla y cancelar solicitudes Ajax pendientes
