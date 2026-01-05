@@ -761,8 +761,19 @@ Exception $e) {
         ]);
 
         try {
+            // Intentar decodificar el QR como JSON (formato nuevo)
+            $qrData = json_decode($request->codigo_carnet, true);
+            
+            // Si es JSON válido, extraer el código
+            if (is_array($qrData) && isset($qrData['codigo'])) {
+                $codigoCarnet = $qrData['codigo'];
+            } else {
+                // Si no es JSON, usar el valor directo (formato antiguo)
+                $codigoCarnet = $request->codigo_carnet;
+            }
+
             $carnet = Carnet::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula', 'entregador'])
-                ->where('codigo_carnet', $request->codigo_carnet)
+                ->where('codigo_carnet', $codigoCarnet)
                 ->first();
 
             if (!$carnet) {
