@@ -361,6 +361,9 @@ function moverHorario(horarioId, nuevaCelda) {
     });
 
     renderizarHorarios();
+
+    // Auto-guardar movimiento
+    guardarCambios();
 }
 
 /**
@@ -681,10 +684,13 @@ function guardarDesdeModal() {
     Swal.fire({
         icon: 'success',
         title: esReceso ? 'Receso(s) agregado(s)' : 'Horario agregado',
-        text: mensaje + '. Haz click en "Guardar Cambios" para confirmar.',
-        timer: 2500,
+        text: mensaje,
+        timer: 1500,
         showConfirmButton: false
     });
+
+    // Auto-guardar inmediatamente
+    guardarCambios();
 }
 
 /**
