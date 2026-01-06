@@ -361,6 +361,9 @@ function moverHorario(horarioId, nuevaCelda) {
     });
 
     renderizarHorarios();
+
+    // Auto-guardar movimiento
+    guardarCambios();
 }
 
 /**
@@ -628,6 +631,20 @@ function guardarDesdeModal() {
     const curso = esReceso ? null : window.scheduleData.cursos.find(c => c.id == cursoId);
     const docente = esReceso ? null : window.scheduleData.docentes.find(d => d.id == docenteId);
 
+    // Validar integridad de datos
+    if (!esReceso) {
+        if (!curso) {
+            console.error('Curso no encontrado en data:', cursoId);
+            Swal.fire('Error', 'No se encontraron los datos del curso seleccionado. Por favor recargue la página.', 'error');
+            return;
+        }
+        if (!docente) {
+            console.error('Docente no encontrado en data:', docenteId);
+            Swal.fire('Error', 'No se encontraron los datos del docente seleccionado. Por favor recargue la página.', 'error');
+            return;
+        }
+    }
+
     // Nombre del curso/receso
     let cursoNombre;
     if (esReceso) {
@@ -681,10 +698,13 @@ function guardarDesdeModal() {
     Swal.fire({
         icon: 'success',
         title: esReceso ? 'Receso(s) agregado(s)' : 'Horario agregado',
-        text: mensaje + '. Haz click en "Guardar Cambios" para confirmar.',
-        timer: 2500,
+        text: mensaje,
+        timer: 1500,
         showConfirmButton: false
     });
+
+    // Auto-guardar inmediatamente
+    guardarCambios();
 }
 
 /**
