@@ -160,6 +160,10 @@
                                     <i class="mdi mdi-calendar-week me-1"></i>
                                     <span>Vista Calendario</span>
                                 </a>
+                                <a href="{{ route('horarios-docentes.grid') }}" class="btn btn-primary btn-sm">
+                                    <i class="mdi mdi-calendar-multiselect me-1"></i>
+                                    <span>Grilla Visual</span>
+                                </a>
                             </div>
                         </div>
                     </div>

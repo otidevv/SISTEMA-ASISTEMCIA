@@ -521,44 +521,58 @@ class PostulacionController extends Controller
      */
     private function determinarGrupoCarrera($nombreCarrera)
     {
-        $nombreLower = strtolower($nombreCarrera);
+        // Normalizar: convertir a minúsculas y quitar tildes
+        $nombreNormalizado = $this->quitarTildes(strtolower($nombreCarrera));
         
-        // Grupo A - Ingenierías
-        if (str_contains($nombreLower, 'ingenieria') || 
-            str_contains($nombreLower, 'sistemas') ||
-            str_contains($nombreLower, 'informatica') ||
-            str_contains($nombreLower, 'forestal') ||
-            str_contains($nombreLower, 'medio ambiente') ||
-            str_contains($nombreLower, 'agroindustrial')) {
-            return 'A';
-        }
+        // IMPORTANTE: Evaluar en orden de especificidad para evitar conflictos
         
-        // Grupo B - Ciencias de la Salud
-        if (str_contains($nombreLower, 'medicina') ||
-            str_contains($nombreLower, 'veterinaria') ||
-            str_contains($nombreLower, 'zootecnia') ||
-            str_contains($nombreLower, 'enfermeria')) {
+        // Grupo B - Ciencias de la Salud (MÁXIMA PRIORIDAD)
+        if (str_contains($nombreNormalizado, 'medicina') ||
+            str_contains($nombreNormalizado, 'veterinaria') ||
+            str_contains($nombreNormalizado, 'zootecnia') ||
+            str_contains($nombreNormalizado, 'enfermeria')) {
             return 'B';
         }
         
-        // Grupo C - Ciencias Sociales y Educación
-        if (str_contains($nombreLower, 'administracion') ||
-            str_contains($nombreLower, 'negocios') ||
-            str_contains($nombreLower, 'contabilidad') ||
-            str_contains($nombreLower, 'finanzas') ||
-            str_contains($nombreLower, 'derecho') ||
-            str_contains($nombreLower, 'ciencias politicas') ||
-            str_contains($nombreLower, 'ecoturismo') ||
-            str_contains($nombreLower, 'educacion') ||
-            str_contains($nombreLower, 'primaria') ||
-            str_contains($nombreLower, 'inicial') ||
-            str_contains($nombreLower, 'especial') ||
-            str_contains($nombreLower, 'matematica') ||
-            str_contains($nombreLower, 'computacion')) {
+        // Grupo C - Ciencias Sociales y Educación (SEGUNDA PRIORIDAD)
+        // Evaluar antes que Grupo A para evitar que "Educación en Informática" vaya a Grupo A
+        if (str_contains($nombreNormalizado, 'educacion') ||
+            str_contains($nombreNormalizado, 'primaria') ||
+            str_contains($nombreNormalizado, 'inicial') ||
+            str_contains($nombreNormalizado, 'especial') ||
+            str_contains($nombreNormalizado, 'administracion') ||
+            str_contains($nombreNormalizado, 'negocios') ||
+            str_contains($nombreNormalizado, 'contabilidad') ||
+            str_contains($nombreNormalizado, 'finanzas') ||
+            str_contains($nombreNormalizado, 'derecho') ||
+            str_contains($nombreNormalizado, 'ciencias politicas') ||
+            str_contains($nombreNormalizado, 'ecoturismo') ||
+            str_contains($nombreNormalizado, 'matematica') ||
+            str_contains($nombreNormalizado, 'computacion')) {
             return 'C';
         }
         
+        // Grupo A - Ingenierías (TERCERA PRIORIDAD)
+        if (str_contains($nombreNormalizado, 'ingenieria') || 
+            str_contains($nombreNormalizado, 'sistemas') ||
+            str_contains($nombreNormalizado, 'informatica') ||
+            str_contains($nombreNormalizado, 'forestal') ||
+            str_contains($nombreNormalizado, 'medio ambiente') ||
+            str_contains($nombreNormalizado, 'agroindustrial')) {
+            return 'A';
+        }
+        
         return null; // Si no coincide con ningún grupo
+    }
+
+    /**
+     * Quitar tildes de un texto para normalización
+     */
+    private function quitarTildes($texto)
+    {
+        $tildes = ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'];
+        $sin_tildes = ['a', 'e', 'i', 'o', 'u', 'n', 'a', 'e', 'i', 'o', 'u', 'n'];
+        return str_replace($tildes, $sin_tildes, $texto);
     }
 
     /**

@@ -48,6 +48,9 @@ class PostulantesImport implements ToCollection, WithHeadingRow
             return;
         }
 
+        // Aumentar el tiempo de ejecución a 5 minutos para evitar timeouts
+        set_time_limit(300);
+
         DB::beginTransaction();
 
         try {

@@ -458,4 +458,237 @@ class HorarioDocenteController extends Controller
         
         return view('horarios_docentes.estadisticas', compact('estadisticas'));
     }
+
+    /**
+     * Vista de grilla visual interactiva para crear horarios masivamente
+     */
+    public function grid(Request $request)
+    {
+        $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
+        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+        
+        $cicloSeleccionadoId = $request->input('ciclo_id', $cicloActivo?->id);
+        $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId) ?? $cicloActivo;
+        
+        $aulas = Aula::all();
+        $turnos = ['MAÑANA', 'TARDE', 'NOCHE'];
+        $cursos = Curso::where('estado', true)->get();
+        $docentes = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
+        })->get();
+        
+        // Obtener aula y turno seleccionados
+        $aulaSeleccionadaId = $request->input('aula_id', $aulas->first()?->id);
+        $turnoSeleccionado = $request->input('turno', 'MAÑANA');
+        
+        return view('horarios_docentes.grid', compact(
+            'ciclos',
+            'cicloSeleccionado',
+            'aulas',
+            'turnos',
+            'cursos',
+            'docentes',
+            'aulaSeleccionadaId',
+            'turnoSeleccionado'
+        ));
+    }
+
+    /**
+     * API: Obtener horarios para la grilla visual
+     */
+    public function getSchedules(Request $request)
+    {
+        $request->validate([
+            'ciclo_id' => 'required|exists:ciclos,id',
+            'aula_id' => 'required|exists:aulas,id',
+            'turno' => 'required|in:MAÑANA,TARDE,NOCHE',
+        ]);
+
+        $horarios = HorarioDocente::with(['docente', 'curso', 'aula'])
+            ->where('ciclo_id', $request->ciclo_id)
+            ->where('aula_id', $request->aula_id)
+            ->where('turno', $request->turno)
+            ->get()
+            ->map(function ($horario) {
+                return [
+                    'id' => $horario->id,
+                    'docente_id' => $horario->docente_id,
+                    'docente_nombre' => $horario->docente?->nombre_completo ?? 'Sin asignar',
+                    'curso_id' => $horario->curso_id,
+                    'curso_nombre' => $horario->curso?->nombre ?? 'Sin curso',
+                    'curso_color' => $horario->curso?->color ?? '#7367f0',
+                    'dia_semana' => $horario->dia_semana,
+                    'hora_inicio' => substr($horario->hora_inicio, 0, 5),
+                    'hora_fin' => substr($horario->hora_fin, 0, 5),
+                    'grupo' => $horario->grupo,
+                ];
+            });
+
+        return response()->json($horarios);
+    }
+
+    /**
+     * Guardar múltiples horarios de forma masiva
+     */
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'horarios' => 'required|array',
+            'horarios.*.docente_id' => 'nullable|exists:users,id', // Cambiado a nullable para recesos
+            'horarios.*.curso_id' => 'nullable|exists:cursos,id', // Cambiado a nullable para recesos
+            'horarios.*.aula_id' => 'required|exists:aulas,id',
+            'horarios.*.ciclo_id' => 'required|exists:ciclos,id',
+            'horarios.*.dia_semana' => 'required|in:Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo',
+            'horarios.*.hora_inicio' => 'required|date_format:H:i',
+            'horarios.*.hora_fin' => 'required|date_format:H:i',
+            'horarios.*.turno' => 'required|in:MAÑANA,TARDE,NOCHE',
+        ]);
+
+        $horariosCreados = [];
+        $errores = [];
+
+        \DB::beginTransaction();
+        try {
+            foreach ($request->horarios as $index => $horarioData) {
+                try {
+                    // Solo validar conflictos si tiene docente (no es receso)
+                    if (!empty($horarioData['docente_id'])) {
+                        $tempRequest = new Request($horarioData);
+                        $this->validateScheduleConflicts($tempRequest);
+                    }
+                    
+                    $horario = HorarioDocente::create([
+                        'docente_id' => $horarioData['docente_id'] ?? null,
+                        'curso_id' => $horarioData['curso_id'],
+                        'aula_id' => $horarioData['aula_id'],
+                        'ciclo_id' => $horarioData['ciclo_id'],
+                        'dia_semana' => $horarioData['dia_semana'],
+                        'hora_inicio' => $horarioData['hora_inicio'],
+                        'hora_fin' => $horarioData['hora_fin'],
+                        'turno' => $horarioData['turno'],
+                        'grupo' => $horarioData['grupo'] ?? null,
+                    ]);
+                    
+                    $horariosCreados[] = $horario->id;
+                } catch (\Illuminate\Validation\ValidationException $e) {
+                    $errores[] = [
+                        'index' => $index,
+                        'errores' => $e->errors()
+                    ];
+                }
+            }
+
+            if (!empty($errores)) {
+                \DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Se encontraron conflictos en algunos horarios',
+                    'errores' => $errores
+                ], 422);
+            }
+
+            \DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => count($horariosCreados) . ' horarios creados exitosamente',
+                'horarios_creados' => $horariosCreados
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar los horarios: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Exportar horario a PDF
+     */
+    public function exportPDF(Request $request)
+    {
+        $request->validate([
+            'ciclo_id' => 'required|exists:ciclos,id',
+            'aula_id' => 'required|exists:aulas,id',
+            'turno' => 'required|in:MAÑANA,TARDE,NOCHE',
+        ]);
+
+        $ciclo = Ciclo::find($request->ciclo_id);
+        $aula = Aula::find($request->aula_id);
+        $turno = $request->turno;
+
+        $horarios = HorarioDocente::with(['docente', 'curso'])
+            ->where('ciclo_id', $request->ciclo_id)
+            ->where('aula_id', $request->aula_id)
+            ->where('turno', $request->turno)
+            ->get();
+
+        // Organizar horarios por día y hora
+        $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        $horasRango = $this->obtenerRangoHoras($horarios);
+        
+        $grilla = [];
+        foreach ($horasRango as $hora) {
+            $fila = ['hora' => $hora];
+            foreach ($dias as $dia) {
+                $fila[$dia] = $this->obtenerHorarioEnCelda($horarios, $dia, $hora);
+            }
+            $grilla[] = $fila;
+        }
+
+        $pdf = \PDF::loadView('horarios_docentes.pdf', [
+            'ciclo' => $ciclo,
+            'aula' => $aula,
+            'turno' => $turno,
+            'grilla' => $grilla,
+            'dias' => $dias
+        ]);
+
+        $pdf->setPaper('A4', 'landscape');
+        
+        return $pdf->download("Horario_{$aula->nombre}_{$turno}_{$ciclo->nombre}.pdf");
+    }
+
+    /**
+     * Obtener rango de horas de los horarios
+     */
+    private function obtenerRangoHoras($horarios)
+    {
+        $horas = [];
+        foreach ($horarios as $horario) {
+            $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
+            $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
+            
+            while ($inicio < $fin) {
+                $horaStr = $inicio->format('H:i');
+                if (!in_array($horaStr, $horas)) {
+                    $horas[] = $horaStr;
+                }
+                $inicio->addHour();
+            }
+        }
+        
+        sort($horas);
+        return $horas;
+    }
+
+    /**
+     * Obtener horario en una celda específica
+     */
+    private function obtenerHorarioEnCelda($horarios, $dia, $hora)
+    {
+        foreach ($horarios as $horario) {
+            if ($horario->dia_semana === $dia) {
+                $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
+                $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
+                $horaActual = Carbon::createFromFormat('H:i', $hora);
+                
+                if ($horaActual >= $inicio && $horaActual < $fin) {
+                    return $horario;
+                }
+            }
+        }
+        return null;
+    }
 }

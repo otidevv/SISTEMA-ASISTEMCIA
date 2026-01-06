@@ -812,6 +812,12 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::get('/{id}/editar', [App\Http\Controllers\HorarioDocenteController::class, 'edit'])->name('horarios-docentes.edit');
         Route::put('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'update'])->name('horarios-docentes.update');
         Route::delete('/{id}', [App\Http\Controllers\HorarioDocenteController::class, 'destroy'])->name('horarios-docentes.delete');
+        
+        // Nueva funcionalidad: Grilla Visual
+        Route::get('/grilla', [App\Http\Controllers\HorarioDocenteController::class, 'grid'])->name('horarios-docentes.grid');
+        Route::post('/bulk-store', [App\Http\Controllers\HorarioDocenteController::class, 'bulkStore'])->name('horarios-docentes.bulk-store');
+        Route::get('/get-schedules', [App\Http\Controllers\HorarioDocenteController::class, 'getSchedules'])->name('horarios-docentes.get-schedules');
+        Route::get('/export-pdf', [App\Http\Controllers\HorarioDocenteController::class, 'exportPDF'])->name('horarios-docentes.export-pdf');
     });
 });
 

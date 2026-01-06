@@ -12,6 +12,7 @@ class Curso extends Model
         'codigo',
         'nombre',
         'descripcion',
+        'color',
     ];
 
     public function horarios()
