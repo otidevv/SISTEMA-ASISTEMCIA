@@ -44,7 +44,7 @@ function generarColorAleatorio() {
 /**
  * Cargar horarios desde el servidor
  */
-async function cargarHorarios() {
+async function cargarHorarios(mostrarAlerta = true) {
     const cicloId = document.getElementById('filtro-ciclo').value;
     const aulaId = document.getElementById('filtro-aula').value;
     const turno = document.getElementById('filtro-turno').value;
@@ -64,13 +64,15 @@ async function cargarHorarios() {
         renderizarHorarios();
         actualizarEstadisticas();
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Horarios cargados',
-            text: `Se cargaron ${data.length} horarios`,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        if (mostrarAlerta) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Horarios cargados',
+                text: `Se cargaron ${data.length} horarios`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
     } catch (error) {
         Swal.fire('Error', 'No se pudieron cargar los horarios', 'error');
     } finally {
@@ -496,7 +498,11 @@ function inicializarEventos() {
     document.getElementById('btn-cargar-horarios').addEventListener('click', cargarHorarios);
 
     // Botón guardar cambios
-    document.getElementById('btn-guardar-cambios').addEventListener('click', guardarCambios);
+    // Botón guardar cambios
+    const btnGuardar = document.getElementById('btn-guardar-cambios');
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', guardarCambios);
+    }
 
     // Botón exportar PDF
     document.getElementById('btn-exportar-pdf').addEventListener('click', function () {
@@ -703,8 +709,8 @@ function guardarDesdeModal() {
         showConfirmButton: false
     });
 
-    // Auto-guardar inmediatamente
-    guardarCambios();
+    // Auto-guardar inmediatamente (silencioso porque ya mostramos mensaje)
+    guardarCambios(false);
 }
 
 /**
@@ -749,8 +755,8 @@ async function guardarSoloEliminaciones() {
             showConfirmButton: false
         });
 
-        // Recargar horarios
-        await cargarHorarios();
+        // Recargar horarios (silencioso)
+        await cargarHorarios(false);
     } catch (error) {
         Swal.fire({
             icon: 'error',
@@ -766,7 +772,7 @@ async function guardarSoloEliminaciones() {
 /**
  * Guardar todos los cambios
  */
-async function guardarCambios() {
+async function guardarCambios(mostrarAlerta = true) {
     if (cambiosPendientes.length === 0 && horariosEliminados.length === 0) {
         return; // Silenciosamente no hacer nada si no hay cambios
     }
@@ -848,16 +854,18 @@ async function guardarCambios() {
             ? 'Horario eliminado correctamente'
             : 'Cambios guardados correctamente';
 
-        Swal.fire({
-            icon: 'success',
-            title: '¡Éxito!',
-            text: mensaje,
-            timer: 2000,
-            showConfirmButton: false
-        });
+        if (mostrarAlerta) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: mensaje,
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
 
-        // Recargar horarios
-        await cargarHorarios();
+        // Recargar horarios (silencioso)
+        await cargarHorarios(false);
     } catch (error) {
         console.error('Error al guardar:', error);
         Swal.fire({
