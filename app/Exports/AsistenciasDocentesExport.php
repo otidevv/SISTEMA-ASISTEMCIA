@@ -371,6 +371,11 @@ class AsistenciasDocentesExport implements WithMultipleSheets
         $rangoFechasHeader = $this->generateDynamicHeader();
 
         foreach ($this->processedData as $docenteId => $docenteData) {
+            // ⚡ FILTRO: Solo crear hoja si el docente tiene sesiones
+            if (empty($docenteData['sessions']) || count($docenteData['sessions']) === 0) {
+                continue; // Saltar docentes sin sesiones
+            }
+            
             $docente = $docenteData['docente_info'];
             $docenteName = trim($docente->nombre . ' ' . $docente->apellido_paterno . ' ' . ($docente->apellido_materno ?? ''));
             
