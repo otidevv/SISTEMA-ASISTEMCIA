@@ -48,8 +48,8 @@ class PostulantesImport implements ToCollection, WithHeadingRow
             return;
         }
 
-        // Aumentar el tiempo de ejecución a 5 minutos para evitar timeouts
-        set_time_limit(300);
+        // Aumentar el tiempo de ejecución a 15 minutos para evitar timeouts
+        set_time_limit(900);
 
         DB::beginTransaction();
 
@@ -119,8 +119,11 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                         if (!$emailEnUso) {
                             $usuario->email = $emailInput;
                         }
-                    } elseif ($esNuevoUsuario) {
-                        $usuario->email = $dni . '@sistema.local';
+                    }
+                    
+                    // Asegurar que siempre haya un email (nuevo usuario o usuario existente sin email)
+                    if (empty($usuario->email)) {
+                        $usuario->email = $dni . '@cepre.unamad.edu.pe';
                     }
 
                     // Actualizar otros campos si vienen en el Excel

@@ -150,8 +150,13 @@ function crearBloqueHorario(horario) {
     block.dataset.horaInicio = horario.hora_inicio;
     block.dataset.horaFin = horario.hora_fin;
 
-    // Detectar si es un receso
-    const esReceso = horario.curso_nombre && (horario.curso_nombre.toLowerCase().includes('receso') || horario.curso_nombre === 'RECESO');
+    // Detectar si es un receso o curso eliminado
+    const esReceso = !horario.curso_id ||
+        (horario.curso_nombre && (
+            horario.curso_nombre.toLowerCase().includes('receso') ||
+            horario.curso_nombre === 'RECESO' ||
+            horario.curso_nombre === 'Sin curso'
+        ));
 
     // Obtener color: priorizar curso_color de la BD, luego cursosColores, luego default
     let color = '#7367f0'; // Default
@@ -174,7 +179,7 @@ function crearBloqueHorario(horario) {
         <button class="delete-btn" onclick="eliminarHorario('${horario.id || block.dataset.horarioId}')">
             <i class="mdi mdi-close"></i>
         </button>
-        <div class="course-name" style="font-size: ${fontSize};">${horario.curso_nombre}</div>
+        <div class="course-name" style="font-size: ${fontSize};">${horario.curso_nombre === 'Sin curso' ? 'RECESO' : horario.curso_nombre}</div>
         ${!esReceso ? `
         <div class="teacher-name">
             <i class="mdi mdi-account"></i>
@@ -448,13 +453,24 @@ function actualizarContadorCambios() {
  * Actualizar estadísticas
  */
 function actualizarEstadisticas() {
-    const total = horariosActuales.length;
-    const cursosUnicos = new Set(horariosActuales.map(h => h.curso_id)).size;
-    const docentesUnicos = new Set(horariosActuales.map(h => h.docente_id)).size;
+    // Filtrar recesos para no contarlos en estadísticas
+    const horariosReales = horariosActuales.filter(h => {
+        const esReceso = !h.curso_id ||
+            (h.curso_nombre && (
+                h.curso_nombre.toLowerCase().includes('receso') ||
+                h.curso_nombre === 'RECESO' ||
+                h.curso_nombre === 'Sin curso'
+            ));
+        return !esReceso;
+    });
+
+    const total = horariosReales.length;
+    const cursosUnicos = new Set(horariosReales.map(h => h.curso_id)).size;
+    const docentesUnicos = new Set(horariosReales.map(h => h.docente_id)).size;
 
     // Calcular horas totales
     let horasTotales = 0;
-    horariosActuales.forEach(h => {
+    horariosReales.forEach(h => {
         const inicio = h.hora_inicio.split(':');
         const fin = h.hora_fin.split(':');
         const minutos = (parseInt(fin[0]) * 60 + parseInt(fin[1])) - (parseInt(inicio[0]) * 60 + parseInt(inicio[1]));
@@ -780,33 +796,47 @@ async function guardarCambios(mostrarAlerta = true) {
     mostrarCargando(true);
 
     try {
-        // Guardar nuevos horarios si hay
+        // Guardar nuevos horarios si hay (EXCLUYENDO RECESOS)
         if (cambiosPendientes.length > 0) {
-            const horarios = cambiosPendientes.map(h => ({
-                docente_id: h.docente_id,
-                curso_id: h.curso_id,
-                aula_id: h.aula_id,
-                ciclo_id: h.ciclo_id,
-                dia_semana: h.dia_semana,
-                hora_inicio: h.hora_inicio,
-                hora_fin: h.hora_fin,
-                turno: h.turno,
-                grupo: h.grupo || null
-            }));
-
-            const response = await fetch(window.scheduleData.routes.bulkStore, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ horarios })
+            // Filtrar recesos - solo guardar horarios reales
+            const horariosParaGuardar = cambiosPendientes.filter(h => {
+                const esReceso = !h.curso_id ||
+                    (h.curso_nombre && (
+                        h.curso_nombre.toLowerCase().includes('receso') ||
+                        h.curso_nombre === 'RECESO' ||
+                        h.curso_nombre === 'Sin curso'
+                    ));
+                return !esReceso;
             });
 
-            const result = await response.json();
+            // Solo hacer la petición si hay horarios reales para guardar
+            if (horariosParaGuardar.length > 0) {
+                const horarios = horariosParaGuardar.map(h => ({
+                    docente_id: h.docente_id,
+                    curso_id: h.curso_id,
+                    aula_id: h.aula_id,
+                    ciclo_id: h.ciclo_id,
+                    dia_semana: h.dia_semana,
+                    hora_inicio: h.hora_inicio,
+                    hora_fin: h.hora_fin,
+                    turno: h.turno,
+                    grupo: h.grupo || null
+                }));
 
-            if (!result.success) {
-                throw new Error(result.message || 'Error al guardar horarios');
+                const response = await fetch(window.scheduleData.routes.bulkStore, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ horarios })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Error al guardar horarios');
+                }
             }
         }
 
