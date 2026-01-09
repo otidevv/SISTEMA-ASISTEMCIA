@@ -22,6 +22,7 @@ use App\Exports\AsistenciasDocentesExport;
 
 class AsistenciaDocenteController extends Controller
 {
+    use \App\Http\Controllers\Traits\HandlesSaturdayRotation;
     // La tarifa por minuto fija se remueve si es dinámica por docente.
     // const TARIFA_POR_MINUTO = 3.00; 
 
@@ -293,7 +294,9 @@ class AsistenciaDocenteController extends Controller
             // Iterar día por día dentro del rango (ahora sin queries)
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
-                $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
+                // Aplicar rotación de sábado si corresponde
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivo);
                 $fechaString = $currentDate->toDateString();
 
                 // Filtrar horarios del día desde la colección pre-cargada

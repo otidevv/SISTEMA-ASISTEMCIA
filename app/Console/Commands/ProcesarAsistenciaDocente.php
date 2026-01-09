@@ -65,6 +65,24 @@ class ProcesarAsistenciaDocente extends Command
 
     private function procesarMarcacion(User $usuario, RegistroAsistencia $registro, Carbon $fechaHora, string $diaSemana)
     {
+        $diaOriginal = $diaSemana;
+        
+        // NUEVO: Si es sábado, obtener día equivalente según rotación del ciclo
+        if ($diaSemana === 'sábado') {
+            $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
+            
+            if (!$cicloActivo) {
+                $this->warn("No hay ciclo activo. No se puede procesar sábado.");
+                $registro->evento()->update(['procesado' => true]);
+                return;
+            }
+            
+            $diaSemana = $cicloActivo->getDiaHorarioParaFecha($fechaHora);
+            $semana = $cicloActivo->getNumeroSemana($fechaHora);
+            
+            $this->info("Sábado detectado (Semana {$semana}). Usando horario de: " . ucfirst($diaSemana));
+        }
+        
         $horariosDelDia = HorarioDocente::where('docente_id', $usuario->id)
             ->where('dia_semana', $diaSemana)
             ->orderBy('hora_inicio', 'asc')
@@ -75,6 +93,7 @@ class ProcesarAsistenciaDocente extends Command
             $registro->evento()->update(['procesado' => true]);
             return;
         }
+
 
         // Caso especial: si la marcación es EXACTAMENTE en el límite de dos clases consecutivas
         $horariosEnLimite = $horariosDelDia->filter(function ($h) use ($fechaHora) {

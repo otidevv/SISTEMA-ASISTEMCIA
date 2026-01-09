@@ -209,4 +209,51 @@ class Ciclo extends Model
         $totalDias = $this->getTotalDiasHabiles();
         return ceil($totalDias * ($this->porcentaje_inhabilitacion / 100));
     }
+
+    /**
+     * Calcular número de semana dentro del ciclo
+     * @param mixed $fecha Fecha a consultar
+     * @return int Número de semana (1, 2, 3, ...)
+     */
+    public function getNumeroSemana($fecha)
+    {
+        $fechaInicio = $this->fecha_inicio->copy()->startOfWeek();
+        $fechaConsulta = \Carbon\Carbon::parse($fecha)->startOfWeek();
+        
+        $semanas = $fechaInicio->diffInWeeks($fechaConsulta);
+        return $semanas + 1;
+    }
+
+    /**
+     * Obtener día equivalente para sábado según rotación
+     * @param mixed $fecha Fecha del sábado
+     * @return string Día de la semana ('lunes', 'martes', etc.)
+     */
+    public function getDiaEquivalenteSabado($fecha)
+    {
+        $semana = $this->getNumeroSemana($fecha);
+        $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
+        $indice = ($semana - 1) % 5;
+        
+        return $diasSemana[$indice];
+    }
+
+    /**
+     * Obtener día de horario para cualquier fecha (incluye rotación de sábado)
+     * @param mixed $fecha Fecha a consultar
+     * @return string Día de la semana a usar para buscar horario
+     */
+    public function getDiaHorarioParaFecha($fecha)
+    {
+        $fechaCarbon = \Carbon\Carbon::parse($fecha);
+        $diaSemana = strtolower($fechaCarbon->translatedFormat('l'));
+        
+        // Si es sábado, aplicar rotación
+        if ($diaSemana === 'sábado') {
+            return $this->getDiaEquivalenteSabado($fecha);
+        }
+        
+        return $diaSemana;
+    }
 }
+

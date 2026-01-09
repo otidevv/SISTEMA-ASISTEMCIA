@@ -46,6 +46,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 class AsistenciasDocentesExport implements WithMultipleSheets 
 {
     use ProcessesTeacherSessions;
+    use \App\Http\Controllers\Traits\HandlesSaturdayRotation;
 
     // ═══════════════════════════════════════════════════════════════════════
     // PROPIEDADES DE CONFIGURACIÓN
@@ -199,7 +200,9 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 
                 $currentDate = $startDate->copy();
                 while ($currentDate->lte($endDate)) {
-                    $diaSemanaNombre = strtolower($currentDate->locale('es')->dayName);
+                    // Aplicar rotación de sábado si corresponde
+                    $cicloActivo = Ciclo::where('es_activo', true)->first();
+                    $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivo);
                     $fechaString = $currentDate->toDateString();
 
                     // Filtrar horarios del día desde la colección pre-cargada

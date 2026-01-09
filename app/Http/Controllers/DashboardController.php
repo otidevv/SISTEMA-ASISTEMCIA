@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\ProcessesTeacherSessions;
+use App\Http\Controllers\Traits\HandlesSaturdayRotation;
 use App\Models\Anuncio;
 use App\Models\Inscripcion;
 use App\Models\RegistroAsistencia;
@@ -25,7 +26,7 @@ use App\Models\Aula;
 
 class DashboardController extends Controller
 {
-    use ProcessesTeacherSessions;
+    use ProcessesTeacherSessions, HandlesSaturdayRotation;
 
     /**
      * Muestra el dashboard principal basado en el rol del usuario.
@@ -237,12 +238,16 @@ class DashboardController extends Controller
                 $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
                 $data['fechaSeleccionada'] = $fechaSeleccionada;
                 
-                $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
-                
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
                 
+                // Aplicar rotación de sábado si corresponde
+                $infoRotacion = $this->getInfoRotacion($fechaSeleccionada, $cicloActivo);
+                $diaSemanaParaHorario = $infoRotacion['dia_horario'];
+                
+                $data['infoRotacion'] = $infoRotacion; // Pasar info a la vista
+                
                 $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
-                    ->where('dia_semana', $diaSemanaSeleccionada)
+                    ->where('dia_semana', $diaSemanaParaHorario)
                     ->when($cicloActivo, function ($query, $ciclo) {
                         return $query->where('ciclo_id', $ciclo->id);
                     })
