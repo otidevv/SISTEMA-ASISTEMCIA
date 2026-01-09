@@ -103,10 +103,19 @@ class AsistenciaDocenteController extends Controller
             $startDate = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->startOfDay();
             $endDate = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->endOfMonth()->endOfDay();
         }
-        // Fallback final: últimos 30 días
+        // NUEVO: Fallback al ciclo activo en lugar de últimos 30 días
         else {
-            $endDate = Carbon::today()->endOfDay();
-            $startDate = $endDate->copy()->subDays(30)->startOfDay();
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            if ($cicloActivo) {
+                $startDate = Carbon::parse($cicloActivo->fecha_inicio)->startOfDay();
+                $endDate = Carbon::parse($cicloActivo->fecha_fin)->endOfDay();
+                // Auto-seleccionar el ciclo activo para que aparezca en el filtro
+                $selectedCicloAcademico = $cicloActivo->codigo;
+            } else {
+                // Si no hay ciclo activo, usar últimos 30 días como último recurso
+                $endDate = Carbon::today()->endOfDay();
+                $startDate = $endDate->copy()->subDays(30)->startOfDay();
+            }
         }
 
         // 3. Construir la consulta base para asistencias docentes, aplicando filtros (TU LÓGICA EXISTENTE)

@@ -220,6 +220,11 @@ class Ciclo extends Model
         $fechaInicio = $this->fecha_inicio->copy()->startOfWeek();
         $fechaConsulta = \Carbon\Carbon::parse($fecha)->startOfWeek();
         
+        // Si la fecha es antes del inicio del ciclo, retornar 1
+        if ($fechaConsulta->lt($fechaInicio)) {
+            return 1;
+        }
+        
         $semanas = $fechaInicio->diffInWeeks($fechaConsulta);
         return $semanas + 1;
     }
@@ -233,7 +238,9 @@ class Ciclo extends Model
     {
         $semana = $this->getNumeroSemana($fecha);
         $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
-        $indice = ($semana - 1) % 5;
+        
+        // Asegurar que el índice sea siempre positivo
+        $indice = (($semana - 1) % 5 + 5) % 5;
         
         return $diasSemana[$indice];
     }
