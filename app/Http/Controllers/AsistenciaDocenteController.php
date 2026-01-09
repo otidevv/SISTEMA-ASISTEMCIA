@@ -265,6 +265,9 @@ class AsistenciaDocenteController extends Controller
         // 6. OPTIMIZACIÓN: NUEVA LÓGICA PARA DATOS DETALLADOS - PRE-CARGA BATCH
         $processedDetailedAsistencias = [];
         
+        // ⚡ OPTIMIZACIÓN CRÍTICA: Obtener ciclo activo UNA SOLA VEZ fuera del loop
+        $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
+        
         // Obtener docentes según filtros
         $docentesQuery = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
@@ -303,9 +306,8 @@ class AsistenciaDocenteController extends Controller
             // Iterar día por día dentro del rango (ahora sin queries)
             $currentDate = $startDate->copy();
             while ($currentDate->lte($endDate)) {
-                // Aplicar rotación de sábado si corresponde
-                $cicloActivo = Ciclo::where('es_activo', true)->first();
-                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivo);
+                // ⚡ OPTIMIZADO: Usar ciclo pre-cargado en lugar de consultar cada vez
+                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivoParaRotacion);
                 $fechaString = $currentDate->toDateString();
 
                 // Filtrar horarios del día desde la colección pre-cargada
@@ -328,6 +330,7 @@ class AsistenciaDocenteController extends Controller
                         $docenteSessions[] = $sessionData;
                     }
                 }
+                
                 
                 $currentDate->addDay();
             }

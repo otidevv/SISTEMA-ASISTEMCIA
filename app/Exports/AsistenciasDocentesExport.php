@@ -198,11 +198,13 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     return Carbon::parse($item->fecha_registro)->toDateString();
                 });
                 
+                // ⚡ OPTIMIZACIÓN CRÍTICA: Obtener ciclo activo UNA SOLA VEZ fuera del loop
+                $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
+                
                 $currentDate = $startDate->copy();
                 while ($currentDate->lte($endDate)) {
-                    // Aplicar rotación de sábado si corresponde
-                    $cicloActivo = Ciclo::where('es_activo', true)->first();
-                    $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivo);
+                    // ⚡ OPTIMIZADO: Usar ciclo pre-cargado en lugar de consultar cada vez
+                    $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivoParaRotacion);
                     $fechaString = $currentDate->toDateString();
 
                     // Filtrar horarios del día desde la colección pre-cargada
