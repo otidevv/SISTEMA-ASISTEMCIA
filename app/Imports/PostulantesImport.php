@@ -49,7 +49,7 @@ class PostulantesImport implements ToCollection, WithHeadingRow
         }
 
         // Aumentar el tiempo de ejecución a 15 minutos para evitar timeouts
-        set_time_limit(900);
+        set_time_limit(1800);
 
         DB::beginTransaction();
 

@@ -3144,7 +3144,7 @@
                                         <i class="bi bi-person-badge text-primary"></i> Foto del Postulante
                                     </label>
                                     <div class="drop-zone" data-doc-type="foto" data-accept="image/*" data-max-size="5">
-                                        <input type="file" class="file-input" accept="image/*" id="input-foto">
+                                        <input type="file" class="file-input" accept="image/*" id="input-foto" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra la foto aquí</p>
@@ -3174,7 +3174,7 @@
                                         <i class="bi bi-card-text text-success"></i> DNI
                                     </label>
                                     <div class="drop-zone" data-doc-type="dni" data-accept="image/*,application/pdf" data-max-size="5">
-                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-dni">
+                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-dni" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra el DNI aquí</p>
@@ -3204,7 +3204,7 @@
                                         <i class="bi bi-receipt text-warning"></i> Voucher de Pago
                                     </label>
                                     <div class="drop-zone" data-doc-type="voucher" data-accept="image/*,application/pdf" data-max-size="5">
-                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-voucher">
+                                        <input type="file" class="file-input" accept="image/*,application/pdf" id="input-voucher" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra el voucher aquí</p>
@@ -3234,7 +3234,7 @@
                                         <i class="bi bi-file-earmark-text text-info"></i> Certificado de Estudios
                                     </label>
                                     <div class="drop-zone" data-doc-type="certificado_estudios" data-accept="application/pdf" data-max-size="10">
-                                        <input type="file" class="file-input" accept="application/pdf" id="input-certificado_estudios">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-certificado_estudios" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra el certificado aquí</p>
@@ -3266,7 +3266,7 @@
                                         <i class="bi bi-file-earmark-check text-secondary"></i> Constancia de Estudios
                                     </label>
                                     <div class="drop-zone" data-doc-type="constancia_estudios" data-accept="application/pdf" data-max-size="10">
-                                        <input type="file" class="file-input" accept="application/pdf" id="input-constancia_estudios">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-constancia_estudios" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra la constancia aquí</p>
@@ -3298,7 +3298,7 @@
                                         <i class="bi bi-file-earmark-ruled text-danger"></i> Carta Compromiso
                                     </label>
                                     <div class="drop-zone" data-doc-type="carta_compromiso" data-accept="application/pdf" data-max-size="10">
-                                        <input type="file" class="file-input" accept="application/pdf" id="input-carta_compromiso">
+                                        <input type="file" class="file-input" accept="application/pdf" id="input-carta_compromiso" style="pointer-events: none; position: absolute; opacity: 0; width: 0; height: 0;">
                                         <div class="drop-zone-content">
                                             <i class="bi bi-cloud-upload-fill text-muted" style="font-size: 48px;"></i>
                                             <p class="mb-1 fw-semibold">Arrastra la carta aquí</p>
@@ -3848,11 +3848,11 @@
             
             // Click en la zona para abrir selector de archivos
             zone.addEventListener('click', (e) => {
-                // Si el clic viene del input file, no disparar click de nuevo (evita doble apertura)
-                if (e.target === fileInput) return;
-                
                 // Si es el botón de eliminar (o su icono), no abrir selector
-                if (e.target.classList.contains('btn-remove') || e.target.closest('.btn-remove')) return;
+                if (e.target.classList.contains('btn-remove') || e.target.closest('.btn-remove')) {
+                    e.stopPropagation();
+                    return;
+                }
 
                 fileInput.click();
             });
