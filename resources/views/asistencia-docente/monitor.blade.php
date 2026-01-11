@@ -94,7 +94,7 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="temas-pendientes-tab" data-bs-toggle="tab" data-bs-target="#temas-pendientes" type="button" role="tab">
-                        <i class="fas fa-list-check"></i> Temas Pendientes
+                        <i class="fas fa-list-check"></i> Estado de Clases
                         <span class="badge bg-danger ms-1" id="badge-temas-pendientes">{{ $estadisticasHoy['temas_pendientes'] }}</span>
                     </button>
                 </li>
@@ -203,7 +203,7 @@
                 <div class="tab-pane fade" id="temas-pendientes" role="tabpanel">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-list-check"></i> Docentes con Temas Pendientes</h5>
+                            <h5 class="mb-0"><i class="fas fa-list-check"></i> Estado de Todas las Clases del Día</h5>
                             <button class="btn btn-success btn-sm" onclick="notificarTodosMasivo()">
                                 <i class="fab fa-whatsapp"></i> Notificar a Todos
                             </button>
@@ -527,33 +527,94 @@ function cargarTemasPendientes() {
         });
 }
 
-// Mostrar temas pendientes
+// Mostrar horario completo del día con estados
 function mostrarTemasPendientes(data) {
     const container = document.getElementById('temas-pendientes-container');
     
-    if (data.docentes.length === 0) {
-        container.innerHTML = '<p class="text-center text-success"><i class="fas fa-check-circle fa-3x mb-3"></i><br>¡Todos los docentes han registrado sus temas!</p>';
+    if (!data.clases || data.clases.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted"><i class="fas fa-calendar-times fa-3x mb-3"></i><br>No hay clases programadas para este día</p>';
         return;
     }
     
-    let html = '<div class="list-group">';
+    // Mostrar estadísticas
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alert alert-info">
+                    <strong>Resumen del ${data.fecha}:</strong> 
+                    Total: ${data.estadisticas.total} | 
+                    <span class="text-success">✓ Completados: ${data.estadisticas.completados}</span> | 
+                    <span class="text-warning">⚠ Pendientes: ${data.estadisticas.temas_pendientes}</span> | 
+                    <span class="text-info">⏳ En Curso: ${data.estadisticas.en_curso}</span> | 
+                    <span class="text-danger">✗ Faltas: ${data.estadisticas.faltas}</span>
+                </div>
+            </div>
+        </div>
+    `;
     
-    data.docentes.forEach(docente => {
+    html += '<div class="list-group">';
+    
+    data.clases.forEach(clase => {
+        const whatsappBtn = clase.docente_telefono && (clase.estado === 'tema_pendiente' || clase.estado === 'falta')
+            ? `<button class="btn btn-sm btn-whatsapp mt-2" onclick="enviarWhatsApp(${clase.docente_id}, '${clase.estado === 'falta' ? 'falta' : 'tema_pendiente'}', {curso: '${clase.curso}', fecha: '${clase.fecha}', hora: '${clase.hora_inicio}'})">
+                    <i class="fab fa-whatsapp"></i> Notificar
+               </button>`
+            : '';
+        
         html += `
             <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">${docente.docente_nombre}</h6>
-                        <p class="mb-1"><strong>Curso:</strong> ${docente.curso} | <strong>Aula:</strong> ${docente.aula}</p>
-                        <small class="text-muted">Salida: ${docente.hora_salida} - ${docente.tiempo_transcurrido}</small>
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">
+                            <i class="fas fa-user-tie text-primary"></i> 
+                            <strong>${clase.docente_nombre}</strong>
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <i class="fas fa-book text-info"></i> 
+                                    <strong>Curso:</strong> ${clase.curso}
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-door-open text-success"></i> 
+                                    <strong>Aula:</strong> ${clase.aula}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <i class="fas fa-clock text-warning"></i> 
+                                    <strong>Horario:</strong> ${clase.horario}
+                                </p>
+                                ${clase.hora_entrada ? `
+                                <p class="mb-1">
+                                    <i class="fas fa-sign-in-alt text-success"></i> 
+                                    <strong>Entrada:</strong> ${clase.hora_entrada}
+                                </p>` : ''}
+                                ${clase.hora_salida ? `
+                                <p class="mb-1">
+                                    <i class="fas fa-sign-out-alt text-danger"></i> 
+                                    <strong>Salida:</strong> ${clase.hora_salida}
+                                </p>` : ''}
+                            </div>
+                        </div>
+                        ${clase.tiempo_transcurrido ? `
+                        <small class="text-muted">
+                            <i class="fas fa-history"></i> ${clase.tiempo_transcurrido}
+                        </small>` : ''}
+                        ${clase.tema_desarrollado ? `
+                        <div class="mt-2">
+                            <small class="text-success">
+                                <i class="fas fa-check-circle"></i> <strong>Tema:</strong> ${clase.tema_desarrollado.substring(0, 50)}${clase.tema_desarrollado.length > 50 ? '...' : ''}
+                            </small>
+                        </div>` : ''}
                     </div>
-                    <div>
-                        ${docente.docente_telefono 
-                            ? `<button class="btn btn-sm btn-whatsapp" onclick="enviarWhatsApp(${docente.docente_id}, 'tema_pendiente', {curso: '${docente.curso}', fecha: '${docente.fecha}', hora: '${docente.hora_salida}'})">
-                                    <i class="fab fa-whatsapp"></i> Notificar
-                               </button>`
-                            : '<span class="badge bg-secondary">Sin teléfono</span>'
-                        }
+                    <div class="col-md-4 text-end">
+                        <div class="d-grid gap-2">
+                            <span class="badge bg-${clase.estado_color} p-2">
+                                <i class="fas fa-${clase.estado_icono}"></i> ${clase.estado_texto}
+                            </span>
+                            ${whatsappBtn}
+                        </div>
                     </div>
                 </div>
             </div>
