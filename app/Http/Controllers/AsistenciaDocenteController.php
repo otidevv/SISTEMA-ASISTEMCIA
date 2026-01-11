@@ -787,7 +787,19 @@ class AsistenciaDocenteController extends Controller
             $turno = $request->input('turno');
             
             $fechaCarbon = Carbon::parse($fecha);
-            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            // Obtener ciclo activo
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Aplicar rotación de sábado si corresponde
+            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
+            $esSabado = $diaReal === 'sábado';
+            $diaSemana = $diaReal;
+            
+            if ($esSabado && $cicloActivo) {
+                // Usar el día equivalente según la rotación semanal
+                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            }
             
             // Query base para horarios
             $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
@@ -840,7 +852,7 @@ class AsistenciaDocenteController extends Controller
                     'hora_fin' => $horario->hora_fin,
                     'hora_entrada' => $entradaBiometrica ? Carbon::parse($entradaBiometrica->fecha_registro)->format('H:i') : '-',
                     'hora_salida' => $salidaBiometrica ? Carbon::parse($salidaBiometrica->fecha_registro)->format('H:i') : '-',
-                    'horas_dictadas' => $asistenciaDocente ? $asistenciaDocente->horas_dictadas : 0,
+                    'horas_dictadas' => $asistenciaDocente && $asistenciaDocente->horas_dictadas ? round($asistenciaDocente->horas_dictadas, 2) : 0,
                     'tema_desarrollado' => $asistenciaDocente ? ($asistenciaDocente->tema_desarrollado ?? 'Pendiente') : 'Pendiente',
                     'estado' => $entradaBiometrica && $salidaBiometrica ? 'Asistió' : 'Falta',
                 ];
@@ -1588,7 +1600,18 @@ class AsistenciaDocenteController extends Controller
             $turno = $request->input('turno');
             
             $fechaCarbon = Carbon::parse($fecha);
-            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            // Obtener ciclo activo
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Aplicar rotación de sábado si corresponde
+            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
+            $esSabado = $diaReal === 'sábado';
+            $diaSemana = $diaReal;
+            
+            if ($esSabado && $cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            }
             
             $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
                 ->where('dia_semana', $diaSemana);
@@ -1604,16 +1627,30 @@ class AsistenciaDocenteController extends Controller
             $horarios = $horariosQuery->orderBy('hora_inicio')->get();
             
             $reporte = $horarios->map(function ($horario) use ($fechaCarbon) {
-                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
-                    ->where('docente_id', $horario->docente_id)
-                    ->whereDate('fecha_hora', $fechaCarbon)
-                    ->where('estado', 'entrada')
-                    ->first();
+                // Buscar registros biométricos
+                $registrosBiometricos = \App\Models\RegistroAsistencia::where('nro_documento', $horario->docente->numero_documento)
+                    ->whereDate('fecha_registro', $fechaCarbon)
+                    ->orderBy('fecha_registro')
+                    ->get();
                 
-                $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
+                $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
+                $horaFinProgramada = Carbon::parse($horario->hora_fin);
+                $horarioInicioHoy = $fechaCarbon->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
+                $horarioFinHoy = $fechaCarbon->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second);
+                
+                $entradaBiometrica = $registrosBiometricos->filter(function($r) use ($horarioInicioHoy) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between($horarioInicioHoy->copy()->subMinutes(15), $horarioInicioHoy->copy()->addMinutes(120));
+                })->sortBy('fecha_registro')->first();
+                
+                $salidaBiometrica = $registrosBiometricos->filter(function($r) use ($horarioFinHoy) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between($horarioFinHoy->copy()->subMinutes(15), $horarioFinHoy->copy()->addMinutes(60));
+                })->sortByDesc('fecha_registro')->first();
+                
+                $asistenciaDocente = AsistenciaDocente::where('horario_id', $horario->id)
                     ->where('docente_id', $horario->docente_id)
                     ->whereDate('fecha_hora', $fechaCarbon)
-                    ->where('estado', 'salida')
                     ->first();
                 
                 return [
@@ -1623,11 +1660,11 @@ class AsistenciaDocenteController extends Controller
                     'turno' => $horario->turno ?? 'N/A',
                     'hora_inicio' => $horario->hora_inicio,
                     'hora_fin' => $horario->hora_fin,
-                    'hora_entrada' => $asistenciaEntrada ? Carbon::parse($asistenciaEntrada->fecha_hora)->format('H:i') : '-',
-                    'hora_salida' => $asistenciaSalida ? Carbon::parse($asistenciaSalida->fecha_hora)->format('H:i') : '-',
-                    'horas_dictadas' => $asistenciaSalida ? $asistenciaSalida->horas_dictadas : 0,
-                    'tema_desarrollado' => $asistenciaSalida ? ($asistenciaSalida->tema_desarrollado ?? 'Pendiente') : 'Pendiente',
-                    'estado' => $asistenciaEntrada && $asistenciaSalida ? 'Asistió' : 'Falta',
+                    'hora_entrada' => $entradaBiometrica ? Carbon::parse($entradaBiometrica->fecha_registro)->format('H:i') : '-',
+                    'hora_salida' => $salidaBiometrica ? Carbon::parse($salidaBiometrica->fecha_registro)->format('H:i') : '-',
+                    'horas_dictadas' => $asistenciaDocente && $asistenciaDocente->horas_dictadas ? round($asistenciaDocente->horas_dictadas, 2) : 0,
+                    'tema_desarrollado' => $asistenciaDocente ? ($asistenciaDocente->tema_desarrollado ?? 'Pendiente') : 'Pendiente',
+                    'estado' => $entradaBiometrica && $salidaBiometrica ? 'Asistió' : 'Falta',
                 ];
             });
             
