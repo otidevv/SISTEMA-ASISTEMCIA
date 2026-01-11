@@ -318,6 +318,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
         Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
         
+        // Nuevas rutas para el monitor mejorado
+        Route::get('/monitor/horario-dia', [AsistenciaDocenteController::class, 'getDailySchedule'])->name('asistencia-docente.monitor.horario-dia');
+        Route::get('/monitor/temas-pendientes', [AsistenciaDocenteController::class, 'getTeachersWithoutTheme'])->name('asistencia-docente.monitor.temas-pendientes');
+        Route::get('/monitor/reporte-diario', [AsistenciaDocenteController::class, 'getDailyReport'])->name('asistencia-docente.monitor.reporte-diario');
+        Route::post('/monitor/generar-whatsapp', [AsistenciaDocenteController::class, 'generateWhatsAppMessage'])->name('asistencia-docente.monitor.whatsapp');
+        
+        // Rutas para TOP 3 enhancements
+        Route::get('/monitor/exportar-reporte', [AsistenciaDocenteController::class, 'exportarReporteDiario'])->name('asistencia-docente.monitor.exportar');
+        Route::post('/monitor/notificar-masivo', [AsistenciaDocenteController::class, 'notificarMasivoWhatsApp'])->name('asistencia-docente.monitor.notificar-masivo');
+        Route::get('/monitor/estadisticas-graficos', [AsistenciaDocenteController::class, 'getEstadisticasGraficos'])->name('asistencia-docente.monitor.estadisticas');
+        
         // Ruta API específica para AJAX (registros recientes)
         Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
     });

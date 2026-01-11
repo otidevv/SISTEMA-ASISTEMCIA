@@ -466,13 +466,307 @@ class AsistenciaDocenteController extends Controller
 
     public function monitor()
     {
+        $hoy = Carbon::today();
+        
+        // Últimas asistencias del día
         $ultimasAsistencias = AsistenciaDocente::with(['docente', 'horario.curso'])
+            ->whereDate('fecha_hora', $hoy)
             ->orderBy('fecha_hora', 'desc')
-            ->take(10)
+            ->take(20)
             ->get();
 
-        return view('asistencia-docente.monitor', compact('ultimasAsistencias'));
+        // Estadísticas del día
+        $estadisticasHoy = [
+            'total_registros' => AsistenciaDocente::whereDate('fecha_hora', $hoy)->count(),
+            'total_entradas' => AsistenciaDocente::whereDate('fecha_hora', $hoy)->where('estado', 'entrada')->count(),
+            'total_salidas' => AsistenciaDocente::whereDate('fecha_hora', $hoy)->where('estado', 'salida')->count(),
+            'temas_pendientes' => AsistenciaDocente::whereDate('fecha_hora', $hoy)
+                ->where('estado', 'salida')
+                ->whereNull('tema_desarrollado')
+                ->count(),
+        ];
+
+        // Obtener ciclo activo
+        $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+        return view('asistencia-docente.monitor', compact('ultimasAsistencias', 'estadisticasHoy', 'cicloActivo'));
     }
+
+    /**
+     * Obtener horario completo del día actual con estados de asistencia
+     */
+    public function getDailySchedule(Request $request)
+    {
+        try {
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $fechaCarbon = Carbon::parse($fecha);
+            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            // Obtener ciclo activo
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Obtener todos los horarios del día
+            $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->where('dia_semana', $diaSemana);
+            
+            if ($cicloActivo) {
+                $horariosQuery->where('ciclo_id', $cicloActivo->id);
+            }
+            
+            $horarios = $horariosQuery->orderBy('hora_inicio')->get();
+            
+            // Procesar cada horario con su estado de asistencia
+            $schedule = $horarios->map(function ($horario) use ($fechaCarbon) {
+                // Buscar asistencias del día para este horario
+                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'entrada')
+                    ->first();
+                
+                $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'salida')
+                    ->first();
+                
+                // Determinar estado
+                $ahora = Carbon::now();
+                $horaInicio = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_inicio);
+                $horaFin = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_fin);
+                
+                $estado = 'pendiente'; // Por defecto
+                $estadoTexto = 'Pendiente';
+                $estadoColor = 'secondary';
+                
+                if ($asistenciaEntrada && $asistenciaSalida) {
+                    if ($asistenciaSalida->tema_desarrollado) {
+                        $estado = 'completo';
+                        $estadoTexto = 'Completo';
+                        $estadoColor = 'success';
+                    } else {
+                        $estado = 'tema_pendiente';
+                        $estadoTexto = 'Tema Pendiente';
+                        $estadoColor = 'warning';
+                    }
+                } elseif ($asistenciaEntrada && $ahora->between($horaInicio, $horaFin)) {
+                    $estado = 'en_curso';
+                    $estadoTexto = 'En Curso';
+                    $estadoColor = 'info';
+                } elseif (!$asistenciaEntrada && $ahora->greaterThan($horaFin)) {
+                    $estado = 'falta';
+                    $estadoTexto = 'Falta';
+                    $estadoColor = 'danger';
+                }
+                
+                return [
+                    'horario_id' => $horario->id,
+                    'hora_inicio' => $horario->hora_inicio,
+                    'hora_fin' => $horario->hora_fin,
+                    'docente_id' => $horario->docente_id,
+                    'docente_nombre' => $horario->docente ? $horario->docente->nombre . ' ' . $horario->docente->apellido_paterno : 'N/A',
+                    'docente_telefono' => $horario->docente ? $horario->docente->telefono : null,
+                    'curso' => $horario->curso ? $horario->curso->nombre : 'N/A',
+                    'aula' => $horario->aula ? $horario->aula->nombre : 'N/A',
+                    'estado' => $estado,
+                    'estado_texto' => $estadoTexto,
+                    'estado_color' => $estadoColor,
+                    'tiene_entrada' => $asistenciaEntrada ? true : false,
+                    'tiene_salida' => $asistenciaSalida ? true : false,
+                    'tema_desarrollado' => $asistenciaSalida ? $asistenciaSalida->tema_desarrollado : null,
+                    'asistencia_id' => $asistenciaSalida ? $asistenciaSalida->id : ($asistenciaEntrada ? $asistenciaEntrada->id : null),
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'fecha' => $fechaCarbon->format('Y-m-d'),
+                'dia_semana' => ucfirst($diaSemana),
+                'schedule' => $schedule,
+                'total_clases' => $schedule->count(),
+                'hora_actual' => Carbon::now()->format('H:i:s'),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener horario: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener docentes que no han registrado tema desarrollado
+     */
+    public function getTeachersWithoutTheme(Request $request)
+    {
+        try {
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $fechaCarbon = Carbon::parse($fecha);
+            
+            // Buscar asistencias de salida sin tema desarrollado
+            $asistenciasSinTema = AsistenciaDocente::with(['docente', 'horario.curso', 'horario.aula'])
+                ->whereDate('fecha_hora', $fechaCarbon)
+                ->where('estado', 'salida')
+                ->whereNull('tema_desarrollado')
+                ->orderBy('fecha_hora', 'desc')
+                ->get();
+            
+            $docentes = $asistenciasSinTema->map(function ($asistencia) use ($fechaCarbon) {
+                $tiempoTranscurrido = Carbon::parse($asistencia->fecha_hora)->diffForHumans();
+                
+                return [
+                    'asistencia_id' => $asistencia->id,
+                    'docente_id' => $asistencia->docente_id,
+                    'docente_nombre' => $asistencia->docente ? $asistencia->docente->nombre . ' ' . $asistencia->docente->apellido_paterno : 'N/A',
+                    'docente_telefono' => $asistencia->docente ? $asistencia->docente->telefono : null,
+                    'curso' => $asistencia->horario && $asistencia->horario->curso ? $asistencia->horario->curso->nombre : 'N/A',
+                    'aula' => $asistencia->horario && $asistencia->horario->aula ? $asistencia->horario->aula->nombre : 'N/A',
+                    'hora_salida' => Carbon::parse($asistencia->fecha_hora)->format('H:i'),
+                    'tiempo_transcurrido' => $tiempoTranscurrido,
+                    'fecha' => $fechaCarbon->format('d/m/Y'),
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'docentes' => $docentes,
+                'total' => $docentes->count(),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener docentes sin tema: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generar reporte diario detallado
+     */
+    public function getDailyReport(Request $request)
+    {
+        try {
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $cicloId = $request->input('ciclo_id');
+            $turno = $request->input('turno');
+            
+            $fechaCarbon = Carbon::parse($fecha);
+            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            // Query base para horarios
+            $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->where('dia_semana', $diaSemana);
+            
+            if ($cicloId) {
+                $horariosQuery->where('ciclo_id', $cicloId);
+            }
+            
+            if ($turno) {
+                $horariosQuery->where('turno', $turno);
+            }
+            
+            $horarios = $horariosQuery->orderBy('hora_inicio')->get();
+            
+            // Procesar reporte detallado
+            $reporte = $horarios->map(function ($horario) use ($fechaCarbon) {
+                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'entrada')
+                    ->first();
+                
+                $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'salida')
+                    ->first();
+                
+                return [
+                    'docente' => $horario->docente ? $horario->docente->nombre . ' ' . $horario->docente->apellido_paterno : 'N/A',
+                    'curso' => $horario->curso ? $horario->curso->nombre : 'N/A',
+                    'aula' => $horario->aula ? $horario->aula->nombre : 'N/A',
+                    'turno' => $horario->turno ?? 'N/A',
+                    'hora_inicio' => $horario->hora_inicio,
+                    'hora_fin' => $horario->hora_fin,
+                    'hora_entrada' => $asistenciaEntrada ? Carbon::parse($asistenciaEntrada->fecha_hora)->format('H:i') : '-',
+                    'hora_salida' => $asistenciaSalida ? Carbon::parse($asistenciaSalida->fecha_hora)->format('H:i') : '-',
+                    'horas_dictadas' => $asistenciaSalida ? $asistenciaSalida->horas_dictadas : 0,
+                    'tema_desarrollado' => $asistenciaSalida ? ($asistenciaSalida->tema_desarrollado ?? 'Pendiente') : 'Pendiente',
+                    'estado' => $asistenciaEntrada && $asistenciaSalida ? 'Asistió' : 'Falta',
+                ];
+            });
+            
+            // Estadísticas del reporte
+            $estadisticas = [
+                'total_clases' => $reporte->count(),
+                'total_asistencias' => $reporte->where('estado', 'Asistió')->count(),
+                'total_faltas' => $reporte->where('estado', 'Falta')->count(),
+                'total_temas_pendientes' => $reporte->where('tema_desarrollado', 'Pendiente')->count(),
+                'total_horas_dictadas' => $reporte->sum('horas_dictadas'),
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'fecha' => $fechaCarbon->format('d/m/Y'),
+                'reporte' => $reporte,
+                'estadisticas' => $estadisticas,
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar reporte: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generar mensaje de WhatsApp
+     */
+    public function generateWhatsAppMessage(Request $request)
+    {
+        try {
+            $request->validate([
+                'docente_id' => 'required|exists:users,id',
+                'tipo' => 'required|in:tema_pendiente,falta,recordatorio',
+                'data' => 'nullable|array',
+            ]);
+            
+            $docente = User::findOrFail($request->docente_id);
+            
+            if (!$docente->telefono) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El docente no tiene número de teléfono registrado.'
+                ], 400);
+            }
+            
+            // Preparar datos para el mensaje
+            $data = array_merge([
+                'docente_nombre' => $docente->nombre . ' ' . $docente->apellido_paterno,
+            ], $request->input('data', []));
+            
+            // Generar mensaje usando el helper
+            $mensaje = \App\Helpers\WhatsAppHelper::getMessageTemplate($request->tipo, $data);
+            $link = \App\Helpers\WhatsAppHelper::generateLink($docente->telefono, $mensaje);
+            
+            return response()->json([
+                'success' => true,
+                'link' => $link,
+                'mensaje' => $mensaje,
+                'telefono' => $docente->telefono,
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar mensaje: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     /**
      * NUEVO: Mostrar el formulario para registrar asistencia docente manualmente.
@@ -1133,5 +1427,228 @@ class AsistenciaDocenteController extends Controller
             'total_pagos' => $totalPagos,
             'rowspan' => $totalRowspan
         ];
+    }
+
+    /**
+     * Exportar reporte diario a Excel
+     */
+    public function exportarReporteDiario(Request $request)
+    {
+        try {
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $cicloId = $request->input('ciclo_id');
+            $turno = $request->input('turno');
+            
+            $fechaCarbon = Carbon::parse($fecha);
+            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->where('dia_semana', $diaSemana);
+            
+            if ($cicloId) {
+                $horariosQuery->where('ciclo_id', $cicloId);
+            }
+            
+            if ($turno) {
+                $horariosQuery->where('turno', $turno);
+            }
+            
+            $horarios = $horariosQuery->orderBy('hora_inicio')->get();
+            
+            $reporte = $horarios->map(function ($horario) use ($fechaCarbon) {
+                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'entrada')
+                    ->first();
+                
+                $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'salida')
+                    ->first();
+                
+                return [
+                    'docente' => $horario->docente ? $horario->docente->nombre . ' ' . $horario->docente->apellido_paterno : 'N/A',
+                    'curso' => $horario->curso ? $horario->curso->nombre : 'N/A',
+                    'aula' => $horario->aula ? $horario->aula->nombre : 'N/A',
+                    'turno' => $horario->turno ?? 'N/A',
+                    'hora_inicio' => $horario->hora_inicio,
+                    'hora_fin' => $horario->hora_fin,
+                    'hora_entrada' => $asistenciaEntrada ? Carbon::parse($asistenciaEntrada->fecha_hora)->format('H:i') : '-',
+                    'hora_salida' => $asistenciaSalida ? Carbon::parse($asistenciaSalida->fecha_hora)->format('H:i') : '-',
+                    'horas_dictadas' => $asistenciaSalida ? $asistenciaSalida->horas_dictadas : 0,
+                    'tema_desarrollado' => $asistenciaSalida ? ($asistenciaSalida->tema_desarrollado ?? 'Pendiente') : 'Pendiente',
+                    'estado' => $asistenciaEntrada && $asistenciaSalida ? 'Asistió' : 'Falta',
+                ];
+            });
+            
+            $estadisticas = [
+                'total_clases' => $reporte->count(),
+                'total_asistencias' => $reporte->where('estado', 'Asistió')->count(),
+                'total_faltas' => $reporte->where('estado', 'Falta')->count(),
+                'total_temas_pendientes' => $reporte->where('tema_desarrollado', 'Pendiente')->count(),
+                'total_horas_dictadas' => $reporte->sum('horas_dictadas'),
+            ];
+            
+            $nombreArchivo = 'Reporte_Diario_Docentes_' . $fechaCarbon->format('Y-m-d') . '.xlsx';
+            
+            return Excel::download(
+                new \App\Exports\ReporteDiarioDocenteExport($reporte, $estadisticas, $fechaCarbon->format('d/m/Y')),
+                $nombreArchivo
+            );
+            
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al exportar: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Enviar notificaciones masivas por WhatsApp
+     */
+    public function notificarMasivoWhatsApp(Request $request)
+    {
+        try {
+            $request->validate([
+                'tipo' => 'required|in:tema_pendiente,falta,recordatorio',
+                'fecha' => 'nullable|date',
+            ]);
+            
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $fechaCarbon = Carbon::parse($fecha);
+            $tipo = $request->tipo;
+            
+            $docentes = [];
+            
+            if ($tipo === 'tema_pendiente') {
+                $asistenciasSinTema = AsistenciaDocente::with(['docente', 'horario.curso', 'horario.aula'])
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'salida')
+                    ->whereNull('tema_desarrollado')
+                    ->get();
+                
+                foreach ($asistenciasSinTema as $asistencia) {
+                    if ($asistencia->docente && $asistencia->docente->telefono) {
+                        $data = [
+                            'docente_nombre' => $asistencia->docente->nombre . ' ' . $asistencia->docente->apellido_paterno,
+                            'curso' => $asistencia->horario && $asistencia->horario->curso ? $asistencia->horario->curso->nombre : 'el curso',
+                            'fecha' => $fechaCarbon->format('d/m/Y'),
+                            'hora' => Carbon::parse($asistencia->fecha_hora)->format('H:i'),
+                        ];
+                        
+                        $mensaje = \App\Helpers\WhatsAppHelper::getMessageTemplate($tipo, $data);
+                        $link = \App\Helpers\WhatsAppHelper::generateLink($asistencia->docente->telefono, $mensaje);
+                        
+                        $docentes[] = [
+                            'id' => $asistencia->docente_id,
+                            'nombre' => $data['docente_nombre'],
+                            'telefono' => $asistencia->docente->telefono,
+                            'link' => $link,
+                            'mensaje' => $mensaje,
+                        ];
+                    }
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'total' => count($docentes),
+                'docentes' => $docentes,
+                'message' => count($docentes) . ' docentes encontrados para notificar'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar notificaciones: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener datos para gráficos estadísticos
+     */
+    public function getEstadisticasGraficos(Request $request)
+    {
+        try {
+            $fecha = $request->input('fecha', Carbon::today()->toDateString());
+            $fechaCarbon = Carbon::parse($fecha);
+            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
+            
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            $horariosQuery = HorarioDocente::with(['docente', 'curso'])
+                ->where('dia_semana', $diaSemana);
+            
+            if ($cicloActivo) {
+                $horariosQuery->where('ciclo_id', $cicloActivo->id);
+            }
+            
+            $horarios = $horariosQuery->get();
+            
+            $asistencias = 0;
+            $faltas = 0;
+            $temasPendientes = 0;
+            $temasRegistrados = 0;
+            
+            foreach ($horarios as $horario) {
+                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'entrada')
+                    ->first();
+                
+                $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
+                    ->where('docente_id', $horario->docente_id)
+                    ->whereDate('fecha_hora', $fechaCarbon)
+                    ->where('estado', 'salida')
+                    ->first();
+                
+                if ($asistenciaEntrada && $asistenciaSalida) {
+                    $asistencias++;
+                    if ($asistenciaSalida->tema_desarrollado) {
+                        $temasRegistrados++;
+                    } else {
+                        $temasPendientes++;
+                    }
+                } else {
+                    $faltas++;
+                }
+            }
+            
+            $asistenciasPorHora = AsistenciaDocente::whereDate('fecha_hora', $fechaCarbon)
+                ->where('estado', 'entrada')
+                ->selectRaw('HOUR(fecha_hora) as hora, COUNT(*) as total')
+                ->groupBy('hora')
+                ->orderBy('hora')
+                ->get()
+                ->pluck('total', 'hora')
+                ->toArray();
+            
+            return response()->json([
+                'success' => true,
+                'fecha' => $fechaCarbon->format('d/m/Y'),
+                'asistencias_vs_faltas' => [
+                    'labels' => ['Asistencias', 'Faltas'],
+                    'data' => [$asistencias, $faltas],
+                    'colors' => ['#28a745', '#dc3545'],
+                ],
+                'temas_status' => [
+                    'labels' => ['Temas Registrados', 'Temas Pendientes'],
+                    'data' => [$temasRegistrados, $temasPendientes],
+                    'colors' => ['#28a745', '#ffc107'],
+                ],
+                'asistencias_por_hora' => [
+                    'labels' => array_keys($asistenciasPorHora),
+                    'data' => array_values($asistenciasPorHora),
+                ],
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
