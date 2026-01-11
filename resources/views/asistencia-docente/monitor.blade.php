@@ -555,11 +555,18 @@ function mostrarTemasPendientes(data) {
     html += '<div class="list-group">';
     
     data.clases.forEach(clase => {
-        const whatsappBtn = clase.docente_telefono && (clase.estado === 'tema_pendiente' || clase.estado === 'falta')
-            ? `<button class="btn btn-sm btn-whatsapp mt-2" onclick="enviarWhatsApp(${clase.docente_id}, '${clase.estado === 'falta' ? 'falta' : 'tema_pendiente'}', {curso: '${clase.curso}', fecha: '${clase.fecha}', hora: '${clase.hora_inicio}'})">
-                    <i class="fab fa-whatsapp"></i> Notificar
-               </button>`
-            : '';
+        let whatsappBtn = '';
+        
+        if (clase.estado === 'tema_pendiente' || clase.estado === 'falta' || clase.estado === 'sin_salida') {
+            if (clase.docente_telefono) {
+                whatsappBtn = `
+                    <button class="btn btn-success btn-sm w-100 mt-2" onclick="enviarWhatsApp(${clase.docente_id}, '${clase.estado === 'falta' ? 'falta' : 'tema_pendiente'}', {curso: '${clase.curso}', fecha: '${clase.fecha}', hora: '${clase.hora_inicio}'})">
+                        <i class="fab fa-whatsapp"></i> Notificar
+                    </button>`;
+            } else {
+                whatsappBtn = '<small class="text-muted mt-2 d-block"><i class="fas fa-phone-slash"></i> Sin teléfono</small>';
+            }
+        }
         
         html += `
             <div class="list-group-item">

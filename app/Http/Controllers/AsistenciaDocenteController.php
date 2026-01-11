@@ -603,10 +603,19 @@ class AsistenciaDocenteController extends Controller
         try {
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
-            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
             
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Aplicar rotación de sábado si corresponde
+            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
+            $esSabado = $diaReal === 'sábado';
+            $diaSemana = $diaReal;
+            
+            if ($esSabado && $cicloActivo) {
+                // Usar el día equivalente según la rotación semanal
+                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            }
             
             // Obtener todos los horarios del día
             $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
@@ -644,7 +653,7 @@ class AsistenciaDocenteController extends Controller
                 $estadoIcono = 'clock';
                 
                 if ($asistenciaEntrada && $asistenciaSalida) {
-                    // Asistió y salió
+                    // Asistió y salió - verificar si registró tema
                     if ($asistenciaSalida->tema_desarrollado) {
                         $estado = 'completado';
                         $estadoTexto = 'Tema Registrado';
@@ -664,8 +673,9 @@ class AsistenciaDocenteController extends Controller
                         $estadoColor = 'info';
                         $estadoIcono = 'spinner';
                     } else {
-                        $estado = 'tema_pendiente';
-                        $estadoTexto = 'Falta Salida';
+                        // Ya pasó la hora de fin pero no registró salida
+                        $estado = 'sin_salida';
+                        $estadoTexto = 'Falta Registrar Salida';
                         $estadoColor = 'warning';
                         $estadoIcono = 'exclamation-circle';
                     }
