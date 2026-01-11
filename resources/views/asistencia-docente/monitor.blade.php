@@ -1,6 +1,31 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    .btn-whatsapp-custom {
+        background-color: #25D366;
+        color: #fff !important;
+        border: none;
+        border-radius: 50px;
+        padding: 5px 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(37, 211, 102, 0.2);
+    }
+    .btn-whatsapp-custom:hover {
+        background-color: #128C7E;
+        color: #fff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(37, 211, 102, 0.3);
+    }
+    .btn-whatsapp-custom i {
+        font-size: 1.2rem;
+        margin-right: 8px;
+    }
+</style>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -560,8 +585,9 @@ function mostrarTemasPendientes(data) {
         if (clase.estado === 'tema_pendiente' || clase.estado === 'falta' || clase.estado === 'sin_salida') {
             if (clase.docente_telefono) {
                 whatsappBtn = `
-                    <button class="btn btn-success btn-sm w-100 mt-2" onclick="enviarWhatsApp(${clase.docente_id}, '${clase.estado === 'falta' ? 'falta' : 'tema_pendiente'}', {curso: '${clase.curso}', fecha: '${clase.fecha}', hora: '${clase.hora_inicio}'})">
-                        <i class="fab fa-whatsapp"></i> Notificar
+                    <button class="btn btn-whatsapp-custom w-100 mt-2" onclick="enviarWhatsApp(${clase.docente_id}, '${clase.estado === 'falta' ? 'falta' : 'tema_pendiente'}', {curso: '${clase.curso}', fecha: '${clase.fecha}', hora: '${clase.hora_inicio}'})">
+                        <i class="fab fa-whatsapp me-2" style="font-size: 1.2rem;"></i>
+                        <span>Enviar WhatsApp</span>
                     </button>`;
             } else {
                 whatsappBtn = '<small class="text-muted mt-2 d-block"><i class="fas fa-phone-slash"></i> Sin teléfono</small>';

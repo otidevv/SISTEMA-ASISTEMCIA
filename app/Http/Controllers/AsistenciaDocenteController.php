@@ -500,10 +500,18 @@ class AsistenciaDocenteController extends Controller
         try {
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
-            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
             
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Aplicar rotación de sábado si corresponde
+            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
+            $esSabado = $diaReal === 'sábado';
+            $diaSemana = $diaReal;
+            
+            if ($esSabado && $cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            }
             
             // Obtener todos los horarios del día
             $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
@@ -1758,9 +1766,17 @@ class AsistenciaDocenteController extends Controller
         try {
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
-            $diaSemana = strtolower($fechaCarbon->locale('es')->dayName);
             
             $cicloActivo = Ciclo::where('es_activo', true)->first();
+            
+            // Aplicar rotación de sábado si corresponde
+            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
+            $esSabado = $diaReal === 'sábado';
+            $diaSemana = $diaReal;
+            
+            if ($esSabado && $cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            }
             
             $horariosQuery = HorarioDocente::with(['docente', 'curso'])
                 ->where('dia_semana', $diaSemana);
