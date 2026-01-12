@@ -24,6 +24,7 @@
         background-color: var(--primary-color) !important;
         color: #fff !important;
     }
+    
 
     /* -------------------------------------------------------------------------- */
     /* Variables de Diseño Avanzado                                                */
@@ -1860,7 +1861,7 @@
     </div>
 </div>
 
-<!{{-- Modal para Registrar/Editar Tema Desarrollado --}}
+{{-- Modal para Registrar/Editar Tema Desarrollado --}}
 <div class="modal fade" id="modalTemaDesarrollado" tabindex="-1" aria-labelledby="modalTemaDesarrolladoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content modern-modal">
