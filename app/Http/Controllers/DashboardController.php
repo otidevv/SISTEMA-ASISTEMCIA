@@ -417,6 +417,68 @@ class DashboardController extends Controller
                 $recordatorios = $this->generarRecordatorios($sesionesPendientes, $proximaClase, $fechaSeleccionada);
                 $data['recordatorios'] = $recordatorios;
 
+                // NUEVO: Agrupar sesiones por curso para la vista organizada
+                $sesionesAgrupadasPorCurso = [];
+                
+                foreach ($horariosDelDiaConDetalles as $item) {
+                    $horario = $item['horario'];
+                    $curso = $horario->curso;
+                    
+                    if (!$curso) {
+                        continue; // Saltar si no tiene curso asignado
+                    }
+                    
+                    $cursoId = $curso->id;
+                    
+                    // Inicializar grupo de curso si no existe
+                    if (!isset($sesionesAgrupadasPorCurso[$cursoId])) {
+                        $sesionesAgrupadasPorCurso[$cursoId] = [
+                            'curso' => $curso,
+                            'estadisticas' => [
+                                'total_sesiones' => 0,
+                                'completadas' => 0,
+                                'pendientes' => 0,
+                                'en_curso' => 0,
+                                'sin_registro' => 0,
+                                'total_horas_programadas' => 0,
+                                'total_horas_reales' => 0,
+                                'temas_pendientes' => 0
+                            ],
+                            'sesiones' => []
+                        ];
+                    }
+                    
+                    // Agregar sesión al grupo
+                    $sesionesAgrupadasPorCurso[$cursoId]['sesiones'][] = $item;
+                    
+                    // Actualizar estadísticas
+                    $stats = &$sesionesAgrupadasPorCurso[$cursoId]['estadisticas'];
+                    $stats['total_sesiones']++;
+                    $stats['total_horas_programadas'] += $item['duracion_programada'] / 60;
+                    $stats['total_horas_reales'] += $item['duracion_real'] / 60;
+                    
+                    // Determinar estado de la sesión para estadísticas
+                    if ($item['asistencia'] && $item['asistencia']->tema_desarrollado) {
+                        $stats['completadas']++;
+                    } elseif ($item['dentro_horario']) {
+                        $stats['en_curso']++;
+                    } elseif ($item['clase_terminada'] && $item['tiene_registros']) {
+                        $stats['pendientes']++;
+                        $stats['temas_pendientes']++;
+                    } elseif ($item['clase_terminada'] && !$item['tiene_registros']) {
+                        $stats['sin_registro']++;
+                    }
+                }
+                
+                // Redondear horas en estadísticas
+                foreach ($sesionesAgrupadasPorCurso as &$cursoData) {
+                    $cursoData['estadisticas']['total_horas_programadas'] = round($cursoData['estadisticas']['total_horas_programadas'], 1);
+                    $cursoData['estadisticas']['total_horas_reales'] = round($cursoData['estadisticas']['total_horas_reales'], 1);
+                }
+                
+                $data['sesionesAgrupadasPorCurso'] = $sesionesAgrupadasPorCurso;
+
+
             } catch (\Exception $e) {
                 \Log::error('Error en dashboard de profesor: ' . $e->getMessage());
                 

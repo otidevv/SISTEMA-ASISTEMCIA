@@ -732,6 +732,33 @@
             align-items: flex-end;
             gap: 0.5rem;
         }
+        
+        /* NUEVO: Responsive para tarjetas de curso */
+        .courses-summary-container {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+        
+        .view-toggle {
+            width: 100%;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            justify-content: center;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.75rem;
+        }
+        
+        .toggle-btn i {
+            font-size: 0.9rem;
+        }
+        
+        .course-group-header {
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: center;
+        }
     }
 
     @media (max-width: 576px) {
@@ -780,6 +807,244 @@
             align-self: flex-end;
             text-align: right;
         }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* NUEVO: Tarjetas de Resumen por Curso                                      */
+    /* -------------------------------------------------------------------------- */
+    .courses-summary-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .course-summary-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .course-summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--curso-color);
+    }
+
+    .course-summary-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--curso-color);
+    }
+
+    .course-summary-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .course-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .course-title h6 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .course-title small {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .course-summary-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 0.5rem;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .stat-item i {
+        color: var(--curso-color);
+    }
+
+    .course-summary-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .course-summary-status.completado {
+        background: var(--success-light);
+        color: var(--success-text);
+    }
+
+    .course-summary-status.en_curso {
+        background: var(--info-light);
+        color: var(--info-text);
+    }
+
+    .course-summary-status.pendiente {
+        background: var(--warning-light);
+        color: var(--warning-text);
+    }
+
+    .course-summary-status.sin_registro {
+        background: var(--danger-light);
+        color: var(--danger-text);
+    }
+
+    .course-summary-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .course-summary-footer small {
+        font-size: 0.75rem;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* NUEVO: Toggle de Vista                                                    */
+    /* -------------------------------------------------------------------------- */
+    .view-toggle {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--border-color);
+        padding: 0.25rem;
+        border-radius: 0.5rem;
+    }
+
+    .toggle-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .toggle-btn:hover {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+    }
+
+    .toggle-btn.active {
+        background: var(--primary-color);
+        color: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-btn i {
+        font-size: 1rem;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* NUEVO: Grupos de Curso                                                    */
+    /* -------------------------------------------------------------------------- */
+    .course-grouped-view {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    .course-group {
+        position: relative;
+    }
+
+    .course-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        color: white;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+
+    .course-group-header:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .course-group-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .course-group-title i {
+        font-size: 1.5rem;
+    }
+
+    .course-group-title h6 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .course-group-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Animación de highlight para scroll */
+    @keyframes highlight {
+        0%, 100% { background: transparent; }
+        50% { background: var(--primary-light); }
+    }
+
+    .course-group.highlight {
+        animation: highlight 1s ease;
     }
 
 </style>
@@ -883,6 +1148,76 @@
         </div>
     </div>
 
+    {{-- NUEVO: Tarjetas de Resumen por Curso --}}
+    @if(isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0)
+        <div class="courses-summary-container">
+            @foreach($sesionesAgrupadasPorCurso as $cursoId => $cursoData)
+                @php
+                    $curso = $cursoData['curso'];
+                    $stats = $cursoData['estadisticas'];
+                    
+                    // Determinar color y estado general del curso
+                    $colores = ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6'];
+                    $colorIndex = $cursoId % count($colores);
+                    $colorCurso = $colores[$colorIndex];
+                    
+                    $estadoGeneral = 'completado';
+                    $estadoTexto = 'Todas completas';
+                    $estadoIcono = 'mdi-check-circle';
+                    
+                    if ($stats['en_curso'] > 0) {
+                        $estadoGeneral = 'en_curso';
+                        $estadoTexto = 'En curso';
+                        $estadoIcono = 'mdi-play-circle';
+                    } elseif ($stats['temas_pendientes'] > 0) {
+                        $estadoGeneral = 'pendiente';
+                        $estadoTexto = $stats['temas_pendientes'] . ' tema' . ($stats['temas_pendientes'] > 1 ? 's' : '') . ' pendiente' . ($stats['temas_pendientes'] > 1 ? 's' : '');
+                        $estadoIcono = 'mdi-alert-circle';
+                    } elseif ($stats['sin_registro'] > 0) {
+                        $estadoGeneral = 'sin_registro';
+                        $estadoTexto = 'Sin registro';
+                        $estadoIcono = 'mdi-close-circle';
+                    }
+                @endphp
+                
+                <div class="course-summary-card {{ $estadoGeneral }}" data-curso-id="{{ $cursoId }}" style="--curso-color: {{ $colorCurso }};">
+                    <div class="course-summary-header">
+                        <div class="course-icon" style="background: linear-gradient(135deg, {{ $colorCurso }}, {{ $colorCurso }}dd);">
+                            <i class="mdi mdi-book-open-variant"></i>
+                        </div>
+                        <div class="course-title">
+                            <h6>{{ $curso->nombre }}</h6>
+                            <small>{{ $stats['total_sesiones'] }} sesión{{ $stats['total_sesiones'] != 1 ? 'es' : '' }} hoy</small>
+                        </div>
+                    </div>
+                    
+                    <div class="course-summary-stats">
+                        <div class="stat-item">
+                            <i class="mdi mdi-clock-outline"></i>
+                            <span>{{ $stats['total_horas_programadas'] }}h programadas</span>
+                        </div>
+                        @if($stats['total_horas_reales'] > 0)
+                            <div class="stat-item">
+                                <i class="mdi mdi-check-circle-outline"></i>
+                                <span>{{ $stats['total_horas_reales'] }}h reales</span>
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <div class="course-summary-status {{ $estadoGeneral }}">
+                        <i class="mdi {{ $estadoIcono }}"></i>
+                        <span>{{ $estadoTexto }}</span>
+                    </div>
+                    
+                    <div class="course-summary-footer">
+                        <small class="text-muted">Click para ver sesiones</small>
+                        <i class="mdi mdi-chevron-down"></i>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="row">
         <!-- Columna Principal: Sesiones de Hoy -->
         <div class="col-lg-8">
@@ -894,16 +1229,193 @@
                             <small class="text-muted">({{ $fechaSeleccionada->diffForHumans() }})</small>
                         @endif
                     </h5>
-                    <form method="GET" action="{{ route('dashboard') }}" id="form-agenda" class="d-flex align-items-center gap-2">
-                        <input type="text" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
-                        <button type="submit" class="action-button outline btn-sm">
-                            <i class="mdi mdi-magnify"></i>
-                            <span>Ver</span>
-                        </button>
-                    </form>
+                    <div class="d-flex align-items-center gap-2">
+                        {{-- NUEVO: Toggle de vista --}}
+                        @if(isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0)
+                            <div class="view-toggle">
+                                <button class="toggle-btn active" data-view="course">
+                                    <i class="mdi mdi-view-module"></i> Por Curso
+                                </button>
+                                <button class="toggle-btn" data-view="timeline">
+                                    <i class="mdi mdi-timeline-clock"></i> Cronológica
+                                </button>
+                            </div>
+                        @endif
+                        
+                        <form method="GET" action="{{ route('dashboard') }}" id="form-agenda" class="d-flex align-items-center gap-2">
+                            <input type="text" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
+                            <button type="submit" class="action-button outline btn-sm">
+                                <i class="mdi mdi-magnify"></i>
+                                <span>Ver</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
-                <div class="session-timeline" id="sessions-container">
+                {{-- NUEVO: Vista por Curso (por defecto) --}}
+                @if(isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0)
+                    <div id="course-view" class="course-grouped-view">
+                        @foreach($sesionesAgrupadasPorCurso as $cursoId => $cursoData)
+                            @php
+                                $curso = $cursoData['curso'];
+                                $stats = $cursoData['estadisticas'];
+                                $colores = ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6'];
+                                $colorIndex = $cursoId % count($colores);
+                                $colorCurso = $colores[$colorIndex];
+                            @endphp
+                            
+                            <div class="course-group" id="course-{{ $cursoId }}">
+                                <div class="course-group-header" style="background: linear-gradient(135deg, {{ $colorCurso }}, {{ $colorCurso }}dd);">
+                                    <div class="course-group-title">
+                                        <i class="mdi mdi-book-open-variant"></i>
+                                        <h6>{{ $curso->nombre }}</h6>
+                                    </div>
+                                    <div class="course-group-badge">
+                                        {{ $stats['total_sesiones'] }} sesión{{ $stats['total_sesiones'] != 1 ? 'es' : '' }}
+                                    </div>
+                                </div>
+                                
+                                <div class="session-timeline">
+                                    @foreach($cursoData['sesiones'] as $item)
+                                        @php
+                                            $horario = $item['horario'];
+                                            $asistencia = $item['asistencia'];
+                                            $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
+                                            $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
+
+                                            // Determinar estado de la sesión
+                                            $estadoConfig = ['clase' => 'programmed', 'texto' => 'PROGRAMADA', 'color' => 'info', 'icono' => 'mdi-clock-outline'];
+                                            if ($asistencia) { 
+                                                $estadoConfig = ['clase' => 'completed', 'texto' => 'COMPLETADA', 'color' => 'success', 'icono' => 'mdi-check-all']; 
+                                            } elseif ($item['dentro_horario']) { 
+                                                $estadoConfig = ['clase' => 'active', 'texto' => 'EN CURSO', 'color' => 'active', 'icono' => 'mdi-play-circle']; 
+                                            } elseif ($item['clase_terminada'] && $item['tiene_registros']) { 
+                                                $estadoConfig = ['clase' => 'pending', 'texto' => 'PENDIENTE', 'color' => 'warning', 'icono' => 'mdi-alert-circle-check-outline']; 
+                                            } elseif ($item['clase_terminada'] && !$item['tiene_registros']) { 
+                                                $estadoConfig = ['clase' => 'no-access', 'texto' => 'SIN REGISTRO', 'color' => 'danger', 'icono' => 'mdi-close-circle-outline']; 
+                                            }
+
+                                            $tiempoInfo = $item['tiempo_info'] ?? null;
+                                            $progreso = $item['progreso_clase'] ?? 0;
+                                            $eficienciaClase = $item['eficiencia'] ?? null;
+                                        @endphp
+
+                                        <div class="session-card {{ $estadoConfig['clase'] }}" id="session-{{ $horario->id }}">
+                                            <div class="session-card-content">
+                                                <div class="session-header">
+                                                    <h6 class="course-name">{{ $horario->curso->nombre ?? 'Sin curso' }}</h6>
+                                                    <div class="session-time">
+                                                        <i class="mdi mdi-clock-outline"></i>
+                                                        {{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}
+                                                        @if($tiempoInfo)
+                                                            <div class="time-indicator {{ $tiempoInfo['estado'] == 'por_empezar' ? 'upcoming' : ($tiempoInfo['estado'] == 'en_curso' ? 'current' : 'finished') }}">
+                                                                <i class="mdi mdi-{{ $tiempoInfo['estado'] == 'por_empezar' ? 'clock-fast' : ($tiempoInfo['estado'] == 'en_curso' ? 'clock' : 'clock-check') }}"></i>
+                                                                {{ $tiempoInfo['texto'] }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+
+                                                @if(isset($item['dentro_horario']) && $item['dentro_horario'] && $progreso > 0)
+                                                    <div class="progress-container">
+                                                        <div class="progress-bar-container">
+                                                            <div class="progress-bar" style="width: {{ $progreso }}%"></div>
+                                                        </div>
+                                                        <div class="progress-text">
+                                                            <span><i class="mdi mdi-play-circle"></i> Clase en progreso</span>
+                                                            <span><strong>{{ $progreso }}%</strong> completado</span>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <div class="session-details">
+                                                    <div>
+                                                        <i class="mdi mdi-login text-success"></i> 
+                                                        <strong>Entrada:</strong> {{ $item['hora_entrada_registrada'] ?? '---' }}
+                                                        @if(isset($item['dentro_tolerancia']) && !$item['dentro_tolerancia'])
+                                                            <i class="mdi mdi-alert-circle text-warning tooltip-info" data-tooltip="Entrada fuera de tolerancia"></i>
+                                                        @endif
+                                                    </div>
+                                                    <div><i class="mdi mdi-logout text-danger"></i> <strong>Salida:</strong> {{ $item['hora_salida_registrada'] ?? '---' }}</div>
+                                                    <div><i class="mdi mdi-map-marker-outline text-info"></i> <strong>Aula:</strong> {{ $horario->aula->nombre ?? 'N/A' }}</div>
+                                                    @if(isset($item['minutos_tardanza']) && $item['minutos_tardanza'] > 0)
+                                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ $item['minutos_tardanza'] }} min</div>
+                                                    @endif
+                                                </div>
+
+                                                @if(isset($item['duracion_programada']) || isset($item['duracion_real']) || $eficienciaClase)
+                                                    <div class="session-metrics">
+                                                        @if(isset($item['duracion_programada']))
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value">{{ round($item['duracion_programada']/60, 1) }}h</span>
+                                                                <div class="session-metric-label">Programado</div>
+                                                            </div>
+                                                        @endif
+                                                        @if(isset($item['duracion_real']))
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value">{{ round($item['duracion_real']/60, 1) }}h</span>
+                                                                <div class="session-metric-label">Real</div>
+                                                            </div>
+                                                        @endif
+                                                        @if($eficienciaClase)
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value efficiency-indicator {{ $eficienciaClase >= 95 ? 'excellent' : ($eficienciaClase >= 85 ? 'good' : ($eficienciaClase >= 70 ? 'average' : 'poor')) }}">
+                                                                    <i class="mdi mdi-{{ $eficienciaClase >= 95 ? 'check-circle' : ($eficienciaClase >= 85 ? 'check' : ($eficienciaClase >= 70 ? 'minus-circle' : 'close-circle')) }}"></i>
+                                                                    {{ $eficienciaClase }}%
+                                                                </span>
+                                                                <div class="session-metric-label">Eficiencia</div>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                                
+                                                @if($asistencia && $asistencia->tema_desarrollado)
+                                                    <div class="tema-registrado">
+                                                        <p class="mb-0">
+                                                            <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
+                                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit($asistencia->tema_desarrollado, 100) }}</span>
+                                                        </p>
+                                                    </div>
+                                                @else
+                                                    <div class="tema-registrado text-muted fst-italic">
+                                                        <p class="mb-0">
+                                                            <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
+                                                            <span id="display-tema-{{ $horario->id }}">No registrado.</span>
+                                                        </p>
+                                                    </div>
+                                                @endif
+
+                                                <div class="session-footer">
+                                                    <div class="status-badge {{ $estadoConfig['color'] }}">
+                                                        <i class="mdi {{ $estadoConfig['icono'] }}"></i>
+                                                        {{ $estadoConfig['texto'] }}
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
+                                                            <button class="action-button btn-sm" 
+                                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }})">
+                                                                <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
+                                                                {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
+                                                            </button>
+                                                        @else
+                                                            <button class="action-button outline btn-sm" disabled title="Solo se puede registrar el tema de clases finalizadas y con registro de entrada/salida.">
+                                                                <i class="mdi mdi-lock-outline"></i>
+                                                                <span>Registrar Tema</span>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                {{-- Vista Cronológica (oculta por defecto si hay cursos agrupados) --}}
+                <div id="timeline-view" class="session-timeline" style="{{ isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0 ? 'display: none;' : '' }}">
                     @forelse($horariosDelDia as $item)
                         @php
                             $horario = $item['horario'];
@@ -1328,6 +1840,58 @@
         tooltips.forEach(tooltip => {
             tooltip.addEventListener('mouseenter', function() {
                 // Agregar funcionalidad de tooltip adicional si es necesario
+            });
+        });
+
+        // NUEVO: Toggle entre vistas (Por Curso / Cronológica)
+        const toggleButtons = document.querySelectorAll('.toggle-btn');
+        toggleButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const view = this.dataset.view;
+                
+                // Actualizar botones activos
+                toggleButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Mostrar/ocultar vistas
+                const courseView = document.getElementById('course-view');
+                const timelineView = document.getElementById('timeline-view');
+                
+                if (view === 'course' && courseView) {
+                    courseView.style.display = 'flex';
+                    if (timelineView) timelineView.style.display = 'none';
+                } else if (view === 'timeline' && timelineView) {
+                    if (courseView) courseView.style.display = 'none';
+                    timelineView.style.display = 'block';
+                }
+            });
+        });
+
+        // NUEVO: Scroll a curso al hacer click en tarjeta de resumen
+        const courseSummaryCards = document.querySelectorAll('.course-summary-card');
+        courseSummaryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const cursoId = this.dataset.cursoId;
+                const cursoGroup = document.getElementById('course-' + cursoId);
+                
+                if (cursoGroup) {
+                    // Cambiar a vista por curso si no está activa
+                    const courseViewBtn = document.querySelector('[data-view="course"]');
+                    if (courseViewBtn && !courseViewBtn.classList.contains('active')) {
+                        courseViewBtn.click();
+                    }
+                    
+                    // Scroll suave al grupo del curso
+                    setTimeout(() => {
+                        cursoGroup.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        
+                        // Efecto de highlight
+                        cursoGroup.classList.add('highlight');
+                        setTimeout(() => {
+                            cursoGroup.classList.remove('highlight');
+                        }, 1000);
+                    }, 100);
+                }
             });
         });
     });
