@@ -1235,6 +1235,105 @@
         box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
     }
 
+    /* --- RESPONSIVE FIXES --- */
+    @media (max-width: 992px) {
+    @media (max-width: 992px) {
+        .dashboard-container {
+            padding: 1.5rem;
+        }
+        
+        .main-content-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1rem;
+        }
+
+        /* Target the d-flex container holding toggle and form */
+        .main-content-header > .d-flex {
+            flex-direction: column;
+            width: 100%;
+            gap: 1rem !important; /* Force gap */
+        }
+        
+        .date-selector-wrapper {
+            width: 100%;
+        }
+        
+        #form-agenda {
+            width: 100%;
+        }
+
+        .view-toggle {
+            width: 100%;
+            display: flex;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .welcome-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .time-display {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .stats-container {
+            grid-template-columns: 1fr; /* Stack stats cards */
+        }
+        
+        .session-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .session-time {
+            align-self: flex-start;
+            margin-top: 0.25rem;
+        }
+        
+        .session-footer {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+        }
+        
+        .session-footer .d-flex {
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .status-badge {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+        
+        .main-content-title {
+            font-size: 1.25rem;
+            text-align: center;
+        }
+
+        .date-selector-wrapper input {
+            text-align: center;
+            padding-left: 2.75rem !important; /* Ensure icon doesn't overlap text */
+        }
+    }
 </style>
 @endpush
 
@@ -1430,12 +1529,11 @@
                             </div>
                         @endif
                         
-                        <form method="GET" action="{{ route('dashboard') }}" id="form-agenda" class="d-flex align-items-center gap-2">
-                            <input type="text" name="fecha" id="fecha-agenda" class="form-control form-control-sm" style="width: auto;" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
-                            <button type="submit" class="action-button outline btn-sm">
-                                <i class="mdi mdi-magnify"></i>
-                                <span>Ver</span>
-                            </button>
+                        <form action="{{ route('dashboard') }}" method="GET" id="form-agenda" class="d-flex gap-2 align-items-center">
+                            <div class="date-selector-wrapper">
+                                <i class="mdi mdi-calendar date-selector-icon"></i>
+                                <input type="text" class="form-control" id="fecha-agenda" name="fecha" placeholder="Seleccionar fecha" autocomplete="off" style="padding-right: 1rem;">
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -2246,7 +2344,7 @@
 
                 const horarioId = document.getElementById('horario_id').value;
                 const displayTema = document.getElementById(`display-tema-${horarioId}`);
-                if (displayTema) {
+                if (displayTema && data.tema_desarrollado) {
                     displayTema.textContent = data.tema_desarrollado.substring(0, 100) + (data.tema_desarrollado.length > 100 ? '...' : '');
                 }
 
