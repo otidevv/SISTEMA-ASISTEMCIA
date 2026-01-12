@@ -1581,7 +1581,7 @@
                                                     <div class="d-flex gap-2">
                                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                                             <button class="action-button btn-sm" 
-                                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }})">
+                                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }}, '{{ $horario->curso->nombre ?? '' }}', '{{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}')">
                                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                                             </button>
@@ -1724,7 +1724,7 @@
                                     <div class="d-flex gap-2">
                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                             <button class="action-button btn-sm" 
-                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }})">
+                                                    onclick="abrirModalTema({{ $horario->id }}, '{{ $asistencia ? addslashes($asistencia->tema_desarrollado) : '' }}', {{ $asistencia ? $asistencia->id : 'null' }}, '{{ $horario->curso->nombre ?? '' }}', '{{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}')">
                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                             </button>
