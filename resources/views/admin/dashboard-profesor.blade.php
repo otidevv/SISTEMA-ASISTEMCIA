@@ -1047,6 +1047,193 @@
         animation: highlight 1s ease;
     }
 
+    /* -------------------------------------------------------------------------- */
+    /* NUEVO: Modal Moderno de Registro de Tema                                  */
+    /* -------------------------------------------------------------------------- */
+    .modern-modal .modal-content {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modern-modal-header {
+        background: linear-gradient(135deg, var(--primary-color), #6d28d9);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 1rem 1rem 0 0;
+        border: none;
+    }
+
+    .modal-header-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .modal-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .modern-modal-header .modal-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .modern-modal-header small {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+    }
+
+    .modern-modal-header .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+    }
+
+    .modern-modal-header .btn-close:hover {
+        opacity: 1;
+    }
+
+    .modern-modal-body {
+        padding: 2rem;
+    }
+
+    .session-info-card {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(109, 40, 217, 0.05));
+        border-radius: 0.75rem;
+        border: 1px solid rgba(79, 70, 229, 0.1);
+    }
+
+    .session-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-color);
+    }
+
+    .session-info-item i {
+        font-size: 1.2rem;
+    }
+
+    .modern-label {
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .textarea-wrapper {
+        position: relative;
+    }
+
+    .modern-textarea {
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .modern-textarea:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .textarea-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+        padding: 0 0.25rem;
+    }
+
+    .char-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .char-counter {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .char-counter .text-muted {
+        font-weight: 400;
+    }
+
+    .tips-card {
+        background: rgba(79, 70, 229, 0.05);
+        border-left: 4px solid var(--primary-color);
+        border-radius: 0.5rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .tips-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .tips-header i {
+        font-size: 1.2rem;
+    }
+
+    .tips-list {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .tips-list li {
+        margin-bottom: 0.5rem;
+    }
+
+    .tips-list li:last-child {
+        margin-bottom: 0;
+    }
+
+    .modern-modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .btn-save-theme {
+        background: linear-gradient(135deg, var(--primary-color), #6d28d9);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .btn-save-theme:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+
 </style>
 @endpush
 
@@ -1673,33 +1860,94 @@
     </div>
 </div>
 
-<!-- Modal para registrar tema desarrollado -->
+<!{{-- Modal para Registrar/Editar Tema Desarrollado --}}
 <div class="modal fade" id="modalTemaDesarrollado" tabindex="-1" aria-labelledby="modalTemaDesarrolladoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTemaDesarrolladoLabel"><i class="mdi mdi-clipboard-edit-outline me-2"></i>Registrar Tema Desarrollado</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-content modern-modal">
+            <div class="modal-header modern-modal-header">
+                <div class="modal-header-content">
+                    <div class="modal-icon">
+                        <i class="mdi mdi-notebook-edit-outline"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title" id="modalTemaDesarrolladoLabel">Registrar Tema Desarrollado</h5>
+                        <small class="text-muted" id="modal-subtitle">Documenta el contenido de tu sesión</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form id="formTemaDesarrollado" class="p-4">
+            <form id="formTemaDesarrollado">
                 @csrf
-                <div class="modal-body p-0">
+                <div class="modal-body modern-modal-body">
                     <input type="hidden" id="horario_id" name="horario_id">
                     <input type="hidden" id="asistencia_id_para_editar" name="asistencia_id">
                     <input type="hidden" id="fecha_seleccionada_input_oculto" name="fecha_seleccionada" value="{{ $fechaSeleccionada->format('Y-m-d') }}">
+                    
                     <div id="alertContainer" class="mb-3"></div>
-                    <div class="mb-3">
-                        <label for="tema_desarrollado" class="form-label fw-bold">Tema y Actividades Realizadas *</label>
-                        <textarea class="form-control" id="tema_desarrollado" name="tema_desarrollado" rows="6" required placeholder="Sea específico sobre los temas cubiertos, ejemplos mostrados y actividades realizadas..."></textarea>
-                        <div class="form-text d-flex justify-content-between mt-1">
-                            <span>Mínimo 10 caracteres.</span>
-                            <span id="contador">0/1000</span>
+                    
+                    {{-- Información de la sesión --}}
+                    <div class="session-info-card mb-4">
+                        <div class="session-info-item">
+                            <i class="mdi mdi-book-open-variant text-primary"></i>
+                            <span id="modal-curso-nombre">-</span>
+                        </div>
+                        <div class="session-info-item">
+                            <i class="mdi mdi-clock-outline text-info"></i>
+                            <span id="modal-horario">-</span>
+                        </div>
+                        <div class="session-info-item">
+                            <i class="mdi mdi-calendar text-success"></i>
+                            <span id="modal-fecha">{{ $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') }}</span>
                         </div>
                     </div>
+                    
+                    {{-- Campo de tema --}}
+                    <div class="mb-3">
+                        <label for="tema_desarrollado" class="form-label modern-label">
+                            <i class="mdi mdi-text-box-outline me-2"></i>
+                            Tema y Actividades Realizadas *
+                        </label>
+                        <div class="textarea-wrapper">
+                            <textarea 
+                                class="form-control modern-textarea" 
+                                id="tema_desarrollado" 
+                                name="tema_desarrollado" 
+                                rows="6" 
+                                required 
+                                maxlength="1000"
+                                placeholder="Ejemplo:&#10;• Ecuaciones de segundo grado: fórmula general&#10;• Discriminante y tipos de soluciones&#10;• Ejercicios prácticos resueltos en clase&#10;• Tarea asignada: problemas 1-10 del libro"></textarea>
+                            <div class="textarea-footer">
+                                <div class="char-info">
+                                    <i class="mdi mdi-information-outline"></i>
+                                    <span>Mínimo 10 caracteres</span>
+                                </div>
+                                <div class="char-counter">
+                                    <span id="contador">0</span>
+                                    <span class="text-muted">/1000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{-- Tips rápidos --}}
+                    <div class="tips-card">
+                        <div class="tips-header">
+                            <i class="mdi mdi-lightbulb-on-outline"></i>
+                            <span>Tips para un buen registro</span>
+                        </div>
+                        <ul class="tips-list">
+                            <li>Menciona los temas principales cubiertos</li>
+                            <li>Incluye ejemplos o ejercicios realizados</li>
+                            <li>Anota tareas o actividades asignadas</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="modal-footer border-0 p-0 pt-3">
-                    <button type="button" class="action-button outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="action-button" id="btnGuardarTema">
+                <div class="modal-footer modern-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="mdi mdi-close me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-save-theme" id="btnGuardarTema">
                         <i class="mdi mdi-content-save me-1"></i>
                         <span>Guardar Tema</span>
                     </button>
@@ -1907,7 +2155,7 @@
         else contador.style.color = 'var(--success-text)';
     }
 
-    function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null) {
+    function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null, cursoNombre = '', horario = '') {
         const modalElement = document.getElementById('modalTemaDesarrollado');
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
         document.getElementById('horario_id').value = horarioId;
@@ -1919,15 +2167,30 @@
             document.getElementById('fecha_seleccionada_input_oculto').value = fechaAgendaInput.value;
         }
 
+        // NUEVO: Actualizar información de la sesión en el modal
+        const sessionCard = modalElement.querySelector('.session-info-card');
+        if (sessionCard) {
+            const cursoSpan = document.getElementById('modal-curso-nombre');
+            const horarioSpan = document.getElementById('modal-horario');
+            
+            if (cursoSpan && cursoNombre) cursoSpan.textContent = cursoNombre;
+            if (horarioSpan && horario) horarioSpan.textContent = horario;
+        }
+
         const titulo = document.getElementById('modalTemaDesarrolladoLabel');
+        const subtitle = document.getElementById('modal-subtitle');
         const btnGuardar = document.getElementById('btnGuardarTema').querySelector('span');
+        
         if (temaExistente) {
-            titulo.innerHTML = '<i class="mdi mdi-pencil-circle-outline me-2"></i>Editar Tema Desarrollado';
+            titulo.textContent = 'Editar Tema Desarrollado';
+            if (subtitle) subtitle.textContent = 'Actualiza el contenido de tu sesión';
             btnGuardar.textContent = 'Actualizar Tema';
         } else {
-            titulo.innerHTML = '<i class="mdi mdi-clipboard-edit-outline me-2"></i>Registrar Tema Desarrollado';
+            titulo.textContent = 'Registrar Tema Desarrollado';
+            if (subtitle) subtitle.textContent = 'Documenta el contenido de tu sesión';
             btnGuardar.textContent = 'Guardar Tema';
         }
+        
         document.getElementById('alertContainer').innerHTML = '';
         actualizarContador();
         modal.show();
@@ -1988,27 +2251,29 @@
                     }
                     displayTemaElement.textContent = newTemaText;
 
-                    const sessionCard = document.getElementById('session-' + horarioId);
-                    if (sessionCard && sessionCard.classList.contains('pending')) {
-                        sessionCard.classList.remove('pending');
-                        sessionCard.classList.add('completed');
-                        const statusBadge = sessionCard.querySelector('.status-badge');
-                        if (statusBadge) {
-                            statusBadge.classList.remove('warning');
-                            statusBadge.classList.add('success');
-                            statusBadge.innerHTML = '<i class="mdi mdi-check-all"></i> COMPLETADA';
-                        }
-                    }
+                const displayTema = document.getElementById(`display-tema-${horarioId}`);
+                if (displayTema) {
+                    displayTema.textContent = data.tema_desarrollado.substring(0, 100) + (data.tema_desarrollado.length > 100 ? '...' : '');
                 }
-
-                setTimeout(() => {
-                    const modalInstance = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                }, 1500);
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));
+                modal.hide();
+                
+                // NUEVO: Mostrar SweetAlert de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Tema Guardado!',
+                    text: data.message || 'El tema se ha registrado correctamente.',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    toast: true,
+                    position: 'top-end'
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                let mensaje = data.message || 'Ocurrió un error.';
+                let mensaje = data.message || 'Error al guardar el tema.';
                 if (data.errors) {
                     mensaje += '<ul class="mt-2 mb-0 ps-3">';
                     Object.values(data.errors).flat().forEach(error => mensaje += `<li>${error}</li>`);

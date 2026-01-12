@@ -359,8 +359,10 @@ class DashboardController extends Controller
                 $data['horasReales'] = round($horasReales, 1);
                 $data['horasProgramadas'] = round($horasProgramadas, 1);
                 
-                $data['eficiencia'] = $this->calcularEficienciaDocente($user->id, $fechaSeleccionada, $cicloActivo);
-                $data['puntualidad'] = $this->calcularPuntualidadDocente($user->id, $cicloActivo);
+                // Calcular eficiencia y puntualidad
+                $eficienciaData = $this->calcularEficienciaYPuntualidad($user->id, $cicloActivo);
+                $data['eficiencia'] = $eficienciaData['eficiencia'];
+                $data['puntualidad'] = $eficienciaData['puntualidad'];
                 
                 $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
                     ->whereBetween('fecha_hora', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
@@ -880,7 +882,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * CORREGIDO: Método para obtener próxima clase solo del docente actual
+     * CORREGIDO: Método para obtener próxima clase considerando rotación de sábados
      */
     private function obtenerProximaClaseCorregida($docenteId, $cicloActivo)
     {
@@ -906,12 +908,21 @@ class DashboardController extends Controller
         $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
         $diaActualIndex = array_search(strtolower($diaActualSemana), $diasSemana);
         
-        // Buscar en los próximos 7 días
-        for ($i = 1; $i <= 7; $i++) {
+        // Buscar en los próximos 14 días para cubrir rotación de sábados
+        for ($i = 1; $i <= 14; $i++) {
             $indexDia = ($diaActualIndex + $i) % 7;
             $diaBuscado = $diasSemana[$indexDia];
+            $fechaBuscada = $ahora->copy()->addDays($i);
             
-            $claseEncontrada = HorarioDocente::where('docente_id', $docenteId) // CORREGIDO: Filtro por docente
+            // Para sábados, verificar si le toca al docente según rotación
+            if ($diaBuscado === 'sábado') {
+                $leTocaSabado = $this->leTocaSabadoAlDocente($docenteId, $fechaBuscada, $cicloActivo);
+                if (!$leTocaSabado) {
+                    continue; // Saltar este sábado si no le toca
+                }
+            }
+            
+            $claseEncontrada = HorarioDocente::where('docente_id', $docenteId)
                 ->where('dia_semana', $diaBuscado)
                 ->when($cicloActivo, function ($query, $ciclo) {
                     return $query->where('ciclo_id', $ciclo->id);
@@ -1058,6 +1069,49 @@ class DashboardController extends Controller
         }
         
         return $ahora->addDays($daysUntilTarget);
+    }
+
+    /**
+     * NUEVO: Calcular eficiencia y puntualidad del docente
+     */
+    private function calcularEficienciaYPuntualidad($docenteId, $cicloActivo)
+    {
+        $asistencias = AsistenciaDocente::where('docente_id', $docenteId)
+            ->when($cicloActivo, function ($query, $ciclo) {
+                return $query->whereHas('horario', function ($q) use ($ciclo) {
+                    $q->where('ciclo_id', $ciclo->id);
+                });
+            })
+            ->where('estado', 'completada')
+            ->get();
+
+        if ($asistencias->isEmpty()) {
+            return ['eficiencia' => 0, 'puntualidad' => 0];
+        }
+
+        // Calcular eficiencia (horas reales vs programadas)
+        $totalHorasProgramadas = $asistencias->sum(function ($asistencia) {
+            $horario = $asistencia->horario;
+            if (!$horario) return 0;
+            $inicio = \Carbon\Carbon::parse($horario->hora_inicio);
+            $fin = \Carbon\Carbon::parse($horario->hora_fin);
+            return $inicio->diffInMinutes($fin) / 60;
+        });
+
+        $totalHorasReales = $asistencias->sum('horas_dictadas');
+        $eficiencia = $totalHorasProgramadas > 0 ? round(($totalHorasReales / $totalHorasProgramadas) * 100) : 0;
+
+        // Calcular puntualidad (sesiones sin tardanza)
+        $sesionesPuntuales = $asistencias->filter(function ($asistencia) {
+            return ($asistencia->minutos_tardanza_entrada ?? 0) == 0;
+        })->count();
+
+        $puntualidad = $asistencias->count() > 0 ? round(($sesionesPuntuales / $asistencias->count()) * 100) : 0;
+
+        return [
+            'eficiencia' => min($eficiencia, 100),
+            'puntualidad' => $puntualidad
+        ];
     }
 
     /**
