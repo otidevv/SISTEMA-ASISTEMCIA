@@ -59,4 +59,53 @@ trait HandlesSaturdayRotation
         
         return $info;
     }
+
+    /**
+     * Determinar si le toca trabajar al docente en un sábado específico
+     * 
+     * @param int $docenteId ID del docente
+     * @param mixed $fecha Fecha del sábado a verificar
+     * @param Ciclo|null $ciclo Ciclo activo (opcional)
+     * @return bool True si le toca trabajar ese sábado
+     */
+    protected function leTocaSabadoAlDocente($docenteId, $fecha, $ciclo = null)
+    {
+        if (!$ciclo) {
+            $ciclo = Ciclo::where('es_activo', true)->first();
+        }
+        
+        if (!$ciclo) {
+            return false; // Sin ciclo activo, no hay rotación
+        }
+        
+        $fechaCarbon = Carbon::parse($fecha);
+        $diaReal = strtolower($fechaCarbon->translatedFormat('l'));
+        
+        // Si no es sábado, retornar true (no aplica rotación)
+        if ($diaReal !== 'sábado') {
+            return true;
+        }
+        
+        // Verificar si el docente tiene horarios para sábado
+        $tieneHorarioSabado = \App\Models\HorarioDocente::where('docente_id', $docenteId)
+            ->where('dia_semana', 'sábado')
+            ->where('ciclo_id', $ciclo->id)
+            ->exists();
+        
+        if (!$tieneHorarioSabado) {
+            return false; // No tiene horarios de sábado
+        }
+        
+        // Obtener el día equivalente según la rotación
+        $diaEquivalente = $ciclo->getDiaEquivalenteSabado($fecha);
+        
+        // Verificar si el docente tiene horarios para ese día equivalente
+        $tieneHorarioEquivalente = \App\Models\HorarioDocente::where('docente_id', $docenteId)
+            ->where('dia_semana', $diaEquivalente)
+            ->where('ciclo_id', $ciclo->id)
+            ->exists();
+        
+        return $tieneHorarioEquivalente;
+    }
 }
+
