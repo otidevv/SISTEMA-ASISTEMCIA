@@ -1581,7 +1581,7 @@
                                                     <div class="d-flex gap-2">
                                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                                             <button class="action-button btn-sm" 
-                                                                    onclick="abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : ''), {{ $asistencia ? $asistencia->id : 'null' }}, @json($horario->curso->nombre ?? ''), @json($horaInicio->format('h:i A') . ' - ' . $horaFin->format('h:i A')))">
+                                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS))'>
                                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                                             </button>
@@ -1724,7 +1724,7 @@
                                     <div class="d-flex gap-2">
                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                             <button class="action-button btn-sm" 
-                                                    onclick="abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : ''), {{ $asistencia ? $asistencia->id : 'null' }}, @json($horario->curso->nombre ?? ''), @json($horaInicio->format('h:i A') . ' - ' . $horaFin->format('h:i A')))">
+                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS))'>
                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                             </button>
@@ -2018,6 +2018,8 @@
         flatpickr("#fecha-agenda", {
             locale: "es",
             dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
             defaultDate: "{{ $fechaSeleccionada->format('Y-m-d') }}",
             onDayCreate: function(dObj, dStr, fp, dayElem){
                 const dateStr = fp.formatDate(dayElem.dateObj, "Y-m-d");
@@ -2241,25 +2243,16 @@
         .then(data => {
             if (data.success) {
                 mostrarAlertEnModal('success', data.message);
-                
-                const horarioId = document.getElementById('horario_id').value;
-                const displayTemaElement = document.getElementById('display-tema-' + horarioId);
-                if (displayTemaElement) {
-                    let newTemaText = document.getElementById('tema_desarrollado').value;
-                    const maxLength = 100;
-                    if (newTemaText.length > maxLength) {
-                        newTemaText = newTemaText.substring(0, maxLength - 3) + '...';
-                    }
-                    displayTemaElement.textContent = newTemaText;
 
+                const horarioId = document.getElementById('horario_id').value;
                 const displayTema = document.getElementById(`display-tema-${horarioId}`);
                 if (displayTema) {
                     displayTema.textContent = data.tema_desarrollado.substring(0, 100) + (data.tema_desarrollado.length > 100 ? '...' : '');
                 }
-                
+
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));
                 modal.hide();
-                
+
                 // NUEVO: Mostrar SweetAlert de éxito
                 Swal.fire({
                     icon: 'success',
