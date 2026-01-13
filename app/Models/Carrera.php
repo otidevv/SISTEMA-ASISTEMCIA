@@ -15,6 +15,7 @@ class Carrera extends Model
     protected $fillable = [
         'codigo',
         'nombre',
+        'grupo',
         'descripcion',
         'estado',
         'creado_por',

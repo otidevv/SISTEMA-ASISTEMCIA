@@ -7,7 +7,7 @@ $.ajaxSetup({
     }
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     // Inicializar DataTables
     var table = $('#carreras-datatable').DataTable({
         processing: true,
@@ -15,7 +15,7 @@ $(document).ready(function() {
         ajax: {
             url: default_server + "/json/carreras",
             type: 'GET',
-            dataSrc: function(json) {
+            dataSrc: function (json) {
                 return json.data;
             }
         },
@@ -24,8 +24,17 @@ $(document).ready(function() {
             { data: 'codigo' },
             { data: 'nombre' },
             {
+                data: 'grupo',
+                render: function (data) {
+                    if (!data) return '<span class="badge bg-secondary">Sin grupo</span>';
+                    var badgeClass = data === 'A' ? 'bg-primary' : (data === 'B' ? 'bg-success' : 'bg-info');
+                    var grupoNombre = data === 'A' ? 'Grupo A' : (data === 'B' ? 'Grupo B' : 'Grupo C');
+                    return '<span class="badge ' + badgeClass + '">' + grupoNombre + '</span>';
+                }
+            },
+            {
                 data: 'descripcion',
-                render: function(data) {
+                render: function (data) {
                     if (!data) return '<span class="text-muted">Sin descripción</span>';
                     // Limitar a 50 caracteres
                     return data.length > 50 ? data.substr(0, 50) + '...' : data;
@@ -33,13 +42,13 @@ $(document).ready(function() {
             },
             {
                 data: 'estudiantes_activos',
-                render: function(data) {
+                render: function (data) {
                     return '<span class="badge bg-info">' + data + '</span>';
                 }
             },
             {
                 data: 'estado',
-                render: function(data) {
+                render: function (data) {
                     return data ?
                         '<span class="badge bg-success">Activo</span>' :
                         '<span class="badge bg-danger">Inactivo</span>';
@@ -48,7 +57,7 @@ $(document).ready(function() {
             { data: 'fecha_creacion' },
             {
                 data: null,
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return row.actions;
                 }
             }
@@ -76,7 +85,7 @@ $(document).ready(function() {
     });
 
     // Limpiar formulario cuando se cierra el modal
-    $('#newCarreraModal').on('hidden.bs.modal', function() {
+    $('#newCarreraModal').on('hidden.bs.modal', function () {
         $('#newCarreraForm')[0].reset();
         $('#newCarreraForm .is-invalid').removeClass('is-invalid');
         $('#newCarreraForm .invalid-feedback').remove();
@@ -84,7 +93,7 @@ $(document).ready(function() {
         toastr.clear();
     });
 
-    $('#editCarreraModal').on('hidden.bs.modal', function() {
+    $('#editCarreraModal').on('hidden.bs.modal', function () {
         $('#editCarreraForm')[0].reset();
         $('#editCarreraForm .is-invalid').removeClass('is-invalid');
         $('#editCarreraForm .invalid-feedback').remove();
@@ -93,7 +102,7 @@ $(document).ready(function() {
     });
 
     // Crear nueva carrera
-    $('#saveNewCarrera').on('click', function() {
+    $('#saveNewCarrera').on('click', function () {
         var btn = $(this);
         var formData = $('#newCarreraForm').serialize();
 
@@ -105,14 +114,14 @@ $(document).ready(function() {
             url: default_server + "/json/carreras",
             type: 'POST',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#newCarreraModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -129,7 +138,7 @@ $(document).ready(function() {
                     toastr.error('Error al crear la carrera');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -137,33 +146,34 @@ $(document).ready(function() {
     });
 
     // Cargar datos para editar
-    $('#carreras-datatable').on('click', '.edit-carrera', function() {
+    $('#carreras-datatable').on('click', '.edit-carrera', function () {
         var id = $(this).data('id');
 
         $.ajax({
             url: default_server + "/json/carreras/" + id,
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var carrera = response.data;
 
                     $('#edit_carrera_id').val(carrera.id);
                     $('#edit_codigo').val(carrera.codigo);
                     $('#edit_nombre').val(carrera.nombre);
+                    $('#edit_grupo').val(carrera.grupo || '');
                     $('#edit_descripcion').val(carrera.descripcion || '');
                     $('#edit_estado').val(carrera.estado ? '1' : '0');
 
                     $('#editCarreraModal').modal('show');
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al obtener los datos de la carrera');
             }
         });
     });
 
     // Actualizar carrera
-    $('#updateCarrera').on('click', function() {
+    $('#updateCarrera').on('click', function () {
         var btn = $(this);
         var id = $('#edit_carrera_id').val();
         var formData = $('#editCarreraForm').serialize();
@@ -176,14 +186,14 @@ $(document).ready(function() {
             url: default_server + "/json/carreras/" + id,
             type: 'PUT',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#editCarreraModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -201,7 +211,7 @@ $(document).ready(function() {
                     toastr.error('Error al actualizar la carrera');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -209,7 +219,7 @@ $(document).ready(function() {
     });
 
     // Cambiar estado de carrera
-    $('#carreras-datatable').on('click', '.change-status', function() {
+    $('#carreras-datatable').on('click', '.change-status', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -219,23 +229,23 @@ $(document).ready(function() {
         $.ajax({
             url: default_server + "/json/carreras/" + id + "/status",
             type: 'PATCH',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al cambiar el estado de la carrera');
             },
-            complete: function() {
+            complete: function () {
                 btn.prop('disabled', false);
             }
         });
     });
 
     // Eliminar carrera
-    $('#carreras-datatable').on('click', '.delete-carrera', function() {
+    $('#carreras-datatable').on('click', '.delete-carrera', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -268,33 +278,33 @@ $(document).ready(function() {
         $.ajax({
             url: default_server + "/json/carreras/" + id,
             type: 'DELETE',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 400) {
                     toastr.error(xhr.responseJSON.message);
                 } else {
                     toastr.error('Error al eliminar la carrera');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.prop('disabled', false);
             }
         });
     }
 
     // Validaciones adicionales
-    $('#codigo, #edit_codigo').on('input', function() {
+    $('#codigo, #edit_codigo').on('input', function () {
         // Convertir a mayúsculas y permitir solo letras, números y guiones
         $(this).val($(this).val().toUpperCase().replace(/[^A-Z0-9-]/g, ''));
     });
 
     // Tooltip para descripción completa
-    $('#carreras-datatable').on('mouseenter', 'td', function() {
+    $('#carreras-datatable').on('mouseenter', 'td', function () {
         var $this = $(this);
         if (this.offsetWidth < this.scrollWidth && !$this.attr('title')) {
             $this.attr('title', $this.text());

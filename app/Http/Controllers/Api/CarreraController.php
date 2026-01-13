@@ -24,6 +24,7 @@ class CarreraController extends Controller
                 'id' => $carrera->id,
                 'codigo' => $carrera->codigo,
                 'nombre' => $carrera->nombre,
+                'grupo' => $carrera->grupo,
                 'descripcion' => $carrera->descripcion,
                 'estado' => $carrera->estado,
                 'estudiantes_activos' => $carrera->inscripciones_count,
@@ -67,6 +68,7 @@ class CarreraController extends Controller
         $validator = Validator::make($request->all(), [
             'codigo' => 'required|string|max:20|unique:carreras',
             'nombre' => 'required|string|max:150',
+            'grupo' => 'required|in:A,B,C',
             'descripcion' => 'nullable|string',
             'estado' => 'boolean'
         ]);
@@ -134,6 +136,7 @@ class CarreraController extends Controller
         $validator = Validator::make($request->all(), [
             'codigo' => 'required|string|max:20|unique:carreras,codigo,' . $id,
             'nombre' => 'required|string|max:150',
+            'grupo' => 'required|in:A,B,C',
             'descripcion' => 'nullable|string',
             'estado' => 'boolean'
         ]);

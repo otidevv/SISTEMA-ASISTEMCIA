@@ -71,6 +71,7 @@
                                 <th>ID</th>
                                 <th>Código</th>
                                 <th>Nombre</th>
+                                <th>Grupo</th>
                                 <th>Descripción</th>
                                 <th>Estudiantes</th>
                                 <th>Estado</th>
@@ -110,6 +111,16 @@
                             <label for="nombre" class="form-label">Nombre de la Carrera</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" required
                                 placeholder="Ej: Ingeniería de Sistemas">
+                        </div>
+                        <div class="mb-3">
+                            <label for="grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
+                            <select class="form-select" id="grupo" name="grupo" required>
+                                <option value="">Seleccione un grupo</option>
+                                <option value="A">Grupo A - Ingenierías</option>
+                                <option value="B">Grupo B - Ciencias de la Salud</option>
+                                <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                            </select>
+                            <small class="text-muted">El grupo determina a qué aula se asignará el estudiante</small>
                         </div>
                         <div class="mb-3">
                             <label for="descripcion" class="form-label">Descripción</label>
@@ -158,6 +169,16 @@
                             <label for="edit_nombre" class="form-label">Nombre de la Carrera</label>
                             <input type="text" class="form-control" id="edit_nombre" name="nombre" required
                                 placeholder="Ej: Ingeniería de Sistemas">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_grupo" name="grupo" required>
+                                <option value="">Seleccione un grupo</option>
+                                <option value="A">Grupo A - Ingenierías</option>
+                                <option value="B">Grupo B - Ciencias de la Salud</option>
+                                <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                            </select>
+                            <small class="text-muted">El grupo determina a qué aula se asignará el estudiante</small>
                         </div>
                         <div class="mb-3">
                             <label for="edit_descripcion" class="form-label">Descripción</label>

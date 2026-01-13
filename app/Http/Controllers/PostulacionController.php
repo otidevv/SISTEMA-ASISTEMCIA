@@ -433,13 +433,13 @@ class PostulacionController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Postulación aprobada exitosamente. Se ha creado la inscripción y asignado al aula ' . $aula->nombre . ' (Grupo ' . $this->determinarGrupoCarrera($postulacion->carrera->nombre) . ')',
+                'message' => 'Postulación aprobada exitosamente. Se ha creado la inscripción y asignado al aula ' . $aula->nombre . ' (Grupo ' . $postulacion->carrera->grupo . ')',
                 'data' => [
                     'inscripcion_id' => $inscripcion->id,
                     'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
                     'aula' => $aula->nombre,
                     'aula_capacidad_disponible' => $aula->getCapacidadDisponible() - 1,
-                    'grupo_carrera' => $this->determinarGrupoCarrera($postulacion->carrera->nombre)
+                    'grupo_carrera' => $postulacion->carrera->grupo
                 ]
             ]);
             
@@ -460,8 +460,8 @@ class PostulacionController extends Controller
         $carrera = Carrera::find($carreraId);
         $turno = Turno::find($turnoId);
         
-        // 1. Determinar el grupo de la carrera
-        $grupoCarrera = $this->determinarGrupoCarrera($carrera->nombre);
+        // 1. Obtener el grupo de la carrera desde la base de datos
+        $grupoCarrera = $carrera->grupo;
         $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
         
         // 2. Construir la consulta base para aulas con el conteo de inscripciones activas
@@ -491,17 +491,10 @@ class PostulacionController extends Controller
             $aulas = $aulasGrupo->get()->filter($filtroCapacidad);
         }
         
-        // 4. Si no hay, buscar aulas mixtas (AB, ABC)
-        if ($aulas->isEmpty()) {
-            $aulasMixtas = clone $baseQuery;
-            $aulasMixtas->where(function($q) {
-                $q->where('codigo', 'like', 'AB%')
-                  ->orWhere('codigo', 'like', 'ABC%');
-            });
-            $aulas = $aulasMixtas->get()->filter($filtroCapacidad);
-        }
+        // 4. Si no hay aulas del grupo específico, buscar cualquier aula del turno
+        // (Eliminada lógica de aulas mixtas AB/ABC ya que solo se manejan grupos A, B, C)
         
-        // 5. Como último recurso, cualquier aula del turno
+        // 5. Si aún no hay aulas, buscar cualquier aula del turno
         if ($aulas->isEmpty()) {
             $aulas = $baseQuery->get()->filter($filtroCapacidad);
         }
@@ -516,77 +509,7 @@ class PostulacionController extends Controller
         return $aulas->first();
     }
 
-    /**
-     * Determinar el grupo de carrera según CEPRE UNAMAD
-     */
-    private function determinarGrupoCarrera($nombreCarrera)
-    {
-        // Normalizar: convertir a minúsculas y quitar tildes
-        $nombreNormalizado = $this->quitarTildes(strtolower($nombreCarrera));
-        
-        // IMPORTANTE: Evaluar en orden de especificidad para evitar conflictos
-        
-        // Grupo B - Ciencias de la Salud (MÁXIMA PRIORIDAD)
-        if (str_contains($nombreNormalizado, 'medicina') ||
-            str_contains($nombreNormalizado, 'veterinaria') ||
-            str_contains($nombreNormalizado, 'zootecnia') ||
-            str_contains($nombreNormalizado, 'enfermeria')) {
-            return 'B';
-        }
-        
-        // Grupo C - Ciencias Sociales y Educación (SEGUNDA PRIORIDAD)
-        // Evaluar antes que Grupo A para evitar que "Educación en Informática" vaya a Grupo A
-        if (str_contains($nombreNormalizado, 'educacion') ||
-            str_contains($nombreNormalizado, 'primaria') ||
-            str_contains($nombreNormalizado, 'inicial') ||
-            str_contains($nombreNormalizado, 'especial') ||
-            str_contains($nombreNormalizado, 'administracion') ||
-            str_contains($nombreNormalizado, 'negocios') ||
-            str_contains($nombreNormalizado, 'contabilidad') ||
-            str_contains($nombreNormalizado, 'finanzas') ||
-            str_contains($nombreNormalizado, 'derecho') ||
-            str_contains($nombreNormalizado, 'ciencias politicas') ||
-            str_contains($nombreNormalizado, 'ecoturismo') ||
-            str_contains($nombreNormalizado, 'matematica') ||
-            str_contains($nombreNormalizado, 'computacion')) {
-            return 'C';
-        }
-        
-        // Grupo A - Ingenierías (TERCERA PRIORIDAD)
-        if (str_contains($nombreNormalizado, 'ingenieria') || 
-            str_contains($nombreNormalizado, 'sistemas') ||
-            str_contains($nombreNormalizado, 'informatica') ||
-            str_contains($nombreNormalizado, 'forestal') ||
-            str_contains($nombreNormalizado, 'medio ambiente') ||
-            str_contains($nombreNormalizado, 'agroindustrial')) {
-            return 'A';
-        }
-        
-        return null; // Si no coincide con ningún grupo
-    }
 
-    /**
-     * Quitar tildes de un texto para normalización
-     */
-    private function quitarTildes($texto)
-    {
-        $tildes = ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'];
-        $sin_tildes = ['a', 'e', 'i', 'o', 'u', 'n', 'a', 'e', 'i', 'o', 'u', 'n'];
-        return str_replace($tildes, $sin_tildes, $texto);
-    }
-
-    /**
-     * Obtener capacidad ideal por grupo de carreras
-     */
-    private function getCapacidadIdealPorGrupo($grupo)
-    {
-        switch ($grupo) {
-            case 'A': return 30; // Ingenierías - grupos medianos
-            case 'B': return 25; // Ciencias de salud - grupos más pequeños
-            case 'C': return 35; // Ciencias sociales - grupos más grandes
-            default: return 30;
-        }
-    }
 
     /**
      * Eliminar postulación
