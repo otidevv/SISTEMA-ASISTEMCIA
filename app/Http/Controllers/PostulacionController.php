@@ -389,9 +389,10 @@ class PostulacionController extends Controller
             $aula = $this->asignarAulaDisponible($postulacion->turno_id, $postulacion->carrera_id, $postulacion->tipo_inscripcion);
             
             if (!$aula) {
+                $grupoInfo = $postulacion->carrera->grupo ? ' del Grupo ' . $postulacion->carrera->grupo : '';
                 return response()->json([
                     'success' => false,
-                    'message' => 'No hay aulas disponibles con capacidad suficiente para el turno y carrera seleccionados'
+                    'message' => 'No hay aulas disponibles con capacidad suficiente' . $grupoInfo . ' para el turno ' . $postulacion->turno->nombre . ' y carrera ' . $postulacion->carrera->nombre
                 ], 400);
             }
             
@@ -484,20 +485,24 @@ class PostulacionController extends Controller
         $aulas = collect();
         if ($grupoCarrera) {
             $aulasGrupo = clone $baseQuery;
+            // Buscar aulas cuyo código o nombre comience con "GRUPO-" (ej: B-1, C-2)
             $aulasGrupo->where(function($q) use ($grupoCarrera) {
-                $q->where('codigo', 'like', $grupoCarrera . '%')
-                  ->orWhere('codigo', 'like', '%' . $grupoCarrera . '%');
+                $q->where('codigo', 'like', $grupoCarrera . '-%')
+                  ->orWhere('nombre', 'like', $grupoCarrera . '-%');
             });
             $aulas = $aulasGrupo->get()->filter($filtroCapacidad);
         }
         
-        // 4. Si no hay aulas del grupo específico, buscar cualquier aula del turno
-        // (Eliminada lógica de aulas mixtas AB/ABC ya que solo se manejan grupos A, B, C)
         
-        // 5. Si aún no hay aulas, buscar cualquier aula del turno
-        if ($aulas->isEmpty()) {
+        // 4. Si no hay aulas del grupo específico, NO asignar cualquier aula
+        // Retornar null para que se muestre error específico del grupo
+        // (ELIMINADO el fallback que asignaba cualquier aula disponible)
+        
+        // Si no hay grupo asignado a la carrera, buscar cualquier aula del turno como fallback
+        if (!$grupoCarrera && $aulas->isEmpty()) {
             $aulas = $baseQuery->get()->filter($filtroCapacidad);
         }
+        
         
         // 6. Ordenar para llenado progresivo
         $aulas = $aulas->sortBy(function ($aula) { 
