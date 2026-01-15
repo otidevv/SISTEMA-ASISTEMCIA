@@ -307,7 +307,7 @@ class DashboardController extends Controller
 
             // ESTADÍSTICAS DE ASISTENCIA
             $data['estadisticasAsistencia'] = Cache::remember('dashboard.admin.asistencia.' . $cicloActivo->id, 900, function () use ($cicloActivo) {
-                return $this->obtenerEstadisticasGenerales($cicloActivo);
+                 return $this->obtenerEstadisticasGenerales($cicloActivo);
             });
 
             // ASISTENCIA DE HOY
@@ -815,44 +815,90 @@ class DashboardController extends Controller
 
     private function obtenerEstadisticasGenerales($ciclo)
     {
-        // OPTIMIZADO: Usar SQL agregado en lugar de loops
         $hoy = Carbon::now()->startOfDay();
-        $fechaInicioCiclo = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
-        $fechaFinCalculo = $hoy < Carbon::parse($ciclo->fecha_fin) ? $hoy : Carbon::parse($ciclo->fecha_fin);
         
-        // Calcular días hábiles totales del ciclo hasta hoy
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicioCiclo, $fechaFinCalculo);
+        // 1. Determinar el examen vigente y su fecha (Lógica mirror de Dashboard Estudiante/Export)
+        // El ciclo se divide en periodos (Inicio->1er, 1er->2do, 2do->3er).
+        // El dashboard general debe mostrar el estado del ALUMNO en el "Reto Actual".
         
-        // Obtener límites de amonestación e inhabilitación
-        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
-        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
-        
-        // Query optimizada: obtener estudiantes con conteo de asistencias
-        $estudiantes = DB::table('inscripciones as i')
+        $fechaPrimerExamen = Carbon::parse($ciclo->fecha_primer_examen)->endOfDay();
+        $fechaSegundoExamen = $ciclo->fecha_segundo_examen ? Carbon::parse($ciclo->fecha_segundo_examen)->endOfDay() : null;
+        $fechaTercerExamen = $ciclo->fecha_tercer_examen ? Carbon::parse($ciclo->fecha_tercer_examen)->endOfDay() : null;
+
+        // Determinamos qué "Periodo de Examen" estamos evaluando
+        $fechaExamenObjetivo = $fechaPrimerExamen;
+        $fechaInicioPeriodoTeorico = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+
+        if ($hoy > $fechaPrimerExamen && $fechaSegundoExamen) {
+             $fechaExamenObjetivo = $fechaSegundoExamen;
+             // Si evaluamos 2do examen, el inicio "teórico" de conteo es post-1er examen
+             $fechaInicioPeriodoTeorico = $this->getSiguienteDiaHabil($fechaPrimerExamen);
+        } elseif ($fechaSegundoExamen && $hoy > $fechaSegundoExamen && $fechaTercerExamen) {
+             $fechaExamenObjetivo = $fechaTercerExamen;
+             $fechaInicioPeriodoTeorico = $this->getSiguienteDiaHabil($fechaSegundoExamen);
+        }
+
+        // Fecha de corte para "Faltas Actuales" (Hoy o Fin de Periodo)
+        $fechaFinEsfuerzo = $hoy < $fechaExamenObjetivo ? $hoy : $fechaExamenObjetivo;
+
+        // 2. Obtener primera asistencia RELEVANTE para este periodo por alumno
+        // Nota: Si es 2do examen, buscamos primera asistencia DESDE el inicio del 2do periodo.
+        $primerasAsistencias = DB::table('registros_asistencia as ra')
+            ->join('users as u', 'ra.nro_documento', '=', 'u.numero_documento')
+            ->join('inscripciones as i', 'u.id', '=', 'i.estudiante_id')
+            ->where('i.ciclo_id', $ciclo->id)
+            ->whereBetween('ra.fecha_registro', [$fechaInicioPeriodoTeorico, $fechaExamenObjetivo])
+            ->select('i.estudiante_id', DB::raw('MIN(ra.fecha_registro) as fecha_primer_asistencia'))
+            ->groupBy('i.estudiante_id')
+            ->pluck('fecha_primer_asistencia', 'i.estudiante_id');
+
+        // 3. Obtener conteo de asistencias en este periodo específico
+        $conteoAsistencias = DB::table('inscripciones as i')
             ->join('users as u', 'i.estudiante_id', '=', 'u.id')
-            ->leftJoin('registros_asistencia as ra', function($join) use ($fechaInicioCiclo, $fechaFinCalculo) {
-                $join->on('u.numero_documento', '=', 'ra.nro_documento')
-                     ->whereBetween('ra.fecha_registro', [$fechaInicioCiclo, $fechaFinCalculo->copy()->endOfDay()])
-                     ->whereRaw('DAYOFWEEK(ra.fecha_registro) BETWEEN 2 AND 6'); // Lunes a Viernes
-            })
+            ->join('registros_asistencia as ra', 'u.numero_documento', '=', 'ra.nro_documento')
             ->where('i.ciclo_id', $ciclo->id)
             ->where('i.estado_inscripcion', 'activo')
-            ->select(
-                'u.id',
-                'u.numero_documento',
-                DB::raw('COUNT(DISTINCT DATE(ra.fecha_registro)) as dias_asistidos')
-            )
-            ->groupBy('u.id', 'u.numero_documento')
-            ->get();
+            ->whereBetween('ra.fecha_registro', [$fechaInicioPeriodoTeorico, $fechaFinEsfuerzo->copy()->endOfDay()])
+            ->whereRaw('DAYOFWEEK(ra.fecha_registro) BETWEEN 2 AND 6')
+            ->select('i.estudiante_id', DB::raw('COUNT(DISTINCT DATE(ra.fecha_registro)) as dias_asistidos'))
+            ->groupBy('i.estudiante_id')
+            ->pluck('dias_asistidos', 'i.estudiante_id');
+            
+        // 4. Lista de inscritos
+        $estudiantesIds = DB::table('inscripciones')
+            ->where('ciclo_id', $ciclo->id)
+            ->where('estado_inscripcion', 'activo')
+            ->pluck('estudiante_id');
         
-        $totalEstudiantes = $estudiantes->count();
+        $totalEstudiantes = $estudiantesIds->count();
         $estudiantesRegulares = 0;
         $estudiantesAmonestados = 0;
         $estudiantesInhabilitados = 0;
         
-        // Clasificar estudiantes según sus faltas
-        foreach ($estudiantes as $estudiante) {
-            $diasFalta = $diasHabilesTotales - $estudiante->dias_asistidos;
+        foreach ($estudiantesIds as $estudianteId) {
+            if (!isset($primerasAsistencias[$estudianteId])) {
+                // Sin registros en este periodo => Regular (o Pendiente)
+                $estudiantesRegulares++;
+                continue;
+            }
+
+            $fechaInicioPersonal = Carbon::parse($primerasAsistencias[$estudianteId])->startOfDay();
+            
+            // A. Días Hábiles TRANSCURRIDOS (StartPersonal -> Hoy/Corte)
+            $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicioPersonal, $fechaFinEsfuerzo);
+
+            // B. Asistencias Reales
+            $diasAsistidos = $conteoAsistencias[$estudianteId] ?? 0;
+
+            // C. Faltas Actuales
+            $diasFalta = max(0, $diasHabilesTranscurridos - $diasAsistidos);
+
+            // D. Límite: Basado en periodo StartPersonal -> ExamenObjetivo
+            // "diasHabilesTotales" en calcularAsistenciaExamen
+            $diasHabilesTotalesPeriodo = $this->contarDiasHabiles($fechaInicioPersonal, $fechaExamenObjetivo);
+            
+            $limiteAmonestacion = ceil($diasHabilesTotalesPeriodo * ($ciclo->porcentaje_amonestacion / 100));
+            $limiteInhabilitacion = ceil($diasHabilesTotalesPeriodo * ($ciclo->porcentaje_inhabilitacion / 100));
             
             if ($diasFalta >= $limiteInhabilitacion) {
                 $estudiantesInhabilitados++;

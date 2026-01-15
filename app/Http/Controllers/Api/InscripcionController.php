@@ -563,6 +563,10 @@ class InscripcionController extends Controller
             $query->where('estado_inscripcion', $request->estado);
         }
 
+        // Aumentar tiempo de ejecución y memoria para reportes grandes
+        set_time_limit(300); // 5 minutos
+        ini_set('memory_limit', '512M');
+
         $inscripciones = $query->get();
 
         return Excel::download(new InscripcionesExport($inscripciones), 'inscripciones_' . date('Y-m-d') . '.xlsx');
@@ -1087,6 +1091,10 @@ class InscripcionController extends Controller
             // Si se usa desde un frontend con JS, este bloque se podría adaptar para respuesta 200 con tipo application/json
             abort(404, 'No existen inscripciones activas para este ciclo.');
         }
+
+        // Aumentar tiempo de ejecución y memoria para reportes complejos de asistencia
+        set_time_limit(600); // 10 minutos
+        ini_set('memory_limit', '1024M');
 
         $filename = 'asistencias_ciclo_' . $cicloId . '.xlsx';
         return Excel::download(new AsistenciasPorCicloExport($cicloId), $filename);
