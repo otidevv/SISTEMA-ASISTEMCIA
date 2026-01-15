@@ -454,7 +454,7 @@ class PostulacionController extends Controller
     }
     
     /**
-     * Asignar aula disponible según turno, carrera y capacidad - LÓGICA MEJORADA
+     * Asignar aula disponible según turno, carrera y capacidad - LÓGICA ROBUSTA
      */
     private function asignarAulaDisponible($turnoId, $carreraId, $tipoInscripcion = 'postulante')
     {
@@ -465,46 +465,37 @@ class PostulacionController extends Controller
         $grupoCarrera = $carrera->grupo;
         $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
         
-        // 2. Construir la consulta base para aulas con el conteo de inscripciones activas
-        $baseQuery = Aula::activas()->withCount(['inscripciones' => function ($query) { 
+        // 2. Construir la consulta completa ANTES de withCount
+        // Esto asegura que inscripciones_count se calcule correctamente solo para las aulas filtradas
+        $queryAulas = Aula::activas()
+            ->where('nombre', 'like', '%' . $turnoNombre . '%');
+        
+        // 3. Aplicar filtro de grupo si la carrera tiene uno asignado
+        // Filtrar SOLO por nombre (el codigo puede tener valores inconsistentes)
+        if ($grupoCarrera) {
+            $queryAulas->where('nombre', 'like', $grupoCarrera . '-%');
+        }
+        
+        // 4. AHORA aplicar withCount DESPUÉS de todos los filtros
+        // Esto garantiza que inscripciones_count solo cuente para aulas del grupo correcto
+        $queryAulas->withCount(['inscripciones' => function ($query) { 
             $query->where('estado_inscripcion', 'activo')
                   ->whereHas('ciclo', function ($subQuery) {
                       $subQuery->where('es_activo', true);
                   });
         }]);
         
-        // Filtrar por turno específico
-        $baseQuery->where('nombre', 'like', '%' . $turnoNombre . '%');
-        
-        // Función de filtro para capacidad disponible
-        $filtroCapacidad = function ($aula) {
+        // 5. Obtener aulas y filtrar por capacidad disponible
+        $aulas = $queryAulas->get()->filter(function ($aula) {
             return ($aula->capacidad - $aula->inscripciones_count) > 0;
-        };
+        });
         
-        // 3. Priorizar aulas del grupo específico
-        $aulas = collect();
-        if ($grupoCarrera) {
-            $aulasGrupo = clone $baseQuery;
-            // Buscar aulas cuyo código o nombre comience con "GRUPO-" (ej: B-1, C-2)
-            $aulasGrupo->where(function($q) use ($grupoCarrera) {
-                $q->where('codigo', 'like', $grupoCarrera . '-%')
-                  ->orWhere('nombre', 'like', $grupoCarrera . '-%');
-            });
-            $aulas = $aulasGrupo->get()->filter($filtroCapacidad);
+        // 6. Si no hay aulas disponibles, retornar null
+        if ($aulas->isEmpty()) {
+            return null;
         }
         
-        
-        // 4. Si no hay aulas del grupo específico, NO asignar cualquier aula
-        // Retornar null para que se muestre error específico del grupo
-        // (ELIMINADO el fallback que asignaba cualquier aula disponible)
-        
-        // Si no hay grupo asignado a la carrera, buscar cualquier aula del turno como fallback
-        if (!$grupoCarrera && $aulas->isEmpty()) {
-            $aulas = $baseQuery->get()->filter($filtroCapacidad);
-        }
-        
-        
-        // 6. Ordenar para llenado progresivo
+        // 7. Ordenar para llenado progresivo (menos ocupadas primero)
         $aulas = $aulas->sortBy(function ($aula) { 
             // Primero, por el número de inscritos activos (ascendente)
             // Segundo, por el nombre del aula (alfabético)

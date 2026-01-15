@@ -86,4 +86,24 @@ class Aula extends Model
 
         return $this->capacidad > 0 ? round(($inscripcionesActivas / $this->capacidad) * 100, 2) : 0;
     }
+
+    // Accessor para características
+    public function getCaracteristicasAttribute()
+    {
+        $caracteristicas = [];
+        
+        if ($this->tiene_proyector) {
+            $caracteristicas[] = '<i class="uil uil-presentation text-primary"></i> Proyector';
+        }
+        
+        if ($this->tiene_aire_acondicionado) {
+            $caracteristicas[] = '<i class="uil uil-snowflake text-info"></i> A/C';
+        }
+        
+        if ($this->accesible) {
+            $caracteristicas[] = '<i class="uil uil-wheelchair text-success"></i> Accesible';
+        }
+        
+        return !empty($caracteristicas) ? implode(' | ', $caracteristicas) : 'Ninguna';
+    }
 }

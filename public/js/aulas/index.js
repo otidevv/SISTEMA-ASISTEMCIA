@@ -7,7 +7,7 @@ $.ajaxSetup({
     }
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     // Inicializar DataTables
     var table = $('#aulas-datatable').DataTable({
         processing: true,
@@ -15,7 +15,7 @@ $(document).ready(function() {
         ajax: {
             url: default_server + "/json/aulas",
             type: 'GET',
-            dataSrc: function(json) {
+            dataSrc: function (json) {
                 return json.data;
             }
         },
@@ -25,11 +25,11 @@ $(document).ready(function() {
             { data: 'nombre' },
             {
                 data: 'tipo_display',
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     let badgeClass = '';
                     let icon = '';
 
-                    switch(row.tipo) {
+                    switch (row.tipo) {
                         case 'aula':
                             badgeClass = 'bg-primary';
                             icon = '<i class="uil uil-book-reader"></i>';
@@ -53,13 +53,13 @@ $(document).ready(function() {
             },
             {
                 data: 'capacidad',
-                render: function(data) {
+                render: function (data) {
                     return `<span class="badge bg-secondary">${data} personas</span>`;
                 }
             },
             {
                 data: null,
-                render: function(data) {
+                render: function (data) {
                     let ubicacion = '';
                     if (data.edificio) {
                         ubicacion += data.edificio;
@@ -76,35 +76,14 @@ $(document).ready(function() {
             },
             {
                 data: 'caracteristicas',
-                render: function(data) {
-                    if (!data || data.length === 0) {
-                        return '<span class="text-muted">Ninguna</span>';
-                    }
-
-                    let badges = '';
-                    data.forEach(function(caracteristica) {
-                        let icon = '';
-                        let color = 'bg-info';
-
-                        if (caracteristica === 'Proyector') {
-                            icon = '<i class="uil uil-presentation"></i>';
-                        } else if (caracteristica === 'Aire Acondicionado') {
-                            icon = '<i class="uil uil-snowflake"></i>';
-                            color = 'bg-primary';
-                        } else if (caracteristica === 'Accesible') {
-                            icon = '<i class="uil uil-wheelchair"></i>';
-                            color = 'bg-success';
-                        }
-
-                        badges += `<span class="badge ${color} me-1">${icon} ${caracteristica}</span>`;
-                    });
-
-                    return badges;
+                render: function (data) {
+                    // El accessor ya devuelve el HTML formateado
+                    return data || '<span class="text-muted">Ninguna</span>';
                 }
             },
             {
                 data: 'estado',
-                render: function(data) {
+                render: function (data) {
                     return data ?
                         '<span class="badge bg-success">Activo</span>' :
                         '<span class="badge bg-danger">Inactivo</span>';
@@ -112,7 +91,7 @@ $(document).ready(function() {
             },
             {
                 data: null,
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return row.actions;
                 }
             }
@@ -140,7 +119,7 @@ $(document).ready(function() {
     });
 
     // Limpiar formulario cuando se cierra el modal
-    $('#newAulaModal').on('hidden.bs.modal', function() {
+    $('#newAulaModal').on('hidden.bs.modal', function () {
         $('#newAulaForm')[0].reset();
         $('#newAulaForm .is-invalid').removeClass('is-invalid');
         $('#newAulaForm .invalid-feedback').remove();
@@ -150,7 +129,7 @@ $(document).ready(function() {
         toastr.clear();
     });
 
-    $('#editAulaModal').on('hidden.bs.modal', function() {
+    $('#editAulaModal').on('hidden.bs.modal', function () {
         $('#editAulaForm')[0].reset();
         $('#editAulaForm .is-invalid').removeClass('is-invalid');
         $('#editAulaForm .invalid-feedback').remove();
@@ -159,7 +138,7 @@ $(document).ready(function() {
     });
 
     // Crear nueva aula
-    $('#saveNewAula').on('click', function() {
+    $('#saveNewAula').on('click', function () {
         var btn = $(this);
         var formData = $('#newAulaForm').serialize();
 
@@ -171,14 +150,14 @@ $(document).ready(function() {
             url: default_server + "/json/aulas",
             type: 'POST',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#newAulaModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -195,7 +174,7 @@ $(document).ready(function() {
                     toastr.error('Error al crear el aula');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -203,13 +182,13 @@ $(document).ready(function() {
     });
 
     // Cargar datos para editar
-    $('#aulas-datatable').on('click', '.edit-aula', function() {
+    $('#aulas-datatable').on('click', '.edit-aula', function () {
         var id = $(this).data('id');
 
         $.ajax({
             url: default_server + "/json/aulas/" + id,
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var aula = response.data;
 
@@ -232,14 +211,14 @@ $(document).ready(function() {
                     $('#editAulaModal').modal('show');
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al obtener los datos del aula');
             }
         });
     });
 
     // Actualizar aula
-    $('#updateAula').on('click', function() {
+    $('#updateAula').on('click', function () {
         var btn = $(this);
         var id = $('#edit_aula_id').val();
         var formData = $('#editAulaForm').serialize();
@@ -252,14 +231,14 @@ $(document).ready(function() {
             url: default_server + "/json/aulas/" + id,
             type: 'PUT',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#editAulaModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -277,7 +256,7 @@ $(document).ready(function() {
                     toastr.error('Error al actualizar el aula');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -285,7 +264,7 @@ $(document).ready(function() {
     });
 
     // Cambiar estado de aula
-    $('#aulas-datatable').on('click', '.change-status', function() {
+    $('#aulas-datatable').on('click', '.change-status', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -295,23 +274,23 @@ $(document).ready(function() {
         $.ajax({
             url: default_server + "/json/aulas/" + id + "/status",
             type: 'PATCH',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al cambiar el estado del aula');
             },
-            complete: function() {
+            complete: function () {
                 btn.prop('disabled', false);
             }
         });
     });
 
     // Eliminar aula
-    $('#aulas-datatable').on('click', '.delete-aula', function() {
+    $('#aulas-datatable').on('click', '.delete-aula', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -321,16 +300,16 @@ $(document).ready(function() {
             $.ajax({
                 url: default_server + "/json/aulas/" + id,
                 type: 'DELETE',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
                         toastr.success(response.message);
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     toastr.error('Error al eliminar el aula');
                 },
-                complete: function() {
+                complete: function () {
                     btn.prop('disabled', false);
                 }
             });
@@ -338,25 +317,25 @@ $(document).ready(function() {
     });
 
     // Validaciones adicionales
-    $('#codigo, #edit_codigo').on('input', function() {
+    $('#codigo, #edit_codigo').on('input', function () {
         // Convertir a mayúsculas
         $(this).val($(this).val().toUpperCase());
     });
 
     // Validar capacidad
-    $('#capacidad, #edit_capacidad').on('input', function() {
+    $('#capacidad, #edit_capacidad').on('input', function () {
         var val = parseInt($(this).val());
         if (val < 1) $(this).val(1);
         if (val > 1000) $(this).val(1000);
     });
 
     // Cambiar opciones según el tipo de aula
-    $('#tipo, #edit_tipo').on('change', function() {
+    $('#tipo, #edit_tipo').on('change', function () {
         var tipo = $(this).val();
         var capacidadInput = $(this).closest('form').find('input[name="capacidad"]');
 
         // Sugerir capacidades típicas según el tipo
-        switch(tipo) {
+        switch (tipo) {
             case 'aula':
                 capacidadInput.attr('placeholder', 'Ej: 30-40');
                 break;
