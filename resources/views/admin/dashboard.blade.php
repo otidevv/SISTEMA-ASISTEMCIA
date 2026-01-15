@@ -112,11 +112,35 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (generalData.cicloActivo) renderBanner(generalData.cicloActivo);
         renderStats(generalData);
         
-        if (adminData.estadisticasAsistencia) renderAsistencia(adminData.estadisticasAsistencia);
-        if (adminData.postulaciones) renderPostulaciones(adminData.postulaciones);
-        if (adminData.carnets) renderCarnets(adminData.carnets);
-        if (adminData.alertas) renderAlertas(adminData.alertas);
-        if (anuncios) renderAnuncios(anuncios);
+        if (adminData.estadisticasAsistencia) {
+            renderAsistencia(adminData.estadisticasAsistencia);
+        } else {
+            document.getElementById('asistencia-chart').innerHTML = '<div class="alert alert-info">📊 No hay datos de asistencia</div>';
+        }
+        
+        if (adminData.postulaciones) {
+            renderPostulaciones(adminData.postulaciones);
+        } else {
+            document.getElementById('postulaciones-stats').innerHTML = '<div class="alert alert-info">📋 Sin postulaciones</div>';
+        }
+        
+        if (adminData.carnets) {
+            renderCarnets(adminData.carnets);
+        } else {
+            document.getElementById('carnets-stats').innerHTML = '<div class="alert alert-info">🆔 Sin carnets</div>';
+        }
+        
+        if (adminData.alertas && adminData.alertas.length > 0) {
+            renderAlertas(adminData.alertas);
+        } else {
+            document.getElementById('alertas-content').innerHTML = '<div class="alert alert-success mb-0"><i class="mdi mdi-check-circle"></i> No hay alertas</div>';
+        }
+        
+        if (anuncios && anuncios.length > 0) {
+            renderAnuncios(anuncios);
+        } else {
+            document.getElementById('anuncios-content').innerHTML = '<p class="text-muted small text-center py-3">📢 No hay anuncios activos</p>';
+        }
         
         document.getElementById('dashboard-content').style.display = 'block';
     } catch (error) {

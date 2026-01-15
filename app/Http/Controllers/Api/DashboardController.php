@@ -389,13 +389,17 @@ class DashboardController extends Controller
                 ];
             }
 
-            if ($proximoExamen && $proximoExamen['dias_faltantes'] <= 7) {
-                $alertas[] = [
-                    'tipo' => 'info',
-                    'mensaje' => "{$proximoExamen['nombre']} en {$proximoExamen['dias_faltantes']} días",
-                    'icono' => 'mdi-calendar-clock',
-                    'url' => '#'
-                ];
+            if ($proximoExamen) {
+                $diasFaltantes = (int) max(0, $hoy->diffInDays($proximoExamen['fecha'], false));
+                
+                if ($diasFaltantes <= 7) {
+                    $alertas[] = [
+                        'tipo' => 'info',
+                        'mensaje' => "{$proximoExamen['nombre']} en {$diasFaltantes} días",
+                        'icono' => 'mdi-calendar-clock',
+                        'url' => '#'
+                    ];
+                }
             }
 
             $data['alertas'] = $alertas;
