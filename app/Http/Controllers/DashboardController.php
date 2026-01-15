@@ -608,8 +608,17 @@ class DashboardController extends Controller
         } elseif ($user->hasRole('padre')) {
             return view('admin.dashboard-padre', $data);
         } else {
-            // Estadísticas generales (para administradores) - Optimizadas con cache
-            if ($user->hasRole('admin') || $user->hasPermission('dashboard.admin')) {
+            // Estadísticas generales (para administradores y roles administrativos)
+            $rolesAdministrativos = ['admin', 'ADMINISTRATIVOS', 'CEPRE UNAMAD MONITOREO', 'COORDINACIÓN ACADEMICA', 'ASISTENTE ADMINISTRATIVO II'];
+            $esAdministrativo = false;
+            foreach ($rolesAdministrativos as $rol) {
+                if ($user->hasRole($rol)) {
+                    $esAdministrativo = true;
+                    break;
+                }
+            }
+            
+            if ($esAdministrativo || $user->hasPermission('dashboard.admin')) {
                 // Ciclo activo
                 $cicloActivo = Ciclo::where('es_activo', true)->first();
 
