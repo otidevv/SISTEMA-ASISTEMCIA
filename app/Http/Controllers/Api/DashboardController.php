@@ -450,10 +450,8 @@ class DashboardController extends Controller
                 ]);
             }
 
-            // Obtener estadísticas con caché de 15 minutos
-            $estadisticas = Cache::remember('dashboard.admin.asistencia.' . $cicloActivo->id, 900, function () use ($cicloActivo) {
-                return $this->obtenerEstadisticasGenerales($cicloActivo);
-            });
+            // Obtener estadísticas SIN caché para ver skeleton siempre
+            $estadisticas = $this->obtenerEstadisticasGenerales($cicloActivo);
 
             // Generar alerta de estudiantes en riesgo
             $alerta = null;

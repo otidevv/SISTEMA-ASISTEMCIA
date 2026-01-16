@@ -629,9 +629,9 @@ class DashboardController extends Controller
                         ->where('estado_inscripcion', 'activo')
                         ->count();
 
-                    // Estadísticas de asistencia general (cacheadas)
-                    // OPTIMIZACIÓN: Cargar por AJAX para que el HTML se renderice instantáneamente
-                    // El skeleton se mostrará mientras se carga en background
+                    // Estadísticas de asistencia general - CARGA PROGRESIVA
+                    // Se cargan por AJAX vía /api/dashboard/admin/estadisticas-asistencia
+                    // Ver: public/js/dashboard-progressive-loading.js
                     // $statsCacheKey = 'dashboard.admin.stats.' . $cicloActivo->id;
                     // $data['estadisticasAsistencia'] = Cache::remember($statsCacheKey, 600, function () use ($cicloActivo) {
                     //     return $this->obtenerEstadisticasGenerales($cicloActivo);

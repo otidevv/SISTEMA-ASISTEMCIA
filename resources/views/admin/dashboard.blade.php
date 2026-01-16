@@ -29,6 +29,18 @@
     .stat-number { font-size: 2.2rem !important; font-weight: 700 !important; }
     .modern-progress { height: 28px !important; border-radius: 14px !important; background: rgba(255,255,255,0.2) !important; }
     .modern-progress .progress-bar { border-radius: 14px !important; font-weight: 600 !important; }
+    
+    /* Skeleton Loader */
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+        border-radius: 8px;
+    }
 </style>
 
 <!-- Page Title -->
@@ -41,19 +53,33 @@
 </div>
 
 <!-- Ciclo Banner -->
-<div id="ciclo-banner" class="row mb-4"></div>
+<div id="ciclo-banner" class="row mb-4">
+    <div class="col-12">
+        <div class="skeleton" style="height: 150px;"></div>
+    </div>
+</div>
 
 <!-- Stats Cards -->
-<div id="stats-cards" class="row mb-4"></div>
+<div id="stats-cards" class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3"><div class="skeleton" style="height: 120px;"></div></div>
+    <div class="col-xl-3 col-md-6 mb-3"><div class="skeleton" style="height: 120px;"></div></div>
+    <div class="col-xl-3 col-md-6 mb-3"><div class="skeleton" style="height: 120px;"></div></div>
+    <div class="col-xl-3 col-md-6 mb-3"><div class="skeleton" style="height: 120px;"></div></div>
+</div>
 
 <!-- Main Content -->
-<div id="dashboard-content" style="display: none;">
+<div id="dashboard-content">
     <div class="row">
         <div class="col-xl-8 mb-4">
             <div class="modern-card">
                 <div class="card-body p-4">
                     <h5 class="mb-4"><i class="mdi mdi-chart-bar text-primary"></i> Estadísticas de Asistencia</h5>
-                    <div id="asistencia-chart"></div>
+                    <div id="asistencia-chart">
+                        <!-- Skeleton loaders -->
+                        <div class="skeleton" style="height: 80px; margin-bottom: 15px;"></div>
+                        <div class="skeleton" style="height: 80px; margin-bottom: 15px;"></div>
+                        <div class="skeleton" style="height: 80px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,14 +88,21 @@
             <div class="modern-card mb-4">
                 <div class="card-body p-4">
                     <h6 class="mb-3"><i class="mdi mdi-clipboard-text text-info"></i> Postulaciones</h6>
-                    <div id="postulaciones-stats"></div>
+                    <div id="postulaciones-stats">
+                        <div class="skeleton" style="height: 30px; margin-bottom: 10px;"></div>
+                        <div class="skeleton" style="height: 30px; margin-bottom: 10px;"></div>
+                        <div class="skeleton" style="height: 30px;"></div>
+                    </div>
                 </div>
             </div>
 
             <div class="modern-card mb-4">
                 <div class="card-body p-4">
                     <h6 class="mb-3"><i class="mdi mdi-card-account-details text-warning"></i> Carnets</h6>
-                    <div id="carnets-stats"></div>
+                    <div id="carnets-stats">
+                        <div class="skeleton" style="height: 30px; margin-bottom: 10px;"></div>
+                        <div class="skeleton" style="height: 30px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,7 +113,10 @@
             <div class="modern-card">
                 <div class="card-body p-4">
                     <h5 class="mb-3"><i class="mdi mdi-bell-ring text-danger"></i> Alertas</h5>
-                    <div id="alertas-content"></div>
+                    <div id="alertas-content">
+                        <div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>
+                        <div class="skeleton" style="height: 60px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,7 +125,10 @@
             <div class="modern-card">
                 <div class="card-body p-4">
                     <h6 class="mb-3"><i class="mdi mdi-bullhorn text-success"></i> Anuncios</h6>
-                    <div id="anuncios-content"></div>
+                    <div id="anuncios-content">
+                        <div class="skeleton" style="height: 80px; margin-bottom: 10px;"></div>
+                        <div class="skeleton" style="height: 80px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -98,9 +137,10 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/dashboard-progressive-loading.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
-    const apiToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const apiToken = document.querySelector('meta[name="csrf-token"]')?.content;
     
     try {
         const [generalData, adminData, anuncios] = await Promise.all([
