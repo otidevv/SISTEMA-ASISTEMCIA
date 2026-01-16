@@ -305,9 +305,10 @@ class DashboardController extends Controller
                 'entregados' => $carnets->entregados ?? 0
             ];
 
-            // ESTADÍSTICAS DE ASISTENCIA - Movido a endpoint separado para carga progresiva
-            // Las estadísticas de asistencia se cargarán mediante /api/dashboard/admin/estadisticas-asistencia
-            // Esto permite que el dashboard cargue rápidamente sin esperar este cálculo pesado
+            // ESTADÍSTICAS DE ASISTENCIA
+            $data['estadisticasAsistencia'] = Cache::remember('dashboard.admin.asistencia.' . $cicloActivo->id, 900, function () use ($cicloActivo) {
+                 return $this->obtenerEstadisticasGenerales($cicloActivo);
+            });
 
             // ASISTENCIA DE HOY
             $today = Carbon::today();
@@ -378,7 +379,15 @@ class DashboardController extends Controller
                 ];
             }
 
-            // Alerta de estudiantes en riesgo se generará en el frontend cuando se carguen las estadísticas
+            $estudiantesEnRiesgo = $data['estadisticasAsistencia']['amonestados'] + $data['estadisticasAsistencia']['inhabilitados'];
+            if ($estudiantesEnRiesgo > 0) {
+                $alertas[] = [
+                    'tipo' => 'danger',
+                    'mensaje' => "{$estudiantesEnRiesgo} estudiantes en riesgo (amonestados/inhabilitados)",
+                    'icono' => 'mdi-account-alert',
+                    'url' => route('asistencia.index')
+                ];
+            }
 
             if ($proximoExamen) {
                 $diasFaltantes = (int) max(0, $hoy->diffInDays($proximoExamen['fecha'], false));
