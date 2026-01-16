@@ -305,10 +305,9 @@ class DashboardController extends Controller
                 'entregados' => $carnets->entregados ?? 0
             ];
 
-            // ESTADÍSTICAS DE ASISTENCIA
-            $data['estadisticasAsistencia'] = Cache::remember('dashboard.admin.asistencia.' . $cicloActivo->id, 900, function () use ($cicloActivo) {
-                 return $this->obtenerEstadisticasGenerales($cicloActivo);
-            });
+            // ESTADÍSTICAS DE ASISTENCIA - Movido a endpoint separado para carga progresiva
+            // Las estadísticas de asistencia se cargarán mediante /api/dashboard/admin/estadisticas-asistencia
+            // Esto permite que el dashboard cargue rápidamente sin esperar este cálculo pesado
 
             // ASISTENCIA DE HOY
             $today = Carbon::today();
@@ -379,15 +378,7 @@ class DashboardController extends Controller
                 ];
             }
 
-            $estudiantesEnRiesgo = $data['estadisticasAsistencia']['amonestados'] + $data['estadisticasAsistencia']['inhabilitados'];
-            if ($estudiantesEnRiesgo > 0) {
-                $alertas[] = [
-                    'tipo' => 'danger',
-                    'mensaje' => "{$estudiantesEnRiesgo} estudiantes en riesgo (amonestados/inhabilitados)",
-                    'icono' => 'mdi-account-alert',
-                    'url' => route('asistencia.index')
-                ];
-            }
+            // Alerta de estudiantes en riesgo se generará en el frontend cuando se carguen las estadísticas
 
             if ($proximoExamen) {
                 $diasFaltantes = (int) max(0, $hoy->diffInDays($proximoExamen['fecha'], false));
@@ -408,6 +399,72 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error en getDatosAdmin: ' . $e->getMessage());
             return response()->json(['error' => 'Error al obtener datos administrativos'], 500);
+        }
+    }
+
+    /**
+     * Obtener SOLO estadísticas de asistencia (endpoint separado para carga progresiva)
+     * Este endpoint se llama después de cargar el dashboard básico
+     */
+    public function getEstadisticasAsistencia()
+    {
+        try {
+            $user = Auth::user();
+
+            // Roles con acceso al dashboard administrativo
+            $rolesAdministrativos = [
+                'admin',
+                'ADMINISTRATIVOS',
+                'CEPRE UNAMAD MONITOREO',
+                'COORDINACIÓN ACADEMICA',
+                'ASISTENTE ADMINISTRATIVO II'
+            ];
+
+            $tieneAcceso = false;
+            foreach ($rolesAdministrativos as $rol) {
+                if ($user->hasRole($rol)) {
+                    $tieneAcceso = true;
+                    break;
+                }
+            }
+
+            if (!$tieneAcceso && !$user->hasPermission('dashboard.admin')) {
+                return response()->json(['error' => 'No autorizado'], 403);
+            }
+
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+            if (!$cicloActivo) {
+                return response()->json([
+                    'error' => 'No hay ciclo activo',
+                    'estadisticas' => null
+                ]);
+            }
+
+            // Obtener estadísticas con caché de 15 minutos
+            $estadisticas = Cache::remember('dashboard.admin.asistencia.' . $cicloActivo->id, 900, function () use ($cicloActivo) {
+                return $this->obtenerEstadisticasGenerales($cicloActivo);
+            });
+
+            // Generar alerta de estudiantes en riesgo
+            $alerta = null;
+            $estudiantesEnRiesgo = $estadisticas['amonestados'] + $estadisticas['inhabilitados'];
+            if ($estudiantesEnRiesgo > 0) {
+                $alerta = [
+                    'tipo' => 'danger',
+                    'mensaje' => "{$estudiantesEnRiesgo} estudiantes en riesgo (amonestados/inhabilitados)",
+                    'icono' => 'mdi-account-alert',
+                    'url' => route('asistencia.index')
+                ];
+            }
+
+            return response()->json([
+                'estadisticas' => $estadisticas,
+                'alerta' => $alerta
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en getEstadisticasAsistencia: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener estadísticas de asistencia'], 500);
         }
     }
 

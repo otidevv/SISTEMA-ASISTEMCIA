@@ -13,6 +13,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/dashboard/anuncios', [DashboardController::class, 'getAnuncios']);
     Route::get('/dashboard/ultimos-registros', [DashboardController::class, 'getUltimosRegistros']);
     Route::get('/dashboard/admin', [DashboardController::class, 'getDatosAdmin']);
+    Route::get('/dashboard/admin/estadisticas-asistencia', [DashboardController::class, 'getEstadisticasAsistencia']);
     Route::get('/dashboard/estudiante', [DashboardController::class, 'getDatosEstudiante']);
     Route::get('/dashboard/profesor', [DashboardController::class, 'getDatosProfesor']);
 });
