@@ -29,41 +29,6 @@
     .stat-number { font-size: 2.2rem !important; font-weight: 700 !important; }
     .modern-progress { height: 28px !important; border-radius: 14px !important; background: rgba(255,255,255,0.2) !important; }
     .modern-progress .progress-bar { border-radius: 14px !important; font-weight: 600 !important; }
-
-    /* Skeleton Loaders */
-    @keyframes shimmer {
-        0% { background-position: -1000px 0; }
-        100% { background-position: 1000px 0; }
-    }
-    
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-        border-radius: 8px;
-    }
-    
-    .skeleton-text {
-        height: 16px;
-        margin-bottom: 8px;
-        border-radius: 4px;
-    }
-    
-    .skeleton-title {
-        height: 24px;
-        width: 60%;
-        margin-bottom: 12px;
-    }
-    
-    .skeleton-card {
-        height: 120px;
-        border-radius: 15px;
-    }
-    
-    .skeleton-chart {
-        height: 300px;
-        border-radius: 15px;
-    }
 </style>
 
 <!-- Page Title -->
@@ -76,44 +41,19 @@
 </div>
 
 <!-- Ciclo Banner -->
-<div id="ciclo-banner" class="row mb-4">
-    <div class="col-12">
-        <div class="card modern-card border-0">
-            <div class="card-body p-4">
-                <div class="skeleton skeleton-title"></div>
-                <div class="skeleton skeleton-text" style="width: 80%"></div>
-                <div class="skeleton skeleton-text" style="width: 60%"></div>
-            </div>
-        </div>
-    </div>
-</div>
+<div id="ciclo-banner" class="row mb-4"></div>
 
 <!-- Stats Cards -->
-<div id="stats-cards" class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card modern-card border-0"><div class="card-body"><div class="skeleton skeleton-card"></div></div></div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card modern-card border-0"><div class="card-body"><div class="skeleton skeleton-card"></div></div></div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card modern-card border-0"><div class="card-body"><div class="skeleton skeleton-card"></div></div></div>
-    </div>
-    <div class="col-xl-3 col-md-6 mb-3">
-        <div class="card modern-card border-0"><div class="card-body"><div class="skeleton skeleton-card"></div></div></div>
-    </div>
-</div>
+<div id="stats-cards" class="row mb-4"></div>
 
 <!-- Main Content -->
-<div id="dashboard-content">
+<div id="dashboard-content" style="display: none;">
     <div class="row">
         <div class="col-xl-8 mb-4">
             <div class="modern-card">
                 <div class="card-body p-4">
                     <h5 class="mb-4"><i class="mdi mdi-chart-bar text-primary"></i> Estadísticas de Asistencia</h5>
-                    <div id="asistencia-chart">
-                        <div class="skeleton skeleton-chart"></div>
-                    </div>
+                    <div id="asistencia-chart"></div>
                 </div>
             </div>
         </div>
@@ -162,13 +102,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const apiToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
-    // PROGRESSIVE LOADING: 3 Stages
-    // Stage 1: Skeleton screens (already visible)
-    // Stage 2: Load basic data (fast)
-    // Stage 3: Load heavy statistics (background)
-    
     try {
-        // STAGE 2: Load basic dashboard data (fast, no heavy queries)
         const [generalData, adminData, anuncios] = await Promise.all([
             fetch('/api/dashboard/datos-generales', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': apiToken }}).then(r => r.json()),
             fetch('/api/dashboard/admin', { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': apiToken }}).then(r => r.json()),
@@ -178,74 +112,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (generalData.cicloActivo) renderBanner(generalData.cicloActivo);
         renderStats(generalData);
         
-        // Render basic admin data (fast)
-        if (adminData.postulaciones) {
-            renderPostulaciones(adminData.postulaciones);
-        } else {
-            document.getElementById('postulaciones-stats').innerHTML = '<div class="alert alert-info">📋 Sin postulaciones</div>';
-        }
+        if (adminData.estadisticasAsistencia) renderAsistencia(adminData.estadisticasAsistencia);
+        if (adminData.postulaciones) renderPostulaciones(adminData.postulaciones);
+        if (adminData.carnets) renderCarnets(adminData.carnets);
+        if (adminData.alertas) renderAlertas(adminData.alertas);
+        if (anuncios) renderAnuncios(anuncios);
         
-        if (adminData.carnets) {
-            renderCarnets(adminData.carnets);
-        } else {
-            document.getElementById('carnets-stats').innerHTML = '<div class="alert alert-info">🆔 Sin carnets</div>';
-        }
-        
-        if (adminData.alertas && adminData.alertas.length > 0) {
-            renderAlertas(adminData.alertas);
-        } else {
-            document.getElementById('alertas-content').innerHTML = '<div class="alert alert-success mb-0"><i class="mdi mdi-check-circle"></i> No hay alertas</div>';
-        }
-        
-        if (anuncios && anuncios.length > 0) {
-            renderAnuncios(anuncios);
-        } else {
-            document.getElementById('anuncios-content').innerHTML = '<p class="text-muted small text-center py-3">📢 No hay anuncios activos</p>';
-        }
-        
-        // STAGE 3: Load heavy attendance statistics in background
-        loadEstadisticasAsistencia(apiToken);
+        document.getElementById('dashboard-content').style.display = 'block';
     } catch (error) {
         console.error('Error:', error);
-    }
-
-    // STAGE 3: Load attendance statistics asynchronously
-    async function loadEstadisticasAsistencia(apiToken) {
-        try {
-            const response = await fetch('/api/dashboard/admin/estadisticas-asistencia', {
-                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': apiToken }
-            });
-            const data = await response.json();
-            
-            if (data.estadisticas) {
-                renderAsistencia(data.estadisticas);
-            } else {
-                document.getElementById('asistencia-chart').innerHTML = '<div class="alert alert-info">📊 No hay datos de asistencia</div>';
-            }
-            
-            // Add alert if there are students at risk
-            if (data.alerta) {
-                const alertasContainer = document.getElementById('alertas-content');
-                const currentContent = alertasContainer.innerHTML;
-                
-                // If there's already a "no alerts" message, replace it
-                if (currentContent.includes('No hay alertas')) {
-                    alertasContainer.innerHTML = '';
-                }
-                
-                // Add the new alert
-                const alertHtml = `
-                    <div class="alert alert-${data.alerta.tipo} mb-2">
-                        <i class="${data.alerta.icono} me-2"></i> ${data.alerta.mensaje}
-                        ${data.alerta.url !== '#' ? `<a href="${data.alerta.url}" class="alert-link ms-2">Ver más →</a>` : ''}
-                    </div>
-                `;
-                alertasContainer.insertAdjacentHTML('afterbegin', alertHtml);
-            }
-        } catch (error) {
-            console.error('Error loading attendance statistics:', error);
-            document.getElementById('asistencia-chart').innerHTML = '<div class="alert alert-warning">⚠️ Error al cargar estadísticas de asistencia</div>';
-        }
     }
 
     function renderBanner(ciclo) {

@@ -619,13 +619,60 @@ class DashboardController extends Controller
             }
             
             if ($esAdministrativo || $user->hasPermission('dashboard.admin')) {
-                // OPTIMIZACIÓN: No cargar NINGÚN dato aquí
-                // El dashboard se renderiza INMEDIATAMENTE con skeleton loaders
-                // Los datos se cargan progresivamente vía AJAX (ver dashboard.blade.php)
-                // Endpoints API:
-                // - /api/dashboard/datos-generales (ciclo, stats básicos)
-                // - /api/dashboard/admin (postulaciones, carnets, alertas)
-                // - /api/dashboard/admin/estadisticas-asistencia (estadísticas pesadas)
+                // Ciclo activo
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+                if ($cicloActivo) {
+                    // Estadísticas del ciclo activo (cacheadas)
+                    $data['cicloActivo'] = $cicloActivo;
+                    $data['totalInscripciones'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
+                        ->where('estado_inscripcion', 'activo')
+                        ->count();
+
+                    // Estadísticas de asistencia general (cacheadas)
+                    // OPTIMIZACIÓN: Cargar por AJAX para que el HTML se renderice instantáneamente
+                    // El skeleton se mostrará mientras se carga en background
+                    // $statsCacheKey = 'dashboard.admin.stats.' . $cicloActivo->id;
+                    // $data['estadisticasAsistencia'] = Cache::remember($statsCacheKey, 600, function () use ($cicloActivo) {
+                    //     return $this->obtenerEstadisticasGenerales($cicloActivo);
+                    // });
+                }
+
+                // Cache datos administrativos estáticos
+                $adminCacheKey = 'dashboard.admin.contadores';
+                $adminData = Cache::remember($adminCacheKey, 300, function () {
+                    return [
+                        'totalCarreras' => Carrera::where('estado', true)->count(),
+                        'totalAulas' => Aula::where('estado', true)->count(),
+                        'totalAdministradores' => User::whereHas('roles', function ($query) {
+                            $query->where('nombre', 'administrador');
+                        })->count(),
+                        'totalRoles' => Role::count(),
+                        'totalPermisos' => Permission::count(),
+                        'totalCiclos' => Ciclo::count(),
+                        'totalTurnos' => Turno::where('estado', true)->count(),
+                        'totalCursos' => Curso::where('estado', true)->count(),
+                        'totalAnuncios' => Anuncio::count(),
+                        'totalHorariosDocentes' => HorarioDocente::count(),
+                        'totalPagosDocentes' => PagoDocente::count(),
+                        'totalAsistenciaDocente' => AsistenciaDocente::count(),
+                        'totalInscripcionesGeneral' => Inscripcion::count()
+                    ];
+                });
+                $data = array_merge($data, $adminData);
+
+                // Asistencia de estudiantes para hoy (datos en tiempo real, no cacheados)
+                $today = Carbon::today();
+                $data['asistenciaHoy'] = [
+                    'total_registros' => RegistroAsistencia::whereDate('fecha_registro', $today)->count(),
+                    'presentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
+                                    ->where('estado', 'presente')
+                                    ->count(),
+                    'ausentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
+                                    ->where('estado', 'ausente')
+                                    ->count(),
+                ];
+
             }
             return view('admin.dashboard', $data);
         }
