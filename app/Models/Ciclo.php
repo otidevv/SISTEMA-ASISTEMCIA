@@ -25,6 +25,7 @@ class Ciclo extends Model
         'fecha_tercer_examen',
         'porcentaje_avance',
         'es_activo',
+        'incluye_sabados',
         'estado',
         'correlativo_inicial',
         'creado_por',
@@ -38,6 +39,7 @@ class Ciclo extends Model
         'fecha_segundo_examen' => 'date',
         'fecha_tercer_examen' => 'date',
         'es_activo' => 'boolean',
+        'incluye_sabados' => 'boolean',
         'porcentaje_avance' => 'decimal:2',
         'porcentaje_amonestacion' => 'decimal:2',
         'porcentaje_inhabilitacion' => 'decimal:2'
@@ -187,14 +189,37 @@ class Ciclo extends Model
         $diasHabiles = 0;
 
         while ($inicio <= $fin) {
-            // Contar solo días de lunes a sábado
-            if ($inicio->dayOfWeek != 0) { // 0 = Domingo
+            if ($this->esDiaHabil($inicio)) {
                 $diasHabiles++;
             }
             $inicio->addDay();
         }
 
         return $diasHabiles;
+    }
+
+    /**
+     * Determinar si una fecha es día hábil según la configuración del ciclo
+     * @param mixed $fecha Fecha a verificar
+     * @return bool True si es día hábil, false si no
+     */
+    public function esDiaHabil($fecha)
+    {
+        $carbonFecha = \Carbon\Carbon::parse($fecha);
+        $dayOfWeek = $carbonFecha->dayOfWeek;
+        
+        // Domingo nunca es día hábil
+        if ($dayOfWeek == 0) {
+            return false;
+        }
+        
+        // Sábado solo es día hábil si el ciclo lo incluye
+        if ($dayOfWeek == 6) {
+            return $this->incluye_sabados;
+        }
+        
+        // Lunes a viernes siempre son días hábiles
+        return true;
     }
 
     // Método para calcular límites de faltas
@@ -230,19 +255,14 @@ class Ciclo extends Model
     }
 
     /**
-     * Obtener día equivalente para sábado según rotación
+     * Determinar si el ciclo incluye clases los sábados
      * @param mixed $fecha Fecha del sábado
-     * @return string Día de la semana ('lunes', 'martes', etc.)
+     * @return string Retorna 'sábado' si el ciclo incluye clases ese día, null si no
      */
     public function getDiaEquivalenteSabado($fecha)
     {
-        $semana = $this->getNumeroSemana($fecha);
-        $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
-        
-        // Asegurar que el índice sea siempre positivo
-        $indice = (($semana - 1) % 5 + 5) % 5;
-        
-        return $diasSemana[$indice];
+        // Si el ciclo incluye sábados, retornar 'sábado', sino retornar null para indicar que no hay clases
+        return $this->incluye_sabados ? 'sábado' : null;
     }
 
     /**

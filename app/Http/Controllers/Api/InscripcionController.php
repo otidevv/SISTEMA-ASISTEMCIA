@@ -694,7 +694,7 @@ class InscripcionController extends Controller
 
             // Segundo Examen
             if ($ciclo->fecha_segundo_examen) {
-                $inicioSegundo = $this->getSiguienteDiaHabilPdf($ciclo->fecha_primer_examen);
+                $inicioSegundo = $this->getSiguienteDiaHabilPdf($ciclo->fecha_primer_examen, $ciclo);
                 $infoAsistencia['segundo_examen'] = $this->calcularAsistenciaExamenPdf(
                     $estudiante->numero_documento,
                     $inicioSegundo,
@@ -705,7 +705,7 @@ class InscripcionController extends Controller
 
             // Tercer Examen
             if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                $inicioTercero = $this->getSiguienteDiaHabilPdf($ciclo->fecha_segundo_examen);
+                $inicioTercero = $this->getSiguienteDiaHabilPdf($ciclo->fecha_segundo_examen, $ciclo);
                 $infoAsistencia['tercer_examen'] = $this->calcularAsistenciaExamenPdf(
                     $estudiante->numero_documento,
                     $inicioTercero,
@@ -726,7 +726,8 @@ class InscripcionController extends Controller
             $detalleAsistencias = $this->obtenerDetalleAsistenciasPorMes(
                 $estudiante->numero_documento,
                 $primerRegistro->fecha_registro,
-                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin))
+                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                $ciclo
             );
 
             $data['detalle_asistencias'] = $detalleAsistencias;
@@ -777,12 +778,14 @@ class InscripcionController extends Controller
         // Calcular días hábiles - IMPORTANTE: usar endOfDay para incluir el día completo
         $diasHabilesTotales = $this->contarDiasHabilesPdf(
             $fechaInicioCarbon->format('Y-m-d'),
-            $fechaExamenCarbon->format('Y-m-d')
+            $fechaExamenCarbon->format('Y-m-d'),
+            $ciclo
         );
 
         $diasHabilesTranscurridos = $this->contarDiasHabilesPdf(
             $fechaInicioCarbon->format('Y-m-d'),
-            $fechaFinCalculo->format('Y-m-d')
+            $fechaFinCalculo->format('Y-m-d'),
+            $ciclo
         );
 
         // Obtener días con asistencia - usar DATE para agrupar por día
@@ -796,15 +799,15 @@ class InscripcionController extends Controller
             ->get()
             ->pluck('fecha');
 
-        // Contar asistencias en días hábiles
+        // Contar asistencias en días hábiles según configuración del ciclo
         $diasConAsistencia = 0;
         $fechasContadas = [];
 
         foreach ($registros as $fecha) {
             $fechaCarbon = Carbon::parse($fecha);
 
-            // Solo contar días hábiles (lunes a viernes)
-            if ($fechaCarbon->isWeekday()) {
+            // Solo contar días hábiles según configuración del ciclo
+            if ($ciclo->esDiaHabil($fechaCarbon)) {
                 $diasConAsistencia++;
                 $fechasContadas[] = $fecha;
             }
@@ -885,34 +888,52 @@ class InscripcionController extends Controller
     }
 
     /**
-     * Contar días hábiles para el PDF
+     * Contar días hábiles para el PDF según configuración del ciclo
      */
-    private function contarDiasHabilesPdf($fechaInicio, $fechaFin)
+    private function contarDiasHabilesPdf($fechaInicio, $fechaFin, $ciclo = null)
     {
         $inicio = Carbon::parse($fechaInicio)->startOfDay();
         $fin = Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
 
-        // IMPORTANTE: usar <= para incluir ambos días (inicio y fin)
-        while ($inicio <= $fin) {
-            if ($inicio->isWeekday()) {
-                $diasHabiles++;
+        // Si no hay ciclo, usar lógica por defecto (lunes a sábado)
+        if (!$ciclo) {
+            while ($inicio <= $fin) {
+                if ($inicio->dayOfWeek != 0) { // Excluir domingos
+                    $diasHabiles++;
+                }
+                $inicio->addDay();
             }
-            $inicio->addDay();
+        } else {
+            // Usar lógica del ciclo
+            while ($inicio <= $fin) {
+                if ($ciclo->esDiaHabil($inicio)) {
+                    $diasHabiles++;
+                }
+                $inicio->addDay();
+            }
         }
 
         return $diasHabiles;
     }
 
     /**
-     * Obtener siguiente día hábil para el PDF
+     * Obtener siguiente día hábil para el PDF según configuración del ciclo
      */
-    private function getSiguienteDiaHabilPdf($fecha)
+    private function getSiguienteDiaHabilPdf($fecha, $ciclo = null)
     {
         $dia = Carbon::parse($fecha)->addDay();
 
-        while (!$dia->isWeekday()) {
-            $dia->addDay();
+        // Si no hay ciclo, usar lógica por defecto (lunes a viernes)
+        if (!$ciclo) {
+            while (!$dia->isWeekday()) {
+                $dia->addDay();
+            }
+        } else {
+            // Usar lógica del ciclo
+            while (!$ciclo->esDiaHabil($dia)) {
+                $dia->addDay();
+            }
         }
 
         return $dia;
@@ -921,7 +942,7 @@ class InscripcionController extends Controller
     /**
      * Obtener detalle de asistencias por mes incluyendo faltas
      */
-    private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin)
+    private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin, $ciclo = null)
     {
         // Primero, obtener todos los registros de asistencia
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
@@ -948,8 +969,10 @@ class InscripcionController extends Controller
         $fechaFinCarbon = Carbon::parse($fechaFin)->endOfDay();
 
         while ($fechaActual <= $fechaFinCarbon) {
-            // Solo procesar días hábiles (lunes a viernes)
-            if ($fechaActual->isWeekday()) {
+            // Solo procesar días hábiles según configuración del ciclo
+            $esDiaHabil = $ciclo ? $ciclo->esDiaHabil($fechaActual) : $fechaActual->isWeekday();
+            
+            if ($esDiaHabil) {
                 $mes = $fechaActual->format('Y-m');
                 $nombreMes = $fechaActual->locale('es')->monthName;
                 $anio = $fechaActual->year;

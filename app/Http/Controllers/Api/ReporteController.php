@@ -256,11 +256,11 @@ class ReporteController extends Controller
         $fechaInicio = Carbon::parse($primerRegistro->fecha_registro)->startOfDay();
         $fechaFin = Carbon::parse($fechaHasta)->endOfDay();
 
-        // Contar días hábiles
+        // Contar días hábiles según configuración del ciclo
         $diasHabiles = 0;
         $fecha = $fechaInicio->copy();
         while ($fecha <= $fechaFin) {
-            if ($fecha->isWeekday()) {
+            if ($ciclo->esDiaHabil($fecha)) {
                 $diasHabiles++;
             }
             $fecha->addDay();
@@ -272,8 +272,8 @@ class ReporteController extends Controller
             ->select(DB::raw('DATE(fecha_registro) as fecha'))
             ->distinct()
             ->get()
-            ->filter(function ($registro) {
-                return Carbon::parse($registro->fecha)->isWeekday();
+            ->filter(function ($registro) use ($ciclo) {
+                return $ciclo->esDiaHabil(Carbon::parse($registro->fecha));
             })
             ->count();
 

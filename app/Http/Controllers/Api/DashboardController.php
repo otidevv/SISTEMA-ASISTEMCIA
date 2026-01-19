@@ -807,7 +807,7 @@ class DashboardController extends Controller
     private function getSiguienteDiaHabil($fecha)
     {
         $dia = Carbon::parse($fecha)->addDay();
-        while (!$dia->isWeekday()) {
+        while ($dia->dayOfWeek == 0) { // Saltar domingos
             $dia->addDay();
         }
         return $dia;

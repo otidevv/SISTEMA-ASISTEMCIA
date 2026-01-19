@@ -194,6 +194,21 @@
                                 <small class="text-muted">Número inicial para el correlativo de inscripciones</small>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="incluye_sabados" name="incluye_sabados" value="1">
+                                    <label class="form-check-label" for="incluye_sabados">
+                                        <strong>Incluir Clases los Sábados</strong>
+                                    </label>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="mdi mdi-information-outline"></i> 
+                                        Marque esta opción si el ciclo tendrá clases los días sábados. Si no se marca, el ciclo solo tendrá clases de lunes a viernes.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -309,6 +324,21 @@
                                 <input type="number" class="form-control" id="edit_correlativo_inicial" name="correlativo_inicial" 
                                     min="1" required>
                                 <small class="text-muted">Número inicial para el correlativo de inscripciones</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="edit_incluye_sabados" name="incluye_sabados" value="1">
+                                    <label class="form-check-label" for="edit_incluye_sabados">
+                                        <strong>Incluir Clases los Sábados</strong>
+                                    </label>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="mdi mdi-information-outline"></i> 
+                                        Marque esta opción si el ciclo tendrá clases los días sábados. Si no se marca, el ciclo solo tendrá clases de lunes a viernes.
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         <div class="row">

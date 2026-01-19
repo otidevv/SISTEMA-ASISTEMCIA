@@ -204,32 +204,47 @@ class AsistenciaController extends Controller
     }
 
     /**
-     * Obtener el siguiente día hábil después de una fecha
+     * Obtener el siguiente día hábil después de una fecha (lunes a sábado)
      */
     private function getSiguienteDiaHabil($fecha)
     {
         $siguiente = \Carbon\Carbon::parse($fecha)->addDay();
-        
-        while (!$siguiente->isWeekday()) {
+
+        while ($siguiente->dayOfWeek == 0) { // Saltar domingos
             $siguiente->addDay();
         }
-        
+
         return $siguiente;
     }
 
     /**
-     * Contar días hábiles entre dos fechas (lunes a viernes)
+     * Contar días hábiles entre dos fechas según configuración del ciclo
      */
-    private function contarDiasHabiles($fechaInicio, $fechaFin)
+    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo = null)
     {
         $inicio = \Carbon\Carbon::parse($fechaInicio)->startOfDay();
         $fin = \Carbon\Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
 
         while ($inicio <= $fin) {
-            // Contar solo días de lunes a viernes (1-5)
-            if ($inicio->isWeekday()) {
-                $diasHabiles++;
+            // Usar configuración del ciclo si está disponible
+            if ($ciclo && isset($ciclo->incluye_sabados)) {
+                if ($ciclo->incluye_sabados) {
+                    // Ciclo incluye sábados: contar lunes a sábado
+                    if ($inicio->dayOfWeek != 0) { // 0 = Domingo
+                        $diasHabiles++;
+                    }
+                } else {
+                    // Ciclo solo lunes a viernes
+                    if ($inicio->isWeekday()) {
+                        $diasHabiles++;
+                    }
+                }
+            } else {
+                // Por defecto: contar lunes a sábado (compatibilidad)
+                if ($inicio->dayOfWeek != 0) { // 0 = Domingo
+                    $diasHabiles++;
+                }
             }
             $inicio->addDay();
         }

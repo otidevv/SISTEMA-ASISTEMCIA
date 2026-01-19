@@ -7,7 +7,7 @@ $.ajaxSetup({
     }
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     // Inicializar DataTables
     var table = $('#ciclos-datatable').DataTable({
         processing: true,
@@ -15,7 +15,7 @@ $(document).ready(function() {
         ajax: {
             url: default_server + "/json/ciclos",
             type: 'GET',
-            dataSrc: function(json) {
+            dataSrc: function (json) {
                 return json.data;
             }
         },
@@ -25,19 +25,19 @@ $(document).ready(function() {
             { data: 'nombre' },
             {
                 data: 'fecha_inicio',
-                render: function(data) {
+                render: function (data) {
                     return formatDate(data);
                 }
             },
             {
                 data: 'fecha_fin',
-                render: function(data) {
+                render: function (data) {
                     return formatDate(data);
                 }
             },
             {
                 data: 'proximo_examen',
-                render: function(data) {
+                render: function (data) {
                     if (data) {
                         return `<div class="text-center">
                             <span class="badge bg-info">${data.nombre}</span><br>
@@ -49,7 +49,7 @@ $(document).ready(function() {
             },
             {
                 data: null,
-                render: function(data) {
+                render: function (data) {
                     return `<div class="text-center">
                         <small>
                             Amonestación: <span class="badge bg-warning">${data.porcentaje_amonestacion}%</span>
@@ -62,7 +62,7 @@ $(document).ready(function() {
             },
             {
                 data: 'porcentaje_avance',
-                render: function(data) {
+                render: function (data) {
                     let color = 'bg-info';
                     if (data >= 75) color = 'bg-warning';
                     if (data == 100) color = 'bg-success';
@@ -76,11 +76,11 @@ $(document).ready(function() {
             },
             {
                 data: 'estado',
-                render: function(data) {
+                render: function (data) {
                     let badgeClass = '';
                     let text = '';
 
-                    switch(data) {
+                    switch (data) {
                         case 'planificado':
                             badgeClass = 'bg-secondary';
                             text = 'Planificado';
@@ -104,7 +104,7 @@ $(document).ready(function() {
             },
             {
                 data: 'es_activo',
-                render: function(data) {
+                render: function (data) {
                     return data ?
                         '<span class="badge bg-success">Sí</span>' :
                         '<span class="badge bg-secondary">No</span>';
@@ -112,7 +112,7 @@ $(document).ready(function() {
             },
             {
                 data: null,
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return row.actions;
                 }
             }
@@ -166,14 +166,14 @@ $(document).ready(function() {
     }
 
     // Limpiar formulario cuando se cierra el modal
-    $('#newCicloModal').on('hidden.bs.modal', function() {
+    $('#newCicloModal').on('hidden.bs.modal', function () {
         $('#newCicloForm')[0].reset();
         $('#newCicloForm .is-invalid').removeClass('is-invalid');
         $('#newCicloForm .invalid-feedback').remove();
         toastr.clear();
     });
 
-    $('#editCicloModal').on('hidden.bs.modal', function() {
+    $('#editCicloModal').on('hidden.bs.modal', function () {
         $('#editCicloForm')[0].reset();
         $('#editCicloForm .is-invalid').removeClass('is-invalid');
         $('#editCicloForm .invalid-feedback').remove();
@@ -181,20 +181,20 @@ $(document).ready(function() {
     });
 
     // Validar fechas en tiempo real
-    $('#fecha_inicio, #fecha_fin').on('change', function() {
+    $('#fecha_inicio, #fecha_fin').on('change', function () {
         validateDates();
     });
 
-    $('#edit_fecha_inicio, #edit_fecha_fin').on('change', function() {
+    $('#edit_fecha_inicio, #edit_fecha_fin').on('change', function () {
         validateEditDates();
     });
 
     // Validar fechas de exámenes
-    $('#fecha_primer_examen, #fecha_segundo_examen, #fecha_tercer_examen').on('change', function() {
+    $('#fecha_primer_examen, #fecha_segundo_examen, #fecha_tercer_examen').on('change', function () {
         validateExamDates();
     });
 
-    $('#edit_fecha_primer_examen, #edit_fecha_segundo_examen, #edit_fecha_tercer_examen').on('change', function() {
+    $('#edit_fecha_primer_examen, #edit_fecha_segundo_examen, #edit_fecha_tercer_examen').on('change', function () {
         validateEditExamDates();
     });
 
@@ -335,7 +335,7 @@ $(document).ready(function() {
     }
 
     // Crear nuevo ciclo
-    $('#saveNewCiclo').on('click', function() {
+    $('#saveNewCiclo').on('click', function () {
         if (!validateDates()) {
             toastr.error('Por favor, corrija los errores en las fechas del ciclo');
             return;
@@ -348,18 +348,22 @@ $(document).ready(function() {
 
         var formData = $('#newCicloForm').serialize();
 
+        // Agregar explícitamente el valor del checkbox incluye_sabados
+        var incluye_sabados = $('#incluye_sabados').is(':checked') ? 1 : 0;
+        formData += '&incluye_sabados=' + incluye_sabados;
+
         $.ajax({
             url: default_server + "/json/ciclos",
             type: 'POST',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#newCicloModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -389,13 +393,13 @@ $(document).ready(function() {
     });
 
     // Cargar datos para editar
-    $('#ciclos-datatable').on('click', '.edit-ciclo', function() {
+    $('#ciclos-datatable').on('click', '.edit-ciclo', function () {
         var id = $(this).data('id');
 
         $.ajax({
             url: default_server + "/json/ciclos/" + id,
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var ciclo = response.data;
 
@@ -416,19 +420,22 @@ $(document).ready(function() {
                     $('#edit_correlativo_inicial').val(ciclo.correlativo_inicial || 1);
                     $('#edit_porcentaje').val(ciclo.porcentaje_avance || 0);
 
+                    // Manejar checkbox de rotación de sábados
+                    $('#edit_incluye_sabados').prop('checked', ciclo.incluye_sabados || false);
+
                     $('#editCicloModal').modal('show');
                 } else {
                     toastr.error('No se pudo cargar la información del ciclo');
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al obtener los datos del ciclo');
             }
         });
     });
 
     // Actualizar ciclo
-    $('#updateCiclo').on('click', function() {
+    $('#updateCiclo').on('click', function () {
         if (!validateEditDates()) {
             toastr.error('Por favor, corrija los errores en las fechas del ciclo');
             return;
@@ -442,18 +449,22 @@ $(document).ready(function() {
         var id = $('#edit_ciclo_id').val();
         var formData = $('#editCicloForm').serialize();
 
+        // Agregar explícitamente el valor del checkbox incluye_sabados
+        var incluye_sabados = $('#edit_incluye_sabados').is(':checked') ? 1 : 0;
+        formData += '&incluye_sabados=' + incluye_sabados;
+
         $.ajax({
             url: default_server + "/json/ciclos/" + id,
             type: 'PUT',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#editCicloModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -484,20 +495,20 @@ $(document).ready(function() {
     });
 
     // Activar ciclo
-    $('#ciclos-datatable').on('click', '.activate-ciclo', function() {
+    $('#ciclos-datatable').on('click', '.activate-ciclo', function () {
         var id = $(this).data('id');
 
         if (confirm('¿Está seguro de activar este ciclo? Se desactivarán todos los demás ciclos.')) {
             $.ajax({
                 url: default_server + "/json/ciclos/" + id + "/activar",
                 type: 'POST',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
                         toastr.success(response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     toastr.error('Error al activar el ciclo académico');
                 }
             });
@@ -505,20 +516,20 @@ $(document).ready(function() {
     });
 
     // Eliminar ciclo
-    $('#ciclos-datatable').on('click', '.delete-ciclo', function() {
+    $('#ciclos-datatable').on('click', '.delete-ciclo', function () {
         var id = $(this).data('id');
 
         if (confirm('¿Está seguro de eliminar este ciclo académico?')) {
             $.ajax({
                 url: default_server + "/json/ciclos/" + id,
                 type: 'DELETE',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
                         toastr.success(response.message);
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     if (xhr.status === 400) {
                         toastr.error(xhr.responseJSON.message);
                     } else {
@@ -535,7 +546,7 @@ $(document).ready(function() {
     let vacantesModificadas = [];
 
     // Guardar y Configurar Vacantes (nuevo ciclo)
-    $('#saveAndConfigVacantes').on('click', function() {
+    $('#saveAndConfigVacantes').on('click', function () {
         if (!validateDates() || !validateExamDates()) {
             toastr.error('Por favor, corrija los errores antes de continuar');
             return;
@@ -547,12 +558,12 @@ $(document).ready(function() {
             url: default_server + "/json/ciclos",
             type: 'POST',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#newCicloModal').modal('hide');
                     table.ajax.reload();
                     toastr.success('Ciclo creado exitosamente');
-                    
+
                     // Abrir modal de vacantes
                     cicloActualId = response.data.id;
                     $('#vacantes-ciclo-nombre').text(response.data.nombre);
@@ -560,17 +571,17 @@ $(document).ready(function() {
                     $('#vacantesModal').modal('show');
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 handleFormErrors(xhr);
             }
         });
     });
 
     // Configurar Vacantes desde edición
-    $('#configVacantesBtn').on('click', function() {
+    $('#configVacantesBtn').on('click', function () {
         cicloActualId = $('#edit_ciclo_id').val();
         const nombreCiclo = $('#edit_nombre').val();
-        
+
         $('#vacantes-ciclo-nombre').text(nombreCiclo);
         $('#editCicloModal').modal('hide');
         cargarVacantes(cicloActualId);
@@ -582,22 +593,22 @@ $(document).ready(function() {
         $.ajax({
             url: default_server + `/json/ciclos/${cicloId}/vacantes`,
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     vacantesData = response.vacantes;
                     vacantesModificadas = [];
-                    
+
                     // Actualizar resumen
                     $('#total-carreras').text(response.resumen.total_carreras);
                     $('#total-vacantes').text(response.resumen.total_vacantes);
                     $('#vacantes-ocupadas').text(response.resumen.vacantes_ocupadas);
                     $('#vacantes-disponibles').text(response.resumen.vacantes_disponibles);
-                    
+
                     // Renderizar tabla con todas las carreras
                     renderizarTablaVacantes();
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al cargar las vacantes');
             }
         });
@@ -607,20 +618,20 @@ $(document).ready(function() {
     function renderizarTablaVacantes() {
         const tbody = $('#vacantesTableBody');
         tbody.empty();
-        
+
         if (vacantesData.length === 0) {
             $('#tablaVacantes').hide();
             $('#noVacantesMessage').show();
         } else {
             $('#tablaVacantes').show();
             $('#noVacantesMessage').hide();
-            
-            vacantesData.forEach(function(vacante) {
+
+            vacantesData.forEach(function (vacante) {
                 const estadoClass = getEstadoClass(vacante.estado_vacantes);
-                const estadoBadge = vacante.estado ? 
-                    '<span class="badge bg-success">Activo</span>' : 
+                const estadoBadge = vacante.estado ?
+                    '<span class="badge bg-success">Activo</span>' :
                     '<span class="badge bg-secondary">Inactivo</span>';
-                
+
                 // Determinar si mostrar porcentaje
                 let porcentajeHtml = '';
                 if (vacante.vacantes_total > 0) {
@@ -635,7 +646,7 @@ $(document).ready(function() {
                 } else {
                     porcentajeHtml = '<span class="text-muted">Sin límite</span>';
                 }
-                
+
                 const row = `
                     <tr data-id="${vacante.id || ''}" data-carrera-id="${vacante.carrera_id}">
                         <td>${vacante.carrera_nombre}</td>
@@ -646,9 +657,9 @@ $(document).ready(function() {
                         </td>
                         <td class="text-center">${vacante.vacantes_ocupadas}</td>
                         <td class="text-center">
-                            ${vacante.vacantes_total > 0 ? 
-                                `<span class="${estadoClass}">${vacante.vacantes_disponibles}</span>` : 
-                                '<span class="text-muted">-</span>'}
+                            ${vacante.vacantes_total > 0 ?
+                        `<span class="${estadoClass}">${vacante.vacantes_disponibles}</span>` :
+                        '<span class="text-muted">-</span>'}
                         </td>
                         <td class="text-center">
                             ${porcentajeHtml}
@@ -667,7 +678,7 @@ $(document).ready(function() {
 
     // Obtener clase de estado
     function getEstadoClass(estado) {
-        switch(estado) {
+        switch (estado) {
             case 'agotado': return 'badge bg-danger';
             case 'pocas': return 'badge bg-warning';
             case 'limitadas': return 'badge bg-info';
@@ -687,10 +698,10 @@ $(document).ready(function() {
 
 
     // Detectar cambios en la tabla
-    $(document).on('change', '.vacante-total, .vacante-obs', function() {
+    $(document).on('change', '.vacante-total, .vacante-obs', function () {
         const row = $(this).closest('tr');
         const carreraId = row.data('carrera-id');
-        
+
         if (!vacantesModificadas.includes(carreraId)) {
             vacantesModificadas.push(carreraId);
             row.addClass('table-warning');
@@ -698,40 +709,40 @@ $(document).ready(function() {
     });
 
     // Guardar todos los cambios
-    $('#guardarTodosVacantes').on('click', function() {
+    $('#guardarTodosVacantes').on('click', function () {
         const vacantesActualizar = [];
-        
+
         // Recopilar datos de todas las filas
-        $('#vacantesTableBody tr').each(function() {
+        $('#vacantesTableBody tr').each(function () {
             const row = $(this);
             const carreraId = row.data('carrera-id');
             const vacantesTotal = parseInt(row.find('.vacante-total').val()) || 0;
             const observaciones = row.find('.vacante-obs').val() || '';
-            
+
             vacantesActualizar.push({
                 carrera_id: carreraId,
                 vacantes_total: vacantesTotal,
                 observaciones: observaciones
             });
         });
-        
+
         if (vacantesActualizar.length === 0) {
             toastr.warning('No hay carreras para configurar');
             return;
         }
-        
+
         $.ajax({
             url: default_server + `/json/ciclos/${cicloActualId}/vacantes`,
             type: 'POST',
             data: { vacantes: vacantesActualizar },
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     toastr.success('Vacantes guardadas exitosamente');
                     vacantesModificadas = [];
                     cargarVacantes(cicloActualId);
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al guardar las vacantes');
             }
         });

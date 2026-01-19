@@ -125,7 +125,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
                 // Segundo Examen
                 if ($ciclo->fecha_segundo_examen) {
-                    $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen);
+                    $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
                     $data['segundo_examen'] = $this->calcularAsistenciaExamen(
                         $estudiante->numero_documento,
                         $inicioSegundo,
@@ -138,7 +138,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
                 // Tercer Examen
                 if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                    $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen);
+                    $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
                     $data['tercer_examen'] = $this->calcularAsistenciaExamen(
                         $estudiante->numero_documento,
                         $inicioTercero,
@@ -182,12 +182,14 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
         $diasHabilesTotales = $this->contarDiasHabiles(
             $fechaInicioCarbon->format('Y-m-d'),
-            $fechaExamenCarbon->format('Y-m-d')
+            $fechaExamenCarbon->format('Y-m-d'),
+            $ciclo
         );
 
         $diasHabilesTranscurridos = $this->contarDiasHabiles(
             $fechaInicioCarbon->format('Y-m-d'),
-            $fechaFinCalculo->format('Y-m-d')
+            $fechaFinCalculo->format('Y-m-d'),
+            $ciclo
         );
 
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
@@ -200,7 +202,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         $diasConAsistencia = 0;
         foreach ($registros as $fecha) {
             $fechaCarbon = Carbon::parse($fecha);
-            if ($fechaCarbon->isWeekday()) {
+            if ($ciclo->esDiaHabil($fechaCarbon)) {
                 $diasConAsistencia++;
             }
         }
@@ -242,14 +244,14 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         return $resultado;
     }
 
-    private function contarDiasHabiles($fechaInicio, $fechaFin)
+    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
     {
         $inicio = Carbon::parse($fechaInicio)->startOfDay();
         $fin = Carbon::parse($fechaFin)->startOfDay();
         $dias = 0;
 
         while ($inicio <= $fin) {
-            if ($inicio->isWeekday()) {
+            if ($ciclo->esDiaHabil($inicio)) {
                 $dias++;
             }
             $inicio->addDay();
@@ -258,12 +260,22 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         return $dias;
     }
 
-    private function getSiguienteDiaHabil($fecha)
+    private function getSiguienteDiaHabil($fecha, $ciclo = null)
     {
         $dia = Carbon::parse($fecha)->addDay();
-        while (!$dia->isWeekday()) {
-            $dia->addDay();
+        
+        // Si no hay ciclo, usar lógica por defecto (lunes a viernes)
+        if (!$ciclo) {
+            while (!$dia->isWeekday()) {
+                $dia->addDay();
+            }
+        } else {
+            // Usar lógica del ciclo
+            while (!$ciclo->esDiaHabil($dia)) {
+                $dia->addDay();
+            }
         }
+        
         return $dia;
     }
 
