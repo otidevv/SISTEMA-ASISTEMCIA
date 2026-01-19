@@ -306,6 +306,17 @@
         font-size: 0.75rem;
         color: #6c757d;
     }
+
+    /* Estilos para recesos en la grilla */
+    .receso-slot {
+        background: linear-gradient(135deg, #10b981 0%, #28c76f 100%) !important;
+        color: white !important;
+        font-weight: 700;
+    }
+
+    .receso-cell-grid {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(40, 199, 111, 0.1)) !important;
+    }
 </style>
 @endpush
 
@@ -453,25 +464,49 @@
                     <div class="grid-cell header">Viernes</div>
                     <div class="grid-cell header">Sábado</div>
 
-                    <!-- Filas de horarios (7:00 AM - 9:00 PM) -->
+                    <!-- Filas de horarios con slots sincronizados (1h + recesos de 30min) -->
                     @php
-                        $horas = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
                         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                         
-                        // Función para obtener la siguiente hora
-                        function siguienteHora($hora) {
-                            $partes = explode(':', $hora);
-                            $horaNum = (int)$partes[0] + 1;
-                            return str_pad($horaNum, 2, '0', STR_PAD_LEFT) . ':00';
+                        // Generar slots sincronizados (igual que en el módulo de carga horaria)
+                        $slots = [];
+                        $h_start = 7; $h_end = 21;
+                        $curr = $h_start * 60;
+                        $limit = $h_end * 60;
+                        
+                        while($curr < $limit) {
+                            $h = floor($curr / 60);
+                            $m = $curr % 60;
+                            $dur = 60; // Por defecto 1 hora
+                            $isReceso = false;
+                            
+                            // Si es hora de receso oficial, el slot dura 30m
+                            if ($curr == 10*60 || $curr == 18*60) {
+                                $dur = 30;
+                                $isReceso = true;
+                            }
+                            
+                            $nxt = $curr + $dur;
+                            $slots[] = [
+                                'inicio' => sprintf('%02d:%02d', $h, $m),
+                                'fin' => sprintf('%02d:%02d', floor($nxt/60), $nxt % 60),
+                                'es_receso' => $isReceso
+                            ];
+                            $curr = $nxt;
                         }
                     @endphp
 
-                    @foreach ($horas as $hora)
-                        <div class="grid-cell time-slot">{{ $hora }} - {{ siguienteHora($hora) }}</div>
+                    @foreach ($slots as $slot)
+                        <div class="grid-cell time-slot {{ $slot['es_receso'] ? 'receso-slot' : '' }}">
+                            {{ $slot['inicio'] }} - {{ $slot['fin'] }}
+                            @if($slot['es_receso'])
+                                <br><small style="font-size: 0.65rem; opacity: 0.8;">RECESO</small>
+                            @endif
+                        </div>
                         @foreach ($dias as $dia)
-                            <div class="grid-cell" 
+                            <div class="grid-cell {{ $slot['es_receso'] ? 'receso-cell-grid' : '' }}" 
                                  data-dia="{{ $dia }}" 
-                                 data-hora="{{ $hora }}"
+                                 data-hora="{{ $slot['inicio'] }}"
                                  ondrop="drop(event)" 
                                  ondragover="allowDrop(event)">
                             </div>

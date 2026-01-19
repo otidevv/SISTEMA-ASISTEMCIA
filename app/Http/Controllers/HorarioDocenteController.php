@@ -651,40 +651,63 @@ class HorarioDocenteController extends Controller
     }
 
     /**
-     * Obtener rango de horas de los horarios
+     * Obtener rango de horas de los horarios - MEJORADO con slots de 1 hora y recesos
      */
     private function obtenerRangoHoras($horarios)
     {
-        $horas = [];
+        // Determinar el rango necesario según los horarios existentes
+        $minHora = 24; $maxHora = 0;
         foreach ($horarios as $horario) {
             $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
             $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
-            
-            while ($inicio < $fin) {
-                $horaStr = $inicio->format('H:i');
-                if (!in_array($horaStr, $horas)) {
-                    $horas[] = $horaStr;
-                }
-                $inicio->addHour();
-            }
+            if ($inicio->hour < $minHora) $minHora = $inicio->hour;
+            if ($fin->hour > $maxHora) $maxHora = $fin->hour;
         }
         
-        sort($horas);
-        return $horas;
+        // Si no hay horarios, usar un rango por defecto
+        if ($minHora == 24) $minHora = 7;
+        if ($maxHora == 0) $maxHora = 21;
+        
+        // Generar slots sincronizados (igual que en carga horaria)
+        $slots = [];
+        $curr = $minHora * 60; // En minutos
+        $limit = $maxHora * 60;
+        
+        while ($curr < $limit) {
+            $h = floor($curr / 60);
+            $m = $curr % 60;
+            $dur = 60; // Por defecto 1 hora
+            
+            // Si es hora de receso oficial, el slot dura 30m
+            if ($curr == 10*60 || $curr == 18*60) {
+                $dur = 30;
+            }
+            
+            $nxt = $curr + $dur;
+            $slots[] = sprintf('%02d:%02d', $h, $m) . ' - ' . sprintf('%02d:%02d', floor($nxt/60), $nxt % 60);
+            $curr = $nxt;
+        }
+        
+        return $slots;
     }
 
     /**
-     * Obtener horario en una celda específica
+     * Obtener horario en una celda específica - MEJORADO para slots sincronizados
      */
-    private function obtenerHorarioEnCelda($horarios, $dia, $hora)
+    private function obtenerHorarioEnCelda($horarios, $dia, $horaRango)
     {
+        // Parsear el rango de hora (ej. "10:00 - 10:30")
+        $partes = explode(' - ', $horaRango);
+        $horaSlotInicio = Carbon::createFromFormat('H:i', trim($partes[0]));
+        $horaSlotFin = Carbon::createFromFormat('H:i', trim($partes[1]));
+        
         foreach ($horarios as $horario) {
             if ($horario->dia_semana === $dia) {
                 $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
                 $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
-                $horaActual = Carbon::createFromFormat('H:i', $hora);
                 
-                if ($horaActual >= $inicio && $horaActual < $fin) {
+                // Verificar si el slot está dentro del horario
+                if ($horaSlotInicio >= $inicio && $horaSlotInicio < $fin) {
                     return $horario;
                 }
             }

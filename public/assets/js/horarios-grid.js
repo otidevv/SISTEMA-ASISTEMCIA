@@ -92,36 +92,82 @@ function renderizarHorarios() {
 
     // Renderizar cada horario
     horariosActuales.forEach(horario => {
-        const cellInicio = encontrarCelda(horario.dia_semana, horario.hora_inicio);
-        if (cellInicio) {
-            // Calcular cuántas celdas debe abarcar
-            const duracionHoras = calcularDuracionHoras(horario.hora_inicio, horario.hora_fin);
-            const celdasACubrir = Math.ceil(duracionHoras);
+        // Verificar si el horario atraviesa un receso (10:00-10:30 o 18:00-18:30)
+        const [hInicio, mInicio] = horario.hora_inicio.split(':').map(Number);
+        const [hFin, mFin] = horario.hora_fin.split(':').map(Number);
+        const minInicio = hInicio * 60 + mInicio;
+        const minFin = hFin * 60 + mFin;
 
-            // Obtener la altura real de la celda ANTES de agregar el bloque
-            const alturaCelda = cellInicio.offsetHeight;
-            const gap = 1; // Gap entre celdas
+        // Horas de receso en minutos
+        const receso1Inicio = 10 * 60; // 10:00
+        const receso1Fin = 10 * 60 + 30; // 10:30
+        const receso2Inicio = 18 * 60; // 18:00
+        const receso2Fin = 18 * 60 + 30; // 18:30
 
-            // Calcular altura total en píxeles
-            const alturaTotal = (alturaCelda * celdasACubrir) + (gap * (celdasACubrir - 1));
-
-            const block = crearBloqueHorario(horario);
-            cellInicio.appendChild(block);
-
-            if (celdasACubrir >= 1) {
-                // Hacer que el bloque abarque múltiples filas
-                block.style.position = 'absolute';
-                block.style.top = '0';
-                block.style.left = '0';
-                block.style.right = '0';
-                block.style.bottom = 'auto';
-                block.style.height = `${alturaTotal}px`;
-                block.style.maxHeight = `${alturaTotal}px`;
-                block.style.overflow = 'hidden';
-                block.style.zIndex = '10';
-            }
+        // Verificar si atraviesa el receso de las 10:00
+        if (minInicio < receso1Inicio && minFin > receso1Fin) {
+            // Dividir en dos bloques
+            renderizarBloqueSimple({
+                ...horario,
+                hora_fin: '10:00'
+            }, false);
+            renderizarBloqueSimple({
+                ...horario,
+                hora_inicio: '10:30'
+            }, false);
+        }
+        // Verificar si atraviesa el receso de las 18:00
+        else if (minInicio < receso2Inicio && minFin > receso2Fin) {
+            // Dividir en dos bloques
+            renderizarBloqueSimple({
+                ...horario,
+                hora_fin: '18:00'
+            }, false);
+            renderizarBloqueSimple({
+                ...horario,
+                hora_inicio: '18:30'
+            }, false);
+        }
+        else {
+            // Renderizar normalmente
+            renderizarBloqueSimple(horario, true);
         }
     });
+}
+
+/**
+ * Renderizar un bloque simple (sin dividir)
+ */
+function renderizarBloqueSimple(horario, mostrarInfo) {
+    const cellInicio = encontrarCelda(horario.dia_semana, horario.hora_inicio);
+    if (cellInicio) {
+        // Calcular cuántas celdas debe abarcar
+        const duracionHoras = calcularDuracionHoras(horario.hora_inicio, horario.hora_fin);
+        const celdasACubrir = Math.ceil(duracionHoras);
+
+        // Obtener la altura real de la celda ANTES de agregar el bloque
+        const alturaCelda = cellInicio.offsetHeight;
+        const gap = 1; // Gap entre celdas
+
+        // Calcular altura total en píxeles
+        const alturaTotal = (alturaCelda * celdasACubrir) + (gap * (celdasACubrir - 1));
+
+        const block = crearBloqueHorario(horario, mostrarInfo);
+        cellInicio.appendChild(block);
+
+        if (celdasACubrir >= 1) {
+            // Hacer que el bloque abarque múltiples filas
+            block.style.position = 'absolute';
+            block.style.top = '0';
+            block.style.left = '0';
+            block.style.right = '0';
+            block.style.bottom = 'auto';
+            block.style.height = `${alturaTotal}px`;
+            block.style.maxHeight = `${alturaTotal}px`;
+            block.style.overflow = 'hidden';
+            block.style.zIndex = '10';
+        }
+    }
 }
 
 /**
@@ -140,7 +186,7 @@ function calcularDuracionHoras(horaInicio, horaFin) {
 /**
  * Crear bloque visual de horario
  */
-function crearBloqueHorario(horario) {
+function crearBloqueHorario(horario, mostrarInfo = true) {
     const block = document.createElement('div');
     block.className = 'schedule-block';
     block.draggable = true;
@@ -180,7 +226,7 @@ function crearBloqueHorario(horario) {
             <i class="mdi mdi-close"></i>
         </button>
         <div class="course-name" style="font-size: ${fontSize};">${horario.curso_nombre === 'Sin curso' ? 'RECESO' : horario.curso_nombre}</div>
-        ${!esReceso ? `
+        ${!esReceso && mostrarInfo ? `
         <div class="teacher-name">
             <i class="mdi mdi-account"></i>
             ${horario.docente_nombre}

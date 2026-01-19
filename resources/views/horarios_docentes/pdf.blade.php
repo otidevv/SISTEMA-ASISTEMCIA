@@ -4,171 +4,190 @@
     <meta charset="UTF-8">
     <title>Horario - {{ $aula->nombre }}</title>
     <style>
-        @page {
-            margin: 10mm 15mm;
-            size: landscape;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* CONFIGURACIÓN LANDSCAPE - PÁGINA ÚNICA */
+        @page { margin: 0.7cm; size: A4 landscape; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 9px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 7px;
             color: #1a1a1a;
-            line-height: 1.3;
+            line-height: 1.1;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 4px solid #1a1a1a;
+        /* HEADER MODERNO CON LOGOS */
+        .header-modern {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+            border-bottom: 2.5pt solid #4f32c2;
+            background-color: #ffffff;
         }
-
-        .header h1 {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 3px;
+        
+        .logo-box { width: 45px; padding: 2px; }
+        .logo-img { width: 40px; height: auto; }
+        
+        .title-box { text-align: center; vertical-align: middle; }
+        .title-box h1 {
+            margin: 0;
+            font-size: 13px;
+            color: #4f32c2;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
         }
-
-        .header h2 {
-            font-size: 12px;
-            font-weight: normal;
-            margin-bottom: 2px;
+        .title-box p {
+            margin: 1px 0;
+            font-size: 9px;
+            font-weight: 700;
+            color: #333;
         }
+        .sub-text { font-size: 6.5px; color: #666; font-style: italic; font-weight: 600; }
 
-        .header h3 {
-            font-size: 11px;
-            font-weight: bold;
-            margin-top: 3px;
-        }
-
+        /* INFO BAR MODERNA */
         .info-bar {
-            background: #1a1a1a;
+            background-color: #4f32c2;
             color: white;
-            padding: 6px 12px;
-            margin-bottom: 10px;
+            padding: 5px 12px;
+            margin-bottom: 4px;
             text-align: center;
-            font-weight: bold;
-            font-size: 10px;
-            letter-spacing: 0.5px;
+            font-weight: 900;
+            font-size: 9px;
+            letter-spacing: 2px;
         }
 
+        /* TABLA DE HORARIO */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
+            border: 1.2pt solid #4f32c2;
         }
 
         th, td {
-            border: 1.5px solid #1a1a1a;
-            padding: 6px 4px;
+            border: 0.5pt solid #dee2e6;
+            padding: 4px 3px;
             text-align: center;
             vertical-align: middle;
         }
 
         thead th {
-            background: #1a1a1a;
+            background-color: #4f32c2;
             color: white;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 8px 4px;
+            letter-spacing: 0.8px;
+            padding: 7px 3px;
+            height: 20px;
+            border: 0.5pt solid #3c26a0;
         }
 
         th.hora-col {
-            background: #e8e8e8;
-            color: #1a1a1a;
-            width: 70px;
+            background-color: #f8f9ff;
+            color: #4f32c2;
+            width: 85px;
             font-weight: bold;
-            font-size: 8px;
+            font-size: 6.5px;
+            border-right: 1.5pt solid #4f32c2;
         }
 
         td {
             background: white;
-            min-height: 50px;
+            height: 32px;
+            overflow: hidden;
         }
 
-        .receso-cell {
-            background: #10b981 !important;
-            color: white;
-            font-weight: bold;
-            font-size: 10px;
+        /* RECESO HORIZONTAL COMPLETO */
+        .receso-horizontal {
+            background-color: #7ade77 !important;
+            color: #004d00;
+            font-weight: 900;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 2px;
+            border: 1.2pt solid #4f32c2 !important;
+            padding: 6px !important;
         }
 
+        /* CELDAS DE CURSO MODERNAS */
         .curso-cell {
-            padding: 5px 3px;
-            font-size: 8px;
-            line-height: 1.2;
+            padding: 4px 3px;
+            font-size: 6.5px;
+            line-height: 1.1;
         }
 
         .curso-nombre {
-            font-weight: bold;
+            font-weight: 800;
             margin-bottom: 2px;
-            font-size: 9px;
+            font-size: 7.5px;
             color: #000;
+            line-height: 1;
         }
 
         .docente-nombre {
-            font-size: 7px;
-            color: #333;
-            font-style: italic;
+            font-size: 5.8px;
+            color: #555;
+            font-weight: 600;
+            margin-top: 1px;
         }
 
-        .footer {
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 2px solid #1a1a1a;
-            font-size: 7px;
+        /* FOOTER PROFESIONAL */
+        .footer-modern {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1.5pt solid #4f32c2;
+            font-size: 6px;
             text-align: center;
             color: #666;
         }
 
-        .footer strong {
-            color: #1a1a1a;
-        }
+        .footer-modern strong { color: #4f32c2; }
 
-        /* Función para aclarar colores */
+        /* Función PHP para aclarar colores */
         <?php
         function lightenColor($hex, $percent) {
             $hex = str_replace('#', '', $hex);
+            if (strlen($hex) != 6) return '#f0f7ff';
             $r = hexdec(substr($hex, 0, 2));
             $g = hexdec(substr($hex, 2, 2));
             $b = hexdec(substr($hex, 4, 2));
-            
             $r = min(255, $r + (255 - $r) * $percent / 100);
             $g = min(255, $g + (255 - $g) * $percent / 100);
             $b = min(255, $b + (255 - $b) * $percent / 100);
-            
             return sprintf("#%02x%02x%02x", $r, $g, $b);
         }
         ?>
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
-        <h2>"Centro Pre Universitario"</h2>
-        <h3>{{ $ciclo->nombre }}</h3>
-    </div>
+    <!-- HEADER PREMIUM -->
+    <table class="header-modern">
+        <tr>
+            <td class="logo-box">
+                <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-img">
+            </td>
+            <td class="title-box">
+                <h1>HORARIO ACADÉMICO OFICIAL</h1>
+                <p>CEPRE-UNAMAD | CICLO {{ $ciclo->nombre }}</p>
+                <div class="sub-text">Universidad Nacional Amazónica de Madre de Dios</div>
+            </td>
+            <td class="logo-box" align="right">
+                <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo-img">
+            </td>
+        </tr>
+    </table>
 
+    <!-- INFO BAR -->
     <div class="info-bar">
-        GRUPO: {{ $aula->nombre }} &nbsp;|&nbsp; TURNO: {{ $turno }}
+        AULA: {{ $aula->nombre }} &nbsp;|&nbsp; TURNO: {{ $turno }}
     </div>
 
+    <!-- TABLA DE HORARIO -->
     <table>
         <thead>
             <tr>
-                <th class="hora-col">HORA</th>
+                <th class="hora-col">HORARIO</th>
                 @foreach ($dias as $dia)
                     <th>{{ strtoupper($dia) }}</th>
                 @endforeach
@@ -176,40 +195,53 @@
         </thead>
         <tbody>
             @foreach ($grilla as $fila)
-                <tr>
-                    <th class="hora-col">{{ $fila['hora'] }}</th>
-                    @foreach ($dias as $dia)
-                        @php
-                            $horario = $fila[$dia] ?? null;
-                            $esReceso = $horario && (stripos($horario->curso->nombre, 'receso') !== false || $horario->curso->nombre === 'RECESO');
+                @php
+                    // Detectar si este slot es un receso (10:00 - 10:30 o 18:00 - 18:30)
+                    $esReceso = ($fila['hora'] === '10:00 - 10:30' || $fila['hora'] === '18:00 - 18:30');
+                @endphp
+                
+                @if($esReceso)
+                    <!-- RECESO HORIZONTAL -->
+                    <tr>
+                        <th class="hora-col">{{ $fila['hora'] }}</th>
+                        <td colspan="6" class="receso-horizontal">RECESO ACADÉMICO - 30 MINUTOS</td>
+                    </tr>
+                @else
+                    <!-- FILA NORMAL DE CLASES -->
+                    <tr>
+                        <th class="hora-col">{{ $fila['hora'] }}</th>
+                        @foreach ($dias as $dia)
+                            @php
+                                $horario = $fila[$dia] ?? null;
+                                $esCursoReceso = $horario && (stripos($horario->curso->nombre, 'receso') !== false || $horario->curso->nombre === 'RECESO');
+                                
+                                // Color de fondo para cursos
+                                $bgColor = '#ffffff';
+                                $borderColor = '#4f32c2';
+                                if ($horario && !$esCursoReceso && $horario->curso->color) {
+                                    $bgColor = lightenColor($horario->curso->color, 85);
+                                    $borderColor = $horario->curso->color;
+                                }
+                            @endphp
                             
-                            // Obtener color del curso y aclararlo
-                            $bgColor = '#ffffff';
-                            if ($horario && !$esReceso && $horario->curso->color) {
-                                $bgColor = lightenColor($horario->curso->color, 75);
-                            }
-                        @endphp
-                        
-                        @if ($horario)
-                            @if ($esReceso)
-                                <td class="receso-cell">RECESO</td>
-                            @else
-                                <td class="curso-cell" style="background-color: {{ $bgColor }}; border-left: 4px solid {{ $horario->curso->color }};">
+                            @if ($horario && !$esCursoReceso)
+                                <td class="curso-cell" style="background-color: {{ $bgColor }}; border-left: 3pt solid {{ $borderColor }};">
                                     <div class="curso-nombre">{{ strtoupper($horario->curso->nombre) }}</div>
                                     <div class="docente-nombre">{{ $horario->docente->nombre_completo ?? 'Sin docente' }}</div>
                                 </td>
+                            @else
+                                <td></td>
                             @endif
-                        @else
-                            <td></td>
-                        @endif
-                    @endforeach
-                </tr>
+                        @endforeach
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>
 
-    <div class="footer">
-        <strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }} &nbsp;|&nbsp; <strong>Centro Pre Universitario - UNAMAD</strong>
+    <!-- FOOTER -->
+    <div class="footer-modern">
+        <strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }} &nbsp;|&nbsp; <strong>Sistema CEPRE-UNAMAD</strong> &nbsp;|&nbsp; © {{ date('Y') }} UNAMAD
     </div>
 </body>
 </html>
