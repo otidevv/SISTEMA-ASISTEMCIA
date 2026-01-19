@@ -26,6 +26,8 @@ use App\Http\Controllers\PostulacionController;
 use App\Http\Controllers\PostulacionUnificadaController;
 use App\Http\Controllers\MaterialAcademicoController;
 use App\Http\Controllers\TarjetasController;
+use App\Http\Controllers\CargaHorariaController;
+use App\Http\Controllers\Api\CargaHorariaApiController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -608,6 +610,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/tarjetas/piso', [TarjetasController::class, 'guardarPisoCompleto'])->name('api.tarjetas.guardar-piso');
     Route::delete('/api/tarjetas/aula/{id}', [TarjetasController::class, 'eliminarAula'])->name('api.tarjetas.eliminar-aula');
 
+    // Carga Horaria
+    Route::prefix('carga-horaria')->group(function () {
+        Route::get('/', [CargaHorariaController::class, 'index'])->name('carga-horaria.index')->middleware('can:carga-horaria.view');
+        Route::get('/pdf-visual/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfVisual'])->name('carga-horaria.pdf-visual')->middleware('can:carga-horaria.pdf');
+        Route::get('/pdf-detallado/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfDetallado'])->name('carga-horaria.pdf-detallado')->middleware('can:carga-horaria.pdf');
+    });
+
+    Route::get('/mi-horario', [CargaHorariaController::class, 'miHorario'])->name('mi-horario')->middleware('can:carga-horaria.mi-horario');
+
+
 });
 
 // Agrega el prefijo 'json' para todas las rutas de API
@@ -803,6 +815,12 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::put('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\ParentescoController::class, 'destroy']);
         Route::patch('/{id}/status', [App\Http\Controllers\Api\ParentescoController::class, 'changeStatus']);
+    });
+
+    // API Carga Horaria
+    Route::prefix('carga-horaria')->group(function () {
+        Route::get('/docente/{docente}/ciclo/{ciclo}', [CargaHorariaApiController::class, 'calcular']);
+        Route::get('/ciclo/{ciclo}/docentes', [CargaHorariaApiController::class, 'listarDocentes']);
     });
 
     // Rutas para el perfil de usuario

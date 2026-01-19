@@ -261,8 +261,17 @@ class Ciclo extends Model
      */
     public function getDiaEquivalenteSabado($fecha)
     {
-        // Si el ciclo incluye sábados, retornar 'sábado', sino retornar null para indicar que no hay clases
-        return $this->incluye_sabados ? 'sábado' : null;
+        if (!$this->incluye_sabados) {
+            return null;
+        }
+
+        // Lógica de rotación: cada sábado corresponde a un día de la semana (Lunes-Viernes)
+        // Semana 1 -> Lunes, Semana 2 -> Martes, ..., Semana 6 -> Lunes
+        $semana = $this->getNumeroSemana($fecha);
+        $diasRotacion = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+        $indice = ($semana - 1) % 5;
+        
+        return $diasRotacion[$indice];
     }
 
     /**
@@ -273,10 +282,19 @@ class Ciclo extends Model
     public function getDiaHorarioParaFecha($fecha)
     {
         $fechaCarbon = \Carbon\Carbon::parse($fecha);
-        $diaSemana = strtolower($fechaCarbon->translatedFormat('l'));
+        $map = [
+            1 => 'Lunes',
+            2 => 'Martes',
+            3 => 'Miércoles',
+            4 => 'Jueves',
+            5 => 'Viernes',
+            6 => 'Sábado',
+            0 => 'Domingo'
+        ];
+        $diaSemana = $map[$fechaCarbon->dayOfWeek];
         
         // Si es sábado, aplicar rotación
-        if ($diaSemana === 'sábado') {
+        if ($diaSemana === 'Sábado') {
             return $this->getDiaEquivalenteSabado($fecha);
         }
         

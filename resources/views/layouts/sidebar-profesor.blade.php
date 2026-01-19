@@ -19,6 +19,16 @@
                     </a>
                 </li>
                 @endcan
+                
+                <!-- Carga Horaria -->
+                @can('carga-horaria.mi-horario')
+                <li>
+                    <a href="{{ route('mi-horario') }}">
+                        <i class="mdi mdi-clock-check-outline"></i>
+                        <span> Mi Carga Horaria </span>
+                    </a>
+                </li>
+                @endcan
 
                 <!-- Asistencia -->
                 @can('asistencia-docente.view')

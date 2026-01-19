@@ -829,6 +829,18 @@
                     @endif
 
                     <li class="menu-title mt-2">Modulos Docentes Cepre</li>
+
+                    {{-- ============================== --}}
+                    {{-- Módulo: Carga Horaria Docente --}}
+                    {{-- ============================== --}}
+                    @if (Auth::user()->hasPermission('carga-horaria.view'))
+                        <li>
+                            <a href="{{ route('carga-horaria.index') }}">
+                                <i data-feather="clock"></i>
+                                <span> Carga Horaria </span>
+                            </a>
+                        </li>
+                    @endif
                     {{-- ============================== --}}
                     {{-- Módulo: Horarios Docentes --}}
                     {{-- ============================== --}}

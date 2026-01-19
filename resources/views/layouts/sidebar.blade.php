@@ -130,6 +130,16 @@
                     </li>
                 @endif
 
+                <!-- Módulo Carga Horaria Docente -->
+                @if (Auth::user()->hasPermission('carga-horaria.view'))
+                    <li>
+                        <a href="{{ route('carga-horaria.index') }}">
+                            <i data-feather="clock"></i>
+                            <span> Carga Horaria </span>
+                        </a>
+                    </li>
+                @endif
+
                 <!-- Módulo Postulaciones - Solo visible si tiene permiso -->
                 @if (Auth::user()->hasPermission('postulaciones.view'))
                     <li>
