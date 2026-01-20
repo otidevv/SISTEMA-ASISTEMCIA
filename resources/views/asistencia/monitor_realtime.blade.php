@@ -2,305 +2,241 @@
 
 @section('title', 'Monitor de Asistencia en Tiempo Real')
 
-@section('css')
+@push('css')
     <style>
-        .monitor-container {
-            height: calc(100vh - 250px);
-            overflow-y: auto;
-            position: relative;
-        /* Estilo específico para una sola inicial */
-        .attendance-modal .student-photo-initial.single-letter {
-            font-size: 220px !important;
-            letter-spacing: 0 !important;
-        }
-        
-        /* Estilo específico para dos iniciales */
-        .attendance-modal .student-photo-initial.double-letter {
-            font-size: 150px !important;
-            letter-spacing: -10px !important;
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --primary-gradient: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            --success-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            --warning-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            --danger-gradient: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            --live-red: #ff0000;
         }
 
-        /* Contenedor de la foto - Limitado estrictamente */
-        .attendance-modal .student-photo-container {
-            position: relative;
-            margin: 0 auto;
-            width: 300px !important;
-            height: 300px !important;
-            max-width: 300px !important;
-            max-height: 300px !important;
-            overflow: hidden !important;
-        }
-        
-        /* Estilos específicos para foto en el modal - Con límites estrictos */
-        .attendance-modal .student-photo,
-        .attendance-modal .student-photo img,
-        .attendance-modal #student-photo img,
-        .attendance-modal .student-photo-container img,
-        .attendance-modal .student-photo-container > img,
-        .attendance-modal .student-photo-container * {
-            width: 300px !important;
-            height: 300px !important;
-            max-width: 300px !important;
-            max-height: 300px !important;
-            object-fit: cover !important;
-            border-radius: 50% !important;
-            border: 12px solid #fff !important;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2) !important;
-            margin: 0 auto !important;
-            display: block !important;
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
         }
 
-        .attendance-modal .student-photo-initial,
-        .attendance-modal #student-photo .student-photo-initial,
-        .attendance-modal .student-photo-container .student-photo-initial {
-            width: 300px !important;
-            height: 300px !important;
-            max-width: 300px !important;
-            max-height: 300px !important;
-            border-radius: 50% !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 180px !important;
-            font-weight: 900 !important;
-            color: white !important;
-            background: linear-gradient(135deg, #667eea, #764ba2) !important;
-            border: 12px solid #fff !important;
-            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3) !important;
-            margin: 0 auto !important;
-            text-transform: uppercase !important;
-            letter-spacing: -5px !important;
-            user-select: none !important;
-            line-height: 1 !important;
-        }
-        
-        /* Asegurar que el contenedor div principal también tenga límites */
-        .attendance-modal #student-photo {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 300px !important;
-            max-height: 300px !important;
-            overflow: hidden !important;
-            border-radius: 50% !important;
-        }
-        
-        /* Fotos pequeñas en la lista de registros */
-        .asistencia-card .student-photo {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: none;
-            box-shadow: none;
-        }
-
-        .asistencia-card .student-photo-initial {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+        /* Indicador LIVE mejorado */
+        .live-indicator {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: var(--live-red);
+            font-weight: 900;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            box-shadow: 0 4px 12px rgba(255, 51, 51, 0.15);
+            border: 1px solid rgba(255, 51, 51, 0.1);
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--live-red);
+            border-radius: 50%;
+            margin-right: 10px;
+            box-shadow: 0 0 10px var(--live-red);
+            animation: pulse-live 1.2s infinite;
+        }
+
+        @keyframes pulse-live {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 12px rgba(255, 51, 51, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
+        }
+
+        .monitor-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding: 2rem;
+            background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(241,245,249,0.5) 100%);
+            backdrop-filter: blur(30px);
+            border-radius: 32px;
+            border: 2px solid #fff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Tarjetas con MUCHA vida y contraste */
+        .asistencia-card {
+            border: 1px solid rgba(255,255,255,0.8) !important;
+            background: white !important;
+            border-radius: 22px !important;
+            margin-bottom: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
+            border-left: 8px solid transparent !important;
+        }
+
+        .asistencia-card:hover {
+            transform: scale(1.03) translateX(10px);
+            box-shadow: 0 25px 40px -10px rgba(0,0,0,0.12);
+        }
+
+        /* Clases de Estado ULTRA VIBRANTES con GLOW */
+        .status-badge {
+            font-size: 0.95rem;
+            padding: 0.8rem 2rem;
+            border-radius: 100px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .status-regular { 
+            background: var(--success-gradient) !important; 
+            color: white !important; 
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5) !important;
+        }
+        .status-amonestado { 
+            background: var(--warning-gradient) !important; 
+            color: white !important; 
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5) !important;
+        }
+        .status-inhabilitado { 
+            background: var(--danger-gradient) !important; 
+            color: white !important; 
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5) !important;
+        }
+
+        /* Inyectar colores de borde a las tarjetas según estado */
+        .asistencia-card[data-estado="regular"] { border-left-color: #10b981 !important; }
+        .asistencia-card[data-estado="amonestado"] { border-left-color: #f59e0b !important; }
+        .asistencia-card[data-estado="inhabilitado"] { border-left-color: #ef4444 !important; }
+
+        .asistencia-card:hover[data-estado="regular"] { box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15); }
+        .asistencia-card:hover[data-estado="amonestado"] { box-shadow: 0 20px 40px rgba(245, 158, 11, 0.15); }
+        .asistencia-card:hover[data-estado="inhabilitado"] { box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15); }
+
+        /* Modal Ultra Premium */
+        .attendance-modal .modal-content {
             border: none;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin: 0;
+            background: #fff;
+            border-radius: 50px;
+            box-shadow: 0 0 100px rgba(0,0,0,0.3);
+        }
+
+        .big-status-text {
+            font-size: 6rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            letter-spacing: -3px;
             text-transform: uppercase;
         }
 
-        .asistencia-card {
-            transition: all 0.5s ease;
+        .text-status-regular { color: #059669; text-shadow: 0 10px 20px rgba(5, 150, 105, 0.2); }
+        .text-status-amonestado { color: #d97706; text-shadow: 0 10px 20px rgba(217, 119, 6, 0.2); }
+        .text-status-inhabilitado { color: #dc2626; text-shadow: 0 10px 20px rgba(220, 38, 38, 0.2); }
+
+        .student-photo-container {
+            width: 420px;
+            height: 420px;
+            position: relative;
         }
 
-        .asistencia-card.new {
-            background-color: rgba(0, 123, 255, 0.1);
+        .student-photo-wrapper {
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.25);
+            border: 2px solid rgba(0,0,0,0.05);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .attendance-modal .verification-badge {
+        .student-photo-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* Fondos Dinámicos para el Modal */
+        .modal-body.bg-regular { background: radial-gradient(circle at center, #ffffff 0%, #e8f5e9 100%); }
+        .modal-body.bg-amonestado { background: radial-gradient(circle at center, #ffffff 0%, #fff3e0 100%); }
+        .modal-body.bg-inhabilitado { background: radial-gradient(circle at center, #ffffff 0%, #ffebee 100%); }
+
+        .verification-type-icon {
+            width: 110px;
+            height: 110px;
+            font-size: 3.5rem;
+            background: var(--primary-gradient);
+            color: white;
+            border: 10px solid #fff;
             position: absolute;
             bottom: 10px;
             right: 10px;
-            background-color: #4caf50;
-            color: white;
-            border-radius: 40px;
-            padding: 15px 30px;
-            font-size: 1.5rem !important;
-            font-weight: bold;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            z-index: 2;
-        }
-
-        .attendance-modal .student-photo-container {
-            position: relative;
-            margin: 0 auto;
-            width: 40vh;
-            height: 40vh;
-            max-width: 500px;
-            max-height: 500px;
-        }
-
-        .attendance-modal .check-animation {
-            font-size: 6rem !important;
-            color: #28a745;
-            margin-bottom: 2rem;
-            animation: pulse 1.5s infinite;
-        }
-        
-        /* Eliminar el check animation ya que no está en el HTML actualizado */
-        .attendance-modal .check-animation {
-            display: none;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.1);
-            }
-
-            100% {
-                transform: scale(1);
-            }
-        }
-
-        .attendance-modal .progress-container {
-            height: 12px;
-            background-color: #f0f0f0;
-            width: 60%;
-            margin: 2rem auto 0;
-            border-radius: 10px;
-        }
-
-        .attendance-modal .progress-bar-custom {
-            height: 100%;
-            width: 0;
-            background: linear-gradient(90deg, #1e88e5, #1565c0);
-            transition: width linear 0.1s;
-            border-radius: 10px;
-        }
-        
-        /* Queue indicator badge */
-        .attendance-modal .queue-badge {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            border-radius: 35px;
-            padding: 12px 25px;
-            font-size: 1.25rem;
-            font-weight: bold;
-            z-index: 3;
-        }
-
-        /* Modal Customization - Más ancho horizontalmente */
-        .attendance-modal .modal-dialog.modal-custom {
-            width: 98vw !important;
-            max-width: 98vw !important;
-            height: 85vh !important;
-            margin: 7.5vh 1vw;
-        }
-        
-        .attendance-modal .modal-content {
-            height: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            background: white;
-        }
-        
-        .attendance-modal .modal-header {
-            background: transparent;
-            color: white;
-            border-bottom: none;
-            padding: 2rem 2rem 0 0;
-            height: auto;
-            position: absolute;
-            right: 0;
-            top: 0;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
         }
-        
-        .attendance-modal .btn-close {
-            font-size: 2rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
 
-        .attendance-modal .modal-body {
-            padding: 3rem;
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
-        }
-        
-        /* Texto de asistencia registrada */
-        .attendance-modal h1.text-success {
-            font-size: clamp(3rem, 5vw, 6rem) !important;
-            font-weight: 900 !important;
-            color: #28a745 !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 3rem !important;
-        }
-        
-        /* Estilos para el contenido del modal */
-        #student-name {
-            font-size: clamp(2.5rem, 4vw, 5rem) !important;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 1rem;
-            margin-top: 2rem;
-        }
-        
-        #student-info {
-            font-size: clamp(1.5rem, 3vw, 3rem) !important;
-            color: #666;
-            font-weight: 500;
-        }
-        
-        /* Ajuste de clases display de Bootstrap */
-        .attendance-modal .display-2 {
-            font-size: clamp(3rem, 5vw, 6rem) !important;
-        }
-        
-        .attendance-modal .display-3 {
-            font-size: clamp(2.5rem, 4vw, 5rem) !important;
-        }
-        
-        .attendance-modal .display-5 {
-            font-size: clamp(1.5rem, 3vw, 3rem) !important;
-        }
-
-        /* Queue indicator badge */
-        .queue-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background-color: rgba(0, 0, 0, 0.4);
+        .situational-box {
+            padding: 1.5rem 6rem;
+            border-radius: 100px;
+            font-size: 4rem;
+            font-weight: 900;
             color: white;
-            border-radius: 25px;
-            padding: 5px 15px;
-            font-size: 16px;
-            font-weight: bold;
-            z-index: 3;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+            animation: pulse-badge 2s infinite;
         }
+
+        @keyframes pulse-badge {
+            0% { transform: scale(1); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+            100% { transform: scale(1); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        }
+
+        .situational-box.status-regular { background: var(--success-gradient) !important; }
+        .situational-box.status-amonestado { background: var(--warning-gradient) !important; }
+        .situational-box.status-inhabilitado { background: var(--danger-gradient) !important; }
+
+        #student-name {
+            font-size: 5rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin-bottom: 10px;
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        #student-info {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar-custom {
+            height: 100%;
+            width: 0;
+            background: var(--primary-gradient);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.8);
+            transition: width linear 0.1s;
+        }
+
+        /* Scrollbar Styling */
+        .monitor-container::-webkit-scrollbar { width: 10px; }
+        .monitor-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); }
+        .monitor-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
     </style>
-@endsection
+@endpush
 
 @section('content')
     <!-- Start Content-->
@@ -325,42 +261,52 @@
 
         <div class="row">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4 class="header-title">Visualizador de Asistencia en Tiempo Real</h4>
+                <div class="card bg-transparent border-0 shadow-none">
+                    <div class="card-body p-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
                             <div>
-                                <span class="badge bg-success" id="connection-status">Conectado</span>
-                                <button class="btn btn-sm btn-primary ms-2" id="toggle-sound">
-                                    <i class="uil uil-volume"></i> Sonido: ON
+                                <h4 class="header-title mb-0">Visualizador en Tiempo Real</h4>
+                                <p class="text-muted mb-0">Sistema de Control de Procesos de Inscripción</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="live-indicator me-3" id="connection-status">
+                                    <div class="live-dot"></div>
+                                    EN VIVO
+                                </div>
+                                <button class="btn btn-white btn-sm shadow-sm border-0 px-3" id="toggle-sound">
+                                    <i class="uil uil-volume"></i> ON
                                 </button>
                             </div>
                         </div>
 
-                        <div class="alert alert-info">
-                            <i class="uil uil-info-circle me-1"></i>
-                            Los nuevos registros de asistencia aparecerán automáticamente en esta pantalla.
-                        </div>
-
                         <div class="monitor-container" id="registros-container">
-                            <div class="text-center p-5">
-                                <h5>Esperando nuevos registros de asistencia...</h5>
-                                <p class="text-muted">Los últimos registros aparecerán aquí.</p>
-                            </div>
-
                             <!-- Lista de registros recientes -->
-                            <h5 class="mt-4">Últimos registros:</h5>
+                            @if($ultimosRegistros->isEmpty())
+                                <div class="text-center p-5">
+                                    <div class="mb-3">
+                                        <i class="uil uil-clock-three display-4 text-muted"></i>
+                                    </div>
+                                    <h5 class="text-muted">Esperando nuevos registros...</h5>
+                                </div>
+                            @endif
+
                             @foreach ($ultimosRegistros as $registro)
-                                <div class="card mb-2 asistencia-card" data-id="{{ $registro->id }}">
-                                    <div class="card-body py-2">
+                                @php
+                                    $estado = $registro->estado_situacional['estado'] ?? 'regular';
+                                    $detalle = $registro->estado_situacional['detalle'] ?? 'REGULAR';
+                                    $statusClass = "status-{$estado}";
+                                @endphp
+                                <div class="card asistencia-card" data-id="{{ $registro->id }}" data-estado="{{ $estado }}">
+                                    <div class="card-body py-3">
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
                                                 @if ($registro->usuario && $registro->usuario->foto_perfil)
                                                     <img src="{{ asset('storage/' . $registro->usuario->foto_perfil) }}"
-                                                        alt="Foto" width="40" height="40" class="rounded-circle">
+                                                        alt="Foto" width="65" height="65" class="rounded-circle shadow-sm border border-2 border-white"
+                                                        onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\"rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm\" style=\"width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;\">{{ strtoupper(substr($registro->usuario->nombre, 0, 1)) }}</div>';">
                                                 @else
-                                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white"
-                                                        style="width: 40px; height: 40px;">
+                                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                                                        style="width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;">
                                                         @if ($registro->usuario)
                                                             {{ strtoupper(substr($registro->usuario->nombre, 0, 1)) }}
                                                         @else
@@ -369,20 +315,22 @@
                                                     </div>
                                                 @endif
                                             </div>
-                                            <div>
-                                                <h6 class="mb-0">
+                                            <div class="flex-grow-1">
+                                                <h5 class="mb-1 fw-bold">
                                                     @if ($registro->usuario)
                                                         {{ $registro->usuario->nombre }}
                                                         {{ $registro->usuario->apellido_paterno }}
                                                     @else
                                                         Documento: {{ $registro->nro_documento }}
                                                     @endif
-                                                </h6>
-                                                <p class="mb-0 text-muted small">
-                                                    {{ $registro->fecha_registro->format('d/m/Y H:i:s') }}</p>
+                                                </h5>
+                                                <div class="d-flex align-items-center text-muted small">
+                                                    <span class="me-3"><i class="uil uil-clock me-1"></i> {{ $registro->fecha_registro->format('H:i:s') }}</span>
+                                                    <span><i class="uil uil-shield-check me-1"></i> {{ $registro->tipo_verificacion_texto }}</span>
+                                                </div>
                                             </div>
-                                            <div class="ms-auto">
-                                                <span class="badge bg-info">{{ $registro->tipo_verificacion_texto }}</span>
+                                            <div class="text-end">
+                                                <span class="status-badge {{ $statusClass }}">{{ $detalle }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -395,37 +343,37 @@
         </div>
     </div>
 
-    <!-- Modal de Asistencia Bootstrap -->
-    <div class="modal fade attendance-modal" id="attendance-modal" tabindex="-1" aria-labelledby="attendance-modal-label"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-custom">
+    <!-- Modal de Asistencia Rediseñado -->
+    <div class="modal fade attendance-modal" id="attendance-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
-                <div class="queue-badge" id="queue-indicator">1/1</div>
-                <div class="modal-header border-0">
-                    <button type="button" class="btn-close btn-close-white btn-lg ms-auto" data-bs-dismiss="modal"
-                        aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body text-center d-flex flex-column justify-content-center align-items-center">
-                    <h1 class="text-success mb-4 display-2 fw-bold">¡ASISTENCIA REGISTRADA!</h1>
+                <div class="queue-counter" id="queue-indicator">1/1 EN COLA</div>
+                
+                <div class="modal-body text-center d-flex flex-column justify-content-center align-items-center" id="modal-body-content">
                     
-                    <div class="student-photo-container mb-4">
-                        <div id="student-photo"></div>
-                        <span class="verification-badge" id="verification-type"></span>
+                    <h1 class="big-status-text" id="modal-title">¡ASISTENCIA REGISTRADA!</h1>
+                    
+                    <div class="student-photo-container">
+                        <div class="student-photo-wrapper" id="student-photo">
+                            <!-- Aquí va la foto -->
+                        </div>
+                        <div class="verification-type-icon" id="verification-icon">
+                            <i class="uil uil-fingerprint"></i>
+                        </div>
                     </div>
 
-                    <h1 class="fw-bold display-3" id="student-name"></h1>
-                    <p class="text-muted display-5" id="student-info"></p>
+                    <h1 id="student-name">CARGANDO...</h1>
+                    <p id="student-info">CARGANDO...</p>
 
-                    <div class="progress-container mt-5">
-                        <div class="progress-bar-custom" id="progress-bar"></div>
+                    <div class="situational-box" id="situational-status">
+                        HABILITADO
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-                    <p class="text-muted display-3" id="student-info"></p>
 
-                    <div class="progress-container mt-5">
+                    <div id="status-details" class="text-muted h4 mb-0">
+                        <!-- Detalles extras como faltas -->
+                    </div>
+
+                    <div class="progress-container">
                         <div class="progress-bar-custom" id="progress-bar"></div>
                     </div>
                 </div>
@@ -437,53 +385,51 @@
 @push('js')
     <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.0/dist/echo.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Variables
-            const notificationSound = new Audio('/assets/sounds/notification.mp3');
+            const notificationSound = new Audio('/assets/sounds/notifipro.mp3');
             const registrosContainer = document.getElementById('registros-container');
             const attendanceModal = new bootstrap.Modal(document.getElementById('attendance-modal'), {
                 backdrop: 'static',
                 keyboard: false
             });
             const modalElement = document.getElementById('attendance-modal');
+            const modalBody = document.getElementById('modal-body-content');
+            const modalTitle = document.getElementById('modal-title');
             const studentPhoto = document.getElementById('student-photo');
             const studentName = document.getElementById('student-name');
             const studentInfo = document.getElementById('student-info');
-            const verificationType = document.getElementById('verification-type');
+            const situationalStatus = document.getElementById('situational-status');
+            const statusDetails = document.getElementById('status-details');
+            const verificationIcon = document.getElementById('verification-icon');
+            
             const toggleSoundBtn = document.getElementById('toggle-sound');
             const connectionStatus = document.getElementById('connection-status');
             const progressBar = document.getElementById('progress-bar');
             const queueIndicator = document.getElementById('queue-indicator');
 
             let isSoundEnabled = true;
-            let attendanceQueue = []; // Cola para almacenar registros pendientes
+            let attendanceQueue = [];
             let isModalShowing = false;
             let progressTimer = null;
 
             // Toggle sound
             toggleSoundBtn.addEventListener('click', function() {
                 isSoundEnabled = !isSoundEnabled;
-                this.innerHTML = isSoundEnabled ?
-                    '<i class="uil uil-volume"></i> Sonido: ON' :
-                    '<i class="uil uil-volume-mute"></i> Sonido: OFF';
+                this.innerHTML = isSoundEnabled ? '<i class="uil uil-volume"></i> ON' : '<i class="uil uil-volume-mute"></i> OFF';
+                this.classList.toggle('btn-white');
+                this.classList.toggle('btn-dark');
             });
 
-            // Evento cuando el modal termina de cerrarse
             modalElement.addEventListener('hidden.bs.modal', function() {
                 isModalShowing = false;
-                if (progressTimer) {
-                    clearInterval(progressTimer);
-                    progressTimer = null;
-                }
-                // Procesar el siguiente en cola después de que se cierre completamente
-                setTimeout(() => {
-                    processNextInQueue();
-                }, 300);
+                if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+                setTimeout(() => { processNextInQueue(); }, 300);
             });
 
-            // Función para mostrar el siguiente registro en la cola
             function processNextInQueue() {
                 if (attendanceQueue.length > 0 && !isModalShowing) {
                     const nextRecord = attendanceQueue.shift();
@@ -492,58 +438,89 @@
                 }
             }
 
-            // Actualizar el indicador de cola
             function updateQueueIndicator() {
                 const queueSize = attendanceQueue.length;
-                queueIndicator.textContent = queueSize > 0 ? `1/${queueSize + 1}` : '1/1';
+                queueIndicator.textContent = queueSize > 0 ? `1/${queueSize + 1} EN COLA` : '1/1 EN COLA';
+                queueIndicator.style.display = queueSize > 0 ? 'block' : 'none';
             }
 
-            // Función para mostrar el modal de asistencia
+            const verificationIcons = {
+                0: 'uil-fingerprint',
+                1: 'uil-credit-card',
+                2: 'uil-user-square',
+                3: 'uil-qrcode-scan',
+                4: 'uil-edit-alt'
+            };
+
             function showAttendanceModal(data) {
                 isModalShowing = true;
+                const situ = data.estado_situacional;
 
-                // Establecer contenido del modal
+                // Reset modal classes
+                modalBody.className = 'modal-body text-center d-flex flex-column justify-content-center align-items-center bg-' + situ.estado;
+                modalTitle.className = 'big-status-text text-status-' + situ.estado;
+                
+                // Set content
                 studentPhoto.innerHTML = data.photoHtml;
                 studentName.textContent = data.name;
-                studentInfo.textContent = data.time;
-                verificationType.textContent = data.type;
-                progressBar.style.width = '0%';
+                studentInfo.innerHTML = `<i class="uil uil-clock me-1"></i> ${data.time}`;
+                situationalStatus.className = 'situational-box status-' + situ.estado;
+                situationalStatus.textContent = situ.detalle;
                 
-                // Aplicar estilos adicionales a las imágenes después de cargarlas
+                verificationIcon.innerHTML = `<i class="uil ${verificationIcons[data.tipo_verificacion] || 'uil-check-circle'}"></i>`;
+                
+                // Animate photo pop
+                studentPhoto.style.transform = 'scale(0.8)';
                 setTimeout(() => {
-                    const images = studentPhoto.querySelectorAll('img');
-                    images.forEach(img => {
-                        img.style.width = '300px';
-                        img.style.height = '300px';
-                        img.style.maxWidth = '300px';
-                        img.style.maxHeight = '300px';
-                        img.style.objectFit = 'cover';
-                        img.style.borderRadius = '50%';
-                    });
-                }, 10);
+                    studentPhoto.style.transform = 'scale(1)';
+                }, 100);
+                if (situ.estado !== 'regular') {
+                    statusDetails.innerHTML = `
+                        <div class="d-flex flex-column align-items-center gap-2 mt-2">
+                            <div class="d-flex justify-content-center gap-4">
+                                <span class="badge bg-soft-danger text-danger p-2"><i class="uil uil-times-circle"></i> Faltas: ${situ.faltas}</span>
+                                <span class="badge bg-soft-primary text-primary p-2"><i class="uil uil-calendar-alt"></i> ${situ.examen}</span>
+                            </div>
+                            <div class="h5 text-muted mt-2">
+                                <i class="uil uil-info-circle"></i> Faltan <strong>${situ.faltas_para_inhabilitacion}</strong> faltas para Inhabilitación
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDetails.innerHTML = `
+                        <div class="d-flex flex-column align-items-center gap-2">
+                            <span class="badge bg-soft-success text-success p-2 h4"><i class="uil uil-check-circle"></i> Asistencias: ${situ.asistencias} / ${situ.dias_habiles_totales}</span>
+                            <div class="h5 text-muted">
+                                <i class="uil uil-smile"></i> ¡Vas por buen camino! Te quedan <strong>${situ.faltas_para_amonestacion}</strong> faltas de margen.
+                            </div>
+                        </div>
+                    `;
+                    // Tirar confeti si es regular
+                    if (typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 150,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                            colors: ['#22c55e', '#10b981', '#ffffff']
+                        });
+                    }
+                }
 
-                // Mostrar modal usando Bootstrap API
+                progressBar.style.width = '0%';
                 attendanceModal.show();
 
-                // Reproducir sonido si está habilitado
-                if (isSoundEnabled) {
-                    notificationSound.play();
-                }
+                if (isSoundEnabled) notificationSound.play();
 
-                // Animación de la barra de progreso
                 let progress = 0;
-                const interval = 50; // Actualizar cada 50ms
-                const duration = 5000; // Duración total: 5 segundos
+                const interval = 50;
+                const duration = 5000;
                 const increment = interval / duration * 100;
 
-                if (progressTimer) {
-                    clearInterval(progressTimer);
-                }
+                if (progressTimer) clearInterval(progressTimer);
 
                 progressTimer = setInterval(() => {
                     progress += increment;
                     progressBar.style.width = `${progress}%`;
-
                     if (progress >= 100) {
                         clearInterval(progressTimer);
                         progressTimer = null;
@@ -552,145 +529,75 @@
                 }, interval);
             }
 
-            // Function to add new attendance record to the list and queue
             function addNewAttendanceRecord(data) {
-                // Create new card element
+                const situ = data.estado_situacional;
+                const statusClass = `status-${situ.estado}`;
+                
                 const newCard = document.createElement('div');
-                newCard.className = 'card mb-2 asistencia-card new';
+                newCard.className = 'card asistencia-card new';
                 newCard.dataset.id = data.id;
+                newCard.dataset.estado = situ.estado;
                 newCard.innerHTML = `
-                <div class="card-body py-2">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            ${data.smallPhotoHtml}
-                        </div>
-                        <div>
-                            <h6 class="mb-0">${data.name}</h6>
-                            <p class="mb-0 text-muted small">${data.time}</p>
-                        </div>
-                        <div class="ms-auto">
-                            <span class="badge bg-info">${data.type}</span>
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                ${data.smallPhotoHtml}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1 fw-bold">${data.name}</h5>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <span class="me-3"><i class="uil uil-clock me-1"></i> ${data.timeOnly}</span>
+                                    <span><i class="uil uil-shield-check me-1"></i> ${data.type}</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-badge ${statusClass}">${situ.detalle}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
                 `;
 
-                // Check if "Esperando nuevos registros" message exists and remove it
                 const emptyMessage = registrosContainer.querySelector('.text-center.p-5');
-                if (emptyMessage) {
-                    registrosContainer.removeChild(emptyMessage);
-                }
+                if (emptyMessage) registrosContainer.removeChild(emptyMessage);
 
-                // Add to container at the top (after the heading)
-                const heading = registrosContainer.querySelector('h5.mt-4');
-                if (heading) {
-                    heading.after(newCard);
-                } else {
-                    registrosContainer.prepend(newCard);
-                }
+                registrosContainer.prepend(newCard);
 
-                // Remove highlight after animation
-                setTimeout(() => {
-                    newCard.classList.remove('new');
-                }, 3000);
+                setTimeout(() => { newCard.classList.remove('new'); }, 3000);
 
-                // Limit the number of records shown
                 const allCards = registrosContainer.querySelectorAll('.asistencia-card');
-                if (allCards.length > 20) {
-                    registrosContainer.removeChild(allCards[allCards.length - 1]);
-                }
+                if (allCards.length > 20) registrosContainer.removeChild(allCards[allCards.length - 1]);
 
-                // Agregar a la cola de asistencia
                 attendanceQueue.push(data);
                 updateQueueIndicator();
-
-                // Si el modal no está mostrándose, procesar el siguiente registro
-                if (!isModalShowing) {
-                    processNextInQueue();
-                }
+                if (!isModalShowing) processNextInQueue();
             }
 
-            // Funciones auxiliares para crear HTML de fotos
             function createPhotoHtml(registro) {
                 if (registro.foto_url) {
-                    return `<img src="${registro.foto_url}" alt="Foto" class="student-photo" style="width: 300px !important; height: 300px !important; max-width: 300px !important; max-height: 300px !important; object-fit: cover !important; border-radius: 50% !important;">`;
+                    return `<img src="${registro.foto_url}" alt="Foto">`;
                 } else {
-                    // Obtener las iniciales del nombre
-                    let iniciales = 'U'; // Por defecto "U" de Usuario
-                    
-                    if (registro.iniciales) {
-                        iniciales = registro.iniciales;
-                    } else if (registro.nombre_completo) {
-                        // Generar iniciales del nombre completo
-                        const palabras = registro.nombre_completo.trim().split(' ');
-                        if (palabras.length >= 2) {
-                            iniciales = palabras[0].charAt(0) + palabras[1].charAt(0);
-                        } else if (palabras.length === 1) {
-                            iniciales = palabras[0].charAt(0);
-                        }
-                    } else if (registro.nro_documento) {
-                        // Si solo hay documento, usar los primeros 2 dígitos
-                        iniciales = registro.nro_documento.substring(0, 2);
-                    }
-                    
-                    iniciales = iniciales.toUpperCase();
-                    
-                    // Determinar la clase CSS según el número de letras
-                    const letterClass = iniciales.length === 1 ? 'single-letter' : 'double-letter';
-                    
-                    return `<div class="student-photo-initial ${letterClass}" style="width: 300px !important; height: 300px !important; max-width: 300px !important; max-height: 300px !important; font-size: 180px !important; line-height: 1 !important;">${iniciales}</div>`;
+                    const iniciales = (registro.iniciales || 'U').toUpperCase();
+                    return `<div class="student-photo-initial" style="background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; height: 100%; width: 100%; color: white; border-radius: 50%;">${iniciales}</div>`;
                 }
             }
 
             function createSmallPhotoHtml(registro) {
                 if (registro.foto_url) {
-                    return `<img src="${registro.foto_url}" alt="Foto" width="40" height="40" class="rounded-circle" style="width: 40px !important; height: 40px !important;">`;
+                    return `<img src="${registro.foto_url}" alt="Foto" width="65" height="65" class="rounded-circle shadow-sm border border-2 border-white" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\&quot;rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm\&quot; style=\&quot;width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;\&quot;>${(registro.iniciales || 'U').toUpperCase()}</div>';">`;
                 } else {
-                    // Misma lógica para las iniciales
-                    let iniciales = 'U';
-                    
-                    if (registro.iniciales) {
-                        iniciales = registro.iniciales;
-                    } else if (registro.nombre_completo) {
-                        const palabras = registro.nombre_completo.trim().split(' ');
-                        if (palabras.length >= 2) {
-                            iniciales = palabras[0].charAt(0) + palabras[1].charAt(0);
-                        } else if (palabras.length === 1) {
-                            iniciales = palabras[0].charAt(0);
-                        }
-                    } else if (registro.nro_documento) {
-                        iniciales = registro.nro_documento.substring(0, 2);
-                    }
-                    
-                    iniciales = iniciales.toUpperCase();
-                    
-                    return `<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px !important; height: 40px !important; font-weight: bold;">${iniciales}</div>`;
+                    const iniciales = (registro.iniciales || 'U').toUpperCase();
+                    return `<div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                                style="width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;">${iniciales}</div>`;
                 }
             }
             
-            // Función para formatear la fecha
             function formatearFecha(fechaString) {
                 if (!fechaString) return '';
-                
                 const fecha = new Date(fechaString);
-                
-                // Formatear fecha en formato dd/mm/yyyy HH:mm:ss
-                const dia = fecha.getDate().toString().padStart(2, '0');
-                const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-                const año = fecha.getFullYear();
-                const horas = fecha.getHours().toString().padStart(2, '0');
-                const minutos = fecha.getMinutes().toString().padStart(2, '0');
-                const segundos = fecha.getSeconds().toString().padStart(2, '0');
-                
-                return `${dia}/${mes}/${año} ${horas}:${minutos}:${segundos}`;
+                return fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             }
 
-            // Configuración directa de Echo (sin función separada)
-            // Reemplaza la sección de configuración de Echo con este código
             try {
-                console.log('Inicializando WebSockets...');
-                
-                // Una sola configuración de Pusher
                 window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
                     wsHost: window.location.hostname,
                     wsPort: 443,
@@ -701,148 +608,38 @@
                     cluster: 'mt1'
                 });
                 
-                // Logging de información de conexión
-                console.log('📡 Configuración WebSocket:', {
-                    host: window.location.hostname,
-                    pusherKey: 'iv9wx1kfwnwactpwfzwn',
-                    canal: 'asistencia-channel',
-                    evento: 'App\\Events\\NuevoRegistroAsistencia'
-                });
-                
-                // Una sola suscripción al canal
                 const channel = window.pusher.subscribe('asistencia-channel');
-                
-                // Un solo binding al evento
                 channel.bind('App\\Events\\NuevoRegistroAsistencia', function(data) {
-                    console.log('✅ EVENTO RECIBIDO:', data);
+                    console.log('✅ EVENTO:', data);
+                    if (!data || !data.registro) return;
                     
-                    try {
-                        if (!data || !data.registro) {
-                            console.error('❌ Datos del evento inválidos:', data);
-                            return;
-                        }
-                        
-                        const registro = data.registro;
-                        
-                        console.log('📋 Procesando registro:', registro);
-                        
-                        // Usar fecha_registro formateada en lugar de fecha_hora_formateada
-                        const fechaRegistroFormateada = registro.fecha_registro_formateada || 
-                            formatearFecha(registro.fecha_registro) || 
-                            'Fecha no disponible';
-                        
-                        const eventData = {
-                            id: registro.id,
-                            name: registro.nombre_completo || 
-                                `Documento: ${registro.nro_documento}`,
-                            time: fechaRegistroFormateada,
-                            photoHtml: createPhotoHtml(registro),
-                            smallPhotoHtml: createSmallPhotoHtml(registro),
-                            type: registro.tipo_verificacion_texto
-                        };
-                        
-                        console.log('🎯 Datos preparados para el modal:', eventData);
-                        addNewAttendanceRecord(eventData);
-                    } catch (error) {
-                        console.error('❌ Error al procesar evento:', error);
-                    }
-                });
-                
-                // Eventos de conexión
-                window.pusher.connection.bind('state_change', function(states) {
-                    console.log(`Estado de WebSocket: ${states.previous} → ${states.current}`);
-                });
-                
-                window.pusher.connection.bind('connected', function() {
-                    console.log('✅ CONECTADO al servidor WebSocket');
-                    connectionStatus.textContent = 'Conectado';
-                    connectionStatus.className = 'badge bg-success';
-                });
-                
-                window.pusher.connection.bind('connecting', function() {
-                    connectionStatus.textContent = 'Conectando...';
-                    connectionStatus.className = 'badge bg-warning';
-                });
-                
-                window.pusher.connection.bind('disconnected', function() {
-                    connectionStatus.textContent = 'Desconectado';
-                    connectionStatus.className = 'badge bg-danger';
-                });
-                
-                window.pusher.connection.bind('failed', function(error) {
-                    console.error('❌ ERROR de conexión WebSocket:', error);
-                    connectionStatus.textContent = 'Error de conexión';
-                    connectionStatus.className = 'badge bg-danger';
-                    
-                    // Iniciar polling como respaldo si WebSockets fallan
-                    checkForNewRecords();
-                });
-                
-                // Función para tests manuales
-                window.testModal = function() {
-                    const testData = {
-                        id: 999,
-                        name: 'Usuario de Prueba',
-                        time: formatearFecha(new Date()),
-                        photoHtml: '<div class="student-photo-initial">TP</div>',
-                        smallPhotoHtml: '<div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 40px; height: 40px;">TP</div>',
-                        type: 'Prueba Manual'
+                    const registro = data.registro;
+                    const eventData = {
+                        id: registro.id,
+                        name: registro.nombre_completo || `Doc: ${registro.nro_documento}`,
+                        time: registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro),
+                        timeOnly: (registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro)).split(' ')[1] || registro.fecha_registro_formateada,
+                        photoHtml: createPhotoHtml(registro),
+                        smallPhotoHtml: createSmallPhotoHtml(registro),
+                        type: registro.tipo_verificacion_texto,
+                        tipo_verificacion: registro.tipo_verificacion,
+                        estado_situacional: registro.estado_situacional
                     };
-                    
-                    showAttendanceModal(testData);
-                    addNewAttendanceRecord(testData);
-                    return 'Test modal activado';
-                };
+                    addNewAttendanceRecord(eventData);
+                });
+                
+                window.pusher.connection.bind('connected', () => {
+                    connectionStatus.innerHTML = '<i class="uil uil-signal me-1"></i> Conectado';
+                    connectionStatus.className = 'badge bg-success-lighten text-success px-3 py-2 rounded-pill';
+                });
+                
+                window.pusher.connection.bind('disconnected', () => {
+                    connectionStatus.innerHTML = '<i class="uil uil-signal-alt-3 me-1"></i> Desconectado';
+                    connectionStatus.className = 'badge bg-danger-lighten text-danger px-3 py-2 rounded-pill';
+                });
                 
             } catch (error) {
-                console.error('❌ Error fatal al configurar WebSockets:', error);
-                // Implementar polling como respaldo
-                checkForNewRecords();
-            }
-
-            // Función de polling como respaldo si WebSockets no funcionan
-            function checkForNewRecords() {
-                let lastId = 0;
-
-                // Obtener el último ID de los registros actuales
-                const existingCards = document.querySelectorAll('.asistencia-card');
-                if (existingCards.length > 0) {
-                    lastId = Math.max(...Array.from(existingCards).map(card => parseInt(card.dataset.id) || 0));
-                }
-
-                setInterval(() => {
-                    fetch(`/api/ultimos-registros?ultimo_id=${lastId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.length > 0) {
-                                console.log('Nuevos registros encontrados mediante polling:', data);
-
-                                // Actualizar el último ID
-                                lastId = Math.max(...data.map(item => item.id));
-
-                                // Procesar cada registro
-                                data.forEach(registro => {
-                                    // Usar fecha_registro formateada
-                                    const fechaRegistroFormateada = registro.fecha_registro_formateada || 
-                                        formatearFecha(registro.fecha_registro) || 
-                                        'Fecha no disponible';
-                                    
-                                    const eventData = {
-                                        id: registro.id,
-                                        name: registro.nombre_completo ||
-                                            `Documento: ${registro.nro_documento}`,
-                                        time: fechaRegistroFormateada,
-                                        photoHtml: createPhotoHtml(registro),
-                                        smallPhotoHtml: createSmallPhotoHtml(registro),
-                                        type: registro.tipo_verificacion_texto
-                                    };
-
-                                    addNewAttendanceRecord(eventData);
-                                });
-                            }
-                        })
-                        .catch(error => console.error('Error al consultar nuevos registros:', error));
-                }, 5000); // Consultar cada 5 segundos
+                console.error('❌ WebSocket Error:', error);
             }
         });
     </script>

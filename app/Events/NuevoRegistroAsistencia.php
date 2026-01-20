@@ -40,6 +40,7 @@ class NuevoRegistroAsistencia implements ShouldBroadcast
                 asset('storage/' . $registro->usuario->foto_perfil) : null,
             'iniciales' => $registro->usuario ?
                 strtoupper(substr($registro->usuario->nombre, 0, 1)) : null,
+            'estado_situacional' => \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($registro->nro_documento),
         ];
     }
 

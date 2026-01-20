@@ -264,6 +264,10 @@ class AsistenciaController extends Controller
             ->take(10)
             ->get();
 
+        foreach ($ultimosRegistros as $registro) {
+            $registro->estado_situacional = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($registro->nro_documento);
+        }
+
         return view('asistencia.monitor_realtime', compact('ultimosRegistros'));
     }
 
