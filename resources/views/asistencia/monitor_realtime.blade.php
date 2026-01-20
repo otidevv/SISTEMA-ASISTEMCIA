@@ -55,66 +55,133 @@
         .monitor-container {
             height: calc(100vh - 200px);
             overflow-y: auto;
-            padding: 2rem;
-            background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(241,245,249,0.5) 100%);
-            backdrop-filter: blur(30px);
-            border-radius: 32px;
-            border: 2px solid #fff;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            align-content: start;
         }
 
-        /* Tarjetas con MUCHA vida y contraste */
+        /* DISEÑO DE "TARJETITAS" */
         .asistencia-card {
-            border: 1px solid rgba(255,255,255,0.8) !important;
+            border: 1px solid #e2e8f0 !important;
             background: white !important;
-            border-radius: 22px !important;
-            margin-bottom: 1.5rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.05);
-            border-left: 8px solid transparent !important;
+            border-radius: 12px !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-top: 6px solid transparent !important;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
         }
 
         .asistencia-card:hover {
-            transform: scale(1.03) translateX(10px);
-            box-shadow: 0 25px 40px -10px rgba(0,0,0,0.12);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: #cbd5e1 !important;
         }
 
-        /* Clases de Estado ULTRA VIBRANTES con GLOW */
-        .status-badge {
-            font-size: 0.95rem;
-            padding: 0.8rem 2rem;
-            border-radius: 100px;
+        .asistencia-card .card-body {
+            padding: 0 !important;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Foto centralizada y resaltada */
+        .photo-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 100%; /* Cuadrado perfecto */
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .student-photo-main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .asistencia-card:hover .student-photo-main {
+            transform: scale(1.1);
+        }
+
+        .student-initials-main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-weight: 900;
+            font-size: 3rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Info de la tarjeta en la base */
+        .card-info-content {
+            padding: 1rem;
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .student-name-card {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .time-badge {
+            font-size: 0.75rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 0.75rem;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            display: inline-block;
-            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
         }
 
-        .status-regular { 
-            background: var(--success-gradient) !important; 
-            color: white !important; 
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5) !important;
-        }
-        .status-amonestado { 
-            background: var(--warning-gradient) !important; 
-            color: white !important; 
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5) !important;
-        }
-        .status-inhabilitado { 
-            background: var(--danger-gradient) !important; 
-            color: white !important; 
-            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5) !important;
-        }
+        /* Bordes superiores por estado */
+        .asistencia-card[data-estado="regular"] { border-top-color: #10b981 !important; }
+        .asistencia-card[data-estado="amonestado"] { border-top-color: #f59e0b !important; }
+        .asistencia-card[data-estado="inhabilitado"] { border-top-color: #ef4444 !important; }
 
-        /* Inyectar colores de borde a las tarjetas según estado */
-        .asistencia-card[data-estado="regular"] { border-left-color: #10b981 !important; }
-        .asistencia-card[data-estado="amonestado"] { border-left-color: #f59e0b !important; }
-        .asistencia-card[data-estado="inhabilitado"] { border-left-color: #ef4444 !important; }
-
-        .asistencia-card:hover[data-estado="regular"] { box-shadow: 0 20px 40px rgba(16, 185, 129, 0.15); }
-        .asistencia-card:hover[data-estado="amonestado"] { box-shadow: 0 20px 40px rgba(245, 158, 11, 0.15); }
-        .asistencia-card:hover[data-estado="inhabilitado"] { box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15); }
+        .status-regular { background: #10b981 !important; color: white !important; }
+        .status-amonestado { background: #f59e0b !important; color: white !important; }
+        .status-inhabilitado { background: #ef4444 !important; color: white !important; }
 
         /* Modal Ultra Premium */
         .attendance-modal .modal-content {
@@ -295,43 +362,36 @@
                                     $estado = $registro->estado_situacional['estado'] ?? 'regular';
                                     $detalle = $registro->estado_situacional['detalle'] ?? 'REGULAR';
                                     $statusClass = "status-{$estado}";
+                                    $iniciales = strtoupper(substr($registro->usuario->nombre ?? 'U', 0, 1));
                                 @endphp
                                 <div class="card asistencia-card" data-id="{{ $registro->id }}" data-estado="{{ $estado }}">
-                                    <div class="card-body py-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="me-3">
-                                                @if ($registro->usuario && $registro->usuario->foto_perfil)
-                                                    <img src="{{ asset('storage/' . $registro->usuario->foto_perfil) }}"
-                                                        alt="Foto" width="65" height="65" class="rounded-circle shadow-sm border border-2 border-white"
-                                                        onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\"rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm\" style=\"width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;\">{{ strtoupper(substr($registro->usuario->nombre, 0, 1)) }}</div>';">
-                                                @else
-                                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
-                                                        style="width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;">
-                                                        @if ($registro->usuario)
-                                                            {{ strtoupper(substr($registro->usuario->nombre, 0, 1)) }}
-                                                        @else
-                                                            <i class="uil uil-user"></i>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h5 class="mb-1 fw-bold">
+                                    <div class="card-body">
+                                        <div class="photo-wrapper">
+                                            @if ($registro->usuario && $registro->usuario->foto_perfil)
+                                                <img src="{{ asset('storage/' . $registro->usuario->foto_perfil) }}"
+                                                    alt="Foto" class="student-photo-main"
+                                                    onerror="handleImageError(this, '{{ $iniciales }}')">
+                                            @else
+                                                <div class="student-initials-main">
+                                                    {{ $iniciales }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="card-info-content">
+                                            <div>
+                                                <div class="student-name-card">
                                                     @if ($registro->usuario)
                                                         {{ $registro->usuario->nombre }}
                                                         {{ $registro->usuario->apellido_paterno }}
                                                     @else
                                                         Documento: {{ $registro->nro_documento }}
                                                     @endif
-                                                </h5>
-                                                <div class="d-flex align-items-center text-muted small">
-                                                    <span class="me-3"><i class="uil uil-clock me-1"></i> {{ $registro->fecha_registro->format('H:i:s') }}</span>
-                                                    <span><i class="uil uil-shield-check me-1"></i> {{ $registro->tipo_verificacion_texto }}</span>
+                                                </div>
+                                                <div class="time-badge">
+                                                    <i class="uil uil-clock"></i> {{ $registro->fecha_registro->format('H:i:s') }}
                                                 </div>
                                             </div>
-                                            <div class="text-end">
-                                                <span class="status-badge {{ $statusClass }}">{{ $detalle }}</span>
-                                            </div>
+                                            <span class="status-badge {{ $statusClass }}">{{ $detalle }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -538,21 +598,18 @@
                 newCard.dataset.id = data.id;
                 newCard.dataset.estado = situ.estado;
                 newCard.innerHTML = `
-                    <div class="card-body py-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3">
-                                ${data.smallPhotoHtml}
-                            </div>
-                            <div class="flex-grow-1">
-                                <h5 class="mb-1 fw-bold">${data.name}</h5>
-                                <div class="d-flex align-items-center text-muted small">
-                                    <span class="me-3"><i class="uil uil-clock me-1"></i> ${data.timeOnly}</span>
-                                    <span><i class="uil uil-shield-check me-1"></i> ${data.type}</span>
+                    <div class="card-body">
+                        <div class="photo-wrapper">
+                            ${data.mainPhotoHtml}
+                        </div>
+                        <div class="card-info-content">
+                            <div>
+                                <div class="student-name-card">${data.name}</div>
+                                <div class="time-badge">
+                                    <i class="uil uil-clock"></i> ${data.timeOnly}
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <span class="status-badge ${statusClass}">${situ.detalle}</span>
-                            </div>
+                            <span class="status-badge ${statusClass}">${situ.detalle}</span>
                         </div>
                     </div>
                 `;
@@ -581,14 +638,18 @@
                 }
             }
 
-            function createSmallPhotoHtml(registro) {
+            function createMainPhotoHtml(registro) {
+                const initials = (registro.iniciales || 'U').toUpperCase();
                 if (registro.foto_url) {
-                    return `<img src="${registro.foto_url}" alt="Foto" width="65" height="65" class="rounded-circle shadow-sm border border-2 border-white" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\&quot;rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm\&quot; style=\&quot;width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;\&quot;>${(registro.iniciales || 'U').toUpperCase()}</div>';">`;
+                    return `<img src="${registro.foto_url}" alt="Foto" class="student-photo-main" onerror="handleImageError(this, '${initials}')">`;
                 } else {
-                    const iniciales = (registro.iniciales || 'U').toUpperCase();
-                    return `<div class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
-                                style="width: 65px; height: 65px; background: var(--primary-gradient); font-weight: 900; font-size: 1.8rem;">${iniciales}</div>`;
+                    return `<div class="student-initials-main">${initials}</div>`;
                 }
+            }
+
+            window.handleImageError = function(img, initials) {
+                const parent = img.parentElement;
+                parent.innerHTML = `<div class="student-initials-main">${initials}</div>`;
             }
             
             function formatearFecha(fechaString) {
@@ -620,7 +681,7 @@
                         time: registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro),
                         timeOnly: (registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro)).split(' ')[1] || registro.fecha_registro_formateada,
                         photoHtml: createPhotoHtml(registro),
-                        smallPhotoHtml: createSmallPhotoHtml(registro),
+                        mainPhotoHtml: createMainPhotoHtml(registro),
                         type: registro.tipo_verificacion_texto,
                         tipo_verificacion: registro.tipo_verificacion,
                         estado_situacional: registro.estado_situacional
