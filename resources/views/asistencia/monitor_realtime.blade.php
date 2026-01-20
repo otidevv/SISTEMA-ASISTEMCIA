@@ -573,7 +573,17 @@
 
                 let progress = 0;
                 const interval = 50;
-                const duration = 5000;
+                
+                // --- DINAMISMO: Ajustar tiempo según el tamaño de la cola ---
+                let duration = 4500; // Por defecto 4.5s
+                const queueSize = attendanceQueue.length;
+                
+                if (queueSize > 10) {
+                    duration = 1200; // Más de 10 en cola: 1.2s
+                } else if (queueSize > 3) {
+                    duration = 2500; // Entre 4 y 10: 2.5s
+                }
+                
                 const increment = interval / duration * 100;
 
                 if (progressTimer) clearInterval(progressTimer);
