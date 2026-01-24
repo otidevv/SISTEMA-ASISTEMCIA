@@ -163,6 +163,9 @@
                                             <ul class="nav-second-level">
                                                 <li><a href="{{ route('postulaciones.reportes.completos') }}">Reportes Completos</a></li>
                                                 <li><a href="{{ route('postulaciones.reportes.resumen') }}">Resúmenes por Carrera/Aula</a></li>
+                                                @if (Auth::user()->hasPermission('postulaciones.reportes.inhabilitados'))
+                                                    <li><a href="{{ route('postulaciones.reportes.inhabilitados') }}">Estudiantes Inhabilitados</a></li>
+                                                @endif
                                             </ul>
                                         </div>
                                     </li>

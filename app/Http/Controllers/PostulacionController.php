@@ -11,6 +11,9 @@ use App\Models\Inscripcion;
 use App\Models\Aula;
 use App\Models\CentroEducativo;
 use App\Models\Parentesco;
+use App\Models\RegistroAsistencia;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1390,5 +1393,194 @@ class PostulacionController extends Controller
             }
             return back()->with('error', 'Error crítico en importación: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mostrar la vista del reporte de inhabilitados con filtros.
+     */
+    public function reporteInhabilitadosView()
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
+            abort(403, 'No tienes permisos para ver reportes de inhabilitados');
+        }
+
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        $cicloActivo = Ciclo::where('es_activo', true)->first();
+
+        return view('postulaciones.reportes.inhabilitados', compact('ciclos', 'cicloActivo'));
+    }
+
+    /**
+     * Genera un reporte PDF detallado de estudiantes inhabilitados con filtros.
+     */
+    public function reporteInhabilitadosPdf(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
+            abort(403, 'No tienes permisos para descargar este reporte');
+        }
+        
+        $cicloId = $request->input('ciclo_id');
+        $periodo = $request->input('periodo_examen', 'hoy');
+        
+        $ciclo = Ciclo::findOrFail($cicloId);
+        
+        $hoy = Carbon::now();
+        $labelPeriodo = "Estado Actual (Proyección)";
+        $fechaFin = $hoy < $ciclo->fecha_fin ? $hoy : $ciclo->fecha_fin;
+        $periodoTipo = $periodo; // 'hoy', '1', '2', '3'
+
+        if ($periodo == '1' && $ciclo->fecha_primer_examen) {
+            $fechaFin = Carbon::parse($ciclo->fecha_primer_examen);
+            $labelPeriodo = "Primer Examen (Hasta " . $fechaFin->format('d/m/Y') . ")";
+        } elseif ($periodo == '2' && $ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
+            $fechaFin = Carbon::parse($ciclo->fecha_segundo_examen);
+            $labelPeriodo = "Segundo Examen (Periodo Independiente)";
+        } elseif ($periodo == '3' && $ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+            $fechaFin = Carbon::parse($ciclo->fecha_tercer_examen);
+            $labelPeriodo = "Tercer Examen (Periodo Independiente)";
+        }
+
+        $inscripciones = Inscripcion::where('ciclo_id', $ciclo->id)
+            ->where('estado_inscripcion', 'activo')
+            ->with(['estudiante', 'carrera', 'aula', 'turno'])
+            ->get();
+
+        $inhabilitados = [];
+        $totalEstudiantes = $inscripciones->count();
+        $estudiantesRegulares = 0;
+        $estudiantesAmonestados = 0;
+        $estudiantesInhabilitadosCount = 0;
+
+        foreach ($inscripciones as $inscripcion) {
+            $estudiante = $inscripcion->estudiante;
+            if (!$estudiante) continue;
+
+            $fechaInicioCalculo = $ciclo->fecha_inicio;
+            
+            // Lógica de periodos independientes
+            if ($periodoTipo == 'hoy' || $periodoTipo == '1') {
+                $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
+                    ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+                    ->orderBy('fecha_registro')
+                    ->first();
+                $fechaInicioCalculo = $primerRegistro ? $primerRegistro->fecha_registro : $ciclo->fecha_inicio;
+            } elseif ($periodoTipo == '2') {
+                $fechaInicioCalculo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen);
+            } elseif ($periodoTipo == '3') {
+                $fechaInicioCalculo = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen);
+            }
+
+            $info = $this->calcularAsistenciaExamen(
+                $estudiante->numero_documento,
+                $fechaInicioCalculo,
+                $fechaFin,
+                $ciclo
+            );
+
+            if ($info['estado'] === 'inhabilitado') {
+                $inhabilitados[] = [
+                    'nombres' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno . ' ' . $estudiante->apellido_materno,
+                    'dni' => $estudiante->numero_documento,
+                    'carrera' => $inscripcion->carrera ? $inscripcion->carrera->nombre : 'N/A',
+                    'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
+                    'turno' => $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
+                    'faltas' => $info['dias_falta'],
+                    'asistencias' => $info['dias_asistidos'],
+                    'total_dias' => $info['dias_habiles_transcurridos'],
+                    'porcentaje' => $info['porcentaje_asistencia_actual'],
+                    'limite' => $info['limite_inhabilitacion']
+                ];
+                $estudiantesInhabilitadosCount++;
+            } elseif ($info['estado'] === 'amonestado') {
+                $estudiantesAmonestados++;
+            } else {
+                $estudiantesRegulares++;
+            }
+        }
+
+        // Ordenar inhabilitados
+        usort($inhabilitados, function($a, $b) {
+            return strcmp($a['nombres'], $b['nombres']);
+        });
+
+        $data = [
+            'ciclo' => $ciclo,
+            'periodo_label' => $labelPeriodo,
+            'inhabilitados' => $inhabilitados,
+            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i A'),
+            'total_general' => $totalEstudiantes,
+            'total_inhabilitados' => $estudiantesInhabilitadosCount,
+            'total_regulares' => $estudiantesRegulares,
+            'total_amonestados' => $estudiantesAmonestados,
+            'resumen' => [
+                'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? round(($estudiantesInhabilitadosCount / $totalEstudiantes) * 100, 2) : 0,
+            ]
+        ];
+
+        $pdf = Pdf::loadView('reportes.inhabilitados-pdf', $data);
+        return $pdf->download('reporte_inhabilitados_' . $ciclo->codigo . '_' . date('Ymd') . '.pdf');
+    }
+
+    private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
+    {
+        $hoy = Carbon::now()->startOfDay();
+        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
+
+        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
+
+        if ($fechaInicioCarbon > $hoy) {
+            return ['estado' => 'regular', 'dias_falta' => 0, 'dias_asistidos' => 0, 'dias_habiles_transcurridos' => 0, 'porcentaje_asistencia_actual' => 100, 'limite_inhabilitacion' => 0];
+        }
+
+        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
+        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
+
+        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [$fechaInicioCarbon->startOfDay(), $fechaFinCalculo->endOfDay()])
+            ->select(DB::raw('DATE(fecha_registro) as fecha'))
+            ->distinct()
+            ->count();
+
+        $diasFaltaActuales = $diasHabilesTranscurridos - $registrosAsistencia;
+        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
+        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
+
+        $estado = 'regular';
+        if ($diasFaltaActuales >= $limiteInhabilitacion) {
+            $estado = 'inhabilitado';
+        } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
+            $estado = 'amonestado';
+        }
+
+        return [
+            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
+            'dias_asistidos' => $registrosAsistencia,
+            'dias_falta' => $diasFaltaActuales,
+            'porcentaje_asistencia_actual' => $diasHabilesTranscurridos > 0 ? round(($registrosAsistencia / $diasHabilesTranscurridos) * 100, 2) : 100,
+            'limite_inhabilitacion' => $limiteInhabilitacion,
+            'estado' => $estado
+        ];
+    }
+
+    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
+    {
+        $inicio = Carbon::parse($fechaInicio)->startOfDay();
+        $fin = Carbon::parse($fechaFin)->startOfDay();
+        $diasHabiles = 0;
+        while ($inicio <= $fin) {
+            if ($ciclo->esDiaHabil($inicio)) $diasHabiles++;
+            $inicio->addDay();
+        }
+        return $diasHabiles;
+    }
+
+    private function getSiguienteDiaHabil($fecha)
+    {
+        $dia = Carbon::parse($fecha)->addDay();
+        while (!$dia->isWeekday()) {
+            $dia->addDay();
+        }
+        return $dia;
     }
 }

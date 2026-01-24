@@ -128,6 +128,12 @@ class ModuloPostulacionSeeder extends Seeder
                 'codigo' => 'postulaciones.generar-constancia',
                 'descripcion' => 'Permite generar o regenerar la constancia de postulación.',
                 'modulo' => 'postulaciones'
+            ],
+            [
+                'nombre' => 'Reporte Estudiantes Inhabilitados',
+                'codigo' => 'postulaciones.reportes.inhabilitados',
+                'descripcion' => 'Permite ver y generar el reporte detallado de estudiantes inhabilitados por inasistencia.',
+                'modulo' => 'postulaciones'
             ]
         ];
 
@@ -172,7 +178,8 @@ class ModuloPostulacionSeeder extends Seeder
                     'postulaciones.reports',
                     'postulaciones.export',
                     'postulaciones.ver-constancia',
-                    'postulaciones.generar-constancia'
+                    'postulaciones.generar-constancia',
+                    'postulaciones.reportes.inhabilitados'
                 ])
                 ->pluck('id');
             
@@ -206,7 +213,8 @@ class ModuloPostulacionSeeder extends Seeder
                     'postulaciones.reports',
                     'postulaciones.statistics',
                     'postulaciones.ver-constancia',
-                    'postulaciones.generar-constancia'
+                    'postulaciones.generar-constancia',
+                    'postulaciones.reportes.inhabilitados'
                 ])
                 ->pluck('id');
             

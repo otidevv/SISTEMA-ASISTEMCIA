@@ -223,45 +223,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/roles/permisos', [RoleController::class, 'permisosUpdate'])->name('roles.permisos.update')->middleware('can:roles.assign_permissions');
     });
 
-  
     // ✅ ANUNCIOS - Sistema Completo CON CÓDIGOS CORRECTOS
     Route::prefix('anuncios')->middleware('auth')->name('anuncios.')->group(function () {
-        // Ver lista de anuncios (para administradores)
-        Route::get('/', [App\Http\Controllers\AnnouncementController::class, 'index'])
-            ->name('index')
-            ->middleware('can:announcements_view');
-        
-        // Crear nuevo anuncio
-        Route::get('/crear', [App\Http\Controllers\AnnouncementController::class, 'create'])
-            ->name('create')
-            ->middleware('can:announcements_create');
-        
-        Route::post('/', [App\Http\Controllers\AnnouncementController::class, 'store'])
-            ->name('store')
-            ->middleware('can:announcements_create');
-        
-        // Ver anuncio específico
-        Route::get('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'show'])
-            ->name('show')
-            ->middleware('can:announcements_view');
-        
-        // Editar anuncio
-        Route::get('/{anuncio}/editar', [App\Http\Controllers\AnnouncementController::class, 'edit'])
-            ->name('edit')
-            ->middleware('can:announcements_edit');
-        
-        Route::put('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'update'])
-            ->name('update')
-            ->middleware('can:announcements_edit');
-        // 🚀 AGREGAR ESTA LÍNEA PARA EL BOTÓN ACTIVAR/DESACTIVAR
-        Route::patch('/{anuncio}/toggle-status', [App\Http\Controllers\AnnouncementController::class, 'toggleStatus'])
-        ->name('toggle-status')
-        ->middleware('can:announcements_edit');
-        
-        // Eliminar anuncio
-        Route::delete('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'destroy'])
-            ->name('destroy')
-            ->middleware('can:announcements_delete');
+        Route::get('/', [App\Http\Controllers\AnnouncementController::class, 'index'])->name('index')->middleware('can:announcements_view');
+        Route::get('/crear', [App\Http\Controllers\AnnouncementController::class, 'create'])->name('create')->middleware('can:announcements_create');
+        Route::post('/', [App\Http\Controllers\AnnouncementController::class, 'store'])->name('store')->middleware('can:announcements_create');
+        Route::get('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'show'])->name('show')->middleware('can:announcements_view');
+        Route::get('/{anuncio}/editar', [App\Http\Controllers\AnnouncementController::class, 'edit'])->name('edit')->middleware('can:announcements_edit');
+        Route::put('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'update'])->name('update')->middleware('can:announcements_edit');
+        Route::patch('/{anuncio}/toggle-status', [App\Http\Controllers\AnnouncementController::class, 'toggleStatus'])->name('toggle-status')->middleware('can:announcements_edit');
+        Route::delete('/{anuncio}', [App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('destroy')->middleware('can:announcements_delete');
     });
 
     // Parentescos - Requiere permiso 'parentescos.view'
@@ -289,13 +260,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/asistencia/editar', [AsistenciaController::class, 'editarIndex'])->name('asistencia.editar');
         Route::get('/asistencia/{asistencia}/editar', [AsistenciaController::class, 'editar'])->name('asistencia.editar.form');
         Route::put('/asistencia/{asistencia}', [AsistenciaController::class, 'update'])->name('asistencia.update');
-        
-        // Nuevas rutas para registro masivo y regularización
         Route::get('/asistencia/estudiantes-filtrados', [AsistenciaController::class, 'getEstudiantesPorFiltros'])->name('asistencia.estudiantes.filtrados');
         Route::post('/asistencia/registrar-masivo', [AsistenciaController::class, 'registrarMasivo'])->name('asistencia.registrar.masivo');
         Route::post('/asistencia/regularizar', [AsistenciaController::class, 'regularizarEstudiante'])->name('asistencia.regularizar');
     });
-
 
     Route::middleware('can:attendance.export')->group(function () {
         Route::get('/asistencia/exportar', [AsistenciaController::class, 'exportarIndex'])->name('asistencia.exportar');
@@ -306,9 +274,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/asistencia/reportes', [AsistenciaController::class, 'reportesIndex'])->name('asistencia.reportes');
     });
 
-    // ==========================================
-    // ASISTENCIA DOCENTE - RUTAS WEB
-    // ==========================================
+    // ASISTENCIA DOCENTE
     Route::prefix('asistencia-docente')->group(function () {
         Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
         Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
@@ -319,19 +285,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
         Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
         Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
-        
-        // Nuevas rutas para el monitor mejorado
         Route::get('/monitor/horario-dia', [AsistenciaDocenteController::class, 'getDailySchedule'])->name('asistencia-docente.monitor.horario-dia');
         Route::get('/monitor/temas-pendientes', [AsistenciaDocenteController::class, 'getTeachersWithoutTheme'])->name('asistencia-docente.monitor.temas-pendientes');
         Route::get('/monitor/reporte-diario', [AsistenciaDocenteController::class, 'getDailyReport'])->name('asistencia-docente.monitor.reporte-diario');
         Route::post('/monitor/generar-whatsapp', [AsistenciaDocenteController::class, 'generateWhatsAppMessage'])->name('asistencia-docente.monitor.whatsapp');
-        
-        // Rutas para TOP 3 enhancements
         Route::get('/monitor/exportar-reporte', [AsistenciaDocenteController::class, 'exportarReporteDiario'])->name('asistencia-docente.monitor.exportar');
         Route::post('/monitor/notificar-masivo', [AsistenciaDocenteController::class, 'notificarMasivoWhatsApp'])->name('asistencia-docente.monitor.notificar-masivo');
         Route::get('/monitor/estadisticas-graficos', [AsistenciaDocenteController::class, 'getEstadisticasGraficos'])->name('asistencia-docente.monitor.estadisticas');
-        
-        // Ruta API específica para AJAX (registros recientes)
         Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
     });
 
@@ -345,22 +305,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/ciclos/{ciclo}/activar', [App\Http\Controllers\CicloController::class, 'activar'])->name('ciclos.activar')->middleware('can:ciclos.activate');
     });
 
-    // Postulaciones - Gestión de postulaciones de estudiantes
+    // Postulaciones
     Route::middleware('can:postulaciones.view')->group(function () {
         Route::get('/postulaciones', [PostulacionController::class, 'index'])->name('postulaciones.index');
         Route::post('/postulaciones/crear-desde-admin', [PostulacionController::class, 'crearDesdeAdmin'])->name('postulaciones.crearDesdeAdmin')->middleware('can:postulaciones.create');
-        
-        // Importación Masiva
         Route::post('/postulaciones/importar', [PostulacionController::class, 'importar'])->name('postulaciones.importar')->middleware('can:postulaciones.create');
         Route::get('/postulaciones/plantilla', [PostulacionController::class, 'descargarPlantilla'])->name('postulaciones.plantilla')->middleware('can:postulaciones.create');
 
         // Reportes de postulaciones
         Route::get('/postulaciones/reportes/completos', [PostulacionController::class, 'reportesCompletos'])->name('postulaciones.reportes.completos')->middleware('can:postulaciones.reports');
         Route::get('/postulaciones/reportes/resumen', [PostulacionController::class, 'reportesResumen'])->name('postulaciones.reportes.resumen')->middleware('can:postulaciones.reports');
+        Route::get('/postulaciones/reportes/inhabilitados', [PostulacionController::class, 'reporteInhabilitadosView'])->name('postulaciones.reportes.inhabilitados')->middleware('can:postulaciones.reportes.inhabilitados');
 
         // Exportar reportes
         Route::post('/postulaciones/reportes/completos/exportar', [PostulacionController::class, 'exportarReporteCompleto'])->name('postulaciones.reportes.completos.exportar')->middleware('can:postulaciones.export');
         Route::post('/postulaciones/reportes/resumen/exportar', [PostulacionController::class, 'exportarReporteResumen'])->name('postulaciones.reportes.resumen.exportar')->middleware('can:postulaciones.export');
+        Route::post('/postulaciones/reportes/inhabilitados/pdf', [PostulacionController::class, 'reporteInhabilitadosPdf'])->name('postulaciones.reportes.inhabilitados.pdf')->middleware('can:postulaciones.reportes.inhabilitados');
     });
     
     // ✅ NUEVA FUNCIONALIDAD: Postulación Unificada - Para uso administrativo (Admin, Secretaria, Coordinador)

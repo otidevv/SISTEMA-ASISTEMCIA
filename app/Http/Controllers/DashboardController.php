@@ -23,6 +23,7 @@ use App\Models\Turno;
 use App\Models\Curso; 
 use App\Models\Carrera;
 use App\Models\Aula; 
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboardController extends Controller
 {
