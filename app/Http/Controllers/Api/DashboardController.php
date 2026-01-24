@@ -788,14 +788,14 @@ class DashboardController extends Controller
         ];
     }
 
-    private function contarDiasHabiles($fechaInicio, $fechaFin)
+    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
     {
         $inicio = Carbon::parse($fechaInicio)->startOfDay();
         $fin = Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
 
         while ($inicio <= $fin) {
-            if ($inicio->isWeekday()) {
+            if ($ciclo->esDiaHabil($inicio)) {
                 $diasHabiles++;
             }
             $inicio->addDay();
@@ -804,10 +804,10 @@ class DashboardController extends Controller
         return $diasHabiles;
     }
 
-    private function getSiguienteDiaHabil($fecha)
+    private function getSiguienteDiaHabil($fecha, $ciclo)
     {
         $dia = Carbon::parse($fecha)->addDay();
-        while ($dia->dayOfWeek == 0) { // Saltar domingos
+        while (!$ciclo->esDiaHabil($dia)) {
             $dia->addDay();
         }
         return $dia;
@@ -817,48 +817,33 @@ class DashboardController extends Controller
     {
         $hoy = Carbon::now()->startOfDay();
         
-        // Determinar el examen vigente
-        $fechaPrimerExamen = Carbon::parse($ciclo->fecha_primer_examen)->endOfDay();
-        $fechaSegundoExamen = $ciclo->fecha_segundo_examen ? 
-            Carbon::parse($ciclo->fecha_segundo_examen)->endOfDay() : null;
-        $fechaTercerExamen = $ciclo->fecha_tercer_examen ? 
-            Carbon::parse($ciclo->fecha_tercer_examen)->endOfDay() : null;
+        // El reporte de Excel usa la lógica acumulada desde el inicio del ciclo hasta hoy
+        $fechaInicioCiclo = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+        $fechaFinEsfuerzo = $hoy;
+        $diaFinHabil = $ciclo->incluye_sabados ? 7 : 6;
 
-        $fechaExamenObjetivo = $fechaPrimerExamen;
-        $fechaInicioPeriodoTeorico = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
-
-        if ($hoy > $fechaPrimerExamen && $fechaSegundoExamen) {
-            $fechaExamenObjetivo = $fechaSegundoExamen;
-            $fechaInicioPeriodoTeorico = $this->getSiguienteDiaHabil($fechaPrimerExamen);
-        } elseif ($fechaSegundoExamen && $hoy > $fechaSegundoExamen && $fechaTercerExamen) {
-            $fechaExamenObjetivo = $fechaTercerExamen;
-            $fechaInicioPeriodoTeorico = $this->getSiguienteDiaHabil($fechaSegundoExamen);
-        }
-
-        $fechaFinEsfuerzo = $hoy < $fechaExamenObjetivo ? $hoy : $fechaExamenObjetivo;
-
-        // Primeras asistencias por estudiante en el periodo
+        // Primeras asistencias por estudiante en TODO el ciclo (tal como lo hace el reporte)
         $primerasAsistencias = DB::table('registros_asistencia as ra')
             ->join('users as u', 'ra.nro_documento', '=', 'u.numero_documento')
             ->join('inscripciones as i', 'u.id', '=', 'i.estudiante_id')
             ->where('i.ciclo_id', $ciclo->id)
             ->where('i.estado_inscripcion', 'activo')
-            ->whereBetween('ra.fecha_registro', [$fechaInicioPeriodoTeorico, $fechaExamenObjetivo])
+            ->whereBetween('ra.fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
             ->select('i.estudiante_id', DB::raw('MIN(ra.fecha_registro) as fecha_primer_asistencia'))
             ->groupBy('i.estudiante_id')
             ->pluck('fecha_primer_asistencia', 'i.estudiante_id');
 
-        // Conteo de asistencias en el periodo
+        // Conteo de asistencias acumuladas hasta hoy (FILTRANDO DÍAS HÁBILES IGUAL QUE EL EXCEL)
         $conteoAsistencias = DB::table('inscripciones as i')
             ->join('users as u', 'i.estudiante_id', '=', 'u.id')
             ->join('registros_asistencia as ra', 'u.numero_documento', '=', 'ra.nro_documento')
             ->where('i.ciclo_id', $ciclo->id)
             ->where('i.estado_inscripcion', 'activo')
             ->whereBetween('ra.fecha_registro', [
-                $fechaInicioPeriodoTeorico, 
+                $ciclo->fecha_inicio, 
                 $fechaFinEsfuerzo->copy()->endOfDay()
             ])
-            ->whereRaw('DAYOFWEEK(ra.fecha_registro) BETWEEN 2 AND 6')
+            ->whereRaw("DAYOFWEEK(ra.fecha_registro) BETWEEN 2 AND $diaFinHabil")
             ->select('i.estudiante_id', DB::raw('COUNT(DISTINCT DATE(ra.fecha_registro)) as dias_asistidos'))
             ->groupBy('i.estudiante_id')
             ->pluck('dias_asistidos', 'i.estudiante_id');
@@ -872,25 +857,32 @@ class DashboardController extends Controller
         $estudiantesRegulares = 0;
         $estudiantesAmonestados = 0;
         $estudiantesInhabilitados = 0;
+        $estudiantesSinRegistros = 0;
         
         foreach ($estudiantesIds as $estudianteId) {
             if (!isset($primerasAsistencias[$estudianteId])) {
-                $estudiantesRegulares++;
+                $estudiantesSinRegistros++;
                 continue;
             }
 
             $fechaInicioPersonal = Carbon::parse($primerasAsistencias[$estudianteId])->startOfDay();
-            $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicioPersonal, $fechaFinEsfuerzo);
+            
+            // Si la fecha de inicio es futura, no hay faltas aún (Regular)
+            if ($fechaInicioPersonal->gt($hoy)) {
+                $estudiantesRegulares++;
+                continue;
+            }
+
+            $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicioPersonal, $fechaFinEsfuerzo, $ciclo);
             $diasAsistidos = $conteoAsistencias[$estudianteId] ?? 0;
-            $diasFalta = max(0, $diasHabilesTranscurridos - $diasAsistidos);
-            $diasHabilesTotalesPeriodo = $this->contarDiasHabiles($fechaInicioPersonal, $fechaExamenObjetivo);
             
-            $limiteAmonestacion = ceil($diasHabilesTotalesPeriodo * ($ciclo->porcentaje_amonestacion / 100));
-            $limiteInhabilitacion = ceil($diasHabilesTotalesPeriodo * ($ciclo->porcentaje_inhabilitacion / 100));
+            // Lógica de porcentaje idéntica a ReporteController::calcularAsistenciaHastaFecha
+            $porcentajeAsistencia = $diasHabilesTranscurridos > 0 ? round(($diasAsistidos / $diasHabilesTranscurridos) * 100, 2) : 0;
+            $porcentajeFalta = 100 - $porcentajeAsistencia;
             
-            if ($diasFalta >= $limiteInhabilitacion) {
+            if ($porcentajeFalta >= $ciclo->porcentaje_inhabilitacion) {
                 $estudiantesInhabilitados++;
-            } elseif ($diasFalta >= $limiteAmonestacion) {
+            } elseif ($porcentajeFalta >= $ciclo->porcentaje_amonestacion) {
                 $estudiantesAmonestados++;
             } else {
                 $estudiantesRegulares++;
@@ -902,12 +894,15 @@ class DashboardController extends Controller
             'regulares' => $estudiantesRegulares,
             'amonestados' => $estudiantesAmonestados,
             'inhabilitados' => $estudiantesInhabilitados,
+            'sin_asistencia' => $estudiantesSinRegistros,
             'porcentaje_regulares' => $totalEstudiantes > 0 ? 
                 round(($estudiantesRegulares / $totalEstudiantes) * 100, 2) : 0,
             'porcentaje_amonestados' => $totalEstudiantes > 0 ? 
                 round(($estudiantesAmonestados / $totalEstudiantes) * 100, 2) : 0,
             'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? 
-                round(($estudiantesInhabilitados / $totalEstudiantes) * 100, 2) : 0
+                round(($estudiantesInhabilitados / $totalEstudiantes) * 100, 2) : 0,
+            'porcentaje_sin_asistencia' => $totalEstudiantes > 0 ? 
+                round(($estudiantesSinRegistros / $totalEstudiantes) * 100, 2) : 0
         ];
     }
 }

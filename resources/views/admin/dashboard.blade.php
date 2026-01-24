@@ -4,33 +4,37 @@
 
 @section('content')
 <style>
-    .gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
-    .gradient-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
-    .gradient-info { background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%) !important; }
-    .gradient-warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; }
+    /* Colores más vibrantes y modernos */
+    .gradient-primary { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%) !important; }
+    .gradient-success { background: linear-gradient(135deg, #2ec4b6 0%, #00f5d4 100%) !important; }
+    .gradient-info { background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%) !important; }
+    .gradient-warning { background: linear-gradient(135deg, #f72585 0%, #ff4d6d 100%) !important; }
+    .gradient-dark { background: linear-gradient(135deg, #2b2d42 0%, #8d99ae 100%) !important; }
     
     .modern-card {
-        border-radius: 15px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        transition: transform 0.3s !important;
-        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 30px -12px rgba(0,0,0,0.15) !important;
+        transition: all 0.3s ease !important;
+        border: 1px solid rgba(0,0,0,0.05) !important;
+        overflow: hidden;
     }
-    .modern-card:hover { transform: translateY(-3px) !important; box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important; }
+    .modern-card:hover { transform: translateY(-5px) !important; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.2) !important; }
     
     .widget-icon-modern {
-        width: 55px !important; height: 55px !important;
-        border-radius: 12px !important;
+        width: 48px !important; height: 48px !important;
+        border-radius: 10px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 24px !important;
+        font-size: 20px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
     }
     
-    .stat-number { font-size: 2.2rem !important; font-weight: 700 !important; }
-    .modern-progress { height: 28px !important; border-radius: 14px !important; background: rgba(255,255,255,0.2) !important; }
-    .modern-progress .progress-bar { border-radius: 14px !important; font-weight: 600 !important; }
-    
-    /* Skeleton Loader */
+    .stat-number { font-size: 1.8rem !important; font-weight: 800 !important; color: #2b2d42; }
+    .modern-progress { height: 24px !important; border-radius: 12px !important; background: rgba(0,0,0,0.05) !important; }
+    .modern-progress .progress-bar { border-radius: 12px !important; font-weight: 700 !important; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+
+    /* Skeleton Loading Animation - Restaurada */
     @keyframes shimmer {
         0% { background-position: -1000px 0; }
         100% { background-position: 1000px 0; }
@@ -38,9 +42,17 @@
     .skeleton {
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
         background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
+        animation: shimmer 2s infinite linear;
         border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.05);
     }
+
+    /* Clases personalizadas para estados de asistencia */
+    .status-badge-vibrant { padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; color: white !important; }
+    .bg-vibrant-success { background: #2ec4b6 !important; }
+    .bg-vibrant-warning { background: #ff9f1c !important; }
+    .bg-vibrant-danger { background: #f72585 !important; }
+    .bg-vibrant-dark { background: #2b2d42 !important; }
 </style>
 
 <!-- Page Title -->
@@ -248,22 +260,33 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function renderAsistencia(stats) {
         const items = [
-            { label: 'Regulares', count: stats.regulares, pct: stats.porcentaje_regulares, color: 'success', bg: '#11998e15' },
-            { label: 'Amonestados', count: stats.amonestados, pct: stats.porcentaje_amonestados, color: 'warning', bg: '#f093fb15' },
-            { label: 'Inhabilitados', count: stats.inhabilitados, pct: stats.porcentaje_inhabilitados, color: 'danger', bg: '#fa709a15' }
+            { label: 'Regulares', count: stats.regulares, pct: stats.porcentaje_regulares, color: 'vibrant-success', bg: '#2ec4b615' },
+            { label: 'Amonestados', count: stats.amonestados, pct: stats.porcentaje_amonestados, color: 'vibrant-warning', bg: '#ff9f1c15' },
+            { label: 'Inhabilitados', count: stats.inhabilitados, pct: stats.porcentaje_inhabilitados, color: 'vibrant-danger', bg: '#f7258515' },
+            { label: 'Sin Asistencia', count: stats.sin_asistencia, pct: stats.porcentaje_sin_asistencia, color: 'vibrant-dark', bg: '#2b2d4215' }
         ];
 
         document.getElementById('asistencia-chart').innerHTML = items.map(i => `
-            <div class="mb-3 p-3 rounded" style="background: ${i.bg}">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="fw-bold text-${i.color}"><i class="mdi mdi-circle"></i> ${i.label}</span>
-                    <span class="badge bg-${i.color}">${i.count} (${i.pct}%)</span>
+            <div class="mb-3 p-3 rounded modern-card" style="background: ${i.bg}; border: none !important;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="status-badge-vibrant bg-${i.color} shadow-sm">
+                        <i class="mdi mdi-account-check me-1"></i> ${i.label}
+                    </span>
+                    <span class="fw-extrabold text-${i.color}" style="font-size: 1.1rem;">
+                        ${i.count} <small class="text-muted fw-normal">(${i.pct}%)</small>
+                    </span>
                 </div>
-                <div class="progress" style="height: 25px">
-                    <div class="progress-bar bg-${i.color}" style="width: ${i.pct}%">${i.pct}%</div>
+                <div class="progress modern-progress shadow-inner">
+                    <div class="progress-bar bg-${i.color} progress-bar-striped progress-bar-animated" 
+                         style="width: ${i.pct}%">
+                    </div>
                 </div>
             </div>
-        `).join('') + `<div class="alert alert-light mb-0"><strong>Total:</strong> ${stats.total_estudiantes}</div>`;
+        `).join('') + `
+            <div class="d-flex justify-content-between align-items-center mt-4 p-3 rounded bg-light border">
+                <span class="text-muted fw-bold">TOTAL INSCRITOS ACTUAMENTE:</span>
+                <span class="h4 mb-0 fw-black text-primary">${stats.total_estudiantes}</span>
+            </div>`;
     }
 
     function renderPostulaciones(p) {

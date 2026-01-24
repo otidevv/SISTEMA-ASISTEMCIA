@@ -26,8 +26,8 @@ class AsistenciaDocenteController extends Controller
     // La tarifa por minuto fija se remueve si es dinámica por docente.
     // const TARIFA_POR_MINUTO = 3.00; 
 
-    // Tolerancia en minutos para la entrada anticipada (ej. 10 minutos antes de las 7:00 AM, se puede marcar desde las 6:50 AM)
-    const TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 10; 
+    // Tolerancia en minutos para la entrada anticipada (ej. 15 minutos antes de las 7:00 AM, se puede marcar desde las 6:45 AM)
+    const TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 15; 
     // Tolerancia en minutos para considerar tardanza (ej. si la hora de inicio es 7:00 AM, la tardanza es a partir de las 7:05 AM)
     const TOLERANCIA_TARDE_MINUTOS = 5; 
 

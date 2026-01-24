@@ -359,11 +359,24 @@ function setupEventHandlers() {
     $('#edit-approved-carrera').on('change', function () {
         const carreraId = $(this).val();
         const cicloId = $('#edit-approved-ciclo').val();
+
         if (carreraId && cicloId) {
-            // Al cambiar carrera, limpiar turno y aula
-            $('#edit-approved-turno').html('<option value="">Seleccione un turno</option>');
-            $('#edit-approved-aula').html('<option value="">Seleccione un aula</option>');
-            loadTurnosForCarrera(carreraId, cicloId);
+            // IMPORTANTE: Capturar valores actuales ANTES de limpiar
+            const currentTurnoId = $('#edit-approved-turno').val();
+            const currentAulaId = $('#edit-approved-aula').val();
+
+            // Cargar turnos preservando la selección actual si es compatible
+            loadTurnosForCarrera(carreraId, cicloId, currentTurnoId, false);
+
+            // Si había un turno seleccionado, intentar cargar las aulas preservando la selección
+            if (currentTurnoId) {
+                setTimeout(function () {
+                    loadAulasForTurno(currentTurnoId, carreraId, cicloId, currentAulaId);
+                }, 500);
+            } else {
+                // Si no había turno seleccionado, limpiar aulas
+                $('#edit-approved-aula').html('<option value="">Primero seleccione un turno</option>');
+            }
         }
     });
 
