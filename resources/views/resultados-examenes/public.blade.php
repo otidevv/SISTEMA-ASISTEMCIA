@@ -860,7 +860,7 @@
             }
 
             .help-desk {
-                font-size: 12px;
+                font-size: 11px;
                 gap: 5px;
             }
 
@@ -875,7 +875,7 @@
             }
 
             .logo {
-                height: 45px;
+                height: 40px;
             }
 
             .nav-menu {
@@ -888,9 +888,9 @@
             }
 
             .header-buttons .btn-primary {
-                padding: 10px 18px;
-                font-size: 13px;
-                border-radius: 25px;
+                padding: 8px 15px;
+                font-size: 12px;
+                border-radius: 20px;
             }
 
             .header-buttons .btn-primary span {
@@ -899,21 +899,21 @@
 
             /* Hero Section */
             .results-hero {
-                padding: 40px 0;
+                padding: 30px 0;
             }
 
             .results-hero h1 {
-                font-size: 32px;
+                font-size: 28px;
                 text-shadow: 1px 1px var(--verde-cepre), 2px 2px var(--cyan-acento);
             }
 
             .results-hero p {
-                font-size: 16px;
+                font-size: 14px;
             }
 
             /* Filters */
             .filters-section {
-                padding: 20px 0;
+                padding: 15px 0;
             }
 
             .filters-container {
@@ -923,11 +923,14 @@
             .filter-group {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
+                gap: 8px;
             }
 
             .filter-group label {
-                font-size: 14px;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
             }
 
             .filter-group select {
@@ -935,11 +938,12 @@
                 min-width: auto;
                 padding: 10px 15px;
                 font-size: 14px;
+                border-radius: 12px;
             }
 
             /* Results Section */
             .results-section {
-                padding: 40px 0;
+                padding: 30px 0;
             }
 
             .results-container {
@@ -947,156 +951,146 @@
             }
 
             .ciclo-group {
-                margin-bottom: 40px;
+                margin-bottom: 30px;
             }
 
             .ciclo-header {
-                padding: 20px 15px;
-                margin-bottom: 25px;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 10px;
             }
 
             .ciclo-header h2 {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .ciclo-header p {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             .results-grid {
                 grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .result-card {
-                border-top-width: 3px;
-            }
-
-            .result-header {
-                padding: 20px;
-            }
-
-            .result-header i {
-                font-size: 36px;
-            }
-
-            .result-title {
-                font-size: 18px;
-            }
-
-            .result-content {
-                padding: 20px;
-            }
-
-            .result-meta {
                 gap: 15px;
             }
 
+            .result-card {
+                border-radius: 12px;
+            }
+
+            .result-header {
+                padding: 15px;
+            }
+
+            .result-header i {
+                font-size: 30px;
+                margin-bottom: 8px;
+            }
+
+            .result-title {
+                font-size: 16px;
+            }
+
+            .result-content {
+                padding: 15px;
+            }
+
+            .result-meta {
+                gap: 10px;
+            }
+
             .meta-item {
-                font-size: 13px;
+                font-size: 12px;
             }
 
             .result-description {
-                font-size: 14px;
+                font-size: 13px;
+                margin-bottom: 15px;
             }
 
             .result-actions {
+                flex-direction: column;
                 gap: 8px;
             }
 
             .btn-view-pdf,
             .btn-download,
             .btn-link {
-                padding: 10px 16px;
+                padding: 10px 15px;
                 font-size: 13px;
-                flex: 1;
+                width: 100%;
                 justify-content: center;
+                border-radius: 10px;
             }
 
             /* Modal */
             .modal-content {
-                width: 95%;
-                height: 95vh;
-                border-radius: 10px;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                max-width: none;
             }
 
             .modal-header {
-                padding: 15px 20px;
+                padding: 12px 15px;
+                border-radius: 0;
             }
 
             .modal-header h3 {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .modal-close {
-                width: 35px;
-                height: 35px;
-                font-size: 24px;
-            }
-
-            /* No Results */
-            .no-results {
-                padding: 40px 20px;
-            }
-
-            .no-results i {
-                font-size: 60px;
-            }
-
-            .no-results h3 {
-                font-size: 22px;
-            }
-
-            .no-results p {
-                font-size: 14px;
-            }
-
-            /* Footer */
-            footer {
-                padding: 30px 0 15px;
-                margin-top: 40px;
-            }
-
-            .footer-content {
-                padding: 0 15px;
-            }
-
-            .footer-content p {
-                font-size: 14px;
+                width: 30px;
+                height: 30px;
+                font-size: 20px;
             }
 
             /* Floating Buttons */
             #floating-postular-btn {
-                bottom: 90px;
+                bottom: 80px;
                 right: 15px;
-                min-width: 90px;
-                padding: 10px 12px;
+                min-width: 80px;
+                padding: 8px 10px;
+                border-radius: 30px;
             }
 
             #floating-postular-btn .btn-icon {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             #floating-postular-btn .btn-text {
-                font-size: 10px;
+                font-size: 9px;
             }
 
             .floating-badge {
                 font-size: 8px;
-                padding: 4px 8px;
-                top: -8px;
-                right: -15px;
+                padding: 3px 6px;
+                top: -5px;
+                right: -5px;
             }
 
             #scrollTop {
                 bottom: 20px;
                 right: 15px;
-                width: 45px;
-                height: 45px;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+
+        /* Responsive extra small */
+        @media (max-width: 480px) {
+            .results-hero h1 {
+                font-size: 24px;
+            }
+            
+            .ciclo-header h2 {
                 font-size: 18px;
             }
         }
     </style>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <!-- Top Bar -->
@@ -1293,12 +1287,7 @@
         </div>
     </footer>
 
-    <!-- Floating Postulation Button -->
-    <a href="{{ route('home') }}#postulacion" id="floating-postular-btn" title="¡Postula Ahora!">
-        <i class="fas fa-edit btn-icon"></i>
-        <span class="btn-text">Postular</span>
-        <span class="floating-badge">¡Abierto!</span>
-    </a>
+
 
     <!-- Scroll to Top -->
     <button id="scrollTop">
@@ -1325,94 +1314,36 @@
             }
         }
 
-        // Confetti Animation
+        // Confetti Animation using canvas-confetti
         function createConfetti() {
-            console.log('createConfetti function called');
-            const canvas = document.getElementById('confetti-canvas');
-            if (!canvas) {
-                console.error('Canvas element not found');
-                return;
-            }
-            console.log('Canvas found:', canvas);
-            
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                console.error('Could not get canvas context');
-                return;
-            }
-            console.log('Canvas context obtained');
-            
-            try {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                canvas.style.display = 'block';
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100000 };
 
-                const confettiCount = 150;
-                const confetti = [];
-                const colors = ['#A4C639', '#E6007E', '#00A0E3', '#2C5F7C', '#C8D92F', '#FFD700', '#FF6B6B'];
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
 
-                for (let i = 0; i < confettiCount; i++) {
-                    confetti.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height - canvas.height,
-                        r: Math.random() * 6 + 4,
-                        d: Math.random() * confettiCount,
-                        color: colors[Math.floor(Math.random() * colors.length)],
-                        tilt: Math.floor(Math.random() * 10) - 10,
-                        tiltAngleIncremental: Math.random() * 0.07 + 0.05,
-                        tiltAngle: 0
-                    });
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
                 }
 
-                function draw() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                    confetti.forEach((c, i) => {
-                        ctx.beginPath();
-                        ctx.lineWidth = c.r / 2;
-                        ctx.strokeStyle = c.color;
-                        ctx.moveTo(c.x + c.tilt + c.r / 4, c.y);
-                        ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r / 4);
-                        ctx.stroke();
-
-                        c.tiltAngle += c.tiltAngleIncremental;
-                        c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
-                        c.x += Math.sin(c.d);
-                        c.tilt = Math.sin(c.tiltAngle - i / 3) * 15;
-
-                        if (c.y > canvas.height) {
-                            confetti[i] = {
-                                x: Math.random() * canvas.width,
-                                y: -10,
-                                r: c.r,
-                                d: c.d,
-                                color: c.color,
-                                tilt: c.tilt,
-                                tiltAngleIncremental: c.tiltAngleIncremental,
-                                tiltAngle: c.tiltAngle
-                            };
-                        }
-                    });
-                }
-
-                let animationId;
-                let duration = 4000;
-                let startTime = Date.now();
-
-                function animate() {
-                    draw();
-                    if (Date.now() - startTime < duration) {
-                        animationId = requestAnimationFrame(animate);
-                    } else {
-                        canvas.style.display = 'none';
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }
-                }
-
-                animate();
-            } catch (error) {
-                console.error('Error creating confetti:', error);
-            }
+                const particleCount = 50 * (timeLeft / duration);
+                // since particles fall down, start a bit higher than random
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                    colors: ['#A4C639', '#E6007E', '#00A0E3', '#2C5F7C', '#C8D92F']
+                }));
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                    colors: ['#A4C639', '#E6007E', '#00A0E3', '#2C5F7C', '#C8D92F']
+                }));
+            }, 250);
         }
 
         // Scroll to top functionality
@@ -1490,6 +1421,12 @@
             if (e.key === 'Escape') {
                 closePdfModal();
             }
+        });
+
+        // Trigger confetti on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, triggering initial confetti...');
+            setTimeout(createConfetti, 500);
         });
     </script>
 </body>

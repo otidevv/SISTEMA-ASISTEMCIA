@@ -1425,20 +1425,31 @@ class PostulacionController extends Controller
         $ciclo = Ciclo::findOrFail($cicloId);
         
         $hoy = Carbon::now();
-        $labelPeriodo = "Estado Actual (Proyección)";
-        $fechaFin = $hoy < $ciclo->fecha_fin ? $hoy : $ciclo->fecha_fin;
+        $labelPeriodo = "Estado Actual (Snapshot)";
         $periodoTipo = $periodo; // 'hoy', '1', '2', '3'
-
-        if ($periodo == '1' && $ciclo->fecha_primer_examen) {
-            $fechaFin = Carbon::parse($ciclo->fecha_primer_examen);
-            $labelPeriodo = "Primer Examen (Hasta " . $fechaFin->format('d/m/Y') . ")";
-        } elseif ($periodo == '2' && $ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
-            $fechaFin = Carbon::parse($ciclo->fecha_segundo_examen);
+        
+        // Determinar periodo de examen
+        $examenPeriodo = null;
+        if ($periodoTipo == 'hoy') {
+            $examenPeriodo = \App\Helpers\AsistenciaHelper::determinarExamenActivo($ciclo);
+            if ($examenPeriodo) {
+                $labelPeriodo = $examenPeriodo['nombre'] . " (Snapshot Actual)";
+            }
+        } elseif ($periodoTipo == '1') {
+            $examenPeriodo = ['fecha_inicio' => $ciclo->fecha_inicio, 'fecha_examen' => $ciclo->fecha_primer_examen, 'nombre' => 'Primer Examen'];
+            $labelPeriodo = "Primer Examen (Corte)";
+        } elseif ($periodoTipo == '2') {
+            $inicio2 = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
+            $examenPeriodo = ['fecha_inicio' => $inicio2, 'fecha_examen' => $ciclo->fecha_segundo_examen, 'nombre' => 'Segundo Examen'];
             $labelPeriodo = "Segundo Examen (Periodo Independiente)";
-        } elseif ($periodo == '3' && $ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-            $fechaFin = Carbon::parse($ciclo->fecha_tercer_examen);
+        } elseif ($periodoTipo == '3') {
+            $inicio3 = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
+            $examenPeriodo = ['fecha_inicio' => $inicio3, 'fecha_examen' => $ciclo->fecha_tercer_examen, 'nombre' => 'Tercer Examen'];
             $labelPeriodo = "Tercer Examen (Periodo Independiente)";
         }
+
+        $fechaFin = $examenPeriodo ? Carbon::parse($examenPeriodo['fecha_examen']) : $hoy;
+        if ($hoy < $fechaFin) $fechaFin = $hoy;
 
         $inscripciones = Inscripcion::where('ciclo_id', $ciclo->id)
             ->where('estado_inscripcion', 'activo')
@@ -1455,19 +1466,22 @@ class PostulacionController extends Controller
             $estudiante = $inscripcion->estudiante;
             if (!$estudiante) continue;
 
-            $fechaInicioCalculo = $ciclo->fecha_inicio;
+            // Obtener el primer registro del ciclo (indispensable según lógica del dashboard)
+            $primerRegistroCiclo = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
+                ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+                ->orderBy('fecha_registro')
+                ->first();
+
+            // Si no tiene registros en todo el ciclo, se omite (según lógica del dashboard admin)
+            if (!$primerRegistroCiclo) continue;
+
+            $fechaInicioCalculo = $examenPeriodo ? $examenPeriodo['fecha_inicio'] : $ciclo->fecha_inicio;
             
-            // Lógica de periodos independientes
-            if ($periodoTipo == 'hoy' || $periodoTipo == '1') {
-                $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
-                    ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
-                    ->orderBy('fecha_registro')
-                    ->first();
-                $fechaInicioCalculo = $primerRegistro ? $primerRegistro->fecha_registro : $ciclo->fecha_inicio;
-            } elseif ($periodoTipo == '2') {
-                $fechaInicioCalculo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen);
-            } elseif ($periodoTipo == '3') {
-                $fechaInicioCalculo = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen);
+            // Si estamos en el primer periodo, ajustamos el inicio a su primera asistencia si fue tardía
+            if (!$examenPeriodo || $examenPeriodo['nombre'] == 'Primer Examen') {
+                if (Carbon::parse($primerRegistroCiclo->fecha_registro)->gt(Carbon::parse($fechaInicioCalculo))) {
+                    $fechaInicioCalculo = $primerRegistroCiclo->fecha_registro;
+                }
             }
 
             $info = $this->calcularAsistenciaExamen(
@@ -1536,11 +1550,20 @@ class PostulacionController extends Controller
         $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
         $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
 
-        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [$fechaInicioCarbon->startOfDay(), $fechaFinCalculo->endOfDay()])
             ->select(DB::raw('DATE(fecha_registro) as fecha'))
             ->distinct()
-            ->count();
+            ->get()
+            ->pluck('fecha');
+
+        $registrosAsistencia = 0;
+        foreach ($registros as $fecha) {
+            $carbonFecha = Carbon::parse($fecha);
+            if ($ciclo->esDiaHabil($carbonFecha)) {
+                $registrosAsistencia++;
+            }
+        }
 
         $diasFaltaActuales = $diasHabilesTranscurridos - $registrosAsistencia;
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
@@ -1575,10 +1598,10 @@ class PostulacionController extends Controller
         return $diasHabiles;
     }
 
-    private function getSiguienteDiaHabil($fecha)
+    private function getSiguienteDiaHabil($fecha, $ciclo)
     {
         $dia = Carbon::parse($fecha)->addDay();
-        while (!$dia->isWeekday()) {
+        while (!$ciclo->esDiaHabil($dia)) {
             $dia->addDay();
         }
         return $dia;

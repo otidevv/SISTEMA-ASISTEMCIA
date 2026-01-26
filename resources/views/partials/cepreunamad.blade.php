@@ -2195,11 +2195,8 @@
                                     <i class="fas fa-book"></i>
                                     <span>EXPLORAR PROGRAMAS</span>
                                 </a>
-                                <!-- RUTA DINÁMICA RESTAURADA -->
-                                <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary">
-                                    <i class="fas fa-edit"></i>
-                                    <span>POSTULAR AHORA</span>
-                                </a>
+                             
+
                                 <div class="video-btn" onclick="showModal('videoModal')">
                                     <i class="fas fa-play"></i>
                                 </div>
@@ -2559,20 +2556,13 @@
                         <li><a href="#">Foro Académico</a></li>
                         <li><a href="#">Términos y Condiciones</a></li>
                     </ul>
-                    
-                    <div class="footer-buttons" style="margin-top: 20px;">
-                        <!-- RUTA DINÁMICA RESTAURADA -->
-                        <a href="{{ route('register') }}"><span>POSTULAR</span></a>
-                        <a href="#"><span>VISITAR</span></a>
-                        <a href="#"><span>CARRERAS</span></a>
-                        <a href="#"><span>CONTACTO</span></a>
-                    </div>
+                   
                 </div>
             </div>
 
             <!-- Copyright -->
             <div class="copyright">
-                <p>Copyright © 2024 CEPRE UNAMAD. Todos los derechos reservados.</p>
+                <p>Copyright © 2026 CEPRE UNAMAD. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
@@ -2653,12 +2643,7 @@
         <i class="fas fa-lightbulb"></i>
     </button>
     
-    <!-- Botón Flotante de Postulación -->
-    <button id="floating-postular-btn" onclick="openPostulacionModal()" title="¡Postula Ahora!">
-        <i class="fas fa-edit btn-icon"></i>
-        <span class="btn-text">Postular</span>
-        <span class="floating-badge">¡Abierto!</span>
-    </button>
+    
     
     <!-- Results Modal -->
     <div id="resultsModal" class="results-modal">
