@@ -46,13 +46,29 @@ class AsistenciaDocenteController extends Controller
         $fechaFin = $request->input('fecha_fin');
         $selectedCicloAcademico = $request->input('ciclo_academico');
 
-        // Obtener todos los docentes para el filtro de selección
-        $docentes = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'profesor');
-        })->select('id', 'nombre', 'apellido_paterno', 'numero_documento')->get();
-
         // Obtener Ciclos Académicos de la base de datos usando tu modelo Ciclo
         $ciclosAcademicos = Ciclo::orderBy('nombre', 'desc')->pluck('nombre', 'codigo')->toArray();
+        
+        // NUEVO: Determinar el ciclo a usar para filtrar docentes
+        $cicloParaFiltroDocentes = $selectedCicloAcademico;
+        if (!$cicloParaFiltroDocentes) {
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            $cicloParaFiltroDocentes = $cicloActivo?->codigo;
+        }
+        
+        // MEJORADO: Obtener solo docentes con carga horaria en el ciclo seleccionado/activo
+        $docentesQuery = User::whereHas('roles', function ($query) {
+            $query->where('nombre', 'profesor');
+        })->select('id', 'nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento');
+        
+        if ($cicloParaFiltroDocentes) {
+            $docentesQuery->whereHas('horarios.ciclo', function ($query) use ($cicloParaFiltroDocentes) {
+                $query->where('codigo', $cicloParaFiltroDocentes);
+            });
+        }
+        
+        // Ordenar alfabéticamente para facilitar búsqueda
+        $docentes = $docentesQuery->orderBy('apellido_paterno')->orderBy('nombre')->get();
 
         // 2. NUEVA LÓGICA DE DETERMINACIÓN DE FECHAS - PRIORIDAD AL CICLO
         $startDate = null;
@@ -111,10 +127,16 @@ class AsistenciaDocenteController extends Controller
                 $endDate = Carbon::parse($cicloActivo->fecha_fin)->endOfDay();
                 // Auto-seleccionar el ciclo activo para que aparezca en el filtro
                 $selectedCicloAcademico = $cicloActivo->codigo;
+                // NUEVO: Mostrar las fechas del ciclo en los campos de fecha
+                $fechaInicio = $startDate->toDateString();
+                $fechaFin = $endDate->toDateString();
             } else {
                 // Si no hay ciclo activo, usar últimos 30 días como último recurso
                 $endDate = Carbon::today()->endOfDay();
                 $startDate = $endDate->copy()->subDays(30)->startOfDay();
+                // Mostrar estas fechas también
+                $fechaInicio = $startDate->toDateString();
+                $fechaFin = $endDate->toDateString();
             }
         }
 
@@ -268,13 +290,28 @@ class AsistenciaDocenteController extends Controller
         // ⚡ OPTIMIZACIÓN CRÍTICA: Obtener ciclo activo UNA SOLA VEZ fuera del loop
         $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
         
-        // Obtener docentes según filtros
+        // MEJORADO: Obtener solo docentes con carga horaria en el ciclo (igual que en Export)
         $docentesQuery = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         });
+        
+        // Filtrar por docente específico si se seleccionó
         if ($selectedDocenteId) {
             $docentesQuery->where('id', $selectedDocenteId);
         }
+        
+        // CRÍTICO: Solo procesar docentes que tienen horarios en el ciclo seleccionado
+        $cicloParaFiltrar = $selectedCicloAcademico;
+        if (!$cicloParaFiltrar && $cicloActivoParaRotacion) {
+            $cicloParaFiltrar = $cicloActivoParaRotacion->codigo;
+        }
+        
+        if ($cicloParaFiltrar) {
+            $docentesQuery->whereHas('horarios.ciclo', function ($q) use ($cicloParaFiltrar) {
+                $q->where('codigo', $cicloParaFiltrar);
+            });
+        }
+        
         $docentesParaProcesar = $docentesQuery->get();
 
         foreach ($docentesParaProcesar as $docente) {
@@ -312,7 +349,7 @@ class AsistenciaDocenteController extends Controller
 
                 // Filtrar horarios del día desde la colección pre-cargada
                 $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
-                    return strtolower($horario->dia_semana) === $diaSemanaNombre;
+                    return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
                 })->sortBy('hora_inicio');
 
                 // Obtener registros biométricos del día desde la colección pre-cargada

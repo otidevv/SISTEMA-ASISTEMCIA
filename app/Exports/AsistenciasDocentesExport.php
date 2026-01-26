@@ -202,6 +202,10 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
                 
                 $currentDate = $startDate->copy();
+                
+                // DEBUG: Log para ver el rango de fechas y horarios
+                \Log::info("EXPORT DEBUG - Docente {$docente->nombre}: Rango {$startDate->toDateString()} a {$endDate->toDateString()}, Horarios precargados: " . $todosHorariosDocente->count() . ", Registros biometricos: " . $todosRegistrosDocente->count());
+                
                 while ($currentDate->lte($endDate)) {
                     // ⚡ OPTIMIZADO: Usar ciclo pre-cargado en lugar de consultar cada vez
                     $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivoParaRotacion);
@@ -209,8 +213,13 @@ class AsistenciasDocentesExport implements WithMultipleSheets
 
                     // Filtrar horarios del día desde la colección pre-cargada
                     $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
-                        return strtolower($horario->dia_semana) === $diaSemanaNombre;
+                        return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
                     })->sortBy('hora_inicio');
+                    
+                    // DEBUG: Log para ver si se encuentran horarios para cada día
+                    if ($horariosDelDia->count() > 0) {
+                        \Log::info("EXPORT DEBUG - {$fechaString} ({$diaSemanaNombre}): {$horariosDelDia->count()} horarios encontrados");
+                    }
 
                     // Obtener registros biométricos del día desde la colección pre-cargada
                     $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
@@ -377,7 +386,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
             }
             
             $docente = $docenteData['docente_info'];
-            $docenteName = trim($docente->nombre . ' ' . $docente->apellido_paterno . ' ' . ($docente->apellido_materno ?? ''));
+            $docenteName = trim(($docente->nombre ?? '') . ' ' . ($docente->apellido_paterno ?? '') . ' ' . ($docente->apellido_materno ?? ''));
             
             // Crear hoja para cada docente con diseño profesional mejorado
             $sheets[] = new class($docenteData, $docenteName, $rangoFechasHeader, $this->selectedCicloAcademico) implements 
@@ -1286,6 +1295,23 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 'color' => ['argb' => self::COLORS['HEADER_BLUE']]
                             ]
                         ]
+                    ]);
+                }
+            };
+        }
+
+        // 🚨 CRÍTICO: Si no hay hojas, PhpSpreadsheet lanza error "out of bounds index: 0"
+        if (empty($sheets)) {
+            $sheets[] = new class($rangoFechasHeader) implements FromCollection, WithTitle, WithHeadings, ShouldAutoSize {
+                private $period;
+                public function __construct($period) { $this->period = $period; }
+                public function title(): string { return 'Sin Datos'; }
+                public function headings(): array { return ['REPORTE DE ASISTENCIA - SIN REGISTROS']; }
+                public function collection() {
+                    return collect([
+                        ['No se encontraron registros de asistencia para el período seleccionado.'],
+                        ['Período: ' . $this->period],
+                        ['Por favor, verifique los filtros seleccionados (Docente, Mes, Año, Ciclo).']
                     ]);
                 }
             };

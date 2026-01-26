@@ -3,6 +3,9 @@
 @section('title', 'Reportes de Asistencia Docente')
 
 @push('css')
+{{-- Select2 CSS for searchable dropdowns --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
 /* ========================================
    REPORTES DE ASISTENCIA DOCENTE - CSS
@@ -462,12 +465,15 @@
                     <form method="GET" action="{{ route('asistencia-docente.reports') }}" id="filterForm">
                         <div class="row g-3">
                             <div class="col-lg-3 col-md-6">
-                                <label for="docente_id" class="form-label fw-semibold">Docente</label>
+                                <label for="docente_id" class="form-label fw-semibold">
+                                    Docente 
+                                    <span class="badge bg-info ms-1">{{ count($docentes) }} con horario</span>
+                                </label>
                                 <select class="form-select" id="docente_id" name="docente_id">
-                                    <option value="">Todos los Docentes</option>
+                                    <option value="">Todos los Docentes ({{ count($docentes) }})</option>
                                     @foreach($docentes as $docente)
                                         <option value="{{ $docente->id }}" {{ (string)$selectedDocenteId === (string)$docente->id ? 'selected' : '' }}>
-                                            {{ $docente->nombre }} {{ $docente->apellido_paterno }}
+                                            {{ $docente->nombre }} {{ $docente->apellido_paterno }} {{ $docente->apellido_materno }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -852,12 +858,29 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /**
  * REPORTES DE ASISTENCIA DOCENTE - JavaScript
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // 0. Inicializar Select2 para búsqueda de docentes
+    $('#docente_id').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Buscar docente...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return 'No se encontraron docentes';
+            },
+            searching: function() {
+                return 'Buscando...';
+            }
+        }
+    });
+
     // 1. Lógica de filtros
     const fechaInicioInput = document.getElementById('fecha_inicio');
     const fechaFinInput = document.getElementById('fecha_fin');
