@@ -103,9 +103,14 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button id="btn-consultar" class="btn btn-primary w-100">
-                                <i class="mdi mdi-magnify me-1"></i> Consultar Carga
-                            </button>
+                            <div class="d-flex flex-column gap-2">
+                                <button id="btn-consultar" class="btn btn-primary">
+                                    <i class="mdi mdi-magnify me-1"></i> Consultar Carga
+                                </button>
+                                <a id="btn-excel-resumen" href="#" class="btn btn-success">
+                                    <i class="mdi mdi-file-excel me-1"></i> Exportar Resumen Ciclo
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

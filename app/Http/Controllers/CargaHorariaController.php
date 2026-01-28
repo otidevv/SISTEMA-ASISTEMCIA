@@ -9,11 +9,23 @@ use App\Models\User;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\CargaHorariaResumenExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CargaHorariaController extends Controller
 {
+    /**
+     * Exportar el resumen de carga horaria de todos los docentes para un ciclo
+     */
+    public function exportarExcelResumen($cicloId)
+    {
+        $ciclo = Ciclo::findOrFail($cicloId);
+        $nombreArchivo = 'Resumen_Carga_Horaria_' . str_replace(' ', '_', $ciclo->nombre) . '.xlsx';
+        
+        return Excel::download(new CargaHorariaResumenExport($cicloId), $nombreArchivo);
+    }
+
     public function index()
     {
         $ciclos = Ciclo::orderBy('nombre', 'desc')->get();

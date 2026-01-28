@@ -575,6 +575,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [CargaHorariaController::class, 'index'])->name('carga-horaria.index')->middleware('can:carga-horaria.view');
         Route::get('/pdf-visual/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfVisual'])->name('carga-horaria.pdf-visual')->middleware('can:carga-horaria.pdf');
         Route::get('/pdf-detallado/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfDetallado'])->name('carga-horaria.pdf-detallado')->middleware('can:carga-horaria.pdf');
+        Route::get('/excel-resumen/{ciclo}', [CargaHorariaController::class, 'exportarExcelResumen'])->name('carga-horaria.excel-resumen')->middleware('can:carga-horaria.view');
     });
 
     Route::get('/mi-horario', [CargaHorariaController::class, 'miHorario'])->name('mi-horario')->middleware('can:carga-horaria.mi-horario');

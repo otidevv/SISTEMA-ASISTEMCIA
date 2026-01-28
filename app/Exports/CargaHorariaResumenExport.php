@@ -1,0 +1,384 @@
+<?php
+
+namespace App\Exports;
+
+use App\Models\User;
+use App\Models\Ciclo;
+use App\Models\HorarioDocente;
+use App\Models\PagoDocente;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+
+class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithEvents
+{
+    protected $cicloId;
+    protected $ciclo;
+    protected $data;
+
+    // Paleta de colores institucional (Sincronizada con AsistenciasDocentesExport)
+    private const COLORS = [
+        'PRIMARY_BLUE'      => 'FF1B365D',    // Azul institucional principal
+        'SECONDARY_BLUE'    => 'FF2E5A87',    // Azul secundario
+        'ACCENT_GOLD'       => 'FFD4AF37',    // Dorado de acento
+        'LIGHT_BLUE'        => 'FFE8F0F8',    // Azul claro para alternos
+        'HEADER_BLUE'       => 'FF4A6FA5',    // Azul para encabezados de tabla
+        'WHITE'             => 'FFFFFFFF',    // Blanco puro
+        'LIGHT_GRAY'        => 'FFF5F7FA',    // Gris muy claro
+        'BORDER_GRAY'       => 'FFBDC3C7',    // Gris para bordes
+        'TEXT_DARK'         => 'FF2C3E50',    // Texto oscuro
+        'SUCCESS_GREEN'     => 'FF27AE60',    // Verde para totales
+        'WARNING_ORANGE'    => 'FFF39C12',    // Naranja para alertas
+        'PALE_GREEN'        => 'FFE2EFDA',    // Verde pálido (académico)
+        'PALE_ORANGE'       => 'FFFFF2CC'     // Naranja pálido (costos)
+    ];
+
+    public function __construct($cicloId)
+    {
+        $this->cicloId = $cicloId;
+        $this->ciclo = Ciclo::findOrFail($cicloId);
+        $this->data = $this->collectData();
+    }
+
+    private function collectData()
+    {
+        // 🚨 FILTRO CRÍTICO: Solo docentes que tienen horarios registrados en el ciclo seleccionado
+        $docentes = User::whereHas('roles', function($q) {
+            $q->where('nombre', 'profesor');
+        })->whereHas('horarios', function($q) {
+            $q->where('ciclo_id', $this->cicloId);
+        })->with(['horarios' => function($q) {
+            $q->where('ciclo_id', $this->cicloId)->with(['curso', 'aula']);
+        }])->orderBy('apellido_paterno')->orderBy('nombre')->get();
+
+        $ocurrenciasDias = $this->contarOcurrenciasDias($this->ciclo);
+        
+        $results = new Collection();
+        $contador = 1;
+
+        foreach ($docentes as $docente) {
+            $pago = PagoDocente::where('docente_id', $docente->id)
+                ->where(function($q) {
+                    $q->where('fecha_inicio', '<=', now())
+                      ->orWhereNull('fecha_inicio');
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+            
+            $tarifa = $pago ? $pago->tarifa_por_hora : 0;
+
+            // Agrupar por curso y grupo
+            $horariosAgrupados = $docente->horarios->groupBy(function($item) {
+                return $item->curso_id . '-' . $item->grupo;
+            });
+
+            $totalHorasSemanalesDocente = 0;
+            $totalHorasCicloDocente = 0;
+            $totalCostoCicloDocente = 0;
+
+            $rowsDocenteTemp = [];
+
+            foreach ($horariosAgrupados as $key => $horariosDoc) {
+                $primerHorario = $horariosDoc->first();
+                $nombreCurso = $primerHorario->curso ? $primerHorario->curso->nombre : 'Sin curso';
+                
+                // Aulas únicas
+                $aulas = $horariosDoc->pluck('aula.nombre')->unique()->filter()->implode(', ');
+                $grupoOriginal = $primerHorario->grupo ?: 'A';
+                $grupoTexto = $aulas ? $aulas . " (G: {$grupoOriginal})" : $grupoOriginal;
+
+                $horasSemanalesCurso = 0;
+                $horasCicloCurso = 0;
+
+                foreach ($horariosDoc as $h) {
+                    if ($h->es_receso) continue; // No contar horas de receso si existen
+                    
+                    $ini = Carbon::parse($h->hora_inicio);
+                    $fni = Carbon::parse($h->hora_fin);
+                    $decimal = abs($fni->diffInMinutes($ini)) / 60;
+                    
+                    $decimal = $this->ajustarHorasReceso($h->hora_inicio, $h->hora_fin, $decimal);
+                    $horasSemanalesCurso += $decimal;
+                    
+                    $cantDias = $ocurrenciasDias[$h->dia_semana] ?? 0;
+                    $horasCicloCurso += ($decimal * $cantDias);
+                }
+
+                $costoCursoCiclo = $horasCicloCurso * $tarifa;
+
+                $rowsDocenteTemp[] = [
+                    'contador' => $contador,
+                    'nombre' => $docente->nombre_completo,
+                    'curso' => $nombreCurso,
+                    'grupo' => $grupoTexto,
+                    'horas_semana_curso' => round($horasSemanalesCurso, 1),
+                    'horas_ciclo_curso' => round($horasCicloCurso, 1),
+                    'tarifa' => $tarifa,
+                    'costo_curso' => $costoCursoCiclo,
+                    'is_first' => false, // Marcaremos la primera después
+                ];
+
+                $totalHorasSemanalesDocente += $horasSemanalesCurso;
+                $totalHorasCicloDocente += $horasCicloCurso;
+                $totalCostoCicloDocente += $costoCursoCiclo;
+            }
+
+            if (count($rowsDocenteTemp) > 0) {
+                $rowsDocenteTemp[0]['is_first'] = true;
+                $rowsDocenteTemp[0]['total_horas_ciclo_doc'] = round($totalHorasCicloDocente, 1);
+                $rowsDocenteTemp[0]['horas_semanales_total_doc'] = round($totalHorasSemanalesDocente, 1);
+                $rowsDocenteTemp[0]['costo_total_doc'] = $totalCostoCicloDocente;
+                
+                foreach ($rowsDocenteTemp as $row) {
+                    $results->push($row);
+                }
+                $contador++;
+            }
+        }
+
+        return $results;
+    }
+
+    private function ajustarHorasReceso($inicio, $fin, $decimal)
+    {
+        $h_ini = Carbon::parse($inicio)->format('H:i');
+        $h_fin = Carbon::parse($fin)->format('H:i');
+        if ($h_ini < '10:00' && $h_fin > '10:30') $decimal -= 0.5;
+        elseif (($h_ini >= '10:00' && $h_ini < '10:30') && $h_fin > '10:30') $decimal -= (Carbon::parse($h_ini)->diffInMinutes(Carbon::parse('10:30')) / 60);
+        elseif ($h_ini < '10:00' && ($h_fin > '10:00' && $h_fin <= '10:30')) $decimal -= (Carbon::parse('10:00')->diffInMinutes(Carbon::parse($h_fin)) / 60);
+        
+        if ($h_ini < '18:00' && $h_fin > '18:30') $decimal -= 0.5;
+        elseif (($h_ini >= '18:00' && $h_ini < '18:30') && $h_fin > '18:30') $decimal -= (Carbon::parse($h_ini)->diffInMinutes(Carbon::parse('18:30')) / 60);
+        elseif ($h_ini < '18:00' && ($h_fin > '18:00' && $h_fin <= '18:30')) $decimal -= (Carbon::parse('18:00')->diffInMinutes(Carbon::parse($h_fin)) / 60);
+        return max(0, $decimal);
+    }
+
+    private function contarOcurrenciasDias($ciclo)
+    {
+        $inicio = Carbon::parse($ciclo->fecha_inicio);
+        $fin = Carbon::parse($ciclo->fecha_fin);
+        $conteo = ['Lunes'=>0,'Martes'=>0,'Miércoles'=>0,'Miercoles'=>0,'Jueves'=>0,'Viernes'=>0];
+        $actual = $inicio->copy();
+        while ($actual <= $fin) {
+            $diaHorario = $ciclo->getDiaHorarioParaFecha($actual);
+            if ($diaHorario && isset($conteo[$diaHorario])) $conteo[$diaHorario]++;
+            $actual->addDay();
+        }
+        return $conteo;
+    }
+
+    public function collection() { return $this->data; }
+    public function title(): string { return 'Resumen Carga Horaria'; }
+    public function headings(): array
+    {
+        $inicio = Carbon::parse($this->ciclo->fecha_inicio);
+        $fin = Carbon::parse($this->ciclo->fecha_fin);
+        $semanas = ceil($inicio->diffInDays($fin) / 7);
+        $titulo3 = "REPORTE DE CARGA HORARIA - ". strtoupper($this->ciclo->nombre) ." (". $semanas ." SEMANAS)";
+
+        return [
+            ['UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS'],
+            ['CENTRO PRE UNIVERSITARIO'],
+            [$titulo3],
+            [''], [''], [''], // Filas 4, 5, 6
+            ['N°', 'DOCENTE', 'CURSO', 'AULAS / GRUPOS', 'H. SEMANALES', 'H. CICLO', 'TOTAL H. CICLO', 'H. SEMANALES TOTAL', 'COSTO HORA', 'COSTO CURSO', 'TOTAL COSTO'] // Fila 7
+        ];
+    }
+
+    public function map($row): array
+    {
+        // Solo mostrar datos combinables si es la primera fila del docente
+        return [
+            $row['is_first'] ? $row['contador'] : '',
+            $row['is_first'] ? $row['nombre'] : '',
+            $row['curso'],
+            $row['grupo'],
+            $row['horas_semana_curso'],
+            $row['horas_ciclo_curso'],
+            $row['is_first'] ? $row['total_horas_ciclo_doc'] : '',
+            $row['is_first'] ? $row['horas_semanales_total_doc'] : '',
+            $row['is_first'] ? $row['tarifa'] : '',
+            $row['costo_curso'],
+            $row['is_first'] ? $row['costo_total_doc'] : '',
+        ];
+    }
+
+    public function styles(Worksheet $sheet) { return []; }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $lastCol = 'K';
+                $lastDataRow = $sheet->getHighestRow();
+                
+                // 1. --- CONFIGURACIÓN DE PÁGINA PROFESIONAL ---
+                $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+                $sheet->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+                $sheet->getPageSetup()->setFitToWidth(1);
+                $sheet->getPageSetup()->setFitToHeight(0);
+                $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
+                $sheet->getStyle("A1:{$lastCol}{$lastDataRow}")->getFont()->setName('Calibri');
+
+                // 2. --- ESTILIZAR CABECERAS (FILAS 1-3) ---
+                $sheet->mergeCells("A1:{$lastCol}1");
+                $sheet->mergeCells("A2:{$lastCol}2");
+                $sheet->mergeCells("A3:{$lastCol}3");
+                $sheet->getStyle("A1:A3")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+                ]);
+                $sheet->getStyle("A1")->getFont()->setSize(20);
+                $sheet->getStyle("A3")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(self::COLORS['SECONDARY_BLUE']));
+
+                // Logos
+                $logoUnamad = public_path('assets/images/logo unamad constancia.png');
+                if (file_exists($logoUnamad)) {
+                    $drawing = new Drawing();
+                    $drawing->setName('Logo UNAMAD'); $drawing->setPath($logoUnamad); $drawing->setHeight(90);
+                    $drawing->setCoordinates('A1'); $drawing->setOffsetX(15); $drawing->setWorksheet($sheet);
+                }
+                $logoCepre = public_path('assets/images/logo cepre costancia.png');
+                if (file_exists($logoCepre)) {
+                    $drawing2 = new Drawing();
+                    $drawing2->setName('Logo CEPRE'); $drawing2->setPath($logoCepre); $drawing2->setHeight(90);
+                    $drawing2->setCoordinates('J1'); $drawing2->setOffsetX(80); $drawing2->setWorksheet($sheet);
+                }
+
+                // 3. --- CUADRO DE RESUMEN EJECUTIVO (FILA 4-5) ---
+                $totalDocentes = $this->data->groupBy('contador')->count();
+                $totalHorasSemanal = $this->data->where('is_first', true)->sum('horas_semanales_total_doc');
+                $totalMontoPlanilla = 0;
+                foreach($this->data->groupBy('contador') as $rows) { $totalMontoPlanilla += $rows->first()['costo_total_doc']; }
+
+                $sheet->mergeCells("B4:E5");
+                $sheet->setCellValue("B4", "RESUMEN EJECUTIVO:\nN° DOCENTES: {$totalDocentes} | TOTAL H. SEMANALES: {$totalHorasSemanal} | TOTAL PRESUPUESTO: S/. " . number_format($totalMontoPlanilla, 2));
+                $sheet->getStyle("B4")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER)->setWrapText(true);
+                $sheet->getStyle("B4")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 11, 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['LIGHT_BLUE']]],
+                    'borders' => ['outline' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]]
+                ]);
+
+                // 4. --- METADATOS DE AUDITORÍA (FILA 6) ---
+                $user = auth()->user() ? auth()->user()->nombre_completo : 'Auditoría de Sistema';
+                $now = now()->format('d/m/Y H:i');
+                $sheet->mergeCells("H6:K6");
+                $sheet->setCellValue("H6", "GENERADO POR: " . strtoupper($user) . " [" . $now . "]");
+                $sheet->getStyle("H6")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("H6")->getFont()->setBold(true)->setSize(8)->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF7F8C8D'));
+
+                // 5. --- ENCABEZADOS TABLA (FILA 7) ---
+                $rowHeaders = 7;
+                $sheet->getStyle("A{$rowHeaders}:{$lastCol}{$rowHeaders}")->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['argb' => self::COLORS['WHITE']], 'size' => 10],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['HEADER_BLUE']]],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+                    'borders' => [
+                        'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFFFFFFF']],
+                        'bottom' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]
+                    ]
+                ]);
+                $sheet->getRowDimension($rowHeaders)->setRowHeight(50);
+
+                // 6. --- DATOS Y ESTILOS (FILA 8+) ---
+                $dataStart = 8;
+                if ($lastDataRow < $dataStart) $lastDataRow = $dataStart;
+
+                $sheet->getStyle("A{$dataStart}:{$lastCol}{$lastDataRow}")->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => self::COLORS['BORDER_GRAY']]]],
+                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+                ]);
+
+                // Estilización por Filas y Alertas
+                for ($row = $dataStart; $row <= $lastDataRow; $row++) {
+                    // Fondo área académica (Blanco / Celeste alterno)
+                    $sheet->getStyle("A{$row}:H{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB($row % 2 == 0 ? self::COLORS['LIGHT_BLUE'] : self::COLORS['WHITE']);
+                    
+                    // Fondo área económica (Arena Suave)
+                    $sheet->getStyle("I{$row}:K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFFAEB');
+
+                    // 🚨 AUDITORÍA: Resaltar docentes sin tarifa (ERROR DE CONFIGURACIÓN)
+                    $tarifaRaw = $sheet->getCell('I' . $row)->getValue();
+                    if ($tarifaRaw === 0 || $tarifaRaw === "0" || $tarifaRaw === 0.0) {
+                        $sheet->getStyle("I{$row}:K{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_RED))->setBold(true);
+                    }
+                }
+
+                // Alineaciones y Formato de Moneda Premium
+                $sheet->getStyle("B{$dataStart}:D{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $sheet->getStyle("E{$dataStart}:I{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("K{$dataStart}:K{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("J{$dataStart}:J{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("A{$dataStart}:A{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                $currFormat = '_-"S/."* #,##0.00_-;-"S/."* #,##0.00_-;_-"S/."* "-"??_-;_-@_-';
+                $sheet->getStyle("I{$dataStart}:K{$lastDataRow}")->getNumberFormat()->setFormatCode($currFormat);
+
+                // 7. --- FUSIONAR CELDAS ---
+                $curr = $dataStart;
+                foreach($this->data->groupBy('contador') as $rows) {
+                    $cnt = count($rows);
+                    if ($cnt >= 1) {
+                        $end = $curr + $cnt - 1;
+                        $sheet->mergeCells("A{$curr}:A{$end}");
+                        $sheet->mergeCells("B{$curr}:B{$end}");
+                        $sheet->mergeCells("G{$curr}:G{$end}");
+                        $sheet->mergeCells("H{$curr}:H{$end}");
+                        $sheet->mergeCells("I{$curr}:I{$end}");
+                        $sheet->mergeCells("K{$curr}:K{$end}");
+                    }
+                    $curr += $cnt;
+                }
+
+                // 8. --- RESUMEN TOTAL (Borde doble contable) ---
+                $totalRow = $lastDataRow + 2;
+                $sheet->mergeCells("A{$totalRow}:J{$totalRow}");
+                $sheet->setCellValue("A{$totalRow}", "RESUMEN CONSOLIDADO DE PLANILLA POR CARGA HORARIA");
+                $sheet->setCellValue("K{$totalRow}", $totalMontoPlanilla);
+                
+                $sheet->getStyle("A{$totalRow}:K{$totalRow}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => self::COLORS['WHITE']]],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                    'borders' => [
+                        'top' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]],
+                        'bottom' => ['borderStyle' => Border::BORDER_DOUBLE, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]
+                    ]
+                ]);
+                $sheet->getStyle("K{$totalRow}")->getNumberFormat()->setFormatCode($currFormat);
+                $sheet->getRowDimension($totalRow)->setRowHeight(40);
+
+                // 9. --- SECCIÓN DE FIRMAS ELEGANTES ---
+                $signRow = $totalRow + 4;
+                if ($signRow + 2 > 1000) $signRow = $totalRow + 2; // Prevent overflow
+                $sheet->mergeCells("B{$signRow}:D{$signRow}");
+                $sheet->mergeCells("H{$signRow}:J{$signRow}");
+                $sheet->setCellValue("B{$signRow}", "__________________________\nRESPONSABLE DE CARGA\nUnidad de Personal");
+                $sheet->setCellValue("H{$signRow}", "__________________________\nVº Bº DIRECCIÓN CEPRE\nUniversidad Nacional Amazonica");
+                $sheet->getStyle("B{$signRow}:J{$signRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setWrapText(true);
+                $sheet->getStyle("B{$signRow}:J{$signRow}")->getFont()->setBold(true)->setSize(9)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(self::COLORS['TEXT_DARK']));
+
+                // 10. --- ANCHOS OPTIMIZADOS ---
+                $widths = ['A'=>6, 'B'=>45, 'C'=>30, 'D'=>40, 'E'=>14, 'F'=>14, 'G'=>16, 'H'=>16, 'I'=>15, 'J'=>15, 'K'=>20];
+                foreach($widths as $col => $w) { $sheet->getColumnDimension($col)->setWidth($w); }
+            }
+        ];
+    }
+}

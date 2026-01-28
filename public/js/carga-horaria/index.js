@@ -7,9 +7,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectCiclo = document.getElementById('ciclo_id');
     const selectDocente = document.getElementById('docente_id');
     const btnConsultar = document.getElementById('btn-consultar');
+    const btnExcelResumen = document.getElementById('btn-excel-resumen');
     const sectionResultados = document.getElementById('section-resultados');
     const sectionVacio = document.getElementById('section-vacio');
     const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Inicializar link de Excel
+    if (btnExcelResumen) {
+        btnExcelResumen.href = `/carga-horaria/excel-resumen/${selectCiclo.value}`;
+    }
+
+    // Evento Cambio de Ciclo
+    selectCiclo.addEventListener('change', function () {
+        if (btnExcelResumen) {
+            btnExcelResumen.href = `/carga-horaria/excel-resumen/${this.value}`;
+        }
+    });
 
     // Elementos de resumen
     const resumenNombre = document.getElementById('resumen-nombre');
