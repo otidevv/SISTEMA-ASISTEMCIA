@@ -1685,6 +1685,9 @@ class AsistenciaDocenteController extends Controller
                 $estadoTexto = 'EN CURSO';
             }
             $duracionTexto = '00:00:00';
+            // Si está incompleta o en curso (sin salida), no debería sumar horas ni pago aún.
+            $horasDictadas = 0;
+            $montoTotal = 0; // Se recalculará abajo si horasDictadas > 0, pero forzamos 0 aquí por seguridad visual.
         } elseif (!$entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'FALTA';
@@ -1705,14 +1708,15 @@ class AsistenciaDocenteController extends Controller
             $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
         }
 
-        // FORMATO DE HORAS CORREGIDO - CON SEGUNDOS
+        // FORMATO DE HORAS CORREGIDO - CON SEGUNDOS Y SIN DATOS FALSOS
+        // Si no hay registro biométrico, mostramos "---" para que sea evidente la falta
         $horaEntradaDisplay = $entradaBiometrica ? 
             Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i:s A') : 
-            $horaInicioProgramada->format('g:i:s A');
+            '--:--:--';
         
         $horaSalidaDisplay = $salidaBiometrica ? 
             Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i:s A') : 
-            $horaFinProgramada->format('g:i:s A');
+            '--:--:--';
 
         return [
             'fecha' => $currentDate->toDateString(),
