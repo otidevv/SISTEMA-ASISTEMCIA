@@ -1808,6 +1808,7 @@ class AsistenciaDocenteController extends Controller
             'months' => $groupedData,
             'total_horas' => $totalHoras,
             'total_pagos' => $totalPagos,
+            'total_pagos_redondeado' => $totalPagosRedondeado,
             'rowspan' => $totalRowspan
         ];
     }
