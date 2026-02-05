@@ -276,27 +276,35 @@ Route::middleware('auth')->group(function () {
 
     // ASISTENCIA DOCENTE
     Route::prefix('asistencia-docente')->group(function () {
-        Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
-        Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
-        Route::post('/', [AsistenciaDocenteController::class, 'store'])->name('asistencia-docente.store');
-        Route::get('/{id}/editar', [AsistenciaDocenteController::class, 'edit'])->name('asistencia-docente.edit');
-        Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
-        Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
-        Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+        // Rutas Administrativas (Protegidas)
+        Route::middleware('can:asistencia-docente.view')->group(function () {
+            Route::get('/', [AsistenciaDocenteController::class, 'index'])->name('asistencia-docente.index');
+            Route::get('/crear', [AsistenciaDocenteController::class, 'create'])->name('asistencia-docente.create');
+            Route::post('/', [AsistenciaDocenteController::class, 'store'])->name('asistencia-docente.store');
+            Route::get('/{id}/editar', [AsistenciaDocenteController::class, 'edit'])->name('asistencia-docente.edit');
+            Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
+            Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
+            Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+            
+            // Monitor y Reportes Administrativos
+            Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
+            Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
+            Route::get('/monitor/horario-dia', [AsistenciaDocenteController::class, 'getDailySchedule'])->name('asistencia-docente.monitor.horario-dia');
+            Route::get('/monitor/temas-pendientes', [AsistenciaDocenteController::class, 'getTeachersWithoutTheme'])->name('asistencia-docente.monitor.temas-pendientes');
+            Route::get('/monitor/reporte-diario', [AsistenciaDocenteController::class, 'getDailyReport'])->name('asistencia-docente.monitor.reporte-diario');
+            Route::post('/monitor/generar-whatsapp', [AsistenciaDocenteController::class, 'generateWhatsAppMessage'])->name('asistencia-docente.monitor.whatsapp');
+            Route::get('/monitor/exportar-reporte', [AsistenciaDocenteController::class, 'exportarReporteDiario'])->name('asistencia-docente.monitor.exportar');
+            Route::post('/monitor/notificar-masivo', [AsistenciaDocenteController::class, 'notificarMasivoWhatsApp'])->name('asistencia-docente.monitor.notificar-masivo');
+            Route::get('/monitor/estadisticas-graficos', [AsistenciaDocenteController::class, 'getEstadisticasGraficos'])->name('asistencia-docente.monitor.estadisticas');
+            Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
+        });
+
+        // Rutas de Docente (Mis Reportes)
         Route::get('/mis-reportes', [AsistenciaDocenteController::class, 'indexReportes'])
             ->name('asistencia-docente.mis-reportes')
             ->middleware('can:asistencia-docente.reports');
+            
         Route::get('/exportar-pdf', [AsistenciaDocenteController::class, 'exportarPdfIndividual'])->name('asistencia-docente.exportar-pdf');
-        Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
-        Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
-        Route::get('/monitor/horario-dia', [AsistenciaDocenteController::class, 'getDailySchedule'])->name('asistencia-docente.monitor.horario-dia');
-        Route::get('/monitor/temas-pendientes', [AsistenciaDocenteController::class, 'getTeachersWithoutTheme'])->name('asistencia-docente.monitor.temas-pendientes');
-        Route::get('/monitor/reporte-diario', [AsistenciaDocenteController::class, 'getDailyReport'])->name('asistencia-docente.monitor.reporte-diario');
-        Route::post('/monitor/generar-whatsapp', [AsistenciaDocenteController::class, 'generateWhatsAppMessage'])->name('asistencia-docente.monitor.whatsapp');
-        Route::get('/monitor/exportar-reporte', [AsistenciaDocenteController::class, 'exportarReporteDiario'])->name('asistencia-docente.monitor.exportar');
-        Route::post('/monitor/notificar-masivo', [AsistenciaDocenteController::class, 'notificarMasivoWhatsApp'])->name('asistencia-docente.monitor.notificar-masivo');
-        Route::get('/monitor/estadisticas-graficos', [AsistenciaDocenteController::class, 'getEstadisticasGraficos'])->name('asistencia-docente.monitor.estadisticas');
-        Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
     });
 
     Route::middleware('can:ciclos.view')->group(function () {

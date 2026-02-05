@@ -84,19 +84,42 @@ class AsistenciaDocentePermissionsSeeder extends Seeder
         }
 
         // 3. Asignar al Rol Profesor (ID 2)
-        // Assign all for now, or specific ones. User needs .view and .reports
-        foreach ($permissionIds as $permisoId) {
+        // SOLO asignar permiso de reportes
+        $reportPermissionId = DB::table('permissions')
+            ->where('codigo', 'asistencia-docente.reports')
+            ->value('id');
+
+        if ($reportPermissionId) {
             $exists = DB::table('role_permissions')
                 ->where('rol_id', 2)
-                ->where('permiso_id', $permisoId)
+                ->where('permiso_id', $reportPermissionId)
                 ->exists();
 
             if (!$exists) {
                 DB::table('role_permissions')->insert([
                     'rol_id' => 2, // Profesor
-                    'permiso_id' => $permisoId,
+                    'permiso_id' => $reportPermissionId,
                 ]);
             }
         }
+        
+        // Remove administrative permissions from teacher if they were added previously mistake
+        $adminPermissions = [
+            'asistencia-docente.view',
+            'asistencia-docente.create', 
+            'asistencia-docente.edit',
+            'asistencia-docente.delete',
+            'asistencia-docente.export',
+            'asistencia-docente.monitor'
+        ];
+        
+        $adminPermissionIds = DB::table('permissions')
+            ->whereIn('codigo', $adminPermissions)
+            ->pluck('id');
+            
+        DB::table('role_permissions')
+            ->where('rol_id', 2)
+            ->whereIn('permiso_id', $adminPermissionIds)
+            ->delete();
     }
 }
