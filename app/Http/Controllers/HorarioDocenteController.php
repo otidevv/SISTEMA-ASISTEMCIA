@@ -127,14 +127,26 @@ class HorarioDocenteController extends Controller
         $horario = HorarioDocente::findOrFail($id);
         $horario->update($validatedData);
 
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Horario actualizado correctamente.',
+                'horario_id' => $horario->id
+            ]);
+        }
+
         return redirect()->route('horarios-docentes.index', ['ciclo_id' => $horario->ciclo_id])
             ->with('success', 'Horario actualizado correctamente.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $horario = HorarioDocente::findOrFail($id);
         $horario->delete();
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Horario eliminado exitosamente.']);
+        }
 
         return back()->with('success', 'Horario eliminado exitosamente.');
     }

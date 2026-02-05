@@ -42,6 +42,10 @@
         cursor: pointer;
     }
 
+    .grid-cell.invalid-drop {
+        background: #ffe6e6 !important;
+    }
+
     .grid-cell.header {
         background: linear-gradient(135deg, #2a3042 0%, #323950 100%);
         color: white;
@@ -82,6 +86,11 @@
     .schedule-block:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .schedule-block.editing {
+        outline: 3px solid #ff9f43;
+        box-shadow: 0 0 0 3px rgba(255,159,67,0.25);
     }
 
     .schedule-block::before {
@@ -673,12 +682,12 @@
         routes: {
             getSchedules: '{{ route('horarios-docentes.get-schedules') }}',
             bulkStore: '{{ route('horarios-docentes.bulk-store') }}',
-            delete: '{{ route('horarios-docentes.delete', ':id') }}'
+            deleteBase: '{{ url('/json/horarios-docentes') }}'
         }
     };
 </script>
 @endsection
 
 @push('js')
-<script src="{{ asset('assets/js/horarios-grid.js') }}"></script>
+<script src="{{ asset('assets/js/horarios-grid.js') }}?v={{ filemtime(public_path('assets/js/horarios-grid.js')) }}"></script>
 @endpush
