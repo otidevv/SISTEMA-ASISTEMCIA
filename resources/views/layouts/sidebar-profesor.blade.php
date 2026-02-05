@@ -31,7 +31,7 @@
                 @endcan
                 
                 <!-- Reportes -->
-                @can('asistencia-docente.view')
+                @can('asistencia-docente.reports')
                 <li>
                     <a href="{{ route('asistencia-docente.mis-reportes') }}">
                         <i class="mdi mdi-file-document-multiple-outline"></i>
