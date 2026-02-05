@@ -741,6 +741,31 @@
                         </div>
                     </div>
 
+                    <!-- Selección de Ciclo -->
+                    <div class="form-group">
+                        <label for="ciclo_id" class="form-label">
+                            <i class="uil uil-calendar-sync label-icon"></i>
+                            Ciclo Académico
+                            <span class="required-asterisk">*</span>
+                        </label>
+                        <div class="form-input-container">
+                            <div class="select-container">
+                                <select name="ciclo_id" id="ciclo_id" class="form-control-modern" required>
+                                    <option value="">Seleccione el ciclo correspondiente</option>
+                                    @foreach($ciclos as $ciclo)
+                                        <option value="{{ $ciclo->id }}" 
+                                                data-inicio="{{ $ciclo->fecha_inicio }}" 
+                                                data-fin="{{ $ciclo->fecha_fin }}" 
+                                                {{ $pago->ciclo_id == $ciclo->id ? 'selected' : '' }}>
+                                            {{ $ciclo->nombre }} ({{ \Carbon\Carbon::parse($ciclo->fecha_inicio)->format('d/m/Y') }} - {{ $ciclo->fecha_fin ? \Carbon\Carbon::parse($ciclo->fecha_fin)->format('d/m/Y') : '...' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <i class="uil uil-calendar-sync input-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tarifa por Hora -->
                     <div class="form-group">
                         <label for="tarifa_por_hora" class="form-label">
@@ -830,6 +855,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editPaymentForm');
     const updateBtn = document.getElementById('updateBtn');
     const docenteSelect = document.getElementById('docente_id');
+    const cicloSelect = document.getElementById('ciclo_id');
     const tarifaInput = document.getElementById('tarifa_por_hora');
     const fechaInicioInput = document.getElementById('fecha_inicio');
     const fechaFinInput = document.getElementById('fecha_fin');
@@ -901,6 +927,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     docenteSelect.addEventListener('change', function() {
+        validateField(this);
+    });
+
+    cicloSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption && selectedOption.dataset.inicio) {
+            fechaInicioInput.value = selectedOption.dataset.inicio;
+            if (selectedOption.dataset.fin && selectedOption.dataset.fin !== 'null') {
+                fechaFinInput.value = selectedOption.dataset.fin;
+            } else {
+                fechaFinInput.value = '';
+            }
+            validateDates();
+        }
         validateField(this);
     });
 

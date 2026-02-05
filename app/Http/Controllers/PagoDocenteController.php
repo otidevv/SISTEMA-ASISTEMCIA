@@ -16,12 +16,17 @@ class PagoDocenteController extends Controller
 
         // 2. Determinar el ciclo a mostrar
         $cicloSeleccionadoId = $request->input('ciclo_id');
-        $cicloActivo = $ciclos->firstWhere('es_activo', true);
-
+        
         if ($cicloSeleccionadoId) {
             $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
         } else {
-            $cicloSeleccionado = $cicloActivo;
+            // Si hay múltiples activos, intentar tomar el más reciente
+            $cicloSeleccionado = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->first();
+            
+            // Si no hay activos, tomar el último ciclo creado
+            if (!$cicloSeleccionado) {
+                $cicloSeleccionado = $ciclos->first();
+            }
         }
 
         // 3. Construir la consulta de pagos
@@ -29,8 +34,7 @@ class PagoDocenteController extends Controller
 
         // 4. Filtrar por el ciclo seleccionado (si existe)
         if ($cicloSeleccionado) {
-            $query->where('fecha_inicio', $cicloSeleccionado->fecha_inicio)
-                  ->where('fecha_fin', $cicloSeleccionado->fecha_fin);
+            $query->where('ciclo_id', $cicloSeleccionado->id);
         }
 
         $pagos = $query->paginate(10);
@@ -64,6 +68,7 @@ class PagoDocenteController extends Controller
 
         PagoDocente::create([
             'docente_id' => $request->docente_id,
+            'ciclo_id' => $request->ciclo_id,
             'tarifa_por_hora' => $request->tarifa_por_hora,
             'fecha_inicio' => $ciclo->fecha_inicio,
             'fecha_fin' => $ciclo->fecha_fin,
@@ -76,12 +81,11 @@ class PagoDocenteController extends Controller
     {
         $pago = PagoDocente::findOrFail($id);
         
-        // CORRECCIÓN 3: Usar User directamente
         $docentes = User::whereHas('roles', function($q){
             $q->where('nombre', 'profesor');
         })->get();
 
-        $ciclos = Ciclo::where('es_activo', true)->get();
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
 
         return view('pagos-docentes.edit', compact('pago', 'docentes', 'ciclos'));
     }
@@ -92,6 +96,7 @@ class PagoDocenteController extends Controller
         
         $request->validate([
             'docente_id' => 'required|exists:users,id',
+            'ciclo_id' => 'required|exists:ciclos,id',
             'tarifa_por_hora' => 'required|numeric|min:0',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
@@ -100,6 +105,7 @@ class PagoDocenteController extends Controller
         // CORRECCIÓN 4: Usar solo los campos necesarios en lugar de $request->all()
         $pago->update([
             'docente_id' => $request->docente_id,
+            'ciclo_id' => $request->ciclo_id,
             'tarifa_por_hora' => $request->tarifa_por_hora,
             'fecha_inicio' => $request->fecha_inicio,
             'fecha_fin' => $request->fecha_fin,

@@ -12,6 +12,7 @@ class PagoDocente extends Model
 
     protected $fillable = [
         'docente_id',
+        'ciclo_id',
         'tarifa_por_hora',
         'fecha_inicio',
         'fecha_fin',
@@ -26,5 +27,11 @@ class PagoDocente extends Model
     public function docente()
     {
         return $this->belongsTo(User::class, 'docente_id');
+    }
+
+    // Relación con el ciclo
+    public function ciclo()
+    {
+        return $this->belongsTo(Ciclo::class, 'ciclo_id');
     }
 }

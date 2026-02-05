@@ -239,6 +239,13 @@
                                         <i class="mdi mdi-magnify text-muted"></i>
                                     </div>
                                 </div>
+                                <select id="ciclo_filter" class="form-select form-select-sm" style="width: auto;">
+                                    @foreach($ciclos as $ciclo)
+                                        <option value="{{ $ciclo->id }}" {{ $cicloSeleccionado && $cicloSeleccionado->id == $ciclo->id ? 'selected' : '' }}>
+                                            {{ $ciclo->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <select id="status_filter" class="form-select form-select-sm" style="width: auto;">
                                     <option value="">Todos los estados</option>
                                     <option value="activo">Activo</option>
@@ -543,6 +550,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('keyup', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
+
+    // Filtro de ciclo (Recarga la página para aplicar filtro server-side)
+    const cicloFilter = document.getElementById('ciclo_filter');
+    if (cicloFilter) {
+        cicloFilter.addEventListener('change', function() {
+            const cicloId = this.value;
+            window.location.href = `{{ route('pagos-docentes.index') }}?ciclo_id=${cicloId}`;
+        });
+    }
 
     // Lógica de ordenamiento de tabla
     document.querySelectorAll('.table-light th.sortable').forEach(headerCell => {
