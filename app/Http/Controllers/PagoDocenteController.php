@@ -16,15 +16,21 @@ class PagoDocenteController extends Controller
 
         // 2. Determinar el ciclo a mostrar
         $cicloSeleccionadoId = $request->input('ciclo_id');
+        $cicloSeleccionado = null;
         
-        if ($cicloSeleccionadoId) {
+        if ($cicloSeleccionadoId === 'all') {
+            $cicloSeleccionado = null;
+        } elseif ($cicloSeleccionadoId === 'none') {
+            $cicloSeleccionado = 'none';
+        } elseif ($cicloSeleccionadoId) {
             $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
         } else {
-            // Si hay múltiples activos, intentar tomar el más reciente
+            // Comportamiento por defecto: mostrar el ciclo activo más reciente
             $cicloSeleccionado = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->first();
             
-            // Si no hay activos, tomar el último ciclo creado
-            if (!$cicloSeleccionado) {
+            // Si no hay activos pero hay pagos sin ciclo, quizás convenga mostrarlos, 
+            // pero mantendremos la lógica de mostrar el primer ciclo si existe.
+            if (!$cicloSeleccionado && $ciclos->isNotEmpty()) {
                 $cicloSeleccionado = $ciclos->first();
             }
         }
@@ -32,15 +38,32 @@ class PagoDocenteController extends Controller
         // 3. Construir la consulta de pagos
         $query = PagoDocente::with('docente');
 
-        // 4. Filtrar por el ciclo seleccionado (si existe)
-        if ($cicloSeleccionado) {
+        // 4. Filtrar por el ciclo seleccionado
+        if ($cicloSeleccionado === 'none') {
+            $query->whereNull('ciclo_id');
+        } elseif ($cicloSeleccionado instanceof Ciclo) {
             $query->where('ciclo_id', $cicloSeleccionado->id);
         }
+        // Si es null o 'all', no filtramos por ciclo (muestra todo)
 
-        $pagos = $query->paginate(10);
+        // --- NUEVO: Estadísticas para el Dashboard ---
+        $stats = [
+            'total' => (clone $query)->count(),
+            'activos' => (clone $query)->whereNull('fecha_fin')->count(),
+            'promedio' => (clone $query)->avg('tarifa_por_hora') ?? 0,
+        ];
 
-        // 5. Pasar los datos a la vista
-        return view('pagos-docentes.index', compact('pagos', 'ciclos', 'cicloSeleccionado'));
+        $pagos = $query->latest()->paginate(10);
+
+    // --- NUEVO: Datos para Modales (Create/Edit) ---
+    $docentes = \App\Models\User::whereHas('roles', function($q) {
+        $q->where('nombre', 'profesor');
+    })->get();
+
+    $cicloActivo = $ciclos->where('es_activo', true)->first();
+
+    // 5. Pasar los datos a la vista
+    return view('pagos-docentes.index', compact('pagos', 'ciclos', 'cicloSeleccionado', 'stats', 'docentes', 'cicloActivo'));
     }
 
     public function create()
@@ -50,10 +73,13 @@ class PagoDocenteController extends Controller
             $q->where('nombre', 'profesor');
         })->get();
 
-        // Solo traer ciclos activos (es_activo = true)
-        $ciclos = Ciclo::where('es_activo', true)->get();
+        // Traer todos los ciclos para mayor flexibilidad
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        
+        // Pero marcar cuál es el preferido (el más reciente activo)
+        $cicloActivo = $ciclos->where('es_activo', true)->first();
 
-        return view('pagos-docentes.create', compact('docentes', 'ciclos'));
+        return view('pagos-docentes.create', compact('docentes', 'ciclos', 'cicloActivo'));
     }
 
     public function store(Request $request)

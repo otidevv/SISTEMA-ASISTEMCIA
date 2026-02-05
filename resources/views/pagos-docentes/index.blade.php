@@ -2,620 +2,663 @@
 
 @section('title', 'Gestión de Pagos a Docentes')
 
-{{-- CSS para un look más profesional y colorido --}}
 @push('css')
-<style>
-    /* Paleta de colores y variables */
-    :root {
-        --primary-gradient: linear-gradient(135deg, #4f32c2 0%, #7367f0 100%);
-        --success-gradient: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
-        --warning-gradient: linear-gradient(135deg, #ff9f43 0%, #ff8b1b 100%); /* Naranja ajustado para mejor contraste */
-        --info-gradient: linear-gradient(135deg, #00cfe8 0%, #1ce1ff 100%);
-        --primary-glow: 0 0 20px rgba(115, 103, 240, 0.4);
-    }
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+    <style>
+        .table-responsive { border-radius: 0.5rem; }
+        .stat-card {
+            border: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-card.primary { border-bottom-color: #5369f8; }
+        .stat-card.success { border-bottom-color: #43d39e; }
+        .stat-card.info { border-bottom-color: #25c2e3; }
+        
+        .avatar-title.bg-soft-primary { background-color: rgba(83, 105, 248, 0.1); color: #5369f8; }
+        .filter-section {
+            background-color: #f9f9f9;
+            border: 1px solid #eef2f7;
+        }
+        .table-centered td { vertical-align: middle !important; }
+        .row-hover:hover { background-color: #f8f9fa; }
 
-    /* --- TARJETAS DE ESTADÍSTICAS MEJORADAS --- */
-    .tilebox-one {
-        border: none;
-        border-radius: 0.75rem;
-        transition: all 0.3s ease;
-        overflow: hidden;
-    }
-    .tilebox-one:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    .tilebox-one .card-body {
-        position: relative;
-        z-index: 2;
-    }
-    .tilebox-one .mdi {
-        font-size: 3rem;
-        transition: all 0.3s ease;
-    }
-    .tilebox-one:hover .mdi {
-        transform: scale(1.2) rotate(-10deg);
-    }
-    
-    /* Estilos específicos para tarjetas con fondo de color */
-    .tilebox-one[style*="--"] {
-        color: white;
-    }
-    .tilebox-one[style*="--"] .mdi {
-        opacity: 0.3 !important;
-    }
-    .tilebox-one[style*="--"] h2, .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p {
-        color: white;
-    }
-    .tilebox-one[style*="--"] h6, .tilebox-one[style*="--"] p {
-        opacity: 0.8; /* Texto secundario con ligera transparencia */
-    }
+        /* Custom Swal Styles for Professionalism */
+        .swal2-popup.swal-premium {
+            border-radius: 12px !important;
+            padding: 2rem !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+        }
+        .swal2-title {
+            font-size: 1.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 1.5rem !important;
+        }
+        .select2-container--bootstrap-5 .select2-dropdown {
+            z-index: 10000 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+        }
+        .swal2-html-container {
+            z-index: 1 !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            text-align: left !important;
+        }
+        .swal2-popup.swal-premium {
+            overflow: visible !important;
+            border-radius: 20px !important;
+            padding: 2.5rem !important;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* Scoped Select2 for Swal to avoid displacement */
+        .swal2-container .select2-container {
+            z-index: 10005 !important;
+            width: 100% !important;
+        }
+        .swal2-container .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #5369f8 !important;
+            box-shadow: 0 10px 25px rgba(83, 105, 248, 0.2) !important;
+            z-index: 10006 !important;
+        }
+        .swal2-container .select2-selection {
+            border-radius: 8px !important;
+            height: calc(1.5em + 1rem + 2px) !important;
+            padding: 0.5rem 0.75rem !important;
+            border: 1px solid #dee2e6 !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+        .swal2-container .select2-selection--single .select2-selection__rendered {
+            line-height: inherit !important;
+            padding-left: 0 !important;
+        }
+        .swal2-container .select2-selection:focus, .swal2-container .select2-container--open .select2-selection {
+            border-color: #5369f8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(83, 105, 248, 0.1) !important;
+        }
 
-    /* --- BOTONES Y ELEMENTOS DE UI --- */
-    .btn-primary-gradient {
-        background-image: var(--primary-gradient);
-        border: none;
-        color: white;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 10px rgba(115, 103, 240, 0.5);
-    }
-    .btn-primary-gradient:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--primary-glow);
-        color: white;
-    }
-    
-    /* --- TABLA PROFESIONAL --- */
-    .table-light thead th {
-        background: #2a3042;
-        color: #b4b7c1;
-        border-bottom: 2px solid var(--bs-primary);
-    }
-    .table-light th.sortable {
-        cursor: pointer;
-        position: relative;
-    }
-    .table-light th.sortable:hover {
-        background-color: #323950;
-        color: #fff;
-    }
-    .sort-indicator {
-        display: inline-block; width: 16px; height: 16px; margin-left: 5px; opacity: 0.6; vertical-align: middle;
-    }
-    .sort-indicator::after {
-        font-family: 'Material Design Icons'; font-size: 16px; line-height: 1;
-    }
-    th[data-sort-direction="asc"] .sort-indicator::after { content: "\F005D"; } /* mdi-arrow-up */
-    th[data-sort-direction="desc"] .sort-indicator::after { content: "\F0045"; } /* mdi-arrow-down */
+        .swal-form-group {
+            position: relative;
+            margin-bottom: 1.8rem;
+        }
+        .swal-form-group label {
+            display: block;
+            font-weight: 700;
+            color: #3d4d5d;
+            margin-bottom: 0.7rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .swal-footer {
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 1px solid #f0f4f8;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        .swal-header-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #f0f3ff 0%, #e8edff 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: -0.5rem auto 1.5rem;
+            box-shadow: 0 5px 15px rgba(83,105,248,0.1);
+        }
+        .swal-header-icon i {
+            font-size: 32px;
+            color: #5369f8;
+        }
+        .swal-info-box {
+            background: #f8fbff;
+            border: 1px solid #e0e9f5;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+@endpush
 
-    .payment-row-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        background-color: #f8f9fe;
-    }
-    
-    /* --- BADGES Y OTROS --- */
-    .badge.bg-success-lighten {
-        background-color: rgba(40, 199, 111, 0.15) !important;
-        color: #28c76f !important;
-        font-weight: 600;
-    }
-    .badge.bg-secondary-lighten {
-        background-color: rgba(130, 134, 139, 0.15) !important;
-        color: #82868b !important;
-        font-weight: 600;
-    }
-    .card-sidebar .card-header {
-        background: linear-gradient(135deg, #f8f9fe 0%, #f1f3f9 100%);
-        border-bottom: 1px solid #eef2f7;
-    }
-    .avatar-sm[data-bg-color] {
-        color: white;
-    }
-    .highlight { background-color: #f8e479; border-radius: 3px; }
-</style>
+@push('js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'bootstrap-5'
+            });
+
+            // Filtro de Ciclo (Servidor)
+            $('#cycleFilter').on('change', function() {
+                const cycleId = $(this).val();
+                window.location.href = `{{ route('pagos-docentes.index') }}?ciclo_id=${cycleId}`;
+            });
+
+            // Filtros de Cliente (Búsqueda y Estado)
+            $('#teacherSearch').on('input', filterTable);
+            $('input[name="statusFilter"]').on('change', filterTable);
+
+            function filterTable() {
+                const searchTerm = $('#teacherSearch').val().toLowerCase();
+                const statusTerm = $('input[name="statusFilter"]:checked').val();
+
+                $('tbody tr').each(function() {
+                    const row = $(this);
+                    if (row.find('td').length < 2) return; // Saltar fila vacía
+
+                    const teacherData = row.data('teacher') ? row.data('teacher').toLowerCase() : row.find('h5').text().toLowerCase() + ' ' + row.find('.text-muted').text().toLowerCase();
+                    const statusBadge = row.find('.badge').text().trim().toLowerCase();
+
+                    let show = teacherData.includes(searchTerm);
+
+                    if (statusTerm === 'active' && !statusBadge.includes('activo')) show = false;
+                    if (statusTerm === 'finalized' && !statusBadge.includes('finalizado')) show = false;
+
+                    row.toggle(show);
+                });
+            }
+
+            // --- Lógica SweetAlert2 para Registro ---
+            window.openCreateModal = function() {
+                const html = document.getElementById('createTemplate').innerHTML;
+                Swal.fire({
+                    html: html,
+                    showConfirmButton: false,
+                    showCancelButton: false,
+                    customClass: {
+                        popup: 'swal-premium'
+                    },
+                    buttonsStyling: false,
+                    width: '650px',
+                    grow: false,
+                    position: 'center',
+                    backdrop: `rgba(45, 55, 72, 0.45)`,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp animate__faster'
+                    },
+                    didOpen: () => {
+                        const content = Swal.getHtmlContainer();
+                        
+                        // Initialize Select2 after a safe delay
+                        setTimeout(() => {
+                            $(content).find('.select2-trigger').select2({
+                                dropdownParent: $(content),
+                                theme: 'bootstrap-5',
+                                width: '100%'
+                            });
+                        }, 250);
+                        // Close on cancel click
+                        $(content).find('.swal-cancel').on('click', () => Swal.close());
+
+                        // Autocomplete tarifa logic
+                        $(content).find('#docente_id').on('change', function() {
+                            const docenteId = $(this).val();
+                            if (docenteId) {
+                                fetch(`{{ url('api/v1/pagos-docentes/ultima-tarifa') }}/${docenteId}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.tarifa) {
+                                            $(content).find('#tarifa_por_hora').val(data.tarifa).addClass('is-valid');
+                                            toastr.success('Tarifa cargada.', 'Optimizado');
+                                        }
+                                    });
+                            }
+                        });
+                    }
+                });
+            };
+
+            // --- Lógica SweetAlert2 para Edición ---
+            $('.edit-pago-btn').on('click', function() {
+                const id = $(this).data('id');
+                const docente = $(this).data('docente');
+                const cicloId = $(this).data('ciclo');
+                const tarifa = $(this).data('tarifa');
+                const inicio = $(this).data('inicio');
+                const fin = $(this).data('fin');
+
+                let html = document.getElementById('editTemplate').innerHTML;
+                
+                Swal.fire({
+                    html: html,
+                    showConfirmButton: false,
+                    showCancelButton: false,
+                    customClass: {
+                        popup: 'swal-premium'
+                    },
+                    buttonsStyling: false,
+                    width: '650px',
+                    grow: false,
+                    position: 'center',
+                    backdrop: `rgba(45, 55, 72, 0.45)`,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp animate__faster'
+                    },
+                    didOpen: () => {
+                        const content = Swal.getHtmlContainer();
+                        
+                        // Populate values first
+                        $(content).find('#edit_form_swal').attr('action', `{{ url('pagos-docentes') }}/${id}`);
+                        $(content).find('#edit_docente_name').text(docente);
+                        $(content).find('#edit_ciclo_id').val(cicloId);
+                        $(content).find('#edit_tarifa_por_hora').val(tarifa);
+                        $(content).find('#edit_fecha_inicio').val(inicio);
+                        $(content).find('#edit_fecha_fin').val(fin || '');
+
+                        // Initialize Select2 after delay
+                        setTimeout(() => {
+                            $(content).find('.select2-trigger').select2({
+                                dropdownParent: $(content),
+                                theme: 'bootstrap-5',
+                                width: '100%'
+                            });
+                        }, 250);
+
+                         // Close on cancel click
+                         $(content).find('.swal-cancel').on('click', () => Swal.close());
+                    }
+                });
+            });
+        });
+
+        function showDeleteConfirmation(id) {
+            if (confirm('¿Está seguro de que desea eliminar este registro de pago?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ url('pagos-docentes') }}/${id}`;
+                form.innerHTML = `
+                    @csrf
+                    @method('DELETE')
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    
-    <!-- Título de la página y breadcrumbs -->
+    <!-- start page title -->
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
+                <h4 class="page-title">Gestión de Pagos</h4>
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="javascript: void(0);">Centro Pre</a></li>
-                        <li class="breadcrumb-item">Gestión Financiera</li>
-                        <li class="breadcrumb-item active">Pagos a Docentes</li>
+                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Pagos Docentes</li>
                     </ol>
                 </div>
-                <h4 class="page-title">
-                    <i class="mdi mdi-cash-multiple me-1"></i>
-                    Gestión de Pagos
-                </h4>
             </div>
         </div>
     </div>
-    <!-- fin del título de la página -->
+    <!-- end page title -->
 
-    <!-- Alertas de sesión -->
-    @if(session('success'))
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="mdi mdi-check-all me-2"></i>
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <!-- Estadísticas -->
+    <!-- Quick Stats -->
     <div class="row">
-        <div class="col-md-6 col-xl-3">
-            <div class="card tilebox-one" style="background: var(--info-gradient);">
+        <div class="col-md-6 col-xl-4">
+            <div class="card stat-card primary">
                 <div class="card-body">
-                    <i class="mdi mdi-cash-register float-end"></i>
-                    <h6 class="text-uppercase mt-0">Total Pagos Registrados</h6>
-                    <h2 class="my-2" id="totalPagos">{{ $pagos->total() ?? 0 }}</h2>
-                    <p class="mb-0">
-                        <span class="text-nowrap">Registros en el sistema</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="card tilebox-one" style="background: var(--success-gradient);">
-                <div class="card-body">
-                    <i class="mdi mdi-briefcase-check float-end"></i>
-                    <h6 class="text-uppercase mt-0">Pagos Activos</h6>
-                    <h2 class="my-2" id="pagosActivos">{{ $pagos->where('fecha_fin', null)->count() ?? 0 }}</h2>
-                    <p class="mb-0">
-                        <span class="text-nowrap">Contratos vigentes</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="card tilebox-one" style="background: var(--warning-gradient);">
-                <div class="card-body">
-                    <i class="mdi mdi-currency-usd float-end"></i>
-                    <h6 class="text-uppercase mt-0">Tarifa Promedio</h6>
-                    <h2 class="my-2" id="tarifaPromedio">S/ {{ number_format($pagos->avg('tarifa_por_hora'), 2) }}</h2>
-                    <p class="mb-0">
-                        <span class="text-nowrap">Promedio por hora</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6 col-xl-3">
-            <div class="card tilebox-one" style="background: var(--primary-gradient);">
-                <div class="card-body">
-                    <i class="mdi mdi-calendar-cash float-end"></i>
-                    <h6 class="text-uppercase mt-0">Total Pagado (Mes Actual)</h6>
-                    <h2 class="my-2" id="totalMesActual">S/ 0.00</h2>
-                     <p class="mb-0">
-                        <span class="text-nowrap">Estimado basado en registros</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="header-title">
-                        <i class="mdi mdi-view-list me-2"></i>
-                        Registro de Pagos
-                    </h4>
-                    <p class="text-muted mb-0">Gestione y visualice todos los pagos al personal docente</p>
-                </div>
-                <div class="card-body">
-
-                    <!-- Acciones y Filtros -->
-                    <div class="row align-items-center mb-3 bg-light p-2 rounded">
-                        <div class="col-md-6">
-                            <a href="{{ route('pagos-docentes.create') }}" class="btn btn-primary-gradient btn-sm">
-                                <i class="mdi mdi-plus me-1"></i>
-                                Nuevo Registro de Pago
-                            </a>
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Total Docentes">Total Personal</h5>
+                            <h3 class="my-2 py-1">{{ $stats['total'] }}</h3>
+                            <p class="mb-0 text-muted">
+                                <span class="text-primary me-2"><i class="mdi mdi-account-group"></i></span>
+                                <span class="text-nowrap">Registros históricos</span>
+                            </p>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                                <div class="position-relative" style="min-width: 220px;">
-                                    <input type="text" 
-                                           class="form-control form-control-sm" 
-                                           id="payment_search" 
-                                           placeholder="Buscar por docente..."
-                                           autocomplete="off">
-                                    <div class="position-absolute top-50 end-0 translate-middle-y pe-2">
-                                        <i class="mdi mdi-magnify text-muted"></i>
-                                    </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <i class="mdi mdi-account-card-details-outline display-4 text-primary opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="card stat-card success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Pagos Activos">Pagos Vigentes</h5>
+                            <h3 class="my-2 py-1 text-success">{{ $stats['activos'] }}</h3>
+                            <p class="mb-0 text-muted">
+                                <span class="text-success me-2"><i class="mdi mdi-check-decagram"></i></span>
+                                <span class="text-nowrap">En curso este ciclo</span>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <i class="mdi mdi-cash-check display-4 text-success opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="card stat-card info">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-6">
+                            <h5 class="text-muted fw-normal mt-0 text-truncate" title="Tarifa Media">Inversión Media</h5>
+                            <h3 class="my-2 py-1 text-info">S/ {{ number_format($stats['promedio'], 2) }}</h3>
+                            <p class="mb-0 text-muted">
+                                <span class="text-info me-2"><i class="mdi mdi-trending-up"></i></span>
+                                <span class="text-nowrap">Promedio por hora</span>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-end">
+                                <i class="mdi mdi-currency-usd display-4 text-info opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-sm-4">
+                            <h4 class="header-title mt-0 mb-1">Listado de Registros</h4>
+                        </div>
+                        <div class="col-sm-8">
+                            <div class="text-sm-end">
+                                <button type="button" class="btn btn-primary mb-2 shadow-sm" onclick="openCreateModal()">
+                                    <i class="mdi mdi-plus-circle me-1"></i> Registrar Contrato
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <!-- Seccion de Filtros -->
+                    <div class="filter-section p-3 rounded-3 mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-lg-4 mb-lg-0 mb-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase">Búsqueda Inteligente</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="mdi mdi-magnify text-primary"></i></span>
+                                    <input type="text" id="teacherSearch" class="form-control" placeholder="Nombre completo o DNI...">
                                 </div>
-                                <select id="ciclo_filter" class="form-select form-select-sm" style="width: auto;">
+                            </div>
+                            <div class="col-lg-3 mb-lg-0 mb-3">
+                                <label class="form-label fw-bold text-muted small text-uppercase">Ciclo Académico</label>
+                                <select id="cycleFilter" class="form-select select2">
+                                    <option value="all" {{ ($cicloSeleccionado === null) ? 'selected' : '' }}>Todos los Periodos</option>
+                                    <option value="none" {{ ($cicloSeleccionado === 'none') ? 'selected' : '' }}>Sin Asignación</option>
                                     @foreach($ciclos as $ciclo)
-                                        <option value="{{ $ciclo->id }}" {{ $cicloSeleccionado && $cicloSeleccionado->id == $ciclo->id ? 'selected' : '' }}>
+                                        <option value="{{ $ciclo->id }}" {{ (isset($cicloSeleccionado->id) && $cicloSeleccionado->id == $ciclo->id) ? 'selected' : '' }}>
                                             {{ $ciclo->nombre }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <select id="status_filter" class="form-select form-select-sm" style="width: auto;">
-                                    <option value="">Todos los estados</option>
-                                    <option value="activo">Activo</option>
-                                    <option value="finalizado">Finalizado</option>
-                                </select>
-                           </div>
+                            </div>
+                            <div class="col-lg-5 text-lg-end">
+                                <label class="form-label fw-bold text-muted small text-uppercase d-block text-lg-start ps-lg-2">Estado de Registro</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="statusFilter" id="statusAll" value="all" checked>
+                                    <label class="btn btn-outline-primary" for="statusAll">Todos</label>
+
+                                    <input type="radio" class="btn-check" name="statusFilter" id="statusActive" value="active">
+                                    <label class="btn btn-outline-primary" for="statusActive">En Curso</label>
+
+                                    <input type="radio" class="btn-check" name="statusFilter" id="statusFinalized" value="finalized">
+                                    <label class="btn btn-outline-primary" for="statusFinalized">Finalizados</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Tabla de Pagos -->
                     <div class="table-responsive">
-                        <table class="table table-hover table-centered mb-0">
+                        <table class="table table-centered table-nowrap mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="sortable" data-sort="docente"><i class="mdi mdi-account-circle-outline me-1"></i>Docente<span class="sort-indicator"></span></th>
-                                    <th class="sortable" data-sort="tarifa"><i class="mdi mdi-cash me-1"></i>Tarifa por Hora<span class="sort-indicator"></span></th>
-                                    <th class="sortable" data-sort="periodo"><i class="mdi mdi-calendar-clock-outline me-1"></i>Periodo<span class="sort-indicator"></span></th>
-                                    <th class="text-center sortable" data-sort="estado"><i class="mdi mdi-list-status me-1"></i>Estado<span class="sort-indicator"></span></th>
-                                    <th class="text-center"><i class="mdi mdi-cogs me-1"></i>Acciones</th>
+                                    <th>Docente</th>
+                                    <th>Tarifa/Hora</th>
+                                    <th>Ciclo</th>
+                                    <th>Inicio</th>
+                                    <th>Fin</th>
+                                    <th>Estado</th>
+                                    <th style="width: 125px;">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="paymentsTableBody">
+                            <tbody>
                                 @forelse($pagos as $pago)
-                                    <tr class="payment-row-item" 
-                                        data-docente="{{ $pago->docente->nombre_completo ?? '' }}"
-                                        data-status="{{ $pago->fecha_fin ? 'finalizado' : 'activo' }}"
-                                        data-tarifa="{{ $pago->tarifa_por_hora }}"
-                                        data-periodo="{{ \Carbon\Carbon::parse($pago->fecha_inicio)->timestamp }}">
+                                    <tr class="row-hover" data-teacher="{{ ($pago->docente->nombre_completo ?? '') . ' ' . ($pago->docente->numero_documento ?? '') }}">
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-2" data-bg-color>
-                                                    <span class="text-white fw-bold">
+                                                <div class="avatar-sm me-3">
+                                                    <span class="avatar-title bg-soft-primary text-primary rounded-circle fw-bold">
                                                         {{ substr($pago->docente->nombre ?? 'N', 0, 1) }}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <h6 class="mb-0 fs-14">{{ $pago->docente->nombre_completo ?? 'Docente no encontrado' }}</h6>
-                                                    <small class="text-muted">ID: {{ $pago->docente->id ?? '---' }}</small>
+                                                    <h5 class="font-size-15 my-0 fw-bold">{{ $pago->docente->nombre_completo ?? 'N/A' }}</h5>
+                                                    <p class="text-muted mb-0 font-size-12"><i class="mdi mdi-account-outline me-1"></i>{{ $pago->docente->numero_documento ?? '---' }}</p>
                                                 </div>
                                             </div>
                                         </td>
+                                        <td class="fw-bold text-dark">S/ {{ number_format($pago->tarifa_por_hora, 2) }}</td>
                                         <td>
-                                            <span class="fw-bold text-success fs-15">S/ {{ number_format($pago->tarifa_por_hora, 2) }}</span>
+                                            <span class="badge bg-light text-dark border">{{ $pago->ciclo->nombre ?? 'Sin Ciclo' }}</span>
                                         </td>
+                                        <td class="text-muted">{{ \Carbon\Carbon::parse($pago->fecha_inicio)->format('d/m/Y') }}</td>
+                                        <td class="text-muted">{{ $pago->fecha_fin ? \Carbon\Carbon::parse($pago->fecha_fin)->format('d/m/Y') : 'Vigente' }}</td>
                                         <td>
-                                            <i class="mdi mdi-calendar-start text-info"></i> {{ \Carbon\Carbon::parse($pago->fecha_inicio)->format('d/m/Y') }}<br>
-                                            <i class="mdi mdi-calendar-end text-danger"></i> {{ $pago->fecha_fin ? \Carbon\Carbon::parse($pago->fecha_fin)->format('d/m/Y') : 'Presente' }}
-                                        </td>
-                                        <td class="text-center">
                                             @if($pago->fecha_fin)
-                                                <span class="badge bg-secondary-lighten text-secondary">Finalizado</span>
+                                                <span class="badge bg-soft-secondary text-secondary px-2">Finalizado</span>
                                             @else
-                                                <span class="badge bg-success-lighten text-success">Activo</span>
+                                                <span class="badge bg-soft-success text-success px-2">Activo</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            <div class="dropdown">
-                                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    Acción
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    <li>
-                                                        <a class="dropdown-item" href="{{ route('pagos-docentes.edit', $pago->id) }}">
-                                                            <i class="mdi mdi-pencil me-2 text-warning"></i>Editar
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item text-danger" href="#" onclick="showDeleteConfirmation({{ $pago->id }})">
-                                                            <i class="mdi mdi-delete me-2"></i>Eliminar
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
+                                        <td>
+                                            <a href="javascript:void(0);" 
+                                               class="action-icon text-primary me-2 edit-pago-btn"
+                                               data-id="{{ $pago->id }}"
+                                               data-docente="{{ $pago->docente->nombre_completo }}"
+                                               data-ciclo="{{ $pago->ciclo_id }}"
+                                               data-tarifa="{{ $pago->tarifa_por_hora }}"
+                                               data-inicio="{{ \Carbon\Carbon::parse($pago->fecha_inicio)->format('Y-m-d') }}"
+                                               data-fin="{{ $pago->fecha_fin ? \Carbon\Carbon::parse($pago->fecha_fin)->format('Y-m-d') : '' }}"> 
+                                                <i class="mdi mdi-pencil font-size-18"></i>
+                                            </a>
+                                            <a href="javascript:void(0);" onclick="showDeleteConfirmation({{ $pago->id }})" class="action-icon text-danger"> 
+                                                <i class="mdi mdi-delete font-size-18"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5">
-                                            <div class="text-center py-5" id="emptyState">
-                                                <i class="mdi mdi-cash-remove display-3 text-muted mb-3"></i>
-                                                <h5 class="text-muted">No hay pagos registrados</h5>
-                                                <p class="text-muted">Comience creando el primer registro de pago</p>
-                                                <a href="{{ route('pagos-docentes.create') }}" class="btn btn-primary mt-2">
-                                                    <i class="mdi mdi-plus me-2"></i>Crear Primer Registro
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="text-muted">
+                                                <i class="mdi mdi-database-off-outline display-3 opacity-25"></i>
+                                                <p class="mt-3 font-size-16">No se encontraron registros de pago asociados.</p>
+                                                <a href="{{ route('pagos-docentes.create') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                    Click aquí para registrar el primero
                                                 </a>
                                             </div>
                                         </td>
                                     </tr>
                                 @endforelse
-                                <tr id="no-results-row" style="display: none;">
-                                    <td colspan="5" class="text-center py-4">
-                                        <i class="mdi mdi-magnify-close fs-2 text-muted"></i>
-                                        <h5 class="mt-2">No se encontraron resultados</h5>
-                                        <p class="text-muted">Intenta ajustar tu búsqueda o filtros.</p>
-                                    </td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- Paginación -->
-                    @if($pagos->hasPages())
-                        <div class="d-flex justify-content-center mt-4">
-                            {{ $pagos->links() }}
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Pagos Recientes -->
-            <div class="card card-sidebar">
-                <div class="card-header">
-                    <h4 class="header-title">
-                        <i class="mdi mdi-history me-2"></i>
-                        Pagos Recientes
-                    </h4>
-                    <p class="text-muted mb-0">Últimos registros añadidos</p>
+                    <div class="mt-3">
+                        {{ $pagos->links() }}
+                    </div>
+
+                </div> <!-- end card body-->
+            </div> <!-- end card -->
+        </div><!-- end col-->
+    </div>
+    </div>
+
+    <!-- TEMPLATES: SWEETALERT2 FORMS -->
+    <template id="createTemplate">
+        <div class="swal-header-icon mb-4">
+            <i class="mdi mdi-plus-circle-outline"></i>
+        </div>
+        <h3 class="text-center mb-1 fw-bold text-dark">Nuevo Contrato</h3>
+        <p class="text-center text-muted small mb-4 px-4">Defina los parámetros financieros para el docente seleccionado.</p>
+        
+        <form action="{{ route('pagos-docentes.store') }}" method="POST" id="create_form_swal" class="text-start px-3">
+            @csrf
+            <div class="swal-form-group">
+                <label>Docente Responsable</label>
+                <select name="docente_id" id="docente_id" class="form-select select2-trigger" required>
+                    <option value="">Buscar en la base de datos...</option>
+                    @foreach($docentes as $docente)
+                        <option value="{{ $docente->id }}">{{ $docente->nombre }} {{ $docente->apellido_paterno }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-7">
+                    <div class="swal-form-group">
+                        <label>Ciclo Académico</label>
+                        <select name="ciclo_id" class="form-select select2-trigger" required>
+                            @foreach($ciclos as $ciclo)
+                                <option value="{{ $ciclo->id }}" {{ (isset($cicloActivo) && $cicloActivo->id == $ciclo->id) ? 'selected' : '' }}>
+                                    {{ $ciclo->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-                <div class="card-body" style="max-height: 280px; overflow-y: auto;">
-                    @forelse ($pagos->take(5) as $pagoReciente)
-                    <div class="d-flex align-items-start mb-3 p-2 border-start border-3 border-primary bg-light bg-opacity-50 rounded">
-                        <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
-                            <i class="mdi mdi-cash-plus text-white"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1 fs-14">
-                                {{ Str::limit($pagoReciente->docente->nombre_completo, 20) ?? 'N/A' }}
-                            </h6>
-                            <div class="text-muted small mb-1">
-                                <i class="mdi mdi-currency-usd"></i> S/ {{ number_format($pagoReciente->tarifa_por_hora, 2) }} por hora
-                            </div>
-                            <small class="text-muted">
-                                <i class="mdi mdi-clock-outline me-1"></i>
-                                Registrado {{ $pagoReciente->created_at->diffForHumans() }}
-                            </small>
+                <div class="col-5">
+                    <div class="swal-form-group">
+                        <label>Tarifa Hora</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 fw-bold text-primary">S/</span>
+                            <input type="number" step="0.01" name="tarifa_por_hora" id="tarifa_por_hora" class="form-control border-start-0" placeholder="0.00" required>
                         </div>
                     </div>
-                    @empty
-                    <div class="text-center text-muted py-3">
-                        <i class="mdi mdi-calendar-remove display-4"></i>
-                        <p class="mb-0 mt-2">Sin actividad reciente</p>
-                    </div>
-                    @endforelse
                 </div>
             </div>
             
-            <!-- Top Docentes por Tarifa -->
-            <div class="card mt-3 card-sidebar">
-                <div class="card-header">
-                    <h4 class="header-title">
-                        <i class="mdi mdi-trophy-award me-2"></i>
-                        Top 5 Docentes por Tarifa
-                    </h4>
-                    <p class="text-muted mb-0">Basado en la tarifa por hora más alta</p>
-                </div>
-                <div class="card-body" style="max-height: 450px; overflow-y: auto;">
-                    @php
-                        // Filtrar solo pagos activos, ordenarlos por tarifa y obtener docentes únicos
-                        $topDocentes = $pagos->sortByDesc('tarifa_por_hora')
-                                            ->unique('docente_id')
-                                            ->take(5);
-                    @endphp
-                    @forelse ($topDocentes as $pagoTop)
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-3" data-bg-color>
-                            <span class="text-white fw-bold">{{ substr($pagoTop->docente->nombre ?? 'N', 0, 1) }}</span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 fs-14">{{ $pagoTop->docente->nombre_completo ?? 'N/A' }}</h6>
-                            <small class="text-muted">
-                                <i class="mdi mdi-cash"></i> S/ {{ number_format($pagoTop->tarifa_por_hora, 2) }} / hora
-                            </small>
-                        </div>
-                        <span class="badge bg-warning-lighten text-warning">Top {{ $loop->iteration }}</span>
-                    </div>
-                    @empty
-                    <div class="text-center text-muted py-3">
-                        <i class="mdi mdi-information-outline display-4"></i>
-                        <p class="mb-0 mt-2">No hay suficientes datos</p>
-                    </div>
-                    @endforelse
+            <div class="swal-info-box d-flex align-items-center">
+                <i class="mdi mdi-auto-fix font-size-22 me-3 text-primary animate__animated animate__pulse animate__infinite"></i>
+                <div class="small">
+                    <strong class="text-primary d-block">Optimización Activa</strong>
+                    <span class="text-muted">La última tarifa del docente se cargará automáticamente.</span>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modal de confirmación para eliminar -->
-<div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="mdi mdi-alert-circle me-2"></i>Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="swal-footer">
+                <button type="button" class="btn btn-light px-4 swal-cancel fw-bold py-2">Descartar</button>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm fw-bold py-2">Crear Registro</button>
             </div>
-            <div class="modal-body">
-                <p>
-                    <i class="mdi mdi-alert-circle-outline text-danger me-2"></i>
-                    ¿Estás seguro de que quieres eliminar este registro de pago?
-                </p>
-                <p class="text-muted">Esta acción no se puede deshacer.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" class="d-inline">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
+        </form>
+    </template>
+
+    <template id="editTemplate">
+        <div class="swal-header-icon mb-4" style="background: linear-gradient(135deg, #fffcf0 0%, #fff8e1 100%);">
+            <i class="mdi mdi-pencil-outline" style="color: #ffb300;"></i>
         </div>
-    </div>
-</div>
+        <h3 class="text-center mb-1 fw-bold text-dark">Editar Parámetros</h3>
+        <p class="text-center text-muted small mb-4 px-4">Actualice la configuración financiera y fechas vigentes.</p>
+
+        <form method="POST" id="edit_form_swal" class="text-start px-3">
+            @csrf
+            @method('PUT')
+            
+            <div class="alert alert-soft-info border-0 mb-4 py-3 d-flex align-items-center rounded-3 bg-light">
+                <div class="avatar-sm me-3 border border-info rounded-circle d-flex align-items-center justify-content-center bg-white">
+                    <i class="mdi mdi-account text-info font-size-18"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <span class="small text-muted d-block text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 0.5px;">Gestionando ficha de</span>
+                    <strong id="edit_docente_name" class="text-dark font-size-16"></strong>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-7">
+                    <div class="swal-form-group">
+                        <label>Periodo Académico</label>
+                        <select name="ciclo_id" id="edit_ciclo_id" class="form-select select2-trigger" required>
+                            @foreach($ciclos as $ciclo)
+                                <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-5">
+                    <div class="swal-form-group">
+                        <label>Tarifa Hora</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 fw-bold text-warning">S/</span>
+                            <input type="number" step="0.01" name="tarifa_por_hora" id="edit_tarifa_por_hora" class="form-control border-start-0" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <div class="swal-form-group">
+                        <label>Fecha de Inicio</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="mdi mdi-calendar"></i></span>
+                            <input type="date" name="fecha_inicio" id="edit_fecha_inicio" class="form-control border-start-0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="swal-form-group">
+                        <label>Fecha de Término</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="mdi mdi-calendar-check"></i></span>
+                            <input type="date" name="fecha_fin" id="edit_fecha_fin" class="form-control border-start-0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="swal-footer">
+                <button type="button" class="btn btn-light px-4 swal-cancel fw-bold py-2">Cancelar</button>
+                <button type="submit" class="btn btn-warning px-4 shadow-sm fw-bold py-2">Guardar Cambios</button>
+            </div>
+        </form>
+    </template>
 @endsection
-
-@push('js')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // Función para animar contadores de estadísticas
-    function animateCounter(element) {
-        let targetText = element.textContent.replace(/[S\/,]/g, '').trim();
-        const target = parseFloat(targetText) || 0;
-        let current = 0;
-        const duration = 1500; // 1.5 segundos
-        const stepTime = 20;
-        const steps = duration / stepTime;
-        const increment = target / steps;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
-            if (element.id === 'tarifaPromedio' || element.id === 'totalMesActual') {
-                 element.textContent = 'S/ ' + current.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            } else {
-                 element.textContent = Math.floor(current);
-            }
-        }, stepTime);
-    }
-    
-    document.querySelectorAll('#totalPagos, #pagosActivos, #tarifaPromedio').forEach(animateCounter);
-
-    // Lógica para el modal de eliminación
-    window.showDeleteConfirmation = function(pagoId) {
-        const deleteForm = document.getElementById('deleteForm');
-        deleteForm.action = `/pagos-docentes/${pagoId}`;
-        const myModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-        myModal.show();
-    }
-
-    // Lógica de búsqueda y filtro
-    const searchInput = document.getElementById('payment_search');
-    const statusFilter = document.getElementById('status_filter');
-    const tableBody = document.getElementById('paymentsTableBody');
-    const allRows = Array.from(tableBody.querySelectorAll('tr.payment-row-item'));
-    const noResultsRow = document.getElementById('no-results-row');
-
-    function applyFilters() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const statusTerm = statusFilter.value.toLowerCase();
-        let visibleCount = 0;
-
-        allRows.forEach(row => {
-            const docente = (row.dataset.docente || '').toLowerCase();
-            const status = (row.dataset.status || '').toLowerCase();
-            
-            const matchesSearch = !searchTerm || docente.includes(searchTerm);
-            const matchesStatus = !statusTerm || status === statusTerm;
-
-            if (matchesSearch && matchesStatus) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        noResultsRow.style.display = visibleCount === 0 ? '' : 'none';
-        
-        // Resaltar texto de búsqueda
-        allRows.forEach(row => {
-            const cell = row.querySelector('td:first-child h6');
-            if(cell){
-                const originalText = row.dataset.docente;
-                if(searchTerm){
-                    const regex = new RegExp(`(${searchTerm})`, 'gi');
-                    cell.innerHTML = originalText.replace(regex, `<span class="highlight">$1</span>`);
-                } else {
-                    cell.innerHTML = originalText;
-                }
-            }
-        });
-    }
-
-    searchInput.addEventListener('keyup', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
-
-    // Filtro de ciclo (Recarga la página para aplicar filtro server-side)
-    const cicloFilter = document.getElementById('ciclo_filter');
-    if (cicloFilter) {
-        cicloFilter.addEventListener('change', function() {
-            const cicloId = this.value;
-            window.location.href = `{{ route('pagos-docentes.index') }}?ciclo_id=${cicloId}`;
-        });
-    }
-
-    // Lógica de ordenamiento de tabla
-    document.querySelectorAll('.table-light th.sortable').forEach(headerCell => {
-        headerCell.addEventListener('click', () => {
-            const tableElement = headerCell.closest('table');
-            const currentIsAsc = headerCell.getAttribute('data-sort-direction') === 'asc';
-            const newDirection = currentIsAsc ? 'desc' : 'asc';
-
-            document.querySelectorAll('.table-light th.sortable').forEach(th => th.removeAttribute('data-sort-direction'));
-            headerCell.setAttribute('data-sort-direction', newDirection);
-
-            const sortProperty = headerCell.dataset.sort;
-
-            allRows.sort((a, b) => {
-                let valA, valB;
-                switch(sortProperty) {
-                    case 'tarifa':
-                    case 'periodo':
-                        valA = parseFloat(a.dataset[sortProperty]);
-                        valB = parseFloat(b.dataset[sortProperty]);
-                        break;
-                    case 'estado':
-                        valA = a.dataset.status === 'activo' ? 1 : 0;
-                        valB = b.dataset.status === 'activo' ? 1 : 0;
-                        break;
-                    default: // docente
-                        valA = a.dataset[sortProperty].toLowerCase();
-                        valB = b.dataset[sortProperty].toLowerCase();
-                }
-                
-                if (valA < valB) return newDirection === 'asc' ? -1 : 1;
-                if (valA > valB) return newDirection === 'asc' ? 1 : -1;
-                return 0;
-            })
-            .forEach(row => tableBody.appendChild(row));
-        });
-    });
-
-    // Calcular total pagado en el mes actual (simulado)
-    const totalMesActualEl = document.getElementById('totalMesActual');
-    if (totalMesActualEl) {
-        let totalMes = 0;
-        allRows.forEach(row => {
-            if (row.dataset.status === 'activo') {
-                totalMes += parseFloat(row.dataset.tarifa) * 40; // Simulación: 40 horas al mes
-            }
-        });
-        totalMesActualEl.textContent = `S/ ${totalMes.toFixed(2)}`;
-        animateCounter(totalMesActualEl);
-    }
-    
-    // Asignar colores dinámicos a los avatares
-    const colors = ["#7367f0", "#28c76f", "#ff9f43", "#ea5455", "#00cfe8", "#8e44ad"];
-    document.querySelectorAll('[data-bg-color]').forEach((el, index) => {
-        el.style.backgroundColor = colors[index % colors.length];
-    });
-});
-</script>
-@endpush
-
