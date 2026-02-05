@@ -171,7 +171,10 @@
     <div class="summary-container">
         <div class="summary-card">
             <div class="summary-card-title">Total Horas Dictadas</div>
-            <div class="summary-card-value">{{ number_format($data['total_horas'], 2) }} hrs</div>
+            <div class="summary-card-value">
+                {{ number_format($data['total_horas'], 2) }}
+                <div style="font-size: 10px; color: #7f8c8d; font-weight: normal; margin-top: 2px;">({{ $data['total_duracion_texto'] }}) HRS</div>
+            </div>
         </div>
         <div class="summary-card">
             @php

@@ -1705,14 +1705,14 @@ class AsistenciaDocenteController extends Controller
             $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
         }
 
-        // FORMATO DE HORAS CORREGIDO - ESTE ERA EL PROBLEMA
+        // FORMATO DE HORAS CORREGIDO - CON SEGUNDOS
         $horaEntradaDisplay = $entradaBiometrica ? 
-            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i A') : 
-            $horaInicioProgramada->format('g:i A');
+            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i:s A') : 
+            $horaInicioProgramada->format('g:i:s A');
         
         $horaSalidaDisplay = $salidaBiometrica ? 
-            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i A') : 
-            $horaFinProgramada->format('g:i A');
+            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i:s A') : 
+            $horaFinProgramada->format('g:i:s A');
 
         return [
             'fecha' => $currentDate->toDateString(),
@@ -1781,19 +1781,20 @@ class AsistenciaDocenteController extends Controller
             $totalPagos += $session['pago'];
         }
 
-        // Calculate rounded values separately and ensure consistency (Sum of parts = Whole)
+        // Calcular redondeo: "Como se debe hacer" -> Exacto (sin redondeo a favor)
+        // Se mantiene la estructura de variables para compatibilidad con la vista
         $totalPagosRedondeado = 0;
         
         foreach ($groupedData as &$mesData) {
             $mesTotalRedondeado = 0;
             foreach ($mesData['weeks'] as &$weekData) {
-                 $valRedondeado = ceil($weekData['total_pagos']);
+                 // Redondeo normal MATEMATICO (0.5 sube, 0.4 baja)
+                 $valExacto = $weekData['total_pagos'];
+                 $valRedondeado = round($valExacto);
                  $weekData['total_pagos_redondeado'] = $valRedondeado;
                  $mesTotalRedondeado += $valRedondeado;
             }
-            // El total del mes redondeado debe ser la suma de sus semanas redondeadas
             $mesData['total_pagos_redondeado'] = $mesTotalRedondeado;
-            // El total global redondeado debe ser la suma de los meses/semanas redondeadas
             $totalPagosRedondeado += $mesTotalRedondeado;
         }
         
@@ -1803,10 +1804,18 @@ class AsistenciaDocenteController extends Controller
             $totalRowspan += $monthData['rowspan'];
         }
 
+        // Calcular duración total en texto (HH:MM:SS)
+        $totalSeconds = round($totalHoras * 3600);
+        $tHours = floor($totalSeconds / 3600);
+        $tMins = floor(($totalSeconds - ($tHours * 3600)) / 60);
+        $tSecs = floor($totalSeconds % 60);
+        $totalDuracionTexto = sprintf('%d:%02d:%02d', $tHours, $tMins, $tSecs);
+
         return [
             'docente_info' => $docente,
             'months' => $groupedData,
             'total_horas' => $totalHoras,
+            'total_duracion_texto' => $totalDuracionTexto,
             'total_pagos' => $totalPagos,
             'total_pagos_redondeado' => $totalPagosRedondeado,
             'rowspan' => $totalRowspan
