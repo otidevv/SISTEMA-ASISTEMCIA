@@ -1667,9 +1667,16 @@ class AsistenciaDocenteController extends Controller
              // Si excedió las horas programadas, ajustamos al máximo permitido (horas programadas)
              // Esto soluciona casos de salida 1:36 PM que daban 3.10 horas
              $horasDictadas = $horasProgramadas;
-        } else {
              $horasDictadas = $horasCalculadas;
         }
+
+        // Formato H:i:s para mostrar al usuario "segundos más"
+        // $minutosDictados es la duración neta en minutos.
+        $seconds = $minutosDictados * 60;
+        $hours = floor($seconds / 3600);
+        $mins = floor(($seconds - ($hours * 3600)) / 60);
+        $secs = floor($seconds % 60);
+        $duracionTexto = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
 
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
@@ -1716,6 +1723,7 @@ class AsistenciaDocenteController extends Controller
             'hora_entrada_prog' => $horaInicioProgramada->format('g:i A'),
             'hora_salida_prog' => $horaFinProgramada->format('g:i A'),
             'horas_dictadas' => $horasDictadas,
+            'duracion_texto' => $duracionTexto,
             'pago' => $montoTotal,
             'estado_sesion' => $estadoTexto,
             'mes' => $currentDate->locale('es')->monthName,
