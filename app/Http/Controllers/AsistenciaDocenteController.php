@@ -1684,12 +1684,14 @@ class AsistenciaDocenteController extends Controller
             } else {
                 $estadoTexto = 'EN CURSO';
             }
+            $duracionTexto = '00:00:00';
         } elseif (!$entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'FALTA';
             } else {
                 $estadoTexto = 'PROGRAMADA';
             }
+            $duracionTexto = '00:00:00';
         }
 
         // Calcular pago
