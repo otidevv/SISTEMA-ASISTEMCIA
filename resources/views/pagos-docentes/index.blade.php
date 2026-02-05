@@ -129,6 +129,42 @@
             border-radius: 12px;
             margin-bottom: 1.5rem;
         }
+
+        /* Modern Pagination Styling */
+        .pagination {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 0 !important;
+        }
+        .page-item .page-link {
+            border: none !important;
+            padding: 0.6rem 0.9rem;
+            border-radius: 8px !important;
+            color: #5d6d7e !important;
+            font-weight: 600;
+            background: #f1f4f7 !important;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            min-width: 38px;
+            text-align: center;
+        }
+        .page-item.active .page-link {
+            background: #5369f8 !important;
+            color: #fff !important;
+            box-shadow: 0 5px 15px rgba(83, 105, 248, 0.3);
+        }
+        .page-item:not(.active):hover .page-link {
+            background: #e8edff !important;
+            color: #5369f8 !important;
+        }
+        .page-item.disabled .page-link {
+            background: #f8f9fa !important;
+            opacity: 0.5;
+            color: #aab4bc !important;
+        }
     </style>
 @endpush
 
@@ -141,28 +177,37 @@
                 theme: 'bootstrap-5'
             });
 
-            // Filtro de Ciclo (Servidor)
+            // Filtros Dinámicos (Servidor)
             $('#cycleFilter').on('change', function() {
-                const cycleId = $(this).val();
-                window.location.href = `{{ route('pagos-docentes.index') }}?ciclo_id=${cycleId}`;
+                $('#filterForm').submit();
             });
 
-            // Filtros de Cliente (Búsqueda y Estado)
-            $('#teacherSearch').on('input', filterTable);
+            // Live Search con Debounce
+            let searchTimer;
+            $('#teacherSearch').on('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    $('#filterForm').submit();
+                }, 600);
+            });
+
+            // Prevenir submit al presionar Enter (ya se maneja por input)
+            $('#teacherSearch').on('keypress', function(e) {
+                if (e.which == 13) e.preventDefault();
+            });
+
+            // Filtros de Cliente (Estado)
             $('input[name="statusFilter"]').on('change', filterTable);
 
             function filterTable() {
-                const searchTerm = $('#teacherSearch').val().toLowerCase();
                 const statusTerm = $('input[name="statusFilter"]:checked').val();
 
                 $('tbody tr').each(function() {
                     const row = $(this);
-                    if (row.find('td').length < 2) return; // Saltar fila vacía
+                    if (row.find('td').length < 2) return;
 
-                    const teacherData = row.data('teacher') ? row.data('teacher').toLowerCase() : row.find('h5').text().toLowerCase() + ' ' + row.find('.text-muted').text().toLowerCase();
                     const statusBadge = row.find('.badge').text().trim().toLowerCase();
-
-                    let show = teacherData.includes(searchTerm);
+                    let show = true;
 
                     if (statusTerm === 'active' && !statusBadge.includes('activo')) show = false;
                     if (statusTerm === 'finalized' && !statusBadge.includes('finalizado')) show = false;
@@ -227,6 +272,7 @@
             // --- Lógica SweetAlert2 para Edición ---
             $('.edit-pago-btn').on('click', function() {
                 const id = $(this).data('id');
+                const docenteId = $(this).data('docente-id');
                 const docente = $(this).data('docente');
                 const cicloId = $(this).data('ciclo');
                 const tarifa = $(this).data('tarifa');
@@ -258,6 +304,7 @@
                         
                         // Populate values first
                         $(content).find('#edit_form_swal').attr('action', `{{ url('pagos-docentes') }}/${id}`);
+                        $(content).find('#edit_docente_id').val(docenteId);
                         $(content).find('#edit_docente_name').text(docente);
                         $(content).find('#edit_ciclo_id').val(cicloId);
                         $(content).find('#edit_tarifa_por_hora').val(tarifa);
@@ -412,42 +459,44 @@
                     @endif
 
                     <!-- Seccion de Filtros -->
-                    <div class="filter-section p-3 rounded-3 mb-4">
-                        <div class="row align-items-end">
-                            <div class="col-lg-4 mb-lg-0 mb-3">
-                                <label class="form-label fw-bold text-muted small text-uppercase">Búsqueda Inteligente</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white"><i class="mdi mdi-magnify text-primary"></i></span>
-                                    <input type="text" id="teacherSearch" class="form-control" placeholder="Nombre completo o DNI...">
+                    <form action="{{ route('pagos-docentes.index') }}" method="GET" id="filterForm">
+                        <div class="filter-section p-3 rounded-3 mb-4">
+                            <div class="row align-items-end">
+                                <div class="col-lg-4 mb-lg-0 mb-3">
+                                    <label class="form-label fw-bold text-muted small text-uppercase">Búsqueda Inteligente</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="mdi mdi-magnify text-primary"></i></span>
+                                        <input type="text" name="search" id="teacherSearch" class="form-control" placeholder="Nombre completo o DNI..." value="{{ request('search') }}">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-lg-3 mb-lg-0 mb-3">
-                                <label class="form-label fw-bold text-muted small text-uppercase">Ciclo Académico</label>
-                                <select id="cycleFilter" class="form-select select2">
-                                    <option value="all" {{ ($cicloSeleccionado === null) ? 'selected' : '' }}>Todos los Periodos</option>
-                                    <option value="none" {{ ($cicloSeleccionado === 'none') ? 'selected' : '' }}>Sin Asignación</option>
-                                    @foreach($ciclos as $ciclo)
-                                        <option value="{{ $ciclo->id }}" {{ (isset($cicloSeleccionado->id) && $cicloSeleccionado->id == $ciclo->id) ? 'selected' : '' }}>
-                                            {{ $ciclo->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-lg-5 text-lg-end">
-                                <label class="form-label fw-bold text-muted small text-uppercase d-block text-lg-start ps-lg-2">Estado de Registro</label>
-                                <div class="btn-group w-100" role="group">
-                                    <input type="radio" class="btn-check" name="statusFilter" id="statusAll" value="all" checked>
-                                    <label class="btn btn-outline-primary" for="statusAll">Todos</label>
-
-                                    <input type="radio" class="btn-check" name="statusFilter" id="statusActive" value="active">
-                                    <label class="btn btn-outline-primary" for="statusActive">En Curso</label>
-
-                                    <input type="radio" class="btn-check" name="statusFilter" id="statusFinalized" value="finalized">
-                                    <label class="btn btn-outline-primary" for="statusFinalized">Finalizados</label>
+                                <div class="col-lg-3 mb-lg-0 mb-3">
+                                    <label class="form-label fw-bold text-muted small text-uppercase">Ciclo Académico</label>
+                                    <select name="ciclo_id" id="cycleFilter" class="form-select select2">
+                                        <option value="all" {{ ($cicloSeleccionado === null) ? 'selected' : '' }}>Todos los Periodos</option>
+                                        <option value="none" {{ ($cicloSeleccionado === 'none') ? 'selected' : '' }}>Sin Asignación</option>
+                                        @foreach($ciclos as $ciclo)
+                                            <option value="{{ $ciclo->id }}" {{ (isset($cicloSeleccionado->id) && $cicloSeleccionado->id == $ciclo->id) ? 'selected' : '' }}>
+                                                {{ $ciclo->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-lg-5 text-lg-end">
+                                    <label class="form-label fw-bold text-muted small text-uppercase d-block text-lg-start ps-lg-2">Estado de Registro</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="statusFilter" id="statusAll" value="all" checked>
+                                        <label class="btn btn-outline-primary" for="statusAll">Todos</label>
+    
+                                        <input type="radio" class="btn-check" name="statusFilter" id="statusActive" value="active">
+                                        <label class="btn btn-outline-primary" for="statusActive">En Curso</label>
+    
+                                        <input type="radio" class="btn-check" name="statusFilter" id="statusFinalized" value="finalized">
+                                        <label class="btn btn-outline-primary" for="statusFinalized">Finalizados</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
 
                     <div class="table-responsive">
                         <table class="table table-centered table-nowrap mb-0">
@@ -495,6 +544,7 @@
                                             <a href="javascript:void(0);" 
                                                class="action-icon text-primary me-2 edit-pago-btn"
                                                data-id="{{ $pago->id }}"
+                                               data-docente-id="{{ $pago->docente_id }}"
                                                data-docente="{{ $pago->docente->nombre_completo }}"
                                                data-ciclo="{{ $pago->ciclo_id }}"
                                                data-tarifa="{{ $pago->tarifa_por_hora }}"
@@ -524,8 +574,14 @@
                         </table>
                     </div>
 
-                    <div class="mt-3">
-                        {{ $pagos->links() }}
+                    <div class="d-flex justify-content-between align-items-center mt-4 bg-light p-3 rounded-3 border-0">
+                        <div class="text-muted small fw-bold">
+                            <i class="mdi mdi-information-outline me-1"></i>
+                            Mostrando {{ $pagos->firstItem() ?? 0 }} a {{ $pagos->lastItem() ?? 0 }} de {{ $pagos->total() }} registros
+                        </div>
+                        <div class="pagination-container">
+                            {{ $pagos->links('pagination::bootstrap-5') }}
+                        </div>
                     </div>
 
                 </div> <!-- end card body-->
@@ -603,6 +659,8 @@
             @csrf
             @method('PUT')
             
+            <input type="hidden" name="docente_id" id="edit_docente_id">
+
             <div class="alert alert-soft-info border-0 mb-4 py-3 d-flex align-items-center rounded-3 bg-light">
                 <div class="avatar-sm me-3 border border-info rounded-circle d-flex align-items-center justify-content-center bg-white">
                     <i class="mdi mdi-account text-info font-size-18"></i>

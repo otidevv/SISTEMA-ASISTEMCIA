@@ -38,6 +38,16 @@ class PagoDocenteController extends Controller
         // 3. Construir la consulta de pagos
         $query = PagoDocente::with('docente');
 
+        // --- NUEVO: Filtro de Búsqueda Server-side ---
+        $search = $request->input('search');
+        if ($search) {
+            $query->whereHas('docente', function($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                  ->orWhere('apellido_materno', 'like', "%{$search}%");
+            });
+        }
+
         // 4. Filtrar por el ciclo seleccionado
         if ($cicloSeleccionado === 'none') {
             $query->whereNull('ciclo_id');
@@ -53,7 +63,8 @@ class PagoDocenteController extends Controller
             'promedio' => (clone $query)->avg('tarifa_por_hora') ?? 0,
         ];
 
-        $pagos = $query->latest()->paginate(10);
+        // Persistir todos los parámetros en la paginación
+        $pagos = $query->latest()->paginate(10)->appends($request->all());
 
     // --- NUEVO: Datos para Modales (Create/Edit) ---
     $docentes = \App\Models\User::whereHas('roles', function($q) {
