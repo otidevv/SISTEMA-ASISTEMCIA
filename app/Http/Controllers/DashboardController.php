@@ -240,18 +240,20 @@ class DashboardController extends Controller
                 $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
                 $data['fechaSeleccionada'] = $fechaSeleccionada;
                 
-                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $ciclosActivos = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->get();
+                $cicloActivo = $ciclosActivos->first(); // Ciclo principal para cálculos por defecto
                 
-                // Aplicar rotación de sábado si corresponde
+                // Aplicar rotación de sábado si corresponde (usando el ciclo principal o el primero que tenga rotación)
                 $infoRotacion = $this->getInfoRotacion($fechaSeleccionada, $cicloActivo);
                 $diaSemanaParaHorario = $infoRotacion['dia_horario'];
                 
-                $data['infoRotacion'] = $infoRotacion; // Pasar info a la vista
+                $data['infoRotacion'] = $infoRotacion; 
+                $data['ciclosActivos'] = $ciclosActivos;
                 
                 $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
                     ->where('dia_semana', $diaSemanaParaHorario)
-                    ->when($cicloActivo, function ($query, $ciclo) {
-                        return $query->where('ciclo_id', $ciclo->id);
+                    ->whereHas('ciclo', function ($query) {
+                        $query->where('es_activo', true);
                     })
                     ->with(['aula', 'curso', 'ciclo'])
                     ->orderBy('hora_inicio')

@@ -498,7 +498,7 @@ $(document).ready(function () {
     $('#ciclos-datatable').on('click', '.activate-ciclo', function () {
         var id = $(this).data('id');
 
-        if (confirm('¿Está seguro de activar este ciclo? Se desactivarán todos los demás ciclos.')) {
+        if (confirm('¿Está seguro de activar este ciclo?')) {
             $.ajax({
                 url: default_server + "/json/ciclos/" + id + "/activar",
                 type: 'POST',
@@ -510,6 +510,27 @@ $(document).ready(function () {
                 },
                 error: function () {
                     toastr.error('Error al activar el ciclo académico');
+                }
+            });
+        }
+    });
+
+    // Desactivar ciclo
+    $('#ciclos-datatable').on('click', '.deactivate-ciclo', function () {
+        var id = $(this).data('id');
+
+        if (confirm('¿Está seguro de desactivar este ciclo?')) {
+            $.ajax({
+                url: default_server + "/json/ciclos/" + id + "/desactivar",
+                type: 'POST',
+                success: function (response) {
+                    if (response.success) {
+                        table.ajax.reload();
+                        toastr.success(response.message);
+                    }
+                },
+                error: function () {
+                    toastr.error('Error al desactivar el ciclo académico');
                 }
             });
         }

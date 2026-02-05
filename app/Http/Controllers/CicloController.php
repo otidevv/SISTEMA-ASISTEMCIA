@@ -22,4 +22,16 @@ class CicloController extends Controller
     {
         return view('academico.ciclos.edit', compact('ciclo'));
     }
+
+    public function activar(Ciclo $ciclo)
+    {
+        $ciclo->activar();
+        return redirect()->route('ciclos.index')->with('success', 'Ciclo académico activado exitosamente');
+    }
+
+    public function desactivar(Ciclo $ciclo)
+    {
+        $ciclo->desactivar();
+        return redirect()->route('ciclos.index')->with('success', 'Ciclo académico desactivado exitosamente');
+    }
 }

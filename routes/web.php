@@ -303,6 +303,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/ciclos/{ciclo}', [App\Http\Controllers\CicloController::class, 'update'])->name('ciclos.update')->middleware('can:ciclos.edit');
         Route::delete('/ciclos/{ciclo}', [App\Http\Controllers\CicloController::class, 'destroy'])->name('ciclos.destroy')->middleware('can:ciclos.delete');
         Route::post('/ciclos/{ciclo}/activar', [App\Http\Controllers\CicloController::class, 'activar'])->name('ciclos.activar')->middleware('can:ciclos.activate');
+        Route::post('/ciclos/{ciclo}/desactivar', [App\Http\Controllers\CicloController::class, 'desactivar'])->name('ciclos.desactivar')->middleware('can:ciclos.activate');
     });
 
     // Postulaciones
@@ -630,6 +631,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::put('/{id}', [App\Http\Controllers\Api\CicloController::class, 'update']);
         Route::delete('/{id}', [App\Http\Controllers\Api\CicloController::class, 'destroy']);
         Route::post('/{id}/activar', [App\Http\Controllers\Api\CicloController::class, 'activar']);
+        Route::post('/{id}/desactivar', [App\Http\Controllers\Api\CicloController::class, 'desactivar']);
         Route::get('/activo/actual', [App\Http\Controllers\Api\CicloController::class, 'cicloActivo']);
         
         // Vacantes por ciclo

@@ -63,8 +63,12 @@ class CicloController extends Controller
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-ciclo" data-id="' . $ciclo->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
         }
 
-        if (auth()->user()->hasPermission('ciclos.activate') && !$ciclo->es_activo) {
-            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-success activate-ciclo" data-id="' . $ciclo->id . '" title="Activar"><i class="uil uil-check-circle"></i></a> ';
+        if (auth()->user()->hasPermission('ciclos.activate')) {
+            if (!$ciclo->es_activo) {
+                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-success activate-ciclo" data-id="' . $ciclo->id . '" title="Activar"><i class="uil uil-check-circle"></i></a> ';
+            } else {
+                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-warning deactivate-ciclo" data-id="' . $ciclo->id . '" title="Desactivar"><i class="uil uil-times-circle"></i></a> ';
+            }
         }
 
         if (auth()->user()->hasPermission('ciclos.delete')) {
@@ -249,7 +253,7 @@ class CicloController extends Controller
         }
     }
 
-    public function activar($id)
+    public function activar(Request $request, $id)
     {
         $ciclo = Ciclo::find($id);
 
@@ -262,7 +266,9 @@ class CicloController extends Controller
 
         DB::beginTransaction();
         try {
-            $ciclo->activar();
+            // Por defecto no desactivamos otros, permitiendo múltiples ciclos activos
+            $deactivateOthers = $request->input('deactivate_others', false);
+            $ciclo->activar($deactivateOthers);
             DB::commit();
 
             return response()->json([
@@ -279,11 +285,43 @@ class CicloController extends Controller
         }
     }
 
-    public function cicloActivo()
+    public function desactivar($id)
     {
-        $ciclo = Ciclo::activo()->first();
+        $ciclo = Ciclo::find($id);
 
         if (!$ciclo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ciclo académico no encontrado'
+            ], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $ciclo->desactivar();
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ciclo académico desactivado exitosamente',
+                'data' => $ciclo
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al desactivar el ciclo académico'
+            ], 500);
+        }
+    }
+
+    public function cicloActivo()
+    {
+        // Si hay varios activos, devolvemos el más reciente por ahora
+        // pero incluimos información de que hay múltiples si es el caso
+        $ciclos = Ciclo::activo()->orderBy('fecha_inicio', 'desc')->get();
+
+        if ($ciclos->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No hay un ciclo activo'
@@ -292,7 +330,9 @@ class CicloController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $ciclo
+            'data' => $ciclos->first(),
+            'total_activos' => $ciclos->count(),
+            'todos_activos' => $ciclos
         ]);
     }
 }

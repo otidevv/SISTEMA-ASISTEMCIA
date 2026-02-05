@@ -100,14 +100,24 @@ class Ciclo extends Model
         return 0;
     }
 
-    public function activar()
+    public function activar($deactivateOthers = false)
     {
-        // Desactivar otros ciclos
-        self::where('es_activo', true)->update(['es_activo' => false]);
+        if ($deactivateOthers) {
+            // Desactivar otros ciclos
+            self::where('es_activo', true)->where('id', '!=', $this->id)->update(['es_activo' => false]);
+        }
 
         // Activar este ciclo
         $this->es_activo = true;
         $this->estado = 'en_curso';
+        $this->save();
+    }
+
+    public function desactivar()
+    {
+        // Desactivar este ciclo
+        $this->es_activo = false;
+        // No cambiamos el estado necesariamente a finalizado, ya que podría volver a activarse
         $this->save();
     }
 

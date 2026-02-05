@@ -15,9 +15,28 @@ class AsistenciaHelper
      * @param string $nro_documento
      * @return array
      */
-    public static function obtenerEstadoHabilitacion($nro_documento)
+    public static function obtenerEstadoHabilitacion($nro_documento, $ciclo = null)
     {
-        $cicloActivo = Ciclo::where('es_activo', true)->first();
+        if (!$ciclo) {
+            // Intentar encontrar el ciclo de la inscripción activa del estudiante
+            $inscripcion = \App\Models\Inscripcion::whereHas('estudiante', function ($q) use ($nro_documento) {
+                $q->where('numero_documento', $nro_documento);
+            })
+            ->whereHas('ciclo', function ($q) {
+                $q->where('es_activo', true);
+            })
+            ->with('ciclo')
+            ->first();
+
+            if ($inscripcion) {
+                $cicloActivo = $inscripcion->ciclo;
+            } else {
+                // Fallback al último ciclo activo si no hay inscripción encontrada
+                $cicloActivo = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->first();
+            }
+        } else {
+            $cicloActivo = $ciclo;
+        }
 
         if (!$cicloActivo) {
             return [
