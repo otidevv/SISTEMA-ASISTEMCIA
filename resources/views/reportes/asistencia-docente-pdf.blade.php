@@ -217,7 +217,7 @@
                     <tr class="week-header">
                         <td colspan="7">
                             Semana {{ $weekNum }} &nbsp;|&nbsp; 
-                            Horas: {{ number_format($weekData['total_horas'], 2) }} &nbsp;|&nbsp; 
+                            Horas: {{ $weekData['total_duracion_texto'] }} &nbsp;|&nbsp; 
                             Pago Real: S/ {{ number_format($weekData['total_pagos'], 2) }} &nbsp;
                             <strong style="color: #27ae60;">(Redondeado: S/ {{ number_format($weekData['total_pagos_redondeado'], 2) }})</strong>
                         </td>

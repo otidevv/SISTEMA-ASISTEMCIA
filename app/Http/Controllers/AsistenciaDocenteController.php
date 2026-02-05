@@ -1665,8 +1665,8 @@ class AsistenciaDocenteController extends Controller
         
         if ($horasCalculadas > $horasProgramadas) {
              // Si excedió las horas programadas, ajustamos al máximo permitido (horas programadas)
-             // Esto soluciona casos de salida 1:36 PM que daban 3.10 horas
              $horasDictadas = $horasProgramadas;
+        } else {
              $horasDictadas = $horasCalculadas;
         }
 
@@ -1793,6 +1793,13 @@ class AsistenciaDocenteController extends Controller
                  $valRedondeado = round($valExacto);
                  $weekData['total_pagos_redondeado'] = $valRedondeado;
                  $mesTotalRedondeado += $valRedondeado;
+
+                 // Calcular duración semanal en texto
+                 $wSeconds = round($weekData['total_horas'] * 3600);
+                 $wHours = floor($wSeconds / 3600);
+                 $wMins = floor(($wSeconds - ($wHours * 3600)) / 60);
+                 $wSecs = floor($wSeconds % 60);
+                 $weekData['total_duracion_texto'] = sprintf('%d:%02d:%02d', $wHours, $wMins, $wSecs);
             }
             $mesData['total_pagos_redondeado'] = $mesTotalRedondeado;
             $totalPagosRedondeado += $mesTotalRedondeado;
