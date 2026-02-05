@@ -187,7 +187,8 @@
         </div>
         <div class="summary-card">
             <div class="summary-card-title">Pago Estimado</div>
-            <div class="summary-card-value" style="color: #27ae60;">S/ {{ number_format($data['total_pagos'], 2) }}</div>
+            <div class="summary-card-value" style="color: #27ae60;">S/ {{ number_format($data['total_pagos_redondeado'], 2) }}</div>
+            <div style="font-size: 8px; color: #7f8c8d; margin-top: 2px;">Real: S/ {{ number_format($data['total_pagos'], 2) }}</div>
         </div>
     </div>
 
@@ -211,7 +212,12 @@
                 </tr>
                 @foreach($monthData['weeks'] as $weekNum => $weekData)
                     <tr class="week-header">
-                        <td colspan="7">Semana {{ $weekNum }} &nbsp;|&nbsp; Horas: {{ number_format($weekData['total_horas'], 2) }} &nbsp;|&nbsp; Pago: S/ {{ number_format($weekData['total_pagos'], 2) }}</td>
+                        <td colspan="7">
+                            Semana {{ $weekNum }} &nbsp;|&nbsp; 
+                            Horas: {{ number_format($weekData['total_horas'], 2) }} &nbsp;|&nbsp; 
+                            Pago Real: S/ {{ number_format($weekData['total_pagos'], 2) }} &nbsp;
+                            <strong style="color: #27ae60;">(Redondeado: S/ {{ number_format($weekData['total_pagos_redondeado'], 2) }})</strong>
+                        </td>
                     </tr>
                     @foreach($weekData['details'] as $session)
                         <tr>

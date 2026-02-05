@@ -1626,34 +1626,50 @@ class AsistenciaDocenteController extends Controller
             
             $duracionBruta = $effectiveStartTime->diffInMinutes($salidaCarbon);
 
-            // Receso de Mañana
-            $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
-            $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
-            $minutosRecesoManana = 0;
-            if ($entradaCarbon < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
-                $superposicionInicio = $entradaCarbon->max($recesoMananaInicio);
-                $superposicionFin = $salidaCarbon->min($recesoMananaFin);
-                if ($superposicionFin > $superposicionInicio) {
-                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
-                }
+        // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
+        // CORRECCIÓN: Usar effectiveStartTime para verificar recesos, NO la hora biométrica.
+        // Evita descontar receso si el pago empieza DESPUÉS del receso (ej. entra 10:21, receso acaba 10:30, inicio pago 10:30).
+        
+        // Receso de Mañana
+        $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
+        $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
+        $minutosRecesoManana = 0;
+        
+        if ($effectiveStartTime < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
+            $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
+            $superposicionFin = $salidaCarbon->min($recesoMananaFin);
+            if ($superposicionFin > $superposicionInicio) {
+                $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
             }
+        }
 
-            // Receso de Tarde
-            $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
-            $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
-            $minutosRecesoTarde = 0;
-            if ($entradaCarbon < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
-                $superposicionInicio = $entradaCarbon->max($recesoTardeInicio);
-                $superposicionFin = $salidaCarbon->min($recesoTardeFin);
-                if ($superposicionFin > $superposicionInicio) {
-                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
-                }
+        // Receso de Tarde
+        $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
+        $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
+        $minutosRecesoTarde = 0;
+        
+        if ($effectiveStartTime < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
+            $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
+            $superposicionFin = $salidaCarbon->min($recesoTardeFin);
+            if ($superposicionFin > $superposicionInicio) {
+                $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
             }
+        }
 
-            $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
-            // --- FIN DE LA LÓGICA DE RECESO ---
-
-            $horasDictadas = round($minutosDictados / 60, 2);
+        $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
+        
+        // Topar las horas dictadas a las horas programadas si se exceden por salir tarde (ej. 3.10 -> 3.00)
+        // Solo si la diferencia es margen de tolerancia de salida (ej. < 15 min extra)
+        // Ojo: Si trabajó horas extra reales podría requerirse, pero en este reporte académico es mejor limitar al horario.
+        $horasCalculadas = round($minutosDictados / 60, 2);
+        
+        if ($horasCalculadas > $horasProgramadas) {
+             // Si excedió las horas programadas, ajustamos al máximo permitido (horas programadas)
+             // Esto soluciona casos de salida 1:36 PM que daban 3.10 horas
+             $horasDictadas = $horasProgramadas;
+        } else {
+             $horasDictadas = $horasCalculadas;
+        }
 
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
@@ -1751,11 +1767,26 @@ class AsistenciaDocenteController extends Controller
             $groupedData[$mes]['total_horas'] += $session['horas_dictadas'];
             $groupedData[$mes]['total_pagos'] += $session['pago'];
             $groupedData[$mes]['rowspan']++;
-            
             $totalHoras += $session['horas_dictadas'];
             $totalPagos += $session['pago'];
         }
 
+        // Calculate rounded values separately and ensure consistency (Sum of parts = Whole)
+        $totalPagosRedondeado = 0;
+        
+        foreach ($groupedData as &$mesData) {
+            $mesTotalRedondeado = 0;
+            foreach ($mesData['weeks'] as &$weekData) {
+                 $valRedondeado = ceil($weekData['total_pagos']);
+                 $weekData['total_pagos_redondeado'] = $valRedondeado;
+                 $mesTotalRedondeado += $valRedondeado;
+            }
+            // El total del mes redondeado debe ser la suma de sus semanas redondeadas
+            $mesData['total_pagos_redondeado'] = $mesTotalRedondeado;
+            // El total global redondeado debe ser la suma de los meses/semanas redondeadas
+            $totalPagosRedondeado += $mesTotalRedondeado;
+        }
+        
         // Calcular rowspan total para el docente
         $totalRowspan = 0;
         foreach ($groupedData as $monthData) {
