@@ -29,6 +29,16 @@
                     </a>
                 </li>
                 @endcan
+                
+                <!-- Reportes -->
+                @can('asistencia-docente.view')
+                <li>
+                    <a href="{{ route('asistencia-docente.mis-reportes') }}">
+                        <i class="mdi mdi-file-document-multiple-outline"></i>
+                        <span> Mis Reportes </span>
+                    </a>
+                </li>
+                @endcan
 
                 <!-- Asistencia -->
                 @can('asistencia-docente.view')

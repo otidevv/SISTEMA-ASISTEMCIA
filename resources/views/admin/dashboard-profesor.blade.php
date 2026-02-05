@@ -137,6 +137,31 @@
         box-shadow: 0 4px 15px -3px rgb(79 70 229 / 40%);
     }
 
+    .btn-pdf-download {
+        background: white;
+        color: var(--primary-color);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        text-decoration: none;
+        z-index: 10;
+    }
+    .btn-pdf-download:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: var(--primary-light);
+        color: var(--primary-hover);
+    }
+    .btn-pdf-download i {
+        font-size: 1.25rem;
+    }
+
     /* -------------------------------------------------------------------------- */
     /* Tarjetas de Estadísticas                                                   */
     /* -------------------------------------------------------------------------- */
@@ -1353,9 +1378,12 @@
                 @endif
             </div>
         </div>
-        <div class="time-display">
-            <i class="mdi mdi-clock-outline"></i>
-            <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i:s A') }}</span>
+
+        <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+            <div class="time-display">
+                <i class="mdi mdi-clock-outline"></i>
+                <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i:s A') }}</span>
+            </div>
         </div>
     </div>
 

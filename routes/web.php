@@ -283,6 +283,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
         Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
         Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+        Route::get('/mis-reportes', [AsistenciaDocenteController::class, 'indexReportes'])
+            ->name('asistencia-docente.mis-reportes')
+            ->middleware('can:asistencia-docente.reports');
+        Route::get('/exportar-pdf', [AsistenciaDocenteController::class, 'exportarPdfIndividual'])->name('asistencia-docente.exportar-pdf');
         Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');
         Route::get('/monitor', [AsistenciaDocenteController::class, 'monitor'])->name('asistencia-docente.monitor');
         Route::get('/monitor/horario-dia', [AsistenciaDocenteController::class, 'getDailySchedule'])->name('asistencia-docente.monitor.horario-dia');
