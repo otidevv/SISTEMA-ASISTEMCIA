@@ -423,6 +423,12 @@ $(document).ready(function () {
                     // Manejar checkbox de rotación de sábados
                     $('#edit_incluye_sabados').prop('checked', ciclo.incluye_sabados || false);
 
+                    // Cargar horarios de receso
+                    $('#edit_receso_manana_inicio').val(ciclo.receso_manana_inicio ? ciclo.receso_manana_inicio.substring(0, 5) : '');
+                    $('#edit_receso_manana_fin').val(ciclo.receso_manana_fin ? ciclo.receso_manana_fin.substring(0, 5) : '');
+                    $('#edit_receso_tarde_inicio').val(ciclo.receso_tarde_inicio ? ciclo.receso_tarde_inicio.substring(0, 5) : '');
+                    $('#edit_receso_tarde_fin').val(ciclo.receso_tarde_fin ? ciclo.receso_tarde_fin.substring(0, 5) : '');
+
                     $('#editCicloModal').modal('show');
                 } else {
                     toastr.error('No se pudo cargar la información del ciclo');

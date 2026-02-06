@@ -209,6 +209,31 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- NUEVO: Horarios de Receso -->
+                        <div class="row">
+                            <div class="col-md-12 mb-2">
+                                <h6 class="text-muted"><i class="mdi mdi-coffee-outline me-1"></i>Horarios de Receso</h6>
+                                <small class="text-muted">Deje vacío si el ciclo no tiene receso en ese turno</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="receso_manana_inicio" class="form-label">Receso Mañana Inicio</label>
+                                <input type="time" class="form-control" id="receso_manana_inicio" name="receso_manana_inicio">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="receso_manana_fin" class="form-label">Receso Mañana Fin</label>
+                                <input type="time" class="form-control" id="receso_manana_fin" name="receso_manana_fin">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="receso_tarde_inicio" class="form-label">Receso Tarde Inicio</label>
+                                <input type="time" class="form-control" id="receso_tarde_inicio" name="receso_tarde_inicio">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="receso_tarde_fin" class="form-label">Receso Tarde Fin</label>
+                                <input type="time" class="form-control" id="receso_tarde_fin" name="receso_tarde_fin">
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -339,6 +364,31 @@
                                         Marque esta opción si el ciclo tendrá clases los días sábados. Si no se marca, el ciclo solo tendrá clases de lunes a viernes.
                                     </small>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- NUEVO: Horarios de Receso -->
+                        <div class="row">
+                            <div class="col-md-12 mb-2">
+                                <h6 class="text-muted"><i class="mdi mdi-coffee-outline me-1"></i>Horarios de Receso</h6>
+                                <small class="text-muted">Deje vacío si el ciclo no tiene receso en ese turno</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_receso_manana_inicio" class="form-label">Receso Mañana Inicio</label>
+                                <input type="time" class="form-control" id="edit_receso_manana_inicio" name="receso_manana_inicio">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_receso_manana_fin" class="form-label">Receso Mañana Fin</label>
+                                <input type="time" class="form-control" id="edit_receso_manana_fin" name="receso_manana_fin">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_receso_tarde_inicio" class="form-label">Receso Tarde Inicio</label>
+                                <input type="time" class="form-control" id="edit_receso_tarde_inicio" name="receso_tarde_inicio">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_receso_tarde_fin" class="form-label">Receso Tarde Fin</label>
+                                <input type="time" class="form-control" id="edit_receso_tarde_fin" name="receso_tarde_fin">
                             </div>
                         </div>
                         <div class="row">
