@@ -1628,32 +1628,36 @@ class AsistenciaDocenteController extends Controller
             $duracionBruta = $effectiveStartTime->diffInMinutes($salidaCarbon);
 
         // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
-        // CORRECCIÓN: Usar effectiveStartTime para verificar recesos, NO la hora biométrica.
-        // Evita descontar receso si el pago empieza DESPUÉS del receso (ej. entra 10:21, receso acaba 10:30, inicio pago 10:30).
-        
-        // Receso de Mañana
-        $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
-        $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
+        // Obtener recesos configurables del ciclo del horario
+        $cicloDelHorario = $horario->ciclo;
         $minutosRecesoManana = 0;
+        $minutosRecesoTarde = 0;
         
-        if ($effectiveStartTime < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
-            $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
-            $superposicionFin = $salidaCarbon->min($recesoMananaFin);
-            if ($superposicionFin > $superposicionInicio) {
-                $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+        // Receso de Mañana (configurable por ciclo)
+        if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+            $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+            $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+            
+            if ($effectiveStartTime < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
+                $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
+                $superposicionFin = $salidaCarbon->min($recesoMananaFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
             }
         }
 
-        // Receso de Tarde
-        $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
-        $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
-        $minutosRecesoTarde = 0;
-        
-        if ($effectiveStartTime < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
-            $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
-            $superposicionFin = $salidaCarbon->min($recesoTardeFin);
-            if ($superposicionFin > $superposicionInicio) {
-                $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+        // Receso de Tarde (configurable por ciclo)
+        if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+            $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+            $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+            
+            if ($effectiveStartTime < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
+                $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
+                $superposicionFin = $salidaCarbon->min($recesoTardeFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
             }
         }
 

@@ -104,26 +104,36 @@ trait ProcessesTeacherSessions
             if ($finEfectivo > $effectiveStartTime) {
                 $duracionBruta = $effectiveStartTime->diffInMinutes($finEfectivo);
 
-                // Descuento de recesos
-                $recesoMananaInicio = $currentDate->copy()->setTime(10, 0, 0);
-                $recesoMananaFin = $currentDate->copy()->setTime(10, 30, 0);
+                // Descuento de recesos - Obtener valores del ciclo del horario
+                $cicloDelHorario = $horario->ciclo;
                 $minutosRecesoManana = 0;
-                if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
-                    $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
-                    $superposicionFin = $finEfectivo->min($recesoMananaFin);
-                    if ($superposicionFin > $superposicionInicio) {
-                        $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                $minutosRecesoTarde = 0;
+                
+                // Receso de mañana (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+                    $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+                    $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+                    
+                    if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                        $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
+                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
                     }
                 }
 
-                $recesoTardeInicio = $currentDate->copy()->setTime(18, 0, 0);
-                $recesoTardeFin = $currentDate->copy()->setTime(18, 30, 0);
-                $minutosRecesoTarde = 0;
-                if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
-                    $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
-                    $superposicionFin = $finEfectivo->min($recesoTardeFin);
-                    if ($superposicionFin > $superposicionInicio) {
-                        $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                // Receso de tarde (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+                    $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+                    $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+                    
+                    if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                        $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
+                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
                     }
                 }
 
