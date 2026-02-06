@@ -4,55 +4,58 @@
 
 @section('content')
 <style>
-    /* Colores más vibrantes y modernos */
-    .gradient-primary { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%) !important; }
-    .gradient-success { background: linear-gradient(135deg, #2ec4b6 0%, #00f5d4 100%) !important; }
-    .gradient-info { background: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%) !important; }
-    .gradient-warning { background: linear-gradient(135deg, #f72585 0%, #ff4d6d 100%) !important; }
-    .gradient-dark { background: linear-gradient(135deg, #2b2d42 0%, #8d99ae 100%) !important; }
+    /* Colores Institucionales Premium */
+    .gradient-primary { background: linear-gradient(135deg, var(--cepre-pink) 0%, #ff4fb1 100%) !important; color: white !important; }
+    .gradient-success { background: linear-gradient(135deg, var(--cepre-green) 0%, #6da12c 100%) !important; color: white !important; }
+    .gradient-info { background: linear-gradient(135deg, var(--cepre-blue) 0%, #0081b1 100%) !important; color: white !important; }
+    .gradient-warning { background: linear-gradient(135deg, #f72585 0%, #ff4d6d 100%) !important; color: white !important; }
+    .gradient-dark { background: linear-gradient(135deg, var(--cepre-dark-blue) 0%, #1a3a49 100%) !important; color: white !important; }
     
     .modern-card {
         border-radius: 12px !important;
-        box-shadow: 0 10px 30px -12px rgba(0,0,0,0.15) !important;
-        transition: all 0.3s ease !important;
-        border: 1px solid rgba(0,0,0,0.05) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: none !important;
         overflow: hidden;
     }
-    .modern-card:hover { transform: translateY(-5px) !important; box-shadow: 0 20px 40px -15px rgba(0,0,0,0.2) !important; }
+
+    /* Sombras según el modo */
+    html[data-bs-theme="light"] .modern-card, body:not([data-layout-mode="dark"]) .modern-card {
+        box-shadow: 0 10px 30px -12px rgba(0,0,0,0.1) !important;
+    }
+    
+    .modern-card:hover { 
+        transform: translateY(-8px) !important; 
+    }
+
+    html[data-bs-theme="light"] .modern-card:hover, body:not([data-layout-mode="dark"]) .modern-card:hover {
+        box-shadow: 0 20px 40px -15px rgba(236, 0, 140, 0.15) !important; 
+    }
     
     .widget-icon-modern {
-        width: 48px !important; height: 48px !important;
-        border-radius: 10px !important;
+        width: 52px !important; height: 52px !important;
+        border-radius: 12px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 20px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+        font-size: 24px !important;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
     }
     
-    .stat-number { font-size: 1.8rem !important; font-weight: 800 !important; color: #2b2d42; }
-    .modern-progress { height: 24px !important; border-radius: 12px !important; background: rgba(0,0,0,0.05) !important; }
-    .modern-progress .progress-bar { border-radius: 12px !important; font-weight: 700 !important; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-
-    /* Skeleton Loading Animation - Restaurada */
-    @keyframes shimmer {
-        0% { background-position: -1000px 0; }
-        100% { background-position: 1000px 0; }
-    }
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite linear;
-        border-radius: 8px;
-        border: 1px solid rgba(0,0,0,0.05);
+    .stat-number { font-size: 2rem !important; font-weight: 800 !important; }
+    
+    html[data-bs-theme="light"] .stat-number, body:not([data-layout-mode="dark"]) .stat-number {
+        color: var(--cepre-dark-blue);
     }
 
-    /* Clases personalizadas para estados de asistencia */
-    .status-badge-vibrant { padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; color: white !important; }
-    .bg-vibrant-success { background: #2ec4b6 !important; }
-    .bg-vibrant-warning { background: #ff9f1c !important; }
-    .bg-vibrant-danger { background: #f72585 !important; }
-    .bg-vibrant-dark { background: #2b2d42 !important; }
+    .modern-progress { height: 10px !important; border-radius: 10px !important; background: rgba(0,0,0,0.05) !important; overflow: hidden; }
+    .modern-progress .progress-bar { border-radius: 10px !important; transition: width 1s ease-in-out; }
+
+    /* Estados de asistencia con colores de marca */
+    .status-badge-vibrant { padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: white !important; }
+    .bg-vibrant-success { background: var(--cepre-green) !important; }
+    .bg-vibrant-warning { background: #fd7e14 !important; }
+    .bg-vibrant-danger { background: var(--cepre-pink) !important; }
+    .bg-vibrant-dark { background: var(--cepre-dark-blue) !important; }
 </style>
 
 <!-- Page Title -->
