@@ -183,7 +183,7 @@ class ProcesarAsistenciaDocente extends Command
             return;
         }
 
-        AsistenciaDocente::create([
+        $asistencia = AsistenciaDocente::create([
             'docente_id' => $usuario->id,
             'horario_id' => $horario->id,
             'fecha_hora' => $fechaHora,
@@ -196,6 +196,21 @@ class ProcesarAsistenciaDocente extends Command
             'aula_id' => $horario->aula_id,
             'turno' => $horario->turno,
         ]);
+
+        // Si es salida, verificar si el tema ya fue registrado en la entrada
+        if ($estado === 'salida') {
+            $temaRegistrado = AsistenciaDocente::where('docente_id', $usuario->id)
+                ->where('horario_id', $horario->id)
+                ->where('estado', 'entrada')
+                ->whereDate('fecha_hora', $fechaHora->toDateString())
+                ->whereNotNull('tema_desarrollado')
+                ->exists();
+
+            if (!$temaRegistrado) {
+                $usuario->notify(new \App\Notifications\SesionPendienteTemaNotification($horario));
+                $this->info("Notificación de tema pendiente enviada al docente {$usuario->id}.");
+            }
+        }
 
         $this->info("Asistencia ({$estado}) creada para docente {$usuario->id} en horario {$horario->id}.");
     }

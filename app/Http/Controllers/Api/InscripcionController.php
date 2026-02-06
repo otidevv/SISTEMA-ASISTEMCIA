@@ -172,6 +172,12 @@ class InscripcionController extends Controller
 
             $inscripcion = Inscripcion::create($data);
 
+            // Notificar a administradores
+            $admins = User::role('admin')->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NuevaInscripcionNotification($inscripcion));
+            }
+
             DB::commit();
 
             return response()->json([

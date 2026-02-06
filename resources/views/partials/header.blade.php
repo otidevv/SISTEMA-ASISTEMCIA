@@ -180,9 +180,9 @@
             </li>
             <li class="dropdown notification-list topbar-dropdown">
                 <a class="nav-link dropdown-toggle position-relative" data-bs-toggle="dropdown" href="#"
-                    role="button" aria-haspopup="false" aria-expanded="false">
+                    role="button" aria-haspopup="false" aria-expanded="false" id="notification-bell">
                     <i data-feather="bell"></i>
-                    <span class="badge bg-danger rounded-circle noti-icon-badge">6</span>
+                    <span class="badge bg-danger rounded-circle noti-icon-badge d-none" id="notification-count">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-lg">
 
@@ -195,73 +195,100 @@
                         </h5>
                     </div>
 
-                    <div class="noti-scroll" data-simplebar>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item border-bottom">
-                            <div class="notify-icon bg-primary"><i class="uil uil-user-plus"></i></div>
-                            <p class="notify-details">New user registered.<small class="text-muted">5 hours
-                                    ago</small>
-                            </p>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item border-bottom">
-                            <div class="notify-icon">
-                                <img src="{{ asset('assets/images/users/avatar-1.jpg') }}"
-                                    class="img-fluid rounded-circle" alt="" />
-                            </div>
-                            <p class="notify-details">Karen Robinson</p>
-                            <p class="text-muted mb-0 user-msg">
-                                <small>Wow ! this admin looks good and awesome design</small>
-                            </p>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item border-bottom">
-                            <div class="notify-icon">
-                                <img src="{{ asset('assets/images/users/avatar-2.jpg') }}"
-                                    class="img-fluid rounded-circle" alt="" />
-                            </div>
-                            <p class="notify-details">Cristina Pride</p>
-                            <p class="text-muted mb-0 user-msg">
-                                <small>Hi, How are you? What about our next meeting</small>
-                            </p>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item border-bottom active">
-                            <div class="notify-icon bg-success"><i class="uil uil-comment-message"></i> </div>
-                            <p class="notify-details">
-                                Jaclyn Brunswick commented on Dashboard<small class="text-muted">1 min
-                                    ago</small>
-                            </p>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item border-bottom">
-                            <div class="notify-icon bg-danger"><i class="uil uil-comment-message"></i></div>
-                            <p class="notify-details">
-                                Caleb Flakelar commented on Admin<small class="text-muted">4 days ago</small>
-                            </p>
-                        </a>
-
-                        <!-- item-->
-                        <a href="javascript:void(0);" class="dropdown-item notify-item">
-                            <div class="notify-icon bg-primary">
-                                <i class="uil uil-heart"></i>
-                            </div>
-                            <p class="notify-details">
-                                Carlos Crouch liked <b>Admin</b> <small class="text-muted">13 days ago</small>
-                            </p>
-                        </a>
+                    <div class="noti-scroll" data-simplebar id="notification-items-container">
+                        <div class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        </div>
                     </div>
 
                     <!-- All-->
-                    <a href="javascript:void(0);"
+                    <a href="{{ route('notifications.index') }}"
                         class="dropdown-item text-center text-primary notify-item notify-all">
-                        View all <i class="fe-arrow-right"></i>
+                        Ver todas <i class="fe-arrow-right"></i>
                     </a>
+
+                </div>
+            </li>
+
+            {{-- Audio para notificaciones --}}
+            <audio id="notification-sound" preload="auto">
+                <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+            </audio>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const bell = document.getElementById('notification-bell');
+                    const countBadge = document.getElementById('notification-count');
+                    const itemsContainer = document.getElementById('notification-items-container');
+                    const sound = document.getElementById('notification-sound');
+
+                    function playNotificationSound() {
+                        if (sound) {
+                            sound.currentTime = 0;
+                            sound.play().catch(e => console.log('Error al reproducir audio:', e));
+                        }
+                    }
+
+                    function updateNotifications() {
+                        fetch('{{ route('notifications.fetch') }}')
+                            .then(response => response.json())
+                            .then(data => {
+                                renderNotifications(data.notifications, data.unread_count);
+                            });
+                    }
+
+                    function renderNotifications(notifications, unreadCount) {
+                        // Actualizar contador
+                        if (unreadCount > 0) {
+                            countBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
+                            countBadge.classList.remove('d-none');
+                        } else {
+                            countBadge.classList.add('d-none');
+                        }
+
+                        // Actualizar items
+                        if (notifications.length === 0) {
+                            itemsContainer.innerHTML = '<div class="text-center p-3 text-muted">No tienes notificaciones nuevas</div>';
+                            return;
+                        }
+
+                        let html = '';
+                        notifications.forEach(noti => {
+                            const data = noti.data;
+                            const timeAgo = moment(noti.created_at).fromNow();
+                            
+                            html += `
+                                <a href="/notificaciones/${noti.id}/read" class="dropdown-item notify-item border-bottom">
+                                    <div class="notify-icon bg-${data.color || 'primary'}">
+                                        <i class="uil ${data.icon || 'uil-bell'}"></i>
+                                    </div>
+                                    <p class="notify-details">${data.title}</p>
+                                    <p class="text-muted mb-0 user-msg">
+                                        <small>${data.message}</small>
+                                        <br>
+                                        <small class="text-muted">${timeAgo}</small>
+                                    </p>
+                                </a>
+                            `;
+                        });
+                        itemsContainer.innerHTML = html;
+                    }
+
+                    // Carga inicial
+                    updateNotifications();
+
+                    // WebSockets - Tiempo Real
+                    if (typeof window.Echo !== 'undefined') {
+                        const userId = {{ Auth::id() }};
+                        window.Echo.private(`App.Models.User.${userId}`)
+                            .notification((notification) => {
+                                console.log('Notificación recibida en tiempo real:', notification);
+                                playNotificationSound();
+                                updateNotifications(); // Recargar lista al recibir nueva
+                            });
+                    }
+                });
+            </script>
 
                 </div>
             </li>

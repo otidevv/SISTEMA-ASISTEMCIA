@@ -1123,7 +1123,7 @@ class AsistenciaDocenteController extends Controller
             return redirect()->back()->withInput()->withErrors(['horario_id' => 'No existe un horario programado para la fecha y hora seleccionadas o está fuera del rango de tolerancia para la entrada.']);
         }
 
-        AsistenciaDocente::updateOrInsert(
+        $asistencia = AsistenciaDocente::updateOrCreate(
             [
                 'docente_id' => $request->docente_id,
                 'horario_id' => $horario->id,
@@ -1138,6 +1138,20 @@ class AsistenciaDocenteController extends Controller
                 'turno' => $horario->turno,
             ]
         );
+
+        // Si es salida sin tema (o el tema es el mismo que antes null), verificar si la entrada tiene tema
+        if ($request->estado === 'salida' && !$request->tema_desarrollado) {
+            $temaRegistrado = AsistenciaDocente::where('docente_id', $request->docente_id)
+                ->where('horario_id', $horario->id)
+                ->where('estado', 'entrada')
+                ->whereDate('fecha_hora', $fecha->toDateString())
+                ->whereNotNull('tema_desarrollado')
+                ->exists();
+
+            if (!$temaRegistrado) {
+                User::find($request->docente_id)->notify(new \App\Notifications\SesionPendienteTemaNotification($horario));
+            }
+        }
 
         return redirect()->route('asistencia-docente.index')->with('success', 'Asistencia docente registrada correctamente.');
     }
