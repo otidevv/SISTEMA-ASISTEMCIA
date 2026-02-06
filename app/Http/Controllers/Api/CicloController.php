@@ -92,7 +92,12 @@ class CicloController extends Controller
             'fecha_segundo_examen' => 'nullable|date|after:fecha_primer_examen',
             'fecha_tercer_examen' => 'nullable|date|after:fecha_segundo_examen',
             'estado' => 'required|in:planificado,en_curso,finalizado,cancelado',
-            'correlativo_inicial' => 'nullable|integer|min:1'
+            'correlativo_inicial' => 'nullable|integer|min:1',
+            // Horarios de receso
+            'receso_manana_inicio' => 'nullable|date_format:H:i',
+            'receso_manana_fin' => 'nullable|date_format:H:i',
+            'receso_tarde_inicio' => 'nullable|date_format:H:i',
+            'receso_tarde_fin' => 'nullable|date_format:H:i',
         ]);
 
         if ($validator->fails()) {
@@ -152,6 +157,11 @@ class CicloController extends Controller
         $cicloData['fecha_segundo_examen'] = $ciclo->fecha_segundo_examen ? $ciclo->fecha_segundo_examen->format('Y-m-d') : null;
         $cicloData['fecha_tercer_examen'] = $ciclo->fecha_tercer_examen ? $ciclo->fecha_tercer_examen->format('Y-m-d') : null;
         $cicloData['correlativo_inicial'] = $ciclo->correlativo_inicial ?? 1;
+        // Agregar campos de receso
+        $cicloData['receso_manana_inicio'] = $ciclo->receso_manana_inicio;
+        $cicloData['receso_manana_fin'] = $ciclo->receso_manana_fin;
+        $cicloData['receso_tarde_inicio'] = $ciclo->receso_tarde_inicio;
+        $cicloData['receso_tarde_fin'] = $ciclo->receso_tarde_fin;
 
         return response()->json([
             'success' => true,
@@ -182,7 +192,12 @@ class CicloController extends Controller
             'fecha_segundo_examen' => 'nullable|date|after:fecha_primer_examen',
             'fecha_tercer_examen' => 'nullable|date|after:fecha_segundo_examen',
             'estado' => 'required|in:planificado,en_curso,finalizado,cancelado',
-            'correlativo_inicial' => 'nullable|integer|min:1'
+            'correlativo_inicial' => 'nullable|integer|min:1',
+            // Horarios de receso
+            'receso_manana_inicio' => 'nullable|date_format:H:i',
+            'receso_manana_fin' => 'nullable|date_format:H:i',
+            'receso_tarde_inicio' => 'nullable|date_format:H:i',
+            'receso_tarde_fin' => 'nullable|date_format:H:i',
         ]);
 
         if ($validator->fails()) {
