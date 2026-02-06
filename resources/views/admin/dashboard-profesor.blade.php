@@ -1680,6 +1680,34 @@
                                                                 <div class="session-metric-label">Eficiencia</div>
                                                             </div>
                                                         @endif
+                                                        {{-- NUEVO: Tarifa, Pago y Ciclo por sesión --}}
+                                                        @if(isset($item['tarifa_sesion']))
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value text-primary">
+                                                                    <i class="mdi mdi-cash"></i>
+                                                                    S/. {{ number_format($item['tarifa_sesion'], 2) }}
+                                                                </span>
+                                                                <div class="session-metric-label">Tarifa/Hora</div>
+                                                            </div>
+                                                        @endif
+                                                        @if(isset($item['pago_sesion']) && $item['pago_sesion'] > 0)
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value text-success">
+                                                                    <i class="mdi mdi-cash-multiple"></i>
+                                                                    S/. {{ number_format($item['pago_sesion'], 2) }}
+                                                                </span>
+                                                                <div class="session-metric-label">Pago Sesión</div>
+                                                            </div>
+                                                        @endif
+                                                        @if(isset($item['ciclo_nombre']) && $item['ciclo_nombre'] != 'Sin ciclo')
+                                                            <div class="session-metric">
+                                                                <span class="session-metric-value text-info" style="font-size: 0.75rem;">
+                                                                    <i class="mdi mdi-school"></i>
+                                                                    {{ Str::limit($item['ciclo_nombre'], 15) }}
+                                                                </span>
+                                                                <div class="session-metric-label">Ciclo</div>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 @endif
                                                 
