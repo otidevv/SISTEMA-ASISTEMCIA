@@ -1551,7 +1551,7 @@ class AsistenciaDocenteController extends Controller
     /**
      * NUEVO: Procesa una sesión individual para reportes
      */
-    private function processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $fechaInicioCiclo)
+    private function processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $fechaInicioCiclo = null)
     {
         $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
         $horaFinProgramada = Carbon::parse($horario->hora_fin);
