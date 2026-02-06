@@ -108,31 +108,38 @@ class CargaHorariaController extends Controller
 
             if (!$esRecesoExplicito) {
                 // Cálculo de sustracción automática (Alineado con Reporte de Planillas Excel)
-                // Se resta el tiempo de receso si la clase cruza los rangos fijos
+                // Se resta el tiempo de receso si la clase cruza los rangos configurados en el ciclo
+                $cicloDelHorario = $horario->ciclo;
                 $baseDate = Carbon::today();
                 $startH = $baseDate->copy()->setTime($inicio->hour, $inicio->minute);
                 $endH = $baseDate->copy()->setTime($fin->hour, $fin->minute);
                 if ($endH < $startH) $endH->addDay();
 
-                // Receso Mañana: 10:00 - 10:30
-                $r1S = $baseDate->copy()->setTime(10, 0);
-                $r1E = $baseDate->copy()->setTime(10, 30);
-                if ($startH < $r1E && $endH > $r1S) {
-                    $overlapS = $startH->max($r1S);
-                    $overlapE = $endH->min($r1E);
-                    if ($overlapE > $overlapS) {
-                        $minutosRecesoSubtraer += $overlapS->diffInMinutes($overlapE);
+                // Receso de Mañana (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+                    $r1S = $baseDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+                    $r1E = $baseDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+                    
+                    if ($startH < $r1E && $endH > $r1S) {
+                        $overlapS = $startH->max($r1S);
+                        $overlapE = $endH->min($r1E);
+                        if ($overlapE > $overlapS) {
+                            $minutosRecesoSubtraer += $overlapS->diffInMinutes($overlapE);
+                        }
                     }
                 }
 
-                // Receso Tarde: 18:00 - 18:30
-                $r2S = $baseDate->copy()->setTime(18, 0);
-                $r2E = $baseDate->copy()->setTime(18, 30);
-                if ($startH < $r2E && $endH > $r2S) {
-                    $overlapS = $startH->max($r2S);
-                    $overlapE = $endH->min($r2E);
-                    if ($overlapE > $overlapS) {
-                        $minutosRecesoSubtraer += $overlapS->diffInMinutes($overlapE);
+                // Receso de Tarde (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+                    $r2S = $baseDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+                    $r2E = $baseDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+                    
+                    if ($startH < $r2E && $endH > $r2S) {
+                        $overlapS = $startH->max($r2S);
+                        $overlapE = $endH->min($r2E);
+                        if ($overlapE > $overlapS) {
+                            $minutosRecesoSubtraer += $overlapS->diffInMinutes($overlapE);
+                        }
                     }
                 }
             }

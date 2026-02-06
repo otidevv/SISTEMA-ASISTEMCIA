@@ -155,15 +155,45 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
 
     private function ajustarHorasReceso($inicio, $fin, $decimal)
     {
-        $h_ini = Carbon::parse($inicio)->format('H:i');
-        $h_fin = Carbon::parse($fin)->format('H:i');
-        if ($h_ini < '10:00' && $h_fin > '10:30') $decimal -= 0.5;
-        elseif (($h_ini >= '10:00' && $h_ini < '10:30') && $h_fin > '10:30') $decimal -= (Carbon::parse($h_ini)->diffInMinutes(Carbon::parse('10:30')) / 60);
-        elseif ($h_ini < '10:00' && ($h_fin > '10:00' && $h_fin <= '10:30')) $decimal -= (Carbon::parse('10:00')->diffInMinutes(Carbon::parse($h_fin)) / 60);
-        
-        if ($h_ini < '18:00' && $h_fin > '18:30') $decimal -= 0.5;
-        elseif (($h_ini >= '18:00' && $h_ini < '18:30') && $h_fin > '18:30') $decimal -= (Carbon::parse($h_ini)->diffInMinutes(Carbon::parse('18:30')) / 60);
-        elseif ($h_ini < '18:00' && ($h_fin > '18:00' && $h_fin <= '18:30')) $decimal -= (Carbon::parse('18:00')->diffInMinutes(Carbon::parse($h_fin)) / 60);
+        $baseDate = Carbon::today();
+        $startH = $baseDate->copy()->setTimeFromTimeString(Carbon::parse($inicio)->format('H:i'));
+        $endH = $baseDate->copy()->setTimeFromTimeString(Carbon::parse($fin)->format('H:i'));
+        if ($endH < $startH) $endH->addDay();
+
+        $minutosSustraer = 0;
+
+        // Receso Mañana
+        if ($this->ciclo->receso_manana_inicio && $this->ciclo->receso_manana_fin) {
+            $rS = $baseDate->copy()->setTimeFromTimeString($this->ciclo->receso_manana_inicio);
+            $rE = $baseDate->copy()->setTimeFromTimeString($this->ciclo->receso_manana_fin);
+            
+            if ($startH < $rE && $endH > $rS) {
+                $overlapS = $startH->max($rS);
+                $overlapE = $endH->min($rE);
+                if ($overlapE > $overlapS) {
+                    $minutosSustraer += $overlapS->diffInMinutes($overlapE);
+                }
+            }
+        }
+
+        // Receso Tarde
+        if ($this->ciclo->receso_tarde_inicio && $this->ciclo->receso_tarde_fin) {
+            $rS = $baseDate->copy()->setTimeFromTimeString($this->ciclo->receso_tarde_inicio);
+            $rE = $baseDate->copy()->setTimeFromTimeString($this->ciclo->receso_tarde_fin);
+            
+            if ($startH < $rE && $endH > $rS) {
+                $overlapS = $startH->max($rS);
+                $overlapE = $endH->min($rE);
+                if ($overlapE > $overlapS) {
+                    $minutosSustraer += $overlapS->diffInMinutes($overlapE);
+                }
+            }
+        }
+
+        if ($minutosSustraer > 0) {
+            $decimal -= ($minutosSustraer / 60);
+        }
+
         return max(0, $decimal);
     }
 
