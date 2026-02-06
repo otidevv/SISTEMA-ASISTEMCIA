@@ -190,12 +190,12 @@
                     <div class="dropdown-item noti-title">
                         <h5 class="m-0">
                             <span class="float-end">
-                                <a href="#" class="text-dark"><small>Clear All</small></a>
-                            </span>Notification
+                                <a href="#" class="text-dark"><small>Limpiar todo</small></a>
+                            </span>Notificaciones
                         </h5>
                     </div>
 
-                    <div class="noti-scroll" data-simplebar id="notification-items-container">
+                    <div class="noti-scroll" data-simplebar id="notification-items-container" style="max-height: 300px; overflow-y: auto;">
                         <div class="text-center p-3">
                             <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                         </div>
@@ -210,88 +210,7 @@
                 </div>
             </li>
 
-            {{-- Audio para notificaciones --}}
-            <audio id="notification-sound" preload="auto">
-                <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
-            </audio>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const bell = document.getElementById('notification-bell');
-                    const countBadge = document.getElementById('notification-count');
-                    const itemsContainer = document.getElementById('notification-items-container');
-                    const sound = document.getElementById('notification-sound');
-
-                    function playNotificationSound() {
-                        if (sound) {
-                            sound.currentTime = 0;
-                            sound.play().catch(e => console.log('Error al reproducir audio:', e));
-                        }
-                    }
-
-                    function updateNotifications() {
-                        fetch('{{ route('notifications.fetch') }}')
-                            .then(response => response.json())
-                            .then(data => {
-                                renderNotifications(data.notifications, data.unread_count);
-                            });
-                    }
-
-                    function renderNotifications(notifications, unreadCount) {
-                        // Actualizar contador
-                        if (unreadCount > 0) {
-                            countBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
-                            countBadge.classList.remove('d-none');
-                        } else {
-                            countBadge.classList.add('d-none');
-                        }
-
-                        // Actualizar items
-                        if (notifications.length === 0) {
-                            itemsContainer.innerHTML = '<div class="text-center p-3 text-muted">No tienes notificaciones nuevas</div>';
-                            return;
-                        }
-
-                        let html = '';
-                        notifications.forEach(noti => {
-                            const data = noti.data;
-                            const timeAgo = moment(noti.created_at).fromNow();
-                            
-                            html += `
-                                <a href="/notificaciones/${noti.id}/read" class="dropdown-item notify-item border-bottom">
-                                    <div class="notify-icon bg-${data.color || 'primary'}">
-                                        <i class="uil ${data.icon || 'uil-bell'}"></i>
-                                    </div>
-                                    <p class="notify-details">${data.title}</p>
-                                    <p class="text-muted mb-0 user-msg">
-                                        <small>${data.message}</small>
-                                        <br>
-                                        <small class="text-muted">${timeAgo}</small>
-                                    </p>
-                                </a>
-                            `;
-                        });
-                        itemsContainer.innerHTML = html;
-                    }
-
-                    // Carga inicial
-                    updateNotifications();
-
-                    // WebSockets - Tiempo Real
-                    if (typeof window.Echo !== 'undefined') {
-                        const userId = {{ Auth::id() }};
-                        window.Echo.private(`App.Models.User.${userId}`)
-                            .notification((notification) => {
-                                console.log('Notificación recibida en tiempo real:', notification);
-                                playNotificationSound();
-                                updateNotifications(); // Recargar lista al recibir nueva
-                            });
-                    }
-                });
-            </script>
-
-                </div>
-            </li>
 
             <li class="dropdown notification-list topbar-dropdown">
                 <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
@@ -343,6 +262,86 @@
             </li>
 
         </ul>
+
+        {{-- Audio para notificaciones --}}
+        <audio id="notification-sound" preload="auto">
+            <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+        </audio>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const bell = document.getElementById('notification-bell');
+                const countBadge = document.getElementById('notification-count');
+                const itemsContainer = document.getElementById('notification-items-container');
+                const sound = document.getElementById('notification-sound');
+
+                function playNotificationSound() {
+                    if (sound) {
+                        sound.currentTime = 0;
+                        sound.play().catch(e => console.log('Error al reproducir audio:', e));
+                    }
+                }
+
+                function updateNotifications() {
+                    fetch('{{ route('notifications.fetch') }}')
+                        .then(response => response.json())
+                        .then(data => {
+                            renderNotifications(data.notifications, data.unread_count);
+                        });
+                }
+
+                function renderNotifications(notifications, unreadCount) {
+                    // Actualizar contador
+                    if (unreadCount > 0) {
+                        countBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
+                        countBadge.classList.remove('d-none');
+                    } else {
+                        countBadge.classList.add('d-none');
+                    }
+
+                    // Actualizar items
+                    if (notifications.length === 0) {
+                        itemsContainer.innerHTML = '<div class="text-center p-3 text-muted">No tienes notificaciones nuevas</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    notifications.forEach(noti => {
+                        const data = noti.data;
+                        const timeAgo = moment(noti.created_at).fromNow();
+                        
+                        html += `
+                            <a href="/notificaciones/${noti.id}/read" class="dropdown-item notify-item border-bottom">
+                                <div class="notify-icon bg-${data.color || 'primary'}">
+                                    <i class="uil ${data.icon || 'uil-bell'}"></i>
+                                </div>
+                                <p class="notify-details">${data.title}</p>
+                                <p class="text-muted mb-0 user-msg">
+                                    <small>${data.message}</small>
+                                    <br>
+                                    <small class="text-muted">${timeAgo}</small>
+                                </p>
+                            </a>
+                        `;
+                    });
+                    itemsContainer.innerHTML = html;
+                }
+
+                // Carga inicial
+                updateNotifications();
+
+                // WebSockets - Tiempo Real
+                if (typeof window.Echo !== 'undefined') {
+                    const userId = {{ Auth::id() }};
+                    window.Echo.private(`App.Models.User.${userId}`)
+                        .notification((notification) => {
+                            console.log('Notificación recibida en tiempo real:', notification);
+                            playNotificationSound();
+                            updateNotifications(); // Recargar lista al recibir nueva
+                        });
+                }
+            });
+        </script>
 
         <!-- LOGO -->
         <div class="logo-box">
