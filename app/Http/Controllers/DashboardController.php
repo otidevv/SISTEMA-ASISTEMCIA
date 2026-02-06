@@ -265,12 +265,14 @@ class DashboardController extends Controller
                     ->get();
 
                 $totalMinutosNetosHoy = 0;
+                $totalPagoHoy = 0; // NUEVO: Acumulador de pago por sesión
                 $sesionesPendientes = 0;
 
+                // Mantener tarifa por defecto para mostrar (se usará la específica por ciclo en cada sesión)
                 $tarifaPorHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
                 $data['tarifa_por_hora'] = $tarifaPorHora;
 
-                $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$totalMinutosNetosHoy, $user, &$sesionesPendientes, $fechaSeleccionada) {
+                $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$totalMinutosNetosHoy, &$totalPagoHoy, $user, &$sesionesPendientes, $fechaSeleccionada) {
                     // Llama a la lógica centralizada desde el trait
                     $sessionDetails = $this->processTeacherSessionLogic($horario, $fechaSeleccionada, $registrosDelDia, $user);
 
@@ -316,6 +318,38 @@ class DashboardController extends Controller
                     $duracionReal = $sessionDetails['horas_dictadas'] * 60;
                     $totalMinutosNetosHoy += $duracionReal;
 
+                    // NUEVO: Obtener tarifa específica del ciclo de ESTE horario
+                    $cicloDelHorario = $horario->ciclo;
+                    $tarifaSesion = 25.00; // Valor por defecto
+                    
+                    if ($cicloDelHorario) {
+                        $pagoDocente = PagoDocente::where('docente_id', $user->id)
+                            ->where('ciclo_id', $cicloDelHorario->id)
+                            ->first();
+                        
+                        if ($pagoDocente) {
+                            $tarifaSesion = $pagoDocente->tarifa_por_hora;
+                        } else {
+                            // Fallback: buscar por fechas si no hay registro específico por ciclo
+                            $pagoDocenteFecha = PagoDocente::where('docente_id', $user->id)
+                                ->where('fecha_inicio', '<=', $fechaSeleccionada)
+                                ->where(function ($q) use ($fechaSeleccionada) {
+                                    $q->where('fecha_fin', '>=', $fechaSeleccionada)
+                                      ->orWhereNull('fecha_fin');
+                                })
+                                ->first();
+                            
+                            if ($pagoDocenteFecha) {
+                                $tarifaSesion = $pagoDocenteFecha->tarifa_por_hora;
+                            }
+                        }
+                    }
+                    
+                    // Calcular pago de esta sesión
+                    $horasDictadasSesion = $duracionReal / 60;
+                    $pagoSesion = round($horasDictadasSesion * $tarifaSesion, 2);
+                    $totalPagoHoy += $pagoSesion;
+
                     $eficiencia = $duracionProgramada > 0 && $duracionReal > 0 ? round(($duracionReal / $duracionProgramada) * 100) : 0;
                     
                     $dentroTolerancia = $sessionDetails['minutos_tardanza'] == 0;
@@ -335,7 +369,10 @@ class DashboardController extends Controller
                         'progreso_clase' => $progresoClase,
                         'duracion_programada' => $duracionProgramada,
                         'duracion_real' => $duracionReal,
-                        'eficiencia' => $eficiencia
+                        'eficiencia' => $eficiencia,
+                        'tarifa_sesion' => $tarifaSesion, // NUEVO: Tarifa específica del ciclo
+                        'pago_sesion' => $pagoSesion, // NUEVO: Pago calculado para esta sesión
+                        'ciclo_nombre' => $cicloDelHorario ? $cicloDelHorario->nombre : 'Sin ciclo' // NUEVO: Para mostrar en UI
                     ];
                 })->filter();
 
@@ -344,7 +381,8 @@ class DashboardController extends Controller
                 $data['horasHoy'] = "{$horas}h {$minutos}m";
 
                 $totalHorasNetas = $totalMinutosNetosHoy / 60;
-                $data['pagoEstimadoHoy'] = round($totalHorasNetas * $tarifaPorHora, 2);
+                // CORREGIDO: Usar el pago acumulado por sesión (cada una con su tarifa de ciclo)
+                $data['pagoEstimadoHoy'] = round($totalPagoHoy, 2);
 
                 $data['horariosDelDia'] = $horariosDelDiaConDetalles;
                 $data['sesionesHoy'] = $horariosDelDia->count();
