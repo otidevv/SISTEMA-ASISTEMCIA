@@ -1594,6 +1594,7 @@ class AsistenciaDocenteController extends Controller
         $horasProgramadas = $horaInicioProgramada->diffInHours($horaFinProgramada, true);
         $horasDictadas = $horasProgramadas;
         $estadoTexto = 'PENDIENTE';
+        $duracionTexto = '00:00:00'; // Inicializar por defecto
 
         $cursoNombre = $horario->curso->nombre ?? 'N/A';
         $aulaNombre = $horario->aula->nombre ?? 'N/A';
