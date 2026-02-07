@@ -1714,6 +1714,8 @@ class AsistenciaDocenteController extends Controller
                 $estadoTexto = 'PROGRAMADA';
             }
             $duracionTexto = '00:00:00';
+            // ⚡ CORRECCIÓN: Las faltas no deben sumar horas ni pago
+            $horasDictadas = 0;
         }
 
         // Calcular pago
