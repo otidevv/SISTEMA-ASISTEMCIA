@@ -1805,17 +1805,13 @@ class AsistenciaDocenteController extends Controller
         }
 
         // Calcular redondeo: "Como se debe hacer" -> Exacto (sin redondeo a favor)
-        // Se mantiene la estructura de variables para compatibilidad con la vista
-        $totalPagosRedondeado = 0;
+        // CORRECCIÓN: El redondeo se aplica AL TOTAL FINAL, no a cada semana individualmente
+        // Esto evita acumulación de errores de redondeo
         
         foreach ($groupedData as &$mesData) {
-            $mesTotalRedondeado = 0;
             foreach ($mesData['weeks'] as &$weekData) {
-                 // Redondeo normal MATEMATICO (0.5 sube, 0.4 baja)
-                 $valExacto = $weekData['total_pagos'];
-                 $valRedondeado = round($valExacto);
-                 $weekData['total_pagos_redondeado'] = $valRedondeado;
-                 $mesTotalRedondeado += $valRedondeado;
+                 // Mantener el valor exacto para mostrar en el detalle semanal
+                 $weekData['total_pagos_redondeado'] = round($weekData['total_pagos']);
 
                  // Calcular duración semanal en texto
                  $wSeconds = round($weekData['total_horas'] * 3600);
@@ -1824,9 +1820,13 @@ class AsistenciaDocenteController extends Controller
                  $wSecs = floor($wSeconds % 60);
                  $weekData['total_duracion_texto'] = sprintf('%d:%02d:%02d', $wHours, $wMins, $wSecs);
             }
-            $mesData['total_pagos_redondeado'] = $mesTotalRedondeado;
-            $totalPagosRedondeado += $mesTotalRedondeado;
+            // Redondear el total del mes desde el valor exacto
+            $mesData['total_pagos_redondeado'] = round($mesData['total_pagos']);
         }
+        
+        // ⚡ CORRECCIÓN CRÍTICA: Redondear el TOTAL FINAL directamente, no sumar redondeos parciales
+        // Esto asegura que S/. 3,592.36 -> S/. 3,592.00 (no S/. 3,593.00)
+        $totalPagosRedondeado = round($totalPagos);
         
         // Calcular rowspan total para el docente
         $totalRowspan = 0;
