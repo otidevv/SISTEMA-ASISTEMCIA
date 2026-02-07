@@ -1639,63 +1639,63 @@ class AsistenciaDocenteController extends Controller
                 $effectiveStartTime = $entradaCarbon;
             }
             
-            $duracionBruta = $effectiveStartTime->diffInMinutes($salidaCarbon);
-
-        // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
-        // Obtener recesos configurables del ciclo del horario
-        $cicloDelHorario = $horario->ciclo;
-        $minutosRecesoManana = 0;
-        $minutosRecesoTarde = 0;
-        
-        // Receso de Mañana (configurable por ciclo)
-        if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
-            $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
-            $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+            // ⚡ CORRECCIÓN CRÍTICA: El fin efectivo es el MÍNIMO entre la hora programada y la hora de salida real
+            // Esto asegura que si el docente sale después de la hora programada, solo se cuenta hasta la hora programada
+            $finEfectivo = $salidaCarbon->min($horarioFinHoy);
             
-            if ($effectiveStartTime < $recesoMananaFin && $salidaCarbon > $recesoMananaInicio) {
-                $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
-                $superposicionFin = $salidaCarbon->min($recesoMananaFin);
-                if ($superposicionFin > $superposicionInicio) {
-                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+            // Validar que hay tiempo positivo
+            if ($finEfectivo <= $effectiveStartTime) {
+                $horasDictadas = 0;
+                $duracionTexto = '00:00:00';
+            } else {
+                $duracionBruta = $effectiveStartTime->diffInMinutes($finEfectivo);
+
+                // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
+                // Obtener recesos configurables del ciclo del horario
+                $cicloDelHorario = $horario->ciclo;
+                $minutosRecesoManana = 0;
+                $minutosRecesoTarde = 0;
+                
+                // Receso de Mañana (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+                    $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+                    $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+                    
+                    if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                        $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
+                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
                 }
-            }
-        }
 
-        // Receso de Tarde (configurable por ciclo)
-        if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
-            $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
-            $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
-            
-            if ($effectiveStartTime < $recesoTardeFin && $salidaCarbon > $recesoTardeInicio) {
-                $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
-                $superposicionFin = $salidaCarbon->min($recesoTardeFin);
-                if ($superposicionFin > $superposicionInicio) {
-                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                // Receso de Tarde (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+                    $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+                    $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+                    
+                    if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                        $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
+                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
                 }
+
+                $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
+                
+                // Las horas dictadas son los minutos netos divididos por 60 (sin redondeo prematuro)
+                $horasDictadas = max(0, $minutosDictados) / 60;
+
+                // Formato H:i:s para mostrar al usuario
+                $seconds = max(0, $minutosDictados) * 60;
+                $hours = floor($seconds / 3600);
+                $mins = floor(($seconds - ($hours * 3600)) / 60);
+                $secs = floor($seconds % 60);
+                $duracionTexto = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
             }
-        }
-
-        $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
-        
-        // Topar las horas dictadas a las horas programadas si se exceden por salir tarde (ej. 3.10 -> 3.00)
-        // Solo si la diferencia es margen de tolerancia de salida (ej. < 15 min extra)
-        // Ojo: Si trabajó horas extra reales podría requerirse, pero en este reporte académico es mejor limitar al horario.
-        $horasCalculadas = round($minutosDictados / 60, 2);
-        
-        if ($horasCalculadas > $horasProgramadas) {
-             // Si excedió las horas programadas, ajustamos al máximo permitido (horas programadas)
-             $horasDictadas = $horasProgramadas;
-        } else {
-             $horasDictadas = $horasCalculadas;
-        }
-
-        // Formato H:i:s para mostrar al usuario "segundos más"
-        // $minutosDictados es la duración neta en minutos.
-        $seconds = $minutosDictados * 60;
-        $hours = floor($seconds / 3600);
-        $mins = floor(($seconds - ($hours * 3600)) / 60);
-        $secs = floor($seconds % 60);
-        $duracionTexto = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
 
         } elseif ($entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
