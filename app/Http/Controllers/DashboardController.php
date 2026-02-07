@@ -243,10 +243,29 @@ class DashboardController extends Controller
                 $ciclosActivos = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->get();
                 $cicloActivo = $ciclosActivos->first(); // Ciclo principal para cálculos por defecto
                 
-                // Aplicar rotación de sábado si corresponde (usando el ciclo principal o el primero que tenga rotación)
+                // Si es sábado, buscar un ciclo que tenga sábados rotativos habilitados
+                $esSabado = $fechaSeleccionada->dayOfWeek === 6; // Carbon: 6 = Sábado
+                if ($esSabado) {
+                    $cicloConSabados = $ciclosActivos->firstWhere('incluye_sabados', true);
+                    if ($cicloConSabados) {
+                        $cicloActivo = $cicloConSabados;
+                    }
+                }
+                
+                // Aplicar rotación de sábado si corresponde (usando el ciclo con sábados rotativos)
                 $infoRotacion = $this->getInfoRotacion($fechaSeleccionada, $cicloActivo);
                 $diaSemanaParaHorario = $infoRotacion['dia_horario'];
                 
+                // Validar ciclos conflictivos (diferentes configuraciones de sábados)
+                if ($ciclosActivos->count() > 1) {
+                    $ciclosConSabados = $ciclosActivos->where('incluye_sabados', true)->count();
+                    $ciclosSinSabados = $ciclosActivos->where('incluye_sabados', false)->count();
+                    
+                    if ($ciclosConSabados > 0 && $ciclosSinSabados > 0) {
+                        $data['advertenciaCiclos'] = 'Hay ' . $ciclosActivos->count() . ' ciclos activos con configuraciones diferentes de sábados rotativos. Contacte al administrador.';
+                    }
+                }
+
                 $data['infoRotacion'] = $infoRotacion; 
                 $data['ciclosActivos'] = $ciclosActivos;
                 
@@ -259,6 +278,7 @@ class DashboardController extends Controller
                     ->orderBy('hora_inicio')
                     ->get();
                 
+
                 $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
                     ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
                     ->orderBy('fecha_registro')

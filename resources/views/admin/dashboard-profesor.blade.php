@@ -1359,6 +1359,86 @@
             padding-left: 2.75rem !important; /* Ensure icon doesn't overlap text */
         }
     }
+
+    /* Estilos para el banner de Sábado Rotativo */
+    .saturday-rotation-banner {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+        50% { box-shadow: 0 4px 25px rgba(99, 102, 241, 0.5); }
+    }
+
+    .rotation-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        font-size: 1.5rem;
+    }
+
+    .rotation-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .rotation-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .rotation-details {
+        font-size: 0.9rem;
+        opacity: 0.95;
+    }
+
+    .rotation-details strong {
+        color: #fbbf24;
+    }
+
+    @media (max-width: 576px) {
+        .saturday-rotation-banner {
+            flex-direction: column;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .rotation-info {
+            align-items: center;
+        }
+    }
+
+    /* Estilos para advertencia de ciclos conflictivos */
+    .cycle-warning-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 0.875rem 1.25rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .cycle-warning-banner i {
+        font-size: 1.25rem;
+    }
 </style>
 @endpush
 
@@ -1386,6 +1466,32 @@
             </div>
         </div>
     </div>
+
+    {{-- Indicador de Sábado Rotativo --}}
+    @if(isset($infoRotacion) && $infoRotacion['es_sabado'] && isset($infoRotacion['dia_horario']) && $infoRotacion['dia_horario'] !== 'Sábado')
+        <div class="saturday-rotation-banner">
+            <div class="rotation-icon">
+                <i class="mdi mdi-calendar-sync"></i>
+            </div>
+            <div class="rotation-info">
+                <span class="rotation-title">📅 Sábado Rotativo</span>
+                <span class="rotation-details">
+                    Hoy corresponde horario de <strong>{{ $infoRotacion['dia_horario'] }}</strong>
+                    @if(isset($infoRotacion['semana']))
+                        • <strong>Semana {{ $infoRotacion['semana'] }}</strong> del ciclo
+                    @endif
+                </span>
+            </div>
+        </div>
+    @endif
+
+    {{-- Advertencia de Ciclos Conflictivos --}}
+    @if(isset($advertenciaCiclos))
+        <div class="cycle-warning-banner">
+            <i class="mdi mdi-alert-circle"></i>
+            <span>{{ $advertenciaCiclos }}</span>
+        </div>
+    @endif
 
     <!-- Estadísticas Mejoradas -->
     <div class="stats-container">
@@ -1653,7 +1759,7 @@
                                                     <div><i class="mdi mdi-logout text-danger"></i> <strong>Salida:</strong> {{ $item['hora_salida_registrada'] ?? '---' }}</div>
                                                     <div><i class="mdi mdi-map-marker-outline text-info"></i> <strong>Aula:</strong> {{ $horario->aula->nombre ?? 'N/A' }}</div>
                                                     @if(isset($item['minutos_tardanza']) && $item['minutos_tardanza'] > 0)
-                                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ $item['minutos_tardanza'] }} min</div>
+                                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ round($item['minutos_tardanza']) }} min</div>
                                                     @endif
                                                 </div>
 
@@ -1823,7 +1929,7 @@
                                     <div><i class="mdi mdi-logout text-danger"></i> <strong>Salida:</strong> {{ $item['hora_salida_registrada'] ?? '---' }}</div>
                                     <div><i class="mdi mdi-map-marker-outline text-info"></i> <strong>Aula:</strong> {{ $horario->aula->nombre ?? 'N/A' }}</div>
                                     @if(isset($item['minutos_tardanza']) && $item['minutos_tardanza'] > 0)
-                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ $item['minutos_tardanza'] }} min</div>
+                                        <div class="text-danger"><i class="mdi mdi-timer-sand-empty"></i> <strong>Tardanza:</strong> {{ round($item['minutos_tardanza']) }} min</div>
                                     @endif
                                 </div>
 

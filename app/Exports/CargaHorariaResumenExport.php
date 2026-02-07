@@ -62,13 +62,20 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         })->whereHas('horarios', function($q) {
             $q->where('ciclo_id', $this->cicloId);
         })->with(['horarios' => function($q) {
-            $q->where('ciclo_id', $this->cicloId)->with(['curso', 'aula']);
+            $q->where('ciclo_id', $this->cicloId)->with(['curso', 'aula', 'ciclo']);
         }])->orderBy('apellido_paterno')->orderBy('nombre')->get();
 
-        $ocurrenciasDias = $this->contarOcurrenciasDias($this->ciclo);
-        
         $results = new Collection();
         $contador = 1;
+
+        // Rango de fechas del ciclo
+        $startDate = Carbon::parse($this->ciclo->fecha_inicio)->startOfDay();
+        $endDate = Carbon::parse($this->ciclo->fecha_fin)->endOfDay();
+        
+        // Si la fecha fin es futura, usar la fecha actual
+        if ($endDate->isFuture()) {
+            $endDate = Carbon::today()->endOfDay();
+        }
 
         foreach ($docentes as $docente) {
             $pago = PagoDocente::where('docente_id', $docente->id)
@@ -81,14 +88,23 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
             
             $tarifa = $pago ? $pago->tarifa_por_hora : 0;
 
+            // Obtener todos los registros biométricos del docente en el rango del ciclo
+            $registrosBiometricos = \App\Models\RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                ->whereBetween('fecha_registro', [$startDate, $endDate])
+                ->orderBy('fecha_registro', 'asc')
+                ->get()
+                ->groupBy(function($item) {
+                    return Carbon::parse($item->fecha_registro)->toDateString();
+                });
+
             // Agrupar por curso y grupo
             $horariosAgrupados = $docente->horarios->groupBy(function($item) {
                 return $item->curso_id . '-' . $item->grupo;
             });
 
             $totalHorasSemanalesDocente = 0;
-            $totalHorasCicloDocente = 0;
-            $totalCostoCicloDocente = 0;
+            $totalHorasRealDocente = 0;
+            $totalCostoDocente = 0;
 
             $rowsDocenteTemp = [];
 
@@ -102,46 +118,64 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 $grupoTexto = $aulas ? $aulas . " (G: {$grupoOriginal})" : $grupoOriginal;
 
                 $horasSemanalesCurso = 0;
-                $horasCicloCurso = 0;
+                $horasRealCurso = 0;
 
+                // Calcular horas semanales programadas del curso
                 foreach ($horariosDoc as $h) {
-                    if ($h->es_receso) continue; // No contar horas de receso si existen
+                    if ($h->es_receso) continue;
                     
                     $ini = Carbon::parse($h->hora_inicio);
                     $fni = Carbon::parse($h->hora_fin);
                     $decimal = abs($fni->diffInMinutes($ini)) / 60;
-                    
                     $decimal = $this->ajustarHorasReceso($h->hora_inicio, $h->hora_fin, $decimal);
                     $horasSemanalesCurso += $decimal;
-                    
-                    $cantDias = $ocurrenciasDias[$h->dia_semana] ?? 0;
-                    $horasCicloCurso += ($decimal * $cantDias);
                 }
 
-                $costoCursoCiclo = $horasCicloCurso * $tarifa;
+                // ⚡ CÁLCULO REAL: Iterar cada día del ciclo y calcular horas reales dictadas
+                $currentDate = $startDate->copy();
+                while ($currentDate->lte($endDate)) {
+                    $diaSemanaNombre = $this->ciclo->getDiaHorarioParaFecha($currentDate);
+                    $fechaString = $currentDate->toDateString();
+                    
+                    // Filtrar horarios de este curso/grupo para este día
+                    $horariosDelDia = $horariosDoc->filter(function($horario) use ($diaSemanaNombre) {
+                        return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
+                    });
+
+                    $registrosDelDia = $registrosBiometricos->get($fechaString, collect([]));
+
+                    foreach ($horariosDelDia as $horario) {
+                        $horasRealSesion = $this->calcularHorasRealesSesion($horario, $currentDate, $registrosDelDia, $docente, $pago);
+                        $horasRealCurso += $horasRealSesion;
+                    }
+                    
+                    $currentDate->addDay();
+                }
+
+                $costoCursoCiclo = $horasRealCurso * $tarifa;
 
                 $rowsDocenteTemp[] = [
                     'contador' => $contador,
                     'nombre' => $docente->nombre_completo,
                     'curso' => $nombreCurso,
                     'grupo' => $grupoTexto,
-                    'horas_semana_curso' => round($horasSemanalesCurso, 1),
-                    'horas_ciclo_curso' => round($horasCicloCurso, 1),
+                    'horas_semana_curso' => round($horasSemanalesCurso, 2),
+                    'horas_ciclo_curso' => round($horasRealCurso, 2),
                     'tarifa' => $tarifa,
                     'costo_curso' => $costoCursoCiclo,
-                    'is_first' => false, // Marcaremos la primera después
+                    'is_first' => false,
                 ];
 
                 $totalHorasSemanalesDocente += $horasSemanalesCurso;
-                $totalHorasCicloDocente += $horasCicloCurso;
-                $totalCostoCicloDocente += $costoCursoCiclo;
+                $totalHorasRealDocente += $horasRealCurso;
+                $totalCostoDocente += $costoCursoCiclo;
             }
 
             if (count($rowsDocenteTemp) > 0) {
                 $rowsDocenteTemp[0]['is_first'] = true;
-                $rowsDocenteTemp[0]['total_horas_ciclo_doc'] = round($totalHorasCicloDocente, 1);
-                $rowsDocenteTemp[0]['horas_semanales_total_doc'] = round($totalHorasSemanalesDocente, 1);
-                $rowsDocenteTemp[0]['costo_total_doc'] = $totalCostoCicloDocente;
+                $rowsDocenteTemp[0]['total_horas_ciclo_doc'] = round($totalHorasRealDocente, 2);
+                $rowsDocenteTemp[0]['horas_semanales_total_doc'] = round($totalHorasSemanalesDocente, 2);
+                $rowsDocenteTemp[0]['costo_total_doc'] = $totalCostoDocente;
                 
                 foreach ($rowsDocenteTemp as $row) {
                     $results->push($row);
@@ -151,6 +185,115 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         }
 
         return $results;
+    }
+
+    /**
+     * Calcula las horas reales dictadas para una sesión, aplicando descuentos por tardanza y recesos.
+     * Lógica unificada con ProcessesTeacherSessions trait.
+     */
+    private function calcularHorasRealesSesion($horario, $currentDate, $registrosDelDia, $docente, $pagoDocente)
+    {
+        if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
+            return 0;
+        }
+
+        $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
+        $horaFinProgramada = Carbon::parse($horario->hora_fin);
+
+        $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
+        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second);
+
+        // Tolerancias (mismas que ProcessesTeacherSessions)
+        $toleranciaEntradaAnticipada = 15;
+        $toleranciaEntradaTarde = 5;
+        $toleranciaVentanaEntrada = 120;
+        $toleranciaVentanaSalida = 60;
+        $toleranciaSalidaAnticipada = 15;
+
+        // Búsqueda de registros biométricos
+        $entradaBiometrica = $registrosDelDia
+            ->filter(function($r) use ($horarioInicioHoy, $toleranciaEntradaAnticipada, $toleranciaVentanaEntrada) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioInicioHoy->copy()->subMinutes($toleranciaEntradaAnticipada),
+                    $horarioInicioHoy->copy()->addMinutes($toleranciaVentanaEntrada)
+                );
+            })
+            ->sortBy('fecha_registro')
+            ->first();
+
+        $salidaBiometrica = $registrosDelDia
+            ->filter(function($r) use ($horarioFinHoy, $toleranciaSalidaAnticipada, $toleranciaVentanaSalida) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioFinHoy->copy()->subMinutes($toleranciaSalidaAnticipada),
+                    $horarioFinHoy->copy()->addMinutes($toleranciaVentanaSalida)
+                );
+            })
+            ->sortByDesc('fecha_registro')
+            ->first();
+
+        // Si no hay entrada y salida, no se pagó esta sesión
+        if (!$entradaBiometrica || !$salidaBiometrica) {
+            return 0;
+        }
+
+        $entradaCarbon = Carbon::parse($entradaBiometrica->fecha_registro);
+        $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
+
+        // Determinar hora de inicio efectiva respetando tolerancia de tardanza
+        $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes($toleranciaEntradaTarde);
+        
+        if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
+            $effectiveStartTime = $horarioInicioHoy;
+        } else {
+            $effectiveStartTime = $entradaCarbon;
+        }
+
+        // El fin efectivo es el más temprano entre la hora programada y la hora de salida
+        $finEfectivo = $salidaCarbon->min($horarioFinHoy);
+
+        if ($finEfectivo <= $effectiveStartTime) {
+            return 0;
+        }
+
+        $duracionBruta = $effectiveStartTime->diffInMinutes($finEfectivo);
+
+        // Descuento de recesos
+        $cicloDelHorario = $horario->ciclo ?? $this->ciclo;
+        $minutosRecesoManana = 0;
+        $minutosRecesoTarde = 0;
+
+        // Receso de mañana
+        if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+            $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+            $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+            
+            if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
+                $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
+            }
+        }
+
+        // Receso de tarde
+        if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+            $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+            $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+            
+            if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
+                $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                if ($superposicionFin > $superposicionInicio) {
+                    $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                }
+            }
+        }
+
+        $minutosNetos = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
+        return max(0, $minutosNetos) / 60;
     }
 
     private function ajustarHorasReceso($inicio, $fin, $decimal)
@@ -218,14 +361,14 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         $inicio = Carbon::parse($this->ciclo->fecha_inicio);
         $fin = Carbon::parse($this->ciclo->fecha_fin);
         $semanas = ceil($inicio->diffInDays($fin) / 7);
-        $titulo3 = "REPORTE DE CARGA HORARIA - ". strtoupper($this->ciclo->nombre) ." (". $semanas ." SEMANAS)";
+        $titulo3 = "REPORTE DE CARGA HORARIA (HORAS REALES) - ". strtoupper($this->ciclo->nombre) ." (". $semanas ." SEMANAS)";
 
         return [
             ['UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS'],
             ['CENTRO PRE UNIVERSITARIO'],
             [$titulo3],
             [''], [''], [''], // Filas 4, 5, 6
-            ['N°', 'DOCENTE', 'CURSO', 'AULAS / GRUPOS', 'H. SEMANALES', 'H. CICLO', 'TOTAL H. CICLO', 'H. SEMANALES TOTAL', 'COSTO HORA', 'COSTO CURSO', 'TOTAL COSTO'] // Fila 7
+            ['N°', 'DOCENTE', 'CURSO', 'AULAS / GRUPOS', 'H. SEMANALES (PROG.)', 'H. REALES DICTADAS', 'TOTAL H. REALES', 'H. SEMANALES TOTAL', 'COSTO HORA', 'COSTO CURSO', 'TOTAL COSTO'] // Fila 7
         ];
     }
 
