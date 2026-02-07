@@ -289,7 +289,7 @@
                     <br><br><br>
                     <div class="signature-box">
                         <strong>ING. ROY KEVIN BONIFACIO FERNANDEZ</strong><br>
-                        INGENIERO DE SISTEMAS E INFORMATICA
+                        SERVICIO ESPECIALIZADO EN GESTION DE SERVICIOS INFORMATICOS
                     </div>
                 </td>
             </tr>
