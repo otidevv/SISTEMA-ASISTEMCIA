@@ -9,7 +9,7 @@
         /* CONFIGURACIÓN PARA DOMPDF Y A4 */
         @page {
             size: A4;
-            margin: 0; /* Manejamos el margen con un div para el borde */
+            margin: 1cm;
         }
 
         body {
@@ -22,46 +22,21 @@
             padding: 0;
         }
 
-        /* BORDE DE PÁGINA PROFESIONAL */
-        .page-border {
-            position: fixed;
-            top: 10mm;
-            left: 10mm;
-            right: 10mm;
-            bottom: 10mm;
-            border: 2px solid #1a365d;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        .page-border-inner {
-            position: fixed;
-            top: 11.5mm;
-            left: 11.5mm;
-            right: 11.5mm;
-            bottom: 11.5mm;
-            border: 1px solid #1a365d;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        /* MARCA DE AGUA ENTRELÍNEAS */
+        /* MARCA DE AGUA INSTITUCIONAL (Sutil para no estorbar) */
         .watermark {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            opacity: 0.05;
-            z-index: -10;
-            width: 400px;
+            opacity: 0.04;
+            z-index: -1000;
+            width: 500px;
             text-align: center;
         }
 
         .container {
-            width: 170mm; /* A4 width minus padding/borders */
-            margin: 15mm auto;
+            width: 100%;
             position: relative;
-            z-index: 1;
         }
 
         /* TABLAS DE ESTRUCTURA */
@@ -84,7 +59,7 @@
             font-size: 13px;
             font-weight: bold;
             color: #1a365d;
-            margin-bottom: 10px;
+            margin: 15px 0 10px 0;
             padding-bottom: 3px;
             border-bottom: 1px solid #dee2e6;
             text-transform: uppercase;
@@ -151,18 +126,6 @@
             margin: 0 auto;
         }
 
-        /* QR AREA */
-        .qr-box {
-            position: absolute;
-            bottom: 30px;
-            right: 0;
-            width: 70px;
-            text-align: center;
-            padding: 5px;
-            border: 1px solid #cbd5e1;
-            background: white;
-        }
-
         /* FOOTER */
         .footer {
             margin-top: 25px;
@@ -185,9 +148,6 @@
 
 <body>
     <!-- ELEMENTOS DECORATIVOS FIJOS -->
-    <div class="page-border"></div>
-    <div class="page-border-inner"></div>
-    
     <div class="watermark">
         @php
             $logoWPath = public_path('assets/images/logo unamad constancia.png');
