@@ -104,12 +104,50 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="hora_inicio" class="form-label">Hora de Inicio</label>
+                                <label for="hora_inicio" class="form-label">Hora de Inicio (General)</label>
                                 <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="hora_fin" class="form-label">Hora de Fin</label>
+                                <label for="hora_fin" class="form-label">Hora de Fin (General)</label>
                                 <input type="time" class="form-control" id="hora_fin" name="hora_fin" required>
+                            </div>
+                        </div>
+
+                        <h5 class="text-uppercase bg-light p-2 mt-0 mb-3">Configuración de Asistencia</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_entrada_inicio" class="form-label text-success">Entrada Inicio</label>
+                                <input type="time" class="form-control" id="hora_entrada_inicio" name="hora_entrada_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_entrada_fin" class="form-label text-success">Entrada Fin</label>
+                                <input type="time" class="form-control" id="hora_entrada_fin" name="hora_entrada_fin">
+                                <small class="text-muted d-block mt-1">Límite para entrada normal</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_tarde_inicio" class="form-label text-warning">Tarde Inicio</label>
+                                <input type="time" class="form-control" id="hora_tarde_inicio" name="hora_tarde_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_tarde_fin" class="form-label text-warning">Tarde Fin</label>
+                                <input type="time" class="form-control" id="hora_tarde_fin" name="hora_tarde_fin">
+                                <small class="text-muted d-block mt-1">Límite para considerar tardanza</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_salida_inicio" class="form-label text-danger">Salida Inicio</label>
+                                <input type="time" class="form-control" id="hora_salida_inicio" name="hora_salida_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="hora_salida_fin" class="form-label text-danger">Salida Fin</label>
+                                <input type="time" class="form-control" id="hora_salida_fin" name="hora_salida_fin">
+                                <small class="text-muted d-block mt-1">Límite para marcar salida</small>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -178,13 +216,51 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="edit_hora_inicio" class="form-label">Hora de Inicio</label>
+                                <label for="edit_hora_inicio" class="form-label">Hora de Inicio (General)</label>
                                 <input type="time" class="form-control" id="edit_hora_inicio" name="hora_inicio"
                                     required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="edit_hora_fin" class="form-label">Hora de Fin</label>
+                                <label for="edit_hora_fin" class="form-label">Hora de Fin (General)</label>
                                 <input type="time" class="form-control" id="edit_hora_fin" name="hora_fin" required>
+                            </div>
+                        </div>
+
+                        <h5 class="text-uppercase bg-light p-2 mt-0 mb-3">Configuración de Asistencia</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_entrada_inicio" class="form-label text-success">Entrada Inicio</label>
+                                <input type="time" class="form-control" id="edit_hora_entrada_inicio" name="hora_entrada_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_entrada_fin" class="form-label text-success">Entrada Fin</label>
+                                <input type="time" class="form-control" id="edit_hora_entrada_fin" name="hora_entrada_fin">
+                                <small class="text-muted d-block mt-1">Límite para entrada normal</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_tarde_inicio" class="form-label text-warning">Tarde Inicio</label>
+                                <input type="time" class="form-control" id="edit_hora_tarde_inicio" name="hora_tarde_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_tarde_fin" class="form-label text-warning">Tarde Fin</label>
+                                <input type="time" class="form-control" id="edit_hora_tarde_fin" name="hora_tarde_fin">
+                                <small class="text-muted d-block mt-1">Límite para considerar tardanza</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_salida_inicio" class="form-label text-danger">Salida Inicio</label>
+                                <input type="time" class="form-control" id="edit_hora_salida_inicio" name="hora_salida_inicio">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_hora_salida_fin" class="form-label text-danger">Salida Fin</label>
+                                <input type="time" class="form-control" id="edit_hora_salida_fin" name="hora_salida_fin">
+                                <small class="text-muted d-block mt-1">Límite para marcar salida</small>
                             </div>
                         </div>
                         <div class="mb-3">

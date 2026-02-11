@@ -266,15 +266,30 @@
                                     <tr class="{{ !$registro['asistio'] ? 'falta-row' : '' }}">
                                         <td>{{ $registro['fecha'] }}</td>
                                         <td>{{ $registro['dia_semana'] }}</td>
-                                        <td class="{{ $registro['hora_entrada'] == 'Sin registro' ? 'text-muted' : ($registro['hora_entrada'] == 'FALTA' ? 'text-danger' : '') }}">
+                                        
+                                        {{-- Lógica de visualización de Hora de Entrada --}}
+                                        <td class="{{ 
+                                            $registro['hora_entrada'] == 'Sin registro' ? 'text-muted' : 
+                                            ($registro['hora_entrada'] == 'FALTA' ? 'text-danger' : 
+                                            ($registro['es_tarde'] ? 'text-danger fw-bold' : '')) 
+                                        }}">
                                             {{ $registro['hora_entrada'] }}
+                                            @if($registro['es_tarde'])
+                                                <span style="font-size: 8px; display: block; color: #dc2626;">(TARDE)</span>
+                                            @endif
                                         </td>
+
                                         <td class="{{ $registro['hora_salida'] == 'FALTA' ? 'text-danger' : '' }}">
                                             {{ $registro['hora_salida'] }}
                                         </td>
+                                        
                                         <td>
                                             @if ($registro['asistio'])
-                                                <span class="text-success">ASISTENCIA REGISTRADA</span>
+                                                @if($registro['es_tarde'])
+                                                    <span style="color: #dc2626; font-weight: bold;">ASISTENCIA (TARDE)</span>
+                                                @else
+                                                    <span class="text-success">ASISTENCIA PUNTUAL</span>
+                                                @endif
                                             @else
                                                 <span class="text-danger">INASISTENCIA / FALTA</span>
                                             @endif

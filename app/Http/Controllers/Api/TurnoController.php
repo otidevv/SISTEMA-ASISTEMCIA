@@ -72,6 +72,12 @@ class TurnoController extends Controller
             'nombre' => 'required|string|max:50',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
+            'hora_entrada_inicio' => 'nullable|date_format:H:i',
+            'hora_entrada_fin' => 'nullable|date_format:H:i',
+            'hora_tarde_inicio' => 'nullable|date_format:H:i',
+            'hora_tarde_fin' => 'nullable|date_format:H:i',
+            'hora_salida_inicio' => 'nullable|date_format:H:i',
+            'hora_salida_fin' => 'nullable|date_format:H:i',
             'dias_semana' => 'nullable|string|max:50',
             'descripcion' => 'nullable|string',
             'orden' => 'nullable|integer|min:0',
@@ -99,6 +105,13 @@ class TurnoController extends Controller
             }
             if (strlen($data['hora_fin']) == 5) {
                 $data['hora_fin'] .= ':00';
+            }
+
+            // Campos opcionales de tiempo
+            foreach(['hora_entrada_inicio', 'hora_entrada_fin', 'hora_tarde_inicio', 'hora_tarde_fin', 'hora_salida_inicio', 'hora_salida_fin'] as $field) {
+                if (isset($data[$field]) && strlen($data[$field]) == 5) {
+                    $data[$field] .= ':00';
+                }
             }
 
             $data['estado'] = $request->estado ?? true;
@@ -142,6 +155,13 @@ class TurnoController extends Controller
         $turnoData = $turno->toArray();
         $turnoData['hora_inicio'] = substr($turno->hora_inicio, 0, 5);
         $turnoData['hora_fin'] = substr($turno->hora_fin, 0, 5);
+        
+        // Formatear nuevos campos de tiempo si existen
+        foreach(['hora_entrada_inicio', 'hora_entrada_fin', 'hora_tarde_inicio', 'hora_tarde_fin', 'hora_salida_inicio', 'hora_salida_fin'] as $field) {
+            if ($turno->$field) {
+                $turnoData[$field] = substr($turno->$field, 0, 5);
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -165,6 +185,12 @@ class TurnoController extends Controller
             'nombre' => 'required|string|max:50',
             'hora_inicio' => 'required|date_format:H:i',
             'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
+            'hora_entrada_inicio' => 'nullable|date_format:H:i',
+            'hora_entrada_fin' => 'nullable|date_format:H:i',
+            'hora_tarde_inicio' => 'nullable|date_format:H:i',
+            'hora_tarde_fin' => 'nullable|date_format:H:i',
+            'hora_salida_inicio' => 'nullable|date_format:H:i',
+            'hora_salida_fin' => 'nullable|date_format:H:i',
             'dias_semana' => 'nullable|string|max:50',
             'descripcion' => 'nullable|string',
             'orden' => 'nullable|integer|min:0',
@@ -192,6 +218,13 @@ class TurnoController extends Controller
             }
             if (strlen($data['hora_fin']) == 5) {
                 $data['hora_fin'] .= ':00';
+            }
+
+            // Campos opcionales de tiempo
+            foreach(['hora_entrada_inicio', 'hora_entrada_fin', 'hora_tarde_inicio', 'hora_tarde_fin', 'hora_salida_inicio', 'hora_salida_fin'] as $field) {
+                if (isset($data[$field]) && strlen($data[$field]) == 5) {
+                    $data[$field] .= ':00';
+                }
             }
 
             $turno->update($data);

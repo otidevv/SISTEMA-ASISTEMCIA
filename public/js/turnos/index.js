@@ -7,7 +7,7 @@ $.ajaxSetup({
     }
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     // Inicializar DataTables
     var table = $('#turnos-datatable').DataTable({
         processing: true,
@@ -15,14 +15,14 @@ $(document).ready(function() {
         ajax: {
             url: default_server + "/json/turnos",
             type: 'GET',
-            dataSrc: function(json) {
+            dataSrc: function (json) {
                 return json.data;
             }
         },
         columns: [
             {
                 data: 'orden',
-                render: function(data) {
+                render: function (data) {
                     return '<span class="badge bg-secondary">' + data + '</span>';
                 }
             },
@@ -30,31 +30,31 @@ $(document).ready(function() {
             { data: 'nombre' },
             {
                 data: null,
-                render: function(data) {
+                render: function (data) {
                     return '<i class="uil uil-clock"></i> ' + data.hora_inicio + ' - ' + data.hora_fin;
                 }
             },
             {
                 data: 'duracion',
-                render: function(data) {
+                render: function (data) {
                     return '<span class="badge bg-info">' + data + '</span>';
                 }
             },
             {
                 data: 'dias_semana',
-                render: function(data) {
+                render: function (data) {
                     return data || '<span class="text-muted">No especificado</span>';
                 }
             },
             {
                 data: 'estudiantes_activos',
-                render: function(data) {
+                render: function (data) {
                     return '<span class="badge bg-primary">' + data + '</span>';
                 }
             },
             {
                 data: 'estado',
-                render: function(data) {
+                render: function (data) {
                     return data ?
                         '<span class="badge bg-success">Activo</span>' :
                         '<span class="badge bg-danger">Inactivo</span>';
@@ -62,7 +62,7 @@ $(document).ready(function() {
             },
             {
                 data: null,
-                render: function(data, type, row) {
+                render: function (data, type, row) {
                     return row.actions;
                 }
             }
@@ -91,7 +91,7 @@ $(document).ready(function() {
     });
 
     // Limpiar formulario cuando se cierra el modal
-    $('#newTurnoModal').on('hidden.bs.modal', function() {
+    $('#newTurnoModal').on('hidden.bs.modal', function () {
         $('#newTurnoForm')[0].reset();
         $('#newTurnoForm .is-invalid').removeClass('is-invalid');
         $('#newTurnoForm .invalid-feedback').remove();
@@ -99,7 +99,7 @@ $(document).ready(function() {
         toastr.clear();
     });
 
-    $('#editTurnoModal').on('hidden.bs.modal', function() {
+    $('#editTurnoModal').on('hidden.bs.modal', function () {
         $('#editTurnoForm')[0].reset();
         $('#editTurnoForm .is-invalid').removeClass('is-invalid');
         $('#editTurnoForm .invalid-feedback').remove();
@@ -108,11 +108,11 @@ $(document).ready(function() {
     });
 
     // Validar horas en tiempo real
-    $('#hora_inicio, #hora_fin').on('change', function() {
+    $('#hora_inicio, #hora_fin').on('change', function () {
         validateHoras();
     });
 
-    $('#edit_hora_inicio, #edit_hora_fin').on('change', function() {
+    $('#edit_hora_inicio, #edit_hora_fin').on('change', function () {
         validateEditHoras();
     });
 
@@ -153,7 +153,7 @@ $(document).ready(function() {
     }
 
     // Crear nuevo turno
-    $('#saveNewTurno').on('click', function() {
+    $('#saveNewTurno').on('click', function () {
         if (!validateHoras()) {
             toastr.error('Por favor, corrija los errores en el horario');
             return;
@@ -170,14 +170,14 @@ $(document).ready(function() {
             url: default_server + "/json/turnos",
             type: 'POST',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#newTurnoModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -194,7 +194,7 @@ $(document).ready(function() {
                     toastr.error('Error al crear el turno');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -202,13 +202,13 @@ $(document).ready(function() {
     });
 
     // Cargar datos para editar
-    $('#turnos-datatable').on('click', '.edit-turno', function() {
+    $('#turnos-datatable').on('click', '.edit-turno', function () {
         var id = $(this).data('id');
 
         $.ajax({
             url: default_server + "/json/turnos/" + id,
             type: 'GET',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var turno = response.data;
 
@@ -217,6 +217,15 @@ $(document).ready(function() {
                     $('#edit_nombre').val(turno.nombre);
                     $('#edit_hora_inicio').val(turno.hora_inicio);
                     $('#edit_hora_fin').val(turno.hora_fin);
+
+                    // Nuevos campos de tiempo
+                    $('#edit_hora_entrada_inicio').val(turno.hora_entrada_inicio || '');
+                    $('#edit_hora_entrada_fin').val(turno.hora_entrada_fin || '');
+                    $('#edit_hora_tarde_inicio').val(turno.hora_tarde_inicio || '');
+                    $('#edit_hora_tarde_fin').val(turno.hora_tarde_fin || '');
+                    $('#edit_hora_salida_inicio').val(turno.hora_salida_inicio || '');
+                    $('#edit_hora_salida_fin').val(turno.hora_salida_fin || '');
+
                     $('#edit_dias_semana').val(turno.dias_semana || '');
                     $('#edit_descripcion').val(turno.descripcion || '');
                     $('#edit_orden').val(turno.orden);
@@ -225,14 +234,14 @@ $(document).ready(function() {
                     $('#editTurnoModal').modal('show');
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al obtener los datos del turno');
             }
         });
     });
 
     // Actualizar turno
-    $('#updateTurno').on('click', function() {
+    $('#updateTurno').on('click', function () {
         if (!validateEditHoras()) {
             toastr.error('Por favor, corrija los errores en el horario');
             return;
@@ -250,14 +259,14 @@ $(document).ready(function() {
             url: default_server + "/json/turnos/" + id,
             type: 'PUT',
             data: formData,
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     $('#editTurnoModal').modal('hide');
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 if (xhr.status === 422) {
                     $('.is-invalid').removeClass('is-invalid');
                     $('.invalid-feedback').remove();
@@ -275,7 +284,7 @@ $(document).ready(function() {
                     toastr.error('Error al actualizar el turno');
                 }
             },
-            complete: function() {
+            complete: function () {
                 btn.find('.spinner-border').addClass('d-none');
                 btn.prop('disabled', false);
             }
@@ -283,7 +292,7 @@ $(document).ready(function() {
     });
 
     // Cambiar estado de turno
-    $('#turnos-datatable').on('click', '.change-status', function() {
+    $('#turnos-datatable').on('click', '.change-status', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -293,23 +302,23 @@ $(document).ready(function() {
         $.ajax({
             url: default_server + "/json/turnos/" + id + "/status",
             type: 'PATCH',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
                     toastr.success(response.message);
                 }
             },
-            error: function() {
+            error: function () {
                 toastr.error('Error al cambiar el estado del turno');
             },
-            complete: function() {
+            complete: function () {
                 btn.prop('disabled', false);
             }
         });
     });
 
     // Eliminar turno
-    $('#turnos-datatable').on('click', '.delete-turno', function() {
+    $('#turnos-datatable').on('click', '.delete-turno', function () {
         var id = $(this).data('id');
         var btn = $(this);
 
@@ -319,20 +328,20 @@ $(document).ready(function() {
             $.ajax({
                 url: default_server + "/json/turnos/" + id,
                 type: 'DELETE',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
                         toastr.success(response.message);
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     if (xhr.status === 400) {
                         toastr.error(xhr.responseJSON.message);
                     } else {
                         toastr.error('Error al eliminar el turno');
                     }
                 },
-                complete: function() {
+                complete: function () {
                     btn.prop('disabled', false);
                 }
             });
@@ -340,18 +349,18 @@ $(document).ready(function() {
     });
 
     // Validaciones adicionales
-    $('#codigo, #edit_codigo').on('input', function() {
+    $('#codigo, #edit_codigo').on('input', function () {
         // Convertir a mayúsculas
         $(this).val($(this).val().toUpperCase());
     });
 
-    $('#dias_semana, #edit_dias_semana').on('input', function() {
+    $('#dias_semana, #edit_dias_semana').on('input', function () {
         // Convertir a mayúsculas
         $(this).val($(this).val().toUpperCase());
     });
 
     // Validar que el orden sea un número positivo
-    $('#orden, #edit_orden').on('input', function() {
+    $('#orden, #edit_orden').on('input', function () {
         var val = parseInt($(this).val());
         if (val < 0 || isNaN(val)) $(this).val(0);
     });

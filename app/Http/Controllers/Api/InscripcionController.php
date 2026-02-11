@@ -748,7 +748,8 @@ class InscripcionController extends Controller
                 $estudiante->numero_documento,
                 $primerRegistro->fecha_registro,
                 min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
-                $ciclo
+                $ciclo,
+                $inscripcion->turno_id
             );
 
             $data['detalle_asistencias'] = $detalleAsistencias;
@@ -963,7 +964,7 @@ class InscripcionController extends Controller
     /**
      * Obtener detalle de asistencias por mes incluyendo faltas
      */
-    private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin, $ciclo = null)
+    private function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin, $ciclo = null, $turno_id = 1)
     {
         // Primero, obtener todos los registros de asistencia
         $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
@@ -988,6 +989,9 @@ class InscripcionController extends Controller
         $detallesPorMes = [];
         $fechaActual = Carbon::parse($fechaInicio)->startOfDay();
         $fechaFinCarbon = Carbon::parse($fechaFin)->endOfDay();
+
+        // Obtener configuración del turno para validar las horas
+        $turnoConfig = \App\Models\Turno::find($turno_id);
 
         while ($fechaActual <= $fechaFinCarbon) {
             // Solo procesar días hábiles según configuración del ciclo
@@ -1027,84 +1031,63 @@ class InscripcionController extends Controller
                     // Procesar los registros del día
                     $registrosDelDia = [];
                     foreach ($registrosPorFecha[$fechaStr] as $reg) {
-                        $hora = Carbon::parse($reg->fecha_registro)->hour;
-                        $horaFormateada = Carbon::parse($reg->fecha_registro)->format('H:i');
+                        $dt = Carbon::parse($reg->fecha_registro);
                         $registrosDelDia[] = [
-                            'hora' => $hora,
-                            'hora_formateada' => $horaFormateada
+                            'hora' => $dt->hour,
+                            'minutos' => $dt->minute,
+                            'hora_formateada' => $dt->format('H:i'),
+                            'total_minutos' => $dt->hour * 60 + $dt->minute
                         ];
                     }
 
                     // Ordenar registros por hora
                     usort($registrosDelDia, function ($a, $b) {
-                        return $a['hora'] - $b['hora'];
+                        return $a['total_minutos'] - $b['total_minutos'];
                     });
 
-                    // Detectar turno y asignar entrada/salida
-                    $primerRegistro = $registrosDelDia[0]['hora'];
-                    $esTurnoManana = $primerRegistro < 14;
+                    $entrada = null;
+                    $salida = null;
+                    $esTarde = false;
 
-                    if ($esTurnoManana) {
-                        // TURNO MAÑANA
-                        foreach ($registrosDelDia as $reg) {
-                            if ($reg['hora'] < 10 && !$datosDelDia['hora_entrada']) {
-                                $datosDelDia['hora_entrada'] = $reg['hora_formateada'];
-                            }
-                            if ($reg['hora'] >= 12 && $reg['hora'] <= 14) {
-                                $datosDelDia['hora_salida'] = $reg['hora_formateada'];
-                            }
-                        }
-
-                        // Valores por defecto si no se encontraron
-                        if (!$datosDelDia['hora_entrada'] && count($registrosDelDia) > 0) {
-                            $datosDelDia['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
-                        }
-                        if (!$datosDelDia['hora_salida'] && count($registrosDelDia) > 1) {
-                            $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
-                        }
-                    } else {
-                        // TURNO TARDE
-                        $todosRegistrosTarde = true;
-                        foreach ($registrosDelDia as $reg) {
-                            if ($reg['hora'] < 18) {
-                                $todosRegistrosTarde = false;
-                                break;
-                            }
-                        }
-
-                        if ($todosRegistrosTarde) {
-                            $datosDelDia['hora_entrada'] = 'Sin registro';
-                            $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
-                        } else {
-                            foreach ($registrosDelDia as $reg) {
-                                if ($reg['hora'] < 18 && !$datosDelDia['hora_entrada']) {
-                                    $datosDelDia['hora_entrada'] = $reg['hora_formateada'];
-                                }
-                                if ($reg['hora'] >= 18) {
-                                    $datosDelDia['hora_salida'] = $reg['hora_formateada'];
-                                }
-                            }
-
-                            if (!$datosDelDia['hora_entrada'] && count($registrosDelDia) > 0) {
-                                $datosDelDia['hora_entrada'] = $registrosDelDia[0]['hora_formateada'];
-                            }
-                            if (!$datosDelDia['hora_salida'] && count($registrosDelDia) > 1) {
-                                $datosDelDia['hora_salida'] = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
-                            }
+                    // Aplicar lógica según el turno oficial del estudiante y su configuración en BD
+                    foreach ($registrosDelDia as $reg) {
+                        $cat = $this->categorizarAsistencia($reg['total_minutos'], $turnoConfig);
+                        
+                        if ($cat === 'Entrada' && !$entrada) {
+                            $entrada = $reg['hora_formateada'];
+                        } elseif ($cat === 'Tarde' && !$entrada) {
+                            $entrada = $reg['hora_formateada'];
+                            $esTarde = true;
+                        } elseif ($cat === 'Salida') {
+                            $salida = $reg['hora_formateada']; // El último registro de salida gana
                         }
                     }
 
-                    // Limpiar valores nulos
-                    if (!$datosDelDia['hora_entrada']) {
-                        $datosDelDia['hora_entrada'] = 'Sin registro';
+                    // Fallbacks si no se detectó nada específico por categorías pero hay registros
+                    if (!$entrada && count($registrosDelDia) > 0) {
+                        $entrada = $registrosDelDia[0]['hora_formateada'];
+                        // Determinar si fue tarde comparando con los límites del turno
+                        $minEntrada = $registrosDelDia[0]['total_minutos'];
+                        if (($turno_id == 1 && $minEntrada > 445) || ($turno_id == 2 && $minEntrada > 915)) {
+                            $esTarde = true;
+                        }
                     }
-                    if (!$datosDelDia['hora_salida']) {
-                        $datosDelDia['hora_salida'] = '-';
+                    
+                    if (!$salida && count($registrosDelDia) > 1) {
+                        // Si hay más de un registro, el último es la salida (si no se marcó por categoría)
+                        if (!$salida || $salida === $entrada) {
+                             $salida = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
+                        }
                     }
+
+                    $datosDelDia['hora_entrada'] = $entrada ?: 'Sin registro';
+                    $datosDelDia['hora_salida'] = ($salida && $salida !== $entrada) ? $salida : '-';
+                    $datosDelDia['es_tarde'] = $esTarde;
                 } else {
                     // NO ASISTIÓ
                     $datosDelDia['hora_entrada'] = 'FALTA';
                     $datosDelDia['hora_salida'] = 'FALTA';
+                    $datosDelDia['es_tarde'] = false;
                     $detallesPorMes[$mes]['dias_falta']++;
                 }
 
@@ -1118,6 +1101,51 @@ class InscripcionController extends Controller
 
         return $detallesPorMes;
     }
+
+    /**
+     * Categorizar asistencia según los rangos configurados en la BD
+     */
+    private function categorizarAsistencia($minutos, $turno)
+    {
+        if (!$turno) return 'Otro';
+
+        // Helper para convertir hora HH:MM a minutos
+        $toMin = function($timeStr) {
+            if (!$timeStr) return null;
+            $parts = explode(':', $timeStr);
+            return intval($parts[0]) * 60 + intval($parts[1]);
+        };
+
+        $entradaInicio = $toMin($turno->hora_entrada_inicio);
+        $entradaFin = $toMin($turno->hora_entrada_fin);
+        $tardeInicio = $toMin($turno->hora_tarde_inicio);
+        $tardeFin = $toMin($turno->hora_tarde_fin);
+        $salidaInicio = $toMin($turno->hora_salida_inicio);
+        $salidaFin = $toMin($turno->hora_salida_fin);
+
+        // Si no hay configuración, usar fallbacks hardcoded (solo por seguridad)
+        if ($entradaInicio === null) {
+            // Fallback lógica anterior
+            if ($turno->id == 1) { // Mañana
+                if ($minutos >= 390 && $minutos <= 445) return 'Entrada';
+                if ($minutos >= 446 && $minutos <= 620) return 'Tarde';
+                if ($minutos >= 621 && $minutos <= 840) return 'Salida';
+            } else { // Tarde
+                if ($minutos >= 870 && $minutos <= 915) return 'Entrada';
+                if ($minutos >= 916 && $minutos <= 1169) return 'Tarde';
+                if ($minutos >= 1165 && $minutos <= 1320) return 'Salida';
+            }
+            return 'Otro';
+        }
+
+        // Lógica Dinámica
+        if ($minutos >= $entradaInicio && $minutos <= $entradaFin) return 'Entrada';
+        if ($minutos >= $tardeInicio && $minutos <= $tardeFin) return 'Tarde';
+        if ($minutos >= $salidaInicio && $minutos <= $salidaFin) return 'Salida'; // Solapamiento manejado por orden de ifs si fuera necesario, pero aquí son rangos distintos
+
+        return 'Otro';
+    }
+
     public function exportarAsistenciasPorCiclo(Request $request): BinaryFileResponse
     {
         $request->validate([
