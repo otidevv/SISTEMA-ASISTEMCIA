@@ -9,7 +9,7 @@
         /* CONFIGURACIÓN PARA DOMPDF Y A4 */
         @page {
             size: A4;
-            margin: 1cm;
+            margin: 0; /* Manejamos el margen con un div para el borde */
         }
 
         body {
@@ -22,8 +22,46 @@
             padding: 0;
         }
 
+        /* BORDE DE PÁGINA PROFESIONAL */
+        .page-border {
+            position: fixed;
+            top: 10mm;
+            left: 10mm;
+            right: 10mm;
+            bottom: 10mm;
+            border: 2px solid #1a365d;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .page-border-inner {
+            position: fixed;
+            top: 11.5mm;
+            left: 11.5mm;
+            right: 11.5mm;
+            bottom: 11.5mm;
+            border: 1px solid #1a365d;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* MARCA DE AGUA ENTRELÍNEAS */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.05;
+            z-index: -10;
+            width: 400px;
+            text-align: center;
+        }
+
         .container {
-            width: 100%;
+            width: 170mm; /* A4 width minus padding/borders */
+            margin: 15mm auto;
+            position: relative;
+            z-index: 1;
         }
 
         /* TABLAS DE ESTRUCTURA */
@@ -36,52 +74,17 @@
         /* ENCABEZADO INSTITUCIONAL */
         .inst-header {
             width: 100%;
-            border-bottom: 2px solid #2c3e50;
+            border-bottom: 4px double #1a365d;
             margin-bottom: 15px;
             padding-bottom: 10px;
         }
 
-        .header-logo {
-            width: 100px;
-            vertical-align: middle;
-        }
-
-        .header-info {
-            text-align: right;
-            vertical-align: middle;
-        }
-
-        .header-info h1 {
-            color: #2c3e50;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 0;
-            text-transform: uppercase;
-        }
-
-        .header-info p {
-            color: #555;
-            font-size: 11px;
-            margin: 2px 0;
-        }
-
-        .ciclo-badge {
-            background-color: #2c3e50;
-            color: white;
-            padding: 3px 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 10px;
-            display: inline-block;
-            margin-top: 5px;
-        }
-
         /* TÍTULOS DE SECCIÓN */
         .section-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 12px;
+            color: #1a365d;
+            margin-bottom: 10px;
             padding-bottom: 3px;
             border-bottom: 1px solid #dee2e6;
             text-transform: uppercase;
@@ -90,15 +93,16 @@
         /* TABLA DE DETALLE */
         .month-header-table {
             width: 100%;
-            background-color: #34495e;
+            background-color: #1a365d;
             color: white;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .month-header-table td {
-            padding: 6px 10px;
+            padding: 5px 10px;
             font-weight: bold;
+            font-size: 10px;
         }
 
         .data-table {
@@ -108,46 +112,71 @@
         }
 
         .data-table th {
-            background-color: #f8f9fa;
-            color: #333;
-            padding: 6px;
-            font-size: 9px;
+            background-color: #f1f5f9;
+            color: #1a365d;
+            padding: 5px;
+            font-size: 8px;
             text-transform: uppercase;
             font-weight: bold;
-            border: 1px solid #dee2e6;
+            border: 1px solid #cbd5e1;
             text-align: center;
         }
 
         .data-table td {
-            padding: 5px;
-            border: 1px solid #dee2e6;
-            font-size: 10px;
+            padding: 4px;
+            border: 1px solid #cbd5e1;
+            font-size: 9px;
             text-align: center;
         }
 
         .falta-row {
-            background-color: #fff1f0;
+            background-color: #fff5f5;
         }
 
-        .text-success { color: #27ae60; font-weight: bold; }
-        .text-danger { color: #e74c3c; font-weight: bold; }
-        .text-muted { color: #777; font-style: italic; }
+        .text-success { color: #059669; font-weight: bold; }
+        .text-danger { color: #dc2626; font-weight: bold; }
+        .text-muted { color: #64748b; font-style: italic; }
+
+        /* SECCIÓN DE FIRMAS */
+        .signature-container {
+            margin-top: 40px;
+            width: 100%;
+        }
+
+        .signature-box {
+            width: 200px;
+            text-align: center;
+            border-top: 1px solid #1a365d;
+            padding-top: 5px;
+            margin: 0 auto;
+        }
+
+        /* QR AREA */
+        .qr-box {
+            position: absolute;
+            bottom: 30px;
+            right: 0;
+            width: 70px;
+            text-align: center;
+            padding: 5px;
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
 
         /* FOOTER */
         .footer {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #2c3e50;
+            margin-top: 25px;
+            padding-top: 10px;
+            border-top: 2px solid #1a365d;
             text-align: center;
-            font-size: 9px;
-            color: #555;
+            font-size: 8px;
+            color: #475569;
         }
 
         .page-break {
             page-break-after: always;
         }
 
-        /* ESTILOS ESPECÍFICOS PARA PDF */
         .no-break {
             page-break-inside: avoid;
         }
@@ -155,11 +184,27 @@
 </head>
 
 <body>
+    <!-- ELEMENTOS DECORATIVOS FIJOS -->
+    <div class="page-border"></div>
+    <div class="page-border-inner"></div>
+    
+    <div class="watermark">
+        @php
+            $logoWPath = public_path('assets/images/logo unamad constancia.png');
+            $logoWData = file_exists($logoWPath) 
+                ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoWPath)) 
+                : null;
+        @endphp
+        @if($logoWData)
+            <img src="{{ $logoWData }}" style="width: 100%;">
+        @endif
+    </div>
+
     <div class="container">
         <!-- ENCABEZADO INSTITUCIONAL (Sincronizado con Constancia de Vacante) -->
         <table class="table-layout inst-header" style="border-bottom: 4px double #1a365d; background: #f8fafc; border-radius: 8px 8px 0 0;">
             <tr>
-                <td style="width: 85px; padding: 10px 15px; vertical-align: middle;">
+                <td style="width: 85px; padding: 10px; vertical-align: middle;">
                     @php
                         $logoUnamad = public_path('assets/images/logo unamad constancia.png');
                         $logoUnamadData = file_exists($logoUnamad) 
@@ -167,9 +212,7 @@
                             : null;
                     @endphp
                     @if($logoUnamadData)
-                        <img src="{{ $logoUnamadData }}" alt="Logo UNAMAD" style="width: 75px; height: auto;">
-                    @else
-                        <div style="width:65px;height:65px;border:1px solid #1a365d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#1a365d;font-weight:bold;text-align:center;">UNAMAD</div>
+                        <img src="{{ $logoUnamadData }}" alt="Logo UNAMAD" style="width: 70px; height: auto;">
                     @endif
                 </td>
                 <td style="text-align: center; vertical-align: middle; padding: 10px 0;">
@@ -183,7 +226,7 @@
                         Reporte de Asistencia - Ciclo: {{ $ciclo->nombre }}
                     </div>
                 </td>
-                <td style="width: 85px; padding: 10px 15px; text-align: right; vertical-align: middle;">
+                <td style="width: 85px; padding: 10px; text-align: right; vertical-align: middle;">
                     @php
                         $logoCepre = public_path('assets/images/logo cepre costancia.png');
                         $logoCepreData = file_exists($logoCepre) 
@@ -191,16 +234,11 @@
                             : null;
                     @endphp
                     @if($logoCepreData)
-                        <img src="{{ $logoCepreData }}" alt="Logo CEPRE" style="width: 75px; height: auto;">
-                    @else
-                        <div style="width:65px;height:65px;border:1px solid #1a365d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#1a365d;font-weight:bold;text-align:center;">CEPRE</div>
+                        <img src="{{ $logoCepreData }}" alt="Logo CEPRE" style="width: 70px; height: auto;">
                     @endif
                 </td>
             </tr>
         </table>
-
-        <!-- Espaciador -->
-        <div style="height: 10px;"></div>
 
         <!-- SECCIÓN DE INFORMACIÓN DEL ESTUDIANTE -->
         @include('reportes.partials.info-estudiante')
@@ -239,28 +277,28 @@
             <!-- DETALLE DE ASISTENCIAS POR MES -->
             @if (isset($detalle_asistencias) && count($detalle_asistencias) > 0)
                 <div class="page-break"></div>
+                <!-- Mostrar borde nuevamente en pág 2 si DomPDF lo permite vía fixed -->
 
                 <div class="section-title">Detalle Mensual de Asistencias</div>
 
                 @foreach ($detalle_asistencias as $mesKey => $mes)
-                    <div class="no-break">
+                    <div class="no-break" style="margin-bottom: 10px;">
                         <table class="month-header-table">
                             <tr>
                                 <td>{{ strtoupper($mes['mes']) }} {{ $mes['anio'] }}</td>
-                                <td style="text-align: right; font-size: 10px;">
-                                    ASISTIDOS: <strong>{{ $mes['dias_asistidos'] }}</strong> | 
-                                    FALTAS: <strong>{{ $mes['dias_falta'] }}</strong>
+                                <td style="text-align: right; font-size: 9px;">
+                                    ASISTIDOS: {{ $mes['dias_asistidos'] }} | FALTAS: {{ $mes['dias_falta'] }}
                                 </td>
                             </tr>
                         </table>
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%;">Fecha</th>
-                                    <th style="width: 20%;">Día</th>
-                                    <th style="width: 20%;">Entrada</th>
-                                    <th style="width: 20%;">Salida</th>
-                                    <th style="width: 20%;">Estado</th>
+                                    <th style="width: 18%;">Fecha</th>
+                                    <th style="width: 18%;">Día</th>
+                                    <th style="width: 18%;">Entrada</th>
+                                    <th style="width: 18%;">Salida</th>
+                                    <th style="width: 28%;">Estado del Registro</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -276,9 +314,9 @@
                                         </td>
                                         <td>
                                             @if ($registro['asistio'])
-                                                <span class="text-success">Asistió</span>
+                                                <span class="text-success">ASISTENCIA REGISTRADA</span>
                                             @else
-                                                <span class="text-danger">Falta</span>
+                                                <span class="text-danger">INASISTENCIA / FALTA</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -288,6 +326,30 @@
                     </div>
                 @endforeach
             @endif
+
+            <!-- SECCIÓN DE FIRMAS AL FINAL (no-break para que no se separe la línea del cargo) -->
+            <div class="no-break signature-container">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; padding-top: 50px;">
+                            <div class="qr-box" style="position: static; margin-left: 20px; text-align: left; border: none;">
+                                @php
+                                    $qrData = 'data:image/svg+xml;base64,' . base64_encode('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="Arial" font-size="8">E-Sello</text></svg>');
+                                @endphp
+                                <img src="{{ $qrData }}" width="50" style="display: block; margin-bottom: 5px;">
+                                <span style="font-size: 7px; color: #94a3b8; font-family: monospace;">VAL-{{ $estudiante->numero_documento }}-{{ date('Y') }}</span>
+                            </div>
+                        </td>
+                        <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                            <div class="signature-box">
+                                <span style="font-weight: bold; color: #1a365d; font-size: 10px; display: block;">CONTROL ACADÉMICO</span>
+                                <span style="font-weight: bold; color: #475569; font-size: 9px; display: block;">CEPRE-UNAMAD</span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
         @else
             <div style="background-color: #fff8e1; color: #856404; border: 1px solid #ffc107; padding: 20px; border-radius: 8px; text-align: center; margin-top: 30px;">
                 <h3 style="margin: 0;">Sin registros de asistencia</h3>
@@ -296,11 +358,13 @@
         @endif
 
         <div class="footer">
-            <strong>Políticas de Control:</strong> Amonestación: {{ $ciclo->porcentaje_amonestacion }}% | Inhabilitación: {{ $ciclo->porcentaje_inhabilitacion }}%<br>
-            A/F/T = Asistidos / Faltas / Total Días Hábiles. Datos obtenidos directamente del sistema de control biométrico.<br>
-            <span style="font-weight: bold; display: block; margin-top: 8px;">DOCUMENTO GENERADO POR EL SISTEMA DE GESTIÓN ACADÉMICA</span>
+            <strong>DOCUMENTO OFICIAL GENERADO POR EL SISTEMA DE CONTROL DE ASISTENCIA BIOMÉTRICA - CEPRE UNAMAD</strong><br>
+            Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} | Fecha y Hora: {{ $fecha_generacion }}<br>
+            A/F/T = Asistidos / Faltas / Total Días Hábiles. Documento para uso exclusivamente académico administrativo.
         </div>
     </div>
 </body>
+
+</html>
 
 </html>
