@@ -156,28 +156,51 @@
 
 <body>
     <div class="container">
-        <!-- ENCABEZADO INSTITUCIONAL -->
-        <table class="table-layout inst-header">
+        <!-- ENCABEZADO INSTITUCIONAL (Sincronizado con Constancia de Vacante) -->
+        <table class="table-layout inst-header" style="border-bottom: 4px double #1a365d; background: #f8fafc; border-radius: 8px 8px 0 0;">
             <tr>
-                <td class="header-logo">
+                <td style="width: 85px; padding: 10px 15px; vertical-align: middle;">
                     @php
-                        $logoPath = public_path('assets/images/logo-institucional.png');
-                        if (file_exists($logoPath)) {
-                            $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-                        } else {
-                            $logoData = 'data:image/svg+xml;base64,' . base64_encode('<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#2c3e50"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Arial" font-size="16">LOGO</text></svg>');
-                        }
+                        $logoUnamad = public_path('assets/images/logo unamad constancia.png');
+                        $logoUnamadData = file_exists($logoUnamad) 
+                            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoUnamad)) 
+                            : null;
                     @endphp
-                    <img src="{{ $logoData }}" alt="Logo" style="max-width: 80px;">
+                    @if($logoUnamadData)
+                        <img src="{{ $logoUnamadData }}" alt="Logo UNAMAD" style="width: 75px; height: auto;">
+                    @else
+                        <div style="width:65px;height:65px;border:1px solid #1a365d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#1a365d;font-weight:bold;text-align:center;">UNAMAD</div>
+                    @endif
                 </td>
-                <td class="header-info">
-                    <h1>REPORTE DE ASISTENCIA</h1>
-                    <p>Centro de Preparación Académica - Gestión de Control Académico</p>
-                    <div class="ciclo-badge">CICLO: {{ $ciclo->nombre }}</div>
-                    <p style="font-size: 10px; margin-top: 5px;">Generado el: {{ $fecha_generacion }}</p>
+                <td style="text-align: center; vertical-align: middle; padding: 10px 0;">
+                    <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; color: #1a365d; margin-bottom: 2px;">
+                        Universidad Nacional Amazónica de Madre de Dios
+                    </div>
+                    <div style="font-size: 11pt; font-weight: bold; color: #4a5568; font-style: italic; margin-bottom: 4px;">
+                        "Centro Pre-Universitario"
+                    </div>
+                    <div style="background-color: #1a365d; color: white; padding: 2px 15px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; text-transform: uppercase;">
+                        Reporte de Asistencia - Ciclo: {{ $ciclo->nombre }}
+                    </div>
+                </td>
+                <td style="width: 85px; padding: 10px 15px; text-align: right; vertical-align: middle;">
+                    @php
+                        $logoCepre = public_path('assets/images/logo cepre costancia.png');
+                        $logoCepreData = file_exists($logoCepre) 
+                            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoCepre)) 
+                            : null;
+                    @endphp
+                    @if($logoCepreData)
+                        <img src="{{ $logoCepreData }}" alt="Logo CEPRE" style="width: 75px; height: auto;">
+                    @else
+                        <div style="width:65px;height:65px;border:1px solid #1a365d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7pt;color:#1a365d;font-weight:bold;text-align:center;">CEPRE</div>
+                    @endif
                 </td>
             </tr>
         </table>
+
+        <!-- Espaciador -->
+        <div style="height: 10px;"></div>
 
         <!-- SECCIÓN DE INFORMACIÓN DEL ESTUDIANTE -->
         @include('reportes.partials.info-estudiante')
