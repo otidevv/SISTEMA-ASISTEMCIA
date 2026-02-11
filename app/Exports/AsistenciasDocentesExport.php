@@ -300,13 +300,27 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $fechaFin = $fechaFin->min($fechaFinCiclo);
                     
                     if ($fechaInicio->month === $fechaFin->month && $fechaInicio->year === $fechaFin->year) {
-                        return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - ' . 
+                    $nombreCiclo = strtoupper($ciclo->nombre);
+                    if (str_starts_with($nombreCiclo, 'CICLO')) {
+                        $tituloCiclo = $nombreCiclo;
+                    } else {
+                        $tituloCiclo = 'CICLO ' . $nombreCiclo;
+                    }
+
+                    return $tituloCiclo . ' - ' . 
                                $fechaInicio->format('d') . ' AL ' . 
                                $fechaFin->format('d') . ' DE ' . 
                                strtoupper($fechaInicio->locale('es')->monthName) . ' ' . 
                                $fechaInicio->year;
                     } else {
-                        return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - ' . 
+                        $nombreCiclo = strtoupper($ciclo->nombre);
+                        if (str_starts_with($nombreCiclo, 'CICLO')) {
+                            $tituloCiclo = $nombreCiclo;
+                        } else {
+                            $tituloCiclo = 'CICLO ' . $nombreCiclo;
+                        }
+
+                        return $tituloCiclo . ' - ' . 
                                $fechaInicio->format('d') . ' DE ' . 
                                strtoupper($fechaInicio->locale('es')->monthName) . ' AL ' . 
                                $fechaFin->format('d') . ' DE ' . 
@@ -325,12 +339,27 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $fechaInicioMes = $fechaInicioMes->max($fechaInicioCiclo);
                     $fechaFinMes = $fechaFinMes->min($fechaFinCiclo);
                     
-                    return 'CICLO ' . strtoupper($this->selectedCicloAcademico) . ' - MES DE ' . 
+                    $nombreCiclo = strtoupper($ciclo->nombre);
+                    if (str_starts_with($nombreCiclo, 'CICLO')) {
+                        $tituloCiclo = $nombreCiclo;
+                    } else {
+                        $tituloCiclo = 'CICLO ' . $nombreCiclo;
+                    }
+
+                    return $tituloCiclo . ' - MES DE ' . 
                            strtoupper($fechaMes->locale('es')->monthName) . ' ' . $this->selectedYear;
                 }
                 
                 // Ciclo completo
-                return 'CICLO ACADÉMICO ' . strtoupper($this->selectedCicloAcademico) . ' (' . 
+                $nombreCiclo = strtoupper($ciclo->nombre);
+                if (str_starts_with($nombreCiclo, 'CICLO')) {
+                    $tituloCiclo = $nombreCiclo;
+                } else {
+                    $tituloCiclo = 'CICLO ACADÉMICO ' . $nombreCiclo;
+                }
+
+                // Ciclo completo
+                return $tituloCiclo . ' (' . 
                        $fechaInicioCiclo->format('d/m/Y') . ' - ' . $fechaFinCiclo->format('d/m/Y') . ')';
             }
         }
@@ -632,14 +661,14 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // Fila con Vº Bº y nombre del responsable (al mismo nivel)
                     $dataRows->push([
                         'Vº Bº', '', '', '', '', '',
-                        'Ing. Roy Kevin Bonifacio Fernández',
+                        'Ing. Roy Kevin Bonifacio Fernandez',
                         '', '', '', '', '', ''
                     ]);
                     
                     // Fila con descripción del servicio (centrada debajo del nombre)
                     $dataRows->push([
                         '', '', '', '', '', '',
-                        'SERVICIO ESPECIALIZADO EN GESTIÓN DE SERVICIOS INFORMÁTICOS DEL CEPRE UNAMAD',
+                        'SERVICIO ESPECIALIZADO EN GESTION DE SERVICIOS INFORMATICOS',
                         '', '', '', '', '', ''
                     ]);
 
