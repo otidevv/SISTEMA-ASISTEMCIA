@@ -292,13 +292,12 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="width: 50%; padding-top: 50px;">
-                            <div class="qr-box" style="position: static; margin-left: 20px; text-align: left; border: none;">
-                                @php
-                                    $qrData = 'data:image/svg+xml;base64,' . base64_encode('<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#eee"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="Arial" font-size="8">E-Sello</text></svg>');
-                                @endphp
-                                <img src="{{ $qrData }}" width="50" style="display: block; margin-bottom: 5px;">
-                                <span style="font-size: 7px; color: #94a3b8; font-family: monospace;">VAL-{{ $estudiante->numero_documento }}-{{ date('Y') }}</span>
-                            </div>
+                            @if(isset($qr_code) && $qr_code)
+                                <div style="margin-left: 20px; text-align: left;">
+                                    <img src="data:image/png;base64,{{ $qr_code }}" width="60" style="display: block; margin-bottom: 5px; border: 1px solid #cbd5e1; padding: 2px;">
+                                    <span style="font-size: 7px; color: #64748b; font-family: monospace; display: block;">VERIF: {{ $codigo_verificacion }}</span>
+                                </div>
+                            @endif
                         </td>
                         <td style="width: 50%; text-align: center; vertical-align: bottom;">
                             <div class="signature-box">

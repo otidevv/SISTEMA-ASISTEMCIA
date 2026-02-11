@@ -10,6 +10,7 @@ use App\Models\RegistroAsistencia;
 use App\Exports\AsistenciasPorCicloExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -683,8 +684,22 @@ class InscripcionController extends Controller
             'turno' => $inscripcion->turno,
             'aula' => $inscripcion->aula,
             'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s'),
-            'primer_registro' => $primerRegistro
+            'primer_registro' => $primerRegistro,
+            'qr_code' => null,
+            'codigo_verificacion' => null
         ];
+
+        // Generar código de verificación y QR (estilo Constancia de Vacante)
+        $numeroVerificacion = 'ATT-' . $estudiante->numero_documento . '-' . date('Ymd');
+        $codigoVerificacion = $numeroVerificacion . '-' . md5($inscripcion->id . now()->timestamp);
+        $urlValidacion = route('constancias.validar', $codigoVerificacion);
+        
+        try {
+            $data['qr_code'] = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
+            $data['codigo_verificacion'] = $codigoVerificacion;
+        } catch (\Exception $e) {
+            \Log::error('Error al generar QR para reporte de asistencia: ' . $e->getMessage());
+        }
 
         // Información de asistencia
         $infoAsistencia = [];
