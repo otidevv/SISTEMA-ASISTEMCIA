@@ -1066,9 +1066,13 @@ class InscripcionController extends Controller
                     // Fallbacks si no se detectó nada específico por categorías pero hay registros
                     if (!$entrada && count($registrosDelDia) > 0) {
                         $entrada = $registrosDelDia[0]['hora_formateada'];
-                        // Determinar si fue tarde comparando con los límites del turno
+                        // Determinar si fue tarde comparando con los límites del turno dinámicamente
                         $minEntrada = $registrosDelDia[0]['total_minutos'];
-                        if (($turno_id == 1 && $minEntrada > 445) || ($turno_id == 2 && $minEntrada > 915)) {
+                        
+                        // Usar hora_entrada_fin como límite de tolerancia si existe
+                        $limiteEntrada = $turnoConfig ? $this->timeStringToMinutes($turnoConfig->hora_entrada_fin) : null;
+                        
+                        if ($limiteEntrada && $minEntrada > $limiteEntrada) {
                             $esTarde = true;
                         }
                     }
@@ -1103,25 +1107,28 @@ class InscripcionController extends Controller
     }
 
     /**
+     * Helper para convertir hora HH:MM a minutos
+     */
+    private function timeStringToMinutes($timeStr)
+    {
+        if (!$timeStr) return null;
+        $parts = explode(':', $timeStr);
+        return intval($parts[0]) * 60 + intval($parts[1]);
+    }
+
+    /**
      * Categorizar asistencia según los rangos configurados en la BD
      */
     private function categorizarAsistencia($minutos, $turno)
     {
         if (!$turno) return 'Otro';
 
-        // Helper para convertir hora HH:MM a minutos
-        $toMin = function($timeStr) {
-            if (!$timeStr) return null;
-            $parts = explode(':', $timeStr);
-            return intval($parts[0]) * 60 + intval($parts[1]);
-        };
-
-        $entradaInicio = $toMin($turno->hora_entrada_inicio);
-        $entradaFin = $toMin($turno->hora_entrada_fin);
-        $tardeInicio = $toMin($turno->hora_tarde_inicio);
-        $tardeFin = $toMin($turno->hora_tarde_fin);
-        $salidaInicio = $toMin($turno->hora_salida_inicio);
-        $salidaFin = $toMin($turno->hora_salida_fin);
+        $entradaInicio = $this->timeStringToMinutes($turno->hora_entrada_inicio);
+        $entradaFin = $this->timeStringToMinutes($turno->hora_entrada_fin);
+        $tardeInicio = $this->timeStringToMinutes($turno->hora_tarde_inicio);
+        $tardeFin = $this->timeStringToMinutes($turno->hora_tarde_fin);
+        $salidaInicio = $this->timeStringToMinutes($turno->hora_salida_inicio);
+        $salidaFin = $this->timeStringToMinutes($turno->hora_salida_fin);
 
         // Si no hay configuración en BD, retornar Otro (sin fallback hardcoded)
         if ($entradaInicio === null) {

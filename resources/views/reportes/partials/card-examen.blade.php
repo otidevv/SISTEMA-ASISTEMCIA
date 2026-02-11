@@ -12,7 +12,7 @@
         <tr>
             <td style="padding: 10px 15px; vertical-align: middle;">
                 <span style="font-weight: 800; font-size: 14px;">
-                    @if($class == 'success') ✓ @elseif($class == 'warning') ! @else ✕ @endif
+                    @if($class == 'success') <span style="font-family: DejaVu Sans, sans-serif;">✔</span> @elseif($class == 'warning') <span style="font-family: DejaVu Sans, sans-serif;">⚠</span> @else <span style="font-family: DejaVu Sans, sans-serif;">✖</span> @endif
                     {{ $titulo }} - FECHA: {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}
                 </span>
             </td>
