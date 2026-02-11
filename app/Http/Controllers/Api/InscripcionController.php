@@ -1123,18 +1123,8 @@ class InscripcionController extends Controller
         $salidaInicio = $toMin($turno->hora_salida_inicio);
         $salidaFin = $toMin($turno->hora_salida_fin);
 
-        // Si no hay configuración, usar fallbacks hardcoded (solo por seguridad)
+        // Si no hay configuración en BD, retornar Otro (sin fallback hardcoded)
         if ($entradaInicio === null) {
-            // Fallback lógica anterior
-            if ($turno->id == 1) { // Mañana
-                if ($minutos >= 390 && $minutos <= 445) return 'Entrada';
-                if ($minutos >= 446 && $minutos <= 620) return 'Tarde';
-                if ($minutos >= 621 && $minutos <= 840) return 'Salida';
-            } else { // Tarde
-                if ($minutos >= 870 && $minutos <= 915) return 'Entrada';
-                if ($minutos >= 916 && $minutos <= 1169) return 'Tarde';
-                if ($minutos >= 1165 && $minutos <= 1320) return 'Salida';
-            }
             return 'Otro';
         }
 
