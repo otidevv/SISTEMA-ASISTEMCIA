@@ -522,7 +522,7 @@
         $('#constancias-table').DataTable({
             responsive: true,
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+                url: '{{ asset("assets/libs/datatables.net/i18n/Spanish.json") }}'
             },
             order: [[5, 'desc']],
             columnDefs: [
