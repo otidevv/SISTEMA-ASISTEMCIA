@@ -1428,24 +1428,14 @@ class PostulacionController extends Controller
         $labelPeriodo = "Estado Actual (Snapshot)";
         $periodoTipo = $periodo; // 'hoy', '1', '2', '3'
         
-        // Determinar periodo de examen
-        $examenPeriodo = null;
+        // Determinar periodo de examen usando el helper
+        $periodoId = ($periodoTipo === 'hoy' ? null : (int)$periodoTipo);
+        $examenPeriodo = \App\Helpers\AsistenciaHelper::getExamenPeriodoPorId($ciclo, $periodoId);
+        
         if ($periodoTipo == 'hoy') {
-            $examenPeriodo = \App\Helpers\AsistenciaHelper::determinarExamenActivo($ciclo);
-            if ($examenPeriodo) {
-                $labelPeriodo = $examenPeriodo['nombre'] . " (Snapshot Actual)";
-            }
-        } elseif ($periodoTipo == '1') {
-            $examenPeriodo = ['fecha_inicio' => $ciclo->fecha_inicio, 'fecha_examen' => $ciclo->fecha_primer_examen, 'nombre' => 'Primer Examen'];
-            $labelPeriodo = "Primer Examen (Corte)";
-        } elseif ($periodoTipo == '2') {
-            $inicio2 = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
-            $examenPeriodo = ['fecha_inicio' => $inicio2, 'fecha_examen' => $ciclo->fecha_segundo_examen, 'nombre' => 'Segundo Examen'];
-            $labelPeriodo = "Segundo Examen (Periodo Independiente)";
-        } elseif ($periodoTipo == '3') {
-            $inicio3 = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
-            $examenPeriodo = ['fecha_inicio' => $inicio3, 'fecha_examen' => $ciclo->fecha_tercer_examen, 'nombre' => 'Tercer Examen'];
-            $labelPeriodo = "Tercer Examen (Periodo Independiente)";
+            $labelPeriodo = ($examenPeriodo['nombre'] ?? 'Actual') . " (Snapshot Actual)";
+        } else {
+            $labelPeriodo = ($examenPeriodo['nombre'] ?? 'Examen') . ($periodoTipo == '1' ? " (Corte)" : " (Periodo Independiente)");
         }
 
         $fechaFin = $examenPeriodo ? Carbon::parse($examenPeriodo['fecha_examen']) : $hoy;
@@ -1465,12 +1455,6 @@ class PostulacionController extends Controller
         foreach ($inscripciones as $inscripcion) {
             $estudiante = $inscripcion->estudiante;
             if (!$estudiante) continue;
-
-            // Mapear periodoTipo a ID numérico para el helper
-            $periodoId = null;
-            if ($periodoTipo === 'primer_examen') $periodoId = 1;
-            elseif ($periodoTipo === 'segundo_examen') $periodoId = 2;
-            elseif ($periodoTipo === 'tercer_examen') $periodoId = 3;
 
             // Usar AsistenciaHelper que ya tiene la lógica del Excel, Dashboard y ahora soporta periodos
             $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo, $periodoId);
