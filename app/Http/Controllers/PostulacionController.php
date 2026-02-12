@@ -1466,30 +1466,14 @@ class PostulacionController extends Controller
             $estudiante = $inscripcion->estudiante;
             if (!$estudiante) continue;
 
-            // Usar AsistenciaHelper que ya tiene la lógica del Excel unificada
-            // Nota: obtenerEstadoHabilitacion ya maneja la lógica de periodos si le pasamos el ciclo
-            $infoHabilitacion = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo);
+            // Mapear periodoTipo a ID numérico para el helper
+            $periodoId = null;
+            if ($periodoTipo === 'primer_examen') $periodoId = 1;
+            elseif ($periodoTipo === 'segundo_examen') $periodoId = 2;
+            elseif ($periodoTipo === 'tercer_examen') $periodoId = 3;
 
-            // Sin embargo, el reporte PDF permite filtrar por periodo específico
-            // Así que si no es 'hoy', debemos forzar el periodo
-            if ($periodoTipo !== 'hoy') {
-                $info = $this->calcularAsistenciaExamen(
-                    $estudiante->numero_documento,
-                    $examenPeriodo['fecha_inicio'],
-                    $fechaFin,
-                    $ciclo
-                );
-            } else {
-                // Si es 'hoy', usamos el helper que es más robusto y coincide con el Excel
-                $info = [
-                    'estado' => $infoHabilitacion['estado'],
-                    'dias_falta' => $infoHabilitacion['faltas'],
-                    'dias_asistidos' => $infoHabilitacion['asistencias'],
-                    'dias_habiles_transcurridos' => $infoHabilitacion['dias_habiles_totales'], // Usamos totales para el limite
-                    'porcentaje_asistencia_actual' => $infoHabilitacion['dias_habiles_totales'] > 0 ? round(($infoHabilitacion['asistencias'] / $infoHabilitacion['dias_habiles_totales']) * 100, 2) : 100,
-                    'limite_inhabilitacion' => $infoHabilitacion['limite_inhabilitacion']
-                ];
-            }
+            // Usar AsistenciaHelper que ya tiene la lógica del Excel, Dashboard y ahora soporta periodos
+            $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo, $periodoId);
 
             if ($info['estado'] === 'inhabilitado') {
                 $inhabilitados[] = [
@@ -1498,10 +1482,10 @@ class PostulacionController extends Controller
                     'carrera' => $inscripcion->carrera ? $inscripcion->carrera->nombre : 'N/A',
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'turno' => $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
-                    'faltas' => $info['dias_falta'],
-                    'asistencias' => $info['dias_asistidos'],
-                    'total_dias' => $info['dias_habiles_transcurridos'],
-                    'porcentaje' => $info['porcentaje_asistencia_actual'],
+                    'faltas' => $info['faltas'],
+                    'asistencias' => $info['asistencias'],
+                    'total_dias' => $info['dias_habiles_totales'] ?? 0,
+                    'porcentaje' => $info['dias_habiles_totales'] > 0 ? round(($info['asistencias'] / $info['dias_habiles_totales']) * 100, 2) : 100,
                     'limite' => $info['limite_inhabilitacion']
                 ];
                 $estudiantesInhabilitadosCount++;
@@ -1533,77 +1517,5 @@ class PostulacionController extends Controller
 
         $pdf = Pdf::loadView('reportes.inhabilitados-pdf', $data);
         return $pdf->download('reporte_inhabilitados_' . $ciclo->codigo . '_' . date('Ymd') . '.pdf');
-    }
-
-    private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
-    {
-        $hoy = Carbon::now()->startOfDay();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
-        $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
-
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
-
-        if ($fechaInicioCarbon > $hoy) {
-            return ['estado' => 'regular', 'dias_falta' => 0, 'dias_asistidos' => 0, 'dias_habiles_transcurridos' => 0, 'porcentaje_asistencia_actual' => 100, 'limite_inhabilitacion' => 0];
-        }
-
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
-        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
-
-        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-            ->whereBetween('fecha_registro', [$fechaInicioCarbon->startOfDay(), $fechaFinCalculo->endOfDay()])
-            ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct()
-            ->get()
-            ->pluck('fecha');
-
-        $registrosAsistencia = 0;
-        foreach ($registros as $fecha) {
-            $carbonFecha = Carbon::parse($fecha);
-            if ($ciclo->esDiaHabil($carbonFecha)) {
-                $registrosAsistencia++;
-            }
-        }
-
-        $diasFaltaActuales = $diasHabilesTranscurridos - $registrosAsistencia;
-        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
-        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
-
-        $estado = 'regular';
-        if ($diasFaltaActuales >= $limiteInhabilitacion) {
-            $estado = 'inhabilitado';
-        } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
-            $estado = 'amonestado';
-        }
-
-        return [
-            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
-            'dias_asistidos' => $registrosAsistencia,
-            'dias_falta' => $diasFaltaActuales,
-            'porcentaje_asistencia_actual' => $diasHabilesTranscurridos > 0 ? round(($registrosAsistencia / $diasHabilesTranscurridos) * 100, 2) : 100,
-            'limite_inhabilitacion' => $limiteInhabilitacion,
-            'estado' => $estado
-        ];
-    }
-
-    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
-    {
-        $inicio = Carbon::parse($fechaInicio)->startOfDay();
-        $fin = Carbon::parse($fechaFin)->startOfDay();
-        $diasHabiles = 0;
-        while ($inicio <= $fin) {
-            if ($ciclo->esDiaHabil($inicio)) $diasHabiles++;
-            $inicio->addDay();
-        }
-        return $diasHabiles;
-    }
-
-    private function getSiguienteDiaHabil($fecha, $ciclo)
-    {
-        $dia = Carbon::parse($fecha)->addDay();
-        while (!$ciclo->esDiaHabil($dia)) {
-            $dia->addDay();
-        }
-        return $dia;
     }
 }

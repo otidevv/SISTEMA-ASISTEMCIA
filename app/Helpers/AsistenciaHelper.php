@@ -15,7 +15,7 @@ class AsistenciaHelper
      * @param string $nro_documento
      * @return array
      */
-    public static function obtenerEstadoHabilitacion($nro_documento, $ciclo = null)
+    public static function obtenerEstadoHabilitacion($nro_documento, $ciclo = null, $periodoId = null)
     {
         if (!$ciclo) {
             $inscripcion = \App\Models\Inscripcion::whereHas('estudiante', function ($q) use ($nro_documento) {
@@ -47,7 +47,11 @@ class AsistenciaHelper
             ];
         }
 
-        $examenActivo = self::determinarExamenActivo($cicloActivo);
+        if ($periodoId) {
+            $examenActivo = self::getExamenPeriodoPorId($cicloActivo, $periodoId);
+        } else {
+            $examenActivo = self::determinarExamenActivo($cicloActivo);
+        }
 
         if (!$examenActivo) {
             return [
@@ -145,6 +149,40 @@ class AsistenciaHelper
             'fecha_inicio_periodo' => $fechaInicioConteo->toDateString(),
             'es_proyeccion' => $diasHabilesTranscurridos < $diasHabilesTotales
         ];
+    }
+
+    public static function getExamenPeriodoPorId($ciclo, $periodoId)
+    {
+        if ($periodoId == 1) {
+            return [
+                'id' => 1,
+                'nombre' => 'Primer Examen',
+                'fecha_inicio' => $ciclo->fecha_inicio,
+                'fecha_examen' => $ciclo->fecha_primer_examen
+            ];
+        }
+
+        if ($periodoId == 2) {
+            $inicioSegundo = self::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
+            return [
+                'id' => 2,
+                'nombre' => 'Segundo Examen',
+                'fecha_inicio' => $inicioSegundo,
+                'fecha_examen' => $ciclo->fecha_segundo_examen
+            ];
+        }
+
+        if ($periodoId == 3) {
+            $inicioTercero = self::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
+            return [
+                'id' => 3,
+                'nombre' => 'Tercer Examen',
+                'fecha_inicio' => $inicioTercero,
+                'fecha_examen' => $ciclo->fecha_tercer_examen
+            ];
+        }
+
+        return self::determinarExamenActivo($ciclo);
     }
 
     public static function determinarExamenActivo($ciclo)
