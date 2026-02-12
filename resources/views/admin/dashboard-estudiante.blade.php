@@ -937,11 +937,7 @@
                                                 @endif
                                             @else
                                                 <div class="alert alert-danger text-center fw-bold">
-                                                    @if ($examenYaPaso)
-                                                        <i class="mdi mdi-close-circle-outline me-2"></i>Inhabilitado para rendir este examen.
-                                                    @else
-                                                        <i class="mdi mdi-close-circle-outline me-2"></i>Riesgo de inhabilitación por faltas.
-                                                    @endif
+                                                    <i class="mdi mdi-close-circle-outline me-2"></i>INHABILITADO: NO PUEDE RENDIR EXAMEN SEGÚN REGLAMENTO ACADÉMICO
                                                 </div>
                                             @endif
                                         @endif
@@ -1053,11 +1049,7 @@
                                                     @endif
                                                 @else
                                                     <div class="alert alert-danger text-center fw-bold">
-                                                        @if ($examenYaPaso)
-                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Inhabilitado para rendir este examen.
-                                                        @else
-                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Riesgo de inhabilitación por faltas.
-                                                        @endif
+                                                        <i class="mdi mdi-close-circle-outline me-2"></i>INHABILITADO: NO PUEDE RENDIR EXAMEN SEGÚN REGLAMENTO ACADÉMICO
                                                     </div>
                                                 @endif
                                             @endif
@@ -1171,11 +1163,7 @@
                                                     @endif
                                                 @else
                                                     <div class="alert alert-danger text-center fw-bold">
-                                                        @if ($examenYaPaso)
-                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Inhabilitado para rendir este examen.
-                                                        @else
-                                                            <i class="mdi mdi-close-circle-outline me-2"></i>Riesgo de inhabilitación por faltas.
-                                                        @endif
+                                                        <i class="mdi mdi-close-circle-outline me-2"></i>INHABILITADO: NO PUEDE RENDIR EXAMEN SEGÚN REGLAMENTO ACADÉMICO
                                                     </div>
                                                 @endif
                                             @endif

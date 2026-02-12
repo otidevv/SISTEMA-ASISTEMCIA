@@ -774,11 +774,11 @@ class DashboardController extends Controller
 
         if ($diasFaltaActuales >= $limiteInhabilitacion) {
             $estado = 'inhabilitado';
-            $mensaje = 'Has superado el límite de inasistencias.';
+            $mensaje = 'Usted ha superado el límite máximo de inasistencias (30%). De acuerdo con el Reglamento Académico, queda INHABILITADO y NO puede rendir el presente examen.';
             $puedeRendir = false;
         } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
             $estado = 'amonestado';
-            $mensaje = 'Has sido amonestado por inasistencias.';
+            $mensaje = 'ADVERTENCIA: Ha superado el umbral de amonestación (20%). De continuar con inasistencias, quedará inhabilitado para el examen según el reglamento.';
         }
 
         return [
