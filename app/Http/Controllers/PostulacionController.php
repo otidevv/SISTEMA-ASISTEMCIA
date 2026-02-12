@@ -1466,30 +1466,30 @@ class PostulacionController extends Controller
             $estudiante = $inscripcion->estudiante;
             if (!$estudiante) continue;
 
-            // Obtener el primer registro del ciclo (indispensable según lógica del dashboard)
-            $primerRegistroCiclo = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
-                ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
-                ->orderBy('fecha_registro')
-                ->first();
+            // Usar AsistenciaHelper que ya tiene la lógica del Excel unificada
+            // Nota: obtenerEstadoHabilitacion ya maneja la lógica de periodos si le pasamos el ciclo
+            $infoHabilitacion = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo);
 
-            // Si no tiene registros en todo el ciclo, se omite (según lógica del dashboard admin)
-            if (!$primerRegistroCiclo) continue;
-
-            $fechaInicioCalculo = $examenPeriodo ? $examenPeriodo['fecha_inicio'] : $ciclo->fecha_inicio;
-            
-            // Si estamos en el primer periodo, ajustamos el inicio a su primera asistencia si fue tardía
-            if (!$examenPeriodo || $examenPeriodo['nombre'] == 'Primer Examen') {
-                if (Carbon::parse($primerRegistroCiclo->fecha_registro)->gt(Carbon::parse($fechaInicioCalculo))) {
-                    $fechaInicioCalculo = $primerRegistroCiclo->fecha_registro;
-                }
+            // Sin embargo, el reporte PDF permite filtrar por periodo específico
+            // Así que si no es 'hoy', debemos forzar el periodo
+            if ($periodoTipo !== 'hoy') {
+                $info = $this->calcularAsistenciaExamen(
+                    $estudiante->numero_documento,
+                    $fechaInicioCalculo,
+                    $fechaFin,
+                    $ciclo
+                );
+            } else {
+                // Si es 'hoy', usamos el helper que es más robusto y coincide con el Excel
+                $info = [
+                    'estado' => $infoHabilitacion['estado'],
+                    'dias_falta' => $infoHabilitacion['faltas'],
+                    'dias_asistidos' => $infoHabilitacion['asistencias'],
+                    'dias_habiles_transcurridos' => $infoHabilitacion['dias_habiles_totales'], // Usamos totales para el limite
+                    'porcentaje_asistencia_actual' => $infoHabilitacion['dias_habiles_totales'] > 0 ? round(($infoHabilitacion['asistencias'] / $infoHabilitacion['dias_habiles_totales']) * 100, 2) : 100,
+                    'limite_inhabilitacion' => $infoHabilitacion['limite_inhabilitacion']
+                ];
             }
-
-            $info = $this->calcularAsistenciaExamen(
-                $estudiante->numero_documento,
-                $fechaInicioCalculo,
-                $fechaFin,
-                $ciclo
-            );
 
             if ($info['estado'] === 'inhabilitado') {
                 $inhabilitados[] = [

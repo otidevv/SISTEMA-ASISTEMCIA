@@ -148,7 +148,7 @@ class DashboardController extends Controller
                     ->where('es_activo', true)
                     ->where(function ($query) {
                         $query->whereNull('fecha_expiracion')
-                              ->orWhere('fecha_expiracion', '>', now());
+                               ->orWhere('fecha_expiracion', '>', now());
                     })
                     ->where('fecha_publicacion', '<=', now())
                     ->orderBy('fecha_publicacion', 'desc')
@@ -472,7 +472,7 @@ class DashboardController extends Controller
                     );
 
                     if ($ciclo->fecha_segundo_examen) {
-                        $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen);
+                        $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
                         $data['infoAsistencia']['segundo_examen'] = $this->calcularAsistenciaExamen(
                             $user->numero_documento,
                             $inicioSegundo,
@@ -482,7 +482,7 @@ class DashboardController extends Controller
                     }
 
                     if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                        $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen);
+                        $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
                         $data['infoAsistencia']['tercer_examen'] = $this->calcularAsistenciaExamen(
                             $user->numero_documento,
                             $inicioTercero,
@@ -740,17 +740,25 @@ class DashboardController extends Controller
             ];
         }
 
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen);
-        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo);
+        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
+        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
 
-        $diasConAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon->startOfDay(),
-                $fechaFinCalculo->endOfDay()
+                $fechaInicioCarbon->copy()->startOfDay(),
+                $fechaFinCalculo->copy()->endOfDay()
             ])
-            ->whereRaw('DAYOFWEEK(fecha_registro) BETWEEN 2 AND 6')
-            ->select(DB::raw('COUNT(DISTINCT DATE(fecha_registro)) as total'))
-            ->value('total') ?? 0;
+            ->select(DB::raw('DATE(fecha_registro) as fecha'))
+            ->distinct()
+            ->get()
+            ->pluck('fecha');
+
+        $diasConAsistencia = 0;
+        foreach ($registros as $fecha) {
+            if ($ciclo->esDiaHabil(Carbon::parse($fecha))) {
+                $diasConAsistencia++;
+            }
+        }
 
         $diasFaltaActuales = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
         $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
@@ -815,74 +823,36 @@ class DashboardController extends Controller
 
     private function obtenerEstadisticasGenerales($ciclo)
     {
-        $hoy = Carbon::now()->startOfDay();
-        
-        // El reporte de Excel usa la lógica acumulada desde el inicio del ciclo hasta hoy
-        $fechaInicioCiclo = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
-        $fechaFinEsfuerzo = $hoy;
-        $diaFinHabil = $ciclo->incluye_sabados ? 7 : 6;
-
-        // Primeras asistencias por estudiante en TODO el ciclo (tal como lo hace el reporte)
-        $primerasAsistencias = DB::table('registros_asistencia as ra')
-            ->join('users as u', 'ra.nro_documento', '=', 'u.numero_documento')
-            ->join('inscripciones as i', 'u.id', '=', 'i.estudiante_id')
-            ->where('i.ciclo_id', $ciclo->id)
-            ->where('i.estado_inscripcion', 'activo')
-            ->whereBetween('ra.fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
-            ->select('i.estudiante_id', DB::raw('MIN(ra.fecha_registro) as fecha_primer_asistencia'))
-            ->groupBy('i.estudiante_id')
-            ->pluck('fecha_primer_asistencia', 'i.estudiante_id');
-
-        // Conteo de asistencias acumuladas hasta hoy (FILTRANDO DÍAS HÁBILES IGUAL QUE EL EXCEL)
-        $conteoAsistencias = DB::table('inscripciones as i')
-            ->join('users as u', 'i.estudiante_id', '=', 'u.id')
-            ->join('registros_asistencia as ra', 'u.numero_documento', '=', 'ra.nro_documento')
-            ->where('i.ciclo_id', $ciclo->id)
-            ->where('i.estado_inscripcion', 'activo')
-            ->whereBetween('ra.fecha_registro', [
-                $ciclo->fecha_inicio, 
-                $fechaFinEsfuerzo->copy()->endOfDay()
-            ])
-            ->whereRaw("DAYOFWEEK(ra.fecha_registro) BETWEEN 2 AND $diaFinHabil")
-            ->select('i.estudiante_id', DB::raw('COUNT(DISTINCT DATE(ra.fecha_registro)) as dias_asistidos'))
-            ->groupBy('i.estudiante_id')
-            ->pluck('dias_asistidos', 'i.estudiante_id');
-            
-        $estudiantesIds = DB::table('inscripciones')
+        $inscripciones = DB::table('inscripciones')
             ->where('ciclo_id', $ciclo->id)
             ->where('estado_inscripcion', 'activo')
-            ->pluck('estudiante_id');
+            ->get();
         
-        $totalEstudiantes = $estudiantesIds->count();
+        $totalEstudiantes = $inscripciones->count();
         $estudiantesRegulares = 0;
         $estudiantesAmonestados = 0;
         $estudiantesInhabilitados = 0;
         $estudiantesSinRegistros = 0;
         
-        foreach ($estudiantesIds as $estudianteId) {
-            if (!isset($primerasAsistencias[$estudianteId])) {
+        foreach ($inscripciones as $inscripcion) {
+            // Buscar si tiene al menos un registro en el ciclo
+            $tieneRegistros = DB::table('registros_asistencia')
+                ->where('nro_documento', $inscripcion->estudiante_id_documento ?? DB::table('users')->where('id', $inscripcion->estudiante_id)->value('numero_documento'))
+                ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+                ->exists();
+
+            if (!$tieneRegistros) {
                 $estudiantesSinRegistros++;
                 continue;
             }
 
-            $fechaInicioPersonal = Carbon::parse($primerasAsistencias[$estudianteId])->startOfDay();
+            // Usar AsistenciaHelper que ya tiene la lógica del Excel unificada
+            $doc = DB::table('users')->where('id', $inscripcion->estudiante_id)->value('numero_documento');
+            $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($doc, $ciclo);
             
-            // Si la fecha de inicio es futura, no hay faltas aún (Regular)
-            if ($fechaInicioPersonal->gt($hoy)) {
-                $estudiantesRegulares++;
-                continue;
-            }
-
-            $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicioPersonal, $fechaFinEsfuerzo, $ciclo);
-            $diasAsistidos = $conteoAsistencias[$estudianteId] ?? 0;
-            
-            // Lógica de porcentaje idéntica a ReporteController::calcularAsistenciaHastaFecha
-            $porcentajeAsistencia = $diasHabilesTranscurridos > 0 ? round(($diasAsistidos / $diasHabilesTranscurridos) * 100, 2) : 0;
-            $porcentajeFalta = 100 - $porcentajeAsistencia;
-            
-            if ($porcentajeFalta >= $ciclo->porcentaje_inhabilitacion) {
+            if ($info['estado'] === 'inhabilitado') {
                 $estudiantesInhabilitados++;
-            } elseif ($porcentajeFalta >= $ciclo->porcentaje_amonestacion) {
+            } elseif ($info['estado'] === 'amonestado') {
                 $estudiantesAmonestados++;
             } else {
                 $estudiantesRegulares++;
