@@ -1,0 +1,291 @@
+:root {
+    /* Colores Institucionales CEPRE UNAMAD */
+    --cepre-pink: #ec008c;
+    --cepre-green: #8cc63f;
+    --cepre-blue: #00aeef;
+    --cepre-dark-blue: #2b5a6f;
+    --cepre-yellow: #fff200;
+
+    /* Sobreescritura de Bootstrap/Shreyu */
+    --bs-primary: var(--cepre-pink);
+    --bs-primary-rgb: 236, 0, 140;
+
+    --bs-success: var(--cepre-green);
+    --bs-success-rgb: 140, 198, 63;
+
+    --bs-info: var(--cepre-blue);
+    --bs-info-rgb: 0, 174, 239;
+
+    --bs-link-color: var(--cepre-pink);
+    --bs-link-hover-color: #d1007a;
+}
+
+/* Micro-detalles Premium de IU */
+::selection {
+    background-color: rgba(236, 0, 140, 0.3);
+    color: #fff;
+}
+
+/* Scrollbar Personalizado */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cepre-pink);
+}
+
+/* Barra de Carga Global (Top-bar) */
+#cepre-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: var(--cepre-pink);
+    z-index: 10000;
+    box-shadow: 0 0 10px var(--cepre-pink);
+    transition: width 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+    pointer-events: none;
+}
+
+/* Ajustes Premium para Componentes */
+
+/* Botones */
+.btn-primary {
+    background-color: var(--cepre-pink) !important;
+    border-color: var(--cepre-pink) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 6px rgba(236, 0, 140, 0.2);
+    transition: all 0.3s ease !important;
+}
+
+.btn-primary:hover {
+    background-color: #d1007a !important;
+    border-color: #d1007a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(236, 0, 140, 0.3) !important;
+}
+
+.btn-success {
+    background-color: var(--cepre-green) !important;
+    border-color: var(--cepre-green) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 6px rgba(140, 198, 63, 0.2);
+}
+
+/* Sidebar y Logo Box - CORRECCIÓN MODO OSCURO */
+
+/* Solo aplicar fondos blancos SI NO estamos en modo oscuro */
+html[data-bs-theme="light"] .left-side-menu,
+html[data-bs-theme="light"] .logo-box {
+    background-color: #fff !important;
+}
+
+/* En modo oscuro, dejar que Shreyu maneje los fondos, pero mantenemos sombras y transiciones */
+[data-bs-theme="dark"] .left-side-menu,
+[data-bs-theme="dark"] .logo-box {
+    background-color: inherit;
+    /* Permite que el CSS del tema gane */
+}
+
+.left-side-menu {
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+.side-menu>li>a,
+#side-menu>li>a {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Color de hover y expandido siempre Rosa Cepre */
+.side-menu>li>a:hover,
+#side-menu>li>a:hover,
+.side-menu>li>a[aria-expanded="true"],
+#side-menu>li>a[aria-expanded="true"] {
+    color: var(--cepre-pink) !important;
+    background-color: rgba(236, 0, 140, 0.05) !important;
+}
+
+.side-menu>li>a i,
+#side-menu>li>a i {
+    font-size: 1.15rem;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.side-menu>li>a:hover i,
+#side-menu>li>a:hover i,
+.side-menu>li>a[aria-expanded="true"] i,
+#side-menu>li>a[aria-expanded="true"] i {
+    color: var(--cepre-pink) !important;
+}
+
+.side-menu>li>a:hover i,
+#side-menu>li>a:hover i {
+    transform: translateX(3px);
+}
+
+/* Flechas indicadoras */
+.side-menu>li>a[aria-expanded="true"] .menu-arrow {
+    color: var(--cepre-pink) !important;
+}
+
+.menuitem-active>a {
+    color: var(--cepre-pink) !important;
+    background-color: rgba(236, 0, 140, 0.08) !important;
+    border-right: 3px solid var(--cepre-pink) !important;
+}
+
+.menuitem-active i {
+    color: var(--cepre-pink) !important;
+}
+
+/* Submenús (Second Level) */
+.nav-second-level li a:hover,
+.nav-second-level li a:focus,
+.nav-second-level li a.active {
+    color: var(--cepre-pink) !important;
+}
+
+.menu-title {
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem !important;
+    padding-top: 1.5rem !important;
+}
+
+/* Header */
+html[data-bs-theme="light"] .navbar-custom {
+    background-color: #fff !important;
+    border-bottom: 1px solid #f1f3fa;
+}
+
+/* Tablas y Cards Premium */
+.table thead th {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* Quitar fondos forzados en modo oscuro para tablas */
+[data-bs-theme="dark"] .table thead th {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.card {
+    border: none !important;
+    border-radius: 0.75rem !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html[data-bs-theme="light"] .card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.card:hover {
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Enfoque de Inputs */
+.form-control:focus {
+    border-color: var(--cepre-pink) !important;
+    box-shadow: 0 0 0 0.15rem rgba(236, 0, 140, 0.15) !important;
+}
+
+/* degradados de Marca Premium */
+.bg-cepre-gradient {
+    background: linear-gradient(135deg, var(--cepre-pink) 0%, #ff4fb1 100%) !important;
+    color: #fff !important;
+}
+
+.bg-cepre-blue-gradient {
+    background: linear-gradient(135deg, var(--cepre-blue) 0%, #0081b1 100%) !important;
+    color: #fff !important;
+}
+
+.bg-cepre-success-gradient {
+    background: linear-gradient(135deg, var(--cepre-green) 0%, #6da12c 100%) !important;
+    color: #fff !important;
+}
+
+/* Elevación Corporativa */
+.shadow-cepre {
+    box-shadow: 0 10px 25px -5px rgba(236, 0, 140, 0.15) !important;
+}
+
+/* Animaciones */
+.skeleton-shimmer {
+    background-size: 1000px 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+html[data-bs-theme="light"] .skeleton-shimmer {
+    background-image: linear-gradient(90deg, #f0f2f5 25%, #e2e8f0 50%, #f0f2f5 75%);
+}
+
+[data-bs-theme="dark"] .skeleton-shimmer {
+    background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.content-page {
+    animation: fadeInSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Utilities */
+.text-cepre-pink {
+    color: var(--cepre-pink) !important;
+}
+
+.text-cepre-green {
+    color: var(--cepre-green) !important;
+}
+
+.text-cepre-blue {
+    color: var(--cepre-blue) !important;
+}
+
+.badge-cepre-pink {
+    background-color: var(--cepre-pink);
+    color: #fff;
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+    font-weight: 600;
+}

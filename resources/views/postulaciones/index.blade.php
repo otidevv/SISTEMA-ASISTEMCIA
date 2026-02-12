@@ -952,7 +952,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="{{ asset('js/postulaciones/index.js') }}"></script>
+    @vite('resources/js/postulaciones/index.js')
     
     <script>
         // Variables globales para el flujo de postulación
@@ -1876,7 +1876,7 @@
             function initWizardRegistroCompleto() {
                 // Cargar script de wizard para registro + postulación
                 const script = document.createElement('script');
-                script.src = "{{ asset('js/postulaciones/wizard-completo.js') }}";
+                script.src = "{{ Vite::asset('resources/js/postulaciones/wizard-completo.js') }}";
                 script.onload = function() {
                     console.log('Wizard completo inicializado');
                 };
@@ -1888,7 +1888,7 @@
                 // Para usuarios existentes, usar un formulario simplificado
                 // que solo pida datos académicos y documentos
                 const script = document.createElement('script');
-                script.src = "{{ asset('js/postulaciones/wizard-simplificado.js') }}";
+                script.src = "{{ Vite::asset('resources/js/postulaciones/wizard-simplificado.js') }}";
                 script.onload = function() {
                     console.log('Wizard simplificado inicializado para postulante existente');
                     

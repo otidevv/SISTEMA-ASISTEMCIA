@@ -3059,7 +3059,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <!-- Custom JS for Public Modal -->
-    <script src="{{ asset('js/postulaciones/publico-modal.js') }}?v={{ time() }}"></script>
+    <script src="{{ Vite::asset('resources/js/postulaciones/publico-modal.js') }}"></script>
 
     <script>
         $(document).ready(function() {

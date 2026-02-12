@@ -13,7 +13,7 @@
         window.default_server = "{{ url('/') }}";
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="{{ asset('js/aulas/index.js') }}"></script>
+    @vite('resources/js/aulas/index.js')
 @endpush
 
 @section('content')

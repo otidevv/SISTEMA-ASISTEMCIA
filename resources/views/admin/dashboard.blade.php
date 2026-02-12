@@ -152,7 +152,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/dashboard-progressive-loading.js') }}"></script>
+@vite('resources/js/dashboard-progressive-loading.js')
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
     const apiToken = document.querySelector('meta[name="csrf-token"]')?.content;

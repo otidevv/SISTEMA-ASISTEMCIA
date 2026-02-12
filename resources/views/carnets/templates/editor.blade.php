@@ -479,5 +479,5 @@
     </script>
     @endif
     
-    <script src="{{ asset('js/carnets/template-editor.js') }}"></script>
+    @vite('resources/js/carnets/template-editor.js')
 @endpush

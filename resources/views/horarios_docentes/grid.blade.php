@@ -689,5 +689,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('assets/js/horarios-grid.js') }}?v={{ filemtime(public_path('assets/js/horarios-grid.js')) }}"></script>
+@vite('resources/js/horarios-grid.js')
 @endpush

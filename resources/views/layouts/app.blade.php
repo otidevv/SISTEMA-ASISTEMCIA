@@ -41,7 +41,7 @@
     <link href="{{ asset('assets/libs/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-default-stylesheet" />
-    <link href="{{ asset('css/brand-cepre.css') }}" rel="stylesheet" type="text/css" />
+    @vite(['resources/css/brand-cepre.css'])
     
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
@@ -265,15 +265,10 @@
     <script src="{{ asset('assets/js/pages/datatables.init.js') }}"></script>
 
     <!-- App js -->
+    @vite(['resources/js/csrf-handler.js'])
     <script src="{{ asset('assets/js/app.js') }}"></script>
     
     <!-- Toastr JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.js"></script>
-    
-    <!-- CSRF Token Handler - DEBE cargarse después de jQuery y SweetAlert2 -->
-    <script src="{{ asset('js/csrf-handler.js') }}"></script>
     
     <script>
         // Configuración global de toastr

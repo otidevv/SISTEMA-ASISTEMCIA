@@ -596,5 +596,6 @@
         document.getElementById('masivo_fecha').valueAsDate = new Date();
     });
 </script>
-<script src="{{ asset('js/asistencia/editar_index.js') }}"></script>
+<script src="{{ asset('assets/js/vendor.min.js') }}"></script>
+@vite('resources/js/asistencia/editar_index.js')
 @endpush

@@ -275,5 +275,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('js/carga-horaria/index.js') }}"></script>
+@vite('resources/js/carga-horaria/index.js')
 @endpush
