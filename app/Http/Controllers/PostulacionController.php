@@ -1475,7 +1475,7 @@ class PostulacionController extends Controller
             if ($periodoTipo !== 'hoy') {
                 $info = $this->calcularAsistenciaExamen(
                     $estudiante->numero_documento,
-                    $fechaInicioCalculo,
+                    $examenPeriodo['fecha_inicio'],
                     $fechaFin,
                     $ciclo
                 );
