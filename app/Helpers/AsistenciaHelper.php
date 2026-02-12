@@ -75,8 +75,23 @@ class AsistenciaHelper
             ->orderBy('fecha_registro')
             ->first();
 
+        // Si no tiene ningún registro en todo el ciclo, lo marcamos como desconocido (Sin datos en Excel)
+        if (!$primerRegistro) {
+            return [
+                'estado' => 'desconocido',
+                'detalle' => 'Sin registros biométricos',
+                'puede_rendir' => true,
+                'faltas' => 0,
+                'asistencias' => 0,
+                'examen' => $examenActivo['nombre'] ?? 'N/A',
+                'dias_habiles_totales' => self::contarDiasHabiles($fechaInicioConteo, $fechaExamenCarbon, $cicloActivo),
+                'limite_amonestacion' => 0,
+                'limite_inhabilitacion' => 0
+            ];
+        }
+
         // Si es el primer examen, ajustamos el inicio a su primera asistencia si fue tardía
-        if ($examenActivo['nombre'] === 'Primer Examen' && $primerRegistro) {
+        if ($examenActivo['nombre'] === 'Primer Examen') {
             $fechaPrimerRegistro = Carbon::parse($primerRegistro->fecha_registro)->startOfDay();
             if ($fechaPrimerRegistro->gt($fechaInicioConteo)) {
                 $fechaInicioConteo = $fechaPrimerRegistro;
