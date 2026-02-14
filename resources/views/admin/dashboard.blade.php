@@ -56,6 +56,10 @@
     .bg-vibrant-warning { background: #fd7e14 !important; }
     .bg-vibrant-danger { background: var(--cepre-pink) !important; }
     .bg-vibrant-dark { background: var(--cepre-dark-blue) !important; }
+    .text-vibrant-success { color: var(--cepre-green) !important; }
+    .text-vibrant-warning { color: #fd7e14 !important; }
+    .text-vibrant-danger { color: var(--cepre-pink) !important; }
+    .text-vibrant-dark { color: var(--cepre-dark-blue) !important; }
 </style>
 
 <!-- Page Title -->
@@ -266,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             { label: 'Regulares', count: stats.regulares, pct: stats.porcentaje_regulares, color: 'vibrant-success', bg: '#2ec4b615' },
             { label: 'Amonestados', count: stats.amonestados, pct: stats.porcentaje_amonestados, color: 'vibrant-warning', bg: '#ff9f1c15' },
             { label: 'Inhabilitados', count: stats.inhabilitados, pct: stats.porcentaje_inhabilitados, color: 'vibrant-danger', bg: '#f7258515' },
-            { label: 'Sin Asistencia', count: stats.sin_asistencia, pct: stats.porcentaje_sin_asistencia, color: 'vibrant-dark', bg: '#2b2d4215' }
+            { label: 'Sin Registro', count: stats.sin_asistencia, pct: stats.porcentaje_sin_asistencia, color: 'vibrant-dark', bg: 'rgba(43, 90, 111, 0.12)' }
         ];
 
         document.getElementById('asistencia-chart').innerHTML = items.map(i => `

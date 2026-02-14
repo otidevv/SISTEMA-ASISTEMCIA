@@ -823,9 +823,12 @@ class DashboardController extends Controller
 
     private function obtenerEstadisticasGenerales($ciclo)
     {
-        $inscripciones = DB::table('inscripciones')
-            ->where('ciclo_id', $ciclo->id)
-            ->where('estado_inscripcion', 'activo')
+        // Obtener inscripciones activas con el numero_documento del usuario
+        $inscripciones = DB::table('inscripciones as i')
+            ->join('users as u', 'i.estudiante_id', '=', 'u.id')
+            ->where('i.ciclo_id', $ciclo->id)
+            ->where('i.estado_inscripcion', 'activo')
+            ->select('i.estudiante_id', 'u.numero_documento')
             ->get();
         
         $totalEstudiantes = $inscripciones->count();
@@ -833,21 +836,26 @@ class DashboardController extends Controller
         $estudiantesAmonestados = 0;
         $estudiantesInhabilitados = 0;
         $estudiantesSinRegistros = 0;
+
+        // Obtener todos los documentos que tienen al menos un registro en el rango del ciclo
+        $documentosConRegistro = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $inscripciones->pluck('numero_documento')->filter())
+            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+            ->distinct('nro_documento')
+            ->pluck('nro_documento')
+            ->toArray();
         
         foreach ($inscripciones as $inscripcion) {
-            // Buscar si tiene al menos un registro en el ciclo
-            $tieneRegistros = DB::table('registros_asistencia')
-                ->where('nro_documento', $inscripcion->estudiante_id_documento ?? DB::table('users')->where('id', $inscripcion->estudiante_id)->value('numero_documento'))
-                ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
-                ->exists();
-
-            if (!$tieneRegistros) {
+            $doc = $inscripcion->numero_documento;
+            
+            // Verificar si no tiene documento o no tiene registros
+            if (empty($doc) || !in_array($doc, $documentosConRegistro)) {
                 $estudiantesSinRegistros++;
                 continue;
             }
 
             // Usar AsistenciaHelper que ya tiene la lógica del Excel unificada
-            $doc = DB::table('users')->where('id', $inscripcion->estudiante_id)->value('numero_documento');
             $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($doc, $ciclo);
             
             if ($info['estado'] === 'inhabilitado') {

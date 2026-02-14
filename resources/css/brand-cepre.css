@@ -230,16 +230,20 @@ html[data-bs-theme="light"] .card {
 }
 
 /* Animaciones */
-.skeleton-shimmer {
+.skeleton-shimmer,
+.skeleton {
     background-size: 1000px 100%;
     animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
 }
 
-html[data-bs-theme="light"] .skeleton-shimmer {
+html[data-bs-theme="light"] .skeleton-shimmer,
+html[data-bs-theme="light"] .skeleton {
     background-image: linear-gradient(90deg, #f0f2f5 25%, #e2e8f0 50%, #f0f2f5 75%);
 }
 
-[data-bs-theme="dark"] .skeleton-shimmer {
+[data-bs-theme="dark"] .skeleton-shimmer,
+[data-bs-theme="dark"] .skeleton {
     background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
 }
 

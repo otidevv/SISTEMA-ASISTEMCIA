@@ -291,6 +291,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 pct: stats.porcentaje_inhabilitados,
                 color: 'danger',
                 bg: '#fa709a15'
+            },
+            {
+                label: 'Sin Registro',
+                count: stats.sin_asistencia,
+                pct: stats.porcentaje_sin_asistencia,
+                color: 'secondary',
+                bg: 'rgba(43, 90, 111, 0.12)'
             }
         ];
 
