@@ -148,6 +148,8 @@
         </div>
     </div>
 </div>
+@endsection
+
 @push('css')
 <style>
     /* Modal styles (Simplified for Shreyu theme) */
