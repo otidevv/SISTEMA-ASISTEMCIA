@@ -97,20 +97,21 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             @if($resultado->tiene_pdf)
-                                            <a href="{{ route('resultados-examenes.download', $resultado->id) }}" 
+                                            <button type="button" 
+                                               onclick="openResourceModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}', false)"
                                                class="btn btn-sm btn-info" 
-                                               title="Descargar PDF">
-                                                <i class="mdi mdi-download"></i>
-                                            </a>
+                                               title="Ver PDF">
+                                                <i class="mdi mdi-eye"></i>
+                                            </button>
                                             @endif
                                             
                                             @if($resultado->tiene_link)
-                                            <a href="{{ $resultado->link_externo }}" 
-                                               target="_blank" 
+                                            <button type="button" 
+                                               onclick="openResourceModal('{{ $resultado->link_externo }}', '{{ addslashes($resultado->nombre_examen) }}', true)"
                                                class="btn btn-sm btn-primary" 
                                                title="Ver Link">
                                                 <i class="mdi mdi-open-in-new"></i>
-                                            </a>
+                                            </button>
                                             @endif
                                             
                                             @can('resultados-examenes.edit')
@@ -147,7 +148,140 @@
         </div>
     </div>
 </div>
-@endsection
+@push('css')
+<style>
+    /* Modal styles (Simplified for Shreyu theme) */
+    .resource-modal {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(5px);
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .resource-modal.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-container {
+        width: 90%;
+        max-width: 1200px;
+        height: 90vh;
+        background: #fff;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+
+    .modal-top-bar {
+        padding: 15px 20px;
+        background: #32394e;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-frame-body {
+        flex: 1;
+        background: #f8f9fa;
+        padding: 0;
+    }
+
+    .modal-frame-body iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .btn-modal-close {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+    }
+</style>
+@endpush
+
+@push('modals')
+<div id="resourceModal" class="resource-modal">
+    <div class="modal-container">
+        <div class="modal-top-bar">
+            <h4 class="mb-0" id="resourceModalTitle" style="color: white">Visualizar Recurso</h4>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn-modal-close" onclick="closeResourceModal()">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
+        </div>
+        <div class="modal-frame-body">
+            <iframe id="resourceViewer" src=""></iframe>
+        </div>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+    function openResourceModal(url, title, isLink = false) {
+        const modal = document.getElementById('resourceModal');
+        const viewer = document.getElementById('resourceViewer');
+        const modalTitle = document.getElementById('resourceModalTitle');
+        
+        let finalUrl = url;
+        
+        // Optimize Google Drive links for iframe
+        if (isLink && url.includes('drive.google.com')) {
+            if (url.includes('/view') || url.includes('/edit')) {
+                finalUrl = url.replace(/\/view.*|\/edit.*/, '/preview');
+            }
+        } else if (!isLink) {
+            finalUrl += '#toolbar=0';
+        }
+        
+        viewer.src = finalUrl;
+        modalTitle.textContent = title;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeResourceModal() {
+        const modal = document.getElementById('resourceModal');
+        const viewer = document.getElementById('resourceViewer');
+        
+        modal.classList.remove('active');
+        viewer.src = 'about:blank';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close on click outside
+    document.getElementById('resourceModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeResourceModal();
+        }
+    });
+
+    // Close on ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeResourceModal();
+        }
+    });
+</script>
+@endpush
 
 @push('scripts')
 <script>

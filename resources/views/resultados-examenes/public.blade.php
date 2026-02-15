@@ -688,6 +688,8 @@
             transform: rotate(90deg);
         }
 
+
+
         .modal-body {
             flex: 1;
             padding: 0;
@@ -1206,9 +1208,9 @@
                                     // Determine the primary action for the card
                                     $cardAction = '';
                                     if($resultado->tiene_pdf) {
-                                        $cardAction = "openPdfModal('" . route('resultados-examenes.view', $resultado->id) . "', '" . addslashes($resultado->nombre_examen) . "')";
+                                        $cardAction = "openResourceModal('" . route('resultados-examenes.view', $resultado->id) . "', '" . addslashes($resultado->nombre_examen) . "', false)";
                                     } elseif($resultado->tiene_link) {
-                                        $cardAction = "window.open('" . $resultado->link_externo . "', '_blank')";
+                                        $cardAction = "openResourceModal('" . $resultado->link_externo . "', '" . addslashes($resultado->nombre_examen) . "', true)";
                                     }
                                 @endphp
                                 <div class="result-card animate-on-scroll" @if($cardAction) onclick="{{ $cardAction }}" style="cursor: pointer;" @endif>
@@ -1235,18 +1237,15 @@
 
                                         <div class="result-actions" onclick="event.stopPropagation();">
                                             @if($resultado->tiene_pdf)
-                                                <button onclick="openPdfModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}')"; class="btn-view-pdf">
+                                                <button type="button" onclick="openResourceModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}', false)" class="btn-view-pdf">
                                                     <i class="fas fa-eye"></i> Ver PDF
                                                 </button>
-                                                <a href="{{ route('resultados-examenes.download', $resultado->id) }}" class="btn-download" download>
-                                                    <i class="fas fa-download"></i> Descargar
-                                                </a>
                                             @endif
-
+                                            
                                             @if($resultado->tiene_link)
-                                                <a href="{{ $resultado->link_externo }}" target="_blank" class="btn-link">
+                                                <button type="button" onclick="openResourceModal('{{ $resultado->link_externo }}', '{{ addslashes($resultado->nombre_examen) }}', true)" class="btn-link">
                                                     <i class="fas fa-external-link-alt"></i> Ver Enlace
-                                                </a>
+                                                </button>
                                             @endif
                                         </div>
                                     </div>
@@ -1270,9 +1269,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Visualizar PDF</h3>
-                <button class="modal-close" onclick="closePdfModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button class="modal-close" onclick="closePdfModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
             <div class="modal-body">
                 <iframe id="pdfViewer" src=""></iframe>
@@ -1375,8 +1376,8 @@
         animateElements.forEach(el => observer.observe(el));
 
         // Modal functions
-        function openPdfModal(pdfUrl, title) {
-            console.log('Opening PDF modal:', pdfUrl, title);
+        function openResourceModal(url, title, isLink = false) {
+            console.log('Opening resource modal:', url, title, isLink);
             const modal = document.getElementById('pdfModal');
             const viewer = document.getElementById('pdfViewer');
             const modalTitle = document.getElementById('modalTitle');
@@ -1386,8 +1387,22 @@
                 return;
             }
             
-            viewer.src = pdfUrl;
+            let finalUrl = url;
+            
+            // Optimize Google Drive links for iframe
+            if (isLink && url.includes('drive.google.com')) {
+                if (url.includes('/view') || url.includes('/edit')) {
+                    finalUrl = url.replace(/\/view.*|\/edit.*/, '/preview');
+                    console.log('Optimized Drive URL:', finalUrl);
+                }
+            } else if (!isLink) {
+                // Append toolbar=0 only for internal PDF views
+                finalUrl += '#toolbar=0';
+            }
+            
+            viewer.src = finalUrl;
             modalTitle.textContent = title;
+            
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
             
@@ -1405,7 +1420,7 @@
             const viewer = document.getElementById('pdfViewer');
             
             modal.classList.remove('active');
-            viewer.src = '';
+            viewer.src = 'about:blank';
             document.body.style.overflow = 'auto';
         }
 

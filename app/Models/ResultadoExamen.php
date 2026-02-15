@@ -78,7 +78,7 @@ class ResultadoExamen extends Model
     public function getArchivoPdfUrlAttribute()
     {
         if ($this->archivo_pdf) {
-            return Storage::url($this->archivo_pdf);
+            return Storage::disk('public')->url($this->archivo_pdf);
         }
         return null;
     }
@@ -88,7 +88,7 @@ class ResultadoExamen extends Model
      */
     public function getTienePdfAttribute()
     {
-        return !empty($this->archivo_pdf) && Storage::exists($this->archivo_pdf);
+        return !empty($this->archivo_pdf) && Storage::disk('public')->exists($this->archivo_pdf);
     }
 
     /**
@@ -115,8 +115,8 @@ class ResultadoExamen extends Model
      */
     public function getTamanioArchivoPdfAttribute()
     {
-        if ($this->archivo_pdf && Storage::exists($this->archivo_pdf)) {
-            $bytes = Storage::size($this->archivo_pdf);
+        if ($this->archivo_pdf && Storage::disk('public')->exists($this->archivo_pdf)) {
+            $bytes = Storage::disk('public')->size($this->archivo_pdf);
             $units = ['B', 'KB', 'MB', 'GB'];
             $i = 0;
             while ($bytes >= 1024 && $i < count($units) - 1) {
@@ -136,8 +136,8 @@ class ResultadoExamen extends Model
         parent::boot();
 
         static::deleting(function ($resultado) {
-            if ($resultado->archivo_pdf && Storage::exists($resultado->archivo_pdf)) {
-                Storage::delete($resultado->archivo_pdf);
+            if ($resultado->archivo_pdf && Storage::disk('public')->exists($resultado->archivo_pdf)) {
+                Storage::disk('public')->delete($resultado->archivo_pdf);
             }
         });
     }
