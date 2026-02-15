@@ -1237,7 +1237,7 @@
 
                                         <div class="result-actions" onclick="event.stopPropagation();">
                                             @if($resultado->tiene_pdf && ($resultado->tipo_resultado == 'pdf' || $resultado->tipo_resultado == 'ambos'))
-                                                <button type="button" onclick="openResourceModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}', false)" class="btn-view-pdf">
+                                                <button type="button" onclick="openResourceModal('{{ $resultado->archivo_pdf_url }}', '{{ addslashes($resultado->nombre_examen) }}', false)" class="btn-view-pdf">
                                                     <i class="fas fa-eye"></i> Ver PDF
                                                 </button>
                                             @endif
@@ -1396,8 +1396,16 @@
                     console.log('Optimized Drive URL:', finalUrl);
                 }
             } else if (!isLink) {
-                // Append toolbar=0 only for internal PDF views
-                finalUrl += '#toolbar=0';
+                // Check if mobile device
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    // Use Google Docs Viewer for mobile PDF display
+                    finalUrl = `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+                } else {
+                    // Append toolbar=0 only for internal PDF views on desktop
+                    finalUrl += '#toolbar=0';
+                }
             }
             
             viewer.src = finalUrl;
