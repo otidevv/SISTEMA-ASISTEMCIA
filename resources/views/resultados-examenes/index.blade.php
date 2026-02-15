@@ -96,7 +96,7 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            @if($resultado->tiene_pdf)
+                                            @if($resultado->tiene_pdf && ($resultado->tipo_resultado == 'pdf' || $resultado->tipo_resultado == 'ambos'))
                                             <button type="button" 
                                                onclick="openResourceModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}', false)"
                                                class="btn btn-sm btn-info" 
@@ -105,7 +105,7 @@
                                             </button>
                                             @endif
                                             
-                                            @if($resultado->tiene_link)
+                                            @if($resultado->tiene_link && ($resultado->tipo_resultado == 'link' || $resultado->tipo_resultado == 'ambos'))
                                             <button type="button" 
                                                onclick="openResourceModal('{{ $resultado->link_externo }}', '{{ addslashes($resultado->nombre_examen) }}', true)"
                                                class="btn btn-sm btn-primary" 

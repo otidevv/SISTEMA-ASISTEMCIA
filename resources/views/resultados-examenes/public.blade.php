@@ -1236,13 +1236,13 @@
                                         @endif
 
                                         <div class="result-actions" onclick="event.stopPropagation();">
-                                            @if($resultado->tiene_pdf)
+                                            @if($resultado->tiene_pdf && ($resultado->tipo_resultado == 'pdf' || $resultado->tipo_resultado == 'ambos'))
                                                 <button type="button" onclick="openResourceModal('{{ route('resultados-examenes.view', $resultado->id) }}', '{{ addslashes($resultado->nombre_examen) }}', false)" class="btn-view-pdf">
                                                     <i class="fas fa-eye"></i> Ver PDF
                                                 </button>
                                             @endif
                                             
-                                            @if($resultado->tiene_link)
+                                            @if($resultado->tiene_link && ($resultado->tipo_resultado == 'link' || $resultado->tipo_resultado == 'ambos'))
                                                 <button type="button" onclick="openResourceModal('{{ $resultado->link_externo }}', '{{ addslashes($resultado->nombre_examen) }}', true)" class="btn-link">
                                                     <i class="fas fa-external-link-alt"></i> Ver Enlace
                                                 </button>
