@@ -1207,9 +1207,11 @@
                                 @php
                                     // Determine the primary action for the card
                                     $cardAction = '';
-                                    if($resultado->tiene_pdf) {
+                                    if ($resultado->tipo_resultado == 'link' && $resultado->tiene_link) {
+                                        $cardAction = "openResourceModal('" . $resultado->link_externo . "', '" . addslashes($resultado->nombre_examen) . "', true)";
+                                    } elseif ($resultado->tiene_pdf) {
                                         $cardAction = "openResourceModal('" . route('resultados-examenes.view', $resultado->id) . "', '" . addslashes($resultado->nombre_examen) . "', false)";
-                                    } elseif($resultado->tiene_link) {
+                                    } elseif ($resultado->tiene_link) {
                                         $cardAction = "openResourceModal('" . $resultado->link_externo . "', '" . addslashes($resultado->nombre_examen) . "', true)";
                                     }
                                 @endphp
