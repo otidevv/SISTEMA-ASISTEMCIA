@@ -41,10 +41,75 @@
     <link href="{{ asset('assets/libs/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-default-stylesheet" />
+    <!-- ESTILOS PRINCIPALES DE CEPRE-UNAMAD (RESTAURADOS) -->
     @vite(['resources/css/brand-cepre.css'])
     
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    
+    <style>
+        /* ESTILOS PROFESIONALES INYECTADOS DIRECTAMENTE */
+        :root {
+            --cepre-pink: #ec008c;
+            --cepre-dark-blue: #2b5a6f;
+        }
+
+        /* FONDO OSCURO INSTITUCIONAL (Dark Blue Puro) */
+        .left-side-menu {
+            background-color: var(--cepre-dark-blue) !important;
+            background-image: linear-gradient(180deg, var(--cepre-dark-blue) 0%, #1a3c4a 100%) !important;
+            box-shadow: 4px 0 20px rgba(43, 90, 111, 0.4) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* TEXTOS BLANCOS (Contraste) */
+        .side-menu > li > a, 
+        .side-menu > li > a i, 
+        .side-menu .menu-title,
+        .user-box .dropdown-toggle,
+        .user-box p,
+        .nav-second-level li a {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        /* HOVER STATES */
+        .side-menu > li > a:hover {
+            color: #fff !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .side-menu > li > a:hover i {
+            color: var(--cepre-pink) !important;
+        }
+
+        /* ITEM ACTIVO (Rosa Institucional) */
+        .menuitem-active > a {
+            background: linear-gradient(90deg, rgba(236, 0, 140, 0.2) 0%, transparent 100%) !important;
+            border-right: 3px solid var(--cepre-pink) !important;
+            color: #fff !important;
+        }
+        .menuitem-active > a i {
+            color: var(--cepre-pink) !important;
+        }
+        .nav-second-level li a.active {
+            color: #fff !important;
+            font-weight: bold;
+        }
+
+        /* CAJA DE USUARIO */
+        .user-box {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 1.5rem 1rem !important;
+            margin-bottom: 1rem !important;
+            /* display: block !important; ELIMINADO PARA PERMITIR OCULTAR */
+        }
+        
+        /* LOGO */
+        .logo-box, html[data-bs-theme="light"] .logo-box {
+            background: transparent !important;
+        }
+    </style>
+    
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
     @stack('css')
@@ -100,7 +165,7 @@
     <!-- Theme Settings -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="theme-settings-offcanvas" style="width: 260px;">
         <div class="px-3 m-0 py-2 text-uppercase bg-light offcanvas-header">
-            <h6 class="fw-medium d-block mb-0">Theme Settings</h6>
+            <h6 class="fw-medium d-block mb-0">Configuración de Tema</h6>
 
             <button type="button" class="btn-close fs-14" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
@@ -108,63 +173,63 @@
         <div class="offcanvas-body" data-simplebar style="height: calc(100% - 50px);">
 
             <div class="alert alert-warning" role="alert">
-                <strong>Customize </strong> the overall color scheme, sidebar menu, etc.
+                <strong>Personaliza </strong> el esquema de color general, menú lateral, etc.
             </div>
 
-            <h6 class="fw-medium mt-4 mb-2 pb-1">Color Scheme</h6>
+            <h6 class="fw-medium mt-4 mb-2 pb-1">Esquema de Color</h6>
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="color-scheme-mode" value="light"
                     id="light-mode-check" checked />
-                <label class="form-check-label" for="light-mode-check">Light Mode</label>
+                <label class="form-check-label" for="light-mode-check">Modo Claro</label>
             </div>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="color-scheme-mode" value="dark"
                     id="dark-mode-check" />
-                <label class="form-check-label" for="dark-mode-check">Dark Mode</label>
+                <label class="form-check-label" for="dark-mode-check">Modo Oscuro</label>
             </div>
 
             <!-- Width -->
-            <h6 class="fw-medium mt-4 mb-2 pb-1">Width</h6>
+            <h6 class="fw-medium mt-4 mb-2 pb-1">Ancho</h6>
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="layout-width" value="fluid" id="fluid-check"
                     checked />
-                <label class="form-check-label" for="fluid-check">Fluid</label>
+                <label class="form-check-label" for="fluid-check">Fluido</label>
             </div>
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="layout-width" value="boxed"
                     id="boxed-check" />
-                <label class="form-check-label" for="boxed-check">Boxed</label>
+                <label class="form-check-label" for="boxed-check">Caja</label>
             </div>
 
             <!-- Menu positions -->
-            <h6 class="fw-medium mt-4 mb-2 pb-1">Menu Position</h6>
+            <h6 class="fw-medium mt-4 mb-2 pb-1">Posición del Menú</h6>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="menu-position" value="fixed"
                     id="fixed-check" checked />
-                <label class="form-check-label" for="fixed-check">Fixed</label>
+                <label class="form-check-label" for="fixed-check">Fijo</label>
             </div>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="menu-position" value="scrollable"
                     id="scrollable-check" />
-                <label class="form-check-label" for="scrollable-check">Scrollable</label>
+                <label class="form-check-label" for="scrollable-check">Desplazable</label>
             </div>
 
             <!-- Left Sidebar-->
-            <h6 class="fw-medium mt-4 mb-2 pb-1">Menu Color</h6>
+            <h6 class="fw-medium mt-4 mb-2 pb-1">Color del Menú</h6>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="menu-color" value="light"
                     id="light-check" checked />
-                <label class="form-check-label" for="light-check">Light</label>
+                <label class="form-check-label" for="light-check">Claro</label>
             </div>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="menu-color" value="dark"
                     id="dark-check" />
-                <label class="form-check-label" for="dark-check">Dark</label>
+                <label class="form-check-label" for="dark-check">Oscuro</label>
             </div>
 
             <!-- <div class="form-switch d-flex align-items-center gap-1 mb-1">
@@ -174,69 +239,68 @@
 
             <!-- size -->
             <div id="sidebarSize">
-                <h6 class="fw-medium mt-4 mb-2 pb-1">Left Sidebar Size</h6>
+                <h6 class="fw-medium mt-4 mb-2 pb-1">Tamaño Barra Lateral</h6>
 
                 <div class="form-switch d-flex align-items-center gap-1 mb-1">
                     <input type="checkbox" class="form-check-input mt-0" name="leftsidebar-size" value="default"
                         id="default-size-check" checked />
-                    <label class="form-check-label" for="default-size-check">Default</label>
+                    <label class="form-check-label" for="default-size-check">Por Defecto</label>
                 </div>
 
                 <div class="form-switch d-flex align-items-center gap-1 mb-1">
                     <input type="checkbox" class="form-check-input mt-0" name="leftsidebar-size" value="condensed"
                         id="condensed-check" />
-                    <label class="form-check-label" for="condensed-check">Condensed <small>(Extra Small
-                            size)</small></label>
+                    <label class="form-check-label" for="condensed-check">Condensado <small>(Muy Pequeño)</small></label>
                 </div>
 
                 <div class="form-switch d-flex align-items-center gap-1 mb-1">
                     <input type="checkbox" class="form-check-input mt-0" name="leftsidebar-size" value="compact"
                         id="compact-check" />
-                    <label class="form-check-label" for="compact-check">Compact <small>(Small size)</small></label>
+                    <label class="form-check-label" for="compact-check">Compacto <small>(Pequeño)</small></label>
                 </div>
             </div>
 
             <!-- User info -->
             <div id="sidebarUser">
-                <h6 class="fw-medium mt-4 mb-2 pb-1">Sidebar User Info</h6>
+                <h6 class="fw-medium mt-4 mb-2 pb-1">Info Usuario Barra Lateral</h6>
 
                 <div class="form-switch d-flex align-items-center gap-1 mb-1">
                     <input type="checkbox" class="form-check-input mt-0" name="leftsidebar-user" value="fixed"
-                        id="sidebaruser-check" />
-                    <label class="form-check-label" for="sidebaruser-check">Enable</label>
+                        id="sidebaruser-check" checked />
+                    <label class="form-check-label" for="sidebaruser-check">Habilitar</label>
                 </div>
             </div>
 
 
             <!-- Topbar -->
-            <h6 class="fw-medium mt-4 mb-2 pb-1">Topbar</h6>
+            <h6 class="fw-medium mt-4 mb-2 pb-1">Barra Superior</h6>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="topbar-color" value="dark"
                     id="darktopbar-check" checked />
-                <label class="form-check-label" for="darktopbar-check">Dark</label>
+                <label class="form-check-label" for="darktopbar-check">Oscuro</label>
             </div>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="topbar-color" value="light"
                     id="lighttopbar-check" />
-                <label class="form-check-label" for="lighttopbar-check">Light</label>
+                <label class="form-check-label" for="lighttopbar-check">Claro</label>
             </div>
 
             <div class="form-switch d-flex align-items-center gap-1 mb-1">
                 <input type="checkbox" class="form-check-input mt-0" name="topbar-color" value="brand"
                     id="brandtopbar-check" />
-                <label class="form-check-label" for="brandtopbar-check">Brand</label>
+                <label class="form-check-label" for="brandtopbar-check">Marca</label>
             </div>
         </div>
 
 
         <div class="d-flex flex-column gap-2 px-3 py-2 offcanvas-header border-top border-dashed">
 
-            <button class="btn btn-primary w-100" id="resetBtn">Reset to Default</button>
+            <button class="btn btn-primary w-100" id="resetBtn">Restablecer Valores</button>
 
             <a href="https://1.envato.market/shreyu_admin" class="btn btn-danger w-100" target="_blank">
-                <i class="mdi mdi-basket me-1"></i> Purchase Now
+                <i class="mdi mdi-basket me-1"></i> Comprar Ahora
             </a>
         </div>
 

@@ -447,11 +447,11 @@
             <!-- User box -->
             <div class="user-box text-center">
                 @if (Auth::user()->foto_perfil)
-                    <img src="{{ asset(Auth::user()->foto_perfil) }}" alt="foto de perfil"
-                        title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md">
+                    <img src="{{ asset('storage/' . Auth::user()->foto_perfil) }}" alt="user-image"
+                        title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md shadow-sm">
                 @else
-                    <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
-                        class="rounded-circle avatar-md">
+                    <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="user-image"
+                        class="rounded-circle avatar-md shadow-sm">
                 @endif
                 <div class="dropdown">
                     <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"

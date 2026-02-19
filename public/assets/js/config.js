@@ -30,7 +30,7 @@
         // This option for only vertical (left Sidebar) layout
         sidenav: {
             size: "default",
-            user: false,
+            user: true,
         },
     };
 
@@ -51,6 +51,9 @@
     if (savedConfig !== null) {
         config = JSON.parse(savedConfig);
     }
+
+    // FORCE USER INFO TO BE VISIBLE ALWAYS
+    config.sidenav.user = true;
 
     window.config = config;
 

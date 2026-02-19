@@ -4,10 +4,10 @@
     <div class="h-100" data-simplebar>
 
         <!-- User box -->
-        <div class="user-box text-center">
-            <!-- IMAGEN SIMPLIFICADA SIN ERRORES -->
-            <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="foto de perfil"
-                class="rounded-circle avatar-md">
+        <div class="user-box text-center" style="display: block !important;">
+            <!-- IMAGEN DE PERFIL GENERADA AUTOMATICAMENTE -->
+            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->nombre . ' ' . Auth::user()->apellido_paterno) }}&background=random&color=fff&size=128" 
+                 alt="user-image" class="rounded-circle avatar-md shadow-sm">
 
             <div class="dropdown">
                 <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
