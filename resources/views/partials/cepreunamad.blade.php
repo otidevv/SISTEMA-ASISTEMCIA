@@ -36,6 +36,11 @@
             opacity: 0.12; /* Ajustado para la imagen real en secciones blancas/claras */
         }
 
+        .hero-section .kene-pattern-overlay {
+            opacity: 0.18; /* Ligeramente más visible en el fondo oscuro del hero */
+            mix-blend-mode: overlay; /* Mejora la integración con el fondo */
+        }
+
         /* ==================================== */
         /* Patrón de Cuaderno Académico */
         /* ==================================== */
@@ -505,17 +510,36 @@
 
         .hero-image-wrapper {
             position: relative; 
-            padding: 0; 
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            padding: 10px; 
+            border-radius: 30px; /* Bordes más suaves */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.4s ease-in-out;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            overflow: hidden; 
+            overflow: visible; /* Permitir que los efectos y el badge sobresalgan sutilmente */
             min-height: 400px; 
-            background-color: var(--azul-oscuro);
+            background: rgba(255, 255, 255, 0.1); /* Glassmorphism */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Resplandor trasero para dar profundidad */
+        .hero-image-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, var(--cyan-acento) 0%, transparent 70%);
+            opacity: 0.2;
+            z-index: -1;
+            filter: blur(30px);
+            border-radius: 50%;
         }
         
         /* INTERACTIVIDAD HERO: Mueve la imagen y el badge al hacer hover */
@@ -525,13 +549,14 @@
 
         .hero-image {
             width: 100%;
-            height: 100%;
-            border-radius: 12px; 
-            box-shadow: none; 
+            height: auto;
+            max-height: 450px;
+            border-radius: 20px; 
             transition: all 0.4s ease-in-out;
             display: block;
             object-fit: contain;
             object-position: center;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); /* Sombra propia de la imagen */
         }
         
         .hero-image-wrapper:hover .hero-image {
@@ -2418,6 +2443,7 @@
         <!-- Contenedor para el Canvas de Partículas 3D (Fondo estático) -->
         <div id="hero-canvas-container"></div>
         <div class="hero-bg-overlay"></div>
+        <div class="kene-pattern-overlay"></div>
         
         <!-- Contenedor del Carrusel -->
         <div class="carousel-container">
