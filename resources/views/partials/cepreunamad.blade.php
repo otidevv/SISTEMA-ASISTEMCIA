@@ -7,12 +7,76 @@
         /* 1. Variables y Reset Global */
         /* ==================================== */
         :root {
-            --verde-cepre: #A4C639;
-            --magenta-unamad: #E6007E;
-            --cyan-acento: #00A0E3;
-            --azul-oscuro: #2C5F7C;
-            --verde-claro: #C8D92F;
-            --fondo-cursos: #f7f7f7;
+            --verde-cepre: #8cc63f; /* Refinado a valor institucional exacto */
+            --magenta-unamad: #ec008c; /* Refinado a valor institucional exacto */
+            --cyan-acento: #00aeef; /* Refinado a valor institucional exacto */
+            --azul-oscuro: #2b5a6f; /* Refinado a valor institucional exacto */
+            --verde-claro: #a4c639;
+            --fondo-cursos: #ffffff;
+            --white-glass: rgba(255, 255, 255, 0.8);
+            --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --transition-smooth: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            
+            /* Colores de Fondo Académico */
+            --paper-bg: #ffffff;
+            --grid-line: rgba(0, 160, 227, 0.08);
+            --margin-line: rgba(236, 0, 140, 0.15);
+        }
+
+        /* ==================================== */
+        /* Patrón Amazónico (Kené) */
+        /* ==================================== */
+        .kene-pattern-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("{{ asset('assets_cepre/img/tejido-kene-final.png') }}");
+            background-size: 200px 200px;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.12; /* Ajustado para la imagen real en secciones blancas/claras */
+        }
+
+        /* ==================================== */
+        /* Patrón de Cuaderno Académico */
+        /* ==================================== */
+        .academic-notebook-pattern {
+            background-color: var(--paper-bg) !important;
+            background-image: 
+                /* Líneas horizontales */
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                /* Líneas verticales */
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) !important;
+            background-size: 30px 30px !important;
+            position: relative;
+        }
+
+        /* Margen de Cuaderno Institucional */
+        .academic-notebook-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 60px;
+            width: 2px;
+            height: 100%;
+            background-color: var(--margin-line);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .academic-notebook-pattern::before {
+                left: 30px;
+            }
+        }
+
+        /* Efecto de Papel Rasgado (Torn Paper) */
+        .torn-paper-edge {
+            position: relative;
+            height: 30px;
+            background: var(--paper-bg);
+            margin-top: -15px;
+            z-index: 10;
+            clip-path: polygon(0% 0%, 5% 40%, 10% 0%, 15% 50%, 20% 0%, 25% 30%, 30% 0%, 35% 60%, 40% 0%, 45% 20%, 50% 0%, 55% 40%, 60% 0%, 65% 50%, 70% 0%, 75% 30%, 80% 0%, 85% 60%, 90% 0%, 95% 20%, 100% 0%, 100% 100%, 0% 100%);
         }
 
         * {
@@ -81,9 +145,21 @@
         .top-bar {
             background: linear-gradient(135deg, var(--verde-cepre) 0%, var(--verde-claro) 100%);
             color: white;
-            padding: 10px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 8px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             animation: slideDown 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .top-bar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM30 60l15-15-15-15-15 15z' fill='%23ffffff' fill-opacity='0.12'/%3E%3C/svg%3E");
+            background-size: 30px 30px;
+            pointer-events: none;
         }
 
         .top-bar-content {
@@ -126,11 +202,19 @@
 
         /* Header Principal */
         .main-header {
-            background: white;
+            background: rgba(255, 255, 255, 1);
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 1000;
+            transition: var(--transition-smooth);
+        }
+        .main-header.scrolled {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 5px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -207,7 +291,31 @@
             text-decoration: none;
         }
         .btn span { position: relative; z-index: 2; }
-        .btn-primary { background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro)); color: white; }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro)); 
+            color: white;
+            box-shadow: 0 4px 15px rgba(164, 198, 57, 0.3);
+        }
+        .btn-primary:active { transform: scale(0.95); }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        .btn-primary:hover::after {
+            left: 100%;
+        }
         .btn-secondary { background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c); color: white; }
         .btn-primary:hover, .btn-secondary:hover { transform: translateY(-3px); }
 
@@ -223,12 +331,12 @@
         /* ==================================== */
         .hero-section {
             background: var(--azul-oscuro); 
-            min-height: 650px; 
+            min-height: 340px; 
             display: flex;
             align-items: center;
             position: relative;
             overflow: hidden;
-            padding: 0; /* padding se manejará en el contenido del slide */
+            padding: 0;
         }
         
         /* Contenedor para el Canvas 3D (Fondo estático) */
@@ -267,9 +375,9 @@
         }
         
         .carousel-slide {
-            min-width: 100%; /* Cada slide ocupa el 100% del contenedor */
+            min-width: 100%;
             box-sizing: border-box;
-            padding: 60px 0; /* Reemplaza el padding original del .hero-section */
+            padding: 10px 0; 
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -329,12 +437,12 @@
         /* --- PUNTOS (DOTS) --- */
         .carousel-dots {
             position: absolute;
-            bottom: 20px;
+            bottom: 20px; 
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 10px;
-            z-index: 3;
+            z-index: 100;
         }
         .dot {
             width: 12px;
@@ -366,18 +474,13 @@
         }
         
         .hero-title { 
-            font-size: 58px; 
-            font-weight: 800; 
-            line-height: 1.1; 
-            margin-bottom: 15px;
-            /* EFECTO 3D Y BRILLO PARA EL TÍTULO */
+            font-size: 64px; 
+            font-weight: 850; 
+            line-height: 1.05; 
+            margin-bottom: 20px;
             color: white;
-            text-shadow: 
-                0 0 5px rgba(255,255,255,0.5), /* Sombra blanca sutil */
-                2px 2px var(--verde-cepre), 
-                4px 4px var(--cyan-acento),
-                6px 6px var(--azul-oscuro); /* Profundidad */
-            transition: text-shadow 0.3s;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            letter-spacing: -0.02em;
         }
         
         /* Interacción: Hace que el título brille un poco más al hacer hover */
@@ -596,17 +699,21 @@
         /* 5. Marquee */
         /* ==================================== */
         .marquee-section {
-            background: linear-gradient(90deg, var(--verde-cepre), var(--verde-claro), var(--cyan-acento), var(--verde-cepre));
+            background: linear-gradient(90deg, var(--magenta-unamad), var(--verde-cepre), var(--cyan-acento), var(--magenta-unamad));
             background-size: 200% 100%;
-            animation: rainbow 5s linear infinite;
-            padding: 15px 0;
+            animation: rainbow 12s linear infinite;
+            padding: 8px 0;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.05), 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
         }
 
         .marquee-content {
             display: flex;
-            animation: scroll 30s linear infinite;
+            animation: scroll 45s linear infinite;
             width: 200%; 
         }
         .marquee-content:hover { animation-play-state: paused; }
@@ -617,11 +724,31 @@
             gap: 10px;
             padding: 0 40px;
             white-space: nowrap;
-            font-weight: 700;
+            font-weight: 600;
             color: white;
-            transition: transform 0.3s;
+            transition: var(--transition-smooth);
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            position: relative;
         }
-        .marquee-item i { animation: bounce 1s ease-in-out infinite; }
+        .marquee-item::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 25%;
+            height: 50%;
+            width: 1px;
+            background: rgba(255,255,255,0.3);
+        }
+        .marquee-item i { 
+            font-size: 18px;
+            opacity: 0.9;
+            transition: transform 0.3s ease;
+        }
+        .marquee-item:hover i {
+            transform: scale(1.2) rotate(10deg);
+            opacity: 1;
+        }
 
         /* ==================================== */
         /* 6. Secciones Generales y Títulos */
@@ -631,7 +758,8 @@
         }
         
         .courses-section {
-            background: var(--fondo-cursos);
+            background: var(--paper-bg);
+            position: relative;
         }
 
         .section-title {
@@ -654,17 +782,34 @@
         }
 
         .course-card {
-            background: white; 
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08); 
-            transition: all 0.3s;
-            border-top: 4px solid var(--verde-cepre);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05); 
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-top: 5px solid var(--verde-cepre);
             cursor: pointer;
+            position: relative;
+        }
+        .course-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-25deg);
+            transition: 0.7s;
+        }
+        .course-card:hover::after {
+            left: 125%;
         }
         .course-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 30px rgba(164, 198, 57, 0.2);
+            transform: translateY(-15px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.12);
+            border-color: rgba(255, 255, 255, 0.8);
         }
 
         /* Configuración de colores de las tarjetas de curso */
@@ -681,9 +826,22 @@
         .course-card:nth-child(5) .course-icon { background: linear-gradient(135deg, var(--magenta-unamad), #ff1a8c); }
         .course-card:nth-child(6) .course-icon { background: linear-gradient(135deg, var(--cyan-acento), #00bfff); }
 
-        .course-icon { padding: 40px; text-align: center; color: white; }
-        .course-icon i { font-size: 48px; transition: transform 0.5s; }
-        .course-card:hover .course-icon i { transform: scale(1.1) rotateY(360deg); }
+        .course-icon { 
+            padding: 40px; 
+            text-align: center; 
+            color: white; 
+            position: relative;
+            overflow: hidden;
+        }
+        .course-icon i { 
+            font-size: 52px; 
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            position: relative;
+            z-index: 2;
+        }
+        .course-card:hover .course-icon i { 
+            transform: scale(1.15) rotate(10deg); 
+        }
 
         .course-content { padding: 25px; }
         .course-content h3 { color: var(--azul-oscuro); }
@@ -693,10 +851,36 @@
         /* 8. Stats Section (Estadísticas) */
         /* ==================================== */
         .stats-section {
+            background: var(--verde-cepre);
             background: linear-gradient(135deg, var(--verde-cepre), var(--verde-claro));
             color: white;
             position: relative;
             overflow: hidden;
+            padding: 100px 0;
+        }
+
+        /* Formas flotantes de fondo para darle profundidad */
+        .stats-section::before, .stats-section::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 15s infinite alternate;
+        }
+        .stats-section::before {
+            width: 300px; height: 300px;
+            top: -100px; left: -100px;
+        }
+        .stats-section::after {
+            width: 200px; height: 200px;
+            bottom: -50px; right: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(50px, 100px) rotate(45deg); }
         }
 
         .stats-container {
@@ -712,12 +896,19 @@
         .stat-box {
             text-align: center;
             background: rgba(255,255,255,0.15);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: all 0.3s;
+            padding: 45px 30px;
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.4s ease;
             cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .stat-box:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
         .stat-box i { font-size: 48px; margin-bottom: 20px; }
         .stat-box h3 { font-size: 48px; font-weight: 900; }
@@ -735,15 +926,21 @@
         }
 
         .teacher-card {
-            background: white;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-            border-top: 4px solid var(--verde-cepre);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-top: 5px solid var(--verde-cepre);
             cursor: pointer;
         }
-        .teacher-card:hover { transform: translateY(-8px); }
+        .teacher-card:hover { 
+            transform: translateY(-15px); 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+        }
 
         .teacher-image { width: 100%; height: 300px; overflow: hidden; }
         .teacher-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
@@ -760,13 +957,28 @@
             margin-top: 40px; 
             overflow: hidden; 
             background: var(--azul-oscuro); 
-            padding: 80px 0;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(236, 0, 140, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(0, 160, 227, 0.15) 0, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(140, 198, 63, 0.1) 0, transparent 50%);
+            padding: 100px 0;
             text-align: center;
+            position: relative;
+        }
+
+        .cta-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("{{ asset('assets_cepre/img/tejido-kene-final.png') }}");
+            background-size: 300px 300px;
+            z-index: 1;
+            opacity: 0.08;
         }
         
         .cta-banner-content { 
             position: relative; 
-            z-index: 1; 
+            z-index: 10; 
             text-align: center; 
             color: white; 
             max-width: 900px; 
@@ -805,10 +1017,17 @@
         /* 10.5 Contact Bar (Integrado y Limpio) */
         /* ==================================== */
         .contact-bar {
-            background: white; 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             padding: 40px 0;
             color: var(--azul-oscuro);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.03);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            z-index: 20;
+            margin-top: -30px; /* Se traslapa sutilmente con el banner anterior para un look premium */
+            border-radius: 40px 40px 0 0;
         }
 
         .contact-bar-content {
@@ -829,19 +1048,25 @@
         }
 
         .contact-bar-icon {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: var(--magenta-unamad); 
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(236, 0, 140, 0.3);
+        }
+
+        .contact-bar:hover .contact-bar-icon {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 8px 25px rgba(236, 0, 140, 0.5);
         }
 
         .contact-bar-icon i {
             color: white;
-            font-size: 20px;
+            font-size: 24px;
         }
         
         .contact-bar-right {
@@ -863,10 +1088,21 @@
         /* ==================================== */
         footer {
             background: linear-gradient(135deg, var(--azul-oscuro), #1a3d52);
-            padding: 60px 0 0 0;
+            padding: 80px 0 0 0;
             color: white;
             position: relative;
             overflow: hidden;
+        }
+
+        footer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("{{ asset('assets_cepre/img/tejido-kene-final.png') }}");
+            background-size: 300px 300px;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.04;
         }
 
         footer::before {
@@ -959,17 +1195,26 @@
         /* Redes Sociales */
         .social-links { display: flex; gap: 10px; margin-top: 20px; }
         .social-links a {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 18px;
         }
-        .social-links a:hover { transform: translateY(-5px) rotate(360deg); background: var(--verde-cepre); }
+        .social-links a:hover { 
+            transform: translateY(-8px); 
+            background: var(--verde-cepre); 
+            box-shadow: 0 10px 20px rgba(140, 198, 63, 0.4);
+            border-color: var(--verde-cepre);
+        }
+        .social-links a:nth-child(2):hover { background: var(--cyan-acento); box-shadow: 0 10px 20px rgba(0, 160, 239, 0.4); border-color: var(--cyan-acento); }
+        .social-links a:nth-child(3):hover { background: var(--magenta-unamad); box-shadow: 0 10px 20px rgba(236, 0, 140, 0.4); border-color: var(--magenta-unamad); }
         
         /* Botones del Footer */
         .footer-buttons { display: flex; flex-direction: column; gap: 10px; }
@@ -2305,6 +2550,7 @@
 
     </section>
 
+
     <!-- Marquee -->
     <div class="marquee-section">
         <div class="marquee-content">
@@ -2325,8 +2571,11 @@
         </div>
     </div>
 
+    <!-- Divisor de Papel Rasgado -->
+    <div class="torn-paper-edge"></div>
+
     <!-- Courses Section -->
-    <section class="courses-section" id="cursos">
+    <section class="courses-section academic-notebook-pattern" id="cursos">
         <div class="section-title">
             <h6>NUESTROS CURSOS</h6>
             <h2>Preparación Exclusiva en:</h2>
@@ -2416,7 +2665,7 @@
     </section>
 
     <!-- Teachers Section -->
-    <section class="teachers-section" id="nosotros">
+    <section class="teachers-section academic-notebook-pattern" id="nosotros">
         <div class="section-title">
             <h6>NUESTRO EQUIPO</h6>
             <h2>Docentes con Trayectoria</h2>
@@ -2467,6 +2716,7 @@
 
     <!-- CTA Banner -->
     <section class="cta-banner">
+        <div class="kene-pattern-overlay" style="opacity: 0.4;"></div>
         <div class="cta-banner-content">
             <h2>¡SOMOS LOS <span style="color:var(--cyan-acento); text-shadow: none;">ÚNICOS</span> EN OTORGARTE INGRESO DIRECTO A LA UNAMAD!</h2>
             <a href="#" class="btn-cyan-cta" style="margin-top: 20px;">
@@ -2500,22 +2750,22 @@
         <div class="footer-content">
             <div class="footer-grid">
                 <!-- Logo & Info -->
-                <div class="footer-column animate-on-scroll">
+                <div class="footer-column animate-on-scroll" style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);">
                     <!-- RUTA DINÁMICA RESTAURADA -->
                     <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/2C5F7C/ffffff?text=LOGO';" alt="CEPRE UNAMAD" class="footer-logo" style="filter: brightness(0) invert(1);">
-                    <p style="font-size: 14px; line-height: 1.6; opacity: 0.9; margin-bottom: 20px;">
+                    <p style="font-size: 14px; line-height: 1.6; opacity: 0.8; margin-bottom: 25px;">
                         Centro Pre Universitario de la UNAMAD<br>
                         Av. Dos de Mayo N° 960<br>
                         Puerto Maldonado - Tambopata<br>
                         Madre de Dios - Perú
                     </p>
-                    <div>
-                        <p style="font-weight: 600; margin-bottom: 10px; color: var(--verde-cepre);">Redes Sociales</p>
+                    <div class="social-links-container">
+                        <p style="font-weight: 700; margin-bottom: 15px; color: var(--verde-cepre); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Siguenos</p>
                         <div class="social-links">
-                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-facebook-f"></i></a>
-                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-twitter"></i></a>
-                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-instagram"></i></a>
-                            <a href="#" style="background: var(--azul-oscuro);"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                         </div>
                     </div>
                 </div>
@@ -3187,36 +3437,52 @@
             }
         }
 
-        // Initialize results modal on page load
-        async function initResultsModal() {
-            // Fetch active announcements
-            const announcements = await fetchActiveAnnouncements();
-            
-            if (announcements) {
-                loadAllAnnouncements(announcements);
-                
-                // Auto-popup always (removed session check)
-                setTimeout(() => {
-                    openResultsModal();
-                }, 2000); // Show after 2 seconds
-            }
-            
-            // Close modal on ESC key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeResultsModal();
-                } else if (e.key === 'ArrowLeft') {
-                    previousAnnouncement();
-                } else if (e.key === 'ArrowRight') {
-                    nextAnnouncement();
+        // Initialize results modal and other effects on page load
+        async function initPremiumEffects() {
+            // 1. Header Scroll Effect
+            const header = document.querySelector('.main-header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
                 }
             });
+
+            // 2. Animate Counters
+            const counters = document.querySelectorAll('.counter');
+            const counterObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = +entry.target.getAttribute('data-target');
+                        const count = +entry.target.innerText;
+                        const increment = target / 50; 
+
+                        const updateCount = () => {
+                            const current = +entry.target.innerText;
+                            if (current < target) {
+                                entry.target.innerText = Math.ceil(current + increment);
+                                setTimeout(updateCount, 20);
+                            } else {
+                                entry.target.innerText = target;
+                            }
+                        };
+                        updateCount();
+                        counterObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            counters.forEach(counter => counterObserver.observe(counter));
+
+            // 3. Results Modal
+            initResultsModal();
         }
 
         // Call initialization when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initResultsModal);
+            document.addEventListener('DOMContentLoaded', initPremiumEffects);
         } else {
-            initResultsModal();
+            initPremiumEffects();
         }
     </script>

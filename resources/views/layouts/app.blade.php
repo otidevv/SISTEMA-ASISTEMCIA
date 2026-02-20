@@ -6,7 +6,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Portal CEPRE UNAMAD | Centro Preuniversitario Universidad Nacional Amazónica de Madre de Dios</title>
+    <title>@yield('title', 'Portal') | CEPRE UNAMAD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
         content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios (CEPRE UNAMAD). Información sobre admisión, cursos, horarios y más." />
@@ -37,7 +37,9 @@
     <!-- Icons CSS -->
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <!-- App favicon -->
-    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('faviconcepre.svg') }}?v=2">
+    <link rel="icon" type="image/x-icon" href="{{ asset('faviconcepre.ico') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('faviconcepre.ico') }}?v=2">
     <link href="{{ asset('assets/libs/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-default-stylesheet" />

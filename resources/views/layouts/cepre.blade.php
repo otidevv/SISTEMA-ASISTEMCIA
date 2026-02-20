@@ -10,10 +10,12 @@
     <meta name="keywords" content="CEPRE UNAMAD, UNAMAD, Preuniversitario">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'CEPRE UNAMAD')</title>
+    <title>@yield('title', 'Inicio') | CEPRE UNAMAD</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('assets_cepre/img/favicon.svg') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('faviconcepre.svg') }}?v=2">
+    <link rel="icon" type="image/x-icon" href="{{ asset('faviconcepre.ico') }}?v=2">
+    <link rel="shortcut icon" href="{{ asset('faviconcepre.ico') }}?v=2">
 
     <!-- Tailwind (con Vite) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
