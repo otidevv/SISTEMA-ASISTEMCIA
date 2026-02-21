@@ -100,5 +100,7 @@
         src="https://connect.facebook.net/es_ES/sdk.js#xfbml=1&version=v18.0"
         nonce="CEPREUNAMAD">
     </script>
+    
+    @include('partials.cepre.info-modal')
 </body>
 </html>

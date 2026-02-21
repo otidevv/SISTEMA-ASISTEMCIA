@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\CargaHorariaApiController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/carreras-profesionales', [HomeController::class, 'carreras'])->name('public.carreras');
+Route::get('/cuadro-vacantes', [HomeController::class, 'vacantes'])->name('public.vacantes');
 
 // Ruta para sitemap.xml
 Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
@@ -894,3 +896,6 @@ Route::prefix('admin/resultados-examenes')->middleware(['auth'])->name('resultad
         ->name('toggle-visibility')
         ->middleware('can:resultados-examenes.publish');
 });
+
+// Ruta pública de cursos (se define al final para evitar colisión con el prefijo administrativo)
+Route::get('/cursos-cepre', [App\Http\Controllers\HomeController::class, 'cursos'])->name('public.cursos');
