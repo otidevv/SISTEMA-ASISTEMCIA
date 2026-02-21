@@ -1,26 +1,55 @@
-@extends('layouts.auth')
+﻿@extends('layouts.auth')
 
 @section('title', 'Acceso al Sistema - CEPRE UNAMAD')
 
 @section('content')
-    <div class="min-vh-100 position-relative d-flex align-items-center justify-content-center p-3">
-        <!-- Imagen de fondo original con overlay oscuro -->
-        <div class="position-absolute w-100 h-100 top-0 start-0 overflow-hidden">
-            <img src="{{ asset('assets/images/login/login.jpg') }}" alt="CEPRE UNAMAD Background"
-                 class="w-100 h-100 object-fit-cover position-absolute top-0 start-0">
-            <div class="position-absolute w-100 h-100 top-0 start-0 bg-dark-overlay"></div>
+    <!-- Fondo premium institucional -->
+    <div class="login-bg">
+        <div class="login-bg-img" style="background-image:url('{{ asset('assets/images/login/login.jpg') }}')"></div>
+        <div class="login-bg-overlay"></div>
+        <canvas id="login-particles"></canvas>
+    </div>
+
+    <!-- Wrapper principal -->
+    <div class="login-wrapper">
+        <!-- Panel izquierdo: branding (solo desktop) -->
+        <div class="login-brand-panel" style="background-image: linear-gradient(160deg, rgba(11, 31, 58, 0.85) 0%, rgba(46, 125, 181, 0.7) 100%), url('{{ asset('assets/images/login/edificio_panel.png') }}'); background-size: cover; background-position: center;">
+            <div class="brand-content">
+                <img src="{{ asset('assets/images/logo cepre.png') }}" alt="CEPRE UNAMAD" class="brand-logo">
+                <h1 class="brand-title">CEPRE <span>UNAMAD</span></h1>
+                <p class="brand-sub">Centro Pre-Universitario de la<br>Universidad Nacional Madre de Dios</p>
+                <div class="brand-stats">
+                    <div class="stat">
+                        <strong>+500</strong>
+                        <span>Ingresantes</span>
+                    </div>
+                    <div class="stat">
+                        <strong>15+</strong>
+                        <span>Años</span>
+                    </div>
+                    <div class="stat">
+                        <strong>12</strong>
+                        <span>Carreras</span>
+                    </div>
+                </div>
+                <a href="{{ route('home') }}" class="brand-back">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
+            </div>
         </div>
 
-        <!-- Contenedor Principal con formulario -->
-        <div class="container position-relative z-1">
-            <div class="row justify-content-center">
-                <div class="col-md-9 col-lg-8 col-xl-7">
-                    <div class="card shadow-lg border-0 rounded-4 animated-card" style="background: rgba(255, 255, 255, 0.98);">
+        <!-- Panel derecho: formulario -->
+        <div class="login-form-panel">
+            <div class="login-card animated-card">
                         <div class="card-body p-4 p-sm-5">
-                            <div class="text-center mb-3">
-                                <a href="{{ route('home') }}" class="d-inline-block mb-3">
-                                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="CEPRE UNAMAD"
-                                         height="90" class="img-fluid" />
+                            <!-- Link volver (solo móvil) -->
+                            <a href="{{ route('home') }}" class="mobile-back">
+                                <i class="fas fa-arrow-left"></i> Volver al Inicio
+                            </a>
+                            <div class="text-center mb-0" style="margin-top: -35px;">
+                                <a href="{{ route('home') }}" class="d-inline-block">
+                                    <img src="{{ asset('assets/images/logo cepre.png') }}" alt="CEPRE UNAMAD"
+                                         height="90" class="img-fluid" style="margin-bottom: -35px;" />
                                 </a>
 
                                 <!-- Tabs para Login y Registro -->
@@ -75,7 +104,7 @@
                             <div class="tab-content" id="authTabsContent">
                                 <!-- Tab Login -->
                                 <div class="tab-pane fade show active" id="login" role="tabpanel">
-                                    <h2 class="fw-bold text-dark mb-2 fs-2 text-center">Bienvenido</h2>
+                                    <h2 class="fw-bold text-dark mt-0 mb-1 fs-2 text-center">Bienvenido</h2>
                                     <p class="text-muted mb-3 text-center">Inicia sesión en tu cuenta para continuar</p>
 
                                     <!-- Formulario de Login -->
@@ -144,7 +173,7 @@
                                             </label>
                                         </div>
 
-                                        <!-- Botón de Envío -->
+                                        <!-- BotÃ³n de EnvÃ­o -->
                                         <div class="d-grid mb-3">
                                             <button class="btn btn-primary btn-lg fw-semibold animate-on-hover" type="submit">
                                                 <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -251,7 +280,7 @@
                                                             <select class="form-select form-control-wizard" id="reg_tipo_documento" name="tipo_documento" required>
                                                                 <option value="">Seleccione...</option>
                                                                 <option value="DNI" {{ old('tipo_documento') == 'DNI' ? 'selected' : '' }}>DNI</option>
-                                                                <option value="CE" {{ old('tipo_documento') == 'CE' ? 'selected' : '' }}>Carnet de Extranjería</option>
+                                                                <option value="CE" {{ old('tipo_documento') == 'CE' ? 'selected' : '' }}>Carnet de ExtranjerÃ­a</option>
                                                             </select>
                                                             <div class="input-feedback"></div>
                                                         </div>
@@ -274,7 +303,7 @@
                                                         </div>
                                                         <div class="invalid-feedback">Ingrese un número de documento válido</div>
                                                         <small class="form-text text-muted d-block mt-2">
-                                                            Ingresa tu DNI y haz clic en la lupa para autocompletar tus datos. 🚀
+                                                            Ingresa tu DNI y haz clic en la lupa para autocompletar tus datos. ðŸš€
                                                         </small>
                                                     </div>
                                                 </div>
@@ -324,7 +353,7 @@
 
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
-                                                        <label for="reg_genero" class="form-label">Género <span class="text-danger">*</span></label>
+                                                        <label for="reg_genero" class="form-label">GÃ©nero <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <select class="form-select form-control-wizard" id="reg_genero" name="genero" required>
                                                                 <option value="">Seleccione...</option>
@@ -333,28 +362,28 @@
                                                             </select>
                                                             <div class="input-feedback"></div>
                                                         </div>
-                                                        <div class="invalid-feedback">Seleccione el género</div>
+                                                        <div class="invalid-feedback">Seleccione el gÃ©nero</div>
                                                     </div>
                                                     <div class="col-md-6 mb-2">
-                                                        <label for="reg_telefono" class="form-label">Teléfono/Celular <span class="text-danger">*</span></label>
+                                                        <label for="reg_telefono" class="form-label">TelÃ©fono/Celular <span class="text-danger">*</span></label>
                                                         <div class="enhanced-input-group">
                                                             <input type="tel" class="form-control form-control-wizard" id="reg_telefono"
                                                                    name="telefono" value="{{ old('telefono') }}"
                                                                    pattern="[0-9]{9}" maxlength="9" required placeholder="">
                                                             <div class="input-feedback"></div>
                                                         </div>
-                                                        <div class="invalid-feedback">Ingrese un teléfono válido (9 dígitos)</div>
+                                                        <div class="invalid-feedback">Ingrese un telÃ©fono válido (9 dÃ­gitos)</div>
                                                     </div>
                                                 </div>
 
                                                 <div class="mb-2">
-                                                    <label for="reg_direccion" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                                    <label for="reg_direccion" class="form-label">DirecciÃ³n <span class="text-danger">*</span></label>
                                                     <div class="enhanced-input-group">
                                                         <input type="text" class="form-control form-control-wizard" id="reg_direccion"
                                                                name="direccion" value="{{ old('direccion') }}" required>
                                                         <div class="input-feedback"></div>
                                                     </div>
-                                                    <div class="invalid-feedback">Ingrese la dirección</div>
+                                                    <div class="invalid-feedback">Ingrese la direcciÃ³n</div>
                                                 </div>
 
                                                 <div class="row">
@@ -419,7 +448,7 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Sección Padre/Tutor -->
+                                                <!-- SecciÃ³n Padre/Tutor -->
                                                 <h5 class="fw-semibold text-dark mb-2">Datos del Padre/Tutor</h5>
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
@@ -473,14 +502,14 @@
                                                     </div>
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label for="padre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                    <label for="padre_telefono" class="form-label">TelÃ©fono <span class="text-danger">*</span></label>
                                                     <div class="enhanced-input-group">
                                                         <input type="tel" class="form-control form-control-wizard" id="padre_telefono"
                                                                name="padre_telefono" value="{{ old('padre_telefono') }}"
                                                                pattern="[0-9]{9}" maxlength="9" required>
                                                         <div class="input-feedback"></div>
                                                     </div>
-                                                    <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                    <div class="invalid-feedback">Ingrese un telÃ©fono válido</div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="padre_email" class="form-label">Correo del Padre</label>
@@ -495,7 +524,7 @@
 
                                                 <hr class="my-3">
 
-                                                <!-- Sección Madre/Tutora -->
+                                                <!-- SecciÃ³n Madre/Tutora -->
                                                 <h5 class="fw-semibold text-dark mb-2">Datos de la Madre/Tutora</h5>
                                                 <div class="row">
                                                     <div class="col-md-6 mb-2">
@@ -549,14 +578,14 @@
                                                     </div>
                                                 </div>
                                                 <div class="mb-2">
-                                                    <label for="madre_telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                                    <label for="madre_telefono" class="form-label">TelÃ©fono <span class="text-danger">*</span></label>
                                                     <div class="enhanced-input-group">
                                                         <input type="tel" class="form-control form-control-wizard" id="madre_telefono"
                                                                name="madre_telefono" value="{{ old('madre_telefono') }}"
                                                                pattern="[0-9]{9}" maxlength="9" required>
                                                         <div class="input-feedback"></div>
                                                     </div>
-                                                    <div class="invalid-feedback">Ingrese un teléfono válido</div>
+                                                    <div class="invalid-feedback">Ingrese un telÃ©fono válido</div>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="madre_email" class="form-label">Correo de la Madre</label>
@@ -585,14 +614,14 @@
                                                 </div>
 
                                                 <div id="confirmationSummary" class="confirmation-container">
-                                                    <!-- Resumen será generado por JavaScript -->
+                                                    <!-- Resumen serÃ¡ generado por JavaScript -->
                                                 </div>
 
                                                 <div class="form-check mb-3">
                                                     <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
                                                     <label class="form-check-label" for="terms">
                                                         Acepto los <a href="#" class="text-primary">términos y condiciones</a> y la
-                                                        <a href="#" class="text-primary">política de privacidad</a>
+                                                        <a href="#" class="text-primary">polÃ­tica de privacidad</a>
                                                     </label>
                                                     <div class="invalid-feedback">Debe aceptar los términos y condiciones</div>
                                                 </div>
@@ -648,8 +677,9 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+            </div><!-- /.login-card -->
+        </div><!-- /.login-form-panel -->
+    </div><!-- /.login-wrapper -->
 
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
@@ -660,8 +690,35 @@
 
         // Variables del wizard
         let wizardCurrentStep = 1;
-        const wizardTotalSteps = 3; // Actualizado a 3 pasos
+        const wizardTotalSteps = 3; 
         let wizardFormData = {};
+
+        // Validación del Login con SweetAlert2
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.querySelector('form[action="{{ route('login') }}"]');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(event) {
+                    const email = document.getElementById('email');
+                    const password = document.getElementById('password');
+                    
+                    if (!email.value.trim() || !password.value.trim()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Campos Vacíos',
+                            text: 'Por favor, ingresa tu correo/DNI y contraseña para continuar.',
+                            confirmButtonColor: '#00AEEF',
+                            background: '#0f1d35',
+                            color: '#ffffff'
+                        });
+                        
+                        loginForm.classList.add('was-validated');
+                    }
+                });
+            }
+        });
 
         // Variables para el progreso
         let fieldCounts = {
@@ -670,7 +727,7 @@
             3: { total: 1, completed: 0 }
         };
 
-        // Función para mostrar/ocultar contraseña
+        // FunciÃ³n para mostrar/ocultar contraseña
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
             const icon = passwordInput.nextElementSibling?.querySelector('svg');
@@ -694,7 +751,7 @@
             }
         }
 
-        // Función para consultar DNI en RENIEC MEJORADA CON SWEETALERT2
+        // FunciÃ³n para consultar DNI en RENIEC MEJORADA CON SWEETALERT2
         async function consultarDNI(tipo) {
             let dniInput, btnBuscar;
 
@@ -715,7 +772,7 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'DNI Inválido',
-                    text: 'El DNI debe tener exactamente 8 dígitos numéricos',
+                    text: 'El DNI debe tener exactamente 8 dÃ­gitos numÃ©ricos',
                     confirmButtonColor: '#3F51B5'
                 });
                 dniInput.focus();
@@ -934,7 +991,7 @@
             const nextBtn = document.getElementById('nextStepBtn');
             const stepCounter = document.getElementById('stepCounter');
             
-            // Corrige la visualización del contador de pasos
+            // Corrige la visualizaciÃ³n del contador de pasos
             stepCounter.textContent = `Paso ${wizardCurrentStep} de ${wizardTotalSteps}`;
 
             prevBtn.style.display = wizardCurrentStep === 1 ? 'none' : 'flex';
@@ -944,7 +1001,7 @@
             });
 
             if (wizardCurrentStep === wizardTotalSteps) {
-                nextBtn.querySelector('.btn-text').textContent = 'Registrar Postulación';
+                nextBtn.querySelector('.btn-text').textContent = 'Registrar PostulaciÃ³n';
                 nextBtn.classList.add('btn-success');
                 nextBtn.classList.remove('btn-primary');
             } else {
@@ -1043,7 +1100,7 @@
                 feedback = 'Ingrese una contraseña';
                 strengthBar.className = 'strength-bar';
             } else if (strength <= 40) {
-                feedback = 'Contraseña débil';
+                feedback = 'Contraseña dÃ©bil';
                 strengthBar.className = 'strength-bar weak';
             } else if (strength <= 60) {
                 feedback = 'Contraseña regular';
@@ -1170,7 +1227,7 @@
             return isValid;
         }
 
-        // FUNCIÓN SAVECURRENTSTEPDATA CORREGIDA
+        // FUNCIÃ“N SAVECURRENTSTEPDATA CORREGIDA
         function saveCurrentStepData() {
             // Guardar datos de TODOS los campos del formulario, no solo del paso actual
             const allInputs = document.querySelectorAll('#registrationWizard input, #registrationWizard select');
@@ -1185,14 +1242,14 @@
         function generateConfirmationSummary() {
             const container = document.getElementById('confirmationSummary');
 
-            // CORRECCIÓN: Obtener datos directamente del formulario, no de wizardFormData
+            // CORRECCIÃ“N: Obtener datos directamente del formulario, no de wizardFormData
             const form = document.getElementById('registrationWizard');
             const formData = new FormData(form);
 
             const sections = [
                 {
                     title: 'Datos Personales del Postulante',
-                    icon: '👤',
+                    icon: 'ðŸ‘¤',
                     data: {
                         'Nombres': formData.get('nombre'),
                         'Apellido Paterno': formData.get('apellido_paterno'),
@@ -1200,25 +1257,25 @@
                         'Tipo de Documento': formData.get('tipo_documento'),
                         'Número de Documento': formData.get('numero_documento'),
                         'Fecha de Nacimiento': formData.get('fecha_nacimiento'),
-                        'Género': formData.get('genero') === 'M' ? 'Masculino' : 'Femenino',
-                        'Teléfono': formData.get('telefono'),
-                        'Dirección': formData.get('direccion'),
+                        'GÃ©nero': formData.get('genero') === 'M' ? 'Masculino' : 'Femenino',
+                        'TelÃ©fono': formData.get('telefono'),
+                        'DirecciÃ³n': formData.get('direccion'),
                         'Correo Electrónico': formData.get('email')
                     }
                 },
                 {
                     title: 'Datos de los Padres/Tutores',
-                    icon: '👨‍👩‍👧',
+                    icon: 'ðŸ‘¨â€ðŸ‘©â€ðŸ‘§',
                     data: {
                         'Nombres del Padre': formData.get('padre_nombre'),
                         'Apellidos del Padre': formData.get('padre_apellidos'),
                         'Documento del Padre': formData.get('padre_tipo_documento') + ': ' + formData.get('padre_numero_documento'),
-                        'Teléfono del Padre': formData.get('padre_telefono'),
+                        'TelÃ©fono del Padre': formData.get('padre_telefono'),
                         'Correo del Padre': formData.get('padre_email') || 'No proporcionado',
                         'Nombres de la Madre': formData.get('madre_nombre'),
                         'Apellidos de la Madre': formData.get('madre_apellidos'),
                         'Documento de la Madre': formData.get('madre_tipo_documento') + ': ' + formData.get('madre_numero_documento'),
-                        'Teléfono de la Madre': formData.get('madre_telefono'),
+                        'TelÃ©fono de la Madre': formData.get('madre_telefono'),
                         'Correo de la Madre': formData.get('madre_email') || 'No proporcionado'
                     }
                 }
@@ -1247,7 +1304,7 @@
             container.innerHTML = html;
         }
 
-        // FUNCIÓN SUBMITWIZARDFORM CORREGIDA
+        // FUNCIÃ“N SUBMITWIZARDFORM CORREGIDA
         async function submitWizardForm() {
             const termsCheckbox = document.getElementById('terms');
             if (!termsCheckbox.checked) {
@@ -1261,11 +1318,11 @@
                 return;
             }
 
-            // CORRECCIÓN: Obtener datos directamente del formulario completo
+            // CORRECCIÃ“N: Obtener datos directamente del formulario completo
             const form = document.getElementById('registrationWizard');
             const formData = new FormData(form);
 
-            // Asegurar que términos esté incluido
+            // Asegurar que términos estÃ© incluido
             if (termsCheckbox.checked) {
                 formData.append('terms', 'on');
             }
@@ -1277,16 +1334,16 @@
                 title: 'Confirmar Registro',
                 html: `
                     <div class="text-start">
-                        <p><strong>Se enviará un correo de confirmación a:</strong></p>
+                        <p><strong>Se enviarÃ¡ un correo de confirmación a:</strong></p>
                         <p class="text-primary fs-5">${email}</p>
-                        <p><small class="text-muted">Su cuenta se creará con estado PENDIENTE hasta que verifique su correo electrónico.</small></p>
+                        <p><small class="text-muted">Su cuenta se crearÃ¡ con estado PENDIENTE hasta que verifique su correo electrónico.</small></p>
                     </div>
                 `,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3F51B5',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, registrar',
+                confirmButtonText: 'SÃ­, registrar',
                 cancelButtonText: 'Cancelar',
                 reverseButtons: true,
                 focusCancel: false
@@ -1311,7 +1368,7 @@
             try {
                 console.log('Enviando datos de registro...');
 
-                // CORRECCIÓN: Usar la misma estructura que funciona
+                // CORRECCIÃ“N: Usar la misma estructura que funciona
                 const response = await fetch('{{ route("api.register.postulante") }}', {
                     method: 'POST',
                     headers: {
@@ -1441,7 +1498,7 @@
             return emailRegex.test(email);
         }
 
-        // Eventos de inicialización
+        // Eventos de inicializaciÃ³n
         document.addEventListener('DOMContentLoaded', function() {
             @if(session('register_tab'))
                 var registerTab = new bootstrap.Tab(document.getElementById('register-tab'));
@@ -1498,7 +1555,7 @@
             });
         });
 
-        // Validación de formulario con Bootstrap
+        // ValidaciÃ³n de formulario con Bootstrap
         (function() {
             'use strict';
             window.addEventListener('load', function() {
@@ -1517,620 +1574,524 @@
         })();
     </script>
 
-    <!-- Estilos CSS COMPLETOS -->
+    <!-- FA Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Estilos CSS PREMIUM -->
     <style>
-        @import url('https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css');
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        /* ====== VARIABLES INSTITUCIONALES ====== */
+        :root {
+            --azul-oscuro:   #2E7DB5;
+            --azul-medio:    #1a4b6d;
+            --verde-cepre:   #8DC63F;
+            --cyan-acento:   #00AEEF;
+            --magenta:       #EC008C;
+            --texto-claro:   rgba(255,255,255,0.85);
+        }
 
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             overflow-x: hidden;
+            background: var(--azul-oscuro);
         }
 
-        .min-vh-100 { min-height: 100vh; }
-        .cursor-pointer { cursor: pointer; }
-        .object-fit-cover { object-fit: cover; }
-        .shadow-lg { box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important; }
-
-        .bg-dark-overlay {
-            background: linear-gradient(135deg, rgba(63, 81, 181, 0.9) 0%, rgba(48, 63, 159, 0.9) 100%);
-        }
-
-        .nav-pills .nav-link {
-            color: #6c757d;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 12px 20px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: #3F51B5;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(63, 81, 181, 0.3);
-        }
-
-        .nav-pills .nav-link:hover:not(.active) {
-            background-color: #e9ecef;
-            transform: translateY(-1px);
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #3F51B5;
-            box-shadow: 0 0 0 0.2rem rgba(63, 81, 181, 0.25);
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #303F9F 0%, #1A237E 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(63, 81, 181, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #1e7e34 0%, #17a2b8 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
-        }
-
-        .text-primary { color: #3F51B5 !important; }
-
-        .card {
-            backdrop-filter: blur(20px);
-            background: rgba(255, 255, 255, 0.98) !important;
-            max-height: 95vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* === ESTILOS DEL WIZARD === */
-
-        .registration-wizard { min-height: 600px; }
-
-        .overall-progress-container {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            padding: 1rem;
-            border: 1px solid #dee2e6;
-        }
-
-        .overall-progress {
-            height: 10px;
-            background: linear-gradient(90deg, #e9ecef 0%, #f8f9fa 100%);
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .overall-progress .progress-bar {
-            background: linear-gradient(90deg, #3F51B5 0%, #28a745 50%, #17a2b8 100%);
-            border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(63, 81, 181, 0.3);
-            position: relative;
-            overflow: hidden;
-            transition: width 0.5s ease;
-        }
-
-        .step-progress-mini {
-            width: 100%;
-            height: 4px;
-            background: #e9ecef;
-            border-radius: 10px;
-            margin-top: 5px;
+        /* ====== FONDO ====== */
+        .login-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
             overflow: hidden;
         }
-
-        .mini-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #3F51B5, #303F9F);
-            border-radius: 10px;
-            transition: all 0.5s ease;
-        }
-
-        .step-indicator {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-            transition: all 0.3s ease;
-        }
-
-        .step-circle {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #e9ecef;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 3px solid #e9ecef;
-        }
-
-        .step-indicator.active .step-circle {
-            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
-            color: white;
-            border-color: #3F51B5;
-            transform: scale(1.1);
-            box-shadow: 0 8px 25px rgba(63, 81, 181, 0.4);
-        }
-
-        .step-indicator.completed .step-circle {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            border-color: #28a745;
-            color: white;
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .celebration {
-            animation: celebrate 0.6s ease;
-        }
-
-        @keyframes celebrate {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1) rotate(5deg); }
-            75% { transform: scale(1.1) rotate(-5deg); }
-        }
-
-        .step-label {
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: #6c757d;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .step-indicator.active .step-label {
-            color: #3F51B5;
-            font-weight: 700;
-            transform: scale(1.05);
-        }
-
-        .step-indicator.completed .step-label {
-            color: #28a745;
-            font-weight: 600;
-        }
-
-        .field-counter {
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 20px;
-            border: 1px solid #dee2e6;
-            transition: all 0.3s ease;
-        }
-
-        .enhanced-input-group {
-            position: relative;
-            margin-bottom: 0.25rem; /* Ajustado para hacerlo más compacto */
-        }
-        
-        .input-group.glow-on-focus {
-            transition: box-shadow 0.3s ease-in-out;
-            box-shadow: 0 0 0 rgba(63, 81, 181, 0);
-        }
-        
-        .input-group.glow-on-focus:not(:focus-within) {
-            animation: none;
-            box-shadow: 0 0 0 rgba(63, 81, 181, 0);
-        }
-
-        .input-group.glow-on-focus:focus-within {
-            animation: glow-animation 1.5s infinite alternate;
-        }
-        
-        .glow-text {
-            font-weight: 700 !important;
-            color: #3F51B5 !important;
-            text-shadow: 0 0 5px rgba(63, 81, 181, 0.4);
-            animation: text-glow-animation 1.5s infinite alternate;
-        }
-
-        @keyframes text-glow-animation {
-            from {
-                text-shadow: 0 0 5px rgba(63, 81, 181, 0.4);
-            }
-            to {
-                text-shadow: 0 0 10px rgba(63, 81, 181, 0.8);
-            }
-        }
-        
-        @keyframes glow-animation {
-            from {
-                box-shadow: 0 0 8px rgba(63, 81, 181, 0.2), inset 0 0 8px rgba(63, 81, 181, 0.2);
-            }
-            to {
-                box-shadow: 0 0 20px rgba(63, 81, 181, 0.6), inset 0 0 20px rgba(63, 81, 181, 0.6);
-            }
-        }
-
-        .input-feedback {
+        .login-bg-img {
             position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-50%);
-            opacity: 0;
-            transition: all 0.3s ease;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: blur(4px) brightness(0.6);
+            transform: scale(1.05);
+        }
+        .login-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(46, 125, 181, 0.4) 0%, rgba(11, 31, 58, 0.85) 100%);
+        }
+        #login-particles {
+            position: absolute;
+            inset: 0;
             pointer-events: none;
-            display: inline-block; /* Agregado para mejor control de la alineación */
         }
 
-        .input-feedback.show {
-            opacity: 1;
-        }
-        
-        .input-feedback svg {
-            vertical-align: middle;
-        }
-        
-        .form-control-wizard.is-valid + .input-feedback svg path {
-            stroke: #28a745;
-        }
-
-        .form-control-wizard, .form-select {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.95rem;
-            background: rgba(255, 255, 255, 0.8);
-        }
-        
-        /* Asegurar que el input dentro del grupo no tenga su propio box-shadow */
-        .glow-on-focus input.form-control-wizard:focus {
-            box-shadow: none; 
-        }
-        
-        .form-control-wizard:focus, .form-select:focus {
-            border-color: #3F51B5;
-            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
-            transform: translateY(-1px);
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .form-control-wizard.is-valid, .form-select.is-valid {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.15);
-            background: rgba(40, 167, 69, 0.05);
-        }
-
-        .form-control-wizard.is-invalid, .form-select.is-invalid {
-            border-color: #dc3545;
-            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
-            background: rgba(220, 53, 69, 0.05);
-        }
-
-        .auto-filled {
-            animation: autoFillPulse 0.5s ease;
-            background: rgba(63, 81, 181, 0.1) !important;
-        }
-
-        @keyframes autoFillPulse {
-            0%, 100% { background: rgba(63, 81, 181, 0.1); }
-            50% { background: rgba(63, 81, 181, 0.2); }
-        }
-
-        .password-strength {
-            margin-top: 0.5rem;
-        }
-
-        .strength-meter {
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 0.25rem;
-        }
-
-        .strength-bar {
-            height: 100%;
-            width: 0%;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .strength-bar.weak { background: linear-gradient(90deg, #dc3545, #fd7e14); }
-        .strength-bar.fair { background: linear-gradient(90deg, #ffc107, #fd7e14); }
-        .strength-bar.good { background: linear-gradient(90deg, #28a745, #20c997); }
-        .strength-bar.strong { background: linear-gradient(90deg, #17a2b8, #6610f2); }
-
-        .strength-text {
-            font-size: 0.8rem;
-            color: #6c757d;
-            transition: all 0.3s ease;
-        }
-
-        .btn {
-            border-radius: 12px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
+        /* ====== WRAPPER ====== */
+        .login-wrapper {
             position: relative;
-            overflow: hidden;
-        }
-
-        .animate-on-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .animate-on-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-reniec {
-            border-radius: 0 12px 12px 0;
-            border: 2px solid #3F51B5;
-            border-left: none;
-            padding: 0.75rem 1rem;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        }
-
-        .btn-reniec:hover {
-            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
-            color: white;
-        }
-
-        .btn-reniec.loading {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            color: white;
-        }
-
-        .btn-reniec.success-animation {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            animation: successPulse 1s ease;
-        }
-
-        @keyframes successPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .mini-dots {
+            z-index: 1;
+            min-height: 100vh;
             display: flex;
-            gap: 0.25rem;
+            align-items: stretch;
         }
 
-        .mini-dots .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #dee2e6;
-            transition: all 0.3s ease;
-        }
-
-        .mini-dots .dot.active {
-            background: #3F51B5;
-            transform: scale(1.2);
-        }
-
-        .shake {
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .wizard-step {
-            min-height: 450px;
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .step-header { margin-bottom: 1rem; }
-
-        .step-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
-            display: flex;
+        /* ====== PANEL IZQUIERDO (Branding) ====== */
+        .login-brand-panel {
+            display: none;
+            flex: 0 0 450px;
+            border-right: 1px solid rgba(255,255,255,0.1);
             align-items: center;
             justify-content: center;
-            margin: 0 auto 0.5rem;
-            color: white;
-            box-shadow: 0 10px 30px rgba(63, 81, 181, 0.3);
-        }
-
-        .step-title {
-            color: #2c3e50;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-            font-size: 1.25rem;
-        }
-
-        .step-subtitle {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .confirmation-container {
-            max-height: 400px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .confirmation-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            padding: 1rem; /* Reducido para compactar */
-            margin-bottom: 0.75rem; /* Reducido para compactar */
-            border: 1px solid #dee2e6;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            padding: 48px 40px;
             position: relative;
             overflow: hidden;
         }
-
-        .confirmation-section::before {
+        .login-brand-panel::after {
             content: '';
             position: absolute;
-            top: 0;
+            bottom: 0;
             left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(135deg, #3F51B5 0%, #28a745 100%);
+            right: 0;
+            height: 150px;
+            background: linear-gradient(to top, rgba(46, 125, 181, 0.9), transparent);
+            pointer-events: none;
         }
+        @media (min-width: 992px) {
+            .login-brand-panel { display: flex; }
+        }
+        .brand-content { text-align: center; }
+        .brand-logo { width: 100px; margin-bottom: 20px; }
+        .brand-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            margin: 0 0 6px;
+            letter-spacing: -0.5px;
+        }
+        .brand-title span { color: var(--cyan-acento); }
+        .brand-sub {
+            font-size: 0.88rem;
+            color: var(--texto-claro);
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+        .brand-stats {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        .brand-stats .stat {
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+        .brand-stats .stat strong {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--cyan-acento);
+        }
+        .brand-stats .stat span {
+            font-size: 0.78rem;
+            color: var(--texto-claro);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .brand-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+        .brand-back:hover { color: var(--cyan-acento); }
 
-        .confirmation-title {
-            color: #3F51B5;
-            font-weight: 600;
-            margin-bottom: 0.5rem; /* Reducido para compactar */
+        /* ====== PANEL DERECHO (Formulario) ====== */
+        .login-form-panel {
+            flex: 1;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.1rem;
+            justify-content: center;
+            padding: 24px 16px;
+            overflow-y: auto;
         }
-
-        .confirmation-data { display: grid; gap: 0.25rem; /* Reducido para compactar */ }
-
-        .data-row {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 0.5rem; /* Reducido para compactar */
-            padding: 0.5rem 1rem; /* Reducido para compactar */
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 10px;
-            border-left: 4px solid #3F51B5;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(5px);
+        .login-card {
+            width: 100%;
+            max-width: 540px;
+            background: rgba(15,29,53,0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--verde-cepre);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            padding: 32px 36px;
+            max-height: 95vh;
+            overflow-y: auto;
         }
-
-        .data-row:hover {
-            transform: translateX(8px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .data-label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.9rem;
-        }
-
-        .data-value {
-            color: #6c757d;
-            font-size: 0.9rem;
-            word-break: break-word;
-        }
-
-        .animated-card {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card::-webkit-scrollbar, .confirmation-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .card::-webkit-scrollbar-track, .confirmation-container::-webkit-scrollbar-track {
-            background: linear-gradient(135deg, #f1f1f1 0%, #e9ecef 100%);
-            border-radius: 10px;
-        }
-
-        .card::-webkit-scrollbar-thumb, .confirmation-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #3F51B5, #28a745);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .card::-webkit-scrollbar-thumb:hover, .confirmation-container::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #303F9F, #1e7e34);
-        }
-
-        /* Personalización de SweetAlert2 */
-        .swal2-popup {
-            border-radius: 15px !important;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
-        }
-
-        .swal2-title {
-            color: #2c3e50 !important;
-            font-weight: 600 !important;
-        }
-
-        .swal2-confirm {
-            background-color: #3F51B5 !important;
-            border-radius: 8px !important;
-            padding: 10px 25px !important;
-            font-weight: 600 !important;
-        }
-
-        .swal2-cancel {
-            background-color: #6c757d !important;
-            border-radius: 8px !important;
-            padding: 10px 25px !important;
-            font-weight: 600 !important;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .card-body { padding: 1.5rem !important; }
-            .step-label { font-size: 0.75rem; }
-
-            .step-circle {
-                width: 40px;
-                height: 40px;
-                font-size: 0.9rem;
-            }
-
-            .step-icon {
-                width: 60px;
-                height: 60px;
-            }
-
-            .step-title { font-size: 1.2rem; }
-
-            .data-row {
-                grid-template-columns: 1fr;
-                gap: 0.5rem;
-            }
-
-            .overall-progress-container { padding: 0.75rem; }
-        }
-
         @media (max-width: 576px) {
-            .wizard-progress .d-flex { flex-wrap: wrap; }
-            .step-indicator {
-                flex: 1;
-                min-width: 80px;
-            }
-            .progress-line { display: none; }
+            .login-card { padding: 24px 18px; border-radius: 16px; }
         }
+
+        /* Mobile: back link shown inside card */
+        /* Mobile: back link shown inside card */
+        .mobile-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--cyan-acento);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            background: rgba(0, 174, 239, 0.1);
+            border-radius: 8px;
+            width: fit-content;
+        }
+        .mobile-back:hover { 
+            background: var(--cyan-acento);
+            color: white;
+            transform: translateX(-5px);
+        }
+        @media (min-width: 992px) { .mobile-back { display: none; } }
+
+        /* ====== TIPOGRAFÃA ====== */
+        h2.fw-bold { color: white !important; }
+        p.text-muted { color: rgba(255,255,255,0.5) !important; }
+        .form-label { color: rgba(255,255,255,0.75) !important; font-size: 0.88rem; }
+        .form-label.fw-semibold { font-weight: 600 !important; }
+
+        /* ====== LOGO (mobile only) ====== */
+        .login-card-logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .login-card-logo img { width: 40px; }
+        @media (min-width: 992px) { .login-card-logo { display: none; } }
+
+        /* ====== INPUTS ====== */
+        .input-group-text {
+            background: rgba(255,255,255,0.06) !important;
+            border-color: rgba(255,255,255,0.12) !important;
+            color: rgba(255,255,255,0.5) !important;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.07) !important;
+            border-color: rgba(255,255,255,0.12) !important;
+            color: white !important;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.3) !important; }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.12) !important;
+            border-color: var(--cyan-acento) !important;
+            box-shadow: 0 0 0 3px rgba(0,174,239,0.2) !important;
+            color: white !important;
+        }
+        .form-select option { background: #0b1f3a; color: white; }
+        .form-check-input {
+            background-color: rgba(255,255,255,0.1) !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        .form-check-input:checked { background-color: var(--cyan-acento) !important; border-color: var(--cyan-acento) !important; }
+        .form-check-label { color: rgba(255,255,255,0.6) !important; }
+        a.text-primary, a.text-decoration-none.text-primary {
+            color: var(--cyan-acento) !important;
+        }
+        a.text-primary:hover { color: var(--magenta) !important; }
+
+        /* ====== BOTONES ====== */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan-acento) 0%, #007fc0 100%) !important;
+            border: none !important;
+            color: white !important;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border-radius: 12px !important;
+            padding: 13px 24px !important;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,174,239,0.4) !important;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--verde-cepre) 0%, #1da851 100%) !important;
+            border: none !important;
+            font-weight: 700;
+            border-radius: 12px !important;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46,200,102,0.4) !important;
+        }
+        .btn-outline-secondary {
+            border-color: rgba(255,255,255,0.2) !important;
+            color: rgba(255,255,255,0.6) !important;
+        }
+        .btn-outline-secondary:hover {
+            background: rgba(255,255,255,0.1) !important;
+            color: white !important;
+        }
+
+        /* ====== ERRORES ====== */
+        .alert-danger {
+            background: rgba(220,53,69,0.15) !important;
+            border-color: rgba(220,53,69,0.3) !important;
+            color: #ff8a9b !important;
+            border-radius: 12px;
+        }
+
+        /* ====== ANIMACIONES ====== */
+        .animated-card { animation: fadeInUp 0.6s ease-out; }
+        @keyframes fadeInUp {
+            from { opacity:0; transform:translateY(30px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .animate-on-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-on-hover:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+
+        /* ====== WIZARD ====== */
+        .registration-wizard { min-height: 500px; }
+        .overall-progress-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .overall-progress, .progress {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--cyan-acento), var(--verde-cepre));
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+        .step-indicator { display:flex; flex-direction:column; align-items:center; position:relative; z-index:2; transition:all 0.3s ease; }
+        .step-circle {
+            width: 46px; height: 46px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.5);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+            border: 2px solid rgba(255,255,255,0.12);
+        }
+        .step-indicator.active .step-circle {
+            background: linear-gradient(135deg, var(--cyan-acento), #007fc0);
+            color: white; border-color: var(--cyan-acento);
+            transform: scale(1.1); box-shadow: 0 6px 20px rgba(0,174,239,0.4);
+        }
+        .step-indicator.completed .step-circle {
+            background: linear-gradient(135deg, var(--verde-cepre), #1da851);
+            border-color: var(--verde-cepre); color: white;
+            box-shadow: 0 4px 15px rgba(46,200,102,0.35);
+        }
+        .step-label { margin-top:6px; font-size:0.8rem; color:rgba(255,255,255,0.4); font-weight:500; text-align:center; }
+        .step-indicator.active .step-label { color: var(--cyan-acento); font-weight:700; }
+        .step-indicator.completed .step-label { color: var(--verde-cepre); }
+        .step-progress-mini { width:100%; height:3px; background:rgba(255,255,255,0.08); border-radius:10px; margin-top:4px; overflow:hidden; }
+        .mini-progress-bar { height:100%; background:linear-gradient(90deg,var(--cyan-acento),var(--verde-cepre)); border-radius:10px; transition:all 0.5s ease; }
+        .progress-line { flex:1; height:2px; background:rgba(255,255,255,0.08); margin: 0 8px; margin-bottom:30px; }
+        .field-counter {
+            font-size:0.85rem; margin-top:0.4rem; padding:0.4rem 1rem;
+            background:rgba(255,255,255,0.05); border-radius:20px;
+            border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.5);
+        }
+        .field-counter.text-success { color: var(--verde-cepre) !important; }
+        .field-counter.text-warning { color: #fbbf24 !important; }
+        .step-header { margin-bottom:1rem; }
+        .step-icon {
+            width:56px; height:56px; border-radius:50%;
+            background:linear-gradient(135deg, var(--cyan-acento), #007fc0);
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 0.5rem; color:white;
+            box-shadow:0 8px 25px rgba(0,174,239,0.3);
+        }
+        .step-title { color:white; font-weight:700; margin-bottom:0.25rem; font-size:1.2rem; }
+        .step-subtitle { color:rgba(255,255,255,0.45); font-size:0.88rem; }
+        .wizard-step { min-height:420px; padding-top:0.5rem; }
+        h5.fw-semibold { color:rgba(255,255,255,0.7) !important; }
+        .border-top { border-color:rgba(255,255,255,0.08) !important; }
+        .text-muted.fw-semibold { color:rgba(255,255,255,0.4) !important; }
+
+        /* Inputs del wizard */
+        .form-control-wizard, .enhanced-input-group .form-control, .enhanced-input-group .form-select {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1.5px solid rgba(255,255,255,0.12) !important;
+            color: white !important;
+            border-radius: 10px !important;
+            padding: 0.65rem 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control-wizard:focus {
+            border-color: var(--cyan-acento) !important;
+            box-shadow: 0 0 0 3px rgba(0,174,239,0.2) !important;
+            background: rgba(255,255,255,0.11) !important;
+        }
+        .form-control-wizard.is-valid { border-color: var(--verde-cepre) !important; }
+        .form-control-wizard.is-invalid { border-color: #f87171 !important; }
+        .enhanced-input-group { position:relative; margin-bottom:0.25rem; }
+        .enhanced-input-group.focused { box-shadow:0 0 0 3px rgba(0,174,239,0.15); border-radius:10px; }
+        .input-feedback { position:absolute; top:50%; right:10px; transform:translateY(-50%); opacity:0; transition:all 0.3s ease; pointer-events:none; }
+        .input-feedback.show { opacity:1; }
+        .input-feedback svg path { stroke: var(--verde-cepre); }
+        .invalid-feedback { color: #f87171 !important; font-size:0.8rem; }
+        .input-group.glow-on-focus:focus-within { box-shadow:0 0 0 3px rgba(0,174,239,0.2); border-radius:10px; }
+        .glow-text { color: var(--cyan-acento) !important; font-weight:700 !important; }
+        .auto-filled { animation: autoFillPulse 0.5s ease; }
+        @keyframes autoFillPulse { 0%,100% { background:rgba(0,174,239,0.1) !important; } 50% { background:rgba(0,174,239,0.2) !important; } }
+
+        /* BotÃ³n RENIEC */
+        .btn-reniec {
+            border-radius: 0 10px 10px 0 !important;
+            border: 1.5px solid rgba(0,174,239,0.4) !important;
+            border-left: none !important;
+            background: rgba(0,174,239,0.1) !important;
+            color: var(--cyan-acento) !important;
+        }
+        .btn-reniec:hover { background: var(--cyan-acento) !important; color: white !important; }
+        .btn-reniec.loading { background: rgba(255,255,255,0.1) !important; color: white !important; }
+        .btn-reniec.success-animation { background: var(--verde-cepre) !important; color: white !important; animation: successPulse 1s ease; }
+        @keyframes successPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+        /* Password strength */
+        .strength-meter { height:5px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden; margin-bottom:0.25rem; }
+        .strength-bar { height:100%; width:0%; border-radius:10px; transition:all 0.3s ease; }
+        .strength-bar.weak { background:linear-gradient(90deg,#ef4444,#f97316); }
+        .strength-bar.fair { background:linear-gradient(90deg,#fbbf24,#f97316); }
+        .strength-bar.good { background:linear-gradient(90deg,var(--verde-cepre),#10b981); }
+        .strength-bar.strong { background:linear-gradient(90deg,var(--cyan-acento),#6366f1); }
+        .strength-text { font-size:0.78rem; color:rgba(255,255,255,0.4); }
+
+        /* Confirmación */
+        .confirmation-container { max-height:380px; overflow-y:auto; padding-right:8px; }
+        .confirmation-section {
+            background:rgba(255,255,255,0.04); border-radius:12px;
+            padding:1rem; margin-bottom:0.75rem;
+            border:1px solid rgba(255,255,255,0.07);
+            position:relative; overflow:hidden;
+        }
+        .confirmation-section::before {
+            content:''; position:absolute; top:0; left:0; width:3px; height:100%;
+            background:linear-gradient(180deg,var(--cyan-acento),var(--verde-cepre));
+        }
+        .confirmation-title { color:var(--cyan-acento); font-weight:600; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem; font-size:1rem; }
+        .confirmation-data { display:grid; gap:0.2rem; }
+        .data-row {
+            display:grid; grid-template-columns:1fr 1.5fr; gap:0.5rem;
+            padding:0.4rem 0.75rem; background:rgba(255,255,255,0.04);
+            border-radius:8px; border-left:3px solid rgba(0,174,239,0.3);
+            transition:all 0.3s ease;
+        }
+        .data-row:hover { transform:translateX(5px); background:rgba(255,255,255,0.07); }
+        .data-label { font-weight:600; color:rgba(255,255,255,0.5); font-size:0.85rem; }
+        .data-value { color:rgba(255,255,255,0.8); font-size:0.85rem; word-break:break-word; }
+
+        /* Navigation wizard */
+        .wizard-navigation { border-top:1px solid rgba(255,255,255,0.08) !important; }
+        .step-info.text-muted { color:rgba(255,255,255,0.35) !important; }
+        .mini-dots { display:flex; gap:0.25rem; }
+        .mini-dots .dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.15); transition:all 0.3s ease; }
+        .mini-dots .dot.active { background:var(--cyan-acento); transform:scale(1.2); }
+
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+        .celebration { animation: celebrate 0.6s ease; }
+        @keyframes celebrate { 0%,100%{transform:scale(1)} 25%{transform:scale(1.1)rotate(5deg)} 75%{transform:scale(1.1)rotate(-5deg)} }
+
+        /* Scrollbars */
+        .login-card::-webkit-scrollbar, .confirmation-container::-webkit-scrollbar { width:6px; }
+        .login-card::-webkit-scrollbar-track, .confirmation-container::-webkit-scrollbar-track { background:rgba(255,255,255,0.05); border-radius:10px; }
+        .login-card::-webkit-scrollbar-thumb, .confirmation-container::-webkit-scrollbar-thumb { background:linear-gradient(180deg,var(--cyan-acento),var(--verde-cepre)); border-radius:10px; }
+
+        /* SweetAlert2 */
+        .swal2-popup { border-radius:16px !important; background:#0f1d35 !important; border:1px solid rgba(255,255,255,0.1) !important; }
+        .swal2-title { color:white !important; font-weight:700 !important; }
+        .swal2-html-container { color:rgba(255,255,255,0.7) !important; }
+        .swal2-confirm { background:linear-gradient(135deg,var(--cyan-acento),#007fc0) !important; border-radius:10px !important; font-weight:700 !important; }
+        .swal2-cancel { background:rgba(255,255,255,0.1) !important; border-radius:10px !important; font-weight:600 !important; color:white !important; }
+
+        /* ====== TÃ‰RMINOS ====== */
+        a.text-primary { color:var(--cyan-acento) !important; }
+        .text-success { color:var(--verde-cepre) !important; }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 768px) {
+            .login-card { 
+                padding:8px 6px; 
+                border-radius: 10px; 
+                max-width: 300px; 
+                margin: 0 auto;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            }
+            .mobile-back { margin-bottom: 8px; padding: 4px 8px; font-size: 0.7rem; }
+            .login-card-logo img { width: 100px; height: auto; }
+            .step-label { font-size:0.55rem; }
+            .card-body { padding: 0.5rem !important; }
+            h2.fw-bold { font-size: 1.1rem !important; margin-bottom: 2px !important; }
+            p.text-muted { font-size: 0.7rem !important; margin-bottom: 8px !important; }
+            .form-label { font-size: 0.7rem !important; margin-bottom: 1px !important; }
+            .form-control, .form-select { padding: 0.3rem 0.5rem; font-size: 0.75rem; height: 32px; }
+            .input-group-text { padding: 0.3rem 0.5rem; }
+            .btn-primary { padding: 5px 12px !important; font-size: 0.8rem; margin-top: 5px; }
+            .step-circle { width:24px; height:24px; font-size:0.65rem; }
+            .mb-3 { margin-bottom: 0.5rem !important; }
+            .mb-2 { margin-bottom: 0.4rem !important; }
+        }
+            .step-icon { width:50px; height:50px; }
+            .step-title { font-size:1.1rem; }
+            .data-row { grid-template-columns:1fr; }
+        }
+        @media (max-width: 576px) {
+            .wizard-progress .d-flex { flex-wrap:wrap; }
+            .step-indicator { flex:1; min-width:70px; }
+            .progress-line { display:none; }
+        }
+
+        /* ====== PARTÃCULA FIN ====== */
     </style>
+
+    <!-- PartÃ­culas de fondo (puntos flotantes) -->
+    <script>
+    (function(){
+        const canvas = document.getElementById('login-particles');
+        const ctx = canvas.getContext('2d');
+        let W, H, dots = [];
+        const COLORS = ['#00AEEF','#2EC866','#EC008C','#FFD700'];
+        function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+        function rnd(a,b){ return a+Math.random()*(b-a); }
+        function createDot(){
+            return { x:rnd(0,W), y:rnd(0,H), r:rnd(1,3), color:COLORS[Math.floor(Math.random()*COLORS.length)],
+                     vx:rnd(-0.3,0.3), vy:rnd(-0.3,0.3), opacity:rnd(0.2,0.6) };
+        }
+        function draw(){
+            ctx.clearRect(0,0,W,H);
+            dots.forEach(d=>{
+                ctx.beginPath();
+                ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+                ctx.fillStyle = d.color;
+                ctx.globalAlpha = d.opacity;
+                ctx.fill();
+                d.x+=d.vx; d.y+=d.vy;
+                if(d.x<0||d.x>W) d.vx*=-1;
+                if(d.y<0||d.y>H) d.vy*=-1;
+            });
+            ctx.globalAlpha=1;
+            requestAnimationFrame(draw);
+        }
+        window.addEventListener('resize',resize);
+        resize();
+        for(let i=0;i<80;i++) dots.push(createDot());
+        draw();
+    })();
+    </script>
 @endsection

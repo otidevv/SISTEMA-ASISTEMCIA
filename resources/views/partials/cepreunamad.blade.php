@@ -403,5 +403,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 </script>
 
+<!-- Animaciones estacionales (carnaval, navidad, etc.) -->
+@include('partials.cepre.seasonal-animations')
+
 <!-- Incluir Modal de Postulación -->
 @include('partials.postulacion-modal')
