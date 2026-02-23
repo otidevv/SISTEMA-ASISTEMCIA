@@ -968,6 +968,18 @@
                     @endif
                     
                     {{-- ============================== --}}
+                    {{-- Módulo: Boletines Académicos --}}
+                    {{-- ============================== --}}
+                    @can('boletines.view')
+                        <li>
+                            <a href="{{ route('boletines.index') }}">
+                                <i data-feather="archive"></i>
+                                <span> Boletines Académicos </span>
+                            </a>
+                        </li>
+                    @endcan
+
+                    {{-- ============================== --}}
                     {{-- Módulo: Material Académico --}}
                     {{-- ============================== --}}
                     @if (Auth::user()->hasPermission('material-academico.ver'))
