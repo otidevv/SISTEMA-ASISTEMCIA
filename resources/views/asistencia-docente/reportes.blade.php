@@ -547,9 +547,9 @@
                                 <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ $fechaFin }}">
                             </div>
 
-                            <div class="col-lg-6 col-md-12">
+                            <div class="col-lg-3 col-md-6">
                                 <label class="form-label fw-semibold">
-                                    <i class="mdi mdi-file-excel me-1"></i> Exportar Datos
+                                    <i class="mdi mdi-file-excel me-1"></i> Exportar Excel
                                 </label>
                                 <a href="{{ route('asistencia-docente.exportar', [
                                     'docente_id' => $selectedDocenteId,
@@ -559,7 +559,22 @@
                                     'fecha_fin' => $fechaFin,
                                     'ciclo_academico' => $selectedCicloAcademico
                                 ]) }}" class="btn btn-success w-100" id="exportBtn">
-                                    <i class="mdi mdi-download me-1"></i> Descargar Excel con Filtros Actuales
+                                    <i class="mdi mdi-download me-1"></i> Descargar Excel
+                                </a>
+                            </div>
+                            <div class="col-lg-3 col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="mdi mdi-file-pdf me-1"></i> Exportar PDF
+                                </label>
+                                <a href="{{ route('asistencia-docente.exportar-planilla-pdf', [
+                                    'docente_id' => $selectedDocenteId,
+                                    'mes' => $selectedMonth,
+                                    'anio' => $selectedYear,
+                                    'fecha_inicio' => $fechaInicio,
+                                    'fecha_fin' => $fechaFin,
+                                    'ciclo_academico' => $selectedCicloAcademico
+                                ]) }}" class="btn btn-danger w-100" id="exportPdfBtn">
+                                    <i class="mdi mdi-file-pdf me-1"></i> Descargar PDF Planilla
                                 </a>
                             </div>
                         </div>

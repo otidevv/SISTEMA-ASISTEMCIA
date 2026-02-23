@@ -287,6 +287,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}', [AsistenciaDocenteController::class, 'update'])->name('asistencia-docente.update');
             Route::delete('/{id}', [AsistenciaDocenteController::class, 'destroy'])->name('asistencia-docente.destroy');
             Route::get('/exportar', [AsistenciaDocenteController::class, 'exportar'])->name('asistencia-docente.exportar');
+            Route::get('/exportar-planilla-pdf', [AsistenciaDocenteController::class, 'exportarPlanillaPdf'])->name('asistencia-docente.exportar-planilla-pdf');
             
             // Monitor y Reportes Administrativos
             Route::get('/reportes', [AsistenciaDocenteController::class, 'reports'])->name('asistencia-docente.reports');

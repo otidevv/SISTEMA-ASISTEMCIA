@@ -38,6 +38,15 @@ class AsistenciaDocenteController extends Controller
 
     public function reports(Request $request)
     {
+        return view('asistencia-docente.reportes', $this->getReportData($request));
+    }
+
+    /**
+     * Obtiene los datos procesados para los reportes de asistencia docente
+     * (Lógica extraída para reuso en web y PDF)
+     */
+    private function getReportData(Request $request)
+    {
         // 1. Obtener parámetros de filtrado desde la URL
         $selectedDocenteId = $request->input('docente_id');
         $selectedMonth = $request->input('mes');
@@ -140,7 +149,7 @@ class AsistenciaDocenteController extends Controller
             }
         }
 
-        // 3. Construir la consulta base para asistencias docentes, aplicando filtros (TU LÓGICA EXISTENTE)
+        // 3. Construir la consulta base para asistencias docentes, aplicando filtros
         $baseQuery = AsistenciaDocente::query();
 
         if ($selectedDocenteId) {
@@ -160,7 +169,7 @@ class AsistenciaDocenteController extends Controller
             });
         }
 
-        // 4. Calcular estadísticas generales (TU LÓGICA EXISTENTE)
+        // 4. Calcular estadísticas generales
         $totalRegistrosPeriodo = (clone $baseQuery)->count();
         
         // Asistencia por día del mes/rango de fechas para el gráfico
@@ -173,7 +182,7 @@ class AsistenciaDocenteController extends Controller
             ->map(function($item) { return $item->total; })
             ->toArray();
 
-        // Ajustar fechas del gráfico para el rango de fechas o mes/año (TU LÓGICA EXISTENTE)
+        // Ajustar fechas del gráfico para el rango de fechas o mes/año
         $fechasCompletasMes = [];
         if ($fechaInicio && $fechaFin) {
             $currentDate = Carbon::parse($fechaInicio)->startOfDay();
@@ -189,12 +198,11 @@ class AsistenciaDocenteController extends Controller
                 $fechasCompletasMes[$fecha] = $asistenciaSemana[$fecha] ?? 0;
             }
         } else {
-            // Para otros casos, mantener los datos como están
             $fechasCompletasMes = $asistenciaSemana;
         }
         $asistenciaSemana = $fechasCompletasMes;
 
-        // 5. Asistencia por docente (TU LÓGICA EXISTENTE MEJORADA)
+        // 5. Asistencia por docente
         $asistenciaPorDocenteQuery = AsistenciaDocente::query();
         
         if ($fechaInicio && $fechaFin) {
@@ -220,7 +228,7 @@ class AsistenciaDocenteController extends Controller
             ->groupBy('docente_id')
             ->get();
 
-        // Calcular horas_dictadas y monto_total por docente (TU LÓGICA EXISTENTE)
+        // Calcular horas_dictadas y monto_total por docente
         $asistenciaPorDocente->transform(function ($item) use ($fechaInicio, $fechaFin, $selectedMonth, $selectedYear, $selectedCicloAcademico) {
             $docenteAsistenciasQuery = AsistenciaDocente::where('docente_id', $item->docente_id)
                 ->orderBy('fecha_hora', 'asc');
@@ -284,23 +292,18 @@ class AsistenciaDocenteController extends Controller
             return $item;
         });
 
-        // 6. OPTIMIZACIÓN: NUEVA LÓGICA PARA DATOS DETALLADOS - PRE-CARGA BATCH
+        // 6. OPTIMIZACIÓN: LÓGICA PARA DATOS DETALLADOS
         $processedDetailedAsistencias = [];
-        
-        // ⚡ OPTIMIZACIÓN CRÍTICA: Obtener ciclo activo UNA SOLA VEZ fuera del loop
         $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
         
-        // MEJORADO: Obtener solo docentes con carga horaria en el ciclo (igual que en Export)
         $docentesQuery = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
         });
         
-        // Filtrar por docente específico si se seleccionó
         if ($selectedDocenteId) {
             $docentesQuery->where('id', $selectedDocenteId);
         }
         
-        // CRÍTICO: Solo procesar docentes que tienen horarios en el ciclo seleccionado
         $cicloParaFiltrar = $selectedCicloAcademico;
         if (!$cicloParaFiltrar && $cicloActivoParaRotacion) {
             $cicloParaFiltrar = $cicloActivoParaRotacion->codigo;
@@ -316,83 +319,102 @@ class AsistenciaDocenteController extends Controller
 
         foreach ($docentesParaProcesar as $docente) {
             $docenteSessions = [];
-
-            // ⚡ OPTIMIZACIÓN: Pre-cargar todos los horarios del docente de una vez
-            $todosHorariosDocente = HorarioDocente::where('docente_id', $docente->id)
-                ->with(['curso', 'aula', 'ciclo']);
+            $todosHorariosDocente = HorarioDocente::where('docente_id', $docente->id)->with(['curso', 'aula', 'ciclo']);
             
             if ($selectedCicloAcademico) {
                 $todosHorariosDocente->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
                     $q->where('codigo', $selectedCicloAcademico);
                 });
             }
-            
             $todosHorariosDocente = $todosHorariosDocente->get();
             
-            // ⚡ OPTIMIZACIÓN: Pre-cargar todos los registros biométricos del rango
             $todosRegistrosDocente = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
                 ->whereBetween('fecha_registro', [$startDate, $endDate])
                 ->orderBy('fecha_registro', 'asc')
                 ->get();
             
-            // Indexar por fecha para acceso rápido
             $registrosPorFecha = $todosRegistrosDocente->groupBy(function($item) {
                 return Carbon::parse($item->fecha_registro)->toDateString();
             });
 
-            // Iterar día por día dentro del rango (ahora sin queries)
-            $currentDate = $startDate->copy();
-            while ($currentDate->lte($endDate)) {
-                // ⚡ OPTIMIZADO: Usar ciclo pre-cargado en lugar de consultar cada vez
-                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivoParaRotacion);
-                $fechaString = $currentDate->toDateString();
+            $currentDateLoop = $startDate->copy();
+            while ($currentDateLoop->lte($endDate)) {
+                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDateLoop, $cicloActivoParaRotacion);
+                $fechaString = $currentDateLoop->toDateString();
 
-                // Filtrar horarios del día desde la colección pre-cargada
                 $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
                     return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
                 })->sortBy('hora_inicio');
 
-                // Obtener registros biométricos del día desde la colección pre-cargada
                 $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
-                // Procesar cada sesión del día
                 foreach ($horariosDelDia as $horario) {
-                    if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
-                        continue;
-                    }
-
-                    $sessionData = $this->processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente);
-                    
-                    if ($sessionData) {
-                        $docenteSessions[] = $sessionData;
-                    }
+                    if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) continue;
+                    $sessionData = $this->processSessionForReports($horario, $currentDateLoop, $registrosBiometricosDelDia, $docente);
+                    if ($sessionData) $docenteSessions[] = $sessionData;
                 }
-                
-                
-                $currentDate->addDay();
+                $currentDateLoop->addDay();
             }
 
-            // Estructurar datos por docente, mes y semana
             if (!empty($docenteSessions)) {
                 $processedDetailedAsistencias[$docente->id] = $this->structureDocenteDataForReports($docente, $docenteSessions);
             }
         }
 
-        // CAMBIO CLAVE: Retornar la vista correcta
-        return view('asistencia-docente.reportes', compact(
-            'totalRegistrosPeriodo', 
-            'asistenciaSemana', 
-            'asistenciaPorDocente', 
-            'docentes',
-            'ciclosAcademicos', 
-            'selectedDocenteId', 
-            'selectedMonth',    
-            'selectedYear',     
-            'fechaInicio',      
-            'fechaFin',         
-            'selectedCicloAcademico',
-            'processedDetailedAsistencias' // NUEVO: Datos detallados para la tabla
-        ));
+        // ⚡ OPTIMIZACIÓN Y ORDENAMIENTO: Ordenar por apellido paterno para que coincida con Excel
+        uasort($processedDetailedAsistencias, function($a, $b) {
+            $nameA = trim(($a['docente_info']->apellido_paterno ?? '') . ' ' . ($a['docente_info']->nombre ?? ''));
+            $nameB = trim(($b['docente_info']->apellido_paterno ?? '') . ' ' . ($b['docente_info']->nombre ?? ''));
+            return strcasecmp($nameA, $nameB);
+        });
+
+        return [
+            'totalRegistrosPeriodo' => $totalRegistrosPeriodo, 
+            'asistenciaSemana' => $asistenciaSemana, 
+            'asistenciaPorDocente' => $asistenciaPorDocente, 
+            'docentes' => $docentes,
+            'ciclosAcademicos' => $ciclosAcademicos, 
+            'selectedDocenteId' => $selectedDocenteId, 
+            'selectedMonth' => $selectedMonth,    
+            'selectedYear' => $selectedYear,     
+            'fechaInicio' => $fechaInicio,      
+            'fechaFin' => $fechaFin,         
+            'selectedCicloAcademico' => $selectedCicloAcademico,
+            'processedDetailedAsistencias' => $processedDetailedAsistencias,
+            'startDate' => $startDate,
+            'endDate' => $endDate
+        ];
+    }
+
+    /**
+     * Exportar reporte de planilla de asistencia docente en PDF
+     */
+    public function exportarPlanillaPdf(Request $request)
+    {
+        $data = $this->getReportData($request);
+        $fecha_generacion = Carbon::now()->format('d/m/Y H:i:s');
+        
+        // Determinar el ciclo actual para el encabezado
+        $cicloNombre = "Todos los Ciclos";
+        if ($data['selectedCicloAcademico']) {
+            $ciclo = Ciclo::where('codigo', $data['selectedCicloAcademico'])->first();
+            if ($ciclo) $cicloNombre = $ciclo->nombre;
+        }
+
+        // Generar QR en Base64 para el PDF
+        $qrData = "PLANILLA OFICIAL CEPRE UNAMAD\nCiclo: {$cicloNombre}\nFecha: {$fecha_generacion}\nValidación: " . uniqid();
+        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(80)->generate($qrData));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('asistencia-docente.planilla-pdf', array_merge($data, [
+            'fecha_generacion' => $fecha_generacion,
+            'cicloNombre' => $cicloNombre,
+            'qrCode' => $qrCode
+        ]));
+
+        $pdf->setPaper('a4', 'portrait');
+
+        $fileName = 'Planilla_Asistencia_Docente_' . str_replace(' ', '_', $cicloNombre) . '_' . date('Ymd_His') . '.pdf';
+        return $pdf->download($fileName);
     }
 
     public function index(Request $request)
@@ -1605,7 +1627,7 @@ class AsistenciaDocenteController extends Controller
         $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
         
         // Calcular horas
-        $horasProgramadas = $horaInicioProgramada->diffInHours($horaFinProgramada, true);
+        $horasProgramadas = $horaInicioProgramada->diffInMinutes($horaFinProgramada, true) / 60;
         $horasDictadas = $horasProgramadas;
         $estadoTexto = 'PENDIENTE';
         $duracionTexto = '00:00:00'; // Inicializar por defecto
@@ -1720,14 +1742,20 @@ class AsistenciaDocenteController extends Controller
 
         // Calcular pago
         $montoTotal = 0;
-        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+        $montoDescuento = 0;
+        
+        $pagoDocente = \App\Models\PagoDocente::where('docente_id', $docente->id)
             ->whereDate('fecha_inicio', '<=', $currentDate)
             ->whereDate('fecha_fin', '>=', $currentDate)
             ->first();
-        
+
         if ($pagoDocente) {
             $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
+            $montoDescuento = ($horasProgramadas - $horasDictadas) * $pagoDocente->tarifa_por_hora;
         }
+        
+        // Evitar descuentos negativos por si acaso (aunque la lógica ya capa el fin)
+        $montoDescuento = max(0, $montoDescuento);
 
         // FORMATO DE HORAS CORREGIDO - CON SEGUNDOS Y SIN DATOS FALSOS
         // Si no hay registro biométrico, mostramos "---" para que sea evidente la falta
@@ -1750,8 +1778,11 @@ class AsistenciaDocenteController extends Controller
             'hora_entrada_prog' => $horaInicioProgramada->format('g:i A'),
             'hora_salida_prog' => $horaFinProgramada->format('g:i A'),
             'horas_dictadas' => $horasDictadas,
+            'horas_programadas' => $horasProgramadas,
             'duracion_texto' => $duracionTexto,
             'pago' => $montoTotal,
+            'monto_descuento' => $montoDescuento,
+            'tarifa_por_hora' => $pagoDocente->tarifa_por_hora ?? 0,
             'estado_sesion' => $estadoTexto,
             'mes' => $currentDate->locale('es')->monthName,
             'semana' => floor($currentDate->diffInDays(Carbon::parse($fechaInicioCiclo), false) * -1 / 7) + 1,
@@ -1769,6 +1800,7 @@ class AsistenciaDocenteController extends Controller
         $groupedData = [];
         $totalHoras = 0;
         $totalPagos = 0;
+        $totalDescuentos = 0;
 
         foreach ($sessions as $session) {
             $mes = $session['mes'];
@@ -1780,6 +1812,7 @@ class AsistenciaDocenteController extends Controller
                     'weeks' => [],
                     'total_horas' => 0,
                     'total_pagos' => 0,
+                    'total_descuentos' => 0,
                     'rowspan' => 0
                 ];
             }
@@ -1790,6 +1823,7 @@ class AsistenciaDocenteController extends Controller
                     'details' => [],
                     'total_horas' => 0,
                     'total_pagos' => 0,
+                    'total_descuentos' => 0,
                     'rowspan' => 0
                 ];
             }
@@ -1797,13 +1831,16 @@ class AsistenciaDocenteController extends Controller
             $groupedData[$mes]['weeks'][$semana]['details'][] = $session;
             $groupedData[$mes]['weeks'][$semana]['total_horas'] += $session['horas_dictadas'];
             $groupedData[$mes]['weeks'][$semana]['total_pagos'] += $session['pago'];
+            $groupedData[$mes]['weeks'][$semana]['total_descuentos'] += $session['monto_descuento'];
             $groupedData[$mes]['weeks'][$semana]['rowspan']++;
             
             $groupedData[$mes]['total_horas'] += $session['horas_dictadas'];
             $groupedData[$mes]['total_pagos'] += $session['pago'];
+            $groupedData[$mes]['total_descuentos'] += $session['monto_descuento'];
             $groupedData[$mes]['rowspan']++;
             $totalHoras += $session['horas_dictadas'];
             $totalPagos += $session['pago'];
+            $totalDescuentos = ($totalDescuentos ?? 0) + $session['monto_descuento'];
         }
 
         // Calcular redondeo: "Como se debe hacer" -> Exacto (sin redondeo a favor)
@@ -1849,6 +1886,7 @@ class AsistenciaDocenteController extends Controller
             'total_horas' => $totalHoras,
             'total_duracion_texto' => $totalDuracionTexto,
             'total_pagos' => $totalPagos,
+            'total_descuentos' => $totalDescuentos,
             'total_pagos_redondeado' => $totalPagosRedondeado,
             'rowspan' => $totalRowspan
         ];
