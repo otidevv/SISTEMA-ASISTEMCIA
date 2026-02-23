@@ -202,7 +202,8 @@ class AsistenciaDocenteController extends Controller
         }
         $asistenciaSemana = $fechasCompletasMes;
 
-        // 5. Asistencia por docente
+        // 5. Asistencia por docente (DETERMINACIÓN INICIAL PARA REPORTE WEB)
+        // Se recalculará después del procesamiento detallado para asegurar consistencia total
         $asistenciaPorDocenteQuery = AsistenciaDocente::query();
         
         if ($fechaInicio && $fechaFin) {
@@ -227,70 +228,6 @@ class AsistenciaDocenteController extends Controller
             ->selectRaw('docente_id, COUNT(*) as total_asistencias')
             ->groupBy('docente_id')
             ->get();
-
-        // Calcular horas_dictadas y monto_total por docente
-        $asistenciaPorDocente->transform(function ($item) use ($fechaInicio, $fechaFin, $selectedMonth, $selectedYear, $selectedCicloAcademico) {
-            $docenteAsistenciasQuery = AsistenciaDocente::where('docente_id', $item->docente_id)
-                ->orderBy('fecha_hora', 'asc');
-
-            if ($fechaInicio && $fechaFin) {
-                $docenteAsistenciasQuery->whereBetween('fecha_hora', [Carbon::parse($fechaInicio)->startOfDay(), Carbon::parse($fechaFin)->endOfDay()]);
-            } elseif (!empty($selectedMonth) && !empty($selectedYear)) {
-                $docenteAsistenciasQuery->whereMonth('fecha_hora', $selectedMonth)
-                                        ->whereYear('fecha_hora', $selectedYear);
-            }
-            if ($selectedCicloAcademico) {
-                $docenteAsistenciasQuery->whereHas('horario.ciclo', function ($query) use ($selectedCicloAcademico) {
-                    $query->where('codigo', $selectedCicloAcademico);
-                });
-            }
-
-            $docenteAsistencias = $docenteAsistenciasQuery->get();
-
-            $totalHorasDictadas = 0;
-            $totalMontoPago = 0;
-
-            $groupedByDayAndHorario = $docenteAsistencias->groupBy(function ($asistencia) {
-                return Carbon::parse($asistencia->fecha_hora)->format('Y-m-d') . '_' . $asistencia->horario_id;
-            });
-
-            foreach ($groupedByDayAndHorario as $group) {
-                $entrada = $group->where('estado', 'entrada')->sortBy('fecha_hora')->first();
-                $salida = $group->where('estado', 'salida')->sortByDesc('fecha_hora')->first();
-
-                $horasDictadasSesion = 0;
-                $montoTotalSesion = 0;
-
-                if ($salida && $salida->horas_dictadas !== null) { 
-                    $horasDictadasSesion = $salida->horas_dictadas;
-                } elseif ($entrada && $entrada->horas_dictadas !== null) {
-                    $horasDictadasSesion = $entrada->horas_dictadas;
-                } else {
-                    if ($entrada && $salida && Carbon::parse($salida->fecha_hora)->greaterThan(Carbon::parse($entrada->fecha_hora))) {
-                        $minutosDictados = Carbon::parse($salida->fecha_hora)->diffInMinutes(Carbon::parse($entrada->fecha_hora));
-                        $horasDictadasSesion = round($minutosDictados / 60, 2);
-                    }
-                }
-                
-                $tarifaPorHoraAplicable = 0;
-                if ($horasDictadasSesion > 0 && $entrada) {
-                    $pagoDocente = PagoDocente::where('docente_id', $item->docente_id)
-                        ->whereDate('fecha_inicio', '<=', $entrada->fecha_hora)
-                        ->whereDate('fecha_fin', '>=', $entrada->fecha_hora)
-                        ->first();
-                    if ($pagoDocente) {
-                        $tarifaPorHoraAplicable = $pagoDocente->tarifa_por_hora;
-                    }
-                }
-                $montoTotalSesion = $horasDictadasSesion * $tarifaPorHoraAplicable;
-
-                $totalHorasDictadas += $horasDictadasSesion;
-                $totalMontoPago += $montoTotalSesion;
-            }
-            $item->total_horas = $totalHorasDictadas;
-            $item->total_pagos = $totalMontoPago;
-            return $item;
-        });
 
         // 6. OPTIMIZACIÓN: LÓGICA PARA DATOS DETALLADOS
         $processedDetailedAsistencias = [];
@@ -361,7 +298,20 @@ class AsistenciaDocenteController extends Controller
             }
         }
 
-        // ⚡ OPTIMIZACIÓN Y ORDENAMIENTO: Ordenar por apellido paterno para que coincida con Excel
+        // ⚡ RECÁLCULO DE ASISTENCIA POR DOCENTE PARA CONSISTENCIA TOTAL
+        // Actualizamos $asistenciaPorDocente con los valores procesados en la lógica detallada
+        $asistenciaPorDocente->transform(function ($item) use ($processedDetailedAsistencias) {
+            if (isset($processedDetailedAsistencias[$item->docente_id])) {
+                $docData = $processedDetailedAsistencias[$item->docente_id];
+                $item->total_horas = $docData['total_horas'];
+                $item->total_pagos = $docData['total_pagos'];
+            } else {
+                $item->total_horas = 0;
+                $item->total_pagos = 0;
+            }
+            return $item;
+        });
+
         uasort($processedDetailedAsistencias, function($a, $b) {
             $nameA = trim(($a['docente_info']->apellido_paterno ?? '') . ' ' . ($a['docente_info']->nombre ?? ''));
             $nameB = trim(($b['docente_info']->apellido_paterno ?? '') . ' ' . ($b['docente_info']->nombre ?? ''));
@@ -1628,7 +1578,7 @@ class AsistenciaDocenteController extends Controller
         
         // Calcular horas
         $horasProgramadas = $horaInicioProgramada->diffInMinutes($horaFinProgramada, true) / 60;
-        $horasDictadas = $horasProgramadas;
+        $horasDictadas = 0; // ⚡ FIJADO: Inicializar en 0 para evitar fallthrough bug
         $estadoTexto = 'PENDIENTE';
         $duracionTexto = '00:00:00'; // Inicializar por defecto
 
