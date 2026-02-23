@@ -821,66 +821,11 @@ class DashboardController extends Controller
         return $dia;
     }
 
+    /**
+     * Obtener estadísticas generales de asistencia optimizadas
+     */
     private function obtenerEstadisticasGenerales($ciclo)
     {
-        // Obtener inscripciones activas con el numero_documento del usuario
-        $inscripciones = DB::table('inscripciones as i')
-            ->join('users as u', 'i.estudiante_id', '=', 'u.id')
-            ->where('i.ciclo_id', $ciclo->id)
-            ->where('i.estado_inscripcion', 'activo')
-            ->select('i.estudiante_id', 'u.numero_documento')
-            ->get();
-        
-        $totalEstudiantes = $inscripciones->count();
-        $estudiantesRegulares = 0;
-        $estudiantesAmonestados = 0;
-        $estudiantesInhabilitados = 0;
-        $estudiantesSinRegistros = 0;
-
-        // Obtener todos los documentos que tienen al menos un registro en el rango del ciclo
-        $documentosConRegistro = DB::table('registros_asistencia')
-            ->whereIn('nro_documento', $inscripciones->pluck('numero_documento')->filter())
-            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
-            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
-            ->distinct('nro_documento')
-            ->pluck('nro_documento')
-            ->toArray();
-        
-        foreach ($inscripciones as $inscripcion) {
-            $doc = $inscripcion->numero_documento;
-            
-            // Verificar si no tiene documento o no tiene registros
-            if (empty($doc) || !in_array($doc, $documentosConRegistro)) {
-                $estudiantesSinRegistros++;
-                continue;
-            }
-
-            // Usar AsistenciaHelper que ya tiene la lógica del Excel unificada
-            $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($doc, $ciclo);
-            
-            if ($info['estado'] === 'inhabilitado') {
-                $estudiantesInhabilitados++;
-            } elseif ($info['estado'] === 'amonestado') {
-                $estudiantesAmonestados++;
-            } else {
-                $estudiantesRegulares++;
-            }
-        }
-        
-        return [
-            'total_estudiantes' => $totalEstudiantes,
-            'regulares' => $estudiantesRegulares,
-            'amonestados' => $estudiantesAmonestados,
-            'inhabilitados' => $estudiantesInhabilitados,
-            'sin_asistencia' => $estudiantesSinRegistros,
-            'porcentaje_regulares' => $totalEstudiantes > 0 ? 
-                round(($estudiantesRegulares / $totalEstudiantes) * 100, 2) : 0,
-            'porcentaje_amonestados' => $totalEstudiantes > 0 ? 
-                round(($estudiantesAmonestados / $totalEstudiantes) * 100, 2) : 0,
-            'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? 
-                round(($estudiantesInhabilitados / $totalEstudiantes) * 100, 2) : 0,
-            'porcentaje_sin_asistencia' => $totalEstudiantes > 0 ? 
-                round(($estudiantesSinRegistros / $totalEstudiantes) * 100, 2) : 0
-        ];
+        return \App\Helpers\AsistenciaHelper::obtenerEstadisticasCiclo($ciclo);
     }
 }

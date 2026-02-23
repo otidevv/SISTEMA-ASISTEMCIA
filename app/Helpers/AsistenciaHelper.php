@@ -259,41 +259,166 @@ class AsistenciaHelper
     /**
      * Obtener estadísticas generales de inhabilitados para un ciclo.
      */
+    /**
+     * Obtener estadísticas generales de asistencia de forma optimizada (Batch processing)
+     */
     public static function obtenerEstadisticasCiclo($ciclo)
     {
+        // 1. Obtener el examen activo
+        $examenActivo = self::determinarExamenActivo($ciclo);
+        if (!$examenActivo) {
+            return self::emptyStats();
+        }
+
+        $periodoInicio = Carbon::parse($examenActivo['fecha_inicio'])->startOfDay();
+        $periodoExamen = Carbon::parse($examenActivo['fecha_examen'])->endOfDay();
+        $ahora = Carbon::now();
+        $fechaFinCalculo = $ahora < $periodoExamen ? $ahora->copy()->endOfDay() : $periodoExamen;
+
+        // 2. Obtener inscripciones
         $inscripciones = \App\Models\Inscripcion::where('ciclo_id', $ciclo->id)
             ->where('estado_inscripcion', 'activo')
+            ->with('estudiante:id,numero_documento')
             ->get();
+        
+        $totalEstudiantes = $inscripciones->count();
+        if ($totalEstudiantes === 0) {
+            return self::emptyStats();
+        }
 
-        $stats = [
-            'total_estudiantes' => $inscripciones->count(),
-            'regulares' => 0,
-            'amonestados' => 0,
-            'inhabilitados' => 0,
-            'sin_asistencia' => 0
-        ];
+        $documentosInscritos = $inscripciones->pluck('estudiante.numero_documento')->filter()->toArray();
+
+        // 3. Batch fetch first registration in cycle
+        $primerasAsistencias = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentosInscritos)
+            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+            ->select('nro_documento', DB::raw('MIN(fecha_registro) as first_reg'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('first_reg', 'nro_documento')
+            ->toArray();
+
+        // 4. Batch fetch attendance counts in current period
+        $asistenciasCount = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentosInscritos)
+            ->where('fecha_registro', '>=', $periodoInicio)
+            ->where('fecha_registro', '<=', $fechaFinCalculo)
+            ->select('nro_documento', DB::raw('COUNT(DISTINCT DATE(fecha_registro)) as total'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('total', 'nro_documento')
+            ->toArray();
+
+        // 5. Pre-calcular mapa de días hábiles acumulativos para el ciclo
+        $cycleStart = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+        $cycleEnd = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+        $cumulativeBusinessDays = [];
+        $count = 0;
+        $temp = $cycleStart->copy();
+        while ($temp <= $cycleEnd) {
+            if ($ciclo->esDiaHabil($temp)) {
+                $count++;
+            }
+            $cumulativeBusinessDays[$temp->toDateString()] = $count;
+            $temp->addDay();
+        }
+
+        // 6. Calcular estadísticas en memoria
+        $estudiantesRegulares = 0;
+        $estudiantesAmonestados = 0;
+        $estudiantesInhabilitados = 0;
+        $estudiantesSinRegistros = 0;
+
+        $isPrimerExamen = ($examenActivo['nombre'] === 'Primer Examen');
+        $porcentajeAmonestacion = $ciclo->porcentaje_amonestacion ?? 20;
+        $porcentajeInhabilitacion = $ciclo->porcentaje_inhabilitacion ?? 30;
 
         foreach ($inscripciones as $inscripcion) {
-            $info = self::obtenerEstadoHabilitacion($inscripcion->estudiante->numero_documento ?? '');
+            $doc = $inscripcion->estudiante->numero_documento ?? '';
             
-            if ($info['estado'] == 'desconocido') {
-                $stats['sin_asistencia']++;
+            if (empty($doc) || !isset($primerasAsistencias[$doc])) {
+                $estudiantesSinRegistros++;
+                continue;
+            }
+
+            $currentInicioConteo = $periodoInicio->copy();
+            if ($isPrimerExamen) {
+                $fechaPrimerRegistro = Carbon::parse($primerasAsistencias[$doc])->startOfDay();
+                if ($fechaPrimerRegistro->gt($currentInicioConteo)) {
+                    $currentInicioConteo = $fechaPrimerRegistro;
+                }
+            }
+
+            if ($currentInicioConteo > $ahora) {
+                $estudiantesRegulares++;
+                continue;
+            }
+
+            $diasHabilesTotales = self::getBusinessDaysCountStatic($currentInicioConteo, $periodoExamen, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
+            $diasHabilesTranscurridos = self::getBusinessDaysCountStatic($currentInicioConteo, $fechaFinCalculo, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
+            
+            $diasConAsistencia = $asistenciasCount[$doc] ?? 0;
+            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+            
+            $limiteAmonestacion = ceil($diasHabilesTotales * ($porcentajeAmonestacion / 100));
+            $limiteInhabilitacion = ceil($diasHabilesTotales * ($porcentajeInhabilitacion / 100));
+
+            if ($totalFaltas >= $limiteInhabilitacion) {
+                $estudiantesInhabilitados++;
+            } elseif ($totalFaltas >= $limiteAmonestacion) {
+                $estudiantesAmonestados++;
             } else {
-                // Mapear estado a contador (regular -> regulares, amonestado -> amonestados, inhabilitado -> inhabilitados)
-                $key = $info['estado'] == 'regular' ? 'regulares' : ($info['estado'] == 'amonestado' ? 'amonestados' : 'inhabilitados');
-                $stats[$key]++;
+                $estudiantesRegulares++;
             }
         }
         
         return [
-            'total_estudiantes' => $stats['total_estudiantes'],
-            'regulares' => $stats['regulares'],
-            'amonestados' => $stats['amonestados'],
-            'inhabilitados' => $stats['inhabilitados'],
-            'sin_asistencia' => $stats['sin_asistencia'],
-            'porcentaje_regulares' => $stats['total_estudiantes'] > 0 ? round(($stats['regulares'] / $stats['total_estudiantes']) * 100, 2) : 0,
-            'porcentaje_amonestados' => $stats['total_estudiantes'] > 0 ? round(($stats['amonestados'] / $stats['total_estudiantes']) * 100, 2) : 0,
-            'porcentaje_inhabilitados' => $stats['total_estudiantes'] > 0 ? round(($stats['inhabilitados'] / $stats['total_estudiantes']) * 100, 2) : 0
+            'total_estudiantes' => $totalEstudiantes,
+            'regulares' => $estudiantesRegulares,
+            'amonestados' => $estudiantesAmonestados,
+            'inhabilitados' => $estudiantesInhabilitados,
+            'sin_asistencia' => $estudiantesSinRegistros,
+            'porcentaje_regulares' => $totalEstudiantes > 0 ? round(($estudiantesRegulares / $totalEstudiantes) * 100, 2) : 0,
+            'porcentaje_amonestados' => $totalEstudiantes > 0 ? round(($estudiantesAmonestados / $totalEstudiantes) * 100, 2) : 0,
+            'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? round(($estudiantesInhabilitados / $totalEstudiantes) * 100, 2) : 0,
+            'porcentaje_sin_asistencia' => $totalEstudiantes > 0 ? round(($estudiantesSinRegistros / $totalEstudiantes) * 100, 2) : 0
+        ];
+    }
+
+    private static function getBusinessDaysCountStatic($from, $to, $cumulativeMap, $cycleStart, $cycleEnd)
+    {
+        $f = $from->copy()->startOfDay();
+        $t = $to->copy()->startOfDay();
+        
+        if ($f < $cycleStart) $f = $cycleStart->copy();
+        if ($t > $cycleEnd) $t = $cycleEnd->copy();
+        if ($f > $t) return 0;
+
+        $toStr = $t->toDateString();
+        $countTo = $cumulativeMap[$toStr] ?? 0;
+        
+        $countFromBefore = 0;
+        $fromBefore = $f->copy()->subDay();
+        if ($fromBefore >= $cycleStart) {
+            $countFromBefore = $cumulativeMap[$fromBefore->toDateString()] ?? 0;
+        }
+        
+        return max(0, $countTo - $countFromBefore);
+    }
+
+    private static function emptyStats()
+    {
+        return [
+            'total_estudiantes' => 0,
+            'regulares' => 0,
+            'amonestados' => 0,
+            'inhabilitados' => 0,
+            'sin_asistencia' => 0,
+            'porcentaje_regulares' => 0,
+            'porcentaje_amonestados' => 0,
+            'porcentaje_inhabilitados' => 0,
+            'porcentaje_sin_asistencia' => 0
         ];
     }
 
