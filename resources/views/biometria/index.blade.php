@@ -143,18 +143,6 @@
                         </div>
                         <div class="col-md-9">
                             <div class="row g-2 justify-content-end">
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1 fw-bold text-cepre-pink">Equipo para Registro:</label>
-                                    <select id="device_enroll_selector" class="form-select form-select-sm border-cepre-pink" style="border-width: 2px;">
-                                        <option value="">-- Seleccionar Equipo --</option>
-                                        @foreach($devices as $device)
-                                            @php $isOnline = $device->last_seen && $device->last_seen->diffInMinutes(now()) < 5; @endphp
-                                            <option value="{{ $device->sn }}" {{ ($devices->count() == 1 || ($loop->first && $isOnline)) ? 'selected' : '' }}>
-                                                {{ $device->nombre }} ({{ $isOnline ? 'ONLINE' : 'OFFLINE' }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
                                 <div class="col-md-2">
                                     <label class="form-label small mb-1 fw-bold">Ciclo:</label>
                                     <select id="ciclo_filter" class="form-select form-select-sm filter-select">
@@ -164,7 +152,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label small mb-1 fw-bold">Carrera:</label>
                                     <select id="carrera_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Carrera --</option>
@@ -173,7 +161,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <label class="form-label small mb-1 fw-bold">Rol:</label>
                                     <select id="role_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Rol --</option>
@@ -182,7 +170,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <label class="form-label small mb-1 fw-bold">Estado:</label>
                                     <select id="status_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Biometría --</option>
@@ -239,6 +227,15 @@
 
     <script>
         $(document).ready(function() {
+            // Lista de dispositivos para JS
+            const devices = @json($devices->map(function($d) {
+                return [
+                    'sn' => $d->sn,
+                    'nombre' => $d->nombre,
+                    'isOnline' => $d->last_seen && $d->last_seen->diffInMinutes(now()) < 5
+                ];
+            }));
+
             const table = $('#users-table').DataTable({
                 processing: true,
                 serverSide: true,
@@ -340,28 +337,45 @@
             $(document).on('click', '.enroll-btn', function() {
                 const userId = $(this).data('id');
                 const type = $(this).data('type');
-                const deviceSn = $('#device_enroll_selector').val();
+                const typeLabel = type === 'fingerprint' ? 'Huella' : 'Rostro';
                 
-                if (!deviceSn) {
-                    Swal.fire({
-                        title: '¡Aviso!',
-                        text: 'Primero selecciona el equipo donde quieres que el alumno ponga su huella/rostro.',
-                        icon: 'warning',
-                        confirmButtonColor: '#ec008c'
-                    });
+                if (devices.length === 0) {
+                    Swal.fire('Error', 'No hay biométricos registrados en el sistema.', 'error');
                     return;
                 }
 
+                // Generar opciones para el selector
+                let optionsHtml = '';
+                devices.forEach(d => {
+                    const statusText = d.isOnline ? '<span class="text-success small">(En Línea)</span>' : '<span class="text-danger small">(Desconectado)</span>';
+                    optionsHtml += `<option value="${d.sn}">${d.nombre} ${d.isOnline ? '🟢' : '🔴'}</option>`;
+                });
+
                 Swal.fire({
-                    title: '¿Iniciar registro remoto?',
-                    text: `Se enviará la orden al equipo [${deviceSn}] para capturar la biometría del usuario.`,
+                    title: `Registro de ${typeLabel}`,
+                    text: 'Selecciona el equipo que entrará en modo registro:',
                     icon: 'question',
+                    html: `
+                        <div class="mt-3">
+                            <label class="form-label small fw-bold">Elija el Biométrico ZKTeco:</label>
+                            <select id="swal_device_selector" class="form-select">
+                                ${optionsHtml}
+                            </select>
+                            <div class="mt-2 small text-muted">
+                                El alumno debe estar frente al equipo seleccionado.
+                            </div>
+                        </div>
+                    `,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, iniciar',
-                    cancelButtonText: 'Cancelar'
+                    confirmButtonText: 'Iniciar Registro',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#ec008c',
+                    preConfirm: () => {
+                        return document.getElementById('swal_device_selector').value;
+                    }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        startEnrollment(userId, deviceSn, type);
+                        startEnrollment(userId, result.value, type);
                     }
                 });
             });
