@@ -1721,13 +1721,13 @@ async function obtenerComandoPendiente(sn) {
             let command = (cmd.command || '').trim();
             let payload = rawPayload.toString().replace(/"/g, '').trim();
 
-            // Mapeo selectivo de comandos según protocolo PUSH ZKTeco
+            // Mapeo selectivo de comandos según protocolo PUSH ZKTeco 8.0.4.x (uFace 800)
             if (command === 'ENROLL_FP') {
-                // Comando clásico sin DATA, a menudo es el único que despierta la pantalla
-                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload} FID=0 RETRY=3`;
+                // Sintaxis exacta vieja del BioTime: requiere DATA, requiere ENROLL_FP y requiere FID
+                cmdText = `C:${cmd.id}:DATA ENROLL_FP PIN=${payload} FID=0 RETRY=3`;
             } else if (command === 'ENROLL_FACE') {
-                // Comando clásico de rostro
-                cmdText = `C:${cmd.id}:ENROLL_FACE PIN=${payload} RETRY=3`;
+                // El único comando de rostro que dio -1003 (timeout del equipo en lugar de rechazo -1002)
+                cmdText = `C:${cmd.id}:DATA ENROLL_BIO PIN=${payload} TYPE=9`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;
