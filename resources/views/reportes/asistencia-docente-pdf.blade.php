@@ -172,8 +172,8 @@
         <div class="summary-card">
             <div class="summary-card-title">Total Horas Dictadas</div>
             <div class="summary-card-value">
-                {{ number_format($data['total_horas'], 2) }}
-                <div style="font-size: 10px; color: #7f8c8d; font-weight: normal; margin-top: 2px;">({{ $data['total_duracion_texto'] }}) HRS</div>
+                {{ $data['total_duracion_texto'] }}
+                <div style="font-size: 10px; color: #7f8c8d; font-weight: normal; margin-top: 2px;">HRS</div>
             </div>
         </div>
         <div class="summary-card">
@@ -235,8 +235,8 @@
                                 <div style="font-size: 8px;">S: {{ $session['hora_salida'] }}</div>
                             </td>
                             <td style="text-align: right; font-weight: bold;">
-                                {{ number_format($session['horas_dictadas'], 2) }}
-                                <br><span style="font-size: 8px; color: #7f8c8d;">({{ $session['duracion_texto'] }})</span>
+                                {{ $session['duracion_texto'] }}
+                                <br><span style="font-size: 8px; color: #7f8c8d;">HRS</span>
                             </td>
                             <td>
                                 @php
