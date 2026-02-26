@@ -1723,11 +1723,11 @@ async function obtenerComandoPendiente(sn) {
 
             // Mapeo selectivo de comandos según protocolo PUSH ZKTeco
             if (command === 'ENROLL_FP') {
-                // Registro de huella: DATA ENROLLPIN=UserID RETRY=3
-                cmdText = `C:${cmd.id}:DATA ENROLLPIN=${payload} RETRY=3`;
+                // Intento alternativo para uFace 800: Comando sin prefijo DATA
+                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload} RETRY=3`;
             } else if (command === 'ENROLL_FACE') {
-                // Registro de rostro: Intentar comando de enrolamiento en dispositivo híbrido
-                cmdText = `C:${cmd.id}:DATA ENROLL_BIO PIN=${payload}`;
+                // Intento alternativo para uFace: Comando sin prefijo DATA
+                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload} TYPE=9`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;
