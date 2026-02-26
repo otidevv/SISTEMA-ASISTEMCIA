@@ -1723,10 +1723,10 @@ async function obtenerComandoPendiente(sn) {
 
             // Mapeo selectivo de comandos según protocolo PUSH ZKTeco
             if (command === 'ENROLL_FP') {
-                // Huella: Usamos el estándar más estable que sí reconoce el uFace
-                cmdText = `C:${cmd.id}:DATA ENROLLPIN=${payload} RETRY=3`;
+                // Huella: Tipo 1 es Fingerprint en ENROLL_BIO
+                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload} TYPE=1`;
             } else if (command === 'ENROLL_FACE') {
-                // Rostro: Este comando (sin DATA) logró conectar, -1003 probablemente fue un timeout
+                // Rostro: Tipo 9 es Face en ENROLL_BIO (Timeout = -1003)
                 cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload} TYPE=9`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
