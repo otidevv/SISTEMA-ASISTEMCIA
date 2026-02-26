@@ -1587,24 +1587,47 @@ async function handleRequest(endpoint, req, res) {
                 } catch (error) {
                     logger.error(`[${endpoint}] Error procesando ATTLOG:`, error);
                 }
-            } else if (table === 'FP' || table === 'Fptemp' || table === 'TEMPLATE') {
-                // Registro de Huella Digital
-                logger.info(`[${sn_dispositivo}] Recibida plantilla de huella.`);
-                const pinMatch = rawData.match(/PIN=(\d+)/i);
-                if (pinMatch) {
-                    const pin = pinMatch[1];
-                    await pool.execute('UPDATE users SET has_fingerprint = 1 WHERE numero_documento = ?', [pin]);
-                    logger.info(`[${sn_dispositivo}] Usuario ${pin} marcado con huella registrada.`);
+            } else if (['FP', 'Fptemp', 'TEMPLATE', 'fingerprint', 'FINGERPRINT'].includes(table)) {
+                // Registro de Huella Digital (Soporta múltiples líneas por ráfaga)
+                const lineas = rawData.trim().split('\n');
+                let procesados = 0;
+                for (const linea of lineas) {
+                    const pinMatch = linea.match(/PIN=(\d+)/i);
+                    if (pinMatch) {
+                        const pin = pinMatch[1];
+                        await pool.execute('UPDATE users SET has_fingerprint = 1 WHERE numero_documento = ?', [pin]);
+                        procesados++;
+                    }
                 }
-            } else if (table === 'FACE') {
-                // Registro de Rostro
-                logger.info(`[${sn_dispositivo}] Recibida plantilla de rostro.`);
-                const pinMatch = rawData.match(/PIN=(\d+)/i);
-                if (pinMatch) {
-                    const pin = pinMatch[1];
-                    await pool.execute('UPDATE users SET has_face = 1 WHERE numero_documento = ?', [pin]);
-                    logger.info(`[${sn_dispositivo}] Usuario ${pin} marcado con rostro registrado.`);
+                logger.info(`[${sn_dispositivo}] Procesadas ${procesados} huellas (Tabla: ${table}).`);
+            } else if (['FACE', 'face', 'BIODATA', 'facev7'].includes(table)) {
+                // Registro de Rostro (Soporta múltiples líneas por ráfaga)
+                const lineas = rawData.trim().split('\n');
+                let procesados = 0;
+                for (const linea of lineas) {
+                    const pinMatch = linea.match(/PIN=(\d+)/i);
+                    if (pinMatch) {
+                        const pin = pinMatch[1];
+                        await pool.execute('UPDATE users SET has_face = 1 WHERE numero_documento = ?', [pin]);
+                        procesados++;
+                    }
                 }
+                logger.info(`[${sn_dispositivo}] Procesados ${procesados} rostros (Tabla: ${table}).`);
+            } else if (['USER', 'user', 'USERINFO', 'userinfo'].includes(table)) {
+                // Información de Usuarios (Sincronización)
+                const lineas = rawData.trim().split('\n');
+                let procesados = 0;
+                for (const linea of lineas) {
+                    const pinMatch = linea.match(/PIN=(\d+)/i);
+                    if (pinMatch) {
+                        const pin = pinMatch[1];
+                        // Aquí podríamos marcar si el usuario existe, pero la huella/rostro viene en su propia tabla
+                        procesados++;
+                    }
+                }
+                logger.info(`[${sn_dispositivo}] Procesados ${procesados} registros de usuario (Tabla: ${table}).`);
+            } else {
+                logger.warn(`[${sn_dispositivo}] Recibida tabla desconocida en cdata: ${table}. Datos: ${rawData.substring(0, 100)}...`);
             }
             return res.send("OK");
         }
