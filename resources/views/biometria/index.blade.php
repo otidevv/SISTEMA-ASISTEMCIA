@@ -13,6 +13,10 @@
             --cepre-magenta: #e91e63;
             --cepre-navy: #1a237e;
         }
+        .device-selector-card {
+            border-left: 5px solid var(--cepre-pink);
+            background-color: #f8f9fa;
+        }
         .biometric-card {
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -139,15 +143,29 @@
                         </div>
                         <div class="col-md-9">
                             <div class="row g-2 justify-content-end">
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1 fw-bold text-cepre-pink">Equipo para Registro:</label>
+                                    <select id="device_enroll_selector" class="form-select form-select-sm border-cepre-pink" style="border-width: 2px;">
+                                        <option value="">-- Seleccionar Equipo --</option>
+                                        @foreach($devices as $device)
+                                            @php $isOnline = $device->last_seen && $device->last_seen->diffInMinutes(now()) < 5; @endphp
+                                            <option value="{{ $device->sn }}" {{ ($devices->count() == 1 || ($loop->first && $isOnline)) ? 'selected' : '' }}>
+                                                {{ $device->nombre }} ({{ $isOnline ? 'ONLINE' : 'OFFLINE' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <div class="col-md-2">
+                                    <label class="form-label small mb-1 fw-bold">Ciclo:</label>
                                     <select id="ciclo_filter" class="form-select form-select-sm filter-select">
-                                        <option value="">-- Ciclo Académico --</option>
+                                        <option value="">-- Ciclo --</option>
                                         @foreach($ciclos as $ciclo)
                                             <option value="{{ $ciclo->id }}" {{ isset($activeCiclo) && $activeCiclo->id == $ciclo->id ? 'selected' : '' }}>{{ $ciclo->nombre }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-3">
+                                    <label class="form-label small mb-1 fw-bold">Carrera:</label>
                                     <select id="carrera_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Carrera --</option>
                                         @foreach($carreras as $carrera)
@@ -156,6 +174,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
+                                    <label class="form-label small mb-1 fw-bold">Rol:</label>
                                     <select id="role_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Rol --</option>
                                         @foreach($roles as $role)
@@ -164,8 +183,9 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
+                                    <label class="form-label small mb-1 fw-bold">Estado:</label>
                                     <select id="status_filter" class="form-select form-select-sm filter-select">
-                                        <option value="">-- Huella/Rostro --</option>
+                                        <option value="">-- Biometría --</option>
                                         <option value="fingerprint_pending">Sin Huella</option>
                                         <option value="face_pending">Sin Rostro</option>
                                         <option value="both_pending">Sin Ninguno</option>
@@ -320,18 +340,21 @@
             $(document).on('click', '.enroll-btn', function() {
                 const userId = $(this).data('id');
                 const type = $(this).data('type');
-                
-                // Por ahora usamos el primer dispositivo disponible (simplificación profesional)
-                const deviceSn = "{{ $devices->first()->sn ?? '' }}";
+                const deviceSn = $('#device_enroll_selector').val();
                 
                 if (!deviceSn) {
-                    Swal.fire('Error', 'No hay dispositivos online para realizar el registro.', 'error');
+                    Swal.fire({
+                        title: '¡Aviso!',
+                        text: 'Primero selecciona el equipo donde quieres que el alumno ponga su huella/rostro.',
+                        icon: 'warning',
+                        confirmButtonColor: '#ec008c'
+                    });
                     return;
                 }
 
                 Swal.fire({
                     title: '¿Iniciar registro remoto?',
-                    text: `Se enviará la orden al equipo ${deviceSn} para capturar la biometría del usuario.`,
+                    text: `Se enviará la orden al equipo [${deviceSn}] para capturar la biometría del usuario.`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, iniciar',
