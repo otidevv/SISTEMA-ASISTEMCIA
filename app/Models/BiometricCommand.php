@@ -16,8 +16,7 @@ class BiometricCommand extends Model
     ];
 
     protected $casts = [
-        'executed_at' => 'datetime',
-        'payload' => 'array'
+        'executed_at' => 'datetime'
     ];
 
     public function device()
