@@ -1725,11 +1725,11 @@ async function obtenerComandoPendiente(sn) {
 
             // Mapeo selectivo de comandos según protocolo PUSH ZKTeco 8.0.4.x (uFace 800)
             if (command === 'ENROLL_FP') {
-                // Último intento: formato más básico sin prefijos ni índices
-                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload} RETRY=3`;
+                // Comando Ultra-Básico: Sin prefijos, sin índices y SIN parámetro RETRY
+                // El uFace 800 toma todo el texto después de PIN= como el ID literal del usuario.
+                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload}`;
             } else if (command === 'ENROLL_FACE') {
-                // Último intento: probar ENROLL_BIO sin parámetro TYPE para evitar el timeout
-                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload} RETRY=3`;
+                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload}`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;
