@@ -1727,7 +1727,7 @@ async function obtenerComandoPendiente(sn) {
                 cmdText = `C:${cmd.id}:DATA ENROLLPIN=${payload} RETRY=3`;
             } else if (command === 'ENROLL_FACE') {
                 // Registro de rostro: DATA ENROLLFACE PIN=UserID
-                cmdText = `C:${cmd.id}:DATA ENROLLFACE PIN=${payload}`;
+                cmdText = `C:${cmd.id}:DATA ENROLLFACE PIN=${payload} RETRY=3`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;

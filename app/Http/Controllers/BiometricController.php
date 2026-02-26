@@ -142,6 +142,18 @@ class BiometricController extends Controller
 
         $user = User::findOrFail($request->user_id);
         
+        // 1. Asegurar que el usuario existe en el equipo (Mandatorio para muchos modelos antes de enrolar)
+        // El formato es PIN=ID <tab> Name=Nombre <tab> Pri=Nivel <tab> Pass=Clave <tab> Grp=Grupo <tab> TZ=ZonaHoraria
+        $userInfo = "PIN=" . $user->numero_documento . "\tName=" . $user->nombre . "\tPri=0\tPass=\tCard=\tGrp=1\tTZ=00000000";
+        
+        BiometricCommand::create([
+            'device_sn' => $request->device_sn,
+            'command' => 'DATA UPDATE USERINFO',
+            'payload' => $userInfo,
+            'status' => 'pending'
+        ]);
+
+        // 2. Orden de registro (Huella o Rostro)
         $command = BiometricCommand::create([
             'device_sn' => $request->device_sn,
             'command' => 'ENROLL_' . $request->type,
