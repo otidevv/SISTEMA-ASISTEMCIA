@@ -26,6 +26,7 @@ use App\Http\Controllers\PostulacionController;
 use App\Http\Controllers\PostulacionUnificadaController;
 use App\Http\Controllers\MaterialAcademicoController;
 use App\Http\Controllers\TarjetasController;
+use App\Http\Controllers\BiometricController;
 use App\Http\Controllers\CargaHorariaController;
 use App\Http\Controllers\Api\CargaHorariaApiController;
 
@@ -897,6 +898,15 @@ Route::prefix('admin/resultados-examenes')->middleware(['auth'])->name('resultad
         ->name('toggle-visibility')
         ->middleware('can:resultados-examenes.publish');
 });
+
+    // Módulo Biométrico
+    Route::group(['prefix' => 'biometria', 'as' => 'biometria.'], function () {
+        Route::get('/', [BiometricController::class, 'index'])->name('index')->middleware('can:biometria.view');
+        Route::get('/devices', [BiometricController::class, 'listDevices'])->name('devices')->middleware('can:biometria.view');
+        Route::get('/users', [BiometricController::class, 'listUsers'])->name('users')->middleware('can:biometria.view');
+        Route::post('/enroll', [BiometricController::class, 'enroll'])->name('enroll')->middleware('can:biometria.enroll');
+        Route::get('/status/{id}', [BiometricController::class, 'checkCommandStatus'])->name('status')->middleware('can:biometria.view');
+    });
 
 // Ruta pública de cursos (se define al final para evitar colisión con el prefijo administrativo)
 Route::get('/cursos-cepre', [App\Http\Controllers\HomeController::class, 'cursos'])->name('public.cursos');

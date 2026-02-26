@@ -1556,58 +1556,168 @@ async function handleRequest(endpoint, req, res) {
     try {
         const method = req.method;
         const ip = req.ip || req.connection.remoteAddress;
-        logger.info(`[${endpoint}] Solicitud ${method} recibida desde: ${ip}`);
+        const sn_dispositivo = req.query.SN || '';
 
-        if (req.query && endpoint.includes('iclock/cdata')) {
-            logger.info(`[${endpoint}] Parámetros URL: ${JSON.stringify(req.query)}`);
-            if (req.query.table === 'ATTLOG') {
+        // 1. Registro de actividad (Heartbeat)
+        if (sn_dispositivo) {
+            actualizarEstadoDispositivo(sn_dispositivo, ip);
+        }
+
+        logger.info(`[${endpoint}] Solicitud ${method} de ${sn_dispositivo} (${ip})`);
+
+        // 2. Recepción de Datos de Asistencia o Biometría (iclock/cdata POST)
+        if (method === 'POST' && endpoint.includes('iclock/cdata')) {
+            const table = req.query.table;
+            let rawData = req.rawBody || (typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString('utf8') : ''));
+
+            if (table === 'ATTLOG') {
                 try {
-                    let rawData = '';
-                    if (req.rawBody) {
-                        rawData = req.rawBody;
-                    } else if (typeof req.body === 'string') {
-                        rawData = req.body;
-                    } else if (Buffer.isBuffer(req.body)) {
-                        rawData = req.body.toString('utf8');
-                    }
                     if (!rawData || !rawData.includes('\t')) {
-                        logger.error(`[${endpoint}] Datos recibidos no tienen el formato esperado: ${rawData}`);
+                        logger.error(`[${endpoint}] Datos inválidos: ${rawData}`);
                         return res.send("OK");
                     }
 
-                    const sn_dispositivo = req.query.SN || '';
-                    logger.info(`Procesando registro de asistencia del dispositivo ${sn_dispositivo}`);
                     const lineas = rawData.trim().split('\n');
                     for (const linea of lineas) {
                         if (linea.trim()) {
                             await procesarAsistencia(sn_dispositivo, linea);
                         }
                     }
-                    logger.info("Registros de asistencia procesados correctamente");
+                    logger.info(`[${sn_dispositivo}] ${lineas.length} registros de asistencia procesados.`);
                 } catch (error) {
-                    logger.error(`[${endpoint}] Error al procesar datos:`, error);
+                    logger.error(`[${endpoint}] Error procesando ATTLOG:`, error);
+                }
+            } else if (table === 'FP' || table === 'Fptemp' || table === 'TEMPLATE') {
+                // Registro de Huella Digital
+                logger.info(`[${sn_dispositivo}] Recibida plantilla de huella.`);
+                const pinMatch = rawData.match(/PIN=(\d+)/i);
+                if (pinMatch) {
+                    const pin = pinMatch[1];
+                    await pool.execute('UPDATE users SET has_fingerprint = 1 WHERE numero_documento = ?', [pin]);
+                    logger.info(`[${sn_dispositivo}] Usuario ${pin} marcado con huella registrada.`);
+                }
+            } else if (table === 'FACE') {
+                // Registro de Rostro
+                logger.info(`[${sn_dispositivo}] Recibida plantilla de rostro.`);
+                const pinMatch = rawData.match(/PIN=(\d+)/i);
+                if (pinMatch) {
+                    const pin = pinMatch[1];
+                    await pool.execute('UPDATE users SET has_face = 1 WHERE numero_documento = ?', [pin]);
+                    logger.info(`[${sn_dispositivo}] Usuario ${pin} marcado con rostro registrado.`);
                 }
             }
+            return res.send("OK");
         }
-        // Lógica de respuesta para los dispositivos ZKTeco.
-        if (endpoint.includes('iclock/cdata') || endpoint.includes('iclock')) {
-            if (req.url.includes('options=all')) {
-                // Respuesta necesaria para que el dispositivo ZKTeco se configure.
-                return res.send("GET OPTION FROM:" + (req.query.SN || '') + "\nTransTimes=1\nTransInterval=1\nTransTables=User,Fptemp,AttLog\nOper=SetDeviceInfo\n");
-            } else {
-                return res.send("OK"); // Respuesta estándar de OK.
+
+        // 3. Petición de Comandos/Tareas (iclock/getrequest GET)
+        if (method === 'GET' && endpoint.includes('iclock/getrequest')) {
+            const comando = await obtenerComandoPendiente(sn_dispositivo);
+            if (comando) {
+                logger.info(`[${sn_dispositivo}] Enviando comando: ${comando.id}:${comando.text}`);
+                return res.send(comando.text);
             }
+            return res.send("OK");
+        }
+
+        // 4. Resultado de Comandos (iclock/devicecmd POST)
+        if (method === 'POST' && endpoint.includes('iclock/devicecmd')) {
+            let rawBody = req.rawBody || (typeof req.body === 'string' ? req.body : (Buffer.isBuffer(req.body) ? req.body.toString('utf8') : ''));
+            logger.info(`[${sn_dispositivo}] Respuesta de comando: ${rawBody}`);
+            await procesarRespuestaComando(sn_dispositivo, rawBody);
+            return res.send("OK");
+        }
+
+        // 5. Configuración Inicial (Opciones)
+        if (endpoint.includes('iclock') && req.url.includes('options=all')) {
+            return res.send(`GET OPTION FROM:${sn_dispositivo}\nTransTimes=1\nTransInterval=1\nTransTables=User,Fptemp,AttLog\nOper=SetDeviceInfo\n`);
+        }
+
+        return res.send("OK");
+
+    } catch (error) {
+        logger.error(`[${endpoint}] Error crítico: ${error.message}`);
+        return res.send("OK");
+    }
+}
+
+/**
+ * Actualiza la tabla biometric_devices con la última vez que se vió el equipo.
+ */
+async function actualizarEstadoDispositivo(sn, ip) {
+    try {
+        const [rows] = await pool.execute('SELECT id FROM biometric_devices WHERE sn = ?', [sn]);
+        if (rows.length > 0) {
+            await pool.execute(
+                'UPDATE biometric_devices SET last_seen = NOW(), ip = ? WHERE sn = ?',
+                [ip, sn]
+            );
         } else {
-            // Respuesta para otros endpoints (por ejemplo, para pruebas).
-            return res.json({
-                "status": "success",
-                "message": `Datos recibidos correctamente en endpoint: ${endpoint}`,
-                "timestamp": new Date().toISOString()
-            });
+            // Si el dispositivo no existe, lo registramos automáticamente (Opcional, pero profesional)
+            await pool.execute(
+                'INSERT INTO biometric_devices (nombre, sn, ip, estado, created_at, updated_at, last_seen) VALUES (?, ?, ?, 1, NOW(), NOW(), NOW())',
+                [`Equipo ${sn}`, sn, ip]
+            );
+            logger.info(`Nuevo dispositivo registrado automáticamente: ${sn}`);
         }
     } catch (error) {
-        logger.error(`[${endpoint}] Error: ${error.message}`);
-        return res.send("OK");
+        logger.error(`Error actualizando estado de dispositivo ${sn}:`, error);
+    }
+}
+
+/**
+ * Busca comandos pendientes para un dispositivo específico.
+ * Formato ZKTeco: C:ID:COMANDO PAYLOAD
+ */
+async function obtenerComandoPendiente(sn) {
+    try {
+        const [rows] = await pool.execute(
+            'SELECT id, command, payload FROM biometric_commands WHERE device_sn = ? AND status = "pending" ORDER BY id ASC LIMIT 1',
+            [sn]
+        );
+        if (rows.length > 0) {
+            const cmd = rows[0];
+            let cmdText = '';
+
+            // Mapeo selectivo de comandos
+            if (cmd.command === 'ENROLL_FP') {
+                // Formato: DATA ENROLLPIN=12345 RETRY=3
+                // El UserID debe ser el DNI para que coincida con nuestra lógica de asistencia
+                cmdText = `C:${cmd.id}:DATA ENROLLPIN=${cmd.payload} RETRY=3`;
+            } else {
+                cmdText = `C:${cmd.id}:${cmd.command} ${cmd.payload || ''}`;
+            }
+
+            // Marcamos como enviado
+            await pool.execute('UPDATE biometric_commands SET status = "sent", updated_at = NOW() WHERE id = ?', [cmd.id]);
+            return { id: cmd.id, text: cmdText };
+        }
+    } catch (error) {
+        logger.error(`Error obteniendo comandos para ${sn}:`, error);
+    }
+    return null;
+}
+
+/**
+ * Procesa la respuesta del dispositivo a un comando enviado.
+ * Formato típico: ID=1&Return=0
+ */
+async function procesarRespuestaComando(sn, rawResponse) {
+    try {
+        // Parsear ID=1&Return=0
+        const params = new URLSearchParams(rawResponse);
+        const cmdId = params.get('ID');
+        const returnCode = params.get('Return');
+
+        if (cmdId) {
+            const status = (returnCode === '0') ? 'completed' : 'error';
+            await pool.execute(
+                'UPDATE biometric_commands SET status = ?, response_data = ?, executed_at = NOW(), updated_at = NOW() WHERE id = ?',
+                [status, rawResponse, cmdId]
+            );
+            logger.info(`Comando ${cmdId} actualizado a estado: ${status}`);
+        }
+    } catch (error) {
+        logger.error(`Error procesando respuesta de comando de ${sn}:`, error);
     }
 }
 

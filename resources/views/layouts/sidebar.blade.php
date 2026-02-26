@@ -236,6 +236,16 @@
                     </li>
                 @endif
 
+                <!-- Módulo Biométrico (Dedicado) -->
+                @if (Auth::user()->hasPermission('biometria.view'))
+                    <li>
+                        <a href="{{ route('biometria.index') }}">
+                            <i data-feather="fingerprint"></i>
+                            <span> Gestión Biométrica </span>
+                        </a>
+                    </li>
+                @endif
+
                 <!-- Ajustes de perfil - Visible para todos -->
                 <li>
                     <a href="{{ route('perfil.index') }}">

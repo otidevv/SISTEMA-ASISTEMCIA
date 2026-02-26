@@ -36,6 +36,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'foto_perfil',
         'ultimo_acceso',
         'estado',
+        'has_fingerprint',
+        'has_face',
     ];
 
     /**
@@ -58,6 +60,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'fecha_creacion' => 'datetime',
         'fecha_actualizacion' => 'datetime',
         'estado' => 'boolean',
+        'has_fingerprint' => 'boolean',
+        'has_face' => 'boolean',
     ];
 
     /**

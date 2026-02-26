@@ -413,6 +413,13 @@
                         <i class="uil uil-archive-alt me-1"></i><span>Boletines Académicos</span>
                     </a>
                     @endcan
+                    
+                    <!-- item-->
+                    @if (Auth::user()->hasPermission('biometria.view'))
+                    <a href="{{ route('biometria.index') }}" class="dropdown-item">
+                        <i class="uil uil-fingerprint me-1"></i><span>Enrolamiento Biométrico</span>
+                    </a>
+                    @endif
 
                     <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
@@ -641,6 +648,16 @@
                                     @endif
                                 </ul>
                             </div>
+                        </li>
+                    @endif
+
+                    <!-- Módulo Biométrico -->
+                    @if (Auth::user()->hasPermission('biometria.view'))
+                        <li>
+                            <a href="{{ route('biometria.index') }}">
+                                <i data-feather="cpu"></i>
+                                <span> Gestión Biométrica </span>
+                            </a>
                         </li>
                     @endif
 
