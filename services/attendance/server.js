@@ -1726,8 +1726,8 @@ async function obtenerComandoPendiente(sn) {
                 // Registro de huella: DATA ENROLLPIN=UserID RETRY=3
                 cmdText = `C:${cmd.id}:DATA ENROLLPIN=${payload} RETRY=3`;
             } else if (command === 'ENROLL_FACE') {
-                // Registro de rostro: DATA ENROLL_BIO PIN=UserID TYPE=9 (Type 9 es Face en protocolo ZKTeco)
-                cmdText = `C:${cmd.id}:DATA ENROLL_BIO PIN=${payload} TYPE=9`;
+                // Registro de rostro: Intentar comando de enrolamiento en dispositivo híbrido
+                cmdText = `C:${cmd.id}:DATA ENROLL_BIO PIN=${payload}`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;
