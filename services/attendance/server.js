@@ -1015,8 +1015,8 @@ async function procesarAsistencia(sn_dispositivo, datos_asistencia) {
         }
 
         // El uFace a veces añade basura como " RETRY=3" al ID si se enroló con comando sucio.
-        // Forzamos a que el documento solo contenga números:
-        const nro_documento = partes[0].trim().replace(/\D/g, '');
+        // Forzamos a que el documento solo contenga el primer bloque de números (antes del espacio):
+        const nro_documento = partes[0].trim().split(' ')[0].replace(/\D/g, '');
         const fecha_hora = partes[1].trim();
         const tipo_verificacion = partes.length > 2 && partes[2].trim() ? parseInt(partes[2]) : 0;
         const estado = partes.length > 3 && partes[3].trim() ? parseInt(partes[3]) : 0;
