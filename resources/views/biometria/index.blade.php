@@ -238,17 +238,31 @@
                     { 
                         data: 'has_fingerprint', 
                         render: function(hasFp) {
-                            return hasFp 
-                                ? '<span class="badge badge-registered status-badge w-100"><i class="mdi mdi-check-decagram-outline me-1"></i>Registrado</span>' 
-                                : '<span class="badge badge-pending status-badge w-100"><i class="mdi mdi-alert-circle-outline me-1"></i>Pendiente</span>';
+                            if (hasFp.status) {
+                                return `
+                                    <div class="position-relative">
+                                        <span class="badge badge-registered status-badge w-100"><i class="mdi mdi-check-decagram-outline me-1"></i>Registrado</span>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="z-index: 1;">
+                                            ${hasFp.count}
+                                        </span>
+                                    </div>`;
+                            }
+                            return '<span class="badge badge-pending status-badge w-100"><i class="mdi mdi-alert-circle-outline me-1"></i>Pendiente</span>';
                         }
                     },
                     { 
                         data: 'has_face', 
                         render: function(hasFace) {
-                            return hasFace 
-                                ? '<span class="badge badge-registered status-badge w-100"><i class="mdi mdi-check-decagram-outline me-1"></i>Registrado</span>' 
-                                : '<span class="badge badge-pending status-badge w-100"><i class="mdi mdi-alert-circle-outline me-1"></i>Pendiente</span>';
+                            if (hasFace.status) {
+                                return `
+                                    <div class="position-relative">
+                                        <span class="badge badge-registered status-badge w-100"><i class="mdi mdi-check-decagram-outline me-1"></i>Registrado</span>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="z-index: 1;">
+                                            ${hasFace.count}
+                                        </span>
+                                    </div>`;
+                            }
+                            return '<span class="badge badge-pending status-badge w-100"><i class="mdi mdi-alert-circle-outline me-1"></i>Pendiente</span>';
                         }
                     },
                     { 

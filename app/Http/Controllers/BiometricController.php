@@ -110,10 +110,16 @@ class BiometricController extends Controller
                 })->implode(', ');
             })
             ->editColumn('has_fingerprint', function($user) {
-                return $user->has_fingerprint;
+                return [
+                    'status' => $user->has_fingerprint,
+                    'count' => $user->fingerprint_count ?? 0
+                ];
             })
             ->editColumn('has_face', function($user) {
-                return $user->has_face;
+                return [
+                    'status' => $user->has_face,
+                    'count' => $user->face_count ?? 0
+                ];
             })
             ->make(true);
     }

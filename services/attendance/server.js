@@ -1600,19 +1600,36 @@ async function handleRequest(endpoint, req, res) {
                     const pin = pinMatch[1];
                     const content = linea.toUpperCase();
 
+                    // Intentar extraer el FID (Finger/Face ID)
+                    const fidMatch = linea.match(/FID=(\d+)/i);
+                    const fid = fidMatch ? parseInt(fidMatch[1]) : 0;
+
                     // Detectamos el tipo de dato por la tabla O por el prefijo de la línea (común en OPERLOG)
                     const esHuella = content.startsWith('FP ') || ['FP', 'FPTEMP', 'TEMPLATE', 'FINGERPRINT'].includes(table.toUpperCase());
                     const esRostro = content.startsWith('FACE ') || ['FACE', 'BIODATA', 'FACEV7'].includes(table.toUpperCase());
                     const esUsuario = (content.startsWith('USER ') && !content.startsWith('USERPIC')) || ['USER', 'USERINFO'].includes(table.toUpperCase());
 
                     if (esHuella) {
-                        await pool.execute('UPDATE users SET has_fingerprint = 1 WHERE numero_documento = ?', [pin]);
+                        await pool.execute(
+                            'INSERT IGNORE INTO user_biometrics (numero_documento, type, biometric_index, sn_dispositivo, created_at, updated_at) VALUES (?, "fingerprint", ?, ?, NOW(), NOW())',
+                            [pin, fid, sn_dispositivo]
+                        );
+                        await pool.execute(
+                            'UPDATE users SET has_fingerprint = 1, fingerprint_count = (SELECT COUNT(*) FROM user_biometrics WHERE numero_documento = ? AND type = "fingerprint") WHERE numero_documento = ?',
+                            [pin, pin]
+                        );
                         huellas++;
                     } else if (esRostro) {
-                        await pool.execute('UPDATE users SET has_face = 1 WHERE numero_documento = ?', [pin]);
+                        await pool.execute(
+                            'INSERT IGNORE INTO user_biometrics (numero_documento, type, biometric_index, sn_dispositivo, created_at, updated_at) VALUES (?, "face", ?, ?, NOW(), NOW())',
+                            [pin, fid, sn_dispositivo]
+                        );
+                        await pool.execute(
+                            'UPDATE users SET has_face = 1, face_count = (SELECT COUNT(*) FROM user_biometrics WHERE numero_documento = ? AND type = "face") WHERE numero_documento = ?',
+                            [pin, pin]
+                        );
                         rostros++;
                     } else if (esUsuario) {
-                        // Confirmación de que el usuario existe en el equipo
                         usuarios++;
                     }
                 }
