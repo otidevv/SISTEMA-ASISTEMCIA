@@ -287,12 +287,20 @@
                         orderable: false,
                         render: function(data) {
                             let buttons = '<div class="btn-group w-100 shadow-sm">';
+                            const userDevices = data.devices || [];
                             @if(Auth::user()->hasPermission('biometria.enroll'))
                                 buttons += `
-                                    <button class="btn btn-cepre-pink enroll-btn d-flex align-items-center justify-content-center" data-type="FP" data-id="${data.id}" style="border-right: 1px solid rgba(255,255,255,0.2);">
+                                    <button class="btn btn-cepre-pink enroll-btn d-flex align-items-center justify-content-center" 
+                                        data-type="FP" 
+                                        data-id="${data.id}" 
+                                        data-user-devices='${JSON.stringify(userDevices)}'
+                                        style="border-right: 1px solid rgba(255,255,255,0.2);">
                                         <i class="mdi mdi-fingerprint"></i> <span class="btn-text">Huella</span>
                                     </button>
-                                    <button class="btn btn-info enroll-btn d-flex align-items-center justify-content-center text-white" data-type="FACE" data-id="${data.id}">
+                                    <button class="btn btn-info enroll-btn d-flex align-items-center justify-content-center text-white" 
+                                        data-type="FACE" 
+                                        data-id="${data.id}"
+                                        data-user-devices='${JSON.stringify(userDevices)}'>
                                         <i class="mdi mdi-face-recognition"></i> <span class="btn-text">Rostro</span>
                                     </button>
                                 `;
@@ -337,7 +345,9 @@
             $(document).on('click', '.enroll-btn', function() {
                 const userId = $(this).data('id');
                 const type = $(this).data('type');
-                const typeLabel = type === 'fingerprint' ? 'Huella' : 'Rostro';
+                const userDevices = $(this).data('user-devices') || [];
+                const typeLabel = type === 'FP' ? 'Huella' : 'Rostro';
+                const typeIcon = type === 'FP' ? 'mdi-fingerprint' : 'mdi-face-recognition';
                 
                 if (devices.length === 0) {
                     Swal.fire('Error', 'No hay biométricos registrados en el sistema.', 'error');
@@ -347,31 +357,56 @@
                 // Generar opciones para el selector
                 let optionsHtml = '';
                 devices.forEach(d => {
-                    const statusText = d.isOnline ? '<span class="text-success small">(En Línea)</span>' : '<span class="text-danger small">(Desconectado)</span>';
-                    optionsHtml += `<option value="${d.sn}">${d.nombre} ${d.isOnline ? '🟢' : '🔴'}</option>`;
+                    const hasData = userDevices.includes(d.sn);
+                    const isSelected = hasData ? 'selected' : '';
+                    const badge = hasData ? ' (Recomendado ⭐)' : '';
+                    const statusText = d.isOnline ? '🟢' : '🔴';
+                    
+                    optionsHtml += `<option value="${d.sn}" ${isSelected}>${statusText} ${d.nombre}${badge}</option>`;
                 });
 
                 Swal.fire({
-                    title: `Registro de ${typeLabel}`,
-                    text: 'Selecciona el equipo que entrará en modo registro:',
-                    icon: 'question',
+                    title: `<div class="d-flex align-items-center justify-content-center text-cepre-pink">
+                                <i class="mdi ${typeIcon} me-2 fs-1"></i>
+                                <span>Registro de ${typeLabel}</span>
+                            </div>`,
                     html: `
-                        <div class="mt-3">
-                            <label class="form-label small fw-bold">Elija el Biométrico ZKTeco:</label>
-                            <select id="swal_device_selector" class="form-select">
+                        <div class="text-start mt-3">
+                            <p class="text-muted mb-4">El equipo seleccionado entrará en modo de captura. Asegúrate de que el alumno esté frente al dispositivo.</p>
+                            
+                            <label class="form-label fw-bold mb-2">Seleccionar Biométrico ZKTeco:</label>
+                            <select id="swal_device_selector" class="form-select form-select-lg border-2" style="border-color: #ec008c;">
                                 ${optionsHtml}
                             </select>
-                            <div class="mt-2 small text-muted">
-                                El alumno debe estar frente al equipo seleccionado.
+                            
+                            <div class="mt-3 p-3 bg-light rounded border">
+                                <small class="text-muted d-block mb-1"><i class="mdi mdi-information-outline me-1"></i><strong>Consejo:</strong></small>
+                                <small class="text-muted">Si el alumno ya tiene biometría en un equipo, hemos pre-seleccionado ese equipo para que lo sobreescribas si es necesario.</small>
                             </div>
                         </div>
                     `,
                     showCancelButton: true,
-                    confirmButtonText: 'Iniciar Registro',
+                    confirmButtonText: 'Iniciar Captura',
                     cancelButtonText: 'Cancelar',
                     confirmButtonColor: '#ec008c',
+                    cancelButtonColor: '#6c757d',
+                    buttonsStyling: true,
+                    width: '500px',
+                    padding: '2em',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg',
+                        title: 'border-bottom pb-3',
+                        confirmButton: 'btn-lg px-4 fw-bold',
+                        cancelButton: 'btn-lg px-4'
+                    },
                     preConfirm: () => {
-                        return document.getElementById('swal_device_selector').value;
+                        const sn = document.getElementById('swal_device_selector').value;
+                        const device = devices.find(d => d.sn === sn);
+                        if (device && !device.isOnline) {
+                            Swal.showValidationMessage('El equipo seleccionado parece estar desconectado.');
+                            return false;
+                        }
+                        return sn;
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {

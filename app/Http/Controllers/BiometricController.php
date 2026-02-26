@@ -121,6 +121,14 @@ class BiometricController extends Controller
                     'count' => $user->face_count ?? 0
                 ];
             })
+            ->addColumn('devices', function($user) {
+                return \Illuminate\Support\Facades\DB::table('user_biometrics')
+                    ->where('numero_documento', $user->numero_documento)
+                    ->distinct()
+                    ->pluck('sn_dispositivo')
+                    ->filter()
+                    ->values();
+            })
             ->make(true);
     }
 
