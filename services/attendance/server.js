@@ -201,7 +201,7 @@ app.use(bodyParser.json()); // Para peticiones con JSON.
 const DB_CONFIG = {
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
-    database: process.env.DB_DATABASE || 'cepre_asistencia',
+    database: (envResult.parsed && envResult.parsed.DB_DATABASE) || process.env.DB_DATABASE || 'cepre_asistencia',
     user: process.env.DB_USERNAME || 'root',
     password: process.env.DB_PASSWORD || '',
     waitForConnections: true,
@@ -211,6 +211,7 @@ const DB_CONFIG = {
 
 // Crea un pool de conexiones para gestionar la carga y reutilizar conexiones.
 const pool = mysql.createPool(DB_CONFIG);
+logger.info(`Conectando a la base de datos: ${DB_CONFIG.database} (Host: ${DB_CONFIG.host})`);
 
 // =====================================================================================
 // 🤖 Sección 6: Inicialización de Clientes de Notificación y Bot de Telegram
