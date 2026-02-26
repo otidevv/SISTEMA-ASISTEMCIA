@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 
 <!-- Mirrored from coderthemes.com/shreyu/index.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 02 May 2025 17:40:03 GMT -->
