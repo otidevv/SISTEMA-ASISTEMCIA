@@ -1712,14 +1712,28 @@ async function obtenerComandoPendiente(sn) {
         if (rows.length > 0) {
             const cmd = rows[0];
             let cmdText = '';
+            let rawPayload = cmd.payload || '';
 
-            // Mapeo selectivo de comandos
-            if (cmd.command === 'ENROLL_FP') {
-                // Formato: DATA ENROLLPIN=12345 RETRY=3
-                // El UserID debe ser el DNI para que coincida con nuestra lógica de asistencia
-                cmdText = `C:${cmd.id}:DATA ENROLLPIN=${cmd.payload} RETRY=3`;
+            // Debug para ver qué llega exactamente de la BD
+            logger.info(`[DEBUG] Procesando comando ID ${cmd.id}: "${cmd.command}" con payload: "${rawPayload}"`);
+
+            // Limpieza agresiva de comillas y espacios
+            let command = (cmd.command || '').trim();
+            let payload = rawPayload.toString().replace(/"/g, '').trim();
+
+            // Mapeo selectivo de comandos según protocolo PUSH ZKTeco
+            if (command === 'ENROLL_FP') {
+                // Registro de huella: DATA ENROLLPIN=UserID RETRY=3
+                cmdText = `C:${cmd.id}:DATA ENROLLPIN=${payload} RETRY=3`;
+            } else if (command === 'ENROLL_FACE') {
+                // Registro de rostro: DATA ENROLLFACE PIN=UserID
+                cmdText = `C:${cmd.id}:DATA ENROLLFACE PIN=${payload}`;
+            } else if (command.startsWith('USER ')) {
+                // Comandos directos de usuario
+                cmdText = `C:${cmd.id}:${command}`;
             } else {
-                cmdText = `C:${cmd.id}:${cmd.command} ${cmd.payload || ''}`;
+                // Comandos genéricos
+                cmdText = `C:${cmd.id}:${command} ${payload}`;
             }
 
             // Marcamos como enviado
