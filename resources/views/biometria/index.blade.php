@@ -111,7 +111,13 @@
                     </div>
                     <p class="text-muted mb-1"><i class="uil uil-processor me-1"></i> SN: <strong>{{ $device->sn }}</strong></p>
                     <p class="text-muted mb-1"><i class="uil uil-rss me-1"></i> IP: {{ $device->ip ?? 'Desconocida' }}</p>
-                    <p class="text-muted mb-0"><i class="uil uil-clock me-1"></i> Visto: {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Nunca' }}</p>
+                    <p class="text-muted mb-2"><i class="uil uil-clock me-1"></i> Visto: {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Nunca' }}</p>
+                    
+                    @if(Auth::user()->hasPermission('biometria.enroll'))
+                    <button class="btn btn-sm btn-outline-primary w-100 sync-device-btn" data-sn="{{ $device->sn }}">
+                        <i class="mdi mdi-sync me-1"></i> Sincronizar Datos
+                    </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -133,11 +139,11 @@
                         </div>
                         <div class="col-md-9">
                             <div class="row g-2 justify-content-end">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <select id="ciclo_filter" class="form-select form-select-sm filter-select">
                                         <option value="">-- Ciclo Académico --</option>
                                         @foreach($ciclos as $ciclo)
-                                            <option value="{{ $ciclo->id }}">{{ $ciclo->nombre }}</option>
+                                            <option value="{{ $ciclo->id }}" {{ isset($activeCiclo) && $activeCiclo->id == $ciclo->id ? 'selected' : '' }}>{{ $ciclo->nombre }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -149,9 +155,17 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <select id="role_filter" class="form-select form-select-sm filter-select">
+                                        <option value="">-- Rol --</option>
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->id }}">{{ ucfirst($role->nombre) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
                                     <select id="status_filter" class="form-select form-select-sm filter-select">
-                                        <option value="">-- Estado Biométrico --</option>
+                                        <option value="">-- Huella/Rostro --</option>
                                         <option value="fingerprint_pending">Sin Huella</option>
                                         <option value="face_pending">Sin Rostro</option>
                                         <option value="both_pending">Sin Ninguno</option>
@@ -213,6 +227,7 @@
                     data: function(d) {
                         d.ciclo_id = $('#ciclo_filter').val();
                         d.carrera_id = $('#carrera_filter').val();
+                        d.role_id = $('#role_filter').val();
                         d.biometric_status = $('#status_filter').val();
                     }
                 },
@@ -259,11 +274,32 @@
                     }
                 ],
                 language: {
-                    url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+                    "sProcessing":     "Procesando...",
+                    "sLengthMenu":     "Mostrar _MENU_ registros",
+                    "sZeroRecords":    "No se encontraron resultados",
+                    "sEmptyTable":     "Ningún dato disponible en esta tabla",
+                    "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
+                    "sInfoPostFix":    "",
+                    "sSearch":         "Buscar:",
+                    "sUrl":            "",
+                    "sInfoThousands":  ",",
+                    "sLoadingRecords": "Cargando...",
+                    "oPaginate": {
+                        "sFirst":    "Primero",
+                        "sLast":     "Último",
+                        "sNext":     "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
+                        "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                    }
                 }
             });
 
-            $('#ciclo_filter, #carrera_filter, #status_filter').change(function() {
+            $('#ciclo_filter, #carrera_filter, #role_filter, #status_filter').change(function() {
                 table.draw();
             });
 
@@ -289,6 +325,47 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         startEnrollment(userId, deviceSn, type);
+                    }
+                });
+            });
+
+            $(document).on('click', '.sync-device-btn', function() {
+                const sn = $(this).data('sn');
+                
+                Swal.fire({
+                    title: '¿Sincronizar equipo?',
+                    text: 'Se solicitarán todos los usuarios, huellas y rostros registrados en el equipo. Esto actualizará el estado en el sistema.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, sincronizar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Sincronizando...',
+                            text: 'Enviando comandos al equipo. Por favor, espere unos segundos.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        $.post("{{ route('biometria.sync') }}", {
+                            _token: "{{ csrf_token() }}",
+                            sn: sn
+                        }, function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire('Comandos Enviados', response.message, 'success');
+                                // Recargamos la tabla después de unos segundos para ver cambios
+                                setTimeout(() => table.ajax.reload(), 5000);
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        }).fail(function() {
+                            Swal.close();
+                            Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+                        });
                     }
                 });
             });

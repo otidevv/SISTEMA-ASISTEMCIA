@@ -18,7 +18,12 @@ class BiometricController extends Controller
         $devices = BiometricDevice::all();
         $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
         $carreras = Carrera::activas()->orderBy('nombre')->get();
-        return view('biometria.index', compact('devices', 'ciclos', 'carreras'));
+        $activeCiclo = Ciclo::where('es_activo', true)->first();
+        
+        // Roles relevantes para biometría
+        $roles = \App\Models\Role::whereIn('nombre', ['estudiante', 'docente', 'profesor', 'coordinador'])->get();
+        
+        return view('biometria.index', compact('devices', 'ciclos', 'carreras', 'activeCiclo', 'roles'));
     }
 
     public function listDevices()
@@ -52,11 +57,20 @@ class BiometricController extends Controller
                     $sq->where('ciclo_id', $request->ciclo_id);
                 });
             });
-        } else {
-            // Por defecto solo mostrar usuarios con roles relevantes
-            $query->whereHas('roles', function($q) {
-                $q->whereIn('nombre', ['estudiante', 'docente', 'profesor']);
+        }
+
+        // Filtrar por Rol
+        if ($request->filled('role_id')) {
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('roles.id', $request->role_id);
             });
+        } else {
+            // Por defecto solo mostrar usuarios con roles relevantes si no hay filtro de rol
+            if (!$request->filled('ciclo_id') && !$request->filled('carrera_id')) {
+                $query->whereHas('roles', function($q) {
+                    $q->whereIn('nombre', ['estudiante', 'docente', 'profesor']);
+                });
+            }
         }
 
         // Filtrar por Carrera
@@ -84,7 +98,11 @@ class BiometricController extends Controller
         
         return DataTables::of($query)
             ->addColumn('nombre_completo', function($user) {
-                return $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno;
+                return trim($user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno);
+            })
+            ->filterColumn('nombre_completo', function($query, $keyword) {
+                $sql = "CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno)  like ?";
+                $query->whereRaw($sql, ["%{$keyword}%"]);
             })
             ->addColumn('rol', function($user) {
                 return $user->roles->pluck('nombre')->map(function($rol) {
@@ -130,6 +148,42 @@ class BiometricController extends Controller
         return response()->json([
             'status' => $command->status,
             'response' => $command->response_data
+        ]);
+    }
+
+    public function syncDevice(Request $request)
+    {
+        $request->validate([
+            'sn' => 'required|exists:biometric_devices,sn'
+        ]);
+
+        $sn = $request->sn;
+
+        // Enviamos ráfaga de comandos para obtener todo
+        // 1. Usuarios
+        BiometricCommand::create([
+            'device_sn' => $sn,
+            'command' => 'DATA QUERY USERINFO',
+            'status' => 'pending'
+        ]);
+
+        // 2. Huellas
+        BiometricCommand::create([
+            'device_sn' => $sn,
+            'command' => 'DATA QUERY FINGERPRINT',
+            'status' => 'pending'
+        ]);
+
+        // 3. Rostros (si el equipo soporta)
+        BiometricCommand::create([
+            'device_sn' => $sn,
+            'command' => 'DATA QUERY FACE',
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comandos de sincronización enviados. El equipo empezará a subir los datos en segundo plano.'
         ]);
     }
 }

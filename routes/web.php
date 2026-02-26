@@ -587,16 +587,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/tarjetas/piso', [TarjetasController::class, 'guardarPisoCompleto'])->name('api.tarjetas.guardar-piso');
     Route::delete('/api/tarjetas/aula/{id}', [TarjetasController::class, 'eliminarAula'])->name('api.tarjetas.eliminar-aula');
 
-    // Carga Horaria
-    Route::prefix('carga-horaria')->group(function () {
-        Route::get('/', [CargaHorariaController::class, 'index'])->name('carga-horaria.index')->middleware('can:carga-horaria.view');
-        Route::get('/pdf-visual/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfVisual'])->name('carga-horaria.pdf-visual')->middleware('can:carga-horaria.pdf');
-        Route::get('/pdf-detallado/{docente}/{ciclo}', [CargaHorariaController::class, 'pdfDetallado'])->name('carga-horaria.pdf-detallado')->middleware('can:carga-horaria.pdf');
-        Route::get('/excel-resumen/{ciclo}', [CargaHorariaController::class, 'exportarExcelResumen'])->name('carga-horaria.excel-resumen')->middleware('can:carga-horaria.view');
+    // Gestión Biométrica (ZKTeco)
+    Route::prefix('biometria')->group(function () {
+        Route::get('/', [BiometricController::class, 'index'])->name('biometria.index')->middleware('can:biometria.view');
+        Route::get('/devices', [BiometricController::class, 'listDevices'])->name('biometria.devices')->middleware('can:biometria.view');
+        Route::get('/users', [BiometricController::class, 'listUsers'])->name('biometria.users')->middleware('can:biometria.view');
+        Route::post('/enroll', [BiometricController::class, 'enroll'])->name('biometria.enroll')->middleware('can:biometria.enroll');
+        Route::get('/status/{id}', [BiometricController::class, 'checkCommandStatus'])->name('biometria.command.status')->middleware('can:biometria.enroll');
+        Route::post('/sync', [BiometricController::class, 'syncDevice'])->name('biometria.sync')->middleware('can:biometria.enroll');
     });
-
-    Route::get('/mi-horario', [CargaHorariaController::class, 'miHorario'])->name('mi-horario')->middleware('can:carga-horaria.mi-horario');
-
 
 });
 
