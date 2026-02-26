@@ -1760,7 +1760,9 @@ async function procesarRespuestaComando(sn, rawResponse) {
         const returnCode = params.get('Return');
 
         if (cmdId) {
-            const status = (returnCode === '0') ? 'completed' : 'error';
+            // Códigos >= 0 son éxito (Ej. Return=0 o Return=2 cuando inicia el enrolamiento físico).
+            // Códigos negativos (Ej. -1002, -1003) son errores.
+            const status = (parseInt(returnCode) >= 0) ? 'completed' : 'error';
             await pool.execute(
                 'UPDATE biometric_commands SET status = ?, response_data = ?, executed_at = NOW(), updated_at = NOW() WHERE id = ?',
                 [status, rawResponse, cmdId]
