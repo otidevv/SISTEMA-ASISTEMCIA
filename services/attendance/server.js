@@ -35,8 +35,12 @@ const fs = require('fs'); // Módulo de Node.js para trabajar con el sistema de 
 const path = require('path'); // Módulo para manejar rutas de archivos y directorios.
 
 // Cargar variables de entorno desde el archivo .env de Laravel raíz
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
-
+const envResult = require('dotenv').config({ path: path.join(__dirname, '../../.env') });
+if (envResult.error) {
+    console.error('❌ Error al cargar el archivo .env:', envResult.error.message);
+} else {
+    console.log('✅ Archivo .env cargado correctamente');
+}
 const logger = require('./logger'); // Módulo de logging personalizado para un registro más limpio.
 const fetch = require('node-fetch'); // Módulo para hacer peticiones HTTP (necesario para la API de SMS).
 
@@ -83,24 +87,21 @@ Le informamos sobre la fecha del **SEGUNDO EXAMEN** del ciclo.
 *CEPRE UNAMAD - Coordinación Académica*`;
 
 // 🔑 Credenciales y tokens
-// ATENCIÓN: En producción, estos valores deberían estar en un archivo .env
-// 🔑 Credenciales y tokens
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7271731673:AAHaLL8SsIdVuYS8LigOkw6PQ26rz7Z6NcE';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// 📱 Configuración para los servicios de SMS-Gate (Soporte Multi-Dispositivo)
 // 📱 Configuración para los servicios de SMS-Gate (Soporte Multi-Dispositivo)
 const SMS_GATEWAYS = [
     {
-        url: process.env.SMS_GATEWAY_URL || 'https://api.sms-gate.app/3rdparty/v1/messages',
-        user: process.env.SMS_GATEWAY_USER || 'NYAO6N',
-        pass: process.env.SMS_GATEWAY_PASS || '_s4hxf_4zrbghi',
+        url: process.env.SMS_GATEWAY_URL,
+        user: process.env.SMS_GATEWAY_USER,
+        pass: process.env.SMS_GATEWAY_PASS,
         deviceId: process.env.SMS_GATEWAY_DEVICE_ID || null
     },
     {
-        url: process.env.SMS_GATEWAY_2_URL || 'https://api.sms-gate.app/3rdparty/v1/messages',
-        user: process.env.SMS_GATEWAY_2_USER || '_PI0DH',
-        pass: process.env.SMS_GATEWAY_2_PASS || 'sdaedsw2rrwwwqrr',
-        deviceId: process.env.SMS_GATEWAY_2_DEVICE_ID || '7c31LlagPDA3-UuZy_dzH'
+        url: process.env.SMS_GATEWAY_2_URL,
+        user: process.env.SMS_GATEWAY_2_USER,
+        pass: process.env.SMS_GATEWAY_2_PASS,
+        deviceId: process.env.SMS_GATEWAY_2_DEVICE_ID
     }
 ];
 let gatewaysBusy = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de qué celular está ocupado enviado ahora mismo
