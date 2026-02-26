@@ -485,7 +485,27 @@
                         } else if (data.status === 'error') {
                             clearInterval(interval);
                             $('#modalProcessing').modal('hide');
-                            Swal.fire('Error', 'El equipo reportó un error durante el proceso.', 'error');
+                            
+                            let titulo = 'Atención';
+                            let icon = 'warning';
+                            let msg = 'El equipo reportó un error o canceló el proceso.';
+                            
+                            if (data.response) {
+                                if (data.response.includes('Return=2')) {
+                                    msg = 'El usuario ya tiene su huella/rostro principal registrado en este equipo.';
+                                    icon = 'info';
+                                } else if (data.response.includes('Return=-1003')) {
+                                    msg = 'Se acabó el tiempo de espera. No se detectó ninguna biometría.';
+                                    icon = 'error';
+                                    titulo = 'Tiempo Agotado';
+                                } else if (data.response.includes('Return=-1002')) {
+                                    msg = 'Comando no soportado por la versión de firmware actual del equipo.';
+                                    icon = 'error';
+                                    titulo = 'Error de Compatibilidad';
+                                }
+                            }
+                            
+                            Swal.fire(titulo, msg, icon);
                         }
                     });
                 }, 2000);
