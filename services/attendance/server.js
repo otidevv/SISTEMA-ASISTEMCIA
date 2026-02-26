@@ -1723,11 +1723,11 @@ async function obtenerComandoPendiente(sn) {
 
             // Mapeo selectivo de comandos según protocolo PUSH ZKTeco 8.0.4.x (uFace 800)
             if (command === 'ENROLL_FP') {
-                // Sintaxis exacta vieja del BioTime: requiere DATA, requiere ENROLL_FP y requiere FID
-                cmdText = `C:${cmd.id}:DATA ENROLL_FP PIN=${payload} FID=0 RETRY=3`;
+                // Último intento: formato más básico sin prefijos ni índices
+                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload} RETRY=3`;
             } else if (command === 'ENROLL_FACE') {
-                // El único comando de rostro que dio -1003 (timeout del equipo en lugar de rechazo -1002)
-                cmdText = `C:${cmd.id}:DATA ENROLL_BIO PIN=${payload} TYPE=9`;
+                // Último intento: probar ENROLL_BIO sin parámetro TYPE para evitar el timeout
+                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload} RETRY=3`;
             } else if (command.startsWith('USER ')) {
                 // Comandos directos de usuario
                 cmdText = `C:${cmd.id}:${command}`;
