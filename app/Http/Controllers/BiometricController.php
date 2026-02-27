@@ -250,39 +250,54 @@ class BiometricController extends Controller
     /**
      * Obtiene los últimos logs del servicio biometrico
      */
-    public function getLogs()
+    public function getLogs(Request $request)
     {
         $logPath = storage_path('logs/biometric.log');
+        $sn = $request->query('sn'); // Filtro opcional por SN
         
         if (!file_exists($logPath)) {
-            return response()->json(['logs' => 'Archivo de log no encontrado o vacío todavía...']);
+            // Intentar crear el archivo para asegurar que el monitor funcione
+            file_put_contents($logPath, "[" . now() . "] [INFO] Monitor iniciado. Esperando actividad...\n");
         }
 
         // Leer las últimas 100 líneas
-        $content = '';
         $linesToRead = 100;
         
-        // Usar comando tail en Windows si está disponible (vía Powershell) o leer manualmente
         try {
-            // Forma segura en PHP para leer el final del archivo
             $file = new \SplFileObject($logPath, 'r');
             $file->seek(PHP_INT_MAX);
             $totalLines = $file->key();
             
-            $start = max(0, $totalLines - $linesToRead);
+            // Retroceder para leer las últimas líneas
+            $start = max(0, $totalLines - 300); // Leemos más para poder filtrar y que queden suficientes
             $file->seek($start);
             
-            $content = "";
+            $filteredLines = [];
             while (!$file->eof()) {
-                $content .= $file->current();
+                $line = $file->current();
+                if ($line) {
+                    // Si hay SN, filtramos líneas que contengan ese SN
+                    if ($sn) {
+                        if (str_contains($line, "[$sn]")) {
+                            $filteredLines[] = $line;
+                        }
+                    } else {
+                        $filteredLines[] = $line;
+                    }
+                }
                 $file->next();
             }
+            
+            // Quedarnos solo con las últimas 100 del resultado filtrado
+            $finalLines = array_slice($filteredLines, -$linesToRead);
+            $content = implode("", $finalLines);
+
         } catch (\Exception $e) {
             return response()->json(['logs' => 'Error leyendo logs: ' . $e->getMessage()]);
         }
 
         return response()->json([
-            'logs' => $content
+            'logs' => $content ?: "No hay actividad reciente registrada para este equipo."
         ]);
     }
 }
