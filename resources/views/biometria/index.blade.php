@@ -116,6 +116,40 @@
         .btn-cepre-pink { background-color: var(--cepre-pink); border-color: var(--cepre-pink); color: white; }
         .btn-cepre-pink:hover { background-color: #d6007e; border-color: #d6007e; color: white; }
         
+        .bg-cepre-teal { background-color: #00acc1 !important; color: white !important; }
+        .btn-cepre-teal { background-color: #00acc1; border-color: #00acc1; color: white; }
+        .btn-cepre-teal:hover { background-color: #0097a7; border-color: #0097a7; color: white; }
+        .text-cepre-teal { color: #00acc1 !important; }
+
+        /* Variantes Soft para botones (Estilo Moderno) */
+        .btn-soft-info {
+            background-color: rgba(0, 172, 193, 0.1);
+            color: #00acc1;
+            border: none;
+        }
+        .btn-soft-info:hover {
+            background-color: #00acc1;
+            color: white;
+        }
+        .btn-soft-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: none;
+        }
+        .btn-soft-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-soft-primary {
+            background-color: rgba(85, 110, 230, 0.1);
+            color: #556ee6;
+            border: none;
+        }
+        .btn-soft-primary:hover {
+            background-color: #556ee6;
+            color: white;
+        }
+        
         .badge-pending {
             background-color: #ffc107;
             color: #000;
@@ -179,21 +213,31 @@
                     <p class="text-muted mb-2"><i class="uil uil-clock me-1"></i> Visto: {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Nunca' }}</p>
                     
                     @if(Auth::user()->hasPermission('biometria.enroll'))
-                    <div class="d-flex gap-2 flex-wrap">
+                    <div class="d-flex gap-2">
                         <button class="btn btn-sm btn-outline-primary flex-grow-1 sync-device-btn" data-sn="{{ $device->sn }}" title="Traer datos del equipo al sistema">
                             <i class="mdi mdi-sync me-1"></i> Sincronizar
                         </button>
                         <button class="btn btn-sm btn-dark btn-open-monitor" data-sn="{{ $device->sn }}" data-name="{{ $device->nombre }}">
                             <i class="mdi mdi-console me-1"></i> Monitor
                         </button>
-                    </div>
-                    <div class="d-flex gap-2 mt-2">
-                        <button class="btn btn-sm btn-soft-info flex-grow-1 provision-device-btn" data-sn="{{ $device->sn }}" title="Cargar todos los usuarios del sistema al equipo">
-                            <i class="mdi mdi-cloud-upload me-1"></i> Cargar Todo
-                        </button>
-                        <button class="btn btn-sm btn-soft-danger clear-device-btn" data-sn="{{ $device->sn }}" title="Borrar TODOS los datos del equipo">
-                            <i class="mdi mdi-trash-can-outline"></i> Limpiar Todo
-                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-soft-secondary dropdown-toggle-nocaret px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="mdi mdi-dots-vertical fs-5"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                                <li>
+                                    <button class="dropdown-item provision-device-btn py-2" data-sn="{{ $device->sn }}">
+                                        <i class="mdi mdi-cloud-upload-outline me-2 text-cepre-teal"></i>Cargar Todo del Sistema
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item clear-device-btn py-2 text-danger" data-sn="{{ $device->sn }}">
+                                        <i class="mdi mdi-trash-can-outline me-2"></i>Limpiar Datos (Reset)
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     @endif
                 </div>
@@ -322,20 +366,26 @@
 <div class="modal fade" id="modalMigrate" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-cepre-teal text-white">
+            <div class="modal-header bg-cepre-teal py-3">
                 <h5 class="modal-title text-white"><i class="mdi mdi-swap-horizontal me-2"></i>Migración de Datos entre Equipos</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-soft-info mb-4">
-                    <i class="mdi mdi-information-outline me-2"></i>
-                    Este asistente extraerá la biometría del equipo <strong>Origen</strong> y le permitirá cargarla masivamente en el equipo <strong>Destino</strong>.
+                <div class="alert alert-soft-info mb-4 border-0 shadow-sm">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="mdi mdi-information-outline fs-3 text-info"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            Este asistente extraerá la biometría del equipo <strong>Origen</strong> y le permitirá cargarla masivamente en el equipo <strong>Destino</strong>.
+                        </div>
+                    </div>
                 </div>
                 
                 <form id="form-migrate">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">1. Seleccione Equipo ORIGEN (Fuente de datos)</label>
-                        <select class="form-select border-cepre-teal" id="migrate-source" required>
+                        <label class="form-label fw-bold text-dark">1. Seleccione Equipo ORIGEN (Fuente de datos)</label>
+                        <select class="form-select border-cepre-teal shadow-none" id="migrate-source" required>
                             <option value="">-- Seleccionar Origen --</option>
                             @foreach($devices as $d)
                                 <option value="{{ $d->sn }}">{{ $d->nombre }} ({{ $d->sn }})</option>
@@ -345,15 +395,15 @@
 
                     <div class="text-center my-3">
                         <div class="avatar-sm mx-auto">
-                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-4">
+                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-4 shadow-sm border border-white">
                                 <i class="mdi mdi-arrow-down"></i>
                             </span>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">2. Seleccione Equipo DESTINO (Donde se clonarán)</label>
-                        <select class="form-select border-cepre-pink" id="migrate-target" required>
+                        <label class="form-label fw-bold text-dark">2. Seleccione Equipo DESTINO (Donde se clonarán)</label>
+                        <select class="form-select border-cepre-pink shadow-none" id="migrate-target" required>
                             <option value="">-- Seleccionar Destino --</option>
                             @foreach($devices as $d)
                                 <option value="{{ $d->sn }}">{{ $d->nombre }} ({{ $d->sn }})</option>
@@ -361,15 +411,15 @@
                         </select>
                     </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-cepre-teal btn-lg shadow-sm">
-                            <i class="mdi mdi-play-circle-outline me-2"></i> Iniciar Proceso de Migración
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-cepre-teal btn-lg shadow-lg border-0 py-3">
+                            <i class="mdi mdi-transfer me-2 fs-4"></i> Iniciar Proceso de Migración
                         </button>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer bg-light py-2">
-                <small class="text-muted italic">Nota: El proceso de extracción puede tardar unos minutos según la cantidad de usuarios.</small>
+            <div class="modal-footer bg-light py-2 border-0">
+                <small class="text-muted italic"><i class="mdi mdi-clock-outline me-1"></i>Nota: El proceso puede tardar unos minutos según la cantidad de usuarios.</small>
             </div>
         </div>
     </div>
