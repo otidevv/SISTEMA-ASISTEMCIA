@@ -1707,43 +1707,55 @@ async function actualizarEstadoDispositivo(sn, ip) {
  */
 async function obtenerComandoPendiente(sn) {
     try {
+        // En lugar de LIMIT 1, traemos todos los comandos pendientes para este equipo
+        // Esto permite el "Modo Ráfaga" (Burst Mode) para que el equipo reciba múltiples órdenes
+        // en un solo latido, acelerando procesos como el enrolamiento (Pre-registro + Orden).
         const [rows] = await pool.execute(
-            'SELECT id, command, payload FROM biometric_commands WHERE device_sn = ? AND status = "pending" ORDER BY id ASC LIMIT 1',
+            'SELECT id, command, payload FROM biometric_commands WHERE device_sn = ? AND status = "pending" ORDER BY id ASC',
             [sn]
         );
+
         if (rows.length > 0) {
-            const cmd = rows[0];
-            let cmdText = '';
-            let rawPayload = cmd.payload || '';
+            let combinedCommands = [];
+            let commandIds = [];
 
-            // Debug para ver qué llega exactamente de la BD
-            logger.info(`[DEBUG] Procesando comando ID ${cmd.id}: "${cmd.command}" con payload: "${rawPayload}"`);
+            for (const cmd of rows) {
+                let cmdText = '';
+                let rawPayload = cmd.payload || '';
+                let command = (cmd.command || '').trim();
+                let payload = rawPayload.toString().replace(/"/g, '').trim();
 
-            // Limpieza agresiva de comillas y espacios
-            let command = (cmd.command || '').trim();
-            let payload = rawPayload.toString().replace(/"/g, '').trim();
+                logger.info(`[DEBUG] Preparando para ráfaga - Comando ID ${cmd.id}: "${command}"`);
 
-            // Mapeo selectivo de comandos según protocolo PUSH ZKTeco 8.0.4.x (uFace 800)
-            if (command === 'ENROLL_FP') {
-                // Comando Ultra-Básico: Sin prefijos, sin índices y SIN parámetro RETRY
-                // El uFace 800 toma todo el texto después de PIN= como el ID literal del usuario.
-                cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload}`;
-            } else if (command === 'ENROLL_FACE') {
-                cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload}`;
-            } else if (command.startsWith('USER ')) {
-                // Comandos directos de usuario
-                cmdText = `C:${cmd.id}:${command}`;
-            } else {
-                // Comandos genéricos
-                cmdText = `C:${cmd.id}:${command} ${payload}`;
+                if (command === 'ENROLL_FP') {
+                    cmdText = `C:${cmd.id}:ENROLL_FP PIN=${payload}`;
+                } else if (command === 'ENROLL_FACE') {
+                    cmdText = `C:${cmd.id}:ENROLL_BIO PIN=${payload}`;
+                } else if (command.startsWith('USER ')) {
+                    cmdText = `C:${cmd.id}:${command}`;
+                } else {
+                    cmdText = `C:${cmd.id}:${command} ${payload}`;
+                }
+
+                combinedCommands.push(cmdText);
+                commandIds.push(cmd.id);
             }
 
-            // Marcamos como enviado
-            await pool.execute('UPDATE biometric_commands SET status = "sent", updated_at = NOW() WHERE id = ?', [cmd.id]);
-            return { id: cmd.id, text: cmdText };
+            // Marcamos todos los comandos de la ráfaga como enviados
+            const placeholders = commandIds.map(() => '?').join(',');
+            await pool.execute(
+                `UPDATE biometric_commands SET status = "sent", updated_at = NOW() WHERE id IN (${placeholders})`,
+                commandIds
+            );
+
+            // ZKTeco requiere que múltiples comandos estén separados por saltos de línea (\n)
+            const finalPayload = combinedCommands.join('\n');
+
+            logger.info(`[${sn}] Enviando ráfaga de ${rows.length} comandos.`);
+            return { id: commandIds[0], text: finalPayload };
         }
     } catch (error) {
-        logger.error(`Error obteniendo comandos para ${sn}:`, error);
+        logger.error(`Error obteniendo ráfaga de comandos para ${sn}:`, error);
     }
     return null;
 }
