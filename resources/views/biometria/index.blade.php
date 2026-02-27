@@ -510,14 +510,14 @@
                     });
                 }, 2000);
 
-                // Timeout de 1 minuto
+                // Timeout de 2 minutos
                 setTimeout(() => {
                     clearInterval(interval);
                     if ($('#modalProcessing').hasClass('show')) {
                         $('#modalProcessing').modal('hide');
-                        Swal.fire('Tiempo agotado', 'El equipo no respondió a tiempo.', 'warning');
+                        Swal.fire('Tiempo agotado', 'El equipo no respondió a tiempo. Intente nuevamente si el proceso no se completó físicamente.', 'warning');
                     }
-                }, 60000);
+                }, 120000);
             }
         });
     </script>

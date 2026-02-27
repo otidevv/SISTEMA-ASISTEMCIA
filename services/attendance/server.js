@@ -1622,6 +1622,12 @@ async function handleRequest(endpoint, req, res) {
                             [pin, pin]
                         );
                         huellas++;
+
+                        // Short-circuit: Marcar comando de enrolamiento como completado
+                        await pool.execute(
+                            'UPDATE biometric_commands SET status = "completed", response_data = "OK (Auto-detected)", executed_at = NOW(), updated_at = NOW() WHERE device_sn = ? AND payload = ? AND command = "ENROLL_FP" AND status = "sent"',
+                            [sn_dispositivo, pin]
+                        );
                     } else if (esRostro) {
                         await pool.execute(
                             'INSERT IGNORE INTO user_biometrics (numero_documento, type, biometric_index, sn_dispositivo, created_at, updated_at) VALUES (?, "face", ?, ?, NOW(), NOW())',
@@ -1632,6 +1638,12 @@ async function handleRequest(endpoint, req, res) {
                             [pin, pin]
                         );
                         rostros++;
+
+                        // Short-circuit: Marcar comando de enrolamiento como completado
+                        await pool.execute(
+                            'UPDATE biometric_commands SET status = "completed", response_data = "OK (Auto-detected)", executed_at = NOW(), updated_at = NOW() WHERE device_sn = ? AND payload = ? AND command = "ENROLL_FACE" AND status = "sent"',
+                            [sn_dispositivo, pin]
+                        );
                     } else if (esUsuario) {
                         usuarios++;
                     }
