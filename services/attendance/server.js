@@ -1748,10 +1748,10 @@ async function obtenerComandoPendiente(sn) {
                 commandIds
             );
 
-            // ZKTeco requiere que múltiples comandos estén separados por saltos de línea (\n)
-            const finalPayload = combinedCommands.join('\n');
+            // ZKTeco requiere que múltiples comandos estén separados por saltos de línea (\r\n para mayor compatibilidad)
+            const finalPayload = combinedCommands.join('\r\n');
 
-            logger.info(`[${sn}] Enviando ráfaga de ${rows.length} comandos.`);
+            logger.info(`[${sn}] Enviando ráfaga de ${rows.length} comandos:\n${finalPayload}`);
             return { id: commandIds[0], text: finalPayload };
         }
     } catch (error) {
