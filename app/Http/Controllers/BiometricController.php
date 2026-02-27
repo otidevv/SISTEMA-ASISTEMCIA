@@ -300,4 +300,87 @@ class BiometricController extends Controller
             'logs' => $content ?: "No hay actividad reciente registrada para este equipo."
         ]);
     }
+
+    /**
+     * Provisionamiento Masivo: Envía todos los usuarios y biometrías de la DB al equipo.
+     */
+    public function provisionDevice(Request $request)
+    {
+        $request->validate([
+            'sn' => 'required|exists:biometric_devices,sn'
+        ]);
+
+        $sn = $request->sn;
+        
+        // 1. Obtener todos los usuarios que tienen alguna biometría registrada en sistema (has_fingerprint or has_face)
+        $users = User::where('has_fingerprint', true)->orWhere('has_face', true)->get();
+        
+        if ($users->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No hay usuarios con biometría registrada en el sistema.']);
+        }
+
+        $commandCount = 0;
+        foreach ($users as $user) {
+            // A. Asegurar UserInfo
+            $userInfo = "PIN=" . $user->numero_documento . "\tName=" . $user->nombre . "\tPri=0\tPass=\tCard=\tGrp=1\tTZ=00000000";
+            BiometricCommand::create([
+                'device_sn' => $sn,
+                'command' => 'DATA UPDATE USERINFO',
+                'payload' => $userInfo,
+                'status' => 'pending'
+            ]);
+
+            // B. Enviar todas las huellas y rostros registrados en DB (user_biometrics) para este usuario
+            $templates = \Illuminate\Support\Facades\DB::table('user_biometrics')
+                ->where('numero_documento', $user->numero_documento)
+                ->get();
+
+            foreach ($templates as $tmp) {
+                $cmdName = $tmp->tipo === 'FACE' ? 'DATA UPDATE UserFace' : 'DATA UPDATE Fptemp';
+                BiometricCommand::create([
+                    'device_sn' => $sn,
+                    'command' => $cmdName,
+                    'payload' => $tmp->payload,
+                    'status' => 'pending'
+                ]);
+                $commandCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => "Se han encolado órdenes para sincronizar " . $users->count() . " usuarios ($commandCount plantillas) al equipo."
+        ]);
+    }
+
+    /**
+     * Reset de Dispositivo: Borra todos los datos y logs del equipo.
+     */
+    public function clearDevice(Request $request)
+    {
+        $request->validate([
+            'sn' => 'required|exists:biometric_devices,sn'
+        ]);
+
+        $sn = $request->sn;
+
+        // 1. Borrar todos los datos de usuario y huellas
+        BiometricCommand::create([
+            'device_sn' => $sn,
+            'command' => 'CLEAR DATA',
+            'status' => 'pending'
+        ]);
+
+        // 2. Borrar logs de asistencia
+        BiometricCommand::create([
+            'device_sn' => $sn,
+            'command' => 'CLEAR LOG',
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comandos de limpieza total (Reset) enviados al equipo.'
+        ]);
+    }
 }

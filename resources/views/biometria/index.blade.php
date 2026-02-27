@@ -176,12 +176,20 @@
                     <p class="text-muted mb-2"><i class="uil uil-clock me-1"></i> Visto: {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Nunca' }}</p>
                     
                     @if(Auth::user()->hasPermission('biometria.enroll'))
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary flex-grow-1 sync-device-btn" data-sn="{{ $device->sn }}">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-sm btn-outline-primary flex-grow-1 sync-device-btn" data-sn="{{ $device->sn }}" title="Traer datos del equipo al sistema">
                             <i class="mdi mdi-sync me-1"></i> Sincronizar
                         </button>
                         <button class="btn btn-sm btn-dark btn-open-monitor" data-sn="{{ $device->sn }}" data-name="{{ $device->nombre }}">
                             <i class="mdi mdi-console me-1"></i> Monitor
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2 mt-2">
+                        <button class="btn btn-sm btn-soft-info flex-grow-1 provision-device-btn" data-sn="{{ $device->sn }}" title="Cargar todos los usuarios del sistema al equipo">
+                            <i class="mdi mdi-cloud-upload me-1"></i> Cargar Todo
+                        </button>
+                        <button class="btn btn-sm btn-soft-danger clear-device-btn" data-sn="{{ $device->sn }}" title="Borrar TODOS los datos del equipo">
+                            <i class="mdi mdi-trash-can-outline"></i> Limpiar Todo
                         </button>
                     </div>
                     @endif
@@ -535,6 +543,75 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         startEnrollment(userId, result.value, type);
+                    }
+                });
+            });
+
+            $(document).on('click', '.provision-device-btn', function() {
+                const sn = $(this).data('sn');
+                
+                Swal.fire({
+                    title: '¿Cargar todos los datos?',
+                    text: 'Se enviarán todos los usuarios y biometrías guardadas en el sistema hacia este equipo. Use esto para configurar equipos nuevos o clonados.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Cargar Todo',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#00acc1'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Encolando ráfaga...',
+                            text: 'Preparando comandos masivos. Esto puede tardar unos segundos.',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        $.post("{{ route('biometria.provision') }}", {
+                            _token: "{{ csrf_token() }}",
+                            sn: sn
+                        }, function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire('Éxito', response.message, 'success');
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('click', '.clear-device-btn', function() {
+                const sn = $(this).data('sn');
+                
+                Swal.fire({
+                    title: '<span class="text-danger">¿LIMPIAR TODO EL EQUIPO?</span>',
+                    html: '<p>Esta acción <strong>BORRARÁ TODOS LOS USUARIOS Y LOGS</strong> del dispositivo físico de forma permanente.</p><p class="small text-muted">Use esto solo para Mantenimiento o Reseteo de fábrica.</p>',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonText: 'SÍ, BORRAR TODO',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Enviando órdenes de limpieza...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        $.post("{{ route('biometria.clear') }}", {
+                            _token: "{{ csrf_token() }}",
+                            sn: sn
+                        }, function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire('Equipo Limpiado', response.message, 'success');
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        });
                     }
                 });
             });

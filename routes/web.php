@@ -607,6 +607,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/sync', [BiometricController::class, 'syncDevice'])->name('biometria.sync')->middleware('can:biometria.enroll');
         Route::post('/delete', [BiometricController::class, 'deleteBiometrics'])->name('biometria.delete')->middleware('can:biometria.enroll');
         Route::get('/logs', [BiometricController::class, 'getLogs'])->name('biometria.logs')->middleware('can:biometria.view');
+        Route::post('/provision', [BiometricController::class, 'provisionDevice'])->name('biometria.provision')->middleware('can:biometria.enroll');
+        Route::post('/clear', [BiometricController::class, 'clearDevice'])->name('biometria.clear')->middleware('can:biometria.enroll');
     });
 
 });
