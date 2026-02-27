@@ -76,6 +76,18 @@
             z-index: 1060 !important;
         }
 
+        /* Ocultar elementos duplicados inyectados por el script global del tema */
+        #datatable-buttons_wrapper, 
+        .dt-buttons, 
+        #datatable-buttons_filter {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
         .dot-online { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
         .dot-offline { background-color: #dc3545; }
         
