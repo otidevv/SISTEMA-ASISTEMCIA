@@ -177,6 +177,40 @@ class BiometricController extends Controller
         ]);
     }
 
+    public function deleteBiometrics(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'device_sn' => 'required',
+            'type' => 'required|in:FINGER,ALL'
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+        
+        // Mapear el comando según el tipo de borrado
+        $commandName = '';
+        if ($request->type == 'FINGER') {
+            // Borra solo huellas (Fptemp)
+            $commandName = 'DATA DELETE Fptemp';
+        } else {
+            // Borra todo el usuario (UserInfo incluye huellas y rostros)
+            $commandName = 'DATA DELETE USERINFO';
+        }
+
+        $command = BiometricCommand::create([
+            'device_sn' => $request->device_sn,
+            'command' => $commandName,
+            'payload' => "PIN=" . $user->numero_documento,
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Orden de borrado enviada al equipo.',
+            'command_id' => $command->id
+        ]);
+    }
+
     public function syncDevice(Request $request)
     {
         $request->validate([
@@ -210,6 +244,45 @@ class BiometricController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Comandos de sincronización enviados. El equipo empezará a subir los datos en segundo plano.'
+        ]);
+    }
+
+    /**
+     * Obtiene los últimos logs del servicio biometrico
+     */
+    public function getLogs()
+    {
+        $logPath = storage_path('logs/biometric.log');
+        
+        if (!file_exists($logPath)) {
+            return response()->json(['logs' => 'Archivo de log no encontrado o vacío todavía...']);
+        }
+
+        // Leer las últimas 100 líneas
+        $content = '';
+        $linesToRead = 100;
+        
+        // Usar comando tail en Windows si está disponible (vía Powershell) o leer manualmente
+        try {
+            // Forma segura en PHP para leer el final del archivo
+            $file = new \SplFileObject($logPath, 'r');
+            $file->seek(PHP_INT_MAX);
+            $totalLines = $file->key();
+            
+            $start = max(0, $totalLines - $linesToRead);
+            $file->seek($start);
+            
+            $content = "";
+            while (!$file->eof()) {
+                $content .= $file->current();
+                $file->next();
+            }
+        } catch (\Exception $e) {
+            return response()->json(['logs' => 'Error leyendo logs: ' . $e->getMessage()]);
+        }
+
+        return response()->json([
+            'logs' => $content
         ]);
     }
 }

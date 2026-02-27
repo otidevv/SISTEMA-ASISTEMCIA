@@ -91,8 +91,16 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="page-title-box">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
                 <h4 class="page-title">Módulo de Gestión Biométrica</h4>
+                <div class="page-title-right">
+                    <button type="button" class="btn btn-dark shadow-sm d-flex align-items-center" id="btn-open-monitor">
+                        <i class="mdi mdi-console me-2 fs-5"></i> Monitor de Sistema
+                    </button>
+                    <button type="button" class="btn btn-cepre-pink shadow-sm d-flex align-items-center ms-2" id="btn-refresh-table">
+                        <i class="mdi mdi-refresh me-2 fs-5"></i> Actualizar Listado
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -215,6 +223,31 @@
                 <div id="command-result" class="mt-2" style="display:none;"></div>
                 <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Cancelar</button>
             </div>
+    </div>
+</div>
+
+<!-- Modal para el Monitor de Logs (Terminal) -->
+<div class="modal fade" id="modalMonitor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-0 shadow-lg">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title text-white"><i class="mdi mdi-console-line me-2"></i>Monitor de Actividad Biométrica (ZKTeco)</h5>
+                <div class="ms-auto d-flex align-items-center">
+                    <span class="badge bg-success me-3" id="log-status-dot">En Vivo</span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0">
+                <div id="log-container" style="height: 500px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; padding: 15px; background: #0c0c0c; color: #33ff33;">
+                    <div class="text-muted italic">Iniciando monitor... Cargando historial...</div>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-secondary py-2 justify-content-between">
+                <small class="text-muted">Desarrollado para CEPRE UNAMAD - Sincronización Automática Cada 3s</small>
+                <div>
+                   <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('log-container').innerHTML = ''">Limpiar Pantalla</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -303,6 +336,22 @@
                                         data-user-devices='${JSON.stringify(userDevices)}'>
                                         <i class="mdi mdi-face-recognition"></i> <span class="btn-text">Rostro</span>
                                     </button>
+                                    <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li><h6 class="dropdown-header">Opciones de Borrado</h6></li>
+                                        <li>
+                                            <a class="dropdown-item text-warning delete-biometric-btn" href="#" data-type="FINGER" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
+                                                <i class="mdi mdi-fingerprint-off me-2"></i>Limpiar Huellas
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item text-danger delete-biometric-btn" href="#" data-type="ALL" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
+                                                <i class="mdi mdi-account-remove me-2"></i>Borrar Usuario de Equipo
+                                            </a>
+                                        </li>
+                                    </ul>
                                 `;
                             @else
                                 buttons += '<span class="text-muted small p-2">Sin Permiso</span>';
@@ -519,6 +568,106 @@
                     }
                 }, 120000);
             }
+
+            // --- Lógica del Monitor de Logs ---
+            let logInterval = null;
+
+            $('#btn-open-monitor').click(function() {
+                $('#modalMonitor').modal('show');
+                fetchLogs();
+                if (logInterval) clearInterval(logInterval);
+                logInterval = setInterval(fetchLogs, 3000);
+            });
+
+            $('#modalMonitor').on('hidden.bs.modal', function() {
+                if (logInterval) clearInterval(logInterval);
+            });
+
+            function fetchLogs() {
+                $.get("{{ route('biometria.logs') }}", function(response) {
+                    const $container = $('#log-container');
+                    const isAtBottom = $container.scrollTop() + $container.innerHeight() >= $container[0].scrollHeight - 50;
+                    
+                    // Formatear logs para que se vean mejor (colores por nivel)
+                    let formattedLogs = response.logs.replace(/\[INFO\]/g, '<span style="color: #66ff66;">[INFO]</span>')
+                                                   .replace(/\[ERROR\]/g, '<span style="color: #ff3333;">[ERROR]</span>')
+                                                   .replace(/\[WARN\]/g, '<span style="color: #ffff00;">[WARN]</span>');
+                    
+                    $container.html(formattedLogs);
+                    
+                    if (isAtBottom || $container.find('.text-muted').length > 0) {
+                        $container.scrollTop($container[0].scrollHeight);
+                    }
+                });
+            }
+
+            // --- Lógica de Borrado de Biometría ---
+            $(document).on('click', '.delete-biometric-btn', function(e) {
+                e.preventDefault();
+                const userId = $(this).data('id');
+                const type = $(this).data('type');
+                const userDevices = $(this).data('user-devices') || [];
+                const typeLabel = type === 'FINGER' ? 'Huellas dactilares' : 'Usuario completo (con rostro)';
+                const btnColor = type === 'FINGER' ? '#ffc107' : '#dc3545';
+
+                if (devices.length === 0) return;
+
+                // Generar opciones para el selector de equipo
+                let optionsHtml = '';
+                devices.forEach(d => {
+                    const hasData = userDevices.includes(d.sn);
+                    const isSelected = hasData ? 'selected' : '';
+                    optionsHtml += `<option value="${d.sn}" ${isSelected}>${d.isOnline ? '🟢' : '🔴'} ${d.nombre}</option>`;
+                });
+
+                Swal.fire({
+                    title: '<span class="text-danger">Confirmar Borrado</span>',
+                    html: `
+                        <div class="text-start">
+                            <p>¿Estás seguro que deseas <strong>borrar</strong> las ${typeLabel} de este usuario en el equipo físico?</p>
+                            <label class="form-label fw-bold small">Seleccionar Equipo:</label>
+                            <select id="swal_delete_device_selector" class="form-select border-danger">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Borrar Permanentemente',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: btnColor,
+                    preConfirm: () => {
+                        return document.getElementById('swal_delete_device_selector').value;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const sn = result.value;
+                        
+                        Swal.fire({
+                            title: 'Enviando orden...',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        $.post("{{ route('biometria.delete') }}", {
+                            _token: "{{ csrf_token() }}",
+                            user_id: userId,
+                            device_sn: sn,
+                            type: type
+                        }, function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire('Orden Enviada', 'Se ha enviado la instrucción de borrado al equipo. Mira el Monitor de Logs para confirmar.', 'success');
+                                setTimeout(() => table.ajax.reload(), 3000);
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            $('#btn-refresh-table').click(() => table.ajax.reload());
         });
     </script>
 @endpush
