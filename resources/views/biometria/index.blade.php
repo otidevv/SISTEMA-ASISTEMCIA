@@ -266,6 +266,7 @@
                 <div id="command-result" class="mt-2" style="display:none;"></div>
                 <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Cancelar</button>
             </div>
+        </div>
     </div>
 </div>
 
