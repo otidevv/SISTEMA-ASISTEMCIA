@@ -383,4 +383,32 @@ class BiometricController extends Controller
             'message' => 'Comandos de limpieza total (Reset) enviados al equipo.'
         ]);
     }
+
+    /**
+     * Migración entre Dispositivos: Sincroniza Origen y prepara Destino.
+     */
+    public function migrate(Request $request)
+    {
+        $request->validate([
+            'source_sn' => 'required|exists:biometric_devices,sn',
+            'target_sn' => 'required|exists:biometric_devices,sn'
+        ]);
+
+        $source = $request->source_sn;
+        $target = $request->target_sn;
+
+        if ($source === $target) {
+            return response()->json(['success' => false, 'message' => 'El equipo origen y destino no pueden ser el mismo.']);
+        }
+
+        // 1. Disparamos sincronización en el origen para asegurar que tenemos lo último en DB
+        BiometricCommand::create(['device_sn' => $source, 'command' => 'DATA QUERY USERINFO', 'status' => 'pending']);
+        BiometricCommand::create(['device_sn' => $source, 'command' => 'DATA QUERY FINGERPRINT', 'status' => 'pending']);
+        BiometricCommand::create(['device_sn' => $source, 'command' => 'DATA QUERY FACE', 'status' => 'pending']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Se ha iniciado la extracción de datos del equipo Origen. Una vez que el monitor muestre que la sincronización terminó, podrá usar "Cargar Todo" en el equipo Destino para completar la migración.'
+        ]);
+    }
 }

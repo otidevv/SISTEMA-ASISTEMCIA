@@ -146,7 +146,10 @@
         <div class="col-12">
             <div class="page-title-box d-flex align-items-center justify-content-between">
                 <h4 class="page-title">Módulo de Gestión Biométrica</h4>
-                <div class="page-title-right">
+                <div class="page-title-right d-flex gap-2">
+                    <button type="button" class="btn btn-cepre-teal shadow-sm d-flex align-items-center" id="btn-open-migrate">
+                        <i class="mdi mdi-swap-horizontal me-2 fs-5"></i> Migrar entre Equipos
+                    </button>
                     <button type="button" class="btn btn-cepre-pink shadow-sm d-flex align-items-center" id="btn-refresh-table">
                         <i class="mdi mdi-refresh me-2 fs-5"></i> Actualizar Listado
                     </button>
@@ -315,6 +318,63 @@
         </div>
     </div>
 </div>
+<!-- Modal para Migración entre Equipos -->
+<div class="modal fade" id="modalMigrate" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-cepre-teal text-white">
+                <h5 class="modal-title text-white"><i class="mdi mdi-swap-horizontal me-2"></i>Migración de Datos entre Equipos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-soft-info mb-4">
+                    <i class="mdi mdi-information-outline me-2"></i>
+                    Este asistente extraerá la biometría del equipo <strong>Origen</strong> y le permitirá cargarla masivamente en el equipo <strong>Destino</strong>.
+                </div>
+                
+                <form id="form-migrate">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">1. Seleccione Equipo ORIGEN (Fuente de datos)</label>
+                        <select class="form-select border-cepre-teal" id="migrate-source" required>
+                            <option value="">-- Seleccionar Origen --</option>
+                            @foreach($devices as $d)
+                                <option value="{{ $d->sn }}">{{ $d->nombre }} ({{ $d->sn }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="text-center my-3">
+                        <div class="avatar-sm mx-auto">
+                            <span class="avatar-title bg-soft-info text-info rounded-circle fs-4">
+                                <i class="mdi mdi-arrow-down"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. Seleccione Equipo DESTINO (Donde se clonarán)</label>
+                        <select class="form-select border-cepre-pink" id="migrate-target" required>
+                            <option value="">-- Seleccionar Destino --</option>
+                            @foreach($devices as $d)
+                                <option value="{{ $d->sn }}">{{ $d->nombre }} ({{ $d->sn }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-cepre-teal btn-lg shadow-sm">
+                            <i class="mdi mdi-play-circle-outline me-2"></i> Iniciar Proceso de Migración
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <small class="text-muted italic">Nota: El proceso de extracción puede tardar unos minutos según la cantidad de usuarios.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Tabla fantasma estructurada para evitar que datatables.init.js se rompa -->
 <table id="datatable-buttons" style="display: none;">
     <thead>
@@ -543,6 +603,70 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         startEnrollment(userId, result.value, type);
+                    }
+                });
+            });
+
+            $('#btn-open-migrate').click(function() {
+                $('#modalMigrate').modal('show');
+            });
+
+            $('#form-migrate').submit(function(e) {
+                e.preventDefault();
+                const source = $('#migrate-source').val();
+                const target = $('#migrate-target').val();
+
+                if (!source || !target) {
+                    Swal.fire('Error', 'Debe seleccionar equipo origen y destino.', 'error');
+                    return;
+                }
+
+                if (source === target) {
+                    Swal.fire('Error', 'El equipo origen y destino no pueden ser el mismo.', 'error');
+                    return;
+                }
+
+                Swal.fire({
+                    title: '¿Iniciar Migración?',
+                    html: `Se extraerán datos de <strong>${source}</strong> para clonarlos en <strong>${target}</strong>.<br><br>Primero sincronizaremos el origen.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, empezar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#modalMigrate').modal('hide');
+                        
+                        Swal.fire({
+                            title: 'Extrayendo datos de Origen...',
+                            text: 'Esto actualizará el sistema con la biometría más reciente del equipo fuente.',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        $.post("{{ route('biometria.migrate') }}", {
+                            _token: "{{ csrf_token() }}",
+                            source_sn: source,
+                            target_sn: target
+                        }, function(response) {
+                            Swal.close();
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Fase 1 completada',
+                                    html: `<p>${response.message}</p><p class="mt-2">¿Desea abrir el monitor para ver el progreso del origen?</p>`,
+                                    icon: 'success',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Ver Monitor',
+                                    cancelButtonText: 'Cerrar'
+                                }).then((monResult) => {
+                                    if (monResult.isConfirmed) {
+                                        $('.btn-open-monitor[data-sn="'+source+'"]').click();
+                                    }
+                                });
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        });
                     }
                 });
             });
