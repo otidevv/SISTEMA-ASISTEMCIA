@@ -33,6 +33,32 @@
         :root {
             --cepre-pink: #ec008c;
             --cepre-dark-blue: #2b5a6f;
+            --cepre-cyan: #00bcd4;
+        }
+
+        .btn-group-bio {
+            display: flex;
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-group-bio .btn {
+            border-radius: 0 !important;
+            border: none;
+            flex-grow: 1;
+        }
+        .btn-group-bio .btn-dropdown {
+            flex-grow: 0;
+            width: 45px;
+            background-color: #00acc1;
+            border-left: 1px solid rgba(255,255,255,0.2) !important;
+        }
+        .btn-group-bio .btn-dropdown:hover {
+            background-color: #0097a7;
+        }
+        .dropdown-toggle-nocaret::after {
+            display: none !important;
         }
 
         .dot-online { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
@@ -94,10 +120,7 @@
             <div class="page-title-box d-flex align-items-center justify-content-between">
                 <h4 class="page-title">Módulo de Gestión Biométrica</h4>
                 <div class="page-title-right">
-                    <button type="button" class="btn btn-dark shadow-sm d-flex align-items-center" id="btn-open-monitor">
-                        <i class="mdi mdi-console me-2 fs-5"></i> Monitor de Sistema
-                    </button>
-                    <button type="button" class="btn btn-cepre-pink shadow-sm d-flex align-items-center ms-2" id="btn-refresh-table">
+                    <button type="button" class="btn btn-cepre-pink shadow-sm d-flex align-items-center" id="btn-refresh-table">
                         <i class="mdi mdi-refresh me-2 fs-5"></i> Actualizar Listado
                     </button>
                 </div>
@@ -126,9 +149,14 @@
                     <p class="text-muted mb-2"><i class="uil uil-clock me-1"></i> Visto: {{ $device->last_seen ? $device->last_seen->diffForHumans() : 'Nunca' }}</p>
                     
                     @if(Auth::user()->hasPermission('biometria.enroll'))
-                    <button class="btn btn-sm btn-outline-primary w-100 sync-device-btn" data-sn="{{ $device->sn }}">
-                        <i class="mdi mdi-sync me-1"></i> Sincronizar Datos
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary flex-grow-1 sync-device-btn" data-sn="{{ $device->sn }}">
+                            <i class="mdi mdi-sync me-1"></i> Sincronizar
+                        </button>
+                        <button class="btn btn-sm btn-dark btn-open-monitor" data-sn="{{ $device->sn }}" data-name="{{ $device->nombre }}">
+                            <i class="mdi mdi-console me-1"></i> Monitor
+                        </button>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -319,44 +347,45 @@
                         data: null, 
                         orderable: false,
                         render: function(data) {
-                            let buttons = '<div class="btn-group w-100 shadow-sm">';
                             const userDevices = data.devices || [];
+                            let buttons = '';
                             @if(Auth::user()->hasPermission('biometria.enroll'))
-                                buttons += `
-                                    <button class="btn btn-cepre-pink enroll-btn d-flex align-items-center justify-content-center" 
-                                        data-type="FP" 
-                                        data-id="${data.id}" 
-                                        data-user-devices='${JSON.stringify(userDevices)}'
-                                        style="border-right: 1px solid rgba(255,255,255,0.2);">
-                                        <i class="mdi mdi-fingerprint"></i> <span class="btn-text">Huella</span>
-                                    </button>
-                                    <button class="btn btn-info enroll-btn d-flex align-items-center justify-content-center text-white" 
-                                        data-type="FACE" 
-                                        data-id="${data.id}"
-                                        data-user-devices='${JSON.stringify(userDevices)}'>
-                                        <i class="mdi mdi-face-recognition"></i> <span class="btn-text">Rostro</span>
-                                    </button>
-                                    <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <span class="visually-hidden">Toggle Dropdown</span>
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                        <li><h6 class="dropdown-header">Opciones de Borrado</h6></li>
-                                        <li>
-                                            <a class="dropdown-item text-warning delete-biometric-btn" href="#" data-type="FINGER" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
-                                                <i class="mdi mdi-fingerprint-off me-2"></i>Limpiar Huellas
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item text-danger delete-biometric-btn" href="#" data-type="ALL" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
-                                                <i class="mdi mdi-account-remove me-2"></i>Borrar Usuario de Equipo
-                                            </a>
-                                        </li>
-                                    </ul>
+                                buttons = `
+                                    <div class="btn-group-bio">
+                                        <button class="btn btn-cepre-pink enroll-btn d-flex align-items-center justify-content-center" 
+                                            data-type="FP" 
+                                            data-id="${data.id}" 
+                                            data-user-devices='${JSON.stringify(userDevices)}'>
+                                            <i class="mdi mdi-fingerprint me-1"></i> <span class="btn-text">Huella</span>
+                                        </button>
+                                        <button class="btn btn-info enroll-btn d-flex align-items-center justify-content-center text-white" 
+                                            data-type="FACE" 
+                                            data-id="${data.id}"
+                                            data-user-devices='${JSON.stringify(userDevices)}'>
+                                            <i class="mdi mdi-face-recognition me-1"></i> <span class="btn-text">Rostro</span>
+                                        </button>
+                                        <button class="btn btn-info btn-dropdown text-white dropdown-toggle-nocaret d-flex align-items-center justify-content-center" 
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="mdi mdi-dots-vertical fs-4"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2">
+                                            <li><h6 class="dropdown-header text-uppercase fw-bold small text-muted">Acciones Avanzadas</h6></li>
+                                            <li>
+                                                <a class="dropdown-item text-warning delete-biometric-btn" href="#" data-type="FINGER" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
+                                                    <i class="mdi mdi-fingerprint-off me-2 fs-5"></i>Limpiar Huellas
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger delete-biometric-btn" href="#" data-type="ALL" data-id="${data.id}" data-user-devices='${JSON.stringify(userDevices)}'>
+                                                    <i class="mdi mdi-account-remove me-2 fs-5"></i>Borrar de este Equipo
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 `;
                             @else
-                                buttons += '<span class="text-muted small p-2">Sin Permiso</span>';
+                                buttons = '<span class="text-muted small p-2">Sin Permiso</span>';
                             @endif
-                            buttons += '</div>';
                             return buttons;
                         }
                     }
@@ -571,9 +600,15 @@
 
             // --- Lógica del Monitor de Logs ---
             let logInterval = null;
+            let currentMonitorSn = null;
 
-            $('#btn-open-monitor').click(function() {
+            $(document).on('click', '.btn-open-monitor', function() {
+                currentMonitorSn = $(this).data('sn');
+                const deviceName = $(this).data('name');
+                
                 $('#modalMonitor').modal('show');
+                $('#modalMonitor .modal-title').html(`<i class="mdi mdi-console-line me-2"></i>Monitor: ${deviceName} (${currentMonitorSn})`);
+                
                 fetchLogs();
                 if (logInterval) clearInterval(logInterval);
                 logInterval = setInterval(fetchLogs, 3000);
@@ -581,10 +616,11 @@
 
             $('#modalMonitor').on('hidden.bs.modal', function() {
                 if (logInterval) clearInterval(logInterval);
+                currentMonitorSn = null;
             });
 
             function fetchLogs() {
-                $.get("{{ route('biometria.logs') }}", function(response) {
+                $.get("{{ route('biometria.logs') }}", { sn: currentMonitorSn }, function(response) {
                     const $container = $('#log-container');
                     const isAtBottom = $container.scrollTop() + $container.innerHeight() >= $container[0].scrollHeight - 50;
                     
