@@ -6,7 +6,7 @@
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Usar los de la plantilla para evitar conflictos -->
     
     <style>
         :root {
@@ -59,6 +59,21 @@
         }
         .dropdown-toggle-nocaret::after {
             display: none !important;
+        }
+
+        /* Asegurar que el menú se posicione relativo al grupo de botones */
+        .btn-group-bio {
+            position: relative;
+            display: flex;
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: visible !important; /* Permitir que el dropdown flote fuera */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-group-bio .dropdown-menu {
+            margin-top: 0 !important;
+            z-index: 1060 !important;
         }
 
         .dot-online { background-color: #28a745; box-shadow: 0 0 5px #28a745; }
@@ -279,11 +294,23 @@
         </div>
     </div>
 </div>
+<!-- Tabla fantasma estructurada para evitar que datatables.init.js se rompa -->
+<table id="datatable-buttons" style="display: none;">
+    <thead>
+        <tr>
+            <th>Dummy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Data</td>
+        </tr>
+    </tbody>
+</table>
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Usar los de la plantilla para evitar conflictos -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
 
     <script>
@@ -365,7 +392,7 @@
                                             <i class="mdi mdi-face-recognition me-1"></i> <span class="btn-text">Rostro</span>
                                         </button>
                                         <button class="btn btn-info btn-dropdown text-white dropdown-toggle-nocaret d-flex align-items-center justify-content-center" 
-                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
                                             <i class="mdi mdi-dots-vertical fs-4"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 py-2">
@@ -413,6 +440,12 @@
                         "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
                         "sSortDescending": ": Activar para ordenar la columna de manera descendente"
                     }
+                },
+                drawCallback: function() {
+                    // Solo re-inicializar si no se ha hecho, para evitar parpadeos
+                    // Bootstrap 5 maneja esto automáticamente via data attributes si el bundle está cargado,
+                    // pero en entornos mixtos a veces requiere este empujón.
+                    $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
                 }
             });
 
