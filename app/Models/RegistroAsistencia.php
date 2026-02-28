@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class RegistroAsistencia extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     /**
      * Nombre de la tabla en la base de datos.
@@ -74,4 +78,14 @@ class RegistroAsistencia extends Model
 
         return isset($tipos[$this->tipo_verificacion]) ? $tipos[$this->tipo_verificacion] : 'Desconocido';
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nro_documento', 'fecha_registro', 'tipo_verificacion', 'estado', 'terminal_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro Biométrico {$eventName}");
+    }
+
 }

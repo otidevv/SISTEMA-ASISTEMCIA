@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class BiometricCommand extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'device_sn',
         'command',
@@ -23,4 +28,14 @@ class BiometricCommand extends Model
     {
         return $this->belongsTo(BiometricDevice::class, 'device_sn', 'sn');
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

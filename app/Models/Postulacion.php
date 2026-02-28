@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Postulacion extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $table = 'postulaciones';
 
@@ -68,6 +70,15 @@ class Postulacion extends Model
         'constancia_generada' => 'boolean',
         'constancia_firmada' => 'boolean'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['estado', 'documentos_verificados', 'pago_verificado', 'revisado_por', 'observaciones', 'motivo_rechazo'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Postulación {$eventName}");
+    }
 
     protected static function boot()
     {

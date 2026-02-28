@@ -527,6 +527,7 @@
                         </li>
                     @endif
 
+
                     <!-- Módulo Postulaciones - Solo visible si tiene permiso -->
                     @if (Auth::user()->hasPermission('postulaciones.view'))
                         <li>
@@ -1065,6 +1066,16 @@
 
 
                     <li class="menu-title mt-2">Configuración</li>
+
+                    <!-- Módulo Auditoría - Reubicado para ser más administrativo -->
+                    @if (Auth::user()->hasPermission('auditoria.view') || Auth::user()->hasPermission('users.view'))
+                        <li>
+                            <a href="{{ route('auditoria.index') }}">
+                                <i data-feather="activity"></i>
+                                <span> Auditoría del Sistema </span>
+                            </a>
+                        </li>
+                    @endif
 
                     <!-- Ajustes de perfil - Visible para todos -->
                     <li>

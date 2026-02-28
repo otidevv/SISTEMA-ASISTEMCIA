@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class MaterialAcademico extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $table = 'materiales_academicos';
 
@@ -42,4 +46,14 @@ class MaterialAcademico extends Model
     {
         return $this->belongsTo(Aula::class);
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

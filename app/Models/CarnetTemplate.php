@@ -4,10 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CarnetTemplate extends Model
 {
+    use LogsActivity;
+
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
@@ -116,4 +121,14 @@ class CarnetTemplate extends Model
         $this->campos_config = $campos;
         $this->save();
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

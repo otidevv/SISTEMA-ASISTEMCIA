@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class UserSession extends Model
 {
+    use LogsActivity;
+
     /**
      * The table associated with the model.
      *
@@ -85,4 +90,14 @@ class UserSession extends Model
         $this->estado = 'invalidada';
         $this->save();
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

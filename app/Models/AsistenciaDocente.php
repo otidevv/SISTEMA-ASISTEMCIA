@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\PagoDocente;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class AsistenciaDocente extends Model
 {
+    use LogsActivity;
+
     protected $table = 'asistencias_docentes';
 
     protected $fillable = [
@@ -27,6 +32,15 @@ class AsistenciaDocente extends Model
         'semana',
         'mes'
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['estado', 'tema_desarrollado', 'hora_entrada', 'hora_salida', 'horas_dictadas', 'monto_total', 'tipo_verificacion', 'docente_id', 'horario_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Asistencia docente {$eventName}");
+    }
 
     // Docente
     public function docente()

@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class CentroEducativo extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     // Usar la conexión externa
     protected $connection = 'mysql_centros';
@@ -98,4 +102,14 @@ class CentroEducativo extends Model
             ->orderBy('cen_edu')
             ->get();
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

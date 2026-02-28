@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 class HorarioDocente extends Model
 {
+    use LogsActivity;
+
     protected $table = 'horarios_docentes';
 
     protected $fillable = [
@@ -51,4 +56,14 @@ class HorarioDocente extends Model
     {
         return $this->belongsTo(Curso::class, 'curso_id');
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 use App\Jobs\ProcessNewAttendanceEvent;
 
 class AsistenciaEvento extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     /**
      * Nombre de la tabla asociada al modelo.
@@ -54,4 +58,14 @@ class AsistenciaEvento extends Model
             \App\Jobs\ProcessNewAttendanceEvent::dispatch($evento);
         });
     }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+    }
+
 }

@@ -29,6 +29,7 @@ use App\Http\Controllers\TarjetasController;
 use App\Http\Controllers\BiometricController;
 use App\Http\Controllers\CargaHorariaController;
 use App\Http\Controllers\Api\CargaHorariaApiController;
+use App\Http\Controllers\AuditoriaController;
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -212,6 +213,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/usuarios/{usuario}/edit', [UsuarioController::class, 'edit'])->name('usuarios.edit')->middleware('can:users.edit');
         Route::put('/usuarios/{usuario}', [UsuarioController::class, 'update'])->name('usuarios.update')->middleware('can:users.edit');
         Route::delete('/usuarios/{usuario}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware('can:users.delete');
+    });
+
+    // Auditoría
+    Route::middleware('can:users.view')->group(function () {
+        Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
     });
 
     // Roles - Requiere permiso 'roles.view'

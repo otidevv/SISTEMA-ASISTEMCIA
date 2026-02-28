@@ -69,6 +69,7 @@
                     </li>
                 @endif
 
+
                 <!-- Módulo Roles - Solo visible si tiene permiso -->
                 @if (Auth::user()->hasPermission('roles.view'))
                     <li>
@@ -242,6 +243,16 @@
                         <a href="{{ route('biometria.index') }}">
                             <i data-feather="fingerprint"></i>
                             <span> Gestión Biométrica </span>
+                        </a>
+                    </li>
+                @endif
+
+                <!-- Módulo Auditoría - Reubicado para ser más administrativo -->
+                @if (Auth::user()->hasPermission('auditoria.view') || Auth::user()->hasPermission('users.view'))
+                    <li>
+                        <a href="{{ route('auditoria.index') }}">
+                            <i data-feather="activity"></i>
+                            <span> Auditoría del Sistema </span>
                         </a>
                     </li>
                 @endif
