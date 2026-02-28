@@ -1176,6 +1176,15 @@ async function procesarAsistencia(sn_dispositivo, datos_asistencia) {
                     await enviarSMS(numero, mensajeSMS);
                 }
             }
+
+            // --- NUEVO: Disparar Notificación por Correo (Laravel API) ---
+            if (usuario.email) {
+                logger.info(`Disparando notificación de correo para docente: ${usuario.email}`);
+                const tipoAsistencia = estado === 0 ? 'entrada' : 'salida'; // Depende de la lógica del ZKTeco
+                enviarCorreoAsistencia(usuario.id, tipoAsistencia, fecha_registro);
+            } else {
+                logger.warn(`El docente ${usuario.nombre} no tiene correo electrónico registrado.`);
+            }
         }
 
         if (esEstudiante) {
@@ -1836,24 +1845,64 @@ async function testTelegramBot() {
 }
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-    logger.info(`🚀 Servidor ZKTeco iniciado en puerto ${PORT}`);
-    logger.info(`📱 WhatsApp: ${WHATSAPP_HABILITADO ? 'HABILITADO' : 'DESHABILITADO'}`);
-    logger.info(`📱 Telegram: ${TELEGRAM_HABILITADO ? 'HABILITADO' : 'DESHABILITADO'}`);
-    logger.info(`💬 SMS: ${SMS_HABILITADO ? 'HABILITADO' : 'DESHABILITADO'}`);
+/**
+ * Envía una señal al backend de Laravel para disparar el correo de asistencia docente.
+ * @param {number} docenteId ID del usuario docente.
+ * @param {string} tipoAsistencia 'entrada' o 'salida'.
+ * @param {string} fechaHora Fecha y hora del registro.
+ */
+async function enviarCorreoAsistencia(docenteId, tipoAsistencia, fechaHora) {
+    try {
+        const url = `${process.env.APP_URL}/api/notificar-asistencia-docente`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                docente_id: docenteId,
+                tipo_asistencia: tipoAsistencia,
+                fecha_hora: fechaHora
+            })
+        });
 
+        const result = await response.json();
+        if (result.success) {
+            logger.info(`Correo de asistencia docente solicitado correctamente: ${result.message}`);
+        } else {
+            logger.error(`Error en la API de correo de Laravel: ${result.message}`);
+        }
+    } catch (error) {
+        logger.error('Error al conectar con la API de correo de Laravel:', error.message);
+    }
+}
+
+app.listen(PORT, async () => {
+    logger.info(`🚀 Servidor de Asistencia Biométrica v3.0 iniciado en puerto ${PORT}`);
+    logger.info(`📍 API expuesta en: http://localhost:${PORT}`);
+    logger.info(`📡 Servicios: WhatsApp(${WHATSAPP_HABILITADO ? '✅' : '❌'}), Telegram(${TELEGRAM_HABILITADO ? '✅' : '❌'}), SMS(${SMS_HABILITADO ? '✅' : '❌'})`);
+
+    // Probar conexión a la base de datos al iniciar
     await testDBConnection();
+
+    // Iniciar cola de mensajes SMS si está habilitado
+    if (SMS_HABILITADO) {
+        if (typeof procesarColaMensajesSMS === 'function') {
+            procesarColaMensajesSMS();
+        }
+    }
+
     await testTelegramBot();
 
     if (TELEGRAM_HABILITADO) {
         logger.info(`📋 Usuarios de Telegram configurados: ${Object.keys(telegramConfig).length}`);
-        if (Object.keys(telegramConfig).length > 0) {
-            logger.info(`📱 Teléfonos configurados: ${Object.keys(telegramConfig).join(', ')}`);
-        }
     }
+
     if (ACTIVAR_COMUNICADO_EXAMEN_GLOBAL) {
         logger.warn("🚨 MODO DE COMUNICADO DE EXAMEN GLOBAL ACTIVO. LAS NOTIFICACIONES DE ASISTENCIA DIARIA ESTÁN TEMPORALMENTE DESHABILITADAS PARA ESTUDIANTES.");
     }
+
     logger.info("🎯 Sistema listo para recibir registros de asistencia");
 });
 

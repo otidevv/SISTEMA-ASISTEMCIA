@@ -31,7 +31,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/postulacion-unificada/buscar-colegios', [PostulacionUnificadaController::class, 'buscarColegios']);
 });
 
-// En routes/ause Illuminate\Http\Request;pi.php
+// En routes/api.php
 Route::get('/ultimos-registros', function (Request $request) {
     $ultimoId = $request->input('ultimo_id', 0);
 
@@ -56,3 +56,6 @@ Route::get('/ultimos-registros', function (Request $request) {
 
     return response()->json($registros);
 });
+
+// Ruta interna para notificaciones de correo disparadas por el servicio Node.js
+Route::post('/notificar-asistencia-docente', [\App\Http\Controllers\Api\MailNotificationController::class, 'notificarAsistenciaDocente']);
