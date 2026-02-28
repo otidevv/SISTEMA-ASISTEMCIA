@@ -5,8 +5,13 @@ User-agent: Facebot
 Allow: /
 
 User-agent: *
-Allow: /
 Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /usuarios/
+Disallow: /asistencia/
+Disallow: /asistencia-docente/
+Disallow: /perfil/
+Disallow: /api/
 
 # Sitemap location
 Sitemap: https://portalcepre.unamad.edu.pe/sitemap.xml
