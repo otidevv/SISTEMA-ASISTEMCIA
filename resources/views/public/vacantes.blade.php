@@ -1,6 +1,6 @@
 @extends('layouts.cepre')
 
-@section('title', 'Cuadro de Vacantes')
+@section('title', 'Cuadro de Vacantes | CEPRE UNAMAD')
 
 @section('content')
     @include('partials.cepre.head')

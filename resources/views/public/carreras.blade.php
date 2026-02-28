@@ -1,6 +1,6 @@
 @extends('layouts.cepre')
 
-@section('title', 'Carreras Profesionales')
+@section('title', 'Carreras Profesionales | CEPRE UNAMAD')
 
 @section('content')
     @include('partials.cepre.head')

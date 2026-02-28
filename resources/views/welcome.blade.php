@@ -1,6 +1,6 @@
 @extends('layouts.cepre')
 
-@section('title', 'CEPRE UNAMAD')
+@section('title', 'Portal CEPRE UNAMAD | Ingreso Directo')
 
 @push('css')
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/animate.css') }}">

@@ -19,7 +19,7 @@
                     <div class="hero-text">
                         <p class="hero-subtitle">Bienvenido a la Universidad</p>
                         <h1 class="hero-title">
-                            CEPRE UNAMAD Tu<br>
+                            Portal CEPRE UNAMAD | Tu<br>
                             Camino Al <span>Éxito</span>
                         </h1>
                         <p class="hero-description">

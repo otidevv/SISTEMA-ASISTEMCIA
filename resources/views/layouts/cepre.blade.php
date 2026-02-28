@@ -5,12 +5,28 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="modinatheme">
-    <meta name="description" content="Eduspace - Online Course, Education & University Html Template">
-    <meta name="keywords" content="CEPRE UNAMAD, UNAMAD, Preuniversitario">
+    <meta name="author" content="CEPRE UNAMAD">
+    <meta name="google-site-verification" content="9BjJJcR6TdrhZrXMG1g9k96vHRgOktWvgDyPqWmyJz4" />
+    <meta name="description" content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios. Prepárate para el ingreso directo con los mejores docentes.">
+    <meta name="keywords" content="CEPRE UNAMAD, UNAMAD, Preuniversitario, Admisión, Ingreso Directo, Madre de Dios">
+    <link rel="canonical" href="https://portalcepre.unamad.edu.pe/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://portalcepre.unamad.edu.pe/">
+    <meta property="og:title" content="Portal CEPRE UNAMAD | Admisión e Ingreso Directo">
+    <meta property="og:description" content="Portal oficial de CEPRE UNAMAD. Revisa notas, vacantes y programas académicos para el ingreso directo a la universidad.">
+    <meta property="og:image" content="{{ asset('assets_cepre/img/logo/logo.png') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://portalcepre.unamad.edu.pe/">
+    <meta property="twitter:title" content="Portal CEPRE UNAMAD | Admisión e Ingreso Directo">
+    <meta property="twitter:description" content="Portal oficial de CEPRE UNAMAD. Revisa notas, vacantes y programas académicos.">
+    <meta property="twitter:image" content="{{ asset('assets_cepre/img/logo/logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Inicio') | CEPRE UNAMAD</title>
+    <title>@yield('title', 'Portal CEPRE UNAMAD')</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('faviconcepre.svg') }}?v=2">
