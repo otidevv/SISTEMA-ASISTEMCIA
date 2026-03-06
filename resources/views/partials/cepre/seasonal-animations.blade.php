@@ -148,7 +148,15 @@
         let startY = y - (totalHeight / 2) + (lineHeight / 2);
 
         for (let k = 0; k < lines.length; k++) {
-            context.fillText(lines[k].trim(), x, startY);
+            const currentLine = lines[k].trim();
+            
+            // Dibujamos el contorno (stroke) para legibilidad
+            context.lineWidth = 6;
+            context.strokeStyle = 'rgba(88, 28, 135, 0.8)'; // Púrpura oscuro
+            context.strokeText(currentLine, x, startY);
+            
+            // Dibujamos el texto principal
+            context.fillText(currentLine, x, startY);
             startY += lineHeight;
         }
     }
@@ -168,7 +176,6 @@
             return;
         }
 
-        // Si cambiamos de frase, reseteamos el trigger de explosión
         if (textState.currentIdx !== currentIdx) {
             textState.currentIdx = currentIdx;
             textState.burstTriggered = false;
@@ -177,7 +184,6 @@
         let opacity = 0;
         let scale = 1;
 
-        // Fases dentro de cada frase: Fade In (1s) -> Hold (2s) -> Fade Out (1s)
         if (elapsedInPhrase < 1000) {
             opacity = elapsedInPhrase / 1000;
             scale = 0.8 + (opacity * 0.2);
@@ -202,8 +208,11 @@
         ctx.font = `bold ${fontSize}px "Outfit", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(236, 72, 153, 0.9)';
-        ctx.shadowBlur = 20;
+        
+        // Brillo exterior suave
+        ctx.shadowColor = 'rgba(236, 72, 153, 0.5)';
+        ctx.shadowBlur = 10;
+        
         ctx.fillStyle = '#fff0f6';
         
         ctx.translate(W / 2, H / 2);
