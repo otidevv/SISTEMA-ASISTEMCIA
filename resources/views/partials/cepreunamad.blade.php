@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
         <div class="contact-bar-right">
             <p style="margin: 0; font-size: 14px; opacity: 0.9; color: var(--azul-oscuro);">USA NUESTRA LÍNEA 24H</p>
-            <h3>+51 974 122 813</h3>
+            <h3>+51 993 110 927<br>+51 993 111 037</h3>
         </div>
     </div>
 </section>

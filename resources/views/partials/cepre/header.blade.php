@@ -3,7 +3,7 @@
     <div class="top-bar-content">
         <div class="help-desk">
             <i class="fas fa-phone-alt"></i>
-            <span><strong>HELP DESK:</strong> +51 974 122 813</span>
+            <span><strong>HELP DESK:</strong> +51 993 110 927 - +51 993 111 037</span>
         </div>
         <div class="info-links">
             <a href="#"><i class="fas fa-graduation-cap"></i> Estudiantes</a>

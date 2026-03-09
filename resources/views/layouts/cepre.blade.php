@@ -17,6 +17,7 @@
     <meta property="og:title" content="Portal CEPRE UNAMAD | Admisión e Ingreso Directo">
     <meta property="og:description" content="Portal oficial de CEPRE UNAMAD. Revisa notas, vacantes y programas académicos para el ingreso directo a la universidad.">
     <meta property="og:image" content="{{ asset('assets_cepre/img/logo/logo.png') }}">
+    <meta property="og:site_name" content="CEPRE UNAMAD">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -24,9 +25,38 @@
     <meta property="twitter:title" content="Portal CEPRE UNAMAD | Admisión e Ingreso Directo">
     <meta property="twitter:description" content="Portal oficial de CEPRE UNAMAD. Revisa notas, vacantes y programas académicos.">
     <meta property="twitter:image" content="{{ asset('assets_cepre/img/logo/logo.png') }}">
+    <meta name="twitter:site" content="@CEPREUNAMAD">
+
+    <!-- JSON-LD Structured Data para Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "CEPRE UNAMAD",
+        "alternateName": ["Portal CEPRE UNAMAD", "Centro Preuniversitario UNAMAD"],
+        "url": "https://portalcepre.unamad.edu.pe/"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "CEPRE UNAMAD",
+        "alternateName": "Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios",
+        "url": "https://portalcepre.unamad.edu.pe/",
+        "logo": "https://portalcepre.unamad.edu.pe/assets_cepre/img/logo/logo.png",
+        "description": "Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios. Prepárate para el ingreso directo con los mejores docentes.",
+        "telephone": "+51 993 110 927",
+        "parentOrganization": {
+            "@type": "CollegeOrUniversity",
+            "name": "Universidad Nacional Amazónica de Madre de Dios",
+            "alternateName": "UNAMAD"
+        }
+    }
+    </script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Portal CEPRE UNAMAD')</title>
+    <title>@yield('title', 'CEPRE UNAMAD | Centro Preuniversitario - Ingreso Directo')</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('faviconcepre.svg') }}?v=2">

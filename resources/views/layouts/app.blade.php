@@ -12,15 +12,45 @@
         content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios (CEPRE UNAMAD). Información sobre admisión, cursos, horarios y más." />
     <meta name="keywords"
         content="CEPRE UNAMAD, portal cepre unamad, preuniversitario, Universidad Nacional Amazónica de Madre de Dios, admisión, Puerto Maldonado" />
-    <meta name="author" content="UNAMAD" />
+    <meta name="author" content="CEPRE UNAMAD" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
     <!-- Etiquetas Open Graph para redes sociales -->
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="Portal CEPRE UNAMAD" />
     <meta property="og:description"
         content="Portal oficial del Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios" />
     <meta property="og:url" content="https://portalcepre.unamad.edu.pe/" />
     <meta property="og:image" content="https://portalcepre.unamad.edu.pe/assets/images/logo-unamad.jpg" />
+    <meta property="og:site_name" content="CEPRE UNAMAD" />
+
+    <!-- JSON-LD Structured Data para Google -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "CEPRE UNAMAD",
+        "alternateName": ["Portal CEPRE UNAMAD", "Centro Preuniversitario UNAMAD"],
+        "url": "https://portalcepre.unamad.edu.pe/"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "CEPRE UNAMAD",
+        "alternateName": "Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios",
+        "url": "https://portalcepre.unamad.edu.pe/",
+        "logo": "https://portalcepre.unamad.edu.pe/assets_cepre/img/logo/logo.png",
+        "description": "Centro Preuniversitario de la Universidad Nacional Amazónica de Madre de Dios. Prepárate para el ingreso directo con los mejores docentes.",
+        "telephone": "+51 993 110 927",
+        "parentOrganization": {
+            "@type": "CollegeOrUniversity",
+            "name": "Universidad Nacional Amazónica de Madre de Dios",
+            "alternateName": "UNAMAD"
+        }
+    }
+    </script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- third party css -->
