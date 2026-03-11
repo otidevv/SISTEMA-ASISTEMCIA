@@ -581,7 +581,7 @@
         // Mapeo de portadas por slug de carrera
         // Solo agrega la ruta de la imagen en public/assets_cepre/img/ para cada carrera
         $portadas = [
-            'ingenieria-agroindustrial'                     => '/assets_cepre/img/preloader.gif'
+            'ingenieria-agroindustrial'                     => '',
             'ingenieria-de-sistemas-e-informatica'          => '/assets_cepre/img/portada-ing-sist.webp',
             'ingenieria-forestal-y-medio-ambiente'          => '',
             'enfermeria'                                    => '',
