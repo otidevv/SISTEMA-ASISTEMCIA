@@ -104,7 +104,7 @@ $(document).ready(function () {
     // Crear nueva carrera
     $('#saveNewCarrera').on('click', function () {
         var btn = $(this);
-        var formData = $('#newCarreraForm').serialize();
+        var formData = new FormData($('#newCarreraForm')[0]);
 
         // Mostrar spinner
         btn.find('.spinner-border').removeClass('d-none');
@@ -114,6 +114,8 @@ $(document).ready(function () {
             url: default_server + "/json/carreras",
             type: 'POST',
             data: formData,
+            processData: false,
+            contentType: false,
             success: function (response) {
                 if (response.success) {
                     $('#newCarreraModal').modal('hide');
@@ -145,6 +147,7 @@ $(document).ready(function () {
         });
     });
 
+
     // Cargar datos para editar
     $('#carreras-datatable').on('click', '.edit-carrera', function () {
         var id = $(this).data('id');
@@ -163,6 +166,48 @@ $(document).ready(function () {
                     $('#edit_descripcion').val(carrera.descripcion || '');
                     $('#edit_estado').val(carrera.estado ? '1' : '0');
 
+                    // Nuevos campos
+                    $('#edit_grado').val(carrera.grado || '');
+                    $('#edit_titulo').val(carrera.titulo || '');
+                    $('#edit_duracion').val(carrera.duracion || '');
+                    $('#edit_mision').val(carrera.mision || '');
+                    $('#edit_vision').val(carrera.vision || '');
+                    $('#edit_perfil').val(carrera.perfil || '');
+
+                    if (carrera.malla_url) {
+                        $('#current_malla_url_display').html('<a href="' + default_server + '/' + carrera.malla_url + '" target="_blank">Ver Malla Actual</a>');
+                    } else {
+                        $('#current_malla_url_display').text('No hay malla subida.');
+                    }
+
+                    if (carrera.imagen_url) {
+                        $('#current_imagen_url_display').html('<a href="' + default_server + '/' + carrera.imagen_url + '" target="_blank">Ver Imagen Actual</a>');
+                    } else {
+                        $('#current_imagen_url_display').text('No hay imagen subida.');
+                    }
+
+                    // Manejo de objetivos (pueden ser array o string)
+                    if (carrera.objetivos) {
+                        if (Array.isArray(carrera.objetivos)) {
+                            $('#edit_objetivos').val(carrera.objetivos.join('\n'));
+                        } else {
+                            $('#edit_objetivos').val(carrera.objetivos);
+                        }
+                    } else {
+                        $('#edit_objetivos').val('');
+                    }
+
+                    // Manejo de campo laboral (pueden ser array o string)
+                    if (carrera.campo_laboral) {
+                        if (Array.isArray(carrera.campo_laboral)) {
+                            $('#edit_campo_laboral').val(carrera.campo_laboral.join('\n'));
+                        } else {
+                            $('#edit_campo_laboral').val(carrera.campo_laboral);
+                        }
+                    } else {
+                        $('#edit_campo_laboral').val('');
+                    }
+
                     $('#editCarreraModal').modal('show');
                 }
             },
@@ -176,7 +221,9 @@ $(document).ready(function () {
     $('#updateCarrera').on('click', function () {
         var btn = $(this);
         var id = $('#edit_carrera_id').val();
-        var formData = $('#editCarreraForm').serialize();
+        var formData = new FormData($('#editCarreraForm')[0]);
+        // Laravel needs _method=PUT when using FormData and POST request
+        formData.append('_method', 'PUT');
 
         // Mostrar spinner
         btn.find('.spinner-border').removeClass('d-none');
@@ -184,8 +231,10 @@ $(document).ready(function () {
 
         $.ajax({
             url: default_server + "/json/carreras/" + id,
-            type: 'PUT',
+            type: 'POST', // POST is used with _method=PUT for file uploads in Laravel
             data: formData,
+            processData: false,
+            contentType: false,
             success: function (response) {
                 if (response.success) {
                     $('#editCarreraModal').modal('hide');

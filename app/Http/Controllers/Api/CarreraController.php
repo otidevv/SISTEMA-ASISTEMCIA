@@ -70,7 +70,17 @@ class CarreraController extends Controller
             'nombre' => 'required|string|max:150',
             'grupo' => 'required|in:A,B,C',
             'descripcion' => 'nullable|string',
-            'estado' => 'boolean'
+            'estado' => 'boolean',
+            'grado' => 'nullable|string|max:255',
+            'titulo' => 'nullable|string|max:255',
+            'duracion' => 'nullable|string|max:100',
+            'mision' => 'nullable|string',
+            'vision' => 'nullable|string',
+            'perfil' => 'nullable|string',
+            'objetivos' => 'nullable|string',
+            'campo_laboral' => 'nullable|string',
+            'malla_file' => 'nullable|file|mimes:pdf|max:5120', // 5MB max
+            'imagen_file' => 'nullable|image|max:2048' // 2MB max
         ]);
 
         if ($validator->fails()) {
@@ -82,9 +92,30 @@ class CarreraController extends Controller
 
         DB::beginTransaction();
         try {
-            $data = $request->all();
+            $data = $request->except(['malla_file', 'imagen_file']);
             $data['creado_por'] = auth()->id();
             $data['estado'] = $request->estado ?? true;
+
+            // Manejo de archivos
+            if ($request->hasFile('malla_file')) {
+                $path = $request->file('malla_file')->store('carreras/mallas', 'public');
+                $data['malla_url'] = 'storage/' . $path;
+            }
+
+            if ($request->hasFile('imagen_file')) {
+                $path = $request->file('imagen_file')->store('carreras/imagenes', 'public');
+                $data['imagen_url'] = 'storage/' . $path;
+            }
+
+            // Convertir objetivos de texto a array si es necesario
+            if (isset($data['objetivos']) && is_string($data['objetivos'])) {
+                $data['objetivos'] = array_filter(array_map('trim', explode("\n", $data['objetivos'])));
+            }
+
+            // Convertir campo_laboral de texto a array
+            if (isset($data['campo_laboral']) && is_string($data['campo_laboral'])) {
+                $data['campo_laboral'] = array_filter(array_map('trim', explode("\n", $data['campo_laboral'])));
+            }
 
             $carrera = Carrera::create($data);
 
@@ -138,7 +169,17 @@ class CarreraController extends Controller
             'nombre' => 'required|string|max:150',
             'grupo' => 'required|in:A,B,C',
             'descripcion' => 'nullable|string',
-            'estado' => 'boolean'
+            'estado' => 'boolean',
+            'grado' => 'nullable|string|max:255',
+            'titulo' => 'nullable|string|max:255',
+            'duracion' => 'nullable|string|max:100',
+            'mision' => 'nullable|string',
+            'vision' => 'nullable|string',
+            'perfil' => 'nullable|string',
+            'objetivos' => 'nullable|string',
+            'campo_laboral' => 'nullable|string',
+            'malla_file' => 'nullable|file|mimes:pdf|max:5120',
+            'imagen_file' => 'nullable|image|max:2048'
         ]);
 
         if ($validator->fails()) {
@@ -150,8 +191,37 @@ class CarreraController extends Controller
 
         DB::beginTransaction();
         try {
-            $data = $request->all();
+            $data = $request->except(['malla_file', 'imagen_file']);
             $data['actualizado_por'] = auth()->id();
+
+            // Manejo de archivos al actualizar
+            if ($request->hasFile('malla_file')) {
+                // Eliminar archivo anterior si existe
+                if ($carrera->malla_url && file_exists(public_path($carrera->malla_url))) {
+                    unlink(public_path($carrera->malla_url));
+                }
+                $path = $request->file('malla_file')->store('carreras/mallas', 'public');
+                $data['malla_url'] = 'storage/' . $path;
+            }
+
+            if ($request->hasFile('imagen_file')) {
+                // Eliminar imagen anterior si existe
+                if ($carrera->imagen_url && file_exists(public_path($carrera->imagen_url))) {
+                    unlink(public_path($carrera->imagen_url));
+                }
+                $path = $request->file('imagen_file')->store('carreras/imagenes', 'public');
+                $data['imagen_url'] = 'storage/' . $path;
+            }
+
+            // Convertir objetivos de texto a array si es necesario
+            if (isset($data['objetivos']) && is_string($data['objetivos'])) {
+                $data['objetivos'] = array_filter(array_map('trim', explode("\n", $data['objetivos'])));
+            }
+
+            // Convertir campo_laboral de texto a array
+            if (isset($data['campo_laboral']) && is_string($data['campo_laboral'])) {
+                $data['campo_laboral'] = array_filter(array_map('trim', explode("\n", $data['campo_laboral'])));
+            }
 
             $carrera->update($data);
 

@@ -38,7 +38,7 @@
             <div class="footer-column">
                 <h3>Enlaces Rápidos</h3>
                 <ul>
-                    <li><a href="{{ route('public.carreras') }}">Carreras Profesionales</a></li>
+                    <li><a href="{{ route('public.carreras.index') }}">Carreras Profesionales</a></li>
                     <li><a href="{{ route('resultados-examenes.public') }}">Resultados de Exámenes</a></li>
                     <li><a href="{{ route('login') }}">Portal de Estudiantes</a></li>
                     <li><a href="{{ route('login') }}">Portal de Docentes</a></li>

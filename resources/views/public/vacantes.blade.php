@@ -92,7 +92,11 @@
                                 <td data-label="Carrera" style="padding: 25px 40px;">
                                     <div style="display: flex; align-items: center; gap: 20px;" class="cell-content-carrera">
                                         <div style="width: 55px; height: 55px; border-radius: 18px; background: {{ $bg }}; display: flex; align-items: center; justify-content: center; color: {{ $color }}; font-size: 22px; transition: all 0.3s ease;" class="icon-box">
-                                            <i class="fas {{ $icon }}"></i>
+                                            @if($vacante->carrera->imagen_url)
+                                                <img src="{{ asset($vacante->carrera->imagen_url) }}" alt="{{ $vacante->carrera->nombre }}" style="max-width: 35px; max-height: 35px; object-fit: contain;">
+                                            @else
+                                                <i class="fas {{ $icon }}"></i>
+                                            @endif
                                         </div>
                                         <div>
                                             <p style="margin: 0; font-weight: 800; color: var(--azul-oscuro); font-size: 18px; line-height: 1.2;">{{ $vacante->carrera->nombre }}</p>

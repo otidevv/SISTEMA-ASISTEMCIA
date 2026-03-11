@@ -87,7 +87,16 @@ class HomeController extends Controller
     public function carreras()
     {
         $carreras = Carrera::activas()->orderBy('grupo')->orderBy('nombre')->get();
-        return view('public.carreras', compact('carreras'));
+        return view('public.carreras.index', compact('carreras'));
+    }
+
+    /**
+     * Vista de detalle público de una carrera profesional.
+     */
+    public function showCarrera($slug)
+    {
+        $carrera = Carrera::where('slug', $slug)->activas()->firstOrFail();
+        return view('public.carreras.show', compact('carrera'));
     }
 
     /**

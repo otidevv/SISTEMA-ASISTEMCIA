@@ -16,18 +16,43 @@ class Carrera extends Model
 
     protected $table = 'carreras';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($carrera) {
+            if (empty($carrera->slug) && !empty($carrera->nombre)) {
+                $carrera->slug = \Illuminate\Support\Str::slug($carrera->nombre);
+            }
+        });
+    }
+
     protected $fillable = [
         'codigo',
         'nombre',
+        'slug',
         'grupo',
         'descripcion',
+        'campo_laboral',
+        'imagen_url',
+        'grado',
+        'titulo',
+        'duracion',
+        'perfil',
+        'malla_url',
+        'mision',
+        'vision',
+        'objetivos',
+        'resena',
         'estado',
         'creado_por',
         'actualizado_por'
     ];
 
     protected $casts = [
-        'estado' => 'boolean'
+        'estado' => 'boolean',
+        'campo_laboral' => 'array',
+        'objetivos' => 'array'
     ];
 
     // Relaciones

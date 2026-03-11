@@ -93,46 +93,105 @@
     <!-- Modal para Nueva Carrera -->
     <div class="modal fade" id="newCarreraModal" tabindex="-1" role="dialog" aria-labelledby="newCarreraModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="newCarreraModalLabel">Nueva Carrera</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="newCarreraForm">
-                        <div class="mb-3">
-                            <label for="codigo" class="form-label">Código</label>
-                            <input type="text" class="form-control" id="codigo" name="codigo" required
-                                placeholder="Ej: ING-SIS" maxlength="20">
-                            <small class="text-muted">Código único de la carrera (máximo 20 caracteres)</small>
+                    <form id="newCarreraForm" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="codigo" name="codigo" required
+                                    placeholder="Ej: ING-SIS" maxlength="20">
+                                <small class="text-muted">Código único de la carrera</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre de la Carrera</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required
+                                    placeholder="Ej: Ingeniería de Sistemas">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="nombre" class="form-label">Nombre de la Carrera</label>
-                            <input type="text" class="form-control" id="nombre" name="nombre" required
-                                placeholder="Ej: Ingeniería de Sistemas">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
+                                <select class="form-select" id="grupo" name="grupo" required>
+                                    <option value="">Seleccione un grupo</option>
+                                    <option value="A">Grupo A - Ingenierías</option>
+                                    <option value="B">Grupo B - Ciencias de la Salud</option>
+                                    <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="estado" class="form-label">Estado</label>
+                                <select class="form-select" id="estado" name="estado">
+                                    <option value="1">Activo</option>
+                                    <option value="0">Inactivo</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
-                            <select class="form-select" id="grupo" name="grupo" required>
-                                <option value="">Seleccione un grupo</option>
-                                <option value="A">Grupo A - Ingenierías</option>
-                                <option value="B">Grupo B - Ciencias de la Salud</option>
-                                <option value="C">Grupo C - Ciencias Sociales y Educación</option>
-                            </select>
-                            <small class="text-muted">El grupo determina a qué aula se asignará el estudiante</small>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="grado" class="form-label">Grado Académico</label>
+                                <input type="text" class="form-control" id="grado" name="grado" placeholder="Ej: Bachiller en...">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="titulo" class="form-label">Título Profesional</label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" placeholder="Ej: Licenciado en...">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="duracion" class="form-label">Duración</label>
+                                <input type="text" class="form-control" id="duracion" name="duracion" placeholder="Ej: 10 Semestres">
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <label for="descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
-                                placeholder="Descripción de la carrera (opcional)..."></textarea>
+                            <label for="descripcion" class="form-label">Descripción General</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="2"
+                                placeholder="Breve descripción..."></textarea>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_mision" class="form-label">Misión</label>
+                                <textarea class="form-control" id="edit_mision" name="mision" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_vision" class="form-label">Visión</label>
+                                <textarea class="form-control" id="edit_vision" name="vision" rows="3"></textarea>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
-                            <label for="estado" class="form-label">Estado</label>
-                            <select class="form-select" id="estado" name="estado">
-                                <option value="1">Activo</option>
-                                <option value="0">Inactivo</option>
-                            </select>
+                            <label for="edit_objetivos" class="form-label">Objetivos (Un objetivo por línea)</label>
+                            <textarea class="form-control" id="edit_objetivos" name="objetivos" rows="3" placeholder="Ingresa los objetivos separados por saltos de línea..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="campo_laboral" class="form-label">Campo Laboral (Una ocupación por línea)</label>
+                            <textarea class="form-control" id="campo_laboral" name="campo_laboral" rows="3" placeholder="Ingresa el campo laboral separado por saltos de línea..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_perfil" class="form-label">Perfil del Egresado</label>
+                            <textarea class="form-control" id="edit_perfil" name="perfil" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="malla_file" class="form-label">Malla Curricular (PDF)</label>
+                                <input type="file" class="form-control" id="malla_file" name="malla_file" accept=".pdf">
+                                <small class="text-muted">Si se sube, reemplazará la URL actual.</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="imagen_file" class="form-label">Imagen/Logo</label>
+                                <input type="file" class="form-control" id="imagen_file" name="imagen_file" accept="image/*">
+                                <small class="text-muted">Si se sube, reemplazará la imagen actual.</small>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -150,47 +209,105 @@
     <!-- Modal para Editar Carrera -->
     <div class="modal fade" id="editCarreraModal" tabindex="-1" role="dialog" aria-labelledby="editCarreraModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editCarreraModalLabel">Editar Carrera</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="editCarreraForm">
+                    <form id="editCarreraForm" enctype="multipart/form-data">
                         <input type="hidden" id="edit_carrera_id" name="id">
-                        <div class="mb-3">
-                            <label for="edit_codigo" class="form-label">Código</label>
-                            <input type="text" class="form-control" id="edit_codigo" name="codigo" required
-                                placeholder="Ej: ING-SIS" maxlength="20">
-                            <small class="text-muted">Código único de la carrera (máximo 20 caracteres)</small>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="edit_codigo" name="codigo" required
+                                    placeholder="Ej: ING-SIS" maxlength="20">
+                                <small class="text-muted">Código único de la carrera</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_nombre" class="form-label">Nombre de la Carrera</label>
+                                <input type="text" class="form-control" id="edit_nombre" name="nombre" required
+                                    placeholder="Ej: Ingeniería de Sistemas">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_nombre" class="form-label">Nombre de la Carrera</label>
-                            <input type="text" class="form-control" id="edit_nombre" name="nombre" required
-                                placeholder="Ej: Ingeniería de Sistemas">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
+                                <select class="form-select" id="edit_grupo" name="grupo" required>
+                                    <option value="">Seleccione un grupo</option>
+                                    <option value="A">Grupo A - Ingenierías</option>
+                                    <option value="B">Grupo B - Ciencias de la Salud</option>
+                                    <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_estado" class="form-label">Estado</label>
+                                <select class="form-select" id="edit_estado" name="estado">
+                                    <option value="1">Activo</option>
+                                    <option value="0">Inactivo</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_grupo" class="form-label">Grupo <span class="text-danger">*</span></label>
-                            <select class="form-select" id="edit_grupo" name="grupo" required>
-                                <option value="">Seleccione un grupo</option>
-                                <option value="A">Grupo A - Ingenierías</option>
-                                <option value="B">Grupo B - Ciencias de la Salud</option>
-                                <option value="C">Grupo C - Ciencias Sociales y Educación</option>
-                            </select>
-                            <small class="text-muted">El grupo determina a qué aula se asignará el estudiante</small>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_grado" class="form-label">Grado Académico</label>
+                                <input type="text" class="form-control" id="edit_grado" name="grado">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_titulo" class="form-label">Título Profesional</label>
+                                <input type="text" class="form-control" id="edit_titulo" name="titulo">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_duracion" class="form-label">Duración</label>
+                                <input type="text" class="form-control" id="edit_duracion" name="duracion">
+                            </div>
                         </div>
+
                         <div class="mb-3">
                             <label for="edit_descripcion" class="form-label">Descripción</label>
-                            <textarea class="form-control" id="edit_descripcion" name="descripcion" rows="3"
-                                placeholder="Descripción de la carrera (opcional)..."></textarea>
+                            <textarea class="form-control" id="edit_descripcion" name="descripcion" rows="2"></textarea>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_mision" class="form-label">Misión</label>
+                                <textarea class="form-control" id="edit_mision" name="mision" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_vision" class="form-label">Visión</label>
+                                <textarea class="form-control" id="edit_vision" name="vision" rows="3"></textarea>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
-                            <label for="edit_estado" class="form-label">Estado</label>
-                            <select class="form-select" id="edit_estado" name="estado">
-                                <option value="1">Activo</option>
-                                <option value="0">Inactivo</option>
-                            </select>
+                            <label for="edit_objetivos" class="form-label">Objetivos (Un objetivo por línea)</label>
+                            <textarea class="form-control" id="edit_objetivos" name="objetivos" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_campo_laboral" class="form-label">Campo Laboral (Una ocupación por línea)</label>
+                            <textarea class="form-control" id="edit_campo_laboral" name="campo_laboral" rows="3" placeholder="Ingresa las ocupaciones separadas por saltos de línea..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit_perfil" class="form-label">Perfil del Egresado</label>
+                            <textarea class="form-control" id="edit_perfil" name="perfil" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_malla_file" class="form-label">Nueva Malla Curricular (PDF)</label>
+                                <input type="file" class="form-control" id="edit_malla_file" name="malla_file" accept=".pdf">
+                                <small class="text-muted" id="current_malla_url_display"></small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit_imagen_file" class="form-label">Nueva Imagen/Logo</label>
+                                <input type="file" class="form-control" id="edit_imagen_file" name="imagen_file" accept="image/*">
+                                <small class="text-muted" id="current_imagen_url_display"></small>
+                            </div>
                         </div>
                     </form>
                 </div>
