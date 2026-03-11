@@ -50,7 +50,7 @@
                                 <span style="font-size: 12px; font-weight: 700; color: var(--magenta-unamad); text-transform: uppercase;">
                                     UNAMAD
                                 </span>
-                                <a href="{{ route('public.carreras.show', $carrera->slug) }}" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px; font-weight: 600; border-radius: 6px; background: var(--azul-oscuro); color: white; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background 0.2s ease;">
+                                <a href="{{ route('public.carreras.show', $carrera->slug ?: 'inactiva') }}" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px; font-weight: 600; border-radius: 6px; background: var(--azul-oscuro); color: white; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background 0.2s ease;">
                                     <span>Ver Detalles</span> <i class="fas fa-arrow-right" style="font-size: 11px;"></i>
                                 </a>
                             </div>
