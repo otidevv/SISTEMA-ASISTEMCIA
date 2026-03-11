@@ -30,14 +30,37 @@
     @endphp
 
     <!-- Hero Cursos Premium -->
-    <section class="hero-section" style="min-height: 280px; background: linear-gradient(135deg, var(--azul-oscuro) 0%, #1a3a4a 100%);">
-        <div class="kene-pattern-overlay" style="opacity: 0.15;"></div>
-        <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 50px 20px; position: relative; z-index: 2; text-align: center; color: white;">
-            <div style="display: inline-block; padding: 5px 15px; background: rgba(255,255,255,0.1); border-radius: 50px; backdrop-filter: blur(5px); margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1);">
-                <span style="font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan-acento);">Nuestra Oferta Académica</span>
+    <section class="hero-section" style="min-height: 300px; background: linear-gradient(135deg, #0d2838 0%, #1f3e76 50%, #1a1a4a 100%); position: relative; overflow: hidden;">
+        <div class="kene-pattern-overlay-2" style="opacity: 0.08;"></div>
+        <!-- Círculos decorativos -->
+        <div style="position: absolute; top: -80px; right: -80px; width: 300px; height: 300px; border-radius: 50%; background: rgba(140,198,63,0.08); z-index: 1;"></div>
+        <div style="position: absolute; bottom: -60px; left: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(236,0,140,0.06); z-index: 1;"></div>
+        <div style="position: absolute; top: 40%; left: 10%; width: 150px; height: 150px; border-radius: 50%; background: rgba(0,174,239,0.05); z-index: 1;"></div>
+
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 50px 20px 45px; position: relative; z-index: 2; text-align: center; color: white;">
+            <div style="display: inline-block; background: rgba(140,198,63,0.2); backdrop-filter: blur(10px); padding: 6px 20px; border-radius: 30px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; border: 1px solid rgba(140,198,63,0.3);">
+                <i class="fas fa-book-reader" style="margin-right: 6px;"></i> CEPRE UNAMAD — Oferta Académica
             </div>
-            <h1 class="animate-on-scroll animated" style="font-size: 52px; font-weight: 850; margin-bottom: 15px; line-height: 1.1;">Formación de <span style="text-primary-gradient; color: var(--verde-cepre);">Excelencia</span></h1>
-            <p class="animate-on-scroll animated" style="font-size: 19px; opacity: 0.85; max-width: 750px; margin: 0 auto; line-height: 1.6;">Desarrolla tus habilidades con los cursos más completos diseñados para el ingreso directo.</p>
+            <h1 class="animate-on-scroll animated" style="font-size: clamp(36px, 5vw, 52px); font-weight: 900; margin-bottom: 15px; letter-spacing: -0.02em; line-height: 1.1;">
+                <span style="color: #ffffff; text-shadow: 0 0 20px rgba(255,255,255,0.4), 0 2px 10px rgba(0,0,0,0.3);">Formación de</span> <span style="background: linear-gradient(90deg, #8cc63f, #a4c639, #00aeef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 2px 4px rgba(140,198,63,0.3));">Excelencia</span>
+            </h1>
+            <p class="animate-on-scroll animated" style="font-size: 17px; opacity: 0.85; max-width: 650px; margin: 0 auto; line-height: 1.6; font-weight: 400;">
+                Desarrolla tus habilidades con los cursos más completos diseñados para el ingreso directo a la UNAMAD.
+            </p>
+            <div style="margin-top: 25px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: 0.7;">
+                    <i class="fas fa-chalkboard-teacher" style="color: #8cc63f;"></i>
+                    <span>{{ $cursos->count() }} Cursos Disponibles</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: 0.7;">
+                    <i class="fas fa-star" style="color: #ec008c;"></i>
+                    <span>Docentes Especializados</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; opacity: 0.7;">
+                    <i class="fas fa-trophy" style="color: #00aeef;"></i>
+                    <span>Preparación de Alto Nivel</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -58,45 +81,45 @@
                 </h2>
             </div>
 
-            <div class="courses-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 35px;">
+            <div class="cur-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px;">
                 @foreach($cursos as $index => $curso)
                     @php 
                         $iconClass = getCourseIcon($curso->nombre); 
                         $nombreJs = json_encode($curso->nombre);
                         $descJs = json_encode($curso->descripcion ?? 'Formación académica de alto rendimiento con expertos en el examen de admisión UNAMAD.');
+                        $color = getCourseColor($index);
                     @endphp
-                    <div class="course-card-premium animate-on-scroll" 
-                         onclick='showModal("courseInfo", {{ $nombreJs }}, {{ $descJs }}, "{{ $iconClass }}")'
-                         style="background: white; border-radius: 32px; padding: 45px 40px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.02); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; display: flex; flex-direction: column; height: 100%;">
+                    <div class="cur-card animate-on-scroll" 
+                         onclick='showModal("courseInfo", {{ $nombreJs }}, {{ $descJs }}, "{{ $iconClass }}")'>
                         
-                        <!-- Borde Gradiente Sutil (Pseudo-border) -->
-                        <div class="card-border-glow" style="position: absolute; inset: 0; border-radius: 32px; padding: 2px; background: linear-gradient(135deg, {{ getCourseColor($index) }}44, transparent 50%); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; transition: opacity 0.4s ease;"></div>
+                        <!-- Acento superior con color -->
+                        <div class="cur-card-accent" style="background: {{ $color }};"></div>
                         
-                        <!-- Elemento decorativo de fondo -->
-                        <div class="card-glow-bg" style="position: absolute; top: -10%; right: -10%; width: 140px; height: 140px; background: {{ getCourseColor($index) }}; opacity: 0.04; border-radius: 50%; filter: blur(40px); transition: all 0.6s ease;"></div>
-                        
-                        <div class="course-icon-container" style="position: relative; margin-bottom: 35px; width: 85px; height: 85px;">
-                            <div class="icon-bg" style="position: absolute; inset: 0; background: {{ getCourseColor($index) }}15; border-radius: 24px; transform: rotate(-6deg); transition: all 0.4s ease;"></div>
-                            <div class="course-icon-wrapper" style="position: relative; width: 100%; height: 100%; background: white; color: {{ getCourseColor($index) }}; display: flex; align-items: center; justify-content: center; border-radius: 24px; font-size: 34px; box-shadow: 0 10px 25px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); transition: all 0.4s ease;">
+                        <!-- Header: Icono + Título -->
+                        <div class="cur-card-header">
+                            <div class="cur-icon" style="background: {{ $color }}15; color: {{ $color }};">
                                 <i class="fas {{ $iconClass }}"></i>
                             </div>
-                        </div>
-
-                        <div class="course-content" style="flex-grow: 1; position: relative; z-index: 2;">
-                            <h3 style="font-size: 26px; font-weight: 850; color: var(--azul-oscuro); margin-bottom: 15px; line-height: 1.2; letter-spacing: -0.02em;">{{ $curso->nombre }}</h3>
-                            <p style="font-size: 15.5px; color: #526484; line-height: 1.7; margin-bottom: 30px; opacity: 0.85;">
-                                {{ Str::limit($curso->descripcion ?? 'Formación académica de alto rendimiento con expertos en el examen de admisión UNAMAD.', 85) }}
-                            </p>
-                        </div>
-
-                        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; padding-top: 30px; border-top: 2px solid #f8fafc; position: relative; z-index: 2;">
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <span style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Modalidad</span>
-                                <span style="font-size: 14px; font-weight: 700; color: var(--azul-oscuro);">Presencial</span>
+                            <div class="cur-header-text">
+                                <h3 class="cur-title">{{ $curso->nombre }}</h3>
+                                <span class="cur-tag" style="color: {{ $color }}; background: {{ $color }}10; border-color: {{ $color }}30;">Presencial</span>
                             </div>
-                            <div class="action-btn" style="padding: 10px 22px; border-radius: 14px; background: #f1f5f9; display: flex; align-items: center; gap: 10px; color: var(--azul-oscuro); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; cursor: pointer; font-weight: 800; font-size: 11px; white-space: nowrap;">
-                                <span>VER MÁS</span>
-                                <i class="fas fa-plus" style="font-size: 10px;"></i>
+                        </div>
+
+                        <!-- Descripción -->
+                        <p class="cur-desc">
+                            {{ Str::limit($curso->descripcion ?? 'Formación académica de alto rendimiento con expertos en el examen de admisión UNAMAD.', 120) }}
+                        </p>
+
+                        <!-- Footer -->
+                        <div class="cur-footer">
+                            <div class="cur-info">
+                                <i class="fas fa-clock" style="color: {{ $color }};"></i>
+                                <span>CEPRE UNAMAD</span>
+                            </div>
+                            <div class="cur-btn" style="background: {{ $color }};">
+                                <span>Ver Más</span>
+                                <i class="fas fa-arrow-right"></i>
                             </div>
                         </div>
                     </div>
@@ -117,7 +140,7 @@
         </div>
     </section>
 
-    <!-- Banner Acción Premium con Diseño Mejorado -->
+    <!-- Banner Acción Premium -->
     <section style="padding: 100px 0; background: #fff;">
         <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 20px;">
             <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 80px 40px; border-radius: 48px; color: white; position: relative; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.18); text-align: center;">
@@ -130,8 +153,6 @@
                         <span>RESERVAR MI VACANTE AQUÍ</span>
                     </a>
                 </div>
-                
-                <!-- Destellos de luz decorativos -->
                 <div style="position: absolute; top: -150px; right: -150px; width: 400px; height: 400px; background: radial-gradient(circle, var(--magenta-unamad) 0%, transparent 70%); opacity: 0.15; filter: blur(60px);"></div>
                 <div style="position: absolute; bottom: -150px; left: -150px; width: 400px; height: 400px; background: radial-gradient(circle, var(--verde-cepre) 0%, transparent 70%); opacity: 0.15; filter: blur(60px);"></div>
             </div>
@@ -139,48 +160,148 @@
     </section>
 
     <style>
-        .course-card-premium {
+        /* ============================== */
+        /* Course Cards Premium            */
+        /* ============================== */
+        .cur-card {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
         }
-        .course-card-premium:hover {
-            transform: translateY(-18px);
-            box-shadow: 0 45px 90px rgba(0,0,0,0.1);
+
+        .cur-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.12);
             border-color: rgba(0,0,0,0.1);
         }
-        .course-card-premium:hover .card-border-glow {
+
+        .cur-card-accent {
+            height: 4px;
+            width: 100%;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .cur-card:hover .cur-card-accent {
             opacity: 1;
         }
-        .course-card-premium:hover .card-glow-bg {
-            transform: scale(1.5);
-            opacity: 0.08;
-        }
-        .course-card-premium:hover .icon-bg {
-            transform: rotate(0deg) scale(1.1);
-            opacity: 0.3;
-        }
-        .course-card-premium:hover .course-icon-wrapper {
-            background: {{ getCourseColor(0) }};
-            color: white !important;
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-        }
-        
-        /* Ajuste específico para cada color de hover del icono */
-        @foreach($cursos as $index => $curso)
-            .courses-grid > div:nth-child({{ $index + 1 }}):hover .course-icon-wrapper {
-                background: {{ getCourseColor($index) }} !important;
-            }
-            .courses-grid > div:nth-child({{ $index + 1 }}):hover .action-btn {
-                background: {{ getCourseColor($index) }} !important;
-                color: white !important;
-                box-shadow: 0 8px 20px {{ getCourseColor($index) }}44;
-            }
-        @endforeach
 
-        .course-card-premium:hover .action-btn {
+        .cur-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 24px 24px 0;
+        }
+
+        .cur-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .cur-card:hover .cur-icon {
+            transform: scale(1.1) rotate(-3deg);
+        }
+
+        .cur-header-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .cur-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: #0d2838;
+            line-height: 1.3;
+            margin: 0 0 6px 0;
+        }
+
+        .cur-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid;
+        }
+
+        .cur-desc {
+            font-size: 13.5px;
+            color: #64748b;
+            line-height: 1.65;
+            padding: 14px 24px 0;
+            margin: 0;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .cur-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            margin-top: 16px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .cur-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .cur-info i { font-size: 11px; }
+
+        .cur-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .cur-btn i {
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .cur-card:hover .cur-btn {
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
             transform: scale(1.05);
         }
-        
+
+        .cur-card:hover .cur-btn i {
+            transform: translateX(3px);
+        }
+
         h1, h2, h3 {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
@@ -188,8 +309,7 @@
         @media (max-width: 768px) {
             h1 { font-size: 40px !important; }
             h2 { font-size: 32px !important; }
-            .courses-grid { grid-template-columns: 1fr; }
-            .course-card-premium { padding: 35px 30px !important; }
+            .cur-grid { grid-template-columns: 1fr !important; }
         }
     </style>
 

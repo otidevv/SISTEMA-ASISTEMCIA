@@ -39,11 +39,30 @@
     /* Ajustado para la imagen real en secciones blancas/claras */
 }
 
+.kene-pattern-overlay-2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("/assets_cepre/img/tejido2.png");
+    background-size: 200px 200px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.08;
+    filter: invert(1); /* Convierte el negro a blanco */
+}
+
 .hero-section .kene-pattern-overlay {
     opacity: 0.18;
     /* Ligeramente más visible en el fondo oscuro del hero */
     mix-blend-mode: overlay;
     /* Mejora la integración con el fondo */
+}
+
+.hero-section .kene-pattern-overlay-2 {
+    opacity: 0.15;
+    mix-blend-mode: overlay;
 }
 
 /* ==================================== */
