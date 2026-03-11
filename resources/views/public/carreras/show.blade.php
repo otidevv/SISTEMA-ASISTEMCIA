@@ -320,7 +320,6 @@
             <div class="container">
                 <div class="content-grid">
                 <!-- Main Content -->
-                <!-- Main Content -->
                 <div class="main-content">
                     
                     <!-- Sobre la Carrera -->
@@ -459,7 +458,8 @@
                         <a href="{{ route('public.vacantes') }}" class="btn-ingreso">VER VACANTES</a>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Closes .content-grid -->
+            </div> <!-- Closes .container -->
         </main>
     </section>
 
@@ -478,7 +478,7 @@
             });
         });
     </script>
-
+ 
     @include('partials.cepre.footer')
     @include('partials.cepre.scripts')
 @endsection
