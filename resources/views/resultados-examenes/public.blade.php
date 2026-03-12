@@ -276,12 +276,13 @@
 
             <div style="flex: 1; background: #eef2f7; position: relative; overflow: hidden;">
                 <!-- Cargador -->
-                <div id="loaderSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #0d2838;">
+                <div id="loaderSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #0d2838; z-index: 10;">
                     <i class="fas fa-circle-notch fa-spin" style="font-size: 40px; color: #8cc63f; margin-bottom: 15px;"></i>
                     <p style="font-weight: 700; font-size: 14px;">Preparando visualización segura...</p>
                 </div>
+
                 <!-- Saludo Innovador (Para Resultados Finales) -->
-                <div id="goldGreeting" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: linear-gradient(135deg, rgba(13, 40, 56, 0.5) 0%, rgba(26, 58, 90, 0.5) 100%); flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 40px; transition: all 1s ease-out;">
+                <div id="goldGreeting" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; background: linear-gradient(135deg, rgba(13, 40, 56, 0.4) 0%, rgba(26, 58, 90, 0.4) 100%); flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 40px; transition: all 1s ease-out;">
                     <div class="greeting-content" style="transform: scale(0.9); opacity: 0; transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
                         <i class="fas fa-university" style="font-size: 80px; color: #d4af37; margin-bottom: 30px; filter: drop_shadow(0 0 20px rgba(212, 175, 55, 0.4));"></i>
                         <h2 style="font-size: 42px; font-weight: 900; letter-spacing: -1px; margin-bottom: 20px;">
@@ -303,18 +304,20 @@
                     </div>
                 </div>
 
-                <iframe id="resultViewer" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 2;" onload="document.getElementById('loaderSpinner').style.display='none'"></iframe>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+                    <iframe id="resultViewer" src="" style="width: 100%; height: calc(100% + 55px); border: none; position: absolute; top: -55px; z-index: 2;" onload="document.getElementById('loaderSpinner').style.display='none'"></iframe>
+                </div>
             </div>
 
-            <div style="padding: 18px 45px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0;">
+            <div class="modal-footer-responsive" style="padding: 18px 45px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; flex-shrink: 0;">
                 <div style="font-size: 11px; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-shield-check" style="color: #8cc63f; font-size: 14px;"></i>
-                    CERTIFICACIÓN OFICIAL DE RESULTADOS UNAMAD — {{ date('Y') }}
+                    <span class="footer-text-mobile">CERTIFICACIÓN OFICIAL DE RESULTADOS UNAMAD — {{ date('Y') }}</span>
                 </div>
                 <div style="display: flex; gap: 15px;">
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #8cc63f; opacity: 0.5;"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #00aeef; opacity: 0.5;"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: #ec008c; opacity: 0.5;"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #8cc63f; opacity: 0.5;"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #00aeef; opacity: 0.5;"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #ec008c; opacity: 0.5;"></div>
                 </div>
             </div>
         </div>
@@ -662,6 +665,12 @@
             }
             .modal-content-premium {
                 padding: 10px 20px !important;
+            }
+            .modal-footer-responsive {
+                padding: 10px 20px !important;
+            }
+            .footer-text-mobile {
+                font-size: 9px !important;
             }
         }
 
