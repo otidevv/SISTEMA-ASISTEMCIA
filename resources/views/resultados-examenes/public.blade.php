@@ -788,6 +788,12 @@
             const loader = document.getElementById('loaderSpinner');
             const greeting = document.getElementById('goldGreeting');
 
+            // --- BLOQUEO DE ZOOM EN MÓVIL (Para que solo se haga zoom al PDF) ---
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+
             // Limpieza de título profesional
             let cleanedTitle = title.replace(/\?|✨|✅|🔥|🚀|📈/g, '').replace(/\s+/g, ' ').trim();
             
@@ -870,6 +876,12 @@
         }
 
         function closeResultModal() {
+            // --- RESTAURAR ZOOM EN MÓVIL ---
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
+
             document.getElementById('resultModal').style.display = 'none';
             document.getElementById('resultViewer').src = 'about:blank';
             document.body.style.overflow = 'auto';
