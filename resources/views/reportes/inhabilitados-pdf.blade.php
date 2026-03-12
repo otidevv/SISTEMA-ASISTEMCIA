@@ -166,14 +166,14 @@
             <tr>
                 <td class="label">Periodo de Cálculo:</td>
                 <td class="font-bold">{{ $periodo_label }}</td>
-                <td class="label">Total Estudiantes:</td>
-                <td>{{ $total_general }}</td>
+                <td class="label">Modalidad:</td>
+                <td class="font-bold">{{ $modalidad_label }}</td>
             </tr>
             <tr>
                 <td class="label">Porcentaje Inhabilitados:</td>
                 <td class="font-bold text-danger">{{ $resumen['porcentaje_inhabilitados'] }}%</td>
-                <td class="label"></td>
-                <td></td>
+                <td class="label">Total Estudiantes:</td>
+                <td>{{ $total_general }}</td>
             </tr>
         </table>
     </div>

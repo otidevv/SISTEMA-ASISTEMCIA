@@ -788,10 +788,10 @@
             const loader = document.getElementById('loaderSpinner');
             const greeting = document.getElementById('goldGreeting');
 
-            // --- BLOQUEO DE ZOOM EN MÓVIL (Para que solo se haga zoom al PDF) ---
+            // --- GESTIÓN DE ZOOM (Permitir gestos de dos dedos / Pinch-to-zoom) ---
             const viewport = document.querySelector('meta[name="viewport"]');
             if (viewport) {
-                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
             }
 
             // Limpieza de título profesional
@@ -876,7 +876,7 @@
         }
 
         function closeResultModal() {
-            // --- RESTAURAR ZOOM EN MÓVIL ---
+            // --- RESTAURAR VIEWPORT ORIGINAL ---
             const viewport = document.querySelector('meta[name="viewport"]');
             if (viewport) {
                 viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');

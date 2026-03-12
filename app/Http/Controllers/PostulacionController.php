@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use App\Imports\PostulantesImport;
 use App\Exports\PostulantesTemplateExport;
+use App\Exports\InhabilitadosExport;
 
 class PostulacionController extends Controller
 {
@@ -1406,45 +1407,43 @@ class PostulacionController extends Controller
 
         $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
         $cicloActivo = Ciclo::where('es_activo', true)->first();
+        $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
 
-        return view('postulaciones.reportes.inhabilitados', compact('ciclos', 'cicloActivo'));
+        return view('postulaciones.reportes.inhabilitados', compact('ciclos', 'cicloActivo', 'carreras'));
     }
 
     /**
-     * Genera un reporte PDF detallado de estudiantes inhabilitados con filtros.
+     * Obtiene los datos procesados de inhabilitados (reutilizable para PDF, Excel y AJAX)
      */
-    public function reporteInhabilitadosPdf(Request $request)
+    private function getInhabilitadosData($cicloId, $periodo, $tipoInscripcion = null, $carreraId = null)
     {
-        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
-            abort(403, 'No tienes permisos para descargar este reporte');
-        }
-        
-        $cicloId = $request->input('ciclo_id');
-        $periodo = $request->input('periodo_examen', 'hoy');
-        
         $ciclo = Ciclo::findOrFail($cicloId);
-        
         $hoy = Carbon::now();
-        $labelPeriodo = "Estado Actual (Snapshot)";
-        $periodoTipo = $periodo; // 'hoy', '1', '2', '3'
+        $periodoTipo = $periodo; 
         
-        // Determinar periodo de examen usando el helper
         $periodoId = ($periodoTipo === 'hoy' ? null : (int)$periodoTipo);
         $examenPeriodo = \App\Helpers\AsistenciaHelper::getExamenPeriodoPorId($ciclo, $periodoId);
         
+        $labelPeriodo = "";
         if ($periodoTipo == 'hoy') {
             $labelPeriodo = ($examenPeriodo['nombre'] ?? 'Actual') . " (Snapshot Actual)";
         } else {
             $labelPeriodo = ($examenPeriodo['nombre'] ?? 'Examen') . ($periodoTipo == '1' ? " (Corte)" : " (Periodo Independiente)");
         }
 
-        $fechaFin = $examenPeriodo ? Carbon::parse($examenPeriodo['fecha_examen']) : $hoy;
-        if ($hoy < $fechaFin) $fechaFin = $hoy;
-
-        $inscripciones = Inscripcion::where('ciclo_id', $ciclo->id)
+        $queryInscripciones = Inscripcion::where('ciclo_id', $ciclo->id)
             ->where('estado_inscripcion', 'activo')
-            ->with(['estudiante', 'carrera', 'aula', 'turno'])
-            ->get();
+            ->with(['estudiante', 'carrera', 'aula', 'turno']);
+
+        if ($tipoInscripcion) {
+            $queryInscripciones->where('tipo_inscripcion', $tipoInscripcion);
+        }
+
+        if ($carreraId) {
+            $queryInscripciones->where('carrera_id', $carreraId);
+        }
+
+        $inscripciones = $queryInscripciones->get();
 
         $inhabilitados = [];
         $totalEstudiantes = $inscripciones->count();
@@ -1456,7 +1455,6 @@ class PostulacionController extends Controller
             $estudiante = $inscripcion->estudiante;
             if (!$estudiante) continue;
 
-            // Usar AsistenciaHelper que ya tiene la lógica del Excel, Dashboard y ahora soporta periodos
             $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo, $periodoId);
 
             if ($info['estado'] === 'inhabilitado') {
@@ -1480,14 +1478,19 @@ class PostulacionController extends Controller
             }
         }
 
-        // Ordenar inhabilitados
         usort($inhabilitados, function($a, $b) {
             return strcmp($a['nombres'], $b['nombres']);
         });
 
-        $data = [
+        $modalidad_label = "Todas las modalidades";
+        if ($tipoInscripcion) {
+            $modalidad_label = ucfirst($tipoInscripcion);
+        }
+
+        return [
             'ciclo' => $ciclo,
             'periodo_label' => $labelPeriodo,
+            'modalidad_label' => $modalidad_label,
             'inhabilitados' => $inhabilitados,
             'fecha_generacion' => Carbon::now()->format('d/m/Y H:i A'),
             'total_general' => $totalEstudiantes,
@@ -1498,8 +1501,73 @@ class PostulacionController extends Controller
                 'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? round(($estudiantesInhabilitadosCount / $totalEstudiantes) * 100, 2) : 0,
             ]
         ];
+    }
+
+    /**
+     * Genera un reporte PDF de inhabilitados
+     */
+    public function reporteInhabilitadosPdf(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
+            abort(403, 'No tienes permisos para descargar este reporte');
+        }
+        
+        $data = $this->getInhabilitadosData(
+            $request->input('ciclo_id'),
+            $request->input('periodo_examen', 'hoy'),
+            $request->input('tipo_inscripcion'),
+            $request->input('carrera_id')
+        );
 
         $pdf = Pdf::loadView('reportes.inhabilitados-pdf', $data);
-        return $pdf->download('reporte_inhabilitados_' . $ciclo->codigo . '_' . date('Ymd') . '.pdf');
+        return $pdf->download('reporte_inhabilitados_' . $data['ciclo']->codigo . '_' . date('Ymd') . '.pdf');
+    }
+
+    /**
+     * Obtiene los datos de inhabilitados en formato JSON para la vista previa
+     */
+    public function reporteInhabilitadosData(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $data = $this->getInhabilitadosData(
+                $request->input('ciclo_id'),
+                $request->input('periodo_examen', 'hoy'),
+                $request->input('tipo_inscripcion'),
+                $request->input('carrera_id')
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener datos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Exporta el reporte de inhabilitados a Excel
+     */
+    public function reporteInhabilitadosExcel(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reportes.inhabilitados')) {
+            abort(403, 'No tienes permisos para descargar este reporte');
+        }
+
+        $data = $this->getInhabilitadosData(
+            $request->input('ciclo_id'),
+            $request->input('periodo_examen', 'hoy'),
+            $request->input('tipo_inscripcion'),
+            $request->input('carrera_id')
+        );
+
+        return Excel::download(new InhabilitadosExport($data['inhabilitados']), 'reporte_inhabilitados_' . $data['ciclo']->codigo . '_' . date('Ymd') . '.xlsx');
     }
 }

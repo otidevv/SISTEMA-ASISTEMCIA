@@ -340,11 +340,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/postulaciones/reportes/completos', [PostulacionController::class, 'reportesCompletos'])->name('postulaciones.reportes.completos')->middleware('can:postulaciones.reports');
         Route::get('/postulaciones/reportes/resumen', [PostulacionController::class, 'reportesResumen'])->name('postulaciones.reportes.resumen')->middleware('can:postulaciones.reports');
         Route::get('/postulaciones/reportes/inhabilitados', [PostulacionController::class, 'reporteInhabilitadosView'])->name('postulaciones.reportes.inhabilitados')->middleware('can:postulaciones.reportes.inhabilitados');
+        Route::get('/postulaciones/reportes/inhabilitados/data', [PostulacionController::class, 'reporteInhabilitadosData'])->name('postulaciones.reportes.inhabilitados.data')->middleware('can:postulaciones.reportes.inhabilitados');
 
         // Exportar reportes
         Route::post('/postulaciones/reportes/completos/exportar', [PostulacionController::class, 'exportarReporteCompleto'])->name('postulaciones.reportes.completos.exportar')->middleware('can:postulaciones.export');
         Route::post('/postulaciones/reportes/resumen/exportar', [PostulacionController::class, 'exportarReporteResumen'])->name('postulaciones.reportes.resumen.exportar')->middleware('can:postulaciones.export');
         Route::post('/postulaciones/reportes/inhabilitados/pdf', [PostulacionController::class, 'reporteInhabilitadosPdf'])->name('postulaciones.reportes.inhabilitados.pdf')->middleware('can:postulaciones.reportes.inhabilitados');
+        Route::post('/postulaciones/reportes/inhabilitados/excel', [PostulacionController::class, 'reporteInhabilitadosExcel'])->name('postulaciones.reportes.inhabilitados.excel')->middleware('can:postulaciones.reportes.inhabilitados');
     });
     
     // ✅ NUEVA FUNCIONALIDAD: Postulación Unificada - Para uso administrativo (Admin, Secretaria, Coordinador)
