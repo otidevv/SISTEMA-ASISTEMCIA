@@ -206,7 +206,9 @@ class AsistenciaHelper
             ->first();
 
         $adjInicio = $fechaInicioCarbon->copy();
-        if ($fechaInicioCarbon->toDateString() === $ciclo->fecha_inicio && $primerRegistroGlobal) {
+        $cicloInicioStr = is_string($ciclo->fecha_inicio) ? $ciclo->fecha_inicio : $ciclo->fecha_inicio->toDateString();
+        
+        if ($fechaInicioCarbon->toDateString() === $cicloInicioStr && $primerRegistroGlobal) {
             $fechaPrimerReg = Carbon::parse($primerRegistroGlobal->fecha_registro)->startOfDay();
             if ($fechaPrimerReg->gt($adjInicio)) {
                 $adjInicio = $fechaPrimerReg;
@@ -555,6 +557,7 @@ class AsistenciaHelper
 
     public static function getSiguienteDiaHabil($fecha, $ciclo)
     {
+        if (!$fecha) return null;
         $siguiente = Carbon::parse($fecha)->addDay();
         while (!$ciclo->esDiaHabil($siguiente)) {
             $siguiente->addDay();
@@ -564,6 +567,7 @@ class AsistenciaHelper
 
     public static function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
     {
+        if (!$fechaInicio || !$fechaFin) return 0;
         $inicio = Carbon::parse($fechaInicio)->startOfDay();
         $fin = Carbon::parse($fechaFin)->startOfDay();
         $diasHabiles = 0;
