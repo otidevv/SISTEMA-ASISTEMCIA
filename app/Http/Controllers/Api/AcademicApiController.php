@@ -84,14 +84,53 @@ class AcademicApiController extends BaseController
     }
 
     /**
-     * Get the student's eligibility status for the current exam.
+     * Get the student's eligibility status for all exam periods.
      */
     public function getEligibility(Request $request)
     {
         $user = $request->user();
-        $estado = AsistenciaHelper::obtenerEstadoHabilitacion($user->numero_documento);
         
-        return $this->sendResponse($estado, 'Estado de habilitación recuperado.');
+        $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada'])
+            ->whereHas('ciclo', function ($q) {
+                $q->where('es_activo', true);
+            })
+            ->with('ciclo')
+            ->first();
+
+        if (!$inscripcion) {
+            return $this->sendError('No se encontró una inscripción activa para el ciclo actual.', [], 404);
+        }
+
+        $ciclo = $inscripcion->ciclo;
+        $numeroDocumento = $user->numero_documento;
+
+        // Calcular datos para cada periodo
+        $resumen = [
+            'ciclo' => $ciclo->nombre,
+            'examenes' => [
+                'primer_examen' => AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento, 
+                    $ciclo->fecha_inicio, 
+                    $ciclo->fecha_primer_examen, 
+                    $ciclo
+                ),
+                'segundo_examen' => $ciclo->fecha_segundo_examen ? AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento, 
+                    AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo), 
+                    $ciclo->fecha_segundo_examen, 
+                    $ciclo
+                ) : null,
+                'tercer_examen' => ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) ? AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento, 
+                    AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo), 
+                    $ciclo->fecha_tercer_examen, 
+                    $ciclo
+                ) : null,
+            ]
+        ];
+        
+        return $this->sendResponse($resumen, 'Estado de habilitación detallado recuperado.');
     }
 
     /**

@@ -457,49 +457,44 @@ class DashboardController extends Controller
 
             if ($inscripcionActiva) {
                 $ciclo = $inscripcionActiva->ciclo;
-                
-                $primerRegistro = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                    ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
-                    ->orderBy('fecha_registro')
-                    ->first();
+                $numeroDocumento = $user->numero_documento;
 
-                if ($primerRegistro) {
-                    $data['infoAsistencia']['primer_examen'] = $this->calcularAsistenciaExamen(
-                        $user->numero_documento,
-                        $primerRegistro->fecha_registro,
-                        $ciclo->fecha_primer_examen,
-                        $ciclo
-                    );
+                $data['infoAsistencia']['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento,
+                    $ciclo->fecha_inicio,
+                    $ciclo->fecha_primer_examen,
+                    $ciclo
+                );
 
-                    if ($ciclo->fecha_segundo_examen) {
-                        $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
-                        $data['infoAsistencia']['segundo_examen'] = $this->calcularAsistenciaExamen(
-                            $user->numero_documento,
-                            $inicioSegundo,
-                            $ciclo->fecha_segundo_examen,
-                            $ciclo
-                        );
-                    }
-
-                    if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                        $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
-                        $data['infoAsistencia']['tercer_examen'] = $this->calcularAsistenciaExamen(
-                            $user->numero_documento,
-                            $inicioTercero,
-                            $ciclo->fecha_tercer_examen,
-                            $ciclo
-                        );
-                    }
-
-                    $data['infoAsistencia']['total_ciclo'] = $this->calcularAsistenciaExamen(
-                        $user->numero_documento,
-                        $primerRegistro->fecha_registro,
-                        min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                if ($ciclo->fecha_segundo_examen) {
+                    $data['infoAsistencia']['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                        $numeroDocumento,
+                        AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo),
+                        $ciclo->fecha_segundo_examen,
                         $ciclo
                     );
                 }
 
-                $data['primerRegistro'] = $primerRegistro;
+                if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                    $data['infoAsistencia']['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                        $numeroDocumento,
+                        AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo),
+                        $ciclo->fecha_tercer_examen,
+                        $ciclo
+                    );
+                }
+
+                $data['infoAsistencia']['total_ciclo'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento,
+                    $ciclo->fecha_inicio,
+                    min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                    $ciclo
+                );
+
+                $data['primerRegistro'] = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+                    ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
+                    ->orderBy('fecha_registro')
+                    ->first();
             }
 
             return response()->json($data);
@@ -718,107 +713,6 @@ class DashboardController extends Controller
         }
 
         return null;
-    }
-
-    private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
-    {
-        $hoy = Carbon::now()->startOfDay();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
-        $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy : $fechaExamenCarbon;
-
-        if ($fechaInicioCarbon > $hoy) {
-            return [
-                'dias_habiles' => 0,
-                'dias_asistidos' => 0,
-                'dias_falta' => 0,
-                'porcentaje_asistencia' => 0,
-                'porcentaje_inasistencia' => 0,
-                'estado' => 'pendiente',
-                'mensaje' => 'Este período aún no ha comenzado.',
-                'puede_rendir' => true
-            ];
-        }
-
-        $diasHabilesTotales = $this->contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
-        $diasHabilesTranscurridos = $this->contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
-
-        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-            ->whereBetween('fecha_registro', [
-                $fechaInicioCarbon->copy()->startOfDay(),
-                $fechaFinCalculo->copy()->endOfDay()
-            ])
-            ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct()
-            ->get()
-            ->pluck('fecha');
-
-        $diasConAsistencia = 0;
-        foreach ($registros as $fecha) {
-            if ($ciclo->esDiaHabil(Carbon::parse($fecha))) {
-                $diasConAsistencia++;
-            }
-        }
-
-        $diasFaltaActuales = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-        $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
-            round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-        $porcentajeInasistenciaProyectado = 100 - $porcentajeAsistenciaProyectado;
-
-        $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
-        $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
-
-        $estado = 'regular';
-        $mensaje = 'Tu asistencia es regular.';
-        $puedeRendir = true;
-
-        if ($diasFaltaActuales >= $limiteInhabilitacion) {
-            $estado = 'inhabilitado';
-            $mensaje = 'Usted ha superado el límite máximo de inasistencias (30%). De acuerdo con el Reglamento Académico, queda INHABILITADO y NO puede rendir el presente examen.';
-            $puedeRendir = false;
-        } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
-            $estado = 'amonestado';
-            $mensaje = 'ADVERTENCIA: Ha superado el umbral de amonestación (20%). De continuar con inasistencias, quedará inhabilitado para el examen según el reglamento.';
-        }
-
-        return [
-            'dias_habiles' => $diasHabilesTotales,
-            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
-            'dias_asistidos' => $diasConAsistencia,
-            'dias_falta' => $diasFaltaActuales,
-            'porcentaje_asistencia' => $porcentajeAsistenciaProyectado,
-            'porcentaje_inasistencia' => $porcentajeInasistenciaProyectado,
-            'limite_amonestacion' => $limiteAmonestacion,
-            'limite_inhabilitacion' => $limiteInhabilitacion,
-            'estado' => $estado,
-            'mensaje' => $mensaje,
-            'puede_rendir' => $puedeRendir
-        ];
-    }
-
-    private function contarDiasHabiles($fechaInicio, $fechaFin, $ciclo)
-    {
-        $inicio = Carbon::parse($fechaInicio)->startOfDay();
-        $fin = Carbon::parse($fechaFin)->startOfDay();
-        $diasHabiles = 0;
-
-        while ($inicio <= $fin) {
-            if ($ciclo->esDiaHabil($inicio)) {
-                $diasHabiles++;
-            }
-            $inicio->addDay();
-        }
-
-        return $diasHabiles;
-    }
-
-    private function getSiguienteDiaHabil($fecha, $ciclo)
-    {
-        $dia = Carbon::parse($fecha)->addDay();
-        while (!$ciclo->esDiaHabil($dia)) {
-            $dia->addDay();
-        }
-        return $dia;
     }
 
     /**
