@@ -21,6 +21,7 @@ use App\Models\Carnet;
 use App\Models\ResultadoExamen;
 use App\Models\Carrera;
 use App\Models\Curso;
+use App\Helpers\AsistenciaHelper;
 
 class DashboardController extends Controller
 {
