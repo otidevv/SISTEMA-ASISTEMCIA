@@ -32,7 +32,7 @@ class SesionPendienteTemaNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['database', 'broadcast', \App\Notifications\Channels\FcmChannel::class];
     }
 
     /**
@@ -65,6 +65,21 @@ class SesionPendienteTemaNotification extends Notification
             'icon' => 'uil-comment-message',
             'color' => 'warning'
         ]);
+    }
+
+    /**
+     * Get the FCM representation of the notification.
+     */
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => 'Tema Pendiente',
+            'body' => "Olvidaste registrar el tema de {$this->curso} hoy.",
+            'extra' => [
+                'type' => 'tema_pendiente',
+                'aula' => $this->aula
+            ]
+        ];
     }
 
     /**

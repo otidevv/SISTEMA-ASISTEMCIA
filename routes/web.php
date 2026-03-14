@@ -182,16 +182,6 @@ Route::middleware('auth')->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Dashboard API endpoints
-    Route::prefix('api/dashboard')->group(function () {
-        Route::get('/datos-generales', [ApiDashboardController::class, 'getDatosGenerales']);
-        Route::get('/anuncios', [ApiDashboardController::class, 'getAnuncios']);
-        Route::get('/ultimos-registros', [ApiDashboardController::class, 'getUltimosRegistros']);
-        Route::get('/admin', [ApiDashboardController::class, 'getDatosAdmin']);
-        Route::get('/estudiante', [ApiDashboardController::class, 'getDatosEstudiante']);
-        Route::get('/profesor', [ApiDashboardController::class, 'getDatosProfesor']);
-    });
 
     // Notificaciones
     Route::get('/notificaciones', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
@@ -200,11 +190,6 @@ Route::middleware('auth')->group(function () {
 
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-    // API de registro de postulantes (disponible para admins autenticados)
-    Route::post('/api/register/postulante', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
-    Route::get('/api/register/check-email-server', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'checkEmailServer'])->name('api.register.check-email');
-    Route::post('/api/register/resend-verification', [\App\Http\Controllers\Api\PostulanteRegisterController::class, 'resendVerification'])->name('api.register.resend');
 
     // Usuarios - Requiere permiso 'users.view'
     Route::middleware('can:users.view')->group(function () {
@@ -357,14 +342,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/form-registro', [PostulacionUnificadaController::class, 'getFormRegistro'])->name('postulacion-unificada.form-registro')->middleware('can:postulaciones.create-unified');
         Route::post('/', [PostulacionUnificadaController::class, 'store'])->name('postulacion-unificada.store')->middleware('can:postulaciones.create-unified');
         Route::post('/registro-completo', [PostulacionUnificadaController::class, 'storeRegistroCompleto'])->name('postulacion-unificada.store-registro')->middleware('can:postulaciones.create-unified');
-    });
-    
-    // ✅ NUEVA FUNCIONALIDAD: API para Postulación Unificada
-    Route::prefix('api/postulacion-unificada')->middleware('auth')->group(function () {
-        Route::get('/departamentos', [PostulacionUnificadaController::class, 'getDepartamentos']);
-        Route::get('/provincias/{departamento}', [PostulacionUnificadaController::class, 'getProvincias']);
-        Route::get('/distritos/{departamento}/{provincia}', [PostulacionUnificadaController::class, 'getDistritos']);
-        Route::post('/buscar-colegios', [PostulacionUnificadaController::class, 'buscarColegios']);
     });
     
     // API para buscar postulantes existentes

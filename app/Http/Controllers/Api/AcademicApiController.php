@@ -1,0 +1,129 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Models\MaterialAcademico;
+use App\Models\ResultadoExamen;
+use App\Models\Ciclo;
+use App\Models\Inscripcion;
+use App\Models\BoletinEntrega;
+use App\Helpers\AsistenciaHelper;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Api\BaseController;
+use Illuminate\Support\Facades\Storage;
+
+class AcademicApiController extends BaseController
+{
+    /**
+     * Get academic materials for the logged in student.
+     */
+    public function getMaterials(Request $request)
+    {
+        $user = $request->user();
+        
+        // Get active inscription
+        $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+            ->where('estado_inscripcion', 'activo')
+            ->first();
+
+        if (!$inscripcion) {
+            return $this->sendError('El estudiante no tiene inscripciones activas.', [], 404);
+        }
+
+        $materiales = MaterialAcademico::with('curso', 'profesor')
+            ->where('ciclo_id', $inscripcion->ciclo_id)
+            ->where('aula_id', $inscripcion->aula_id)
+            ->orderBy('semana', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($material) {
+                return [
+                    'id' => $material->id,
+                    'titulo' => $material->titulo,
+                    'descripcion' => $material->descripcion,
+                    'semana' => $material->semana,
+                    'tipo' => $material->tipo,
+                    'curso' => $material->curso->nombre ?? 'N/A',
+                    'profesor' => $material->profesor->nombre_completo ?? 'N/A',
+                    'url' => $material->tipo === 'link' 
+                             ? $material->archivo 
+                             : asset(Storage::url($material->archivo)),
+                    'fecha' => $material->created_at->format('d/m/Y'),
+                ];
+            });
+
+        return $this->sendResponse($materiales, 'Materiales recuperados con éxito');
+    }
+
+    /**
+     * List available exam results.
+     */
+    public function getExamResults(Request $request)
+    {
+        $user = $request->user();
+        
+        // Visible results ordered
+        $resultados = ResultadoExamen::with('ciclo')
+            ->visible()
+            ->ordenado()
+            ->get()
+            ->map(function($res) {
+                return [
+                    'id' => $res->id,
+                    'nombre' => $res->nombre_examen,
+                    'descripcion' => $res->descripcion,
+                    'ciclo' => $res->ciclo->nombre ?? 'N/A',
+                    'tipo' => $res->tipo_resultado,
+                    'url_pdf' => $res->archivo_pdf ? asset(Storage::url($res->archivo_pdf)) : null,
+                    'url_externa' => $res->link_externo,
+                    'fecha_examen' => $res->fecha_examen->format('d/m/Y'),
+                ];
+            });
+
+        return $this->sendResponse($resultados, 'Resultados de exámenes recuperados con éxito');
+    }
+
+    /**
+     * Get the student's eligibility status for the current exam.
+     */
+    public function getEligibility(Request $request)
+    {
+        $user = $request->user();
+        $estado = AsistenciaHelper::obtenerEstadoHabilitacion($user->numero_documento);
+        
+        return $this->sendResponse($estado, 'Estado de habilitación recuperado.');
+    }
+
+    /**
+     * List report cards and their delivery status.
+     */
+    public function getReportCards(Request $request)
+    {
+        $user = $request->user();
+        
+        $inscripciones = Inscripcion::where('estudiante_id', $user->id)
+            ->with(['ciclo'])
+            ->get();
+
+        $datos = $inscripciones->map(function($ins) {
+            $entregas = BoletinEntrega::where('inscripcion_id', $ins->id)
+                ->with('curso')
+                ->get()
+                ->map(function($e) {
+                    return [
+                        'curso' => $e->curso->nombre ?? 'N/A',
+                        'tipo_examen' => $e->tipo_examen,
+                        'entregado' => (bool)$e->entregado,
+                        'fecha_entrega' => $e->fecha_entrega ? (is_string($e->fecha_entrega) ? $e->fecha_entrega : $e->fecha_entrega->format('d/m/Y')) : null,
+                    ];
+                });
+
+            return [
+                'ciclo' => $ins->ciclo->nombre ?? 'N/A',
+                'entregas' => $entregas
+            ];
+        });
+
+        return $this->sendResponse($datos, 'Boletines de notas recuperados.');
+    }
+}

@@ -316,4 +316,35 @@ class UserController extends Controller
             'data' => $padres
         ]);
     }
+
+    /**
+     * Actualiza los ajustes móviles del usuario (Token FCM y Tema).
+     */
+    public function updateSettings(Request $request)
+    {
+        $user = auth()->user();
+
+        $validator = Validator::make($request->all(), [
+            'fcm_token' => 'nullable|string',
+            'theme_preference' => 'sometimes|in:light,dark,system',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user->update($request->only(['fcm_token', 'theme_preference']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ajustes actualizados correctamente',
+            'data' => [
+                'fcm_token' => $user->fcm_token,
+                'theme_preference' => $user->theme_preference
+            ]
+        ]);
+    }
 }

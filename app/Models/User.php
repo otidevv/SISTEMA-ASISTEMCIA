@@ -9,9 +9,11 @@ use Carbon\Carbon;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
+use Laravel\Sanctum\HasApiTokens;
+
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use Notifiable, LogsActivity;
+    use HasApiTokens, Notifiable, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -36,9 +38,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'genero',
         'foto_perfil',
         'ultimo_acceso',
-        'estado',
         'has_fingerprint',
         'has_face',
+        'fcm_token',
+        'theme_preference',
     ];
 
     /**
