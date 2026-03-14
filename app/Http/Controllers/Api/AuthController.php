@@ -14,10 +14,11 @@ class AuthController extends Controller
     {
         $login = $request->input('username');
         
-        // Determinar si es email o username (DNI) como en la web
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        $user = User::where($field, $login)->first();
+        // Determinar el campo de búsqueda: email, username o numero_documento (DNI)
+        $user = User::where('email', $login)
+            ->orWhere('username', $login)
+            ->orWhere('numero_documento', $login)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password_hash)) {
             return response()->json([
