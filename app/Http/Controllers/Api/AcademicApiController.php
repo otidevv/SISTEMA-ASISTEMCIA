@@ -95,7 +95,7 @@ class AcademicApiController extends BaseController
             ->whereHas('ciclo', function ($q) {
                 $q->where('es_activo', true);
             })
-            ->with('ciclo')
+            ->with(['ciclo', 'carrera', 'turno', 'aula'])
             ->first();
 
         if (!$inscripcion) {
@@ -105,10 +105,21 @@ class AcademicApiController extends BaseController
         $ciclo = $inscripcion->ciclo;
         $numeroDocumento = $user->numero_documento;
 
-        // Calcular datos para cada periodo
         $resumen = [
             'ciclo' => $ciclo->nombre,
+            'inscripcion' => [
+                'carrera' => $inscripcion->carrera->nombre ?? 'N/A',
+                'turno' => $inscripcion->turno->nombre ?? 'N/A',
+                'aula' => $inscripcion->aula->nombre ?? 'N/A',
+                'aula_detalle' => $inscripcion->aula->descripcion ?? '',
+            ],
             'examenes' => [
+                'total_ciclo' => AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $numeroDocumento, 
+                    $ciclo->fecha_inicio, 
+                    $ciclo->fecha_fin ?? $ciclo->fecha_tercer_examen ?? $ciclo->fecha_segundo_examen ?? now(), 
+                    $ciclo
+                ),
                 'primer_examen' => AsistenciaHelper::calcularInfoAsistenciaExamen(
                     $numeroDocumento, 
                     $ciclo->fecha_inicio, 

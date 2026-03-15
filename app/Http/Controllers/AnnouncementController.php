@@ -261,7 +261,7 @@ class AnnouncementController extends Controller
         try {
             $anuncios = Anuncio::publicados()
                 ->ordenadosPorPrioridad()
-                ->whereIn('tipo', ['importante', 'urgente', 'evento']) // Solo tipos relevantes
+                ->whereIn('tipo', ['importante', 'urgente', 'evento', 'informativo', 'mantenimiento']) // Se agregaron informativo y mantenimiento
                 ->get(['id', 'titulo', 'descripcion', 'imagen', 'tipo', 'prioridad']);
             
             return response()->json($anuncios);

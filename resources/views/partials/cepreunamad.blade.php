@@ -407,4 +407,4 @@ document.addEventListener('DOMContentLoaded', function () {
 @include('partials.cepre.seasonal-animations')
 
 <!-- Incluir Modal de Postulación -->
-@include('partials.postulacion-modal')
+@include('partials.postulacion-modal')@include('partials.cepre.results-modal')

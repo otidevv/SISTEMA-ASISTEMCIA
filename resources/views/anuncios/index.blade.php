@@ -197,13 +197,23 @@
                                         </td>
                                         <td>
                                             @if($anuncio->es_activo)
-                                                @if(method_exists($anuncio, 'estaVigente') && $anuncio->estaVigente())
-                                                    <span class="badge bg-success">
-                                                        <i class="bi bi-check-circle"></i> Activo
+                                                @php
+                                                    $now = now();
+                                                    $is_scheduled = $anuncio->fecha_publicacion && $anuncio->fecha_publicacion > $now;
+                                                    $is_expired = $anuncio->fecha_expiracion && $anuncio->fecha_expiracion < $now;
+                                                @endphp
+                                                
+                                                @if($is_scheduled)
+                                                    <span class="badge bg-warning text-dark" title="Publicación programada para el {{ $anuncio->fecha_publicacion->format('d/m/Y H:i') }}">
+                                                        <i class="bi bi-clock"></i> Programado
+                                                    </span>
+                                                @elseif($is_expired)
+                                                    <span class="badge bg-danger" title="Expiró el {{ $anuncio->fecha_expiracion->format('d/m/Y H:i') }}">
+                                                        <i class="bi bi-calendar-x"></i> Expirado
                                                     </span>
                                                 @else
-                                                    <span class="badge bg-warning">
-                                                        <i class="bi bi-clock"></i> Programado/Expirado
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Activo
                                                     </span>
                                                 @endif
                                             @else
