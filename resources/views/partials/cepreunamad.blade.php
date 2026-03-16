@@ -30,8 +30,10 @@
                                 <i class="fas fa-book"></i>
                                 <span>EXPLORAR PROGRAMAS</span>
                             </a>
-                         
-
+                            <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary">
+                                <i class="fas fa-edit"></i>
+                                <span>INSCRIBIRSE AHORA</span>
+                            </a>
                             <div class="video-btn" onclick="showModal('videoModal')">
                                 <i class="fas fa-play"></i>
                             </div>
@@ -67,9 +69,9 @@
                                 <i class="fas fa-certificate"></i>
                                 <span>VER REGLAMENTO</span>
                             </a>
-                            <a href="{{ route('register') }}" class="btn btn-secondary" style="background: linear-gradient(135deg, var(--verde-cepre), var(--cyan-acento));">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>PRÓXIMAS FECHAS</span>
+                            <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary" style="background: linear-gradient(135deg, var(--verde-cepre), var(--cyan-acento));">
+                                <i class="fas fa-user-plus"></i>
+                                <span>¡POSTULA AQUÍ!</span>
                             </a>
                             <div class="video-btn" onclick="showModal('videoModal')">
                                 <i class="fas fa-play"></i>
@@ -105,9 +107,9 @@
                                 <i class="fas fa-users"></i>
                                 <span>CONOCE AL EQUIPO</span>
                             </a>
-                            <a href="{{ route('register') }}" class="btn btn-secondary">
-                                <i class="fas fa-comment-dots"></i>
-                                <span>SOLICITAR INFO</span>
+                            <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary">
+                                <i class="fas fa-pencil-alt"></i>
+                                <span>INICIAR INSCRIPCIÓN</span>
                             </a>
                             <div class="video-btn" onclick="showModal('videoModal')">
                                 <i class="fas fa-play"></i>
