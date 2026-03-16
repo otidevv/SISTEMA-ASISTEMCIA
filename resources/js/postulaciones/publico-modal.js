@@ -913,13 +913,15 @@ function verificarPostulante(btnElement) {
         btn = $('#btn-verificar-dni');
     }
 
-    const originalText = btn.text();
-    btn.prop('disabled', true).text('Verificando...');
+    const originalHtml = btn.html();
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Verificando...');
 
     $.post('/postulacion/check-postulante', {
         dni: dni,
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
+        try {
+            console.log('Respuesta servidor (check-postulante):', response);
         let swalIcon = 'success';
         let swalTitle = 'Verificación Exitosa';
         let swalText = response.message || 'Datos listos para continuar.';
@@ -1162,6 +1164,10 @@ function verificarPostulante(btnElement) {
                     confirmButtonText: 'Continuar'
                 });
             }
+            }
+        } catch (err) {
+            console.error('Error interno en success callback:', err);
+            Toast.fire({ icon: 'error', title: 'Error al procesar la respuesta del servidor' });
         }
     }).fail(function (xhr) {
         console.error('Error verificar postulante:', xhr);
@@ -1187,20 +1193,23 @@ function verificarPostulante(btnElement) {
             });
         }
     }).always(function () {
-        btn.prop('disabled', false).text(originalText);
+        btn.prop('disabled', false).html(originalHtml);
     });
 }
 
-function consultarDNIPadre(tipo) {
+function consultarDNIPadre(tipo, btnElement) {
     const dni = $('#' + tipo + '_dni').val();
     if (dni.length !== 8) {
             Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
         return;
     }
 
-    const btn = event.target;
-    const originalText = $(btn).text();
-    $(btn).prop('disabled', true).text('Consultando...');
+    let btn = $(btnElement);
+    if (btn.length === 0) {
+        btn = $(event.target);
+    }
+    const originalHtml = btn.html();
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
 
     $.post('/api/reniec/consultar', {
         dni: dni,
@@ -1216,7 +1225,7 @@ function consultarDNIPadre(tipo) {
     }).fail(function () {
         Toast.fire({ icon: 'error', title: 'Error al consultar RENIEC' });
     }).always(function () {
-        $(btn).prop('disabled', false).text(originalText);
+        btn.prop('disabled', false).html(originalHtml);
     });
 } // <--- Cierre CORRECTO de consultarDNIPadre
 

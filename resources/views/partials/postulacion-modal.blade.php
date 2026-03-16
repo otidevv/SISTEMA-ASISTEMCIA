@@ -352,7 +352,7 @@
                                 <label class="form-label">DNI Padre</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="padre_dni" name="padre_dni" maxlength="8" pattern="[0-9]{8}">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('padre')">RENIEC</button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('padre', this)">RENIEC</button>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -395,7 +395,7 @@
                                 <label class="form-label">DNI Madre</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="madre_dni" name="madre_dni" maxlength="8" pattern="[0-9]{8}">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('madre')">RENIEC</button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="consultarDNIPadre('madre', this)">RENIEC</button>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
