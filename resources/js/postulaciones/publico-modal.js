@@ -434,7 +434,7 @@ function loadProvincias(dep) {
             select.html(html).prop('disabled', false).show();
         }
     }).fail(function () {
-        toastr.error('Error al cargar provincias');
+            Toast.fire({ icon: 'error', title: 'Error al cargar provincias' });
     });
 }
 
@@ -859,14 +859,14 @@ function validateForm() {
         const confirm = $('#estudiante_password_confirmation').val();
 
         if ($('#estudiante_password').is(':visible') && pass && confirm && pass !== confirm) {
-            toastr.error('Las contraseñas no coinciden');
+                Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
             $('#estudiante_password_confirmation').addClass('is-invalid');
             valid = false;
         }
 
         // Validar DNI verificado
         if (!$('#estudiante_dni').val()) {
-            toastr.error('Debe verificar su DNI primero');
+                Toast.fire({ icon: 'error', title: 'Debe verificar su DNI primero' });
             valid = false;
         }
     }
@@ -884,7 +884,7 @@ function validateForm() {
     }
 
     if (!valid) {
-        toastr.error('Por favor complete todos los campos requeridos correctamente');
+            Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
     }
 
     return valid;
@@ -903,7 +903,7 @@ function verificarPostulante(btnElement) {
                 confirmButtonText: 'Aceptar'
             });
         } else {
-            toastr.error('DNI debe tener 8 dígitos');
+            Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
         }
         return;
     }
@@ -1087,7 +1087,7 @@ function verificarPostulante(btnElement) {
                     }
                 });
             } else {
-                toastr.warning('Ya tienes una postulación registrada para este ciclo.');
+                Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
             }
         } else {
             // Nuevo o Recurrente
@@ -1194,7 +1194,7 @@ function verificarPostulante(btnElement) {
 function consultarDNIPadre(tipo) {
     const dni = $('#' + tipo + '_dni').val();
     if (dni.length !== 8) {
-        toastr.error('DNI debe tener 8 dígitos');
+            Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
         return;
     }
 
@@ -1209,12 +1209,12 @@ function consultarDNIPadre(tipo) {
         if (response.success && response.data) {
             $('#' + tipo + '_nombre').val(response.data.nombres);
             $('#' + tipo + '_apellidos').val(response.data.apellido_paterno + ' ' + response.data.apellido_materno);
-            toastr.success('Datos encontrados');
+            Toast.fire({ icon: 'success', title: 'Datos encontrados' });
         } else {
-            toastr.warning('No se encontraron datos');
+            Toast.fire({ icon: 'warning', title: 'No se encontraron datos' });
         }
     }).fail(function () {
-        toastr.error('Error al consultar RENIEC');
+        Toast.fire({ icon: 'error', title: 'Error al consultar RENIEC' });
     }).always(function () {
         $(btn).prop('disabled', false).text(originalText);
     });
@@ -1225,7 +1225,7 @@ function consultarReniecEstudiante(dni) {
     console.log('Consultando RENIEC para DNI:', dni);
 
     // Mostrar indicador de carga
-    toastr.info('Consultando RENIEC...', 'Por favor espere');
+    Toast.fire({ icon: 'info', title: 'Consultando RENIEC...', text: 'Por favor espere' });
 
     $.ajax({
         url: '/api/reniec/consultar',
@@ -1256,7 +1256,7 @@ function consultarReniecEstudiante(dni) {
                 }
 
                 // Mostrar mensaje de éxito
-                toastr.success('Datos cargados desde RENIEC', 'Éxito');
+                Toast.fire({ icon: 'success', title: 'Datos cargados desde RENIEC' });
 
                 // Mostrar alerta informativa
                 if (typeof Swal !== 'undefined') {
@@ -1273,7 +1273,7 @@ function consultarReniecEstudiante(dni) {
                 }
             } else {
                 console.warn('No se encontraron datos en RENIEC');
-                toastr.warning('No se encontraron datos en RENIEC. Por favor complete manualmente.', 'Atención');
+                Toast.fire({ icon: 'warning', title: 'No se encontraron datos en RENIEC', text: 'Por favor complete manualmente.' });
             }
         },
         error: function (xhr) {
@@ -1284,7 +1284,7 @@ function consultarReniecEstudiante(dni) {
                 errorMsg = xhr.responseJSON.message;
             }
 
-            toastr.warning(errorMsg, 'Advertencia');
+            Toast.fire({ icon: 'warning', title: errorMsg });
         }
     });
 }
@@ -1328,7 +1328,7 @@ function precargarDatosPadres(padres) {
     if (padresCargados > 0) {
         const mensaje = padresCargados === 2 ? 'Datos de padre y madre cargados' :
             padres.padre ? 'Datos del padre cargados' : 'Datos de la madre cargados';
-        toastr.success(mensaje + ' de postulación anterior', 'Datos de Padres');
+        Toast.fire({ icon: 'success', title: mensaje + ' de postulación anterior' });
     } else {
         console.log('No se encontraron datos de padres para pre-cargar');
     }
@@ -1405,7 +1405,7 @@ function precargarDatosAcademicos(datosAcademicos) {
             });
         }
 
-        toastr.success('Colegio cargado: ' + colegio.nombre, 'Datos Académicos');
+        Toast.fire({ icon: 'success', title: 'Colegio cargado: ' + colegio.nombre });
     }
 }
 
@@ -1459,7 +1459,7 @@ function mostrarArchivosExistentes(archivos) {
     });
 
     if (archivosEncontrados > 0) {
-        toastr.success(`${archivosEncontrados} archivo(s) encontrado(s) de postulación anterior`, 'Archivos');
+        Toast.fire({ icon: 'success', title: `${archivosEncontrados} archivo(s) encontrado(s) de postulación anterior` });
     }
 }
 
@@ -1573,7 +1573,7 @@ function submitPostulacion() {
                         showConfirmButton: false
                     });
                 } else {
-                    toastr.success('¡Postulación enviada con éxito!');
+                    Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
                 }
                 setTimeout(function () {
                     // Nota: 'closeModal' debe ser una función global disponible en el entorno
@@ -1583,7 +1583,7 @@ function submitPostulacion() {
                     location.reload();
                 }, 2000);
             } else {
-                toastr.error('Error: ' + (data.message || 'Error desconocido'));
+                Toast.fire({ icon: 'error', title: 'Error: ' + (data.message || 'Error desconocido') });
                 submitBtn.prop('disabled', false).html('ENVIAR POSTULACIÓN');
             }
         },
@@ -1593,7 +1593,7 @@ function submitPostulacion() {
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
             }
-            toastr.error(errorMsg);
+            Toast.fire({ icon: 'error', title: errorMsg });
             submitBtn.prop('disabled', false).html('ENVIAR POSTULACIÓN');
         }
     });
@@ -1623,7 +1623,7 @@ function habilitarBusquedaManual() {
     input.val('');
     input.focus();
     input.attr('placeholder', 'Ingrese DNI o código de voucher');
-    toastr.info('Puede ingresar otro DNI o código de voucher manualmente');
+    Toast.fire({ icon: 'info', title: 'Puede ingresar otro DNI o código de voucher manualmente' });
 }
 
 // Actualizar el display del DNI cuando se muestra el paso 5
@@ -1728,15 +1728,15 @@ function confirmarVoucherManual() {
 
     // Validar campos
     if (!numero) {
-        toastr.error('Por favor ingrese el número de voucher');
+        Toast.fire({ icon: 'error', title: 'Por favor ingrese el número de voucher' });
         return;
     }
     if (!fecha) {
-        toastr.error('Por favor ingrese la fecha de emisión');
+        Toast.fire({ icon: 'error', title: 'Por favor ingrese la fecha de emisión' });
         return;
     }
     if (matricula <= 0 && ensenanza <= 0) {
-        toastr.error('Por favor ingrese al menos un monto válido');
+        Toast.fire({ icon: 'error', title: 'Por favor ingrese al menos un monto válido' });
         return;
     }
 
@@ -1762,7 +1762,7 @@ function confirmarVoucherManual() {
     // Ocultar formulario manual
     document.getElementById('manual_voucher_section').style.display = 'none';
 
-    toastr.success('Datos del voucher confirmados correctamente');
+    Toast.fire({ icon: 'success', title: 'Datos del voucher confirmados correctamente' });
 }
 
 // Cancelar ingreso manual
@@ -1797,7 +1797,7 @@ function togglePadreFields() {
 
     // Validar que al menos uno esté activo
     if (!tienePadre && !tieneMadre) {
-        toastr.warning('Debe registrar al menos la información de uno de los padres');
+        Toast.fire({ icon: 'warning', title: 'Debe registrar al menos la información de uno de los padres' });
         document.getElementById('tiene_padre').checked = true;
         return;
     }
@@ -1824,7 +1824,7 @@ function toggleMadreFields() {
 
     // Validar que al menos uno esté activo
     if (!tienePadre && !tieneMadre) {
-        toastr.warning('Debe registrar al menos la información de uno de los padres');
+        Toast.fire({ icon: 'warning', title: 'Debe registrar al menos la información de uno de los padres' });
         document.getElementById('tiene_madre').checked = true;
         return;
     }
@@ -1848,7 +1848,7 @@ function validarPadres() {
     const tieneMadre = document.getElementById('tiene_madre').checked;
 
     if (!tienePadre && !tieneMadre) {
-        toastr.error('Debe registrar al menos la información de uno de los padres (padre o madre)');
+        Toast.fire({ icon: 'error', title: 'Debe registrar al menos la información de uno de los padres (padre o madre)' });
         return false;
     }
 
@@ -1862,49 +1862,49 @@ function validarPadres() {
         const padreEmail = document.getElementById('padre_email').value.trim();
 
         if (!padreDNI) {
-            toastr.error('Por favor ingrese el DNI del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el DNI del padre' });
             document.getElementById('padre_dni').focus();
             return false;
         }
         if (padreDNI.length !== 8) {
-            toastr.error('El DNI del padre debe tener 8 dígitos');
+            Toast.fire({ icon: 'error', title: 'El DNI del padre debe tener 8 dígitos' });
             document.getElementById('padre_dni').focus();
             return false;
         }
         if (!padreNombre) {
-            toastr.error('Por favor ingrese el nombre del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el nombre del padre' });
             document.getElementById('padre_nombre').focus();
             return false;
         }
         if (!padreApellidos) {
-            toastr.error('Por favor ingrese los apellidos del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese los apellidos del padre' });
             document.getElementById('padre_apellidos').focus();
             return false;
         }
         if (!padreTelefono) {
-            toastr.error('Por favor ingrese el teléfono del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el teléfono del padre' });
             document.getElementById('padre_telefono').focus();
             return false;
         }
         if (padreTelefono.length !== 9) {
-            toastr.error('El teléfono del padre debe tener 9 dígitos');
+            Toast.fire({ icon: 'error', title: 'El teléfono del padre debe tener 9 dígitos' });
             document.getElementById('padre_telefono').focus();
             return false;
         }
         if (!padreOcupacion) {
-            toastr.error('Por favor ingrese la ocupación del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese la ocupación del padre' });
             document.getElementById('padre_ocupacion').focus();
             return false;
         }
         if (!padreEmail) {
-            toastr.error('Por favor ingrese el email del padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el email del padre' });
             document.getElementById('padre_email').focus();
             return false;
         }
         // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(padreEmail)) {
-            toastr.error('Por favor ingrese un email válido para el padre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese un email válido para el padre' });
             document.getElementById('padre_email').focus();
             return false;
         }
@@ -1920,49 +1920,49 @@ function validarPadres() {
         const madreEmail = document.getElementById('madre_email').value.trim();
 
         if (!madreDNI) {
-            toastr.error('Por favor ingrese el DNI de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el DNI de la madre' });
             document.getElementById('madre_dni').focus();
             return false;
         }
         if (madreDNI.length !== 8) {
-            toastr.error('El DNI de la madre debe tener 8 dígitos');
+            Toast.fire({ icon: 'error', title: 'El DNI de la madre debe tener 8 dígitos' });
             document.getElementById('madre_dni').focus();
             return false;
         }
         if (!madreNombre) {
-            toastr.error('Por favor ingrese el nombre de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el nombre de la madre' });
             document.getElementById('madre_nombre').focus();
             return false;
         }
         if (!madreApellidos) {
-            toastr.error('Por favor ingrese los apellidos de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese los apellidos de la madre' });
             document.getElementById('madre_apellidos').focus();
             return false;
         }
         if (!madreTelefono) {
-            toastr.error('Por favor ingrese el teléfono de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el teléfono de la madre' });
             document.getElementById('madre_telefono').focus();
             return false;
         }
         if (madreTelefono.length !== 9) {
-            toastr.error('El teléfono de la madre debe tener 9 dígitos');
+            Toast.fire({ icon: 'error', title: 'El teléfono de la madre debe tener 9 dígitos' });
             document.getElementById('madre_telefono').focus();
             return false;
         }
         if (!madreOcupacion) {
-            toastr.error('Por favor ingrese la ocupación de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese la ocupación de la madre' });
             document.getElementById('madre_ocupacion').focus();
             return false;
         }
         if (!madreEmail) {
-            toastr.error('Por favor ingrese el email de la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese el email de la madre' });
             document.getElementById('madre_email').focus();
             return false;
         }
         // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(madreEmail)) {
-            toastr.error('Por favor ingrese un email válido para la madre');
+            Toast.fire({ icon: 'error', title: 'Por favor ingrese un email válido para la madre' });
             document.getElementById('madre_email').focus();
             return false;
         }
