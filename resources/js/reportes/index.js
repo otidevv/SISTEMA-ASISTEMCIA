@@ -1,3 +1,16 @@
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function() {
     // Configurar fecha mínima y máxima según el ciclo seleccionado
     $('#ciclo_id').on('change', function() {
@@ -35,7 +48,7 @@ $(document).ready(function() {
 
         if (fecha === examen1 || fecha === examen2 || fecha === examen3) {
             $('#tipo_reporte').val('resumen_examen');
-            toastr.info('Fecha de examen detectada. Tipo de reporte cambiado a "Resumen para Examen"');
+            Toast.fire({ icon: 'info', title: 'Fecha de examen detectada. Tipo de reporte cambiado a "Resumen para Examen"' });
         }
     });
 
@@ -84,11 +97,11 @@ $(document).ready(function() {
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
 
-                toastr.success('Reporte generado exitosamente');
+                Toast.fire({ icon: 'success', title: 'Reporte generado exitosamente' });
             },
             error: function(xhr) {
                 $('#loadingModal').modal('hide');
-                toastr.error('Error al generar el reporte');
+                Toast.fire({ icon: 'error', title: 'Error al generar el reporte' });
             }
         });
     });
@@ -127,8 +140,9 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 $('#loadingModal').modal('hide');
-                toastr.error('Error al generar la vista previa');
+                Toast.fire({ icon: 'error', title: 'Error al generar la vista previa' });
             }
         });
     });
 });
+

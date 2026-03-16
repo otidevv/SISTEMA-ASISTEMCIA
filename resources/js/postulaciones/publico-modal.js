@@ -56,6 +56,20 @@ $(document).ready(function () {
     loadDepartamentos();
 
     // Event listeners para validación en tiempo real
+    $('input[required], select[required], textarea[required]').on('blur input change', function () {
+        const $el = $(this);
+        if ($el.val()) {
+            $el.removeClass('is-invalid').addClass('is-valid');
+            // Agregar ícono de éxito si no existe
+            if (!$el.parent().find('.valid-feedback-icon').length) {
+                $el.after('<div class="valid-feedback-icon" style="position: absolute; right: 25px; top: 10px; color: #198754;"><i class="fas fa-check-circle"></i></div>');
+            }
+        } else {
+            $el.removeClass('is-valid').addClass('is-invalid');
+            $el.parent().find('.valid-feedback-icon').remove();
+        }
+    });
+
     $('input[type="tel"]').on('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
@@ -1579,9 +1593,13 @@ function submitPostulacion() {
                         icon: 'success',
                         title: '¡Postulación Enviada!',
                         text: 'Su postulación ha sido enviada con éxito. Redireccionando...',
-                        showConfirmButton: false
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            lanzarConfetti();
+                        }
                     });
                 } else {
+                    lanzarConfetti();
                     Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
                 }
                 setTimeout(function () {

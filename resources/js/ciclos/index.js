@@ -7,6 +7,19 @@ $.ajaxSetup({
     }
 });
 
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function () {
     // Inicializar DataTables
     var table = $('#ciclos-datatable').DataTable({
@@ -337,12 +350,12 @@ $(document).ready(function () {
     // Crear nuevo ciclo
     $('#saveNewCiclo').on('click', function () {
         if (!validateDates()) {
-            toastr.error('Por favor, corrija los errores en las fechas del ciclo');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en las fechas del ciclo' });
             return;
         }
 
         if (!validateExamDates()) {
-            toastr.error('Por favor, corrija los errores en las fechas de exámenes');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en las fechas de exámenes' });
             return;
         }
 
@@ -360,7 +373,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#newCicloModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -386,7 +399,7 @@ $(document).ready(function () {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al crear el ciclo académico');
+                    Toast.fire({ icon: 'error', title: 'Error al crear el ciclo académico' });
                 }
             }
         });
@@ -431,11 +444,11 @@ $(document).ready(function () {
 
                     $('#editCicloModal').modal('show');
                 } else {
-                    toastr.error('No se pudo cargar la información del ciclo');
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la información del ciclo' });
                 }
             },
             error: function () {
-                toastr.error('Error al obtener los datos del ciclo');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del ciclo' });
             }
         });
     });
@@ -443,12 +456,12 @@ $(document).ready(function () {
     // Actualizar ciclo
     $('#updateCiclo').on('click', function () {
         if (!validateEditDates()) {
-            toastr.error('Por favor, corrija los errores en las fechas del ciclo');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en las fechas del ciclo' });
             return;
         }
 
         if (!validateEditExamDates()) {
-            toastr.error('Por favor, corrija los errores en las fechas de exámenes');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en las fechas de exámenes' });
             return;
         }
 
@@ -467,7 +480,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#editCicloModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -494,7 +507,7 @@ $(document).ready(function () {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al actualizar el ciclo académico');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar el ciclo académico' });
                 }
             }
         });
@@ -511,11 +524,11 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function () {
-                    toastr.error('Error al activar el ciclo académico');
+                    Toast.fire({ icon: 'error', title: 'Error al activar el ciclo académico' });
                 }
             });
         }
@@ -532,11 +545,11 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function () {
-                    toastr.error('Error al desactivar el ciclo académico');
+                    Toast.fire({ icon: 'error', title: 'Error al desactivar el ciclo académico' });
                 }
             });
         }
@@ -553,14 +566,14 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function (xhr) {
                     if (xhr.status === 400) {
-                        toastr.error(xhr.responseJSON.message);
+                        Toast.fire({ icon: 'error', title: xhr.responseJSON.message });
                     } else {
-                        toastr.error('Error al eliminar el ciclo académico');
+                        Toast.fire({ icon: 'error', title: 'Error al eliminar el ciclo académico' });
                     }
                 }
             });
@@ -575,7 +588,7 @@ $(document).ready(function () {
     // Guardar y Configurar Vacantes (nuevo ciclo)
     $('#saveAndConfigVacantes').on('click', function () {
         if (!validateDates() || !validateExamDates()) {
-            toastr.error('Por favor, corrija los errores antes de continuar');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores antes de continuar' });
             return;
         }
 
@@ -589,7 +602,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#newCicloModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success('Ciclo creado exitosamente');
+                    Toast.fire({ icon: 'success', title: 'Ciclo creado exitosamente' });
 
                     // Abrir modal de vacantes
                     cicloActualId = response.data.id;
@@ -636,7 +649,7 @@ $(document).ready(function () {
                 }
             },
             error: function () {
-                toastr.error('Error al cargar las vacantes');
+                Toast.fire({ icon: 'error', title: 'Error al cargar las vacantes' });
             }
         });
     }
@@ -754,7 +767,7 @@ $(document).ready(function () {
         });
 
         if (vacantesActualizar.length === 0) {
-            toastr.warning('No hay carreras para configurar');
+            Toast.fire({ icon: 'warning', title: 'No hay carreras para configurar' });
             return;
         }
 
@@ -764,13 +777,13 @@ $(document).ready(function () {
             data: { vacantes: vacantesActualizar },
             success: function (response) {
                 if (response.success) {
-                    toastr.success('Vacantes guardadas exitosamente');
+                    Toast.fire({ icon: 'success', title: 'Vacantes guardadas exitosamente' });
                     vacantesModificadas = [];
                     cargarVacantes(cicloActualId);
                 }
             },
             error: function () {
-                toastr.error('Error al guardar las vacantes');
+                Toast.fire({ icon: 'error', title: 'Error al guardar las vacantes' });
             }
         });
     });
@@ -800,7 +813,8 @@ $(document).ready(function () {
                 enableHtml: true
             });
         } else {
-            toastr.error('Error al procesar la solicitud');
+            Toast.fire({ icon: 'error', title: 'Error al procesar la solicitud' });
         }
     }
 });
+

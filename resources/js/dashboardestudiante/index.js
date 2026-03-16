@@ -479,7 +479,7 @@ $(document).ready(function() {
         $('#formInscripcion').on('submit', function(e) {
             e.preventDefault();
             if (!colegioSeleccionado) {
-                toastr.warning('Por favor seleccione un colegio de la lista');
+                Toast.fire({ icon: 'warning', title: 'Por favor seleccione un colegio de la lista' });
                 return;
             }
 
@@ -496,7 +496,7 @@ $(document).ready(function() {
             for (let archivo of archivosRequeridos) {
                 const input = document.getElementById(archivo.id);
                 if (!input.files || !input.files[0]) {
-                    toastr.warning(`Por favor seleccione el archivo: ${archivo.nombre}`);
+                    Toast.fire({ icon: 'warning', title: `Por favor seleccione el archivo: ${archivo.nombre}` });
                     return;
                 }
             }
@@ -507,7 +507,7 @@ $(document).ready(function() {
         // Evento de click para los botones de matrícula
         $(document).on('click', '.btn-matricula', function() {
             if ($('#campo-monto-matricula').is(':hidden')) {
-                toastr.info('Por favor, sube primero el voucher de pago.');
+                Toast.fire({ icon: 'info', title: 'Por favor, sube primero el voucher de pago.' });
                 return;
             }
             const value = $(this).data('value');
@@ -517,7 +517,7 @@ $(document).ready(function() {
         // Evento de click para los botones de enseñanza
         $(document).on('click', '.btn-ensenanza', function() {
             if ($('#campo-monto-ensenanza').is(':hidden')) {
-                toastr.info('Por favor, sube primero el voucher de pago.');
+                Toast.fire({ icon: 'info', title: 'Por favor, sube primero el voucher de pago.' });
                 return;
             }
             const value = $(this).data('value');
@@ -774,9 +774,9 @@ $(document).ready(function() {
                     $.each(response.errors, function(key, value) {
                         errores += value[0] + '<br>';
                     });
-                    toastr.error(errores);
+                    Toast.fire({ icon: 'error', title: errores });
                 } else {
-                    toastr.error(response.message || 'Error al registrar inscripción');
+                    Toast.fire({ icon: 'error', title: response.message || 'Error al registrar inscripción' });
                 }
                 $('#btnConfirmarInscripcion').prop('disabled', false).html('Confirmar Inscripción');
             }
@@ -958,7 +958,7 @@ $(document).ready(function() {
         const postulacionId = $('#postulacion_id').val();
 
         if (!archivo) {
-            toastr.error('Por favor seleccione un archivo');
+            Toast.fire({ icon: 'error', title: 'Por favor seleccione un archivo' });
             return;
         }
 
@@ -977,20 +977,20 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    toastr.success('Constancia firmada subida exitosamente');
+                    Toast.fire({ icon: 'success', title: 'Constancia firmada subida exitosamente' });
                     $('#subirConstanciaModal').modal('hide');
                     $('#formSubirConstancia')[0].reset();
                     $('#preview-constancia').hide();
                     cargarEstadoPostulacion();
                     verificarInscripcion();
                 } else {
-                    toastr.error(response.message || 'Error al subir la constancia');
+                    Toast.fire({ icon: 'error', title: response.message || 'Error al subir la constancia' });
                 }
                 $('#btnSubirConstancia').prop('disabled', false).html('<i class="mdi mdi-upload me-1"></i>Subir Constancia');
             },
             error: function(xhr) {
                 const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al subir la constancia');
+                Toast.fire({ icon: 'error', title: response?.message || 'Error al subir la constancia' });
                 $('#btnSubirConstancia').prop('disabled', false).html('<i class="mdi mdi-upload me-1"></i>Subir Constancia');
             }
         });
@@ -1058,3 +1058,4 @@ $(document).ready(function() {
         }
     });
 });
+

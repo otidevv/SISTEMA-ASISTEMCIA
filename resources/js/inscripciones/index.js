@@ -7,6 +7,19 @@ $.ajaxSetup({
     }
 });
 
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function() {
     let table;
 
@@ -154,7 +167,7 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                toastr.error('Error al cargar estudiantes');
+                Toast.fire({ icon: 'error', title: 'Error al cargar estudiantes' });
             }
         });
     }
@@ -259,7 +272,7 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                toastr.error('Error al cargar aulas');
+                Toast.fire({ icon: 'error', title: 'Error al cargar aulas' });
             }
         });
     }
@@ -353,7 +366,7 @@ $(document).ready(function() {
                 if (response.success) {
                     $('#newInscripcionModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function(xhr) {
@@ -379,7 +392,7 @@ $(document).ready(function() {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al crear la inscripción');
+                    Toast.fire({ icon: 'error', title: 'Error al crear la inscripción' });
                 }
             }
         });
@@ -411,11 +424,11 @@ $(document).ready(function() {
 
                     $('#editInscripcionModal').modal('show');
                 } else {
-                    toastr.error('No se pudo cargar la información de la inscripción');
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la información de la inscripción' });
                 }
             },
             error: function() {
-                toastr.error('Error al obtener los datos de la inscripción');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos de la inscripción' });
             }
         });
     });
@@ -433,7 +446,7 @@ $(document).ready(function() {
                 if (response.success) {
                     $('#editInscripcionModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function(xhr) {
@@ -460,7 +473,7 @@ $(document).ready(function() {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al actualizar la inscripción');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar la inscripción' });
                 }
             }
         });
@@ -552,7 +565,7 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                toastr.error('Error al cargar los detalles de la inscripción');
+                Toast.fire({ icon: 'error', title: 'Error al cargar los detalles de la inscripción' });
             }
         });
     });
@@ -579,14 +592,14 @@ $(document).ready(function() {
                 success: function(response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 400) {
-                        toastr.error(xhr.responseJSON.message);
+                        Toast.fire({ icon: 'error', title: xhr.responseJSON.message });
                     } else {
-                        toastr.error('Error al eliminar la inscripción');
+                        Toast.fire({ icon: 'error', title: 'Error al eliminar la inscripción' });
                     }
                 }
             });
@@ -600,9 +613,11 @@ $(document).ready(function() {
         const cicloId = $(this).data('ciclo-id');
 
         // Mostrar loading
-        toastr.info('Generando reporte de asistencia...', 'Por favor espere', {
-            timeOut: 2000,
-            progressBar: true
+        Toast.fire({
+            icon: 'info',
+            title: 'Generando reporte de asistencia...',
+            timer: 2000,
+            timerProgressBar: true
         });
 
         // Crear la URL para descargar el PDF - ACTUALIZADA
@@ -617,15 +632,16 @@ $(document).ready(function() {
         const ciclo = $('#filtro-ciclo').val();
 
         if (!ciclo) {
-            toastr.warning('Seleccione un ciclo para exportar asistencias.');
+            Toast.fire({ icon: 'warning', title: 'Seleccione un ciclo para exportar asistencias.' });
             return;
         }
 
         // Mostrar notificación de carga
-        toastr.info('Generando archivo...', { timeOut: 1500 });
+        Toast.fire({ icon: 'info', title: 'Generando archivo...', timer: 1500 });
 
         // Redirigir a la URL que genera el archivo Excel
         window.location.href = `${default_server}/json/inscripciones/exportar/asistencias?ciclo_id=${ciclo}`;
     });
 
 });
+

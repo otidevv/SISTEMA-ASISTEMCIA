@@ -2,7 +2,21 @@
  * Wizard Simplificado para Postulantes Existentes
  * Solo 4 pasos: Confirmar datos, Datos académicos, Documentos, Confirmación
  */
-(function() {
+
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
+$(document).ready(function () {
     let currentStep = 1;
     const totalSteps = 4;
     let postulanteData = null;
@@ -149,7 +163,7 @@
         }
         
         if (!isValid) {
-            toastr.warning('Por favor, complete todos los campos obligatorios', 'Campos requeridos');
+            Toast.fire({ icon: 'warning', title: 'Por favor, complete todos los campos obligatorios' });
         }
         
         return isValid;
@@ -236,7 +250,7 @@
         // Validar que el checkbox esté marcado
         const confirmarCheckbox = document.getElementById('confirmarPostulacion');
         if (!confirmarCheckbox.checked) {
-            toastr.error('Debe confirmar los términos y condiciones', 'Error');
+            Toast.fire({ icon: 'error', title: 'Debe confirmar los términos y condiciones' });
             return;
         }
         
@@ -259,7 +273,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                toastr.success(data.message || 'Postulación enviada exitosamente', 'Éxito');
+                Toast.fire({ icon: 'success', title: data.message || 'Postulación enviada exitosamente' });
                 
                 // Notificar al padre que se completó la postulación
                 window.parent.postMessage({
@@ -279,9 +293,9 @@
                     for (let field in data.errors) {
                         errorMessages += data.errors[field].join('<br>') + '<br>';
                     }
-                    toastr.error(errorMessages, 'Errores de validación');
+                    Toast.fire({ icon: 'error', title: errorMessages });
                 } else {
-                    toastr.error(data.message || 'Error al procesar la postulación', 'Error');
+                    Toast.fire({ icon: 'error', title: data.message || 'Error al procesar la postulación' });
                 }
                 
                 // Rehabilitar botón
@@ -291,7 +305,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            toastr.error('Error al enviar la postulación', 'Error');
+            Toast.fire({ icon: 'error', title: 'Error al enviar la postulación' });
             
             // Rehabilitar botón
             btnEnviar.disabled = false;

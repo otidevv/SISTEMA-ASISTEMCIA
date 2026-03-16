@@ -154,7 +154,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#newAulaModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -169,9 +169,9 @@ $(document).ready(function () {
                         $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al crear el aula');
+                    Toast.fire({ icon: 'error', title: 'Error al crear el aula' });
                 }
             },
             complete: function () {
@@ -212,7 +212,7 @@ $(document).ready(function () {
                 }
             },
             error: function () {
-                toastr.error('Error al obtener los datos del aula');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del aula' });
             }
         });
     });
@@ -235,7 +235,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#editAulaModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -251,9 +251,9 @@ $(document).ready(function () {
                         $('#' + inputField).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al actualizar el aula');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar el aula' });
                 }
             },
             complete: function () {
@@ -277,11 +277,11 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function () {
-                toastr.error('Error al cambiar el estado del aula');
+                Toast.fire({ icon: 'error', title: 'Error al cambiar el estado del aula' });
             },
             complete: function () {
                 btn.prop('disabled', false);
@@ -303,11 +303,11 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function (xhr) {
-                    toastr.error('Error al eliminar el aula');
+                    Toast.fire({ icon: 'error', title: 'Error al eliminar el aula' });
                 },
                 complete: function () {
                     btn.prop('disabled', false);
@@ -354,3 +354,4 @@ $(document).ready(function () {
     // Tooltip para equipamiento
     $('[data-bs-toggle="tooltip"]').tooltip();
 });
+

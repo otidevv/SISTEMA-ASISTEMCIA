@@ -70,6 +70,19 @@ function loadPadres(selectElement, callback) {
     });
 }
 
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function() {
     console.log('Document ready ejecutado');
 
@@ -221,10 +234,10 @@ $(document).ready(function() {
                     table.ajax.reload();
 
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 } else {
                     // Mostrar errores
-                    toastr.error('Hay errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Hay errores en el formulario' });
                 }
             },
             error: function(xhr) {
@@ -260,7 +273,7 @@ $(document).ready(function() {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al crear el parentesco: ' + xhr.statusText);
+                    Toast.fire({ icon: 'error', title: 'Error al crear el parentesco: ' + xhr.statusText });
                 }
             }
         });
@@ -303,11 +316,11 @@ $(document).ready(function() {
                     $('#edit_recibe_notificaciones').prop('checked', parentesco.recibe_notificaciones);
                     $('#edit_contacto_emergencia').prop('checked', parentesco.contacto_emergencia);
                 } else {
-                    toastr.error('No se pudo cargar la información del parentesco');
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la información del parentesco' });
                 }
             },
             error: function() {
-                toastr.error('Error al obtener los datos del parentesco');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del parentesco' });
             }
         });
     });
@@ -339,10 +352,10 @@ $(document).ready(function() {
                     table.ajax.reload();
 
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 } else {
                     // Mostrar errores
-                    toastr.error('Hay errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Hay errores en el formulario' });
                 }
             },
             error: function(xhr) {
@@ -380,7 +393,7 @@ $(document).ready(function() {
                         enableHtml: true
                     });
                 } else {
-                    toastr.error('Error al actualizar el parentesco');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar el parentesco' });
                 }
             }
         });
@@ -399,11 +412,11 @@ $(document).ready(function() {
                     table.ajax.reload();
 
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function() {
-                toastr.error('Error al cambiar el estado del parentesco');
+                Toast.fire({ icon: 'error', title: 'Error al cambiar el estado del parentesco' });
             }
         });
     });
@@ -422,13 +435,14 @@ $(document).ready(function() {
                         table.ajax.reload();
 
                         // Mostrar mensaje de éxito
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function() {
-                    toastr.error('Error al eliminar el parentesco');
+                    Toast.fire({ icon: 'error', title: 'Error al eliminar el parentesco' });
                 }
             });
         }
     });
 });
+

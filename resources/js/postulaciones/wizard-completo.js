@@ -12,8 +12,20 @@
     const btnEnviar = document.getElementById('btnEnviar');
     const progressBar = document.getElementById('wizardProgress');
     
-    // Inicializar wizard
-    document.addEventListener('DOMContentLoaded', function() {
+    // Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
+$(document).ready(function () {
         initializeWizard();
     });
     
@@ -127,13 +139,13 @@
             
             if (password !== confirmPassword) {
                 document.getElementById('estudiante_password_confirmation').classList.add('is-invalid');
-                toastr.error('Las contraseñas no coinciden', 'Error');
+                Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
                 isValid = false;
             }
         }
         
         if (!isValid) {
-            toastr.warning('Por favor, complete todos los campos obligatorios', 'Campos requeridos');
+            Toast.fire({ icon: 'warning', title: 'Por favor, complete todos los campos obligatorios' });
         }
         
         return isValid;
@@ -245,7 +257,7 @@
         // Validar que el checkbox esté marcado
         const confirmarCheckbox = document.getElementById('confirmarDatos');
         if (!confirmarCheckbox.checked) {
-            toastr.error('Debe aceptar los términos y condiciones', 'Error');
+            Toast.fire({ icon: 'error', title: 'Debe aceptar los términos y condiciones' });
             return;
         }
         
@@ -268,7 +280,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                toastr.success(data.message, 'Éxito');
+                Toast.fire({ icon: 'success', title: data.message });
                 
                 // Notificar al padre que se completó la postulación
                 window.parent.postMessage({
@@ -288,9 +300,9 @@
                     for (let field in data.errors) {
                         errorMessages += data.errors[field].join('<br>') + '<br>';
                     }
-                    toastr.error(errorMessages, 'Errores de validación');
+                    Toast.fire({ icon: 'error', title: errorMessages });
                 } else {
-                    toastr.error(data.message || 'Error al procesar la postulación', 'Error');
+                    Toast.fire({ icon: 'error', title: data.message || 'Error al procesar la postulación' });
                 }
                 
                 // Rehabilitar botón
@@ -300,7 +312,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            toastr.error('Error al enviar la postulación', 'Error');
+            Toast.fire({ icon: 'error', title: 'Error al enviar la postulación' });
             
             // Rehabilitar botón
             btnEnviar.disabled = false;
@@ -314,7 +326,7 @@
         const dni = dniField.value;
         
         if (dni.length !== 8) {
-            toastr.warning('El DNI debe tener 8 dígitos', 'Advertencia');
+            Toast.fire({ icon: 'warning', title: 'El DNI debe tener 8 dígitos' });
             return;
         }
         
@@ -334,14 +346,14 @@
                     document.getElementById(`${tipo}_apellido_paterno`).value = data.apellidoPaterno || '';
                     document.getElementById(`${tipo}_apellido_materno`).value = data.apellidoMaterno || '';
                     
-                    toastr.success('Datos obtenidos de RENIEC', 'Éxito');
+                    Toast.fire({ icon: 'success', title: 'Datos obtenidos de RENIEC' });
                 } else {
-                    toastr.info('No se encontraron datos en RENIEC', 'Información');
+                    Toast.fire({ icon: 'info', title: 'No se encontraron datos en RENIEC' });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                toastr.info('Servicio RENIEC no disponible', 'Información');
+                Toast.fire({ icon: 'info', title: 'Servicio RENIEC no disponible' });
             })
             .finally(() => {
                 // Restaurar botón

@@ -1,6 +1,19 @@
 // public/js/turnos/index.js
 
 // Configuración CSRF para AJAX
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -96,7 +109,7 @@ $(document).ready(function () {
         $('#newTurnoForm .is-invalid').removeClass('is-invalid');
         $('#newTurnoForm .invalid-feedback').remove();
         $('#saveNewTurno .spinner-border').addClass('d-none');
-        toastr.clear();
+        
     });
 
     $('#editTurnoModal').on('hidden.bs.modal', function () {
@@ -104,7 +117,7 @@ $(document).ready(function () {
         $('#editTurnoForm .is-invalid').removeClass('is-invalid');
         $('#editTurnoForm .invalid-feedback').remove();
         $('#updateTurno .spinner-border').addClass('d-none');
-        toastr.clear();
+        
     });
 
     // Validar horas en tiempo real
@@ -155,7 +168,7 @@ $(document).ready(function () {
     // Crear nuevo turno
     $('#saveNewTurno').on('click', function () {
         if (!validateHoras()) {
-            toastr.error('Por favor, corrija los errores en el horario');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el horario' });
             return;
         }
 
@@ -174,7 +187,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#newTurnoModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -189,9 +202,9 @@ $(document).ready(function () {
                         $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al crear el turno');
+                    Toast.fire({ icon: 'error', title: 'Error al crear el turno' });
                 }
             },
             complete: function () {
@@ -235,7 +248,7 @@ $(document).ready(function () {
                 }
             },
             error: function () {
-                toastr.error('Error al obtener los datos del turno');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del turno' });
             }
         });
     });
@@ -243,7 +256,7 @@ $(document).ready(function () {
     // Actualizar turno
     $('#updateTurno').on('click', function () {
         if (!validateEditHoras()) {
-            toastr.error('Por favor, corrija los errores en el horario');
+            Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el horario' });
             return;
         }
 
@@ -263,7 +276,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#editTurnoModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -279,9 +292,9 @@ $(document).ready(function () {
                         $('#' + inputField).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al actualizar el turno');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar el turno' });
                 }
             },
             complete: function () {
@@ -305,11 +318,11 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function () {
-                toastr.error('Error al cambiar el estado del turno');
+                Toast.fire({ icon: 'error', title: 'Error al cambiar el estado del turno' });
             },
             complete: function () {
                 btn.prop('disabled', false);
@@ -331,14 +344,14 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response.success) {
                         table.ajax.reload();
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function (xhr) {
                     if (xhr.status === 400) {
-                        toastr.error(xhr.responseJSON.message);
+                        Toast.fire({ icon: 'error', title: xhr.responseJSON.message });
                     } else {
-                        toastr.error('Error al eliminar el turno');
+                        Toast.fire({ icon: 'error', title: 'Error al eliminar el turno' });
                     }
                 },
                 complete: function () {
@@ -365,3 +378,4 @@ $(document).ready(function () {
         if (val < 0 || isNaN(val)) $(this).val(0);
     });
 });
+

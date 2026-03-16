@@ -11,7 +11,7 @@
 
     <!-- Panel principal -->
     <div id="bubble-panel"
-        style="background:linear-gradient(160deg,var(--azul-oscuro) 0%,#0b2a4a 100%);border-radius:16px;overflow:hidden;width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;">
+        style="background:linear-gradient(160deg,#0f172a 0%,#020617 100%);backdrop-filter:blur(10px);border-radius:16px;overflow:hidden;width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;">
 
         <!-- Header: crono2.png como fondo CSS para no distorsionar -->
         <div class="bubble-header"
@@ -73,7 +73,7 @@
         border-radius:8px; padding:5px 3px; display:flex; flex-direction:column; align-items:center; min-width:0;
     }
     .tbox .n { font-size:17px; font-weight:900; color:white; line-height:1; }
-    .tbox .l { font-size:8px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
+    .tbox .l { font-size:8px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
     @media (max-width: 768px) {
         #countdown-bubble { right:10px; bottom:72px; }
         #bubble-panel { width:200px; }

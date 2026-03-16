@@ -188,10 +188,10 @@ $(document).ready(function() {
                     table.ajax.reload();
 
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 } else {
                     // Mostrar errores
-                    toastr.error('Hay errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Hay errores en el formulario' });
                 }
             },
             error: function(xhr) {
@@ -325,10 +325,10 @@ $(document).ready(function() {
                     // Recargar la tabla
                     table.ajax.reload();
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 } else {
                     // Mostrar errores
-                    toastr.error('Hay errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Hay errores en el formulario' });
                 }
             },
             error: function(xhr) {
@@ -511,3 +511,4 @@ function consultarDNI(numeroDNI) {
         }
     });
 }
+

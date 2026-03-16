@@ -15,6 +15,19 @@ let provincias = [];
 let distritos = [];
 let colegioSeleccionado = null;
 
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function() {
     console.log('Postulación Unificada JS cargado');
     
@@ -202,7 +215,7 @@ function handleFileSelect(input) {
         // Validar tamaño
         const maxSize = target === 'foto_carnet' ? 2 * 1024 * 1024 : 5 * 1024 * 1024; // 2MB para foto, 5MB para otros
         if (file.size > maxSize) {
-            toastr.error('El archivo es demasiado grande. Tamaño máximo: ' + (maxSize / 1024 / 1024) + 'MB');
+            Toast.fire({ icon: 'error', title: 'El archivo es demasiado grande. Tamaño máximo: ' + (maxSize / 1024 / 1024) + 'MB' });
             input.value = '';
             return;
         }
@@ -213,7 +226,7 @@ function handleFileSelect(input) {
             ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
         
         if (!allowedTypes.includes(file.type)) {
-            toastr.error('Tipo de archivo no permitido');
+            Toast.fire({ icon: 'error', title: 'Tipo de archivo no permitido' });
             input.value = '';
             return;
         }
@@ -340,7 +353,7 @@ function validateCurrentStep() {
     }
     
     if (!isValid) {
-        toastr.error('Por favor complete todos los campos requeridos correctamente');
+        Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
     }
     
     return isValid;
@@ -455,7 +468,7 @@ function validateStep5() {
     });
     
     if (!isValid) {
-        toastr.error('Debe subir todos los documentos requeridos');
+        Toast.fire({ icon: 'error', title: 'Debe subir todos los documentos requeridos' });
     }
     
     return isValid;
@@ -730,7 +743,7 @@ function submitForm() {
             $('#loadingOverlay').hide();
             
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 
                 // Mostrar información de la postulación
                 if (response.postulacion) {
@@ -757,7 +770,7 @@ function submitForm() {
                     }
                 }
             } else {
-                toastr.error(response.message || 'Error al enviar la postulación');
+                Toast.fire({ icon: 'error', title: response.message || 'Error al enviar la postulación' });
             }
         },
         error: function(xhr) {
@@ -767,11 +780,11 @@ function submitForm() {
                 // Errores de validación
                 const errors = xhr.responseJSON.errors;
                 for (let field in errors) {
-                    toastr.error(errors[field][0]);
+                    Toast.fire({ icon: 'error', title: errors[field][0] });
                 }
             } else {
                 const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al enviar la postulación');
+                Toast.fire({ icon: 'error', title: response?.message || 'Error al enviar la postulación' });
             }
         }
     });
@@ -784,7 +797,7 @@ window.consultarDNI = function(tipo) {
     const dniField = $('#' + tipo + '_dni');
     if (dniField.length === 0) {
         console.error('No se encontró el campo DNI para tipo:', tipo);
-        toastr.error('Error: No se encontró el campo DNI');
+        Toast.fire({ icon: 'error', title: 'Error: No se encontró el campo DNI' });
         return;
     }
     
@@ -794,7 +807,7 @@ window.consultarDNI = function(tipo) {
     if (!/^\d{8}$/.test(dni)) {
         const mensaje = 'Ingrese un DNI válido de 8 dígitos';
         console.log('DNI inválido:', dni);
-        toastr.error(mensaje);
+        Toast.fire({ icon: 'error', title: mensaje });
         return;
     }
     
@@ -802,7 +815,7 @@ window.consultarDNI = function(tipo) {
     const button = dniField.parent('.input-group').find('button');
     if (button.length === 0) {
         console.error('No se encontró el botón RENIEC');
-        toastr.error('Error: No se encontró el botón RENIEC');
+        Toast.fire({ icon: 'error', title: 'Error: No se encontró el botón RENIEC' });
         return;
     }
     
@@ -811,12 +824,12 @@ window.consultarDNI = function(tipo) {
     button.html('<i class="mdi mdi-loading mdi-spin"></i> Consultando...');
     
     console.log('Iniciando consulta RENIEC...');
-    toastr.info('Consultando RENIEC...', 'Procesando');
+    Toast.fire({ icon: 'info', title: 'Consultando RENIEC...' });
     
     // Verificar que tenemos el servidor configurado
     if (!window.default_server) {
         console.error('window.default_server no está definido');
-        toastr.error('Error de configuración del servidor');
+        Toast.fire({ icon: 'error', title: 'Error de configuración del servidor' });
         button.prop('disabled', false);
         button.html(originalText);
         return;
@@ -877,17 +890,17 @@ window.consultarDNI = function(tipo) {
                 });
                 
                 const mensajeExito = 'Datos encontrados y completados automáticamente';
-                toastr.success(mensajeExito, 'RENIEC');
+                Toast.fire({ icon: 'success', title: mensajeExito });
             } else {
                 const mensajeError = data.message || 'No se encontraron datos para este DNI';
                 console.log('No se encontraron datos:', mensajeError);
-                toastr.warning(mensajeError, 'RENIEC');
+                Toast.fire({ icon: 'warning', title: mensajeError });
             }
         },
         error: function(xhr, status, error) {
             console.error('Error consultando RENIEC:', error);
             const mensajeError = 'Error al consultar RENIEC: ' + error;
-            toastr.error(mensajeError, 'Error');
+            Toast.fire({ icon: 'error', title: mensajeError });
         },
         complete: function() {
             // Rehabilitar el botón
@@ -901,3 +914,4 @@ window.consultarDNI = function(tipo) {
 // Funciones globales para navegación
 window.changeStep = changeStep;
 window.goToStep = goToStep;
+

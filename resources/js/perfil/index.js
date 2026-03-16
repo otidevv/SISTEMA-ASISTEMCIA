@@ -1,4 +1,17 @@
 // public/js/perfil/index.js
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function() {
     // Configuración CSRF para AJAX
     $.ajaxSetup({
@@ -22,7 +35,7 @@ $(document).ready(function() {
                 }
             },
             error: function() {
-                toastr.error('Error al cargar la información del perfil');
+                Toast.fire({ icon: 'error', title: 'Error al cargar la información del perfil' });
             }
         });
     }
@@ -38,7 +51,7 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                     // Actualizar la información mostrada
                     cargarPerfil();
                 }
@@ -57,7 +70,7 @@ $(document).ready(function() {
                         $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                     }
                 } else {
-                    toastr.error('Error al actualizar la información');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar la información' });
                 }
             }
         });
@@ -74,7 +87,7 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                     // Limpiar formulario
                     $('#formPassword')[0].reset();
                 }
@@ -90,10 +103,10 @@ $(document).ready(function() {
                             $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                         }
                     } else {
-                        toastr.error(xhr.responseJSON.message);
+                        Toast.fire({ icon: 'error', title: xhr.responseJSON.message });
                     }
                 } else {
-                    toastr.error('Error al cambiar la contraseña');
+                    Toast.fire({ icon: 'error', title: 'Error al cambiar la contraseña' });
                 }
             }
         });
@@ -112,7 +125,7 @@ $(document).ready(function() {
             processData: false,
             success: function(response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                     // Actualizar la imagen mostrada
                     if (response.data.foto_url) {
                         $('.avatar-xl').attr('src', response.data.foto_url);
@@ -129,7 +142,7 @@ $(document).ready(function() {
                         $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                     }
                 } else {
-                    toastr.error('Error al subir la foto de perfil');
+                    Toast.fire({ icon: 'error', title: 'Error al subir la foto de perfil' });
                 }
             }
         });
@@ -145,13 +158,13 @@ $(document).ready(function() {
                 type: 'DELETE',
                 success: function(response) {
                     if (response.success) {
-                        toastr.success(response.message);
+                        Toast.fire({ icon: 'success', title: response.message });
                         // Actualizar la imagen a la imagen por defecto o iniciales
                         $('.avatar-xl').replaceWith('<div class="avatar-xl rounded-circle bg-primary text-white mx-auto p-4 font-24"></div>');
                     }
                 },
                 error: function() {
-                    toastr.error('Error al eliminar la foto de perfil');
+                    Toast.fire({ icon: 'error', title: 'Error al eliminar la foto de perfil' });
                 }
             });
         }
@@ -168,11 +181,11 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function() {
-                toastr.error('Error al actualizar las preferencias');
+                Toast.fire({ icon: 'error', title: 'Error al actualizar las preferencias' });
             }
         });
     });
@@ -180,3 +193,4 @@ $(document).ready(function() {
     // Inicialización
     cargarPerfil();
 });
+

@@ -120,7 +120,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#newCarreraModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -135,9 +135,9 @@ $(document).ready(function () {
                         $('#' + field).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al crear la carrera');
+                    Toast.fire({ icon: 'error', title: 'Error al crear la carrera' });
                 }
             },
             complete: function () {
@@ -212,7 +212,7 @@ $(document).ready(function () {
                 }
             },
             error: function () {
-                toastr.error('Error al obtener los datos de la carrera');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos de la carrera' });
             }
         });
     });
@@ -239,7 +239,7 @@ $(document).ready(function () {
                 if (response.success) {
                     $('#editCarreraModal').modal('hide');
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
@@ -255,9 +255,9 @@ $(document).ready(function () {
                         $('#' + inputField).after('<div class="invalid-feedback">' + message + '</div>');
                     }
 
-                    toastr.error('Por favor, corrija los errores en el formulario');
+                    Toast.fire({ icon: 'error', title: 'Por favor, corrija los errores en el formulario' });
                 } else {
-                    toastr.error('Error al actualizar la carrera');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar la carrera' });
                 }
             },
             complete: function () {
@@ -281,11 +281,11 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function () {
-                toastr.error('Error al cambiar el estado de la carrera');
+                Toast.fire({ icon: 'error', title: 'Error al cambiar el estado de la carrera' });
             },
             complete: function () {
                 btn.prop('disabled', false);
@@ -330,14 +330,14 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     table.ajax.reload();
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function (xhr) {
                 if (xhr.status === 400) {
-                    toastr.error(xhr.responseJSON.message);
+                    Toast.fire({ icon: 'error', title: xhr.responseJSON.message });
                 } else {
-                    toastr.error('Error al eliminar la carrera');
+                    Toast.fire({ icon: 'error', title: 'Error al eliminar la carrera' });
                 }
             },
             complete: function () {
@@ -360,3 +360,4 @@ $(document).ready(function () {
         }
     });
 });
+
