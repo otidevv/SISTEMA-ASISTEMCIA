@@ -276,19 +276,19 @@ class AsistenciaDocenteController extends Controller
 
             $currentDateLoop = $startDate->copy();
             while ($currentDateLoop->lte($endDate)) {
-                $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDateLoop, $cicloActivoParaRotacion);
                 $fechaString = $currentDateLoop->toDateString();
-
-                $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
-                    return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
-                })->sortBy('hora_inicio');
-
                 $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
-                foreach ($horariosDelDia as $horario) {
+                foreach ($todosHorariosDocente as $horario) {
                     if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) continue;
-                    $sessionData = $this->processSessionForReports($horario, $currentDateLoop, $registrosBiometricosDelDia, $docente);
-                    if ($sessionData) $docenteSessions[] = $sessionData;
+                    
+                    // Obtener el día que le corresponde a este horario según SU ciclo
+                    $diaSemanaNombre = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($currentDateLoop) : $this->getDiaHorarioParaFecha($currentDateLoop);
+                    
+                    if (strtolower($horario->dia_semana) === strtolower($diaSemanaNombre)) {
+                        $sessionData = $this->processSessionForReports($horario, $currentDateLoop, $registrosBiometricosDelDia, $docente);
+                        if ($sessionData) $docenteSessions[] = $sessionData;
+                    }
                 }
                 $currentDateLoop->addDay();
             }
@@ -513,24 +513,17 @@ class AsistenciaDocenteController extends Controller
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
             
-            // Aplicar rotación de sábado si corresponde
-            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
-            $esSabado = $diaReal === 'sábado';
-            $diaSemana = $diaReal;
+            // Obtener todos los horarios activos del día (considerando rotación por ciclo)
+            $todosHorariosActivos = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->whereHas('ciclo', function($q) {
+                    $q->where('es_activo', true);
+                })
+                ->get();
             
-            if ($esSabado && $cicloActivo) {
-                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
-            }
-            
-            // Obtener todos los horarios del día
-            $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
-                ->where('dia_semana', $diaSemana);
-            
-            if ($cicloActivo) {
-                $horariosQuery->where('ciclo_id', $cicloActivo->id);
-            }
-            
-            $horarios = $horariosQuery->orderBy('hora_inicio')->get();
+            $horarios = $todosHorariosActivos->filter(function($horario) use ($fechaCarbon) {
+                $diaNecesario = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($fechaCarbon) : null;
+                return $diaNecesario && strtolower($diaNecesario) === strtolower($horario->dia_semana);
+            })->sortBy('hora_inicio');
             
             // Procesar cada horario con su estado de asistencia
             $schedule = $horarios->map(function ($horario) use ($fechaCarbon) {
@@ -624,25 +617,17 @@ class AsistenciaDocenteController extends Controller
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
             
-            // Aplicar rotación de sábado si corresponde
-            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
-            $esSabado = $diaReal === 'sábado';
-            $diaSemana = $diaReal;
+            // Obtener todos los horarios activos del día (considerando rotación por ciclo)
+            $todosHorariosActivos = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->whereHas('ciclo', function($q) {
+                    $q->where('es_activo', true);
+                })
+                ->get();
             
-            if ($esSabado && $cicloActivo) {
-                // Usar el día equivalente según la rotación semanal
-                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
-            }
-            
-            // Obtener todos los horarios del día
-            $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
-                ->where('dia_semana', $diaSemana);
-            
-            if ($cicloActivo) {
-                $horariosQuery->where('ciclo_id', $cicloActivo->id);
-            }
-            
-            $horarios = $horariosQuery->orderBy('hora_inicio')->get();
+            $horarios = $todosHorariosActivos->filter(function($horario) use ($fechaCarbon) {
+                $diaNecesario = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($fechaCarbon) : null;
+                return $diaNecesario && strtolower($diaNecesario) === strtolower($horario->dia_semana);
+            })->sortBy('hora_inicio');
             
             // Procesar cada horario con su estado
             $clases = $horarios->map(function ($horario) use ($fechaCarbon) {

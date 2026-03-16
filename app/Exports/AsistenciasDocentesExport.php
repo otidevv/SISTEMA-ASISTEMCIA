@@ -207,31 +207,22 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 \Log::info("EXPORT DEBUG - Docente {$docente->nombre}: Rango {$startDate->toDateString()} a {$endDate->toDateString()}, Horarios precargados: " . $todosHorariosDocente->count() . ", Registros biometricos: " . $todosRegistrosDocente->count());
                 
                 while ($currentDate->lte($endDate)) {
-                    // ⚡ OPTIMIZADO: Usar ciclo pre-cargado en lugar de consultar cada vez
-                    $diaSemanaNombre = $this->getDiaHorarioParaFecha($currentDate, $cicloActivoParaRotacion);
                     $fechaString = $currentDate->toDateString();
-
-                    // Filtrar horarios del día desde la colección pre-cargada
-                    $horariosDelDia = $todosHorariosDocente->filter(function($horario) use ($diaSemanaNombre) {
-                        return strtolower($horario->dia_semana) === strtolower($diaSemanaNombre);
-                    })->sortBy('hora_inicio');
-                    
-                    // DEBUG: Log para ver si se encuentran horarios para cada día
-                    if ($horariosDelDia->count() > 0) {
-                        \Log::info("EXPORT DEBUG - {$fechaString} ({$diaSemanaNombre}): {$horariosDelDia->count()} horarios encontrados");
-                    }
-
-                    // Obtener registros biométricos del día desde la colección pre-cargada
                     $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
-                    // Procesar cada sesión del día
-                    foreach ($horariosDelDia as $horario) {
-                        $sessionData = $this->processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+                    // Procesar cada sesión posible buscando si corresponde al docente según SU ciclo
+                    foreach ($todosHorariosDocente as $horario) {
+                        // ⚡ OPTIMIZADO: Obtener el día que le corresponde a este horario según SU ciclo
+                        $diaSemanaNombre = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($currentDate) : $this->getDiaHorarioParaFecha($currentDate);
                         
-                        if ($sessionData) {
-                            $processedDetailedAsistencias[$docente->id]['sessions'][] = $sessionData;
-                            $processedDetailedAsistencias[$docente->id]['total_horas'] += $sessionData['horas_dictadas'];
-                            $processedDetailedAsistencias[$docente->id]['total_pagos'] += $sessionData['pago'];
+                        if (strtolower($horario->dia_semana) === strtolower($diaSemanaNombre)) {
+                            $sessionData = $this->processSession($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+                            
+                            if ($sessionData) {
+                                $processedDetailedAsistencias[$docente->id]['sessions'][] = $sessionData;
+                                $processedDetailedAsistencias[$docente->id]['total_horas'] += $sessionData['horas_dictadas'];
+                                $processedDetailedAsistencias[$docente->id]['total_pagos'] += $sessionData['pago'];
+                            }
                         }
                     }
                     

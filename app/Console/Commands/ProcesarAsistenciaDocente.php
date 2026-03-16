@@ -65,31 +65,22 @@ class ProcesarAsistenciaDocente extends Command
 
     private function procesarMarcacion(User $usuario, RegistroAsistencia $registro, Carbon $fechaHora, string $diaSemana)
     {
-        $diaOriginal = $diaSemana;
-        
-        // NUEVO: Si es sábado, obtener día equivalente según rotación del ciclo
-        if ($diaSemana === 'sábado') {
-            $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
-            
-            if (!$cicloActivo) {
-                $this->warn("No hay ciclo activo. No se puede procesar sábado.");
-                $registro->evento()->update(['procesado' => true]);
-                return;
-            }
-            
-            $diaSemana = $cicloActivo->getDiaHorarioParaFecha($fechaHora);
-            $semana = $cicloActivo->getNumeroSemana($fechaHora);
-            
-            $this->info("Sábado detectado (Semana {$semana}). Usando horario de: " . ucfirst($diaSemana));
-        }
-        
-        $horariosDelDia = HorarioDocente::where('docente_id', $usuario->id)
-            ->where('dia_semana', $diaSemana)
-            ->orderBy('hora_inicio', 'asc')
+        // Obtener todos los horarios activos del docente para cualquier día
+        // luego filtraremos según la lógica de cada ciclo
+        $todosHorariosActivos = HorarioDocente::where('docente_id', $usuario->id)
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->get();
 
+        // Filtrar horarios que corresponden a la fecha de la marcación según su ciclo
+        $horariosDelDia = $todosHorariosActivos->filter(function ($horario) use ($fechaHora) {
+            $diaNecesario = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($fechaHora) : null;
+            return $diaNecesario && strtolower($diaNecesario) === strtolower($horario->dia_semana);
+        });
+
         if ($horariosDelDia->isEmpty()) {
-            $this->warn("No se encontró ningún horario para el docente {$usuario->id} el {$diaSemana}. Se ignora la marcación.");
+            $this->warn("No se encontró ningún horario para el docente {$usuario->id} el " . $fechaHora->toDateString() . ". Se ignora la marcación.");
             $registro->evento()->update(['procesado' => true]);
             return;
         }

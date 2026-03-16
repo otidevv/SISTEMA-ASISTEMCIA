@@ -243,40 +243,26 @@ class DashboardController extends Controller
                 $ciclosActivos = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->get();
                 $cicloActivo = $ciclosActivos->first(); // Ciclo principal para cálculos por defecto
                 
-                // Si es sábado, buscar un ciclo que tenga sábados rotativos habilitados
-                $esSabado = $fechaSeleccionada->dayOfWeek === 6; // Carbon: 6 = Sábado
-                if ($esSabado) {
-                    $cicloConSabados = $ciclosActivos->firstWhere('incluye_sabados', true);
-                    if ($cicloConSabados) {
-                        $cicloActivo = $cicloConSabados;
-                    }
-                }
-                
-                // Aplicar rotación de sábado si corresponde (usando el ciclo con sábados rotativos)
-                $infoRotacion = $this->getInfoRotacion($fechaSeleccionada, $cicloActivo);
-                $diaSemanaParaHorario = $infoRotacion['dia_horario'];
-                
-                // Validar ciclos conflictivos (diferentes configuraciones de sábados)
-                if ($ciclosActivos->count() > 1) {
-                    $ciclosConSabados = $ciclosActivos->where('incluye_sabados', true)->count();
-                    $ciclosSinSabados = $ciclosActivos->where('incluye_sabados', false)->count();
-                    
-                    if ($ciclosConSabados > 0 && $ciclosSinSabados > 0) {
-                        $data['advertenciaCiclos'] = 'Hay ' . $ciclosActivos->count() . ' ciclos activos con configuraciones diferentes de sábados rotativos. Contacte al administrador.';
-                    }
-                }
-
-                $data['infoRotacion'] = $infoRotacion; 
-                $data['ciclosActivos'] = $ciclosActivos;
-                
-                $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
-                    ->where('dia_semana', $diaSemanaParaHorario)
+                // 1. Obtener todos los horarios activos del docente
+                $todosHorariosActivos = HorarioDocente::where('docente_id', $user->id)
                     ->whereHas('ciclo', function ($query) {
                         $query->where('es_activo', true);
                     })
                     ->with(['aula', 'curso', 'ciclo'])
-                    ->orderBy('hora_inicio')
                     ->get();
+                
+                // 2. Filtrar horarios según la configuración de su propio ciclo para la fecha seleccionada
+                $horariosDelDia = $todosHorariosActivos->filter(function ($horario) use ($fechaSeleccionada) {
+                    $ciclo = $horario->ciclo;
+                    if (!$ciclo) return false;
+                    
+                    $diaHorarioNecesario = $ciclo->getDiaHorarioParaFecha($fechaSeleccionada);
+                    return $diaHorarioNecesario === $horario->dia_semana;
+                })->sortBy('hora_inicio');
+                
+                // Para compatibilidad con el resto del código, mantenemos infoRotacion usando el primer ciclo activo
+                // o el ciclo que coincida con la rotación si es sábado
+                $infoRotacion = $this->getInfoRotacion($fechaSeleccionada, $cicloActivo);
                 
 
                 $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
