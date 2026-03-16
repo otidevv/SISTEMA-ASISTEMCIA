@@ -33,8 +33,21 @@ function lanzarConfetti() {
 }
 
 
+// Configuración Global de Toasts con SweetAlert2 (Para un look más moderno y premium)
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $(document).ready(function () {
-    console.log('Publico Modal JS Initialized');
+    console.log('Publico Modal JS Initialized with SweetAlert2 Toasts');
 
     // Inicializar wizard
     showStep(currentStep);
@@ -222,7 +235,10 @@ function buscarColegios() {
                     Error al buscar colegios. Por favor, intente nuevamente.
                 </div>
             `);
-            toastr.error('Error al buscar colegios');
+            Toast.fire({
+                icon: 'error',
+                title: 'Error al buscar colegios'
+            });
         }
     });
 }
@@ -279,9 +295,9 @@ function mostrarSugerenciasColegios(colegios, termino = '') {
         $('#sugerencias-colegios').empty();
 
         // Feedback visual
-        toastr.success('Colegio seleccionado correctamente', 'Éxito', {
-            timeOut: 2000,
-            positionClass: 'toast-bottom-right'
+        Toast.fire({
+            icon: 'success',
+            title: 'Colegio seleccionado correctamente'
         });
     });
 
@@ -332,7 +348,11 @@ function loadDepartamentos() {
 
     if (select.length === 0) {
         console.error('ERROR CRÍTICO: No se encontró el elemento #departamento');
-        toastr.error('Error interno: No se encontró el selector de departamentos');
+        Toast.fire({
+            icon: 'error',
+            title: 'Error interno',
+            text: 'No se encontró el selector de departamentos'
+        });
         return;
     }
 
@@ -366,12 +386,20 @@ function loadDepartamentos() {
         } else {
             console.error('API reportó error:', data.message);
             select.html('<option value="">Error al cargar</option>').show();
-            toastr.error('Error al cargar departamentos: ' + (data.message || 'Desconocido'));
+            Toast.fire({
+                icon: 'error',
+                title: 'Error al cargar departamentos',
+                text: (data.message || 'Desconocido')
+            });
         }
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.error('Error AJAX Departamentos:', textStatus, errorThrown);
         select.html('<option value="">Error de conexión</option>').show();
-        toastr.error('Error de conexión al cargar departamentos');
+        Toast.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'No se pudieron cargar los departamentos'
+        });
 
         if (typeof Swal !== 'undefined') {
             Swal.fire({
@@ -431,7 +459,10 @@ function loadDistritos(dep, prov) {
             select.html(html).prop('disabled', false).show();
         }
     }).fail(function () {
-        toastr.error('Error al cargar distritos');
+        Toast.fire({
+            icon: 'error',
+            title: 'Error al cargar distritos'
+        });
     });
 }
 
@@ -494,7 +525,11 @@ function validarVoucher() {
     const btnBuscar = $('#btn-validar-pago-manual');
 
     if (!secuencia) {
-        toastr.warning('Por favor ingrese el código de voucher o DNI');
+        Toast.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: 'Por favor ingrese el código de voucher o DNI'
+        });
         return;
     }
 
@@ -521,10 +556,16 @@ function validarVoucher() {
 
             if (response.valid && response.payments && response.payments.length > 0) {
                 mostrarDetallesPago(response.payments);
-                toastr.success('Pagos encontrados y verificados');
+                Toast.fire({
+                    icon: 'success',
+                    title: 'Pagos encontrados y verificados'
+                });
                 $('#pago_feedback').html('<div class="alert alert-success"><i class="fas fa-check-circle"></i> Pago verificado correctamente</div>');
             } else {
-                toastr.error(response.message || 'No se encontraron pagos válidos');
+                Toast.fire({
+                    icon: 'error',
+                    title: response.message || 'No se encontraron pagos válidos'
+                });
                 $('#pago_feedback').html(`
                     <div class="alert alert-danger">
                         <i class="fas fa-times-circle"></i> ${response.message || 'Pago no encontrado'}
@@ -542,7 +583,10 @@ function validarVoucher() {
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 msg = xhr.responseJSON.message;
             }
-            toastr.error(msg);
+            Toast.fire({
+                icon: 'error',
+                title: msg
+            });
             $('#pago_feedback').html(`
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle"></i> ${msg}
@@ -1137,7 +1181,10 @@ function verificarPostulante(btnElement) {
                 confirmButtonText: 'Reintentar'
             });
         } else {
-            toastr.error(msg);
+            Toast.fire({
+                icon: 'error',
+                title: msg
+            });
         }
     }).always(function () {
         btn.prop('disabled', false).text(originalText);

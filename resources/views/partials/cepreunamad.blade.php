@@ -397,11 +397,10 @@ document.addEventListener('DOMContentLoaded', function () {
 @include('partials.cepre.home-scripts')
 
 @push('css')
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    {{-- Toastr removido por SweetAlert2 Toasts --}}
 @endpush
 
 @push('js')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     @vite('resources/js/postulaciones/publico-modal.js')
