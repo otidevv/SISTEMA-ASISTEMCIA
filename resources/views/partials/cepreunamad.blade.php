@@ -396,12 +396,33 @@ document.addEventListener('DOMContentLoaded', function () {
 @include('partials.cepre.scripts')
 @include('partials.cepre.home-scripts')
 
+@push('css')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+@endpush
+
+@push('js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    @vite('resources/js/postulaciones/publico-modal.js')
+@endpush
+
 <!-- Script para abrir modal de postulación (usado por el floating button) -->
 <script>
     function openPostulacionModal() {
-        document.getElementById('postulacionModal').style.display = 'flex';
-        if (typeof showStep === 'function') { showStep(1); }
-        if (typeof createConfetti === 'function') { createConfetti(); }
+        const modal = document.getElementById('postulacionModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            // showStep is defined in publico-modal.js
+            if (typeof showStep === 'function') { 
+                showStep(1); 
+            } else {
+                console.error('showStep function not found. publico-modal.js might not be loaded.');
+            }
+            if (typeof createConfetti === 'function') { 
+                createConfetti(); 
+            }
+        }
     }
 </script>
 

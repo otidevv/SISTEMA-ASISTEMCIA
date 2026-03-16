@@ -110,36 +110,44 @@
     <script>
         const carousel = document.getElementById("facebookCarousel");
         const indicators = document.querySelectorAll(".indicator-dot");
-        let current = 0;
-        const cards = carousel.children.length;
+        
+        if (carousel) {
+            let current = 0;
+            const cards = carousel.children.length;
 
-        function updateIndicator() {
-            indicators.forEach((dot, i) => {
-                dot.classList.toggle("bg-secondary", i === current);
-                dot.classList.toggle("bg-light", i !== current);
-            });
-        }
+            function updateIndicator() {
+                indicators.forEach((dot, i) => {
+                    dot.classList.toggle("bg-secondary", i === current);
+                    dot.classList.toggle("bg-light", i !== current);
+                });
+            }
 
-        function scrollToCard(index) {
-            const cardWidth = carousel.children[0].offsetWidth + 16; // ancho + gap
-            carousel.style.transform = `translateX(-${index * cardWidth}px)`;
-            current = index;
+            function scrollToCard(index) {
+                if (carousel.children[0]) {
+                    const cardWidth = carousel.children[0].offsetWidth + 16; // ancho + gap
+                    carousel.style.transform = `translateX(-${index * cardWidth}px)`;
+                    current = index;
+                    updateIndicator();
+                }
+            }
+
+            function nextSlide() {
+                current = (current + 1) % cards;
+                scrollToCard(current);
+            }
+
+            function prevSlide() {
+                current = (current - 1 + cards) % cards;
+                scrollToCard(current);
+            }
+
+            setInterval(() => nextSlide(), 5000);
+
+            window.addEventListener("resize", () => scrollToCard(current));
+            
+            // Initializing indicators if any
             updateIndicator();
         }
-
-        function nextSlide() {
-            current = (current + 1) % cards;
-            scrollToCard(current);
-        }
-
-        function prevSlide() {
-            current = (current - 1 + cards) % cards;
-            scrollToCard(current);
-        }
-
-        setInterval(() => nextSlide(), 5000);
-
-        window.addEventListener("resize", () => scrollToCard(current));
     </script>
     <div id="fb-root"></div>
     <script async defer crossorigin="anonymous"
