@@ -1037,6 +1037,10 @@ function verificarPostulante(btnElement) {
                                 <td style="padding: 5px 0;">${postulacion.codigo || 'N/A'}</td>
                             </tr>
                             <tr>
+                                <td style="padding: 5px 0; color: #6c757d;"><strong>Ciclo:</strong></td>
+                                <td style="padding: 5px 0;">${postulacion.ciclo || 'N/A'}</td>
+                            </tr>
+                            <tr>
                                 <td style="padding: 5px 0; color: #6c757d;"><strong>Estado:</strong></td>
                                 <td style="padding: 5px 0;">
                                     <span class="${estadoBadgeClass}" style="padding: 4px 10px; border-radius: 4px; font-size: 12px;">

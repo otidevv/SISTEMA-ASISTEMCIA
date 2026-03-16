@@ -51,7 +51,7 @@ class PublicPostulacionController extends Controller
 
             if ($postulacion) {
                 // Cargar relaciones para mostrar información completa
-                $postulacion->load(['carrera', 'turno']);
+                $postulacion->load(['carrera', 'turno', 'ciclo']);
                 
                 // Determinar el estado legible
                 $estadoTexto = [
@@ -69,6 +69,7 @@ class PublicPostulacionController extends Controller
                         'codigo' => $postulacion->codigo_postulante,
                         'estado' => $postulacion->estado,
                         'estado_texto' => $estadoTexto[$postulacion->estado] ?? ucfirst($postulacion->estado),
+                        'ciclo' => $postulacion->ciclo ? $postulacion->ciclo->nombre : 'N/A',
                         'carrera' => $postulacion->carrera ? $postulacion->carrera->nombre : 'N/A',
                         'turno' => $postulacion->turno ? $postulacion->turno->nombre : 'N/A',
                         'fecha_postulacion' => $postulacion->fecha_postulacion ? $postulacion->fecha_postulacion->format('d/m/Y') : 'N/A',
