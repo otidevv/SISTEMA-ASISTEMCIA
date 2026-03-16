@@ -229,11 +229,22 @@
     #postulacionModal .col-md-8,
     #postulacionModal .col-md-12 {
         position: relative !important;
+        display: flex;
+        flex-direction: column;
     }
 
     #postulacionModal .valid-feedback-icon {
+        position: absolute !important;
+        right: 12px;
+        /* Centrado vertical respecto al input */
+        top: 32px; 
+        height: 38px;
+        display: flex;
+        align-items: center;
         z-index: 5;
         pointer-events: none;
+        color: #198754;
+        font-size: 14px;
     }
 </style>
 

@@ -62,8 +62,7 @@ $(document).ready(function () {
             $el.removeClass('is-invalid').addClass('is-valid');
             // Agregar ícono de éxito si no existe
             if (!$el.parent().find('.valid-feedback-icon').length) {
-                // Ajuste de posición: el ícono ahora está más pegado al borde derecho del input
-                $el.after('<div class="valid-feedback-icon" style="position: absolute; right: 10px; top: 38px; color: #198754; font-size: 14px;"><i class="fas fa-check-circle"></i></div>');
+                $el.after('<div class="valid-feedback-icon"><i class="fas fa-check-circle"></i></div>');
             }
         } else {
             $el.removeClass('is-valid').addClass('is-invalid');
