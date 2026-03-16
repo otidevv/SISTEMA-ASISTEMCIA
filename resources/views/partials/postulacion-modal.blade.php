@@ -220,6 +220,21 @@
             padding-right: 8px;
         }
     }
+
+    /* FIX: Garantizar que los íconos de validación no se escapen del campo */
+    #postulacionModal .mb-3, 
+    #postulacionModal .mb-4,
+    #postulacionModal .col-md-4,
+    #postulacionModal .col-md-6,
+    #postulacionModal .col-md-8,
+    #postulacionModal .col-md-12 {
+        position: relative !important;
+    }
+
+    #postulacionModal .valid-feedback-icon {
+        z-index: 5;
+        pointer-events: none;
+    }
 </style>
 
 <!-- Modal de Postulación -->
