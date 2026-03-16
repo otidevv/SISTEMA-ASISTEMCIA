@@ -14,10 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Models\CentroEducativo;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class PublicPostulacionController extends Controller
 {
@@ -459,7 +459,9 @@ class PublicPostulacionController extends Controller
     public function getDepartamentos()
     {
         try {
-            $departamentos = CentroEducativo::getDepartamentos();
+            $departamentos = Cache::remember('departamentos_list', 86400, function () {
+                return CentroEducativo::getDepartamentos();
+            });
             
             // Modificación: Mapear a un array de objetos con 'id' y 'nombre'
             $departamentosFormatoCorrecto = $departamentos->map(function($departamento) {
@@ -488,7 +490,10 @@ class PublicPostulacionController extends Controller
     public function getProvincias($departamento)
     {
         try {
-            $provincias = CentroEducativo::getProvincias($departamento);
+            $cacheKey = 'provincias_list_' . str_replace(' ', '_', $departamento);
+            $provincias = Cache::remember($cacheKey, 86400, function () use ($departamento) {
+                return CentroEducativo::getProvincias($departamento);
+            });
 
             // Modificación: Mapear a un array de objetos con 'id' y 'nombre'
             $provinciasFormatoCorrecto = $provincias->map(function($provincia) {
@@ -517,7 +522,10 @@ class PublicPostulacionController extends Controller
     public function getDistritos($departamento, $provincia)
     {
         try {
-            $distritos = CentroEducativo::getDistritos($departamento, $provincia);
+            $cacheKey = 'distritos_list_' . str_replace(' ', '_', $departamento) . '_' . str_replace(' ', '_', $provincia);
+            $distritos = Cache::remember($cacheKey, 86400, function () use ($departamento, $provincia) {
+                return CentroEducativo::getDistritos($departamento, $provincia);
+            });
 
             // Modificación: Mapear a un array de objetos con 'id' y 'nombre'
             $distritosFormatoCorrecto = $distritos->map(function($distrito) {
