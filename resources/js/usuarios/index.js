@@ -2,6 +2,19 @@
 console.log('index.js cargado correctamente');
 console.log('default_server está definida:', window.default_server);
 // Configuración CSRF para AJAX
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -131,9 +144,6 @@ $(document).ready(function() {
 
     // Limpiar formulario cuando se cierran los modales
     $('#newUserModal').on('hidden.bs.modal', function() {
-        // Limpiar toastr
-        toastr.clear();
-
         // Resetear el formulario
         $('#newUserForm')[0].reset();
 
@@ -148,9 +158,6 @@ $(document).ready(function() {
     });
 
     $('#editUserModal').on('hidden.bs.modal', function() {
-        // Limpiar toastr
-        toastr.clear();
-
         // Resetear el formulario
         $('#editUserForm')[0].reset();
 
@@ -225,15 +232,15 @@ $(document).ready(function() {
 
                     errorSummary += '</ul>';
 
-                    toastr.error(errorSummary, 'Error de validación', {
-                        closeButton: true,
-                        timeOut: 0,
-                        extendedTimeOut: 0,
-                        positionClass: "toast-top-center",
-                        enableHtml: true
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Error de validación',
+                        html: errorSummary,
+                        timer: null,
+                        showConfirmButton: true
                     });
                 } else {
-                    toastr.error('Error al crear el usuario: ' + xhr.statusText);
+                    Toast.fire({ icon: 'error', title: 'Error al crear el usuario: ' + xhr.statusText });
                 }
             }
         });
@@ -293,11 +300,11 @@ $(document).ready(function() {
                         }
                     });
                 } else {
-                    toastr.error('No se pudo cargar la información del usuario');
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la información del usuario' });
                 }
             },
             error: function() {
-                toastr.error('Error al obtener los datos del usuario');
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del usuario' });
             }
         });
     });
@@ -364,15 +371,15 @@ $(document).ready(function() {
 
                     errorSummary += '</ul>';
 
-                    toastr.error(errorSummary, 'Error de validación', {
-                        closeButton: true,
-                        timeOut: 0,
-                        extendedTimeOut: 0,
-                        positionClass: "toast-top-center",
-                        enableHtml: true
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Error de validación',
+                        html: errorSummary,
+                        timer: null,
+                        showConfirmButton: true
                     });
                 } else {
-                    toastr.error('Error al actualizar el usuario');
+                    Toast.fire({ icon: 'error', title: 'Error al actualizar el usuario' });
                 }
             }
         });
@@ -390,11 +397,12 @@ $(document).ready(function() {
                     // Recargar la tabla
                     table.ajax.reload();
                     // Mostrar mensaje de éxito
-                    toastr.success(response.message);
+                    // Mostrar mensaje de éxito
+                    Toast.fire({ icon: 'success', title: response.message });
                 }
             },
             error: function() {
-                toastr.error('Error al cambiar el estado del usuario');
+                Toast.fire({ icon: 'error', title: 'Error al cambiar el estado del usuario' });
             }
         });
     });
@@ -412,11 +420,12 @@ $(document).ready(function() {
                         // Recargar la tabla
                         table.ajax.reload();
                         // Mostrar mensaje de éxito
-                        toastr.success(response.message);
+                        // Mostrar mensaje de éxito
+                        Toast.fire({ icon: 'success', title: response.message });
                     }
                 },
                 error: function() {
-                    toastr.error('Error al eliminar el usuario');
+                    Toast.fire({ icon: 'error', title: 'Error al eliminar el usuario' });
                 }
             });
         }
@@ -427,7 +436,7 @@ $(document).ready(function() {
         const numeroDNI = $('#numero_documento').val().trim();
 
         if (numeroDNI.length !== 8) {
-            toastr.error('El DNI debe tener 8 dígitos', 'Error');
+            Toast.fire({ icon: 'error', title: 'El DNI debe tener 8 dígitos' });
             return;
         }
 
@@ -489,11 +498,11 @@ function consultarDNI(numeroDNI) {
             }
 
             // Mostrar notificación de éxito
-            toastr.success('Se han completado los campos automáticamente', '¡Datos encontrados!');
+            Toast.fire({ icon: 'success', title: 'Se han completado los campos automáticamente' });
         },
         error: function(xhr, status, error) {
             console.error("Error en la consulta:", error);
-            toastr.error('No se pudieron obtener los datos. Verifique el número de documento.', 'Error');
+            Toast.fire({ icon: 'error', title: 'No se pudieron obtener los datos. Verifique el número de documento.' });
         },
         complete: function() {
             // Quitar indicador de carga

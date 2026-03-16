@@ -7,6 +7,19 @@ const wizardTotalSteps = 3;
 let wizardFormData = {};
 
 // Función para mostrar/ocultar contraseña
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 function togglePassword(fieldId) {
     const passwordInput = document.getElementById(fieldId);
     const icon = passwordInput.nextElementSibling?.querySelector('svg');
@@ -50,7 +63,7 @@ async function consultarDNI(tipo) {
     const dni = dniInput.value.trim();
 
     if (dni.length !== 8 || !/^\d{8}$/.test(dni)) {
-        alert('El DNI debe tener exactamente 8 dígitos numéricos');
+        Toast.fire({ icon: 'warning', title: 'El DNI debe tener exactamente 8 dígitos numéricos' });
         dniInput.focus();
         return;
     }
@@ -86,28 +99,16 @@ async function consultarDNI(tipo) {
                 autocompletarMadre(result.data);
             }
 
-            if (typeof toastr !== 'undefined') {
-                toastr.success('Datos cargados desde RENIEC correctamente');
-            } else {
-                alert('Datos cargados desde RENIEC correctamente');
-            }
+            Toast.fire({ icon: 'success', title: 'Datos cargados desde RENIEC correctamente' });
             
             btnBuscar.classList.add('success-animation');
             setTimeout(() => btnBuscar.classList.remove('success-animation'), 1000);
         } else {
-            if (typeof toastr !== 'undefined') {
-                toastr.info(result.message || 'No se encontraron datos para el DNI ingresado');
-            } else {
-                alert(result.message || 'No se encontraron datos para el DNI ingresado');
-            }
+            Toast.fire({ icon: 'info', title: result.message || 'No se encontraron datos para el DNI ingresado' });
         }
     } catch (error) {
         console.error('Error al consultar RENIEC:', error);
-        if (typeof toastr !== 'undefined') {
-            toastr.error('No se pudo consultar el servicio RENIEC. Intente nuevamente.');
-        } else {
-            alert('No se pudo consultar el servicio RENIEC. Intente nuevamente.');
-        }
+        Toast.fire({ icon: 'error', title: 'No se pudo consultar el servicio RENIEC. Intente nuevamente.' });
     } finally {
         btnBuscar.disabled = false;
         btnBuscar.classList.remove('loading');
@@ -379,9 +380,7 @@ function validateWizardStep(step) {
             if (password.value !== passwordConfirm.value) {
                 passwordConfirm.classList.add('is-invalid');
                 isValid = false;
-                if (typeof toastr !== 'undefined') {
-                    toastr.error('Las contraseñas no coinciden');
-                }
+                Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
             } else {
                 passwordConfirm.classList.remove('is-invalid');
             }
@@ -407,9 +406,7 @@ function validateParentEmails() {
     if (padreValue && madreValue && padreValue === madreValue) {
         padreEmail.classList.add('is-invalid');
         madreEmail.classList.add('is-invalid');
-        if (typeof toastr !== 'undefined') {
-            toastr.error('Los correos del padre y la madre deben ser diferentes');
-        }
+        Toast.fire({ icon: 'error', title: 'Los correos del padre y la madre deben ser diferentes' });
         return false;
     }
 
@@ -564,11 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateFieldProgress();
                 }
             } else {
-                if (typeof toastr !== 'undefined') {
-                    toastr.error('Por favor complete todos los campos requeridos');
-                } else {
-                    alert('Por favor complete todos los campos requeridos');
-                }
+                Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos' });
             }
         });
     }

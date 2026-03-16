@@ -1,6 +1,19 @@
 // public/js/postulaciones/index.js
 
 // Configuración CSRF para AJAX
+// Configuración Global de Toasts con SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
+
 $.ajaxSetup({
     headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -55,7 +68,7 @@ function initDataTable() {
 
                 // Solo mostrar error si no es un abort
                 if (error !== 'abort') {
-                    toastr.error('Error al cargar las postulaciones. Por favor, intente nuevamente.');
+                    Toast.fire({ icon: 'error', title: 'Error al cargar las postulaciones. Por favor, intente nuevamente.' });
                 }
             }
         },
@@ -227,21 +240,24 @@ function setupEventHandlers() {
             type: 'POST',
             success: function (response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
 
                     // Si hay información adicional, mostrarla
                     if (response.data) {
-                        toastr.info('Código de inscripción: ' + response.data.codigo_inscripcion +
-                            '<br>Aula asignada: ' + response.data.aula +
-                            '<br>Capacidad disponible restante: ' + response.data.aula_capacidad_disponible,
-                            'Detalles de la inscripción',
-                            { timeOut: 8000, extendedTimeOut: 3000, escapeHtml: false });
+                        Toast.fire({
+                            icon: 'info',
+                            title: 'Detalles de la inscripción',
+                            html: 'Código de inscripción: ' + response.data.codigo_inscripcion +
+                                '<br>Aula asignada: ' + response.data.aula +
+                                '<br>Capacidad disponible restante: ' + response.data.aula_capacidad_disponible,
+                            timer: 8000
+                        });
                     }
 
                     // Recargar la tabla
                     table.ajax.reload();
                 } else {
-                    toastr.error(response.message || 'Error al aprobar la postulación');
+                    Toast.fire({ icon: 'error', title: response.message || 'Error al aprobar la postulación' });
                     // Restaurar el botón
                     btn.prop('disabled', false);
                     btn.html('<i class="uil uil-check-circle"></i>');
@@ -256,7 +272,7 @@ function setupEventHandlers() {
                 } else if (xhr.status === 422) {
                     const errors = xhr.responseJSON.errors;
                     for (let key in errors) {
-                        toastr.error(errors[key][0]);
+                        Toast.fire({ icon: 'error', title: errors[key][0] });
                     }
                     // Restaurar el botón
                     btn.prop('disabled', false);
@@ -264,7 +280,7 @@ function setupEventHandlers() {
                     return;
                 }
 
-                toastr.error(errorMsg);
+                Toast.fire({ icon: 'error', title: errorMsg });
                 // Restaurar el botón
                 btn.prop('disabled', false);
                 btn.html('<i class="uil uil-check-circle"></i>');
@@ -279,13 +295,13 @@ function setupEventHandlers() {
 
         const newWindow = window.open('/postulacion/constancia/generar/' + id, '_blank');
         if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-            toastr.warning('El navegador bloqueó la ventana emergente. Por favor, permita las ventanas emergentes para este sitio.', 'Aviso de Pop-up');
+            Toast.fire({ icon: 'warning', title: 'Aviso de Pop-up', text: 'El navegador bloqueó la ventana emergente. Por favor, permita las ventanas emergentes para este sitio.' });
             return;
         }
 
         // Para evitar que el usuario pierda la fila, actualizamos la UI manualmente.
         // La recarga completa se hará cuando suba el archivo firmado.
-        toastr.success('Constancia generada. La fila se actualizará para permitir la subida del documento firmado.');
+        Toast.fire({ icon: 'success', title: 'Constancia generada. La fila se actualizará para permitir la subida del documento firmado.' });
 
         // Actualizar la data de la fila en DataTables
         const row = table.row(btn.closest('tr'));
@@ -306,7 +322,7 @@ function setupEventHandlers() {
     $('#confirmReject').on('click', function () {
         const motivo = $('#reject-motivo').val();
         if (motivo.length < 10) {
-            toastr.error('El motivo debe tener al menos 10 caracteres');
+            Toast.fire({ icon: 'error', title: 'El motivo debe tener al menos 10 caracteres' });
             return;
         }
         rejectPostulacion(currentPostulacionId, motivo);
@@ -316,7 +332,7 @@ function setupEventHandlers() {
     $('#confirmObserve').on('click', function () {
         const observaciones = $('#observe-observaciones').val();
         if (observaciones.length < 10) {
-            toastr.error('Las observaciones deben tener al menos 10 caracteres');
+            Toast.fire({ icon: 'error', title: 'Las observaciones deben tener al menos 10 caracteres' });
             return;
         }
         observePostulacion(currentPostulacionId, observaciones);
@@ -414,7 +430,7 @@ function setupEventHandlers() {
         const postulacionId = $('#postulacion-id-admin-upload').val();
 
         if (!formData.get('documento_constancia_admin').name) {
-            toastr.error('Debe seleccionar un archivo');
+            Toast.fire({ icon: 'error', title: 'Debe seleccionar un archivo' });
             return;
         }
 
@@ -426,16 +442,16 @@ function setupEventHandlers() {
             contentType: false,
             success: function (response) {
                 if (response.success) {
-                    toastr.success(response.message);
+                    Toast.fire({ icon: 'success', title: response.message });
                     $('#uploadConstanciaAdminModal').modal('hide');
                     table.ajax.reload();
                 } else {
-                    toastr.error(response.message || 'Error al subir la constancia');
+                    Toast.fire({ icon: 'error', title: response.message || 'Error al subir la constancia' });
                 }
             },
             error: function (xhr) {
                 const errorMsg = xhr.responseJSON?.message || 'Error al subir la constancia';
-                toastr.error(errorMsg);
+                Toast.fire({ icon: 'error', title: errorMsg });
             }
         });
     });
@@ -607,7 +623,7 @@ function viewPostulacion(id) {
             }
         },
         error: function (xhr) {
-            toastr.error('Error al cargar el detalle de la postulación');
+            Toast.fire({ icon: 'error', title: 'Error al cargar el detalle de la postulación' });
         }
     });
 }
@@ -619,12 +635,12 @@ function verifyDocuments(id, verified) {
         data: { verificado: verified },
         success: function (response) {
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 table.ajax.reload();
             }
         },
         error: function (xhr) {
-            toastr.error('Error al verificar documentos');
+            Toast.fire({ icon: 'error', title: 'Error al verificar documentos' });
         }
     });
 }
@@ -636,12 +652,12 @@ function verifyPayment(id, verified) {
         data: { verificado: verified },
         success: function (response) {
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 table.ajax.reload();
             }
         },
         error: function (xhr) {
-            toastr.error('Error al verificar pago');
+            Toast.fire({ icon: 'error', title: 'Error al verificar pago' });
         }
     });
 }
@@ -653,7 +669,7 @@ function rejectPostulacion(id, motivo) {
         data: { motivo: motivo },
         success: function (response) {
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 $('#rejectModal').modal('hide');
                 table.ajax.reload();
             }
@@ -662,10 +678,10 @@ function rejectPostulacion(id, motivo) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
-                    toastr.error(errors[key][0]);
+                    Toast.fire({ icon: 'error', title: errors[key][0] });
                 }
             } else {
-                toastr.error('Error al rechazar la postulación');
+                Toast.fire({ icon: 'error', title: 'Error al rechazar la postulación' });
             }
         }
     });
@@ -678,7 +694,7 @@ function observePostulacion(id, observaciones) {
         data: { observaciones: observaciones },
         success: function (response) {
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 $('#observeModal').modal('hide');
                 table.ajax.reload();
             }
@@ -687,10 +703,10 @@ function observePostulacion(id, observaciones) {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
-                    toastr.error(errors[key][0]);
+                    Toast.fire({ icon: 'error', title: errors[key][0] });
                 }
             } else {
-                toastr.error('Error al observar la postulación');
+                Toast.fire({ icon: 'error', title: 'Error al observar la postulación' });
             }
         }
     });
@@ -702,13 +718,13 @@ function deletePostulacion(id) {
         type: 'DELETE',
         success: function (response) {
             if (response.success) {
-                toastr.success(response.message);
+                Toast.fire({ icon: 'success', title: response.message });
                 $('#deleteModal').modal('hide');
                 table.ajax.reload();
             }
         },
         error: function (xhr) {
-            toastr.error('Error al eliminar la postulación');
+            Toast.fire({ icon: 'error', title: 'Error al eliminar la postulación' });
         }
     });
 }
@@ -729,7 +745,7 @@ function loadStatistics() {
         },
         error: function (xhr) {
             console.error('Error al cargar estadísticas:', xhr.responseText);
-            toastr.error('No se pudieron cargar las estadísticas.');
+            Toast.fire({ icon: 'error', title: 'No se pudieron cargar las estadísticas.' });
         }
     });
 }
@@ -812,7 +828,7 @@ function loadDocumentsForEdit(id) {
             }
         },
         error: function (xhr) {
-            toastr.error('Error al cargar los documentos');
+            Toast.fire({ icon: 'error', title: 'Error al cargar los documentos' });
         }
     });
 }
@@ -839,7 +855,7 @@ function saveDocumentChanges() {
     });
 
     if (!hasFiles) {
-        toastr.warning('No ha seleccionado ningún archivo para actualizar');
+        Toast.fire({ icon: 'warning', title: 'No ha seleccionado ningún archivo para actualizar' });
         return;
     }
 
@@ -856,7 +872,7 @@ function saveDocumentChanges() {
         contentType: false,
         success: function (response) {
             if (response.success) {
-                toastr.success('Documentos actualizados correctamente');
+                Toast.fire({ icon: 'success', title: 'Documentos actualizados correctamente' });
                 $('#editDocumentsModal').modal('hide');
 
                 // Recargar el modal de detalle si está abierto
@@ -867,7 +883,7 @@ function saveDocumentChanges() {
                 // Recargar la tabla
                 table.ajax.reload();
             } else {
-                toastr.error(response.message || 'Error al actualizar los documentos');
+                Toast.fire({ icon: 'error', title: response.message || 'Error al actualizar los documentos' });
             }
 
             // Restaurar botón
@@ -880,13 +896,13 @@ function saveDocumentChanges() {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
-                    toastr.error(errors[key][0]);
+                    Toast.fire({ icon: 'error', title: errors[key][0] });
                 }
             } else if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
-                toastr.error(errorMsg);
+                Toast.fire({ icon: 'error', title: errorMsg });
             } else {
-                toastr.error(errorMsg);
+                Toast.fire({ icon: 'error', title: errorMsg });
             }
 
             // Restaurar botón
@@ -957,7 +973,7 @@ function loadApprovedPostulationForEdit(id) {
                 }
             },
             error: function (xhr) {
-                toastr.error('Error al cargar los datos de la postulación');
+                Toast.fire({ icon: 'error', title: 'Error al cargar los datos de la postulación' });
                 $('#editApprovedModal').modal('hide');
             }
         });
@@ -1120,7 +1136,7 @@ function saveApprovedPostulationChanges() {
 
     // Validar observación
     if (!formData.observacion_cambio || formData.observacion_cambio.length < 10) {
-        toastr.error('Debe explicar el motivo de la modificación (mínimo 10 caracteres)');
+        Toast.fire({ icon: 'error', title: 'Debe explicar el motivo de la modificación (mínimo 10 caracteres)' });
         return;
     }
 
@@ -1135,16 +1151,16 @@ function saveApprovedPostulationChanges() {
         data: formData,
         success: function (response) {
             if (response.success) {
-                toastr.success('Postulación actualizada correctamente');
+                Toast.fire({ icon: 'success', title: 'Postulación actualizada correctamente' });
 
                 if (response.message) {
-                    toastr.info(response.message);
+                    Toast.fire({ icon: 'info', title: response.message });
                 }
 
                 $('#editApprovedModal').modal('hide');
                 table.ajax.reload();
             } else {
-                toastr.error(response.message || 'Error al actualizar la postulación');
+                Toast.fire({ icon: 'error', title: response.message || 'Error al actualizar la postulación' });
             }
 
             // Restaurar botón
@@ -1155,10 +1171,10 @@ function saveApprovedPostulationChanges() {
             if (xhr.status === 422) {
                 const errors = xhr.responseJSON.errors;
                 for (let key in errors) {
-                    toastr.error(errors[key][0]);
+                    Toast.fire({ icon: 'error', title: errors[key][0] });
                 }
             } else {
-                toastr.error('Error al actualizar la postulación');
+                Toast.fire({ icon: 'error', title: 'Error al actualizar la postulación' });
             }
 
             // Restaurar botón
