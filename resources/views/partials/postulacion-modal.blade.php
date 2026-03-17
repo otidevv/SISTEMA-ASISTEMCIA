@@ -25,7 +25,7 @@
     .modal-content {
         background-color: #fefefe;
         margin: 3% auto; 
-        padding: 30px;
+        padding: 0; /* Padding movido a la columna interna */
         border: none;
         border-radius: 15px; /* Bordes más suaves */
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
@@ -146,7 +146,7 @@
         }
         .modal-content {
             margin: 2% auto;
-            padding: 20px;
+            padding: 0;
             width: 98% !important;
             max-width: 98% !important;
             max-height: 96vh;
@@ -201,7 +201,7 @@
     /* Estilos para pantallas muy pequeñas */
     @media (max-width: 480px) {
         .modal-content {
-            padding: 15px;
+            padding: 0;
             max-height: 98vh;
         }
         .step-item span {
@@ -250,13 +250,27 @@
 
 <!-- Modal de Postulación -->
 <div id="postulacionModal" class="modal">
-    <div class="modal-content" style="max-width: 900px; width: 95%;">
-        <span class="close-button" onclick="closeModal('postulacionModal')" style="position: absolute; top: 15px; right: 25px; font-size: 24px; color: #6b7280; cursor: pointer;">&times;</span>
-        <h3 style="color: var(--color-secundario); margin-bottom: 30px; text-align: center; font-weight: 800;">
-            <!-- RUTA ACTUALIZADA CON asset() Y onerror -->
-            <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/8bc34a/ffffff?text=CEPRE+UNAMAD';" alt="CEPRE UNAMAD" style="height: 40px; margin-right: 10px; vertical-align: middle;">
-            Postulación CEPRE UNAMAD
-        </h3>
+    <div class="modal-content" style="max-width: 1200px; width: 95%;">
+        <div class="row g-0">
+            <!-- Sección de Flyers (Carrusel oculto en pantallas pequeñas) -->
+            <div class="col-lg-5 d-none d-lg-block" style="background-color: #0d1e34; position: relative;">
+                <div id="flayerCarousel" class="carousel slide carousel-fade h-100" data-bs-ride="carousel" data-bs-interval="4000">
+                    <div class="carousel-inner h-100">
+                        <div class="carousel-item active h-100" style="background-image: url('{{ asset('assets_cepre/img/flayer_reforzamiento.jpg') }}'); background-size: contain; background-repeat: no-repeat; background-position: center;">
+                        </div>
+                        <div class="carousel-item h-100" style="background-image: url('{{ asset('assets_cepre/img/flyer_reforzamiento2.jpg') }}'); background-size: contain; background-repeat: no-repeat; background-position: center;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección del Formulario -->
+            <div class="col-lg-7 p-4 p-md-5 position-relative">
+                <span class="close-button" onclick="closeModal('postulacionModal')" style="position: absolute; top: 15px; right: 25px; font-size: 32px; color: #6b7280; cursor: pointer; z-index: 10;">&times;</span>
+                <h3 style="color: var(--color-secundario); margin-bottom: 30px; text-align: center; font-weight: 800;">
+                    <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}" onerror="this.onerror=null; this.src='https://placehold.co/150x60/8bc34a/ffffff?text=CEPRE+UNAMAD';" alt="CEPRE UNAMAD" style="height: 40px; margin-right: 10px; vertical-align: middle;">
+                    Postulación CEPRE UNAMAD
+                </h3>
 
         <!-- Wizard Steps -->
         <div class="wizard-progress">
@@ -663,5 +677,7 @@
                 <button type="button" class="btn btn-primary btn-next-prev" id="nextBtn" onclick="nextPrev(1)">Siguiente</button>
             </div>
         </form>
+            </div>
+        </div>
     </div>
 </div>
