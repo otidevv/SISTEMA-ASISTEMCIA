@@ -170,11 +170,28 @@ trait ProcessesTeacherSessions
 
         // Cálculo de pago
         $montoTotal = 0;
-        $pagoDocente = PagoDocente::where('docente_id', $docente->id)
-            ->whereDate('fecha_inicio', '<=', $currentDate)
-            ->whereDate('fecha_fin', '>=', $currentDate)
-            ->first();
-        
+        $pagoDocente = null;
+
+        // Priorizar pago asignado al ciclo del horario para soportar m�ltiples ciclos activos
+        if ($horario->ciclo_id) {
+            $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+                ->where('ciclo_id', $horario->ciclo_id)
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+        }
+
+        // Fallback por rango de fechas (compatibilidad con registros sin ciclo_id)
+        if (!$pagoDocente) {
+            $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+                ->whereDate('fecha_inicio', '<=', $currentDate)
+                ->where(function ($query) use ($currentDate) {
+                    $query->whereDate('fecha_fin', '>=', $currentDate)
+                          ->orWhereNull('fecha_fin');
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+        }
+
         if ($pagoDocente) {
             $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
         }

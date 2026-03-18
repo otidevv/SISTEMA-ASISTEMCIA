@@ -729,22 +729,32 @@ class DashboardController extends Controller
     /**
      * NUEVO: Método para obtener la tarifa del docente desde la base de datos
      */
-    private function obtenerTarifaDocente($docenteId, $cicloActivo = null)
+    private function obtenerTarifaDocente($docenteId, $cicloActivo = null, $fechaReferencia = null)
     {
+        $fechaReferencia = $fechaReferencia ? Carbon::parse($fechaReferencia) : Carbon::now();
+
         if (!$cicloActivo) {
             $cicloActivo = Ciclo::where('es_activo', true)->first();
         }
 
         if ($cicloActivo) {
-            // Buscar tarifa en la tabla pagos_docentes para el ciclo activo
+            // Priorizar tarifa asociada expl�citamente al ciclo
             $pagoDocente = PagoDocente::where('docente_id', $docenteId)
-                ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
-                ->where(function ($query) use ($cicloActivo) {
-                    $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
-                          ->orWhereNull('fecha_fin');
-                })
+                ->where('ciclo_id', $cicloActivo->id)
                 ->orderBy('fecha_inicio', 'desc')
                 ->first();
+
+            // Fallback por rango de fechas (compatibilidad con registros hist�ricos sin ciclo_id)
+            if (!$pagoDocente) {
+                $pagoDocente = PagoDocente::where('docente_id', $docenteId)
+                    ->whereDate('fecha_inicio', '<=', $fechaReferencia)
+                    ->where(function ($query) use ($fechaReferencia) {
+                        $query->whereDate('fecha_fin', '>=', $fechaReferencia)
+                              ->orWhereNull('fecha_fin');
+                    })
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
+            }
 
             if ($pagoDocente) {
                 return $pagoDocente->tarifa_por_hora;
@@ -1318,9 +1328,9 @@ class DashboardController extends Controller
                 $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
                 $horasTrabajadas = $minutosNetos / 60;
                 
-                // CORREGIDO: Usar tarifa desde base de datos
-                $cicloActivo = Ciclo::where('es_activo', true)->first();
-                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
+                // CORREGIDO: usar el ciclo del horario para evitar cruces cuando hay m�ltiples ciclos activos
+                $cicloTarifa = $horario->ciclo ?: Ciclo::where('es_activo', true)->first();
+                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloTarifa, $fechaSeleccionada);
                 $montoTotal = $horasTrabajadas * $tarifaHora;
             } else {
                  return response()->json([
