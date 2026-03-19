@@ -21,23 +21,20 @@ class Postulacion extends Model
         'turno_id',
         'tipo_inscripcion',
         'centro_educativo_id',
-        'anio_egreso',  // Año de egreso del colegio
-        // Documentos - campos actualizados según las migraciones
-        'voucher_path',  // Cambiado de voucher_pago_path
+        'anio_egreso',
+        'voucher_path',
         'certificado_estudios_path',
         'carta_compromiso_path',
         'constancia_estudios_path',
         'dni_path',
-        'foto_path',  // Cambiado de foto_carnet_path
-        'constancia_firmada_path',  // Agregado
+        'foto_path',
+        'constancia_firmada_path',
         'documento_constancia',
-        // Datos del voucher
         'numero_recibo',
         'fecha_emision_voucher',
         'monto_matricula',
         'monto_ensenanza',
         'monto_total_pagado',
-        // Estados
         'documentos_verificados',
         'pago_verificado',
         'estado',
@@ -45,14 +42,13 @@ class Postulacion extends Model
         'motivo_rechazo',
         'constancia_generada',
         'constancia_firmada',
-        // Auditoría
         'revisado_por',
         'fecha_revision',
         'fecha_postulacion',
         'fecha_constancia_generada',
         'fecha_constancia_subida',
-        'actualizado_por',  // Agregado
-        'fecha_actualizacion'  // Agregado
+        'actualizado_por',
+        'fecha_actualizacion'
     ];
 
     protected $casts = [
@@ -60,7 +56,7 @@ class Postulacion extends Model
         'fecha_revision' => 'datetime',
         'fecha_constancia_generada' => 'datetime',
         'fecha_constancia_subida' => 'datetime',
-        'fecha_actualizacion' => 'datetime',  // Agregado
+        'fecha_actualizacion' => 'datetime',
         'fecha_emision_voucher' => 'date',
         'monto_matricula' => 'decimal:2',
         'monto_ensenanza' => 'decimal:2',
@@ -150,18 +146,9 @@ class Postulacion extends Model
         if (!$ciclo) {
             throw new \Exception('Ciclo no encontrado');
         }
-        
-        // Obtener el correlativo inicial del ciclo (por defecto 1)
         $correlativoInicial = $ciclo->correlativo_inicial ?? 1;
-        
-        // Contar cuántas postulaciones hay para este ciclo
         $cantidadPostulaciones = self::where('ciclo_id', $cicloId)->count();
-        
-        // El nuevo código será el correlativo inicial + cantidad de postulaciones existentes + 1
-        // Si no hay postulaciones, será correlativo_inicial + 1
-        // Si hay 1 postulación, será correlativo_inicial + 2, etc.
         $nuevoCorrelativo = $correlativoInicial + $cantidadPostulaciones + 1;
-        
         return (string) $nuevoCorrelativo;
     }
 
@@ -191,5 +178,60 @@ class Postulacion extends Model
         $this->fecha_revision = now();
         $this->observaciones = $observaciones;
         $this->save();
+    }
+
+    /**
+     * Accesor para calcular el paso actual del flujo (1-5)
+     */
+    public function getPasoActualAttribute()
+    {
+        // Paso 5: Biometría
+        if ($this->estudiante && ($this->estudiante->has_fingerprint || $this->estudiante->has_face)) {
+            return 5;
+        }
+
+        // Paso 4: Carnetización
+        $tieneCarnet = \DB::table('carnets')
+            ->where('estudiante_id', $this->estudiante_id)
+            ->where('ciclo_id', $this->ciclo_id)
+            ->exists();
+        if ($tieneCarnet) {
+            return 4;
+        }
+
+        // Paso 3: Firma
+        if ($this->constancia_firmada || !empty($this->constancia_firmada_path)) {
+            return 3;
+        }
+
+        // Paso 2: Registro Web (Aprobado/Constancia Gen)
+        if ($this->estado === 'aprobado' || $this->constancia_generada) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    /**
+     * Accesor para obtener el mensaje informativo según el paso
+     */
+    public function getMensajePasoAttribute()
+    {
+        switch ($this->paso_actual) {
+            case 1:
+                return ($this->estado === 'observado') 
+                    ? "Tu postulación tiene observaciones. Por favor, revisa y subsana los requisitos."
+                    : "Estamos revisando tus requisitos (DNI, Certificados, Pago, etc.). Te avisaremos para que vengas a firmar.";
+            case 2:
+                return "¡Requisitos validados! Por favor, acércate a la oficina central para la firma física de tu constancia.";
+            case 3:
+                return "Tu firma ha sido validada con éxito. Estamos procesando la emisión de tu carnet.";
+            case 4:
+                return "Tu carnet ha sido impreso. Acércate a recogerlo y finaliza con tu registro biométrico.";
+            case 5:
+                return "¡Enrolamiento completado con éxito! Bienvenido(a) a la familia CEPRE UNAMAD.";
+            default:
+                return "Procesando...";
+        }
     }
 }

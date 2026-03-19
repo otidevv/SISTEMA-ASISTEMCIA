@@ -301,6 +301,145 @@
             transform: translateY(-2px);
         }
 
+        /* --- NUEVO: ESTILOS PARA LA LÍNEA DE VIDA (PROGRESS TRACKER) --- */
+        .workflow-tracker {
+            margin-top: -1rem;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 2;
+            padding: 0 1rem;
+        }
+
+        .stepper-wrapper {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 2rem;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stepper-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 5%;
+            width: 90%;
+            height: 6px;
+            background: #e0e0e0;
+            z-index: 1;
+            border-radius: 10px;
+        }
+
+        .stepper-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .step-counter {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 5px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #9e9e9e;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .stepper-item.completed .step-counter {
+            background: var(--cepre-green);
+            border-color: #ffffff;
+            color: white;
+            box-shadow: 0 0 20px rgba(139, 195, 74, 0.5);
+        }
+
+        .stepper-item.active .step-counter {
+            background: white;
+            border-color: var(--cepre-navy);
+            color: var(--cepre-navy);
+            transform: scale(1.2);
+            box-shadow: 0 0 25px rgba(26, 35, 126, 0.4);
+        }
+
+        .step-name {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-align: center;
+            max-width: 120px;
+        }
+
+        .stepper-item.completed .step-name {
+            color: var(--cepre-green);
+        }
+
+        .stepper-item.active .step-name {
+            color: var(--cepre-navy);
+            font-size: 0.9rem;
+        }
+
+        .workflow-message-box {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 20px;
+            border-left: 6px solid var(--cepre-navy);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            animation: slideInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .workflow-message-box i {
+            font-size: 2.5rem;
+            color: var(--cepre-navy);
+            background: rgba(26, 35, 126, 0.1);
+            padding: 1rem;
+            border-radius: 15px;
+        }
+
+        .workflow-message-box .msg-content h5 {
+            margin: 0 0 0.3rem 0;
+            font-weight: 800;
+            color: var(--cepre-navy);
+            font-size: 1.2rem;
+        }
+
+        .workflow-message-box .msg-content p {
+            margin: 0;
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: #546e7a;
+        }
+
+        .progress-bar-fill {
+            position: absolute;
+            top: 25px;
+            left: 5%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--cepre-green), var(--cepre-cyan));
+            z-index: 1;
+            transition: width 1s ease-in-out;
+            border-radius: 10px;
+        }
+
         .dashboard-estudiante-container .form-label {
             font-weight: 700;
             color: var(--cepre-navy);
@@ -658,6 +797,53 @@
                     </div>
                 </div>
             </div>
+
+            @if(isset($postulacionActual))
+                <div class="workflow-tracker" data-aos="fade-up">
+                    <div class="stepper-wrapper">
+                        <div class="progress-bar-fill" style="width: {{ ($postulacionActual->paso_actual - 1) * 25 }}%;"></div>
+                        
+                        <div class="stepper-item {{ $postulacionActual->paso_actual >= 1 ? ($postulacionActual->paso_actual > 1 ? 'completed' : 'active') : '' }}">
+                            <div class="step-counter">
+                                @if($postulacionActual->paso_actual > 1) <i class="mdi mdi-check"></i> @else <i class="mdi mdi-map-marker-radius"></i> @endif
+                            </div>
+                            <div class="step-name">Orientación</div>
+                        </div>
+                        <div class="stepper-item {{ $postulacionActual->paso_actual >= 2 ? ($postulacionActual->paso_actual > 2 ? 'completed' : 'active') : '' }}">
+                            <div class="step-counter">
+                                @if($postulacionActual->paso_actual > 2) <i class="mdi mdi-check"></i> @else <i class="mdi mdi-file-document-edit"></i> @endif
+                            </div>
+                            <div class="step-name">Registro Web</div>
+                        </div>
+                        <div class="stepper-item {{ $postulacionActual->paso_actual >= 3 ? ($postulacionActual->paso_actual > 3 ? 'completed' : 'active') : '' }}">
+                            <div class="step-counter">
+                                @if($postulacionActual->paso_actual > 3) <i class="mdi mdi-check"></i> @else <i class="mdi mdi-draw"></i> @endif
+                            </div>
+                            <div class="step-name">Firma y Validación</div>
+                        </div>
+                        <div class="stepper-item {{ $postulacionActual->paso_actual >= 4 ? ($postulacionActual->paso_actual > 4 ? 'completed' : 'active') : '' }}">
+                            <div class="step-counter">
+                                @if($postulacionActual->paso_actual > 4) <i class="mdi mdi-check"></i> @else <i class="mdi mdi-card-account-details"></i> @endif
+                            </div>
+                            <div class="step-name">Carnetización</div>
+                        </div>
+                        <div class="stepper-item {{ $postulacionActual->paso_actual >= 5 ? 'active' : '' }}">
+                            <div class="step-counter">
+                                @if($postulacionActual->paso_actual == 5) <i class="mdi mdi-check-decagram"></i> @else <i class="mdi mdi-fingerprint"></i> @endif
+                            </div>
+                            <div class="step-name">Biometría</div>
+                        </div>
+                    </div>
+
+                    <div class="workflow-message-box">
+                        <i class="mdi {{ $postulacionActual->paso_actual == 5 ? 'mdi-check-decagram text-success' : 'mdi-information-outline' }}"></i>
+                        <div class="msg-content">
+                            <h5>Estado de Proceso: Etapa {{ $postulacionActual->paso_actual }} de 5</h5>
+                            <p>{{ $postulacionActual->mensaje_paso }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="row mb-4">
                 <div class="col-12">

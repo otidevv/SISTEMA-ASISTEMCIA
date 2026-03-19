@@ -612,6 +612,30 @@ class PostulacionController extends Controller
             </button>';
         }
 
+        // NUEVO: Generar Constancia (Paso 2) - Solo si no se ha subido la firmada
+        if ($postulacion->estado == 'aprobado' && !$postulacion->constancia_firmada && empty($postulacion->constancia_firmada_path)) {
+            $actions[] = '<button class="btn btn-sm btn-info generate-constancia" data-id="' . $postulacion->id . '" title="Generar Constancia">
+                <i class="uil uil-file-download-alt"></i>
+            </button>';
+        }
+
+        // NUEVO: Subir Constancia Firmada (Admin - Paso 3) - Solo si no se ha subido aún
+        if ($postulacion->estado == 'aprobado' && 
+            $user->hasPermission('postulaciones.subir-constancia-admin') && 
+            !$postulacion->constancia_firmada && 
+            empty($postulacion->constancia_firmada_path)) {
+            $actions[] = '<button class="btn btn-sm btn-secondary upload-constancia-admin" data-id="' . $postulacion->id . '" title="Subir Constancia Firmada">
+                <i class="uil uil-cloud-upload"></i>
+            </button>';
+        }
+
+        // NUEVO: Ver Constancia Firmada - Solo si ya se subió
+        if (($postulacion->constancia_firmada || !empty($postulacion->constancia_firmada_path))) {
+            $actions[] = '<a href="/postulacion/constancia/ver/' . $postulacion->id . '" target="_blank" class="btn btn-sm btn-success" title="Ver Constancia Firmada">
+                <i class="uil uil-eye"></i>
+            </a>';
+        }
+
         // Eliminar
         if ($user->hasPermission('postulaciones.delete')) {
             $actions[] = '<button class="btn btn-sm btn-danger delete-postulacion" data-id="' . $postulacion->id . '" title="Eliminar">

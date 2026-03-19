@@ -106,16 +106,20 @@
         }
         
         /* Estilos para encabezados de modal (mantenidos de Bootstrap con colores CEPRE) */
-        .modal-header.cepre-bg-gradient {
-            background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%) !important;
-        }
-        .modal-header.cepre-bg-navy {
+        .modal-header.cepre-bg-navy,
+        .modal-header.cepre-bg-navy .modal-title {
             background-color: var(--cepre-navy) !important;
-            color: white;
+            color: white !important;
         }
-        .modal-header.cepre-bg-cyan {
+        .modal-header.cepre-bg-cyan,
+        .modal-header.cepre-bg-cyan .modal-title {
             background-color: var(--cepre-cyan) !important;
-            color: white;
+            color: white !important;
+        }
+        .modal-header.cepre-bg-gradient,
+        .modal-header.cepre-bg-gradient .modal-title {
+            background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%) !important;
+            color: white !important;
         }
         
         /* Íconos de las Tarjetas de Estadísticas */

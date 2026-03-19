@@ -82,7 +82,9 @@ function initDataTable() {
                 data: 'tipo_inscripcion',
                 name: 'tipo_inscripcion',
                 render: function (data) {
-                    return data === 'postulante' ?
+                    if (!data) return '<span class="badge bg-secondary">N/A</span>';
+                    const tipo = data.toString().toLowerCase().trim();
+                    return tipo === 'postulante' ?
                         '<span class="badge bg-primary">Postulante</span>' :
                         '<span class="badge bg-info">Reforzamiento</span>';
                 }
@@ -520,7 +522,9 @@ function viewPostulacion(id) {
                 html += '<tr><td><strong>Ciclo:</strong></td><td>' + postulacion.ciclo.nombre + '</td></tr>';
                 html += '<tr><td><strong>Carrera:</strong></td><td>' + postulacion.carrera.nombre + '</td></tr>';
                 html += '<tr><td><strong>Turno:</strong></td><td>' + postulacion.turno.nombre + '</td></tr>';
-                html += '<tr><td><strong>Tipo:</strong></td><td>' + postulacion.tipo_inscripcion + '</td></tr>';
+                const tipoLabel = postulacion.tipo_inscripcion ? 
+                    (postulacion.tipo_inscripcion.toString().toLowerCase().trim() === 'postulante' ? 'Postulante' : 'Reforzamiento') : 'N/A';
+                html += '<tr><td><strong>Tipo:</strong></td><td>' + tipoLabel + '</td></tr>';
                 html += '<tr><td><strong>Estado:</strong></td><td><span class="badge badge-estado-' +
                     postulacion.estado + '"> ' + postulacion.estado.toUpperCase() + '</span></td></tr>';
                 // Mostrar aula si la postulación está aprobada y hay inscripción

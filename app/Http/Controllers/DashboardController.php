@@ -223,6 +223,7 @@ class DashboardController extends Controller
                 // Verificar si la constancia firmada fue realmente subida
                 if ($postulacion) {
                     $constanciaSubida = !empty($postulacion->constancia_firmada_path);
+                    $data['postulacionActual'] = $postulacion; // AGREGADO
                 }
             }
             
@@ -398,9 +399,9 @@ class DashboardController extends Controller
                 $horasProgramadas = 0;
                 
                 foreach ($horariosDelDiaConDetalles as $item) {
-                    $horasProgramadas += $item['duracion_programada'] / 60;
-                    if ($item['duracion_real']) {
-                        $horasReales += $item['duracion_real'] / 60;
+                    $horasProgramadas += data_get($item, 'duracion_programada', 0) / 60;
+                    if (data_get($item, 'duracion_real')) {
+                        $horasReales += data_get($item, 'duracion_real') / 60;
                     }
                 }
                 
@@ -471,7 +472,7 @@ class DashboardController extends Controller
                 $sesionesAgrupadasPorCurso = [];
                 
                 foreach ($horariosDelDiaConDetalles as $item) {
-                    $horario = $item['horario'];
+                    $horario = data_get($item, 'horario');
                     $curso = $horario->curso;
                     
                     if (!$curso) {
@@ -504,18 +505,18 @@ class DashboardController extends Controller
                     // Actualizar estadísticas
                     $stats = &$sesionesAgrupadasPorCurso[$cursoId]['estadisticas'];
                     $stats['total_sesiones']++;
-                    $stats['total_horas_programadas'] += $item['duracion_programada'] / 60;
-                    $stats['total_horas_reales'] += $item['duracion_real'] / 60;
+                    $stats['total_horas_programadas'] += data_get($item, 'duracion_programada', 0) / 60;
+                    $stats['total_horas_reales'] += data_get($item, 'duracion_real', 0) / 60;
                     
                     // Determinar estado de la sesión para estadísticas
-                    if ($item['asistencia'] && $item['asistencia']->tema_desarrollado) {
+                    if (data_get($item, 'asistencia') && data_get($item, 'asistencia')->tema_desarrollado) {
                         $stats['completadas']++;
-                    } elseif ($item['dentro_horario']) {
+                    } elseif (data_get($item, 'dentro_horario')) {
                         $stats['en_curso']++;
-                    } elseif ($item['clase_terminada'] && $item['tiene_registros']) {
+                    } elseif (data_get($item, 'clase_terminada') && data_get($item, 'tiene_registros')) {
                         $stats['pendientes']++;
                         $stats['temas_pendientes']++;
-                    } elseif ($item['clase_terminada'] && !$item['tiene_registros']) {
+                    } elseif (data_get($item, 'clase_terminada') && !data_get($item, 'tiene_registros')) {
                         $stats['sin_registro']++;
                     }
                 }
