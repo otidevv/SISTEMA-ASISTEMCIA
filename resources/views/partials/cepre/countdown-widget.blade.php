@@ -121,14 +121,21 @@
         initTimer('timer-examen', 'var(--cyan-acento)');
         initTimer('timer-ciclo', 'var(--magenta-unamad)');
 
-        // Cerrar automáticamente en móviles al cargar
+        // Lógica de estado inicial según dispositivo
+        const panel = document.getElementById('bubble-panel');
+        const reopen = document.getElementById('bubble-reopen');
+        
         if (window.innerWidth <= 768) {
-            const panel = document.getElementById('bubble-panel');
-            const reopen = document.getElementById('bubble-reopen');
-            if (panel && reopen) {
-                panel.style.display = 'none';
-                reopen.style.display = 'flex';
+            // En móviles: Iniciar con la burbuja (cerrado)
+            if (panel) panel.style.display = 'none';
+            if (reopen) reopen.style.display = 'flex';
+        } else {
+            // En computadoras: Iniciar con el panel (abierto)
+            if (panel) {
+                panel.style.display = 'flex';
+                panel.style.flexDirection = 'column';
             }
+            if (reopen) reopen.style.display = 'none';
         }
     });
 </script>
