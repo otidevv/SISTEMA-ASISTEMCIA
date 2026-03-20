@@ -194,6 +194,9 @@
     </div>
     <!-- END wrapper -->
 
+    @include('partials.chatbot')
+    @vite(['resources/js/assistant/chatbot.js', 'resources/css/assistant/chatbot.css'])
+
     <!-- Theme Settings -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="theme-settings-offcanvas" style="width: 260px;">
         <div class="px-3 m-0 py-2 text-uppercase bg-light offcanvas-header">

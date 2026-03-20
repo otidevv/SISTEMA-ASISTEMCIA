@@ -32,7 +32,9 @@ export default defineConfig({
                 'resources/js/postulaciones/unificado.js',
                 'resources/js/postulaciones/wizard.js',
                 'resources/js/horarios-grid.js',
-                'resources/css/modal-fixes.css'
+                'resources/css/modal-fixes.css',
+                'resources/js/assistant/chatbot.js',
+                'resources/css/assistant/chatbot.css'
             ],
             refresh: true,
         }),

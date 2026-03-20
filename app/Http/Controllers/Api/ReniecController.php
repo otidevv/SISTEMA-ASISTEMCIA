@@ -126,52 +126,49 @@ class ReniecController extends Controller
         ]);
 
         $resultados = [];
-        
-        foreach ($request->dnis as $tipo => $dni) {
-            try {
-                // Verificar caché
-                $cacheKey = 'reniec_dni_' . $dni;
-                $datosCache = Cache::get($cacheKey);
-                
-                if ($datosCache) {
-                    $resultados[$tipo] = [
-                        'success' => true,
-                        'data' => $datosCache
-                    ];
-                    continue;
-                }
+        $dnisParaConsultar = [];
 
-                // Consultar API
-                $response = Http::timeout(10)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
-                
-                if ($response->successful()) {
+        // 1. Revisar Caché primero y separar los que necesitan consulta
+        foreach ($request->dnis as $tipo => $dni) {
+            $cacheKey = 'reniec_dni_' . $dni;
+            $datosCache = Cache::get($cacheKey);
+            
+            if ($datosCache) {
+                $resultados[$tipo] = [
+                    'success' => true,
+                    'data' => $datosCache
+                ];
+            } else {
+                $dnisParaConsultar[$tipo] = $dni;
+            }
+        }
+
+        // 2. Consultar en paralelo los que no están en caché
+        if (!empty($dnisParaConsultar)) {
+            $responses = Http::pool(fn ($pool) => 
+                collect($dnisParaConsultar)->map(fn ($dni, $tipo) => 
+                    $pool->as($tipo)->timeout(5)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni)
+                )->toArray()
+            );
+
+            foreach ($dnisParaConsultar as $tipo => $dni) {
+                $response = $responses[$tipo] ?? null;
+
+                if ($response && $response->successful()) {
                     $datos = $response->json();
-                    
                     if (!empty($datos) && isset($datos['DNI'])) {
                         $datosFormateados = $this->formatearDatos($datos);
-                        Cache::put($cacheKey, $datosFormateados, 86400);
-                        
+                        Cache::put('reniec_dni_' . $dni, $datosFormateados, 86400);
                         $resultados[$tipo] = [
                             'success' => true,
                             'data' => $datosFormateados
                         ];
                     } else {
-                        $resultados[$tipo] = [
-                            'success' => false,
-                            'message' => 'DNI no encontrado'
-                        ];
+                        $resultados[$tipo] = ['success' => false, 'message' => 'DNI no encontrado'];
                     }
                 } else {
-                    $resultados[$tipo] = [
-                        'success' => false,
-                        'message' => 'Error en la consulta'
-                    ];
+                    $resultados[$tipo] = ['success' => false, 'message' => 'Servicio no disponible'];
                 }
-            } catch (\Exception $e) {
-                $resultados[$tipo] = [
-                    'success' => false,
-                    'message' => 'Error: ' . $e->getMessage()
-                ];
             }
         }
 

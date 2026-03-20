@@ -80,7 +80,7 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/status', [PostulationApiController::class, 'status']);
     });
 
-    // --- RENIEC ---
+    // --- RENIEC (Internal) ---
     Route::post('/reniec/consultar-multiple', [ReniecController::class, 'consultarMultiple']);
 
     // --- POSTULACIÓN UNIFICADA (AUXILIAR) ---
@@ -139,3 +139,20 @@ Route::get('/ultimos-registros', function (Request $request) {
 
 // Ruta interna para notificaciones (llamada por servicio Node.js)
 Route::post('/notificar-asistencia-docente', [MailNotificationController::class, 'notificarAsistenciaDocente']);
+// Rutas de Postulación Pública para App Móvil
+Route::prefix('public-postulation')->group(function () {
+    Route::get('/dependencies', [\App\Http\Controllers\Api\PostulanteRegisterApiController::class, 'getFormDependencies']);
+    Route::post('/register', [\App\Http\Controllers\Api\PostulanteRegisterApiController::class, 'registerAndPostulate']);
+    
+    // Ubigueo (Reutilizando lógica de PostulacionUnificada)
+    Route::get('/departamentos', [\App\Http\Controllers\PostulacionUnificadaController::class, 'getDepartamentos']);
+    Route::get('/provincias/{departamento}', [\App\Http\Controllers\PostulacionUnificadaController::class, 'getProvincias']);
+    Route::get('/distritos/{departamento}/{provincia}', [\App\Http\Controllers\PostulacionUnificadaController::class, 'getDistritos']);
+    Route::get('/buscar-colegios', [\App\Http\Controllers\PostulacionUnificadaController::class, 'buscarColegios']);
+    Route::get('/available-payments/{dni}', [\App\Http\Controllers\Api\PostulanteRegisterApiController::class, 'getAvailablePayments']);
+    Route::post('/validate-payment', [\App\Http\Controllers\Api\PostulanteRegisterApiController::class, 'validatePayment']);
+    Route::post('/verify-dni', [\App\Http\Controllers\Api\ReniecController::class, 'consultarMultiple']);
+});
+
+// --- CHATBOT ASSISTANT ---
+Route::get('/assistant/config', [App\Http\Controllers\Api\ChatbotApiController::class, 'getAssistantData']);

@@ -1,5 +1,5 @@
 @if(isset($proximoExamen) && $proximoExamen || isset($proximoCiclo) && $proximoCiclo)
-<div id="countdown-bubble" style="position:fixed; right:16px; bottom:80px; z-index:9998; display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+<div id="countdown-bubble" style="position:fixed; left:20px; right:auto; bottom:30px; z-index:9998; display:flex; flex-direction:column; align-items:flex-start; gap:6px;">
 
     <!-- Botón para re-abrir (solo visible cuando panel está cerrado) -->
     <button id="bubble-reopen" onclick="toggleCountdownBubble()"
@@ -75,7 +75,7 @@
     .tbox .n { font-size:17px; font-weight:900; color:white; line-height:1; }
     .tbox .l { font-size:8px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
     @media (max-width: 768px) {
-        #countdown-bubble { right:10px; bottom:72px; }
+        #countdown-bubble { right:auto; left:10px; bottom:30px; }
         #bubble-panel { width:200px; }
         .bubble-header { height:46px !important; }
         .bubble-avatar { display:none !important; }

@@ -18,13 +18,9 @@ class PaymentValidationService
     }
 
     /**
-     * Validate a payment voucher.
-     *
-     * @param string $dni The student's DNI (used to query the API).
-     * @param string $voucherCode The voucher sequence number to verify.
-     * @return array|null Returns payment data if valid, null otherwise.
+     * Validate a payment voucher. 
      */
-    public function validateVoucher($dni, $voucherCode)
+    public function validateVoucher($dni, $voucherCode, $onlyPostulation = false)
     {
         try {
             // Query API by DNI to get all payments with increased timeout
@@ -40,36 +36,71 @@ class PaymentValidationService
                     return null;
                 }
 
-                // Return all payments found for the DNI
-                $foundPayments = [];
+                $foundVouchers = [];
 
                 foreach ($payments as $voucher) {
-                    // Extract payment details (can be multiple items per voucher)
+                    $serial = $voucher['serial_voucher'] ?? '---';
+                    
+                    if (!isset($foundVouchers[$serial])) {
+                        $foundVouchers[$serial] = [
+                            'serial' => $serial,
+                            'monto_total' => 0,
+                            'monto_matricula' => 0,
+                            'monto_ensenanza' => 0,
+                            'fecha' => null,
+                            'lugar' => $voucher['payments'][0]['name'] ?? 'CEPRE',
+                            'items' => []
+                        ];
+                    }
+
                     if (isset($voucher['payments']) && is_array($voucher['payments'])) {
-                        foreach ($voucher['payments'] as $paymentDetail) {
-                            $foundPayments[] = [
-                                'serial' => $voucher['serial_voucher'] ?? '---',
-                                'monto' => number_format($paymentDetail['total'] ?? 0, 2),
-                                'fecha' => $paymentDetail['paymentDate'] ?? null,
-                                'concepto' => $paymentDetail['description'] ?? 'Pago CEPRE',
-                                'tipo' => $paymentDetail['type_user'] ?? '',
-                                'estado' => $paymentDetail['status'] ?? '',
-                                'lugar' => $paymentDetail['name'] ?? ''
+                        foreach ($voucher['payments'] as $detail) {
+                            $monto = (float)($detail['total'] ?? 0);
+                            $foundVouchers[$serial]['monto_total'] += $monto;
+                            $foundVouchers[$serial]['fecha'] = $detail['paymentDate'] ?? $foundVouchers[$serial]['fecha'];
+                            
+                            $desc = $detail['description'] ?? '';
+                            if (str_contains($desc, '582')) {
+                                $foundVouchers[$serial]['monto_matricula'] += $monto;
+                            } else if (str_contains($desc, '583')) {
+                                $foundVouchers[$serial]['monto_ensenanza'] += $monto;
+                            } else {
+                                // Cualquier otro concepto se suma a enseñanza o se puede manejar aparte
+                                $foundVouchers[$serial]['monto_ensenanza'] += $monto;
+                            }
+
+                            $foundVouchers[$serial]['items'][] = [
+                                'descripcion' => $desc,
+                                'monto' => number_format($monto, 2, '.', ''),
                             ];
                         }
                     }
                 }
 
-                // Sort by date descending
-                usort($foundPayments, function($a, $b) {
-                    return strtotime($b['fecha']) - strtotime($a['fecha']);
+                // Convertir a lista
+                $result = array_values($foundVouchers);
+                
+                // Filtrar para postulación solo si se solicita
+                if ($onlyPostulation) {
+                    $result = array_filter($result, function($v) {
+                        return (float)$v['monto_matricula'] > 0 || (float)$v['monto_ensenanza'] > 0;
+                    });
+                }
+
+                // Ordenar por fecha descendente (lo más reciente primero) siempre
+                usort($result, function($a, $b) {
+                    return strtotime($b['fecha'] ?? 0) - strtotime($a['fecha'] ?? 0);
                 });
 
-                if (!empty($foundPayments)) {
-                    return $foundPayments;
+                foreach ($result as &$v) {
+                    $v['monto_total'] = number_format($v['monto_total'], 2, '.', '');
+                    $v['monto_matricula'] = number_format($v['monto_matricula'], 2, '.', '');
+                    $v['monto_ensenanza'] = number_format($v['monto_ensenanza'], 2, '.', '');
                 }
-            }
 
+                return !empty($result) ? array_values($result) : null;
+            }
+ 
             Log::warning("No payments found for DNI: {$dni}");
             return null;
 

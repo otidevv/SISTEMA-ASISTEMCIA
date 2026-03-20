@@ -441,7 +441,8 @@ class DashboardController extends Controller
         try {
             $user = Auth::user();
             
-            if (!$user->hasRole('estudiante')) {
+            // Permitir tanto a estudiantes como a postulantes (que están en proceso)
+            if (!$user->hasRole('estudiante') && !$user->hasRole('postulante')) {
                 return response()->json(['error' => 'No autorizado'], 403);
             }
 
@@ -451,9 +452,17 @@ class DashboardController extends Controller
                 ->with(['ciclo', 'carrera', 'aula', 'turno'])
                 ->first();
 
+            $postulacion = null;
+            if (!$inscripcionActiva && $user->hasRole('postulante')) {
+                $postulacion = Postulacion::where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+
             $data = [
                 'inscripcionActiva' => $inscripcionActiva,
-                'infoAsistencia' => []
+                'postulacion' => $postulacion,
+                'infoAsistencia' => (object)[] // Aseguramos que sea un objeto en JSON
             ];
 
             if ($inscripcionActiva) {
