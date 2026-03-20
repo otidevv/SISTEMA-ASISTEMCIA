@@ -156,3 +156,4 @@ Route::prefix('public-postulation')->group(function () {
 
 // --- CHATBOT ASSISTANT ---
 Route::get('/assistant/config', [App\Http\Controllers\Api\ChatbotApiController::class, 'getAssistantData']);
+Route::post('/assistant/ask', [App\Http\Controllers\Api\ChatbotApiController::class, 'ask']);

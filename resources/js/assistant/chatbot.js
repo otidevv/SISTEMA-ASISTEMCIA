@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendBtn = document.getElementById('chatbot-send');
     const messagesContainer = document.getElementById('chatbot-messages');
     const bubblesContainer = document.getElementById('launcher-bubbles');
+    const maximizeBtn = document.getElementById('chatbot-maximize');
+    const statusOnline = chatWindow.querySelector('.status-online');
 
     // Configuration & Data (Enriched Knowledge Base)
     let data = {
@@ -241,13 +243,17 @@ ${d.contactos.redes}`
                     return val;
                 });
 
-                // Convert simple markdown-like bold to HTML
-                const htmlText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                             .replace(/\n/g, '<br>');
+                // Convert simple markdown to HTML
+                let htmlText = processedText
+                    .replace(/\!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width:100%; border-radius:8px; margin:10px 0; display:block; cursor:pointer;" onclick="window.open(\'$2\', \'_blank\')">')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--color-acento); text-decoration:underline; font-weight:bold;">$1</a>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+
                 typeHtml(content, htmlText, 8).then(resolve);
             } else {
                 msgElement.innerHTML = `
-                    <div>${text.replace(/\n/g, '<br>')}</div>
+                    <div class="user-content">${text.replace(/\n/g, '<br>')}</div>
                     <span class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 `;
                 messagesContainer.appendChild(msgElement);
@@ -277,58 +283,82 @@ ${d.contactos.redes}`
     }
 
     // Bot Responses (The Knowledge Engine)
-    function handleBotResponse(query) {
+    async function handleBotResponse(query) {
         const q = query.toLowerCase();
-        let bestIntent = null;
-        let highestScore = 0;
-
-        // 1. Check for Specific Career Focus (Improved Matching)
-        const careerFound = data.vacantes.find(v => {
-            const cName = v.c.toLowerCase();
-            // Match if query contains career name OR career name contains query words (e.g. "sistemas" in "Ingeniería de Sistemas")
-            return q.includes(cName) || cName.includes(q) || cName.split(' ').some(word => word.length > 4 && q.includes(word));
-        });
         
-        if (careerFound) {
-            let careerMsg = [];
-            
-            if (careerFound.img) {
-                careerMsg.push(`<div style="text-align:center; margin-bottom:10px;"><img src="${careerFound.img}" style="max-height:80px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"></div>`);
-            }
-            
-            careerMsg.push(`¡Claro! He buscado la información de **${careerFound.c}** para ti. 😊`);
-            careerMsg.push(`Para el ciclo **${data.ciclo.nombre}**, contamos con **${careerFound.v} vacantes** de ingreso directo.`);
-            
-            if (careerFound.desc) {
-                const cleanDesc = careerFound.desc.replace(/<[^>]*>?/gm, ''); // Remove any HTML tags from DB
-                careerMsg.push(`Breve reseña: *${cleanDesc.substring(0, 180)}...*`);
-            }
-            
-            careerMsg.push(`¿Te gustaría saber los requisitos de inscripción para asegurar tu plaza en **${careerFound.c}**? ✨`);
-            
-            sendBotBurst(careerMsg);
-            return;
-        }
+        // 1. Show typing indicator & Status Message
+        statusOnline.innerHTML = 'Escribiendo <span class="typing-dots"><span></span><span></span><span></span></span>';
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot typing-indicator-msg';
+        typingDiv.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+        messagesContainer.appendChild(typingDiv);
+        scrollToBottom();
 
-        // 2. Smart Intent Detection (Global)
-        intents.forEach(intent => {
-            let score = 0;
-            intent.keywords.forEach(keyword => {
-                if (q.includes(keyword)) score++;
+        // 2. Try Gemini AI via Backend
+        try {
+            const response = await fetch('/api/assistant/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({ message: query })
             });
-            if (score > highestScore) {
-                highestScore = score;
-                bestIntent = intent;
-            }
-        });
 
-        if (bestIntent && highestScore > 0) {
-            sendBotBurst([bestIntent.response(data)]);
-        } else {
-            sendBotBurst([
-                `¡Hola! 👋 Soy **Boni-Bot**, tu asistente virtual de la UNAMAD.`,
-                `Puedo ayudarte con Info del Ciclo, Costos, Vacantes por carrera o requisitos de inscripción.\n\n¿De qué carrera te gustaría recibir información hoy? ✨`
-            ]);
+            typingDiv.remove();
+
+            if (response.ok) {
+                statusOnline.innerHTML = 'En línea';
+                const data = await response.json();
+                await addMessage(data.response);
+                return;
+            }
+            throw new Error('AI API Error');
+
+        } catch (error) {
+            console.warn("Boni-Bot: Cayendo a lógica de palabras clave...", error);
+            statusOnline.innerHTML = 'En línea';
+            if (typingDiv) typingDiv.remove();
+
+            // FALLBACK: Original Keyword Matching Logic
+            let bestIntent = null;
+            let highestScore = 0;
+
+            // Specific Career Focus Match
+            const careerFound = data.vacantes.find(v => {
+                const cName = v.c.toLowerCase();
+                return q.includes(cName) || cName.includes(q) || cName.split(' ').some(word => word.length > 4 && q.includes(word));
+            });
+            
+            if (careerFound) {
+                let careerMsg = [];
+                if (careerFound.img) {
+                    careerMsg.push(`<div style="text-align:center; margin-bottom:10px;"><img src="${careerFound.img}" style="max-height:80px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"></div>`);
+                }
+                careerMsg.push(`¡Claro! He buscado la información de **${careerFound.c}** para ti. 😊`);
+                careerMsg.push(`Para el ciclo **${data.ciclo.nombre}**, contamos con **${careerFound.v} vacantes** de ingreso directo.`);
+                if (careerFound.desc) {
+                    careerMsg.push(`Breve reseña: *${careerFound.desc.substring(0, 180)}...*`);
+                }
+                careerMsg.push(`¿Te gustaría saber los requisitos de inscripción para asegurar tu plaza? ✨`);
+                sendBotBurst(careerMsg);
+                return;
+            }
+
+            intents.forEach(intent => {
+                let score = 0;
+                intent.keywords.forEach(keyword => { if (q.includes(keyword)) score++; });
+                if (score > highestScore) { highestScore = score; bestIntent = intent; }
+            });
+
+            if (bestIntent && highestScore > 0) {
+                sendBotBurst([bestIntent.response(data)]);
+            } else {
+                sendBotBurst([
+                    `¡Hola! 👋 Soy **Boni-Bot**, tu asistente virtual.`,
+                    `Parece que tengo problemas para conectar con mi cerebro principal, pero puedo ayudarte con Info del Ciclo, Costos o Requisitos. ✨`
+                ]);
+            }
         }
     }
 
@@ -338,7 +368,7 @@ ${d.contactos.redes}`
         document.getElementById('cepre-chatbot').classList.add('chat-open');
         if (messagesContainer.children.length === 0) {
             sendBotBurst([
-                "¡Hola! 👋 Soy **Boni-Bot**, tu asistente virtual de la UNAMAD.",
+                "¡Hola! Soy **Boni-Bot**, tu asistente del CEPRE UNAMAD. ¡Es un gusto saludarte! 😊",
                 "¿Deseas información sobre el nuevo ciclo **{ciclo.nombre}** o los requisitos de inscripción?"
             ]);
         }
@@ -346,7 +376,15 @@ ${d.contactos.redes}`
 
     closeBtn.addEventListener('click', () => {
         chatWindow.classList.add('hidden');
+        chatWindow.classList.remove('maximized'); // Reset size on close
         document.getElementById('cepre-chatbot').classList.remove('chat-open');
+    });
+
+    maximizeBtn.addEventListener('click', () => {
+        chatWindow.classList.toggle('maximized');
+        const isMax = chatWindow.classList.contains('maximized');
+        maximizeBtn.innerHTML = isMax ? '<i class="fas fa-compress-alt"></i>' : '<i class="fas fa-expand-alt"></i>';
+        maximizeBtn.title = isMax ? 'Restaurar' : 'Agrandar';
     });
 
     function sendMessage() {

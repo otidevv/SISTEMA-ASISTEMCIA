@@ -16,12 +16,19 @@
                 <div class="avatar-mini">
                     <img src="{{ asset('assets/images/asistente/asistente_virtual.svg') }}" alt="Bot">
                 </div>
-                <div>
+                <div class="bot-name-container">
                     <h5>Boni-Bot</h5>
                     <span class="status-online">En línea</span>
                 </div>
             </div>
-            <button id="chatbot-close" class="btn-close-chat">&times;</button>
+            <div class="header-actions">
+                <button id="chatbot-maximize" class="btn-action-chat" title="Agrandar">
+                    <i class="fas fa-expand-alt"></i>
+                </button>
+                <button id="chatbot-close" class="btn-action-chat close" title="Cerrar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
 
         <div id="chatbot-messages" class="chatbot-messages">
