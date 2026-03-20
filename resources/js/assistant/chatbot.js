@@ -423,26 +423,32 @@ ${d.contactos.redes}`
                 bubble.classList.remove('show');
                 break;
             }
+            
             const text = messages[currentIndex];
             bubble.classList.add('show');
-            await typeHtml(bubble, text, 35);
-            await new Promise(r => setTimeout(r, 4500));
+            
+            // Tipo de escritura más rápida + Cursor
+            bubble.innerHTML = '<span class="text-content"></span><span class="cursor"></span>';
+            const textSpan = bubble.querySelector('.text-content');
+            
+            for (let i = 0; i < text.length; i++) {
+                if (!chatWindow.classList.contains('hidden')) break;
+                textSpan.textContent += text.charAt(i);
+                await new Promise(r => setTimeout(r, 20)); // Más rápido
+            }
+
+            await new Promise(r => setTimeout(r, 3500)); // Esperar un poco
             if (!chatWindow.classList.contains('hidden')) break;
             
-            await new Promise(resolve => {
-                let interval = setInterval(() => {
-                    let content = bubble.innerText;
-                    if (content.length > 0) {
-                        bubble.innerText = content.substring(0, content.length - 1);
-                    } else {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 15);
-            });
+            // Borrado más rápido
+            while (textSpan.textContent.length > 0) {
+                if (!chatWindow.classList.contains('hidden')) break;
+                textSpan.textContent = textSpan.textContent.substring(0, textSpan.textContent.length - 1);
+                await new Promise(r => setTimeout(r, 10)); // Borrado veloz
+            }
 
             currentIndex = (currentIndex + 1) % messages.length;
-            await new Promise(r => setTimeout(r, 600));
+            await new Promise(r => setTimeout(r, 400));
         }
     }
 

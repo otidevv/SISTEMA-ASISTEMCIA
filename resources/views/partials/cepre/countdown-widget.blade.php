@@ -3,7 +3,7 @@
 
     <!-- Botón para re-abrir (solo visible cuando panel está cerrado) -->
     <button id="bubble-reopen" onclick="toggleCountdownBubble()"
-        style="display:none;border:none;background:none;cursor:pointer;padding:0;animation:bubble-pulse 2.5s infinite;border-radius:50%;width:65px;height:65px;">
+        style="display:flex;border:none;background:none;cursor:pointer;padding:0;animation:bubble-pulse 2.5s infinite;border-radius:50%;width:65px;height:65px;">
         <img src="{{ asset('assets_cepre/img/cronometro.png') }}" alt="Próximos Eventos"
              style="width:100%;height:100%;object-fit:contain;display:block;"
              onerror="this.parentElement.style.background='var(--magenta-unamad)';">
@@ -11,7 +11,7 @@
 
     <!-- Panel principal -->
     <div id="bubble-panel"
-        style="background:linear-gradient(160deg,#0f172a 0%,#020617 100%);backdrop-filter:blur(10px);border-radius:16px;overflow:hidden;width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;">
+        style="background:linear-gradient(160deg,#0f172a 0%,#020617 100%);backdrop-filter:blur(10px);border-radius:16px;overflow:hidden;width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:none;flex-direction:column;">
 
         <!-- Header: crono2.png como fondo CSS para no distorsionar -->
         <div class="bubble-header"
@@ -120,6 +120,16 @@
         }
         initTimer('timer-examen', 'var(--cyan-acento)');
         initTimer('timer-ciclo', 'var(--magenta-unamad)');
+
+        // Cerrar automáticamente en móviles al cargar
+        if (window.innerWidth <= 768) {
+            const panel = document.getElementById('bubble-panel');
+            const reopen = document.getElementById('bubble-reopen');
+            if (panel && reopen) {
+                panel.style.display = 'none';
+                reopen.style.display = 'flex';
+            }
+        }
     });
 </script>
 @endif
