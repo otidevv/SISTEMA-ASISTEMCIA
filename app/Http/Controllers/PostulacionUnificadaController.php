@@ -40,29 +40,33 @@ class PostulacionUnificadaController extends Controller
             return redirect()->route('dashboard')->with('info', 'Ya tienes una postulación en proceso para este ciclo');
         }
 
-        // Obtener carreras con vacantes disponibles
-        $carreras = CicloCarreraVacante::with('carrera')
-            ->where('ciclo_id', $cicloActivo->id)
-            ->where('estado', true)
-            ->where(function($query) {
-                $query->where('vacantes_total', 0) // Sin límite
-                      ->orWhereRaw('vacantes_total > (vacantes_ocupadas + vacantes_reservadas)'); // Con vacantes disponibles
-            })
-            ->get()
-            ->map(function($vacante) {
-                return [
-                    'id' => $vacante->carrera_id,
-                    'nombre' => $vacante->carrera->nombre,
-                    'codigo' => $vacante->carrera->codigo,
-                    'vacantes_disponibles' => $vacante->vacantes_total == 0 ? 
-                        'Sin límite' : $vacante->vacantes_disponibles
-                ];
-            });
+        // Obtener carreras con vacantes disponibles (cacheado 60s para evitar sobrecarga en ráfagas de recarga)
+        $carreras = \Illuminate\Support\Facades\Cache::remember('carreras_vacantes_activas_' . $cicloActivo->id, 60, function () use ($cicloActivo) {
+            return CicloCarreraVacante::with('carrera')
+                ->where('ciclo_id', $cicloActivo->id)
+                ->where('estado', true)
+                ->where(function($query) {
+                    $query->where('vacantes_total', 0) // Sin límite
+                          ->orWhereRaw('vacantes_total > (vacantes_ocupadas + vacantes_reservadas)'); // Con vacantes disponibles
+                })
+                ->get()
+                ->map(function($vacante) {
+                    return [
+                        'id' => $vacante->carrera_id,
+                        'nombre' => $vacante->carrera->nombre,
+                        'codigo' => $vacante->carrera->codigo,
+                        'vacantes_disponibles' => $vacante->vacantes_total == 0 ? 
+                            'Sin límite' : $vacante->vacantes_disponibles
+                    ];
+                });
+        });
 
-        // Obtener turnos disponibles
-        $turnos = Turno::where('estado', true)
-            ->select('id', 'nombre', 'hora_inicio', 'hora_fin')
-            ->get();
+        // Obtener turnos disponibles (cacheado 60s)
+        $turnos = \Illuminate\Support\Facades\Cache::remember('turnos_activos_web', 60, function () {
+            return Turno::where('estado', true)
+                ->select('id', 'nombre', 'hora_inicio', 'hora_fin')
+                ->get();
+        });
 
         // Obtener datos del usuario actual (si los tiene)
         $usuario = Auth::user();
@@ -340,6 +344,18 @@ class PostulacionUnificadaController extends Controller
             $datosPostulacion['codigo_postulante'] = $nuevoCodigo;
             
             $postulacion = Postulacion::create($datosPostulacion);
+
+            // Disparar Evento en Tiempo Real (Reverb)
+            $nombreCarrera = \App\Models\Carrera::find($request->carrera_id)->nombre ?? 'Carrera';
+            \App\Events\NuevaPostulacionCreada::dispatch($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera);
+
+            // Notificar a administradores (Base de Datos + Campana)
+            $admins = \App\Models\User::whereHas('roles', function($q) {
+                $q->where('nombre', 'admin');
+            })->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NuevaPostulacionDatabaseNotification($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera));
+            }
 
             DB::commit();
 

@@ -41,9 +41,14 @@ class PostulacionController extends Controller
 
         $cicloActivo = Ciclo::where('es_activo', true)->first();
 
-        // Obtener ciclos y carreras activos para precargar los filtros
-        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
-        $carreras = Carrera::where('estado', true)->orderBy('nombre')->get();
+        // Obtener ciclos y carreras activos para precargar los filtros (cacheados por 60s para evitar saturación web)
+        $ciclos = \Illuminate\Support\Facades\Cache::remember('filtros_ciclos_admin', 60, function () {
+            return Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        });
+        
+        $carreras = \Illuminate\Support\Facades\Cache::remember('filtros_carreras_admin', 60, function () {
+            return Carrera::where('estado', true)->orderBy('nombre')->get();
+        });
 
         return view('postulaciones.index', compact('cicloActivo', 'ciclos', 'carreras'));
     }
@@ -64,7 +69,9 @@ class PostulacionController extends Controller
             // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
             $cicloId = $request->input('ciclo_id');
             if (empty($cicloId)) {
-                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $cicloActivo = \Illuminate\Support\Facades\Cache::remember('ciclo_activo', 60, function() {
+                    return Ciclo::where('es_activo', true)->first();
+                });
                 // Si hay un ciclo activo, usamos su ID. Si no, usamos un ID inválido para no devolver nada. 
                 $cicloId = $cicloActivo ? $cicloActivo->id : -1; 
             }
@@ -780,8 +787,6 @@ class PostulacionController extends Controller
      */
     public function actualizarAprobada(Request $request, $id)
     {
-        Log::info('actualizarAprobada method called');
-        // dd($request->all()); // Removed dd as it's not needed for the final output
         if (!Auth::user()->hasPermission('postulaciones.edit')) {
             return response()->json(['error' => 'Sin permisos para editar'], 403);
         }
@@ -1321,31 +1326,40 @@ class PostulacionController extends Controller
         }
 
         try {
-            $query = Postulacion::query();
-
-            // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
             $cicloId = $request->input('ciclo_id');
-            if (empty($cicloId)) {
-                $cicloActivo = Ciclo::where('es_activo', true)->first();
-                $cicloId = $cicloActivo ? $cicloActivo->id : -1;
-            }
+            $carreraId = $request->input('carrera_id');
+            
+            // Generar una llave de caché única para esta combinación de filtros
+            $cacheKey = 'stats_postulaciones_' . ($cicloId ?: 'activo') . '_' . ($carreraId ?: 'todas');
 
-            $query->where('ciclo_id', $cicloId);
+            // Cachear la matemática de la estadística por 15 segundos
+            $stats = \Illuminate\Support\Facades\Cache::remember($cacheKey, 15, function() use ($cicloId, $carreraId) {
+                
+                if (empty($cicloId)) {
+                    $cicloActivo = Ciclo::where('es_activo', true)->first();
+                    $cicloId = $cicloActivo ? $cicloActivo->id : -1;
+                }
 
-            // Otros filtros
-            if ($request->filled('carrera_id')) {
-                $query->where('carrera_id', $request->carrera_id);
-            }
+                $query = Postulacion::query();
+                $query->where('ciclo_id', $cicloId);
 
-            $stats = $query->select('estado', DB::raw('count(*) as total'))
-                        ->groupBy('estado')
-                        ->pluck('total', 'estado')
-                        ->all();
+                // Otros filtros
+                if (!empty($carreraId)) {
+                    $query->where('carrera_id', $carreraId);
+                }
 
-            $stats['pendiente'] = $stats['pendiente'] ?? 0;
-            $stats['aprobado'] = $stats['aprobado'] ?? 0;
-            $stats['rechazado'] = $stats['rechazado'] ?? 0;
-            $stats['observado'] = $stats['observado'] ?? 0;
+                $result = $query->select('estado', DB::raw('count(*) as total'))
+                            ->groupBy('estado')
+                            ->pluck('total', 'estado')
+                            ->all();
+
+                $result['pendiente'] = $result['pendiente'] ?? 0;
+                $result['aprobado'] = $result['aprobado'] ?? 0;
+                $result['rechazado'] = $result['rechazado'] ?? 0;
+                $result['observado'] = $result['observado'] ?? 0;
+                
+                return $result;
+            });
 
             return response()->json($stats);
 

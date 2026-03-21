@@ -63,29 +63,35 @@ class CentroEducativo extends Model
     // Métodos para obtener listas únicas
     public static function getDepartamentos()
     {
-        return self::select('d_dpto')
-            ->distinct()
-            ->orderBy('d_dpto')
-            ->pluck('d_dpto');
+        return \Illuminate\Support\Facades\Cache::remember('ubigeo_departamentos', 86400, function () {
+            return self::select('d_dpto')
+                ->distinct()
+                ->orderBy('d_dpto')
+                ->pluck('d_dpto');
+        });
     }
 
     public static function getProvincias($departamento)
     {
-        return self::where('d_dpto', $departamento)
-            ->select('d_prov')
-            ->distinct()
-            ->orderBy('d_prov')
-            ->pluck('d_prov');
+        return \Illuminate\Support\Facades\Cache::remember('ubigeo_provincias_' . $departamento, 86400, function () use ($departamento) {
+            return self::where('d_dpto', $departamento)
+                ->select('d_prov')
+                ->distinct()
+                ->orderBy('d_prov')
+                ->pluck('d_prov');
+        });
     }
 
     public static function getDistritos($departamento, $provincia)
     {
-        return self::where('d_dpto', $departamento)
-            ->where('d_prov', $provincia)
-            ->select('d_dist')
-            ->distinct()
-            ->orderBy('d_dist')
-            ->pluck('d_dist');
+        return \Illuminate\Support\Facades\Cache::remember('ubigeo_distritos_' . $departamento . '_' . $provincia, 86400, function () use ($departamento, $provincia) {
+            return self::where('d_dpto', $departamento)
+                ->where('d_prov', $provincia)
+                ->select('d_dist')
+                ->distinct()
+                ->orderBy('d_dist')
+                ->pluck('d_dist');
+        });
     }
 
     public static function buscarColegios($departamento, $provincia, $distrito, $termino = null)

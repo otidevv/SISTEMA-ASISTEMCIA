@@ -327,6 +327,18 @@ class PublicPostulacionController extends Controller
 
             $postulacion->save();
 
+            // Disparar Evento en Tiempo Real (Reverb)
+            $nombreCarrera = \App\Models\Carrera::find($request->carrera_id)->nombre ?? 'Carrera';
+            \App\Events\NuevaPostulacionCreada::dispatch($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera);
+
+            // Notificar a administradores (Base de Datos + Campana)
+            $admins = \App\Models\User::whereHas('roles', function($q) {
+                $q->where('nombre', 'admin');
+            })->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NuevaPostulacionDatabaseNotification($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera));
+            }
+
             DB::commit();
 
             return response()->json([

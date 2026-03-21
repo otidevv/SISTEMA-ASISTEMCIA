@@ -220,6 +220,20 @@ class PostulanteRegisterApiController extends BaseController
                 'created_by' => null, // Público
             ]);
 
+            // Disparar Evento en Tiempo Real (Reverb) y Notificación Persistente
+            $nombreCarrera = \App\Models\Carrera::find($request->carrera_id)->nombre ?? 'Carrera';
+            $nombreCompleto = $estudiante->nombre . ' ' . $estudiante->apellido_paterno;
+            
+            \App\Events\NuevaPostulacionCreada::dispatch($nombreCompleto, $nombreCarrera);
+
+            // Notificar a administradores (Base de Datos + Campana)
+            $admins = \App\Models\User::whereHas('roles', function($q) {
+                $q->where('nombre', 'admin');
+            })->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NuevaPostulacionDatabaseNotification($nombreCompleto, $nombreCarrera));
+            }
+
             DB::commit();
 
             return $this->sendResponse([
@@ -315,26 +329,34 @@ class PostulanteRegisterApiController extends BaseController
      */
     public function getFormDependencies()
     {
-        $cicloActivo = Ciclo::activo()->first();
-        if (!$cicloActivo) {
+        $data = \Illuminate\Support\Facades\Cache::remember('public_postulation_dependencies', 60, function () {
+            $cicloActivo = Ciclo::activo()->first();
+            if (!$cicloActivo) {
+                return null;
+            }
+
+            $carreras = Carrera::where('estado', true)->get(['id', 'nombre', 'codigo']);
+            $turnos = Turno::where('estado', true)->get(['id', 'nombre', 'hora_inicio', 'hora_fin']);
+            
+            return [
+                'ciclo' => [
+                    'id' => $cicloActivo->id,
+                    'nombre' => $cicloActivo->nombre,
+                    'codigo' => $cicloActivo->codigo,
+                ],
+                'carreras' => $carreras,
+                'turnos' => $turnos,
+                'tipos_inscripcion' => [
+                    ['id' => 'postulante', 'nombre' => 'Postulante'],
+                    ['id' => 'reforzamiento', 'nombre' => 'Reforzamiento'],
+                ]
+            ];
+        });
+
+        if (!$data) {
             return $this->sendError('No hay ciclo activo disponible.');
         }
 
-        $carreras = Carrera::where('estado', true)->get(['id', 'nombre', 'codigo']);
-        $turnos = Turno::where('estado', true)->get(['id', 'nombre', 'hora_inicio', 'hora_fin']);
-        
-        return $this->sendResponse([
-            'ciclo' => [
-                'id' => $cicloActivo->id,
-                'nombre' => $cicloActivo->nombre,
-                'codigo' => $cicloActivo->codigo,
-            ],
-            'carreras' => $carreras,
-            'turnos' => $turnos,
-            'tipos_inscripcion' => [
-                ['id' => 'postulante', 'nombre' => 'Postulante'],
-                ['id' => 'reforzamiento', 'nombre' => 'Reforzamiento'],
-            ]
-        ], 'Catálogos obtenidos correctamente.');
+        return $this->sendResponse($data, 'Catálogos obtenidos correctamente.');
     }
 }

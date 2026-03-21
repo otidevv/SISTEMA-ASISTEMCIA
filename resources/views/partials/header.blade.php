@@ -265,7 +265,7 @@
 
         {{-- Audio para notificaciones --}}
         <audio id="notification-sound" preload="auto">
-            <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+            <source src="{{ asset('assets/audio/sonido_notificacion.mp3') }}" type="audio/mpeg">
         </audio>
 
         <script>

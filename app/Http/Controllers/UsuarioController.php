@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class UsuarioController extends Controller
@@ -26,7 +27,6 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         // Depurar datos recibidos
-        // dd($request->all());
 
         $request->validate([
             'username' => 'required|string|max:50|unique:users',
@@ -46,7 +46,6 @@ class UsuarioController extends Controller
         ]);
 
         // Depurar que pasó la validación
-        // dd('Validación exitosa');
 
         DB::beginTransaction();
 
@@ -69,12 +68,10 @@ class UsuarioController extends Controller
             ];
 
             // Depurar datos antes de crear el usuario
-            // dd($userData);
 
             $user = User::create($userData);
 
             // Depurar usuario creado
-            // dd($user);
 
             // Asignar roles
             foreach ($request->roles as $rolId) {
@@ -87,7 +84,6 @@ class UsuarioController extends Controller
             }
 
             // Depurar después de asignar roles
-            // dd('Roles asignados');
 
             // Guardar historial de contraseña
             DB::table('password_history')->insert([
@@ -105,9 +101,7 @@ class UsuarioController extends Controller
                 ->with('success', 'Usuario creado exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            // Depurar el error específico
-            dd('Error: ' . $e->getMessage() . ' en la línea ' . $e->getLine() . ' del archivo ' . $e->getFile());
-
+            Log::error('Error al crear usuario: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Error al crear el usuario: ' . $e->getMessage())
                 ->withInput();
