@@ -330,7 +330,7 @@
                 // Carga inicial
                 updateNotifications();
 
-                // WebSockets - Tiempo Real
+                // WebSockets - Tiempo Real (Notificaciones Privadas)
                 if (typeof window.Echo !== 'undefined') {
                     const userId = {{ Auth::id() }};
                     window.Echo.private(`App.Models.User.${userId}`)
@@ -338,6 +338,52 @@
                             console.log('Notificación recibida en tiempo real:', notification);
                             playNotificationSound();
                             updateNotifications(); // Recargar lista al recibir nueva
+                        });
+
+                    // 🟢 ESCUCHADOR GLOBAL DE POSTULACIONES (Canal Público)
+                    console.log("🟢 Conectando a canal de postulaciones global...");
+                    window.Echo.channel('postulaciones')
+                        .listen('.NuevaPostulacionCreada', (e) => {
+                            console.log("🔔 Evento Global Recibido: ", e);
+                            
+                            // 1. Sonido
+                            playNotificationSound();
+                            
+                            // 2. Toast Alert (SweetAlert2)
+                            if(typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: '¡Nueva Postulación!',
+                                    html: `Se registró <b>${e.nombre}</b><br>Carrera: <b>${e.carrera}</b>`,
+                                    icon: 'success',
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 15000,
+                                    timerProgressBar: true,
+                                    showCloseButton: true,
+                                    background: '#f8f9fa',
+                                    color: '#333',
+                                    iconColor: '#28a745'
+                                });
+                            }
+
+                            // 3. Recargar tabla si estamos en la página de postulaciones
+                            const dt = typeof window.postulacionesDataTable !== 'undefined' ? 
+                                       window.postulacionesDataTable : 
+                                       (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable('#postulaciones-datatable') ? $('#postulaciones-datatable').DataTable() : null);
+                                       
+                            if (dt) {
+                                dt.ajax.reload(() => {
+                                    // Pintar la fila de verde si existe
+                                    $('#postulaciones-datatable tbody tr').each(function() {
+                                        if ($(this).text().includes(e.nombre)) {
+                                            const fila = $(this);
+                                            fila.css({'background-color': '#d4edda', 'transition': 'background-color 1.5s ease'});
+                                            setTimeout(() => fila.css('background-color', ''), 6000);
+                                        }
+                                    });
+                                }, false);
+                            }
                         });
                 }
             });

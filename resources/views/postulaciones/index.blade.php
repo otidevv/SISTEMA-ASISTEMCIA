@@ -4229,76 +4229,8 @@
             });
         });
         
-        // ==========================================
-        // LARAVEL REVERB (WEBSOCKETS)
-        // ==========================================
-        if (typeof window.Echo !== 'undefined') {
-            console.log("🟢 Conectando a canal de postulaciones por Reverb...");
-            window.Echo.channel('postulaciones')
-                .listen('.NuevaPostulacionCreada', (e) => {
-                    console.log("🔔 Evento Recibido: ", e);
-                    
-                    // Reproducir Sonido de Notificación Personalizado (del Header)
-                    try {
-                        const sound = document.getElementById('notification-sound');
-                        if (sound) {
-                            sound.currentTime = 0;
-                            sound.play();
-                        }
-                    } catch(err) {
-                        console.warn("No se pudo reproducir el sonido personalizado", err);
-                    }
-                    
-                    // Notificación tipo Sweet Alert (Estilo del Proyecto)
-                    if(typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: '¡Nueva Postulación!',
-                            html: 'Se registró <b>' + e.nombre + '</b><br>Carrera: <b>' + e.carrera + '</b>',
-                            icon: 'success',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 15000,
-                            timerProgressBar: true,
-                            showCloseButton: true,
-                            background: '#f8f9fa',
-                            color: '#333',
-                            iconColor: '#28a745',
-                            customClass: {
-                                popup: 'colored-toast'
-                            },
-                            didOpen: (toast) => {
-                                toast.addEventListener('mouseenter', Swal.stopTimer)
-                                toast.addEventListener('mouseleave', Swal.resumeTimer)
-                            }
-                        });
-                    }
-
-                    // Definir dt para recargar la tabla
-                    const dt = typeof window.postulacionesDataTable !== 'undefined' ? 
-                               window.postulacionesDataTable : 
-                               ($.fn.DataTable.isDataTable('#postulaciones-datatable') ? $('#postulaciones-datatable').DataTable() : null);
-                               
-                    if (dt) {
-                        dt.ajax.reload(() => {
-                            // Buscar la fila por el nombre y pintarla de verde con transición
-                            $('#postulaciones-datatable tbody tr').each(function() {
-                                if ($(this).text().includes(e.nombre)) {
-                                    const fila = $(this);
-                                    fila.css({'background-color': '#d4edda', 'transition': 'background-color 1.5s ease'}); // Fondo verde suave
-                                    
-                                    // Quitar el verde despues de 6 segundos
-                                    setTimeout(() => {
-                                        fila.css('background-color', '');
-                                    }, 6000);
-                                }
-                            });
-                        }, false); // El false mantiene la paginación
-                    }
-                });
-        } else {
-            console.warn("⚠️ Laravel Echo no está definido. Asegúrate de compilar con Vite.");
-        }
+        // Nota: El escuchador de Echo para nuevas postulaciones 
+        // ahora se encuentra de forma global en partials/header.blade.php
         
     });
     </script>

@@ -96,6 +96,13 @@ class PaymentValidationService
                     $v['monto_total'] = number_format($v['monto_total'], 2, '.', '');
                     $v['monto_matricula'] = number_format($v['monto_matricula'], 2, '.', '');
                     $v['monto_ensenanza'] = number_format($v['monto_ensenanza'], 2, '.', '');
+                    
+                    // ALINEACIÓN CON JS: Añadir 'monto' y 'concepto' resumido
+                    $v['monto'] = $v['monto_total'];
+                    $v['concepto'] = !empty($v['items']) ? $v['items'][0]['descripcion'] : 'Pago CEPRE';
+                    if (count($v['items']) > 1) {
+                        $v['concepto'] .= ' (+ ' . (count($v['items']) - 1) . ' items)';
+                    }
                 }
 
                 return !empty($result) ? array_values($result) : null;

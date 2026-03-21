@@ -39,8 +39,8 @@ return [
                 'host' => env('REVERB_HOST', '127.0.0.1'),
                 'port' => env('REVERB_PORT', 8081),
                 'scheme' => env('REVERB_SCHEME', 'http'),
-                'encrypted' => true,
-                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+                'encrypted' => env('REVERB_SCHEME', 'http') === 'https',
+                'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
             ],
         ],
 
