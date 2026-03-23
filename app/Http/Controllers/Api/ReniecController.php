@@ -106,6 +106,7 @@ class ReniecController extends Controller
             'estado_civil' => $datos['EST_CIVIL'] ?? '',
             'nombre_madre' => $datos['MADRE'] ?? '',
             'nombre_padre' => $datos['PADRE'] ?? '',
+            'digito_verificador' => $datos['DIG_RUC'] ?? null,
             'datos_completos' => [
                 'fecha_inscripcion' => $datos['FCH_INSCRIPCION'] ?? null,
                 'fecha_emision' => $datos['FCH_EMISION'] ?? null,
