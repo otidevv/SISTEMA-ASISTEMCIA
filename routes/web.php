@@ -36,6 +36,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/carreras-profesionales', [HomeController::class, 'carreras'])->name('public.carreras.index');
 Route::get('/carreras-profesionales/{slug}', [HomeController::class, 'showCarrera'])->name('public.carreras.show');
 Route::get('/cuadro-vacantes', [HomeController::class, 'vacantes'])->name('public.vacantes');
+Route::get('/secundaria', [HomeController::class, 'secundaria'])->name('public.secundaria');
 
 // Ruta para sitemap.xml
 Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');

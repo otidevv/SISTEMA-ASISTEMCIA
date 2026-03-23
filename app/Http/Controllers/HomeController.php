@@ -164,4 +164,49 @@ class HomeController extends Controller
     {
         return view('contact');
     }
+
+    /**
+     * Mostrar la página de reforzamiento para nivel secundario.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function secundaria()
+    {
+        $cicloActivo = Ciclo::activo()->first();
+        $departamentos = CentroEducativo::getDepartamentos();
+        
+        // Cursos específicos de reforzamiento (según flyer)
+        $cursos_reforzamiento = [
+            ['nombre' => 'Razonamiento Matemático', 'icono' => 'fa-calculator'],
+            ['nombre' => 'Álgebra', 'icono' => 'fa-square-root-variable'],
+            ['nombre' => 'Aritmética', 'icono' => 'fa-plus-minus'],
+            ['nombre' => 'Trigonometría', 'icono' => 'fa-draw-polygon'],
+            ['nombre' => 'Geometría', 'icono' => 'fa-shapes'],
+            ['nombre' => 'Comprensión Lectora', 'icono' => 'fa-book-open']
+        ];
+
+        // Estadísticas referenciales para la página
+        $stats_secundaria = [
+            ['value' => 1200, 'label' => 'Postulantes Anuales', 'suffix' => '+'],
+            ['value' => 15, 'label' => 'Cursos de Nivelación', 'suffix' => ''],
+            ['value' => 95, 'label' => 'Padres Satisfechos', 'suffix' => '%'],
+            ['value' => 24, 'label' => 'Sedes Regionales', 'suffix' => ''],
+        ];
+
+        // Datos para el countdown widget
+        $proximoExamen = null;
+        if ($cicloActivo) {
+            $proximoExamenInfo = $cicloActivo->getProximoExamen();
+            if ($proximoExamenInfo) {
+                $proximoExamen = [
+                    'nombre' => $proximoExamenInfo['nombre'],
+                    'fecha'  => Carbon::parse($proximoExamenInfo['fecha'])->format('M d, Y H:i:s')
+                ];
+            }
+        }
+        $proximoCicloRaw = Ciclo::where('fecha_inicio', '>', now())->orderBy('fecha_inicio')->first();
+        $proximoCiclo = $proximoCicloRaw ? ['nombre' => $proximoCicloRaw->nombre, 'fecha' => Carbon::parse($proximoCicloRaw->fecha_inicio)->format('M d, Y H:i:s')] : null;
+
+        return view('public.secundaria', compact('cicloActivo', 'proximoExamen', 'proximoCiclo', 'departamentos', 'cursos_reforzamiento', 'stats_secundaria'));
+    }
 }

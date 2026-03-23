@@ -49,6 +49,7 @@
             </style>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Inicio</a></li>
+                <li><a href="{{ route('public.secundaria') }}" class="{{ request()->routeIs('public.secundaria') ? 'active' : '' }}">Secundaria <span class="badge-new">NEW</span></a></li>
                 <li><a href="{{ route('public.cursos') }}" class="{{ request()->routeIs('public.cursos') ? 'active' : '' }}">Cursos <span class="badge-new">NEW</span></a></li>
                 <li><a href="{{ route('public.carreras.index') }}" class="{{ request()->routeIs('public.carreras.*') ? 'active' : '' }}">Carreras <span class="badge-new">NEW</span></a></li>
                 <li><a href="{{ route('public.vacantes') }}" class="{{ request()->routeIs('public.vacantes') ? 'active' : '' }}">Vacantes <span class="badge-new">NEW</span></a></li>
