@@ -30,7 +30,7 @@
                                 <i class="fas fa-book"></i>
                                 <span>EXPLORAR PROGRAMAS</span>
                             </a>
-                            <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary">
+                            <a href="javascript:void(0)" onclick="openPostulacionModal()" class="btn btn-secondary btn-postulacion-main" id="hero-btn-postular">
                                 <i class="fas fa-edit"></i>
                                 <span>INSCRIBIRSE AHORA</span>
                             </a>
@@ -409,9 +409,29 @@ document.addEventListener('DOMContentLoaded', function () {
 <!-- Script para abrir modal de postulación (usado por el floating button) -->
 <script>
     function openPostulacionModal() {
+        // Cerrar el tour si está activo
+        if (typeof window.closeCepreTour === 'function') {
+            window.closeCepreTour();
+        }
+
         const modal = document.getElementById('postulacionModal');
         if (modal) {
             modal.style.display = 'flex';
+            
+            // Ocultar elementos flotantes que estorban en móvil
+            const bubble = document.getElementById('countdown-bubble');
+            const chatbot = document.getElementById('chatbot-launcher');
+            const helpBtn = document.querySelector('.btn-ayuda-tour');
+            
+            if (bubble) bubble.style.display = 'none';
+            if (chatbot) chatbot.style.display = 'none';
+            if (helpBtn) helpBtn.style.display = 'none';
+
+            // Marcar tour como completado definitivamente si abren el modal
+            if (typeof window.markTourAsCompleted === 'function') {
+                window.markTourAsCompleted();
+            }
+
             // showStep is defined in publico-modal.js
             if (typeof showStep === 'function') { 
                 showStep(1); 

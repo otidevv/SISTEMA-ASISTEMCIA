@@ -21,7 +21,6 @@
 
         createDots();
         showSlide(currentSlide);
-        startAutoPlay();
     }
 
     function createDots() {
@@ -36,10 +35,10 @@
         }
     }
 
-    function showSlide(index) {
+    function showSlide(index, pause = false) {
         if (!slidesContainer) return;
         clearInterval(slideInterval);
-        startAutoPlay();
+        if (!pause) startAutoPlay();
 
         if (index >= totalSlides) {
             currentSlide = 0;
@@ -72,6 +71,7 @@
     }
 
     function startAutoPlay() {
+        clearInterval(slideInterval);
         slideInterval = setInterval(() => {
             showSlide(currentSlide + 1);
         }, autoPlayTime);
@@ -152,8 +152,123 @@
     // Asignar funciones a window para que sean accesibles desde botones HTML
     window.changeSlide = changeSlide;
 
+    // ====================================
+    // ONBOARDING & HIGHLIGHTS (Driver.js)
+    // ====================================
+    let driverInstance = null; // Variable global para controlar el tour
+
+    function initOnboarding(forced = false) {
+        if (!forced && (localStorage.getItem('cepre_tour_completed') || sessionStorage.getItem('cepre_tour_hidden_session'))) return;
+
+        setTimeout(() => {
+            if (typeof window.driver !== 'undefined') {
+                const driver = window.driver.js.driver;
+                const countdownBubble = document.getElementById('countdown-bubble');
+                const isMobile = window.innerWidth < 768;
+                
+                const steps = [];
+
+                // PASO 0: Impresión Inicial / Incentivo (Hero Section)
+                // FORZAR SLIDE 1 para que el botón esté visible y pausar carrusel
+                showSlide(0, true);
+
+                const heroBtn = document.getElementById('hero-btn-postular');
+                if (heroBtn) {
+                    steps.push({
+                        element: '#hero-btn-postular',
+                        popover: {
+                            title: '<div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-graduation-cap" style="color:#8bc34a"></i> ¡TU ÉXITO COMIENZA AQUÍ!</div>',
+                            description: 'Asegura tu ingreso a la UNAMAD. <strong>¡Las inscripciones ya están abiertas!</strong> Únete a la mejor preparación académica.',
+                            side: "bottom",
+                            align: 'center'
+                        }
+                    });
+                }
+
+                if (countdownBubble) {
+                    steps.push({
+                        element: '#countdown-bubble',
+                        popover: {
+                            title: '<div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-calendar-check" style="color:#00aeef"></i> PRÓXIMOS EVENTOS</div>',
+                            description: 'Mantente al tanto de las fechas de exámenes y nuevos ciclos.',
+                            side: isMobile ? "bottom" : "right",
+                            align: 'start'
+                        }
+                    });
+
+                    steps.push({
+                        element: '#countdown-btn-postular',
+                        popover: {
+                            title: '<div style="display:flex; align-items:center; gap:10px;"><i class="fas fa-rocket" style="color:#ec008c"></i> ¡POSTULA YA!</div>',
+                            description: 'Haz clic aquí para registrarte. ¡Es rápido, fácil y seguro!',
+                            side: isMobile ? "top" : "right",
+                            align: 'center'
+                        }
+                    });
+                }
+
+                if (steps.length === 0) return;
+
+                // Si es móvil y la burbuja está cerrada, abrirla automáticamente para el tour
+                if (isMobile && typeof toggleCountdownBubble === 'function') {
+                    const panel = document.getElementById('bubble-panel');
+                    if (panel && (panel.style.display === 'none' || panel.style.display === '')) {
+                        toggleCountdownBubble();
+                    }
+                }
+
+                driverInstance = driver({
+                    showProgress: true,
+                    animate: true,
+                    overlayColor: 'rgba(12, 30, 47, 0.85)',
+                    popoverClass: 'cepre-premium-popover',
+                    progressText: 'Paso @{{current}} de @{{total}}',
+                    nextBtnText: 'Siguiente',
+                    prevBtnText: 'Anterior',
+                    doneBtnText: '¡Entendido, no mostrar más!',
+                    onDestroyStarted: () => {
+                        // Reanudar carrusel al salir del tour
+                        if (typeof startAutoPlay === 'function') startAutoPlay();
+
+                        // Mark as completed permanently ONLY if they finish it
+                        localStorage.setItem('cepre_tour_completed', 'true');
+                        if (driverInstance) driverInstance.destroy();
+                        driverInstance = null;
+                    },
+                    steps: steps
+                });
+
+                // ESPERAR UN MOMENTO PARA QUE EL CARRUSEL SE POSITIONE CORRECTAMENTE
+                setTimeout(() => {
+                    driverInstance.drive();
+                }, 400); 
+            }
+        }, forced ? 300 : 1500); 
+    }
+
+    // Exportar para que el modal pueda cerrar el tour
+    window.closeCepreTour = function() {
+        if (driverInstance) {
+            driverInstance.destroy();
+            driverInstance = null;
+            
+            // Reanudar carrusel si se cerró manualmente (ej. al abrir el modal)
+            if (typeof startAutoPlay === 'function') startAutoPlay();
+
+            // Al abrir el modal, marcamos como visto en la sesión para no molestar más,
+            // pero NO permanentemente si el usuario quiere volver a ver la ayuda luego.
+            sessionStorage.setItem('cepre_tour_hidden_session', 'true');
+        }
+    };
+
+    // Función para marcar como completado cuando abren el modal (llamada desde publico-modal.js)
+    window.markTourAsCompleted = function() {
+        localStorage.setItem('cepre_tour_completed', 'true');
+    };
+
     window.addEventListener('load', function() {
         initThreeJS();
         initCarousel();
+        initOnboarding();
     });
 </script>

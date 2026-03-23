@@ -52,7 +52,8 @@
                 </div>
                 <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" style="display:flex;gap:5px;"></div>
             </div>
-            <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;"
+            <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" id="countdown-btn-postular"
+                class="btn-postulacion-main"
                 style="display:block;text-align:center;background:var(--magenta-unamad);color:white;border-radius:50px;padding:7px 12px;font-weight:800;font-size:11px;text-decoration:none;letter-spacing:1px;box-shadow:0 3px 10px rgba(236,0,140,0.35);transition:all 0.3s;margin-top:2px;">
                 ¡INSCRÍBETE AHORA!
             </a>

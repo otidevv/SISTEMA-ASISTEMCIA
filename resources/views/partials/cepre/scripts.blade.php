@@ -161,6 +161,17 @@
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.style.display = 'none';
+
+            // Restaurar elementos flotantes si es el modal de postulación
+            if (modalId === 'postulacionModal') {
+                const bubble = document.getElementById('countdown-bubble');
+                const chatbot = document.getElementById('chatbot-launcher');
+                const helpBtn = document.querySelector('.btn-ayuda-tour');
+                
+                if (bubble) bubble.style.display = 'flex';
+                if (chatbot) chatbot.style.display = 'flex';
+                if (helpBtn) helpBtn.style.display = 'flex';
+            }
         }
     }
     
@@ -198,3 +209,6 @@
     window.closeModal = closeModal;
     window.createConfetti = createConfetti;
 </script>
+
+<!-- Driver.js para el Tutorial / Onboarding -->
+<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>

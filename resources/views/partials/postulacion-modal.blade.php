@@ -321,18 +321,19 @@
 
                 <!-- Sección de Verificación (Solo para DNI) -->
                 <div id="section-verificacion" class="mb-4 p-3 bg-light rounded-lg border border-gray-200">
-                    <div class="d-flex align-items-end gap-2 mb-2 flex-nowrap w-100">
-                        <div class="flex-grow-1">
+                    <div class="d-flex align-items-end gap-2 mb-2 flex-wrap w-100">
+                        <div style="flex: 1; min-width: 120px;">
                             <label class="form-label mb-1" style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">DNI</label>
                             <input type="text" class="form-control" id="check_dni" name="check_dni" maxlength="8" pattern="[0-9]{8}" placeholder="8 dígitos" required style="height: 38px;">
                         </div>
-                        <div class="pb-2 fw-bold text-muted" style="font-size: 1.2rem;">-</div>
-                        <div style="width: 60px; flex-shrink: 0;">
+                        <div class="pb-2 fw-bold text-muted d-none d-sm-block" style="font-size: 1.2rem;">-</div>
+                        <div style="width: 50px; flex-shrink: 0;">
                             <label class="form-label mb-1 text-center d-block" style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">DV</label>
                             <input type="text" class="form-control text-center" id="check_dv" name="check_dv" maxlength="1" pattern="[0-9]{1}" placeholder="0" required style="height: 38px;">
                         </div>
-                        <div class="flex-shrink-0">
-                            <button type="button" class="btn btn-next-prev shadow-sm" id="btn-verificar-dni" style="background-color: var(--color-principal); color: white; white-space: nowrap; height: 38px; padding: 0 35px; font-weight: 700; min-width: 140px;">
+                        <div class="w-100 d-sm-none"></div> <!-- Salto de línea solo en móvil muy pequeño -->
+                        <div class="flex-grow-1 flex-sm-grow-0">
+                            <button type="button" class="btn btn-next-prev shadow-sm w-100" id="btn-verificar-dni" style="background-color: var(--color-principal); color: white; white-space: nowrap; height: 38px; padding: 0 25px; font-weight: 700; min-width: 120px;">
                                 <i class="fas fa-search me-2"></i> Verificar
                             </button>
                         </div>

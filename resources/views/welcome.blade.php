@@ -146,7 +146,248 @@
             .cepre-subtitle { font-size: 9px; letter-spacing: 3px; }
             .cepre-loader-line { width: 140px; }
         }
+
+        /* ===== POSTULACIÓN HIGHLIGHTS & FAB ===== */
+        @keyframes btn-glow-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 160, 227, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(0, 160, 227, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 160, 227, 0); }
+        }
+
+        .btn-postulacion-main {
+            animation: btn-glow-pulse 2s infinite !important;
+            position: relative;
+            z-index: 10;
+        }
+
+        .fab-postulacion {
+            position: fixed;
+            bottom: 90px;
+            left: 30px;
+            z-index: 9991;
+            display: flex;
+            align-items: center;
+            flex-direction: row-reverse;
+            gap: 12px;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .fab-postulacion.active {
+            pointer-events: auto;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fab-label {
+            background: #0c1e2f;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .fab-button {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #8cc63f, #00aeef);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            animation: btn-glow-pulse 2s infinite;
+        }
+
+        .fab-button:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        @media (max-width: 768px) {
+            .fab-postulacion { bottom: 80px; left: 20px; }
+            .fab-button { width: 55px; height: 55px; font-size: 22px; }
+            .fab-label { display: none; }
+        }
+
+        /* Driver.js Premium Overrides */
+        .cepre-premium-popover, 
+        .cepre-premium-popover *, 
+        .cepre-premium-popover ::before, 
+        .cepre-premium-popover ::after {
+            background-image: none !important;
+        }
+        
+        .cepre-premium-popover {
+            background: #0c1e2f !important;
+            color: #ffffff !important;
+            border-radius: 12px !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+            padding: 20px !important;
+            width: 350px !important; /* Increased width */
+            max-width: 90vw !important;
+            height: auto !important;
+            min-height: auto !important;
+            z-index: 2000000000 !important;
+        }
+        .cepre-premium-popover .driver-popover-title {
+            font-family: 'Sora', sans-serif !important;
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            color: #00aeef !important;
+            margin: 0 0 10px 0 !important;
+            line-height: 1.2 !important;
+        }
+        .cepre-premium-popover .driver-popover-description {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            line-height: 1.5 !important;
+            color: #ffffff !important;
+            margin: 0 0 15px 0 !important;
+        }
+        .cepre-premium-popover .driver-popover-footer {
+            margin-top: 15px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            padding: 0 !important;
+        }
+        .cepre-premium-popover .driver-popover-progress-text {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        .cepre-premium-popover .driver-popover-navigation-btns {
+            display: flex !important;
+            gap: 8px !important;
+        }
+        .cepre-premium-popover .driver-popover-close-btn {
+            color: rgba(255, 255, 255, 0.7) !important;
+            transition: all 0.3s;
+        }
+        .cepre-premium-popover .driver-popover-arrow {
+            border-bottom-color: #0c1e2f !important;
+            border-top-color: #0c1e2f !important;
+        }
+        .cepre-premium-popover button {
+            text-shadow: none !important;
+            border-radius: 8px !important;
+            padding: 8px 15px !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            white-space: nowrap !important;
+        }
+        .driver-popover-next-btn { 
+            background-color: #00aeef !important; 
+            color: #ffffff !important; 
+            border: none !important; 
+        }
+        .driver-popover-prev-btn { 
+            background-color: rgba(255,255,255,0.1) !important; 
+            color: #ffffff !important; 
+            border: 1px solid rgba(255,255,255,0.1) !important; 
+        }
+
+        .cepre-premium-popover i {
+            font-family: "Font Awesome 5 Free", "Font Awesome 6 Free", "Font Awesome 5 Pro", "Font Awesome 6 Pro", "Font Awesome" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+        }
+
+        /* Botón de Ayuda Flotante (Pequeño y discreto) */
+        .btn-ayuda-tour {
+            position: fixed;
+            top: 40%;
+            right: 30px;
+            bottom: auto;
+            background: rgba(12, 30, 47, 0.9);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 999999;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            font-size: 18px;
+            font-family: "Font Awesome 5 Free", "Font Awesome 6 Free", "Font Awesome 5 Pro", "Font Awesome 6 Pro", "Font Awesome" !important;
+            font-weight: 900 !important;
+        }
+        .btn-ayuda-tour:hover {
+            background: #ec008c;
+            transform: scale(1.1) rotate(15deg);
+            color: white;
+        }
+
+        /* Optimizaciones para Celulares */
+        @media (max-width: 767px) {
+            .cepre-premium-popover {
+                width: 280px !important;
+                max-width: 85vw !important;
+                padding: 15px !important;
+            }
+            .cepre-premium-popover .driver-popover-title {
+                font-size: 16px !important;
+            }
+            .cepre-premium-popover .driver-popover-description {
+                font-size: 13px !important;
+                line-height: 1.4 !important;
+            }
+            .cepre-premium-popover .driver-popover-footer {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 12px !important;
+            }
+            .cepre-premium-popover .driver-popover-navigation-btns {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .cepre-premium-popover button {
+                width: 100% !important;
+                text-align: center !important;
+                padding: 10px !important;
+            }
+            .btn-ayuda-tour {
+                width: 40px;
+                height: 40px;
+                top: 50%;
+                right: 15px;
+                bottom: auto;
+            }
+            .cepre-premium-popover .driver-popover-close-btn {
+                top: 8px !important;
+                right: 12px !important;
+                font-size: 20px !important;
+            }
+        }
     </style>
+
+    <!-- Botón de ayuda para repetir tour -->
+    <div class="btn-ayuda-tour" onclick="initOnboarding(true)" title="Ver ayuda interactiva">
+        <i class="fas fa-question"></i>
+    </div>
     <div id="preloader" class="preloader">
         <div class="animation-preloader">
             <div class="edu-preloader-icon">
