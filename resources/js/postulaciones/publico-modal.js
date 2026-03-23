@@ -1,5 +1,6 @@
 let currentStep = 1;
-const totalSteps = 6;
+const totalSteps = 5;
+let pagosSeleccionadosDetalles = []; // Global para el resumen
 
 // Función para lanzar confetti cuando la postulación es aprobada
 function lanzarConfetti() {
@@ -138,6 +139,39 @@ $(document).ready(function () {
     });
 
     // Verificar postulante (Delegación de eventos para mayor robustez)
+    // Manejo de Cambio de Tipo de Documento
+    $(document).on('change', '#estudiante_tipo_documento_select', function () {
+        const val = $(this).val();
+        const sectionVerif = $('#section-verificacion');
+        const personalFields = $('#personal_fields');
+        const labelDNI = $('#label_estudiante_dni');
+        const inputDNI = $('#estudiante_dni');
+        const checkDni = $('#check_dni');
+        const checkDv = $('#check_dv');
+
+        if (val == '1') { // DNI
+            sectionVerif.slideDown();
+            personalFields.hide();
+            labelDNI.text('DNI');
+            inputDNI.prop('readonly', true).val('');
+            checkDni.val('').focus();
+            checkDv.val('');
+        } else { // CE o Pasaporte
+            sectionVerif.slideUp();
+            personalFields.slideDown();
+            const typeText = (val == '2') ? 'Carnet de Extranjería' : 'Pasaporte';
+            labelDNI.text(typeText);
+            inputDNI.prop('readonly', false).val('').focus();
+            
+            // Limpiar campos para evitar mezclas con RENIEC previo
+            $('#estudiante_nombre').val('');
+            $('#estudiante_apellido_paterno').val('');
+            $('#estudiante_apellido_materno').val('');
+            $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
+            $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
+        }
+    });
+
     $(document).on('click', '#btn-verificar-dni', function () {
         console.log('Click en verificar DNI detectado via jQuery');
         verificarPostulante(this);
@@ -656,6 +690,49 @@ function mostrarDetallesPago(vouchers) {
             cursor: pointer;
             border-radius: 6px;
         }
+        .payment-bundle-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 4px;
+            border: 1px solid #fde68a;
+        }
+        .payment-item-detail {
+            font-size: 0.75rem;
+            color: #4b5563;
+            margin-top: 2px;
+            padding-left: 12px;
+            position: relative;
+        }
+        .payment-item-detail::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+        }
+        .total-applied-card {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: none;
+            overflow: hidden;
+        }
+        .total-applied-card .icon-circle {
+            background: rgba(255, 255, 255, 0.2);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .total-applied-amount {
+            font-size: 1.75rem;
+            letter-spacing: -1px;
+        }
     </style>
     `;
 
@@ -672,6 +749,7 @@ function mostrarDetallesPago(vouchers) {
                     concepto: pago.concepto,
                     monto: parseFloat(montoLimpio),
                     fecha: pago.fecha,
+                    items: pago.items || [], // Guardar items
                     original: pago
                 });
             }
@@ -726,7 +804,21 @@ function mostrarDetallesPago(vouchers) {
                             
                             <!-- Contenido -->
                             <div class="flex-grow-1 me-3">
-                                <div class="payment-concept mb-1 text-wrap">${pago.concepto}</div>
+                                <div class="payment-concept mb-1 text-wrap">${pago.concepto.split(' (+ ')[0]}</div>
+                                
+                                ${pago.items && pago.items.length > 1 ? `
+                                    <div class="payment-items-breakdown mb-2">
+                                        <div class="payment-bundle-badge mb-1">
+                                            <i class="fas fa-layer-group me-1"></i> Paquete de ${pago.items.length} conceptos
+                                        </div>
+                                        ${pago.items.map(item => `
+                                            <div class="payment-item-detail">
+                                                ${item.descripcion} (S/ ${parseFloat(item.monto).toFixed(2)})
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+
                                 <div class="payment-meta d-flex flex-wrap gap-3">
                                     <span title="Fecha"><i class="far fa-calendar-alt me-1"></i>${fecha}</span>
                                     <span title="Código" class="font-monospace bg-light px-1 rounded border"><i class="fas fa-barcode me-1"></i>${pago.secuencia}</span>
@@ -759,20 +851,20 @@ function mostrarDetallesPago(vouchers) {
 
     html += '</div>';
 
-    // Footer Total (Estilo Tarjeta Resumen)
+    // Footer Total (Estilo Tarjeta Resumen) - Rediseñado
     html += `
-        <div class="card bg-primary text-white shadow-xl border-0 rounded-lg mt-4">
+        <div class="card total-applied-card text-white shadow-lg border-0 rounded-lg mt-4">
             <div class="card-body d-flex justify-content-between align-items-center p-3">
                 <div class="d-flex align-items-center">
-                    <div class="rounded-circle bg-white bg-opacity-30 p-2 me-3">
-                        <i class="fas fa-calculator fa-fw fa-lg"></i>
+                    <div class="icon-circle me-3">
+                        <i class="fas fa-calculator fw-bold fa-lg"></i>
                     </div>
                     <div>
-                        <div class="text-uppercase small text-white-50 fw-bold">Total Aplicado</div>
-                        <div class="small text-white-50">Suma de pagos seleccionados</div>
+                        <div class="text-uppercase small text-white-50 fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">TOTAL APLICADO</div>
+                        <div class="small text-white-50 d-none d-sm-block" style="font-size: 0.75rem;">Suma de pagos seleccionados</div>
                     </div>
                 </div>
-                <h2 class="mb-0 fw-bold text-white" id="total_seleccionado">S/ 0.00</h2>
+                <h2 class="mb-0 fw-bold text-white total-applied-amount" id="total_seleccionado">S/ 0.00</h2>
             </div>
         </div>
     `;
@@ -786,6 +878,7 @@ function actualizarPagosSeleccionados() {
     let total = 0;
     let secuencias = [];
     let fechaReciente = null;
+    pagosSeleccionadosDetalles = []; // Limpiar para el resumen
 
     // Resetear estilos visuales primero
     $('.payment-card-label').removeClass('selected-card');
@@ -795,12 +888,21 @@ function actualizarPagosSeleccionados() {
         const secuencia = $(this).val();
         const fecha = $(this).data('fecha');
         const index = $(this).data('index');
+        const card = $('#label_pago_' + index);
+        const concepto = card.find('.payment-concept').text() || 'Pago';
 
         // Añadir clase visual de seleccionado a la tarjeta padre
-        $('#label_pago_' + index).addClass('selected-card');
+        card.addClass('selected-card');
 
         total += monto;
         secuencias.push(secuencia);
+        
+        // Guardar detalles para el resumen final
+        pagosSeleccionadosDetalles.push({
+            secuencia: secuencia,
+            monto: monto,
+            concepto: concepto
+        });
 
         if (!fechaReciente) {
             fechaReciente = fecha;
@@ -882,18 +984,25 @@ function validateForm() {
 function verificarPostulante(btnElement) {
     console.log('Iniciando verificación de postulante...');
     const dni = $('#check_dni').val();
+    const digito = $('#check_dv').val();
+
     if (dni.length !== 8) {
-        // Uso de SweetAlert para error de formato de DNI
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'DNI Inválido',
-                text: 'El DNI debe contener exactamente 8 dígitos.',
-                confirmButtonText: 'Aceptar'
-            });
-        } else {
-            Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
-        }
+        Swal.fire({
+            icon: 'error',
+            title: 'DNI Inválido',
+            text: 'El DNI debe contener exactamente 8 dígitos.',
+            confirmButtonText: 'Aceptar'
+        });
+        return;
+    }
+
+    if (!digito || digito.length !== 1) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Dígito Requerido',
+            text: 'Por favor, ingrese el dígito verificador (el número después del guion en su DNI).',
+            confirmButtonText: 'Aceptar'
+        });
         return;
     }
 
@@ -907,6 +1016,8 @@ function verificarPostulante(btnElement) {
 
     $.post('/postulacion/check-postulante', {
         dni: dni,
+        digito: digito,
+        check_dv: digito, // Enviamos ambos por compatibilidad si hay caché
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
         try {
@@ -1147,6 +1258,9 @@ function verificarPostulante(btnElement) {
                 // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
                 consultarReniecEstudiante(dni);
             }
+
+            // Ocultar sección de verificación al tener éxito
+            $('#section-verificacion').slideUp(400);
 
             // Mostrar SweetAlert para casos que NO son 'registered'
             if (typeof Swal !== 'undefined') {
@@ -1545,7 +1659,20 @@ function generarResumen() { // <--- DEFINICIÓN CORRECTA de generarResumen
         }
 
         if (value) {
-            html += `<li class="list-group-item"><strong>${field.label}:</strong> ${value}</li>`;
+            if (field.id === 'voucher_secuencia' && pagosSeleccionadosDetalles.length > 0) {
+                let pagosHtml = '<div class="mt-2 p-2 bg-white rounded border shadow-sm" style="font-size: 0.9em;">';
+                pagosHtml += '<strong class="d-block mb-1 text-primary"><i class="fas fa-receipt me-1"></i> Detalle de Pagos:</strong>';
+                pagosSeleccionadosDetalles.forEach((p, idx) => {
+                    pagosHtml += `<div class="mb-1 pb-1 ${idx < pagosSeleccionadosDetalles.length - 1 ? 'border-bottom' : ''}">
+                        <span class="text-muted small">#${p.secuencia}</span><br>
+                        <strong>${p.concepto}</strong>: S/ ${p.monto.toFixed(2)}
+                    </div>`;
+                });
+                pagosHtml += `</div>`;
+                html += `<li class="list-group-item"><strong>${field.label}:</strong> ${pagosHtml}</li>`;
+            } else {
+                html += `<li class="list-group-item"><strong>${field.label}:</strong> ${value}</li>`;
+            }
         }
     });
     html += '</ul>';
@@ -1553,6 +1680,17 @@ function generarResumen() { // <--- DEFINICIÓN CORRECTA de generarResumen
 } // <--- Cierre CORRECTO de generarResumen
 
 function submitPostulacion() {
+    // Validar checkboxes de confirmación
+    if (!$('#confirmarDatos').is(':checked') || !$('#aceptoTerminos').is(':checked')) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Confirmación Requerida',
+            text: 'Debe aceptar los términos y declarar que la información es verídica.',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
     const formData = new FormData($('#formPostulacionPublica')[0]);
     const submitBtn = $('#formPostulacionPublica button[type="submit"]');
 
@@ -1571,23 +1709,26 @@ function submitPostulacion() {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Postulación Enviada!',
-                        text: 'Su postulación ha sido enviada con éxito. Redireccionando...',
-                        showConfirmButton: false,
+                        text: 'Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.',
+                        confirmButtonText: 'Aceptar y Cerrar',
+                        confirmButtonColor: 'var(--color-principal)',
                         didOpen: () => {
                             lanzarConfetti();
                         }
+                    }).then((result) => {
+                        // Recargar solo después de que el usuario cierre el Swal
+                        if (typeof closeModal === 'function') {
+                            closeModal('postulacionModal');
+                        }
+                        location.reload();
                     });
                 } else {
                     lanzarConfetti();
                     Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
+                    setTimeout(function() {
+                        location.reload();
+                    }, 4000);
                 }
-                setTimeout(function () {
-                    // Nota: 'closeModal' debe ser una función global disponible en el entorno
-                    if (typeof closeModal === 'function') {
-                        closeModal('postulacionModal');
-                    }
-                    location.reload();
-                }, 2000);
             } else {
                 Toast.fire({ icon: 'error', title: 'Error: ' + (data.message || 'Error desconocido') });
                 submitBtn.prop('disabled', false).html('ENVIAR POSTULACIÓN');
@@ -1981,3 +2122,54 @@ function validarPadres() {
 window.togglePadreFields = togglePadreFields;
 window.toggleMadreFields = toggleMadreFields;
 window.validarPadres = validarPadres;
+
+// ======================================================================
+// VALIDACIÓN DE ARCHIVOS (TAMAÑO Y TIPO)
+// ======================================================================
+
+$(document).on('change', 'input[type="file"]', function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedExtensions = $(this).attr('accept') ? $(this).attr('accept').split(',').map(ext => ext.trim()) : [];
+    
+    // Validar tamaño
+    if (file.size > maxSize) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Archivo demasiado pesado',
+            text: `El archivo "${file.name}" supera el límite de 5MB. Por favor, suba un archivo más pequeño.`,
+            confirmButtonText: 'Aceptar'
+        });
+        $(this).val(''); // Limpiar el input
+        return;
+    }
+
+    // Validar extensión (si el input tiene el atributo accept)
+    if (allowedExtensions.length > 0) {
+        const fileName = file.name.toLowerCase();
+        let isValid = false;
+        
+        for (const ext of allowedExtensions) {
+            if (ext.startsWith('image/')) {
+                if (file.type.startsWith('image/')) isValid = true;
+            } else if (ext === 'application/pdf') {
+                if (file.type === 'application/pdf') isValid = true;
+            } else if (fileName.endsWith(ext.replace('*', ''))) {
+                isValid = true;
+            }
+        }
+
+        if (!isValid) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Formato no permitido',
+                text: `El formato del archivo "${file.name}" no es válido. Formatos permitidos: ${$(this).attr('accept')}`,
+                confirmButtonText: 'Aceptar'
+            });
+            $(this).val(''); // Limpiar el input
+            return;
+        }
+    }
+});

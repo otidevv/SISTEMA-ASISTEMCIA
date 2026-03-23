@@ -30,15 +30,68 @@ class PublicPostulacionController extends Controller
 
     public function checkPostulante(Request $request)
     {
+        // Log para debug (puedes revisarlo en storage/logs/laravel.log)
+        // Log::info('Verificando postulante', $request->all());
+
         $request->validate([
             'dni' => 'required|numeric|digits:8',
+            'digito' => 'nullable|numeric|digits:1', // Lo hacemos nullable aquí para manejar el error manualmente con un mensaje mejor si falta
         ]);
 
         $dni = $request->dni;
+        $digitoProporcionado = $request->digito ?? $request->check_dv; // Soporte para ambos nombres
+
+        if (!$digitoProporcionado) {
+            return response()->json([
+                'error' => 'Dígito de verificación requerido.',
+                'message' => 'El campo del dígito verificador es obligatorio para continuar.'
+            ], 422);
+        }
+
         $cicloActivo = Ciclo::where('es_activo', 1)->first();
 
         if (!$cicloActivo) {
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
+        }
+
+        // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de RENIEC
+        try {
+            $cacheKey = 'reniec_dni_' . $dni;
+            $datosReniec = Cache::get($cacheKey);
+            
+            if (!$datosReniec) {
+                $response = \Illuminate\Support\Facades\Http::timeout(10)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
+                if ($response->successful()) {
+                    $datosReniec = $response->json();
+                    // El dígito viene como DIG_RUC en esta API
+                    $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
+                } else {
+                    return response()->json(['error' => 'No se pudo conectar con el servicio de verificación de identidad.'], 500);
+                }
+            } else {
+                // Si está en caché, los datos ya están formateados por el ReniecController
+                $digitoCorrecto = $datosReniec['digito_verificador'] ?? null;
+                
+                // Si por alguna razón el caché no tiene el dígito (viejo caché), forzar actualización
+                if ($digitoCorrecto === null) {
+                    $response = \Illuminate\Support\Facades\Http::timeout(10)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
+                    if ($response->successful()) {
+                        $datosReniec = $response->json();
+                        $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
+                    }
+                }
+            }
+
+            if ($digitoCorrecto !== null && $digitoProporcionado != $digitoCorrecto) {
+                return response()->json([
+                    'error' => 'El dígito de verificación es incorrecto.',
+                    'message' => 'Por favor, revise su DNI e ingrese el dígito que aparece después del guion.'
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            Log::error("Error validando dígito DNI: " . $e->getMessage());
+            // En caso de error técnico extremo, permitimos pasar si es un error de la API externa
+            // para no bloquear al usuario, pero lo ideal es que funcione.
         }
 
         $estudiante = User::where('numero_documento', $dni)->first();
@@ -192,21 +245,29 @@ class PublicPostulacionController extends Controller
 
     public function store(Request $request)
     {
-        // Validación básica
-        $request->validate([
-            'estudiante_dni' => 'required|digits:8',
+        // Validación básica adaptable al tipo de documento
+        $rules = [
+            'estudiante_tipo_documento' => 'required',
             'estudiante_nombre' => 'required|string',
             'estudiante_apellido_paterno' => 'required|string',
             'estudiante_apellido_materno' => 'required|string',
             'carrera_id' => 'required|exists:carreras,id',
             'turno_id' => 'required|exists:turnos,id',
             'voucher_secuencia' => 'required',
-            // Archivos
             'foto' => 'required|file|image|max:2048',
             'dni_pdf' => 'required|file|mimes:pdf|max:5120',
             'certificado_estudios' => 'required|file|mimes:pdf|max:5120',
             'voucher_pago' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ]);
+        ];
+
+        // Validación específica según tipo de documento (DNI = 1)
+        if ($request->estudiante_tipo_documento == '1') {
+            $rules['estudiante_dni'] = 'required|digits:8';
+        } else {
+            $rules['estudiante_dni'] = 'required|string|min:6|max:15';
+        }
+
+        $request->validate($rules);
 
         DB::beginTransaction();
         try {
@@ -229,11 +290,15 @@ class PublicPostulacionController extends Controller
                 }
                 
                 $estudiante = new User();
+                $estudiante->tipo_documento = $request->estudiante_tipo_documento;
                 $estudiante->numero_documento = $request->estudiante_dni;
+                $estudiante->nombre = $request->estudiante_nombre;
+                $estudiante->apellido_paterno = $request->estudiante_apellido_paterno;
+                $estudiante->apellido_materno = $request->estudiante_apellido_materno;
                 $estudiante->username = $this->generateUsername($request->estudiante_nombre, $request->estudiante_apellido_paterno);
                 $estudiante->password_hash = Hash::make($request->estudiante_password ?? $request->estudiante_dni);
                 $estudiante->email = $request->estudiante_email;
-                $estudiante->estado = true; // Activo como usuario, pero postulación pendiente
+                $estudiante->estado = true; 
             } else {
                 // Si el estudiante existe pero el email es diferente, verificar que el nuevo email no esté en uso
                 if ($estudiante->email !== $request->estudiante_email) {
@@ -248,6 +313,16 @@ class PublicPostulacionController extends Controller
                     }
                     $estudiante->email = $request->estudiante_email;
                 }
+
+                // Siempre actualizar nombres y tipo de documento por si acaso
+                $estudiante->tipo_documento = $request->estudiante_tipo_documento;
+                $estudiante->nombre = $request->estudiante_nombre;
+                $estudiante->apellido_paterno = $request->estudiante_apellido_paterno;
+                $estudiante->apellido_materno = $request->estudiante_apellido_materno;
+                $estudiante->telefono = $request->estudiante_telefono;
+                $estudiante->direccion = $request->estudiante_direccion;
+                $estudiante->genero = $request->estudiante_genero;
+                $estudiante->fecha_nacimiento = $request->estudiante_fecha_nacimiento;
             }
             
             $estudiante->nombre = $request->estudiante_nombre;

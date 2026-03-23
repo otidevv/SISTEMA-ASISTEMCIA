@@ -305,24 +305,62 @@
             <div class="step-content active" data-step="1">
                 <h5 class="form-section-title">Datos Personales</h5>
                 
-                <!-- Validación DNI Inicial -->
-                <div class="mb-4 p-3 bg-light rounded-lg border border-gray-200">
-                    <label for="check_dni" class="form-label" style="font-weight: bold;">Verificar DNI</label>
-                    <div class="d-flex gap-3">
-                        <input type="text" class="form-control" id="check_dni" name="check_dni" maxlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI para verificar" required>
-                        <button type="button" class="btn btn-next-prev shadow-sm" id="btn-verificar-dni" style="background-color: var(--color-principal); color: white;">
-                            <i class="fas fa-search me-1"></i> Verificar
-                        </button>
+                <!-- Selector de Tipo de Documento -->
+                <div class="mb-4">
+                    <label for="estudiante_tipo_documento_select" class="form-label" style="font-weight: bold;">Tipo de Documento</label>
+                    <div class="d-flex gap-2">
+                        <div class="flex-grow-1">
+                            <select class="form-select" id="estudiante_tipo_documento_select" name="estudiante_tipo_documento">
+                                <option value="1" selected>DNI (Perú)</option>
+                                <option value="2">Carnet de Extranjería</option>
+                                <option value="3">Pasaporte</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="dni_feedback" class="mt-2 small text-muted">Asegúrese de ingresar un DNI válido de 8 dígitos.</div>
+                </div>
+
+                <!-- Sección de Verificación (Solo para DNI) -->
+                <div id="section-verificacion" class="mb-4 p-3 bg-light rounded-lg border border-gray-200">
+                    <div class="d-flex align-items-end gap-2 mb-2 flex-nowrap w-100">
+                        <div class="flex-grow-1">
+                            <label class="form-label mb-1" style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">DNI</label>
+                            <input type="text" class="form-control" id="check_dni" name="check_dni" maxlength="8" pattern="[0-9]{8}" placeholder="8 dígitos" required style="height: 38px;">
+                        </div>
+                        <div class="pb-2 fw-bold text-muted" style="font-size: 1.2rem;">-</div>
+                        <div style="width: 60px; flex-shrink: 0;">
+                            <label class="form-label mb-1 text-center d-block" style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">DV</label>
+                            <input type="text" class="form-control text-center" id="check_dv" name="check_dv" maxlength="1" pattern="[0-9]{1}" placeholder="0" required style="height: 38px;">
+                        </div>
+                        <div class="flex-shrink-0">
+                            <button type="button" class="btn btn-next-prev shadow-sm" id="btn-verificar-dni" style="background-color: var(--color-principal); color: white; white-space: nowrap; height: 38px; padding: 0 35px; font-weight: 700; min-width: 140px;">
+                                <i class="fas fa-search me-2"></i> Verificar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="dni_feedback" class="mt-2 p-3 rounded border" style="background-color: #f8fafc;">
+                        <div class="d-flex align-items-start mb-2">
+                            <i class="fas fa-info-circle me-2 text-primary mt-1"></i>
+                            <div>
+                                <span class="fw-bold d-block mb-1" style="font-size: 0.9rem;">¿Dónde encontrar el dígito verificador?</span>
+                                <p class="text-muted mb-2" style="font-size: 0.85rem; line-height: 1.4;">
+                                    Es el número ubicado después del guion en la parte superior derecha (DNI azul) o al final del número CUI (DNI electrónico).
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-center rounded overflow-hidden shadow-sm border bg-white mt-1">
+                            <img src="{{ asset('assets_cepre/img/ejmplo_verificador.jpg') }}" 
+                                 alt="Guía Dígito Verificador" 
+                                 class="img-fluid" 
+                                 style="max-height: 250px; width: auto; object-fit: contain;">
+                        </div>
+                    </div>
                 </div>
 
                 <div id="personal_fields" style="display: none;">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">DNI</label>
-                            <input type="hidden" name="estudiante_tipo_documento" value="1">
-                            <input type="text" class="form-control" id="estudiante_dni" name="estudiante_dni" readonly>
+                            <label class="form-label" id="label_estudiante_dni">Número de Documento</label>
+                            <input type="text" class="form-control" id="estudiante_dni" name="estudiante_dni">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Nombres</label>
@@ -659,10 +697,17 @@
                 <p>Por favor revise sus datos antes de enviar.</p>
                 <div id="resumen_final" style="text-align: left; background: var(--color-fondo-claro); padding: 15px; margin: 20px 0; border-radius: 8px; max-height: 300px; overflow-y: auto;"></div>
                 
-                <div class="form-check mb-3" style="text-align: left;">
+                <div class="form-check mb-2" style="text-align: left;">
+                    <input class="form-check-input" type="checkbox" id="aceptoTerminos" required>
+                    <label class="form-check-label" for="aceptoTerminos">
+                        Acepto los <a href="javascript:void(0)" onclick="Swal.fire('Términos y Condiciones', 'Todas las postulaciones están sujetas a la veracidad de la información proporcionada y al cumplimiento del reglamento interno del CEPRE UNAMAD.', 'info')" style="color: var(--color-principal); text-decoration: underline;">términos y condiciones</a> y las políticas de privacidad.
+                    </label>
+                </div>
+
+                <div class="form-check mb-4" style="text-align: left;">
                     <input class="form-check-input" type="checkbox" id="confirmarDatos" required>
                     <label class="form-check-label" for="confirmarDatos">
-                        Declaro que toda la información es verídica.
+                        Declaro que toda la información consignada en este formulario es verídica.
                     </label>
                 </div>
 
