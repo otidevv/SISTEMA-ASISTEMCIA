@@ -174,5 +174,10 @@
     </div>
 
     @include('partials.cepreunamad')
+
+    <script>
+        // Inyectar departamentos desde el servidor para carga instantánea (Profesional Hydration)
+        window.DEPARTAMENTOS_INICIALES = @json($departamentos ?? []);
+    </script>
 @endsection
 

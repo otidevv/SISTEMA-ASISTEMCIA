@@ -12,6 +12,8 @@ use App\Models\Inscripcion;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+use App\Models\CentroEducativo;
+
 class HomeController extends Controller
 {
     /**
@@ -23,6 +25,9 @@ class HomeController extends Controller
     {
         $cicloActivo = Ciclo::activo()->first();
         $cursos = Curso::where('estado', 1)->orderBy('id', 'asc')->get();
+        
+        // Departamentos para el formulario de postulación (Hydration)
+        $departamentos = CentroEducativo::getDepartamentos();
 
         // Estadísticas
         $stats = [
@@ -78,7 +83,7 @@ class HomeController extends Controller
             ];
         }
 
-        return view('welcome', compact('cicloActivo', 'cursos', 'stats', 'docentes_destacados', 'proximoExamen', 'proximoCiclo'));
+        return view('welcome', compact('cicloActivo', 'cursos', 'stats', 'docentes_destacados', 'proximoExamen', 'proximoCiclo', 'departamentos'));
     }
 
     /**

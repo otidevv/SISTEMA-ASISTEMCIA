@@ -362,67 +362,42 @@ function loadDepartamentos() {
 
     if (select.length === 0) {
         console.error('ERROR CRÍTICO: No se encontró el elemento #departamento');
-        Toast.fire({
-            icon: 'error',
-            title: 'Error interno',
-            text: 'No se encontró el selector de departamentos'
-        });
         return;
     }
 
-    // Mostrar el select inmediatamente con opción por defecto
-    select.html('<option value="">Seleccione departamento</option>').show();
-
-    $.get('/api/public/departamentos', function (data) {
-        console.log('Respuesta API Departamentos:', data);
-
-        if (data.success) {
-            let html = '<option value="">Seleccione departamento</option>';
-
-            // Verificar si es array u objeto
-            const lista = data.departamentos;
-            if (Array.isArray(lista)) {
-                lista.forEach(function (item) {
-                    const id = (typeof item === 'object') ? item.id : item;
-                    const nombre = (typeof item === 'object') ? item.nombre : item;
-                    html += `<option value="${id}">${nombre}</option>`;
-                });
-            } else if (typeof lista === 'object') {
-                $.each(lista, function (i, item) {
-                    const id = (typeof item === 'object') ? item.id : item;
-                    const nombre = (typeof item === 'object') ? item.nombre : item;
-                    html += `<option value="${id}">${nombre}</option>`;
-                });
-            }
-
-            select.html(html).show();
-            console.log('Departamentos cargados correctamente');
-        } else {
-            console.error('API reportó error:', data.message);
-            select.html('<option value="">Error al cargar</option>').show();
-            Toast.fire({
-                icon: 'error',
-                title: 'Error al cargar departamentos',
-                text: (data.message || 'Desconocido')
-            });
-        }
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.error('Error AJAX Departamentos:', textStatus, errorThrown);
-        select.html('<option value="">Error de conexión</option>').show();
-        Toast.fire({
-            icon: 'error',
-            title: 'Error de conexión',
-            text: 'No se pudieron cargar los departamentos'
+    // CARGA INICIAL (Profesional): Usar datos inyectados desde el servidor (Hydration)
+    // Esto evita peticiones API redundantes y es instantáneo
+    const departamentosSource = window.DEPARTAMENTOS_INICIALES || [];
+    
+    if (departamentosSource.length > 0) {
+        let html = '<option value="">Seleccione departamento</option>';
+        departamentosSource.forEach(function (dep) {
+            // Manejar tanto array de strings como array de objetos
+            const id = (typeof dep === 'object') ? (dep.id || dep.nombre) : dep;
+            const nombre = (typeof dep === 'object') ? dep.nombre : dep;
+            html += `<option value="${id}">${nombre}</option>`;
         });
-
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de Conexión',
-                text: 'No se pudieron cargar los departamentos. Por favor revise su conexión o contacte al administrador.'
-            });
-        }
-    });
+        select.html(html).show();
+        console.log('Departamentos cargados mediante Hydration (Servidor -> Vista -> JS)');
+    } else {
+        // Fallback: Si por alguna razón la hidratación falló, intentar la API
+        console.warn('Hydration vacía, intentando API como fallback...');
+        select.html('<option value="">Cargando...</option>').show();
+        
+        $.get('/api/public/departamentos', function (data) {
+            if (data.success) {
+                let html = '<option value="">Seleccione departamento</option>';
+                data.departamentos.forEach(function (item) {
+                    const id = (typeof item === 'object') ? item.id : item;
+                    const nombre = (typeof item === 'object') ? item.nombre : item;
+                    html += `<option value="${id}">${nombre}</option>`;
+                });
+                select.html(html);
+            }
+        }).fail(function () {
+            select.html('<option value="">Error de conexión</option>');
+        });
+    }
 }
 
 function loadProvincias(dep) {
