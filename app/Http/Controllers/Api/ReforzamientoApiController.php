@@ -151,6 +151,10 @@ class ReforzamientoApiController extends BaseController
             return $this->sendError('Datos incompletos', $validator->errors()->toArray(), 422);
         }
 
+        // Buscar ID del Programa de Reforzamiento
+        $prog = ProgramaAcademico::where('nombre', 'like', '%Reforzamiento%')->first();
+        $programaId = $prog ? $prog->id : 2; 
+
         DB::beginTransaction();
         try {
             // 1. Crear/Actualizar Estudiante (User)
@@ -191,7 +195,7 @@ class ReforzamientoApiController extends BaseController
             // 3. Crear Inscripción
             $inscripcion = new InscripcionReforzamiento();
             $inscripcion->estudiante_id = $estudiante->id;
-            $inscripcion->programa_id = 2; // Reforzamiento Escolar id=2
+            $inscripcion->programa_id = $programaId;
             $inscripcion->ciclo_id = $request->ciclo_id;
             $inscripcion->grado = $gradoMap[$request->grado] ?? $request->grado;
             $inscripcion->turno = strtolower($request->seccion); // mañana o tarde
