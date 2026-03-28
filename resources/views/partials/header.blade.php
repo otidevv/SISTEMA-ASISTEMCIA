@@ -1135,6 +1135,16 @@
 
                     <li class="menu-title mt-2">Configuración</li>
 
+                    <!-- Módulo Programas Académicos -->
+                    @if (Auth::user()->hasPermission('users.view'))
+                        <li>
+                            <a href="{{ route('programas.index') }}">
+                                <i data-feather="box"></i>
+                                <span> Programas Académicos </span>
+                            </a>
+                        </li>
+                    @endif
+
                     <!-- Módulo Auditoría - Reubicado para ser más administrativo -->
                     @if (Auth::user()->hasPermission('auditoria.view') || Auth::user()->hasPermission('users.view'))
                         <li>
