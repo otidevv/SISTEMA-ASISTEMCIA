@@ -353,9 +353,9 @@
                     data: d => { d.ciclo_id = $('#filtroCiclo').val(); },
                     dataSrc: json => {
                         if(json.counts) {
-                            $('#count-pendiente').text(json.counts.pendiente);
-                            $('#count-aprobado').text(json.counts.aprobado);
-                            $('#count-total').text(json.counts.total);
+                            animateCounter('#count-pendiente', json.counts.pendiente);
+                            animateCounter('#count-aprobado', json.counts.aprobado);
+                            animateCounter('#count-total', json.counts.total);
                         }
                         return json.data;
                     }
@@ -368,10 +368,43 @@
                     { data: 'semaforo_pagos', className: 'text-center' },
                     { data: 'acciones', className: 'text-center', orderable: false }
                 ],
-                language: { url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" }
+                language: { url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" },
+                drawCallback: function() {
+                    // Animación sutil al redibujar la tabla
+                    $('.badge').addClass('animate__animated animate__fadeIn');
+                }
             });
             $('#filtroCiclo').on('change', () => table.ajax.reload());
+
+            // --- ESCUCHA EN TIEMPO REAL (REVERB) ---
+            if (typeof Echo !== 'undefined') {
+                Echo.channel('postulaciones')
+                    .listen('.NuevaPostulacionCreada', (e) => {
+                        console.log("Nueva inscripción detectada vía Reverb:", e);
+                        
+                        // Recargar tabla sutilmente
+                        if (typeof table !== 'undefined') {
+                            table.ajax.reload(null, false);
+                        }
+                        
+                        // Notificación Premium
+                        toastr.options = { "closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "8000" };
+                        toastr.info(`El estudiante <b>${e.nombre}</b> se acaba de inscribir en el programa de Reforzamiento.`, '¡NUEVA INSCRIPCIÓN!');
+                        
+                        // Sonido sutil (opcional si el navegador lo permite)
+                        // new Audio('{{ asset("assets/sounds/notification.mp3") }}').play().catch(err => {});
+                    });
+            }
         });
+
+        function animateCounter(id, target) {
+            $({ countNum: $(id).text() }).animate({ countNum: target }, {
+                duration: 800,
+                easing: 'swing',
+                step: function() { $(id).text(Math.ceil(this.countNum)); },
+                complete: function() { $(id).text(this.countNum); }
+            });
+        }
 
         function viewDetails(id) {
             $('#loading-expediente').show(); $('#content-expediente').hide(); $('#modalExpediente').modal('show');
@@ -514,8 +547,26 @@
                 confirmButtonText: 'Sí, validar'
             }).then(r => {
                 if (r.isConfirmed) {
-                    $.post("{{ url('admin/reforzamiento') }}/" + id + "/status", { _token: "{{ csrf_token() }}", estado: 'validado' }, res => {
-                        table.ajax.reload(); toastr.success(res.message);
+                    $.post("{{ url('api/public-reforzamiento/validar') }}/" + id, {
+                        _token: '{{ csrf_token() }}'
+                    }).done(function(res) {
+                        Swal.fire('¡Validado!', 'La inscripción ha sido aprobada con éxito.', 'success');
+                        
+                        // 1. Recargar la tabla sin refrescar la página
+                        if (typeof table !== 'undefined') {
+                            table.ajax.reload(null, false);
+                        }
+
+                        // 2. Actualizar el UI del Modal en tiempo real
+                        $('#exp-status-main').text('VALIDADO').removeClass('bg-soft-warning text-warning').addClass('bg-soft-success text-success');
+                        $('#exp-pago-status').text('VALIDADO OK').removeClass('payment-chip-unpaid').addClass('payment-chip-paid');
+                        $('#btn-validar-modal').hide();
+                        $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
+                            window.open("{{ url('api/public-reforzamiento/constancia') }}/" + id, '_blank');
+                        });
+
+                    }).fail(function(err) {
+                        Swal.fire('Error', 'No se pudo validar la inscripción.', 'error');
                     });
                 }
             });
@@ -524,26 +575,32 @@
         function deleteRecord(id) {
             Swal.fire({
                 title: '¿Estás seguro?',
-                text: "Esta acción eliminará la inscripción, apoderados y pagos permanentemente.",
+                text: "Esta acción no se puede deshacer.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
+                confirmButtonColor: '#ff0000',
+                cancelButtonColor: '#74788d',
+                confirmButtonText: 'Sí, anular',
+                cancelButtonText: 'Regresar'
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: "{{ url('admin/reforzamiento') }}/" + id,
+                        url: "{{ url('api/public-reforzamiento/delete') }}/" + id,
                         type: 'DELETE',
-                        data: { _token: "{{ csrf_token() }}" },
-                        success: function(res) {
-                            if (res.success) {
-                                Swal.fire('Eliminado', res.message, 'success');
-                                table.ajax.reload();
-                            } else { Swal.fire('Error', res.message, 'error'); }
-                        },
-                        error: function() { Swal.fire('Error', 'No se pudo eliminar el registro.', 'error'); }
+                        data: { _token: '{{ csrf_token() }}' }
+                    }).done(function(res) {
+                        Swal.fire('Anulado', 'El registro ha sido eliminado.', 'success');
+                        
+                        // Recargar tabla en segundo plano
+                        if (typeof table !== 'undefined') {
+                            table.ajax.reload(null, false);
+                        }
+                        
+                        // Cerrar Modal si estaba abierto
+                        $('#modalExpediente').modal('hide');
+
+                    }).fail(function(err) {
+                        Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
                     });
                 }
             });

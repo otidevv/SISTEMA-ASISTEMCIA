@@ -274,9 +274,13 @@ class ReforzamientoApiController extends BaseController
             try {
                 NuevaPostulacionCreada::dispatch(
                     $estudiante->nombre . ' ' . $estudiante->apellido_paterno, 
-                    'REFORZAMIENTO - ' . ($request->grado ?? '') . '° SEC.'
+                    'Reforzamiento'
                 );
             } catch (\Exception $e) { Log::error("Error notificando: " . $e->getMessage()); }
+
+            // Disparar Evento en Tiempo Real (Reverb)
+            $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
+            event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
 
             DB::commit();
             return $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
