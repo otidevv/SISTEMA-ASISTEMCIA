@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Ciclo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\InscripcionReforzamiento;
 use App\Models\ApoderadoReforzamiento;
 use App\Models\PagoReforzamiento;
@@ -26,6 +27,35 @@ class ReforzamientoApiController extends BaseController
     public function __construct(PaymentValidationService $paymentService)
     {
         $this->paymentService = $paymentService;
+    }
+
+    /**
+     * Generar PDF de Constancia de Inscripción
+     */
+    public function generarConstancia($id)
+    {
+        try {
+            $inscripcion = InscripcionReforzamiento::with(['estudiante', 'apoderados', 'pagos'])
+                ->findOrFail($id);
+
+            // Permitir descarga si está validado o finalizado
+            if ($inscripcion->estado_inscripcion !== 'validado' && $inscripcion->estado_inscripcion !== 'finalizado') {
+                return response()->json(['error' => 'La inscripción debe estar validada para generar la constancia.'], 403);
+            }
+
+            $pago = $inscripcion->pagos()->orderBy('created_at', 'desc')->first();
+            $estudiante = $inscripcion->estudiante;
+
+            $pdf = Pdf::loadView('pdf.constancia-reforzamiento', [
+                'inscripcion' => $inscripcion,
+                'estudiante' => $estudiante,
+                'pago' => $pago
+            ]);
+
+            return $pdf->stream('constancia-reforzamiento-' . $estudiante->numero_documento . '.pdf');
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al generar PDF: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
