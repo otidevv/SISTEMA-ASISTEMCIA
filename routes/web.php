@@ -214,6 +214,11 @@ Route::middleware('auth')->group(function () {
     // Auditoría
     Route::middleware('can:users.view')->group(function () {
         Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
+        
+        // Programas Académicos
+        Route::get('/admin/programas', [\App\Http\Controllers\ProgramaAcademicoController::class, 'index'])->name('programas.index');
+        Route::post('/admin/programas', [\App\Http\Controllers\ProgramaAcademicoController::class, 'store'])->name('programas.store');
+        Route::post('/admin/programas/toggle/{id}', [\App\Http\Controllers\ProgramaAcademicoController::class, 'toggle'])->name('programas.toggle');
     });
 
     // Roles - Requiere permiso 'roles.view'
