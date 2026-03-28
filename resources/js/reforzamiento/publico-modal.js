@@ -265,9 +265,17 @@ async function verifyDni() {
     btn.innerHTML = '<span class="rf-spin" style="display:inline-block;">cached</span>';
 
     try {
-        const url = `${getBaseUrl()}/api/public-reforzamiento/verify-dni/${dni}`;
-        console.log("Fetching DNI verification from:", url);
-        const response = await fetch(url);
+        let url = `${getBaseUrl()}/api/public-reforzamiento/verify-dni/${dni}`;
+        console.log("Iniciando verificación en:", url);
+        
+        let response = await fetch(url);
+        
+        // Si falla con 404 y no estamos usando /public/, intentar con /public/
+        if (response.status === 404 && !url.includes('/public/api/')) {
+            const fallbackUrl = url.replace('/api/', '/public/api/');
+            console.log("Reintentando con fallback (Apache):", fallbackUrl);
+            response = await fetch(fallbackUrl);
+        }
         const data = await response.json();
 
         if (response.ok) {

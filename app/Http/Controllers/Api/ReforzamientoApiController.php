@@ -77,7 +77,8 @@ class ReforzamientoApiController extends BaseController
             ->first();
 
         if (!$ciclo) {
-            return $this->sendError('No hay un ciclo de reforzamiento activo en este momento.', [], 404);
+            Log::warning("Intento de verificación de DNI sin ciclo de Reforzamiento activo.", ['dni' => $dni]);
+            return $this->sendError('No hay un ciclo de reforzamiento activo en este momento.', [], 422);
         }
 
         // 2. Verificar si ya está inscrito
