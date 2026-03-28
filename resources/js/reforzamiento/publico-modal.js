@@ -265,7 +265,9 @@ async function verifyDni() {
     btn.innerHTML = '<span class="rf-spin" style="display:inline-block;">cached</span>';
 
     try {
-        const response = await fetch(`${getBaseUrl()}/api/public-reforzamiento/verify-dni/${dni}`);
+        const url = `${getBaseUrl()}/api/public-reforzamiento/verify-dni/${dni}`;
+        console.log("Fetching DNI verification from:", url);
+        const response = await fetch(url);
         const data = await response.json();
 
         if (response.ok) {
