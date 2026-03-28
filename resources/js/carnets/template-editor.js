@@ -744,6 +744,7 @@ class CarnetTemplateEditor {
         const formData = {
             nombre: document.getElementById('nombre').value,
             tipo: document.getElementById('tipo').value,
+            ciclo_id: document.getElementById('ciclo_id').value,
             ancho_mm: document.getElementById('ancho_mm').value,
             alto_mm: document.getElementById('alto_mm').value,
             descripcion: document.getElementById('descripcion').value,
