@@ -179,6 +179,17 @@
                     </li>
                 @endif
 
+                <!-- Módulo Reforzamiento - Gestión Independiente -->
+                @if (Auth::user()->hasPermission('postulaciones.view'))
+                    <li>
+                        <a href="{{ route('admin.reforzamiento.index') }}">
+                            <i data-feather="star"></i>
+                            <span class="badge bg-danger float-end">NUEVO</span>
+                            <span> Reforzamiento </span>
+                        </a>
+                    </li>
+                @endif
+
                 <!-- Módulo Material Académico -->
                 @if (Auth::user()->hasPermission('material-academico.ver'))
                     <li>

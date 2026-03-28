@@ -48,7 +48,11 @@ class Postulacion extends Model
         'fecha_constancia_generada',
         'fecha_constancia_subida',
         'actualizado_por',
-        'fecha_actualizacion'
+        'fecha_actualizacion',
+        'grado_secundario',
+        'seccion_reforzamiento',
+        'colegio_nombre_manual',
+        'es_manual'
     ];
 
     protected $casts = [

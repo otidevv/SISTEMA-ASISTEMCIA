@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/js/postulaciones/wizard-completo.js',
                 'resources/js/postulaciones/wizard-simplificado.js',
                 'resources/js/postulaciones/publico-modal.js',
+                'resources/js/reforzamiento/publico-modal.js',
                 'resources/js/perfil/index.js',
                 'resources/js/parentescos/index.js',
                 'resources/js/carreras/index.js',

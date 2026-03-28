@@ -154,6 +154,13 @@ Route::prefix('public-postulation')->group(function () {
     Route::post('/verify-dni', [\App\Http\Controllers\Api\ReniecController::class, 'consultarMultiple']);
 });
 
+// --- REFORZAMIENTO PÚBLICO ---
+Route::prefix('public-reforzamiento')->group(function () {
+    Route::get('/verify-dni/{dni}', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'verifyDni']);
+    Route::post('/reniec/consultar', [\App\Http\Controllers\Api\ReniecController::class, 'consultarDni']);
+    Route::post('/register', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'register']);
+});
+
 // --- CHATBOT ASSISTANT ---
 Route::get('/assistant/config', [App\Http\Controllers\Api\ChatbotApiController::class, 'getAssistantData']);
 Route::post('/assistant/ask', [App\Http\Controllers\Api\ChatbotApiController::class, 'ask']);

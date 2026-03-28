@@ -3,6 +3,7 @@
 @section('title', 'Nivel Secundaria | CEPRE UNAMAD - Inicia tu preparación')
 
 @push('css')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/animate.css') }}">
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/magnific-popup.css') }}">
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/odometer.css') }}">
@@ -308,7 +309,7 @@
                         mientras terminas tus estudios secundarios. ¡El futuro comienza hoy!
                     </p>
                     <div class="hero-btns wow fadeInUp" data-wow-delay="0.6s">
-                        <button class="btn-premium btn-magenta btn-postulacion-main" onclick="openPostulacionModal()">
+                        <button class="btn-premium btn-magenta btn-postulacion-main" onclick="openReforzamientoModal()">
                             <i class="fas fa-edit mr-2"></i> ¡INSCRIBIRSE AHORA!
                         </button>
                     </div>
@@ -522,7 +523,7 @@
                             <li><i class="fas fa-plus-circle text-info mr-2"></i> Prepárate para las carreras más demandadas.</li>
                             <li><i class="fas fa-plus-circle text-info mr-2"></i> Plus de asesoramiento personalizado.</li>
                         </ul>
-                        <button class="btn-premium btn-magenta" onclick="openPostulacionModal()">
+                        <button class="btn-premium btn-magenta" onclick="openReforzamientoModal()">
                             Quiero inscribirme ahora
                         </button>
                     </div>
@@ -537,7 +538,7 @@
     </section>
 
     <!-- INCLUIR MODALES Y SCRIPTS -->
-    @include('partials.postulacion-modal')
+    @include('partials.reforzamiento-modal')
     @include('partials.cepre.countdown-widget')
     
     @include('partials.cepre.footer')
@@ -548,8 +549,9 @@
     </button>
 
     <script>
-        // Inyectar departamentos para hidratación
+        // Inyectar departamentos y URL base
         window.DEPARTAMENTOS_INICIALES = @json($departamentos ?? []);
+        window.APP_URL = "{{ url('/') }}";
 
         /**
          * Inicialización de Three.js Particles para el Hero de Secundaria
@@ -638,5 +640,7 @@
             }
         });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @vite(['resources/js/reforzamiento/publico-modal.js'])
     @include('partials.cepre.scripts')
 @endsection

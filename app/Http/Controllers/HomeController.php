@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Carrera;
 use App\Models\CicloCarreraVacante;
 use App\Models\Inscripcion;
+use App\Models\Turno;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -207,6 +208,8 @@ class HomeController extends Controller
         $proximoCicloRaw = Ciclo::where('fecha_inicio', '>', now())->orderBy('fecha_inicio')->first();
         $proximoCiclo = $proximoCicloRaw ? ['nombre' => $proximoCicloRaw->nombre, 'fecha' => Carbon::parse($proximoCicloRaw->fecha_inicio)->format('M d, Y H:i:s')] : null;
 
-        return view('public.secundaria', compact('cicloActivo', 'proximoExamen', 'proximoCiclo', 'departamentos', 'cursos_reforzamiento', 'stats_secundaria'));
+        $turnos = Turno::activos()->ordenados()->get();
+
+        return view('public.secundaria', compact('cicloActivo', 'proximoExamen', 'proximoCiclo', 'departamentos', 'cursos_reforzamiento', 'stats_secundaria', 'turnos'));
     }
 }

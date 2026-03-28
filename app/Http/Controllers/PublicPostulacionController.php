@@ -577,10 +577,7 @@ class PublicPostulacionController extends Controller
     public function getProvincias($departamento)
     {
         try {
-            $cacheKey = 'provincias_list_' . str_replace(' ', '_', $departamento);
-            $provincias = Cache::remember($cacheKey, 86400, function () use ($departamento) {
-                return CentroEducativo::getProvincias($departamento);
-            });
+            $provincias = CentroEducativo::getProvincias($departamento);
 
             // Modificación: Mapear a un array de objetos con 'id' y 'nombre'
             $provinciasFormatoCorrecto = $provincias->map(function($provincia) {
@@ -609,10 +606,7 @@ class PublicPostulacionController extends Controller
     public function getDistritos($departamento, $provincia)
     {
         try {
-            $cacheKey = 'distritos_list_' . str_replace(' ', '_', $departamento) . '_' . str_replace(' ', '_', $provincia);
-            $distritos = Cache::remember($cacheKey, 86400, function () use ($departamento, $provincia) {
-                return CentroEducativo::getDistritos($departamento, $provincia);
-            });
+            $distritos = CentroEducativo::getDistritos($departamento, $provincia);
 
             // Modificación: Mapear a un array de objetos con 'id' y 'nombre'
             $distritosFormatoCorrecto = $distritos->map(function($distrito) {

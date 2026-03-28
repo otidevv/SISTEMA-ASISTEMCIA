@@ -184,6 +184,15 @@ Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // --- GESTIÓN DE REFORZAMIENTO ---
+    Route::prefix('admin/reforzamiento')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ReforzamientoAdminController::class, 'index'])->name('admin.reforzamiento.index');
+        Route::get('/data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'getData'])->name('admin.reforzamiento.data');
+        Route::get('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'show'])->name('admin.reforzamiento.show');
+        Route::post('/{id}/status', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateStatus'])->name('admin.reforzamiento.update-status');
+        Route::delete('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'destroy'])->name('admin.reforzamiento.destroy');
+    });
+
     // Notificaciones
     Route::get('/notificaciones', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notificaciones/fetch', [App\Http\Controllers\NotificationController::class, 'fetch'])->name('notifications.fetch');

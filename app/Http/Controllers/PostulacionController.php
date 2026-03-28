@@ -64,6 +64,7 @@ class PostulacionController extends Controller
 
         try {
             $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
+                ->where('tipo_inscripcion', '!=', 'reforzamiento')
                 ->select('postulaciones.*');
 
             // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
