@@ -18,6 +18,7 @@ class CarnetTemplate extends Model
     protected $fillable = [
         'nombre',
         'tipo',
+        'ciclo_id',
         'fondo_path',
         'ancho_mm',
         'alto_mm',
@@ -52,6 +53,14 @@ class CarnetTemplate extends Model
     }
 
     /**
+     * Relación con el ciclo académico
+     */
+    public function ciclo()
+    {
+        return $this->belongsTo(Ciclo::class, 'ciclo_id');
+    }
+
+    /**
      * Scope para obtener solo plantillas activas
      */
     public function scopeActivas($query)
@@ -70,11 +79,24 @@ class CarnetTemplate extends Model
     /**
      * Obtener la plantilla activa para un tipo específico
      */
-    public static function obtenerActiva($tipo = 'postulante')
+    public static function obtenerActiva($tipo = 'postulante', $cicloId = null)
     {
-        return self::where('tipo', $tipo)
-            ->where('activa', true)
-            ->first();
+        $baseQuery = self::where('tipo', $tipo)
+            ->where('activa', true);
+            
+        if ($cicloId) {
+            // Intentar buscar la específica del ciclo
+            $template = (clone $baseQuery)->where('ciclo_id', $cicloId)->first();
+            
+            // Si no existe, usamos la global (donde ciclo_id es null)
+            if (!$template) {
+                $template = (clone $baseQuery)->whereNull('ciclo_id')->first();
+            }
+
+            return $template;
+        }
+
+        return $baseQuery->first();
     }
 
     /**
@@ -82,8 +104,9 @@ class CarnetTemplate extends Model
      */
     public function activar()
     {
-        // Desactivar todas las plantillas del mismo tipo
+        // Desactivar todas las plantillas del mismo tipo y ciclo
         self::where('tipo', $this->tipo)
+            ->where('ciclo_id', $this->ciclo_id)
             ->where('id', '!=', $this->id)
             ->update(['activa' => false]);
 

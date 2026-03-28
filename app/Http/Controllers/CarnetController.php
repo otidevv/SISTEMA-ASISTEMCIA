@@ -82,8 +82,7 @@ class CarnetController extends Controller
                 'data' => $data
             ]);
 
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar carnets: ' . $e->getMessage()
@@ -103,8 +102,7 @@ Exception $e) {
                 'success' => true,
                 'data' => $this->formatCarnetData($carnet)
             ]);
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Carnet no encontrado.'
@@ -200,7 +198,7 @@ Exception $e) {
 
             $inscripciones = $queryInscripciones->get();
 
-            // 2. Buscar postulaciones aceptadas (para postulantes)
+            // 2. Buscar postulaciones aceptadas
             $queryPostulaciones = Postulacion::where('ciclo_id', $request->ciclo_id)
                 ->where('estado', 'aprobado');
 
@@ -208,11 +206,15 @@ Exception $e) {
                 $queryPostulaciones->where('carrera_id', $request->carrera_id);
             }
 
-            $postulaciones = $queryPostulaciones->get();
+            $postulantes = $queryPostulaciones->get();
 
-            // Procesar inscripciones
+            // 3. Buscar inscripciones de Reforzamiento (NUEVO)
+            $reforzamiento = \App\Models\InscripcionReforzamiento::where('ciclo_id', $request->ciclo_id)
+                ->where('estado_inscripcion', 'validado')
+                ->get();
+
+            // PROCESAR INSCRIPCIONES REGULARES
             foreach ($inscripciones as $inscripcion) {
-                // Verificar si ya existe un carnet
                 $carnetExistente = Carnet::where('estudiante_id', $inscripcion->estudiante_id)
                     ->where('ciclo_id', $inscripcion->ciclo_id)
                     ->first();
@@ -222,12 +224,6 @@ Exception $e) {
                     continue;
                 }
 
-                // Buscar la postulación para obtener la foto
-                $postulacion = Postulacion::where('estudiante_id', $inscripcion->estudiante_id)
-                    ->where('ciclo_id', $inscripcion->ciclo_id)
-                    ->first();
-
-                // Generar código QR
                 $codigoCarnet = Carnet::generarCodigo($inscripcion->ciclo_id, $inscripcion->carrera_id);
                 $qrContent = json_encode([
                     'codigo' => $codigoCarnet,
@@ -235,7 +231,6 @@ Exception $e) {
                     'estudiante' => $inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido_paterno
                 ]);
 
-                // Crear el carnet
                 $carnet = Carnet::create([
                     'codigo_carnet' => $codigoCarnet,
                     'estudiante_id' => $inscripcion->estudiante_id,
@@ -248,21 +243,18 @@ Exception $e) {
                     'grupo' => $inscripcion->aula ? $inscripcion->aula->nombre : null,
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
-                    'foto_path' => $postulacion ? $postulacion->foto_path : null,
+                    'foto_path' => $inscripcion->estudiante->foto_perfil,
                     'estado' => 'activo'
                 ]);
 
-                // Generar y guardar QR
                 $qrPath = $this->generarQR($carnet->id, $qrContent);
                 $carnet->qr_code = $qrPath;
                 $carnet->save();
-
                 $carnetsGenerados++;
             }
 
-            // Procesar postulaciones aceptadas
-            foreach ($postulaciones as $postulacion) {
-                // Verificar si ya existe un carnet
+            // PROCESAR POSTULACIONES
+            foreach ($postulantes as $postulacion) {
                 $carnetExistente = Carnet::where('estudiante_id', $postulacion->estudiante_id)
                     ->where('ciclo_id', $postulacion->ciclo_id)
                     ->first();
@@ -272,7 +264,6 @@ Exception $e) {
                     continue;
                 }
 
-                // Generar código QR
                 $codigoCarnet = Carnet::generarCodigo($postulacion->ciclo_id, $postulacion->carrera_id);
                 $qrContent = json_encode([
                     'codigo' => $codigoCarnet,
@@ -280,49 +271,75 @@ Exception $e) {
                     'estudiante' => $postulacion->estudiante->nombre . ' ' . $postulacion->estudiante->apellido_paterno
                 ]);
 
-                // Crear el carnet para postulante
-                $grupo = $this->determinarGrupo($postulacion->carrera->nombre);
-                
                 $carnet = Carnet::create([
                     'codigo_carnet' => $codigoCarnet,
                     'estudiante_id' => $postulacion->estudiante_id,
                     'ciclo_id' => $postulacion->ciclo_id,
                     'carrera_id' => $postulacion->carrera_id,
                     'turno_id' => $postulacion->turno_id,
-                    'aula_id' => null,
                     'tipo_carnet' => 'postulante',
                     'modalidad' => 'postulante',
-                    'grupo' => $grupo,
+                    'grupo' => $this->determinarGrupo($postulacion->carrera->nombre),
                     'fecha_emision' => Carbon::now(),
                     'fecha_vencimiento' => $request->fecha_vencimiento,
                     'foto_path' => $postulacion->foto_path,
                     'estado' => 'activo'
                 ]);
 
-                // Generar y guardar QR
                 $qrPath = $this->generarQR($carnet->id, $qrContent);
                 $carnet->qr_code = $qrPath;
                 $carnet->save();
+                $carnetsGenerados++;
+            }
 
+            // PROCESAR REFORZAMIENTO
+            foreach ($reforzamiento as $ref) {
+                $carnetExistente = Carnet::where('estudiante_id', $ref->estudiante_id)
+                    ->where('ciclo_id', $ref->ciclo_id)
+                    ->first();
+
+                if ($carnetExistente) {
+                    $carnetsExistentes++;
+                    continue;
+                }
+
+                $codigoCarnet = Carnet::generarCodigo($ref->ciclo_id, null);
+                $qrContent = json_encode([
+                    'codigo' => $codigoCarnet,
+                    'dni' => $ref->estudiante->numero_documento,
+                    'estudiante' => $ref->estudiante->nombre . ' ' . $ref->estudiante->apellido_paterno
+                ]);
+
+                $carnet = Carnet::create([
+                    'codigo_carnet' => $codigoCarnet,
+                    'estudiante_id' => $ref->estudiante_id,
+                    'ciclo_id' => $ref->ciclo_id,
+                    'carrera_id' => null,
+                    'turno_id' => ($ref->turno == 'MAÑANA' ? 1 : 2),
+                    'tipo_carnet' => 'estudiante',
+                    'modalidad' => 'reforzamiento_colegio',
+                    'grupo' => 'REF - ' . $ref->grado,
+                    'fecha_emision' => Carbon::now(),
+                    'fecha_vencimiento' => $request->fecha_vencimiento,
+                    'foto_path' => $ref->foto_path,
+                    'estado' => 'activo'
+                ]);
+
+                $qrPath = $this->generarQR($carnet->id, $qrContent);
+                $carnet->qr_code = $qrPath;
+                $carnet->save();
                 $carnetsGenerados++;
             }
 
             DB::commit();
-
             return response()->json([
                 'success' => true,
-                'message' => "Se generaron {$carnetsGenerados} carnets exitosamente" . 
-                           ($carnetsExistentes > 0 ? ". {$carnetsExistentes} estudiantes ya tenían carnet." : ""),
-                'generados' => $carnetsGenerados,
-                'existentes' => $carnetsExistentes
+                'message' => "Proceso terminado. Se generaron {$carnetsGenerados} carnets nuevos."
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al generar carnets: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
 
@@ -340,48 +357,27 @@ Exception $e) {
             'ciclo_id' => 'required|exists:ciclos,id',
             'aula_id' => 'nullable|exists:aulas,id',
             'fecha_vencimiento' => 'required|date|after:today',
-            'modalidad' => 'required|string|in:postulante,reforzamiento'
+            'modalidad' => 'required|string|in:postulante,reforzamiento_colegio'
         ];
 
-        if ($request->input('modalidad') !== 'reforzamiento') {
+        if ($request->input('modalidad') !== 'reforzamiento_colegio') {
             $rules['carrera_id'] = 'required|exists:carreras,id';
             $rules['turno_id'] = 'required|exists:turnos,id';
-        } else {
-            $rules['carrera_id'] = 'nullable|exists:carreras,id';
-            $rules['turno_id'] = 'nullable|exists:turnos,id';
         }
 
         $request->validate($rules);
 
         DB::beginTransaction();
-        
         try {
-            // Verificar si ya existe un carnet
             $carnetExistente = Carnet::where('estudiante_id', $request->estudiante_id)
                 ->where('ciclo_id', $request->ciclo_id)
                 ->first();
 
             if ($carnetExistente) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El estudiante ya tiene un carnet para este ciclo'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Ya existe un carnet.'], 400);
             }
 
-            // Buscar la postulación para obtener la foto
-            $postulacion = Postulacion::where('estudiante_id', $request->estudiante_id)
-                ->where('ciclo_id', $request->ciclo_id)
-                ->first();
-
-            // Generar código
             $codigoCarnet = Carnet::generarCodigo($request->ciclo_id, $request->carrera_id);
-
-            // Crear el carnet
-            $grupo = $request->grupo;
-            if (!$request->aula_id && !$grupo && $postulacion && $postulacion->carrera) {
-                $grupo = $this->determinarGrupo($postulacion->carrera->nombre);
-            }
-
             $carnet = Carnet::create([
                 'codigo_carnet' => $codigoCarnet,
                 'estudiante_id' => $request->estudiante_id,
@@ -391,40 +387,21 @@ Exception $e) {
                 'aula_id' => $request->aula_id,
                 'tipo_carnet' => 'estudiante',
                 'modalidad' => $request->modalidad,
-                'grupo' => $grupo,
+                'grupo' => $request->grupo,
                 'fecha_emision' => Carbon::now(),
                 'fecha_vencimiento' => $request->fecha_vencimiento,
-                'foto_path' => $postulacion ? $postulacion->foto_path : null,
-                'estado' => 'activo',
-                'observaciones' => $request->observaciones
+                'estado' => 'activo'
             ]);
 
-            // Generar QR
-            $qrContent = json_encode([
-                'codigo' => $codigoCarnet,
-                'dni' => $carnet->estudiante->numero_documento,
-                'estudiante' => $carnet->nombre_completo
-            ]);
-            
-            $qrPath = $this->generarQR($carnet->id, $qrContent);
+            $qrPath = $this->generarQR($carnet->id, json_encode(['codigo' => $codigoCarnet]));
             $carnet->qr_code = $qrPath;
             $carnet->save();
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Carnet generado exitosamente',
-                'carnet' => $carnet
-            ]);
-
-        } catch (
-Exception $e) {
+            return response()->json(['success' => true, 'message' => 'Carnet generado.']);
+        } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al generar carnet: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
 
@@ -438,119 +415,81 @@ Exception $e) {
         }
 
         $carnetIds = $request->carnets ?? [];
-        
         if (empty($carnetIds)) {
-            return back()->with('error', 'Debe seleccionar al menos un carnet');
+            return back()->with('error', 'Seleccione al menos un carnet');
         }
 
         $carnets = Carnet::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])
             ->whereIn('id', $carnetIds)
             ->get();
 
-        // Obtener plantilla activa para postulantes
-        $template = \App\Models\CarnetTemplate::obtenerActiva('postulante');
-        
-        if (!$template) {
-            return back()->with('error', 'No hay una plantilla activa configurada. Por favor, active una plantilla en el módulo de Plantillas de Carnets.');
-        }
-
-        // Preparar datos para la vista
-        $carnetsData = $carnets->map(function($carnet) use ($template) {
-            // Obtener la foto del estudiante y código de postulante
-            $foto = null;
-            $codigoPostulante = '00000000';
+        // Preparar datos para la vista (Dinámico por carnet)
+        $carnetsData = $carnets->map(function($carnet) {
+            // Diferenciar entre Reforzamiento Colegio y otros para la plantilla
+            $tipoTemplate = $carnet->modalidad === 'reforzamiento_colegio' ? 'reforzamiento_colegio' : 'postulante';
+            $template = \App\Models\CarnetTemplate::obtenerActiva($tipoTemplate, $carnet->ciclo_id) 
+                        ?? \App\Models\CarnetTemplate::obtenerActiva('postulante', $carnet->ciclo_id);
             
-            // Buscar postulación para obtener foto y código
-            $postulacion = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)
-                ->where('ciclo_id', $carnet->ciclo_id)
-                ->first();
-                
-            if ($postulacion) {
-                // Obtener código del postulante desde la tabla postulaciones
-                $codigoPostulante = $postulacion->codigo_postulante ?? '00000000';
-                
-                // Obtener foto
-                if ($carnet->foto_path) {
-                    $fotoPath = storage_path('app/public/' . $carnet->foto_path);
-                    if (file_exists($fotoPath)) {
-                        $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fotoPath));
-                    }
-                } elseif ($postulacion && $postulacion->foto_path) {
-                    $fotoPath = storage_path('app/public/' . $postulacion->foto_path);
-                    if (file_exists($fotoPath)) {
-                        $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fotoPath));
-                    }
-                }
+            $foto = null;
+            $codigoPostulante = $carnet->dni;
+            $infoAcademica = '';
+
+            if ($carnet->modalidad === 'reforzamiento_colegio') {
+                $ref = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)->first();
+                $infoAcademica = $ref ? strtoupper("{$ref->grado}° - {$ref->colegio_procedencia}") : 'REF. COLEGIO';
+                $codigoPostulante = $carnet->dni;
+            } else {
+                $post = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)->first();
+                $codigoPostulante = $post->codigo_postulante ?? $carnet->dni;
+                $infoAcademica = strtoupper($carnet->carrera->nombre ?? 'ADMISIÓN');
             }
 
-            // Generar QR si no existe
+            if ($carnet->foto_path) {
+                $path = storage_path('app/public/' . $carnet->foto_path);
+                if (file_exists($path)) $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
+            }
+
             $qrCode = null;
             if ($carnet->qr_code) {
-                $qrPath = storage_path('app/public/' . $carnet->qr_code);
-                if (file_exists($qrPath)) {
-                    $qrCode = 'data:image/png;base64,' . base64_encode(file_get_contents($qrPath));
-                }
+                $path = storage_path('app/public/' . $carnet->qr_code);
+                if (file_exists($path)) $qrCode = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
             }
 
-            // Cargar fondo desde la plantilla
             $fondo = null;
-            if ($template->fondo_path && \Storage::disk('public')->exists($template->fondo_path)) {
-                $fondoPath = storage_path('app/public/' . $template->fondo_path);
-                if (file_exists($fondoPath)) {
-                    $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fondoPath));
-                }
-            }
-
-
-
-            // Determinar grupo/aula dinámicamente
-            $grupoDisplay = '';
-            if ($carnet->aula) {
-                $grupoDisplay = $carnet->aula->nombre;
-            } else {
-                // Verificar inscripción respaldo (búsqueda dinámica)
-                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
-                    ->where('ciclo_id', $carnet->ciclo_id)
-                    ->where('estado_inscripcion', 'activo')
-                    ->whereNotNull('aula_id')
-                    ->with('aula')
-                    ->first();
-                    
-                if ($inscripcion && $inscripcion->aula) {
-                    $grupoDisplay = $inscripcion->aula->nombre;
-                } elseif ($carnet->grupo) {
-                    $grupoDisplay = $carnet->grupo; 
-                    if (strlen($grupoDisplay) == 1) {
-                         $grupoDisplay = 'Grupo ' . $grupoDisplay;
-                    }
-                }
+            if ($template && $template->fondo_path) {
+                $path = storage_path('app/public/' . $template->fondo_path);
+                if (file_exists($path)) $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
             }
 
             return [
                 'id' => $carnet->id,
-                'codigo' => $carnet->codigo_carnet,
                 'codigo_postulante' => $codigoPostulante,
-                'estudiante_id' => str_pad($carnet->estudiante_id, 8, '0', STR_PAD_LEFT),
                 'nombre_completo' => strtoupper($carnet->nombre_completo),
-                'dni' => $carnet->estudiante->numero_documento,
-                'carrera' => strtoupper($carnet->carrera->nombre),
-                'ciclo' => $carnet->ciclo->nombre,
-                'turno' => $carnet->turno->nombre,
-                'grupo' => $grupoDisplay,
-                'modalidad' => strtoupper($carnet->modalidad ?? 'PRESENCIAL'),
-                'fecha_vencimiento' => $carnet->fecha_vencimiento->format('d/m/Y'),
+                'dni' => $carnet->estudiante->numero_documento ?? 'N/A',
+                'carrera' => $infoAcademica, 
+                'grado' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? "{$ref->grado}°" : '---',
+                'colegio' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? strtoupper($ref->colegio_procedencia) : '---',
+                'ciclo' => $carnet->ciclo->nombre ?? '---',
+                'turno' => $carnet->turno->nombre ?? 'N/A',
+                'grupo' => $carnet->grupo ?? '---',
+                'modalidad' => strtoupper(str_replace('_', ' ', $carnet->modalidad ?? 'PRESENCIAL')),
+                'fecha_vencimiento' => $carnet->fecha_vencimiento ? $carnet->fecha_vencimiento->format('d/m/Y') : '---',
                 'foto' => $foto,
                 'qr_code' => $qrCode,
                 'fondo' => $fondo,
-                'fecha_impresion' => \Carbon\Carbon::now()->format('d/m/Y H:i')
+                'template' => $template
             ];
         });
 
-        // Usar vista dinámica con la plantilla
+        // Usamos la primera plantilla como base para las dimensiones del papel
+        $templateBase = \App\Models\CarnetTemplate::obtenerActiva('postulante', $carnets->first()->ciclo_id)
+                      ?? \App\Models\CarnetTemplate::obtenerActiva('postulante');
+        if (!$templateBase) abort(500, 'No hay plantillas activas');
+
         $pdf = PDF::loadView('carnets.pdf-dynamic', [
             'carnets' => $carnetsData,
-            'template' => $template
-        ])->setPaper([0, 0, $template->ancho_mm * 2.83465, $template->alto_mm * 2.83465], 'portrait');
+            'template' => $templateBase
+        ])->setPaper([0, 0, $templateBase->ancho_mm * 2.83465, $templateBase->alto_mm * 2.83465], 'portrait');
 
         return $pdf->download('carnets_' . date('YmdHis') . '.pdf');
     }
@@ -586,8 +525,7 @@ Exception $e) {
                 'message' => "{$updated} carnets marcados como impresos"
             ]);
 
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al actualizar carnets: ' . $e->getMessage()
@@ -628,8 +566,7 @@ Exception $e) {
                 'message' => "Estado cambiado de {$estadoAnterior} a {$request->estado}"
             ]);
 
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar estado: ' . $e->getMessage()
@@ -657,8 +594,7 @@ Exception $e) {
                 'success' => true,
                 'message' => 'Carnet eliminado exitosamente.'
             ]);
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar el carnet.'
@@ -683,8 +619,7 @@ Exception $e) {
             Storage::disk('public')->put($path, $qrCode);
             
             return $path;
-        } catch (
-Exception $e) {
+        } catch (\Exception $e) {
             // Si falla la generación del QR, continuar sin él
             return null;
         }

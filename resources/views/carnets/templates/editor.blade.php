@@ -228,6 +228,22 @@
                                         <option value="estudiante" {{ (isset($template) && $template->tipo == 'estudiante') ? 'selected' : '' }}>Estudiante</option>
                                         <option value="docente" {{ (isset($template) && $template->tipo == 'docente') ? 'selected' : '' }}>Docente</option>
                                         <option value="administrativo" {{ (isset($template) && $template->tipo == 'administrativo') ? 'selected' : '' }}>Administrativo</option>
+                                        <option value="reforzamiento_colegio" {{ (isset($template) && $template->tipo == 'reforzamiento_colegio') ? 'selected' : '' }}>Reforzamiento Colegio</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Ciclo Académico <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="ciclo_id" name="ciclo_id" required>
+                                        <option value="">Seleccione Ciclo</option>
+                                        @foreach($ciclos as $ciclo)
+                                            <option value="{{ $ciclo->id }}" 
+                                                    data-es-reforzamiento="{{ (stripos($ciclo->nombre, 'reforzamiento') !== false || stripos($ciclo->nombre, 'escolar') !== false) ? '1' : '0' }}"
+                                                    {{ (isset($template) && $template->ciclo_id == $ciclo->id) ? 'selected' : '' }}>
+                                                {{ $ciclo->nombre }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -321,7 +337,7 @@
                                 <li data-field="qr_code">
                                     <i class="uil uil-qrcode-scan me-2"></i> Código QR
                                 </li>
-                                <li data-field="codigo_postulante">
+                                <li data-field="codigo_postulante" class="field-tipo field-postulante">
                                     <i class="uil uil-hashtag me-2"></i> Código Postulante
                                 </li>
                                 <li data-field="nombre_completo">
@@ -333,11 +349,17 @@
                                 <li data-field="grupo">
                                     <i class="uil uil-users-alt me-2"></i> Grupo
                                 </li>
-                                <li data-field="modalidad">
+                                <li data-field="modalidad" class="field-tipo field-postulante">
                                     <i class="uil uil-book-alt me-2"></i> Modalidad
                                 </li>
-                                <li data-field="carrera">
+                                <li data-field="carrera" class="field-tipo field-postulante">
                                     <i class="uil uil-graduation-cap me-2"></i> Carrera
+                                </li>
+                                <li data-field="grado" class="field-tipo field-reforzamiento">
+                                    <i class="uil uil-layer-group me-2"></i> Grado
+                                </li>
+                                <li data-field="colegio" class="field-tipo field-reforzamiento">
+                                    <i class="uil uil-university me-2"></i> Colegio
                                 </li>
                             </ul>
                         </div>
@@ -473,11 +495,55 @@
             id: {{ $template->id }},
             nombre: "{{ $template->nombre }}",
             tipo: "{{ $template->tipo }}",
+            ciclo_id: {{ $template->ciclo_id ?? 'null' }},
             fondo_path: "{{ $template->fondo_path ?? '' }}",
             campos_config: {!! json_encode($template->campos_config) !!}
         };
     </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoSelect = document.getElementById('tipo');
+            const cicloSelect = document.getElementById('ciclo_id');
+            const fieldList = document.getElementById('fieldList');
+
+            function filterFields() {
+                const tipo = tipoSelect.value;
+                const fields = fieldList.querySelectorAll('.field-tipo');
+                
+                fields.forEach(field => {
+                    if (tipo === 'reforzamiento_colegio') {
+                        if (field.classList.contains('field-reforzamiento')) {
+                            field.style.display = 'block';
+                        } else {
+                            field.style.display = 'none';
+                        }
+                    } else {
+                        // Para otros tipos, se muestra Carrera pero no Grado/Colegio
+                        if (field.classList.contains('field-postulante')) {
+                            field.style.display = 'block';
+                        } else {
+                            field.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            tipoSelect.addEventListener('change', filterFields);
+            
+            // Sincronización automática con Ciclo
+            cicloSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && selectedOption.dataset.esReforzamiento === '1') {
+                    tipoSelect.value = 'reforzamiento_colegio';
+                    filterFields();
+                }
+            });
+
+            filterFields(); // Ejecutar al cargar
+        });
+    </script>
     
     @vite('resources/js/carnets/template-editor.js')
 @endpush

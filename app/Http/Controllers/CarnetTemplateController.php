@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CarnetTemplate;
+use App\Models\Ciclo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +20,7 @@ class CarnetTemplateController extends Controller
             abort(403, 'Sin permisos para ver plantillas');
         }
 
-        $templates = CarnetTemplate::with(['creador', 'actualizador'])
+        $templates = CarnetTemplate::with(['creador', 'actualizador', 'ciclo'])
             ->orderBy('activa', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -36,7 +37,8 @@ class CarnetTemplateController extends Controller
             abort(403, 'Sin permisos para crear plantillas');
         }
 
-        return view('carnets.templates.editor');
+        $ciclos = Ciclo::orderBy('created_at', 'desc')->get();
+        return view('carnets.templates.editor', compact('ciclos'));
     }
 
     /**
@@ -50,7 +52,8 @@ class CarnetTemplateController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
-            'tipo' => 'required|in:postulante,estudiante,docente,administrativo',
+            'tipo' => 'required|in:postulante,estudiante,docente,administrativo,reforzamiento_colegio',
+            'ciclo_id' => 'nullable|exists:ciclos,id',
             'ancho_mm' => 'required|numeric|min:0',
             'alto_mm' => 'required|numeric|min:0',
             'campos_config' => 'required|json',
@@ -65,6 +68,7 @@ class CarnetTemplateController extends Controller
             $template = CarnetTemplate::create([
                 'nombre' => $request->nombre,
                 'tipo' => $request->tipo,
+                'ciclo_id' => $request->ciclo_id,
                 'fondo_path' => $request->fondo_path,
                 'ancho_mm' => $request->ancho_mm,
                 'alto_mm' => $request->alto_mm,
@@ -97,8 +101,9 @@ class CarnetTemplateController extends Controller
         }
 
         $template = CarnetTemplate::findOrFail($id);
+        $ciclos = Ciclo::orderBy('created_at', 'desc')->get();
 
-        return view('carnets.templates.editor', compact('template'));
+        return view('carnets.templates.editor', compact('template', 'ciclos'));
     }
 
     /**
@@ -112,7 +117,8 @@ class CarnetTemplateController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
-            'tipo' => 'required|in:postulante,estudiante,docente,administrativo',
+            'tipo' => 'required|in:postulante,estudiante,docente,administrativo,reforzamiento_colegio',
+            'ciclo_id' => 'nullable|exists:ciclos,id',
             'ancho_mm' => 'required|numeric|min:0',
             'alto_mm' => 'required|numeric|min:0',
             'campos_config' => 'required|json',
@@ -129,6 +135,7 @@ class CarnetTemplateController extends Controller
             $template->update([
                 'nombre' => $request->nombre,
                 'tipo' => $request->tipo,
+                'ciclo_id' => $request->ciclo_id,
                 'fondo_path' => $request->fondo_path ?? $template->fondo_path,
                 'ancho_mm' => $request->ancho_mm,
                 'alto_mm' => $request->alto_mm,

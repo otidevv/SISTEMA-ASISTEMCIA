@@ -86,13 +86,13 @@
 
                         <!-- Template Info -->
                         <h5 class="card-title mb-2">{{ $template->nombre }}</h5>
-                        
+
                         <div class="mb-2">
                             <span class="badge {{ $template->activa ? 'badge-active' : 'badge-inactive' }}">
                                 {{ $template->activa ? 'Activa' : 'Inactiva' }}
                             </span>
-                            <span class="badge bg-info text-white ms-1">
-                                {{ ucfirst($template->tipo) }}
+                            <span class="badge {{ $template->tipo === 'reforzamiento_colegio' ? 'bg-warning' : 'bg-info' }} text-white ms-1">
+                                {{ $template->tipo === 'reforzamiento_colegio' ? 'Ref. Colegio' : ucfirst($template->tipo) }}
                             </span>
                         </div>
 
@@ -100,11 +100,17 @@
                             <p class="text-muted small mb-3">{{ Str::limit($template->descripcion, 80) }}</p>
                         @endif
 
-                        <!-- Dimensions -->
-                        <p class="text-muted small mb-3">
+                        <!-- Dimensions & Cycle -->
+                        <p class="text-muted small mb-1">
                             <i class="uil uil-ruler-combined me-1"></i>
                             {{ $template->ancho_mm }} x {{ $template->alto_mm }} mm
                         </p>
+                        @if($template->ciclo)
+                            <p class="text-muted small mb-3">
+                                <i class="uil uil-calendar-alt me-1"></i>
+                                Ciclo: {{ $template->ciclo->nombre }}
+                            </p>
+                        @endif
 
                         <!-- Actions -->
                         <div class="btn-group w-100" role="group">
