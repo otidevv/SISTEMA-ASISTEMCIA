@@ -203,7 +203,31 @@
                                             </div>
                                             <i class="mdi mdi-open-in-new text-muted"></i>
                                         </a>
-                                        <a id="link-voucher" href="#" target="_blank" class="list-group-item list-group-item-action border-0 px-2 py-2 d-flex align-items-center">
+                                        <a id="link-dni-apo" href="#" target="_blank" class="list-group-item list-group-item-action border-0 px-2 py-2 d-flex align-items-center mb-1">
+                                            <div class="avatar-sm mr-2 me-2">
+                                                <span class="avatar-title rounded-circle bg-soft-warning text-warning">
+                                                    <i class="mdi mdi-account-group-outline font-size-18"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="mb-0 text-dark fs-13">DNI Apoderado</h6>
+                                                <small class="text-muted">Copia Padre/Madre</small>
+                                            </div>
+                                            <i class="mdi mdi-open-in-new text-muted"></i>
+                                        </a>
+                                        <a id="link-cert" href="#" target="_blank" class="list-group-item list-group-item-action border-0 px-2 py-2 d-flex align-items-center mb-1">
+                                            <div class="avatar-sm mr-2 me-2">
+                                                <span class="avatar-title rounded-circle bg-soft-info text-info">
+                                                    <i class="mdi mdi-school-outline font-size-18"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="mb-0 text-dark fs-13">Certificado</h6>
+                                                <small class="text-muted">Estudios/Vacante</small>
+                                            </div>
+                                            <i class="mdi mdi-open-in-new text-muted"></i>
+                                        </a>
+                                        <a id="link-voucher" href="#" target="_blank" class="list-group-item list-group-item-action border-0 px-2 py-2 d-flex align-items-center mb-1">
                                             <div class="avatar-sm mr-2 me-2">
                                                 <span class="avatar-title rounded-circle bg-soft-success text-success">
                                                     <i class="mdi mdi-receipt-text-outline font-size-18"></i>
@@ -215,6 +239,21 @@
                                             </div>
                                             <i class="mdi mdi-open-in-new text-muted"></i>
                                         </a>
+                                    </div>
+
+                                    <div class="mt-4 pt-4 border-top">
+                                        <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Acciones Administrativas</h6>
+                                        <div class="d-grid gap-2" id="panel-acciones">
+                                            <button id="btn-validar-modal" class="btn btn-success fw-bold d-flex align-items-center justify-content-center py-2">
+                                                <i class="mdi mdi-check-decagram fs-18 mr-2 me-2"></i> VALIDAR INSCRIPCIÓN
+                                            </button>
+                                            <button id="btn-constancia-modal" class="btn btn-dark fw-bold d-flex align-items-center justify-content-center py-2" style="display:none !important;">
+                                                <i class="mdi mdi-file-pdf-box fs-18 mr-2 me-2"></i> IMPRIMIR CONSTANCIA
+                                            </button>
+                                            <button id="btn-eliminar-modal" class="btn btn-outline-danger fw-bold d-flex align-items-center justify-content-center py-2">
+                                                <i class="mdi mdi-delete-outline fs-18 mr-2 me-2"></i> ANULAR REGISTRO
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -377,9 +416,13 @@
 
                 // Documentos
                 const dniPath = data.dni_estudiante_path ? storageUrl + data.dni_estudiante_path : '#';
-                $('#link-dni').attr('href', dniPath);
-                if (!data.dni_estudiante_path) $('#link-dni').addClass('disabled').css('opacity', '0.5');
-                else $('#link-dni').removeClass('disabled').css('opacity', '1');
+                $('#link-dni').attr('href', dniPath).toggle(!!data.dni_estudiante_path);
+
+                const dniApoPath = data.dni_apoderado_path ? storageUrl + data.dni_apoderado_path : '#';
+                $('#link-dni-apo').attr('href', dniApoPath).toggle(!!data.dni_apoderado_path);
+
+                const certPath = data.certificado_path ? storageUrl + data.certificado_path : '#';
+                $('#link-cert').attr('href', certPath).toggle(!!data.certificado_path);
 
                 const pago = data.pagos && data.pagos.length > 0 ? data.pagos[0] : null;
 
@@ -395,9 +438,8 @@
                     
                     if (pago.voucher_path) {
                         $('#link-voucher').attr('href', storageUrl + pago.voucher_path).show();
-                        $('#link-voucher').removeClass('disabled').css('opacity', '1');
                     } else { 
-                        $('#link-voucher').attr('href', '#').addClass('disabled').css('opacity', '0.5');
+                        $('#link-voucher').hide();
                     }
 
                     const isPaid = pago.estado_pago === 'aprobado';
@@ -408,8 +450,22 @@
                     $('#pago-operacion').text('---');
                     $('#pago-monto').text('---');
                     $('#pago-fecha').text('---');
-                    $('#link-voucher').attr('href', '#').addClass('disabled').css('opacity', '0.5');
+                    $('#link-voucher').hide();
                     $('#exp-pago-status').text('SIN PAGO').removeClass('payment-chip-paid').addClass('payment-chip-unpaid');
+                }
+
+                // Configurar Botones de Acción
+                const currentStatus = (data.estado_inscripcion || "PENDIENTE").toUpperCase();
+                $('#btn-validar-modal').toggle(currentStatus !== 'VALIDADO').off().on('click', () => approve(data.id));
+                $('#btn-eliminar-modal').off().on('click', () => deleteRecord(data.id));
+                
+                // Botón de Constancia
+                if (currentStatus === 'VALIDADO') {
+                    $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
+                        window.open("{{ url('api/public-reforzamiento/constancia') }}/" + data.id, '_blank');
+                    });
+                } else {
+                    $('#btn-constancia-modal').attr('style', 'display:none !important;');
                 }
 
                 // Estado Inscripción

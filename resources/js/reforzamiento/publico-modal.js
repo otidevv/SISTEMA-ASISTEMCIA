@@ -280,15 +280,15 @@ async function verifyDni() {
                 pagoDetectado = true;
                 const p = resData.pago_encontrado;
                 
-                // Guardar serial real de la API UNAMAD
-                document.getElementById('ref_pago_api_serial').value = p.serial || '';
+                // Guardar serial real de la API UNAMAD (serial_voucher)
+                document.getElementById('ref_pago_api_serial').value = p.serial_voucher || '';
                 
                 resultDiv.innerHTML = `
                     <div class="rf-alert rf-alert-success">
                         <i class="material-icons-round">verified</i>
                         <div>
-                            <strong>Pago Verificado:</strong> S/. ${p.monto_total}<br>
-                            <small style="opacity:0.8;">Recibo: ${p.serial || '---'}</small>
+                            <strong>Pago Verificado:</strong> S/. ${p.total || p.monto_total}<br>
+                            <small style="opacity:0.8;">Recibo: ${p.serial_voucher || '---'}</small>
                         </div>
                     </div>`;
                 document.getElementById('ref_es_manual').value = "0";
