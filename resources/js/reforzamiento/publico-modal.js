@@ -265,17 +265,11 @@ async function verifyDni() {
     btn.innerHTML = '<span class="rf-spin" style="display:inline-block;">cached</span>';
 
     try {
-        let url = `${getBaseUrl()}/api/public-reforzamiento/verify-dni/${dni}`;
-        console.log("Iniciando verificación en:", url);
+        const baseUrl = getBaseUrl();
+        const url = `${baseUrl}/api/public-reforzamiento/verify-dni/${dni}`;
+        console.log("Verificando DNI en:", url);
         
-        let response = await fetch(url);
-        
-        // Si falla con 404 y no estamos usando /public/, intentar con /public/
-        if (response.status === 404 && !url.includes('/public/api/')) {
-            const fallbackUrl = url.replace('/api/', '/public/api/');
-            console.log("Reintentando con fallback (Apache):", fallbackUrl);
-            response = await fetch(fallbackUrl);
-        }
+        const response = await fetch(url);
         const data = await response.json();
 
         if (response.ok) {
@@ -313,8 +307,25 @@ async function verifyDni() {
 
             if (resData.estudiante_existente) fillStudentFields(resData.estudiante_existente);
             else await fetchReniecStudent(dni);
+        } else {
+            // Manejo de errores controlados (400, 422, 404)
+            Swal.fire({
+                icon: 'warning',
+                title: 'No se pudo verificar',
+                text: data.message || 'El DNI ingresado no es válido o ya existe una inscripción activa.',
+                confirmButtonColor: '#ec008c'
+            });
+            resultDiv.innerHTML = '';
         }
-    } catch (e) { console.error(e); } finally {
+    } catch (e) { 
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Conexión',
+            text: 'No pudimos conectar con el servidor de verificación. Inténtalo de nuevo.',
+            confirmButtonColor: '#ec008c'
+        });
+    } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="material-icons-round">search</i>';
     }
