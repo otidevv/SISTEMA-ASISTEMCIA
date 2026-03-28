@@ -308,7 +308,6 @@ async function verifyDni() {
             if (resData.estudiante_existente) fillStudentFields(resData.estudiante_existente);
             else await fetchReniecStudent(dni);
         } else {
-            // Manejo de errores controlados (400, 422, 404)
             Swal.fire({
                 icon: 'warning',
                 title: 'No se pudo verificar',
@@ -963,7 +962,62 @@ async function handleFinalSubmit(e) {
         });
         const res = await r.json();
         if (res.success) {
-            Swal.fire({ icon: 'success', title: '¡Inscripción Exitosa!', text: res.message }).then(() => location.href = '/login');
+            // Mostrar Vista de Éxito Ultra-Premium
+            const modalBody = document.querySelector('.rf-body');
+            const wizardLayout = document.querySelector('.rf-layout'); 
+            
+            // Si no encontramos el layout rf-layout, usamos el modal body directo
+            const targetContainer = wizardLayout || modalBody;
+
+            targetContainer.innerHTML = `
+                <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem;">
+                    <div class="mb-4">
+                        <img src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" width="120" class="animate__animated animate__bounceIn">
+                    </div>
+                    <h2 style="font-family: var(--rf-font-titles); font-weight: 900; color: var(--rf-navy); font-size: 2.2rem; margin-bottom: 0.5rem;">¡Inscripción Registrada!</h2>
+                    <p style="color: var(--rf-text-muted); font-size: 1.1rem; margin-bottom: 2.5rem; font-weight: 600;">Hemos recibido tu expediente digital correctamente.</p>
+                    
+                    <div style="max-width: 550px; margin: 0 auto; background: #f8fafc; border-radius: 1.5rem; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.02);">
+                        <div style="background: linear-gradient(135deg, #1A237E 0%, #311B92 100%); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: rgba(255,255,255,0.8); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Estado de tu Solicitud</span>
+                            <span style="background: #fbbf24; color: #78350f; padding: 0.4rem 1rem; border-radius: 0.5rem; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <i class="material-icons-round" style="font-size: 1.1rem;">history</i> PENDIENTE
+                            </span>
+                        </div>
+                        <div style="padding: 2rem; text-align: left;">
+                            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0,174,239,0.1); color: var(--rf-cyan); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="material-icons-round">description</i>
+                                </div>
+                                <div>
+                                    <h6 style="font-weight: 800; color: var(--rf-navy); margin-bottom: 0.2rem; font-size: 1rem;">Documentación en Revisión</h6>
+                                    <p style="color: var(--rf-text-muted); font-size: 0.85rem; margin: 0; line-height: 1.4;">El equipo administrativo de la UNAMAD está validando tu DNI y el voucher de pago adjuntado.</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(236,0,140,0.1); color: var(--rf-magenta); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="material-icons-round">notifications_active</i>
+                                </div>
+                                <div>
+                                    <h6 style="font-weight: 800; color: var(--rf-navy); margin-bottom: 0.2rem; font-size: 1rem;">Notificación de Resultados</h6>
+                                    <p style="color: var(--rf-text-muted); font-size: 0.85rem; margin: 0; line-height: 1.4;">Se te notificará vía correo electrónico y llamada/WhatsApp cuando tu vacante sea confirmada.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 3rem;">
+                        <button type="button" class="rf-btn rf-btn-magenta" style="padding: 1.2rem 4rem; font-size: 1.1rem; border-radius: 1.25rem;" onclick="location.reload()">
+                            Entendido, Finalizar <i class="material-icons-round" style="margin-left: 0.5rem;">done_all</i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Ocultar Footer y Sidebar si existen
+            document.querySelector('.rf-footer')?.style.setProperty('display', 'none', 'important');
+            document.querySelector('.rf-sidebar')?.style.setProperty('display', 'none', 'important');
+
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: res.message || 'Error interno.' });
         }
