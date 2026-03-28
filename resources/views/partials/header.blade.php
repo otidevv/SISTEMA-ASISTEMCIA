@@ -444,6 +444,13 @@
                     </a>
 
                     <!-- item-->
+                    @if (Auth::user()->hasPermission('users.view'))
+                    <a href="{{ route('programas.index') }}" class="dropdown-item">
+                        <i class="uil uil-box me-1"></i><span>Programas Académicos</span>
+                    </a>
+                    @endif
+
+                    <!-- item-->
                     <a href="javascript:void(0);" class="dropdown-item">
                         <i class="uil uil-user-plus me-1"></i><span>Crear Usuarios</span>
                     </a>
