@@ -25,7 +25,21 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getBaseUrl() {
-    return window.APP_URL || window.location.origin;
+    // Intentar obtener la URL base desde el meta tag si existe, 
+    // de lo contrario usar la URL actual sin el /api
+    const metaUrl = document.querySelector('meta[name="app-url"]');
+    if (metaUrl && metaUrl.content) return metaUrl.content;
+    
+    // Si no hay meta tag, detectamos si estamos en un subdirectorio
+    const path = window.location.pathname;
+    const segments = path.split('/').filter(s => s.length > 0);
+    
+    // Si estamos en un subdirectorio (ej: /sistema_asistencia/), lo incluimos
+    if (segments.length > 0 && segments[0] !== 'api') {
+        return window.location.origin + '/' + segments[0];
+    }
+    
+    return window.location.origin;
 }
 
 function initPremiumWizard() {
