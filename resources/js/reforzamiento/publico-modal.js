@@ -25,21 +25,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getBaseUrl() {
-    // Intentar obtener la URL base desde el meta tag si existe, 
-    // de lo contrario usar la URL actual sin el /api
+    // 1. Prioridad: Buscar el meta tag app-url (La opción más segura)
     const metaUrl = document.querySelector('meta[name="app-url"]');
-    if (metaUrl && metaUrl.content) return metaUrl.content;
-    
-    // Si no hay meta tag, detectamos si estamos en un subdirectorio
-    const path = window.location.pathname;
-    const segments = path.split('/').filter(s => s.length > 0);
-    
-    // Si estamos en un subdirectorio (ej: /sistema_asistencia/), lo incluimos
-    if (segments.length > 0 && segments[0] !== 'api') {
-        return window.location.origin + '/' + segments[0];
+    if (metaUrl && metaUrl.content) {
+        return metaUrl.content.replace(/\/$/, ''); // Quitar barra final si existe
     }
     
-    return window.location.origin;
+    // 2. Fallback inteligente: Detectar si estamos en una carpeta del servidor
+    // Ej: https://portalcepre.unamad.edu.pe/sistema_asistencia/
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+    const parts = path.split('/').filter(p => p.length > 0);
+    
+    // Si no estamos en la raíz y la primera parte no es 'api', es una subcarpeta
+    if (parts.length > 0 && parts[0] !== 'api' && parts[0] !== 'reforzamiento') {
+        return origin + '/' + parts[0];
+    }
+    
+    return origin;
 }
 
 function initPremiumWizard() {
