@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\InscripcionReforzamiento;
 use App\Models\ApoderadoReforzamiento;
 use App\Models\PagoReforzamiento;
+use App\Models\ProgramaAcademico;
 use App\Events\NuevaPostulacionCreada;
 use App\Notifications\NuevaPostulacionDatabaseNotification;
 use App\Services\PaymentValidationService;
