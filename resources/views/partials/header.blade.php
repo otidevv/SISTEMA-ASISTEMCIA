@@ -341,11 +341,8 @@
                         });
 
                     // 🟢 ESCUCHADOR GLOBAL DE POSTULACIONES (Canal Público)
-                    console.log("🟢 Conectando a canal de postulaciones global...");
                     window.Echo.channel('postulaciones')
                         .listen('.NuevaPostulacionCreada', (e) => {
-                            console.log("🔔 Evento Global Recibido: ", e);
-                            
                             // 1. Sonido
                             playNotificationSound();
                             
@@ -365,6 +362,11 @@
                                     color: '#333',
                                     iconColor: '#28a745'
                                 });
+                            }
+
+                            // 2.5 Actualizar el contador y la lista de la campana (NUEVO)
+                            if (typeof updateNotifications === 'function') {
+                                updateNotifications();
                             }
 
                             // 3. Recargar tabla si estamos en la página de postulaciones

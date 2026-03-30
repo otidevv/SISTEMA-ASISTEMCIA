@@ -5,12 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\InscripcionReforzamiento;
 use App\Models\Ciclo;
 use App\Models\User;
+use App\Services\PaymentValidationService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 
 class ReforzamientoAdminController extends Controller
 {
+    protected $paymentService;
+
+    public function __construct(PaymentValidationService $paymentService)
+    {
+        $this->paymentService = $paymentService;
+    }
+
     public function index()
     {
         $ciclos = Ciclo::where('nombre', 'like', '%Reforzamiento%')->get();
@@ -116,6 +124,46 @@ class ReforzamientoAdminController extends Controller
     public function show($id)
     {
         $inscripcion = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'apoderados', 'pagos'])->findOrFail($id);
+        
+        // AUTO-REPARACIÓN DE PAGOS: Si no tiene un recibo real (es AUTO-), intentar recuperarlo de la API UNAMAD
+        $pago = $inscripcion->pagos()->first();
+        if ($pago && (str_contains($pago->numero_operacion, 'AUTO-') || empty($pago->numero_operacion) || $pago->numero_operacion === '---')) {
+            try {
+                $dni = $inscripcion->estudiante->numero_documento;
+                $vouchers = $this->paymentService->validateVoucher($dni, null); // Buscar todos por DNI
+                
+                if ($vouchers && count($vouchers) > 0) {
+                    // Filtrar los que tengan monto >= 200
+                    $reforzamientoVouchers = array_filter($vouchers, function($v) {
+                        return (float)$v['monto_total'] >= 200;
+                    });
+                    
+                    if (count($reforzamientoVouchers) > 0) {
+                        $pagoReal = array_values($reforzamientoVouchers)[0]; // Tomar el primero
+                        
+                        // Si encontramos un serial real y es diferente al actual AUTO-
+                        $realSerial = $pagoReal['serial_voucher'] ?? $pagoReal['serial'] ?? $pagoReal['numero_operacion'] ?? null;
+                        
+                        if ($realSerial && !str_contains($realSerial, 'AUTO-')) {
+                            $pago->numero_operacion = $realSerial;
+                            $pago->monto = $pagoReal['monto_total'];
+                            if (isset($pagoReal['fecha'])) {
+                                $pago->fecha_pago = $pagoReal['fecha'];
+                            }
+                            $pago->estado_pago = 'aprobado';
+                            $pago->save();
+                            
+                            // Refrescar modelo para la respuesta
+                            $inscripcion->load('pagos');
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Silenciar errores de la API externa para no romper la vista admin
+                \Log::error("Error auto-reparando pago reforzamiento: " . $e->getMessage());
+            }
+        }
+        
         return response()->json($inscripcion);
     }
 

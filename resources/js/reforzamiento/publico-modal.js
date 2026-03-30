@@ -281,14 +281,21 @@ async function verifyDni() {
                 const p = resData.pago_encontrado;
                 
                 // Guardar serial real de la API UNAMAD (serial_voucher)
-                document.getElementById('ref_pago_api_serial').value = p.serial_voucher || '';
+                apiSerial = p.serial_voucher || p.serial || ''; 
+                document.getElementById('ref_pago_api_serial').value = apiSerial;
                 
                 resultDiv.innerHTML = `
-                    <div class="rf-alert rf-alert-success">
+                    <div class="rf-alert rf-alert-success animate__animated animate__pulse">
                         <i class="material-icons-round">verified</i>
                         <div>
                             <strong>Pago Verificado:</strong> S/. ${p.total || p.monto_total}<br>
-                            <small style="opacity:0.8;">Recibo: ${p.serial_voucher || '---'}</small>
+                            <div style="font-size:0.75rem; opacity:0.9; margin-top:0.2rem;">
+                                <span style="margin-right:1rem;"><i class="fas fa-receipt mr-1"></i> Recibo: <strong>${p.serial_voucher || p.serial || '---'}</strong></span>
+                                <span><i class="fas fa-calendar-alt mr-1"></i> Fecha: <strong>${p.fecha ? p.fecha.split(' ')[0] : '---'}</strong></span>
+                            </div>
+                            <div style="font-size:0.7rem; opacity:0.7; font-style:italic; margin-top:0.1rem;">
+                                Concepto: ${p.concepto || 'Pago Reforzamiento'}
+                            </div>
                         </div>
                     </div>`;
                 document.getElementById('ref_es_manual').value = "0";

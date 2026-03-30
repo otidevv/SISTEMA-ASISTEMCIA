@@ -368,7 +368,7 @@
                     { data: 'semaforo_pagos', className: 'text-center' },
                     { data: 'acciones', className: 'text-center', orderable: false }
                 ],
-                language: { url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" },
+                language: { url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" },
                 drawCallback: function() {
                     // Animación sutil al redibujar la tabla
                     $('.badge').addClass('animate__animated animate__fadeIn');
@@ -380,19 +380,10 @@
             if (typeof Echo !== 'undefined') {
                 Echo.channel('postulaciones')
                     .listen('.NuevaPostulacionCreada', (e) => {
-                        console.log("Nueva inscripción detectada vía Reverb:", e);
-                        
                         // Recargar tabla sutilmente
                         if (typeof table !== 'undefined') {
                             table.ajax.reload(null, false);
                         }
-                        
-                        // Notificación Premium
-                        toastr.options = { "closeButton": true, "progressBar": true, "positionClass": "toast-top-right", "timeOut": "8000" };
-                        toastr.info(`El estudiante <b>${e.nombre}</b> se acaba de inscribir en el programa de Reforzamiento.`, '¡NUEVA INSCRIPCIÓN!');
-                        
-                        // Sonido sutil (opcional si el navegador lo permite)
-                        // new Audio('{{ asset("assets/sounds/notification.mp3") }}').play().catch(err => {});
                     });
             }
         });
@@ -547,8 +538,9 @@
                 confirmButtonText: 'Sí, validar'
             }).then(r => {
                 if (r.isConfirmed) {
-                    $.post("{{ url('api/public-reforzamiento/validar') }}/" + id, {
-                        _token: '{{ csrf_token() }}'
+                    $.post("{{ url('admin/reforzamiento') }}/" + id + "/status", {
+                        _token: '{{ csrf_token() }}',
+                        estado: 'validado'
                     }).done(function(res) {
                         Swal.fire('¡Validado!', 'La inscripción ha sido aprobada con éxito.', 'success');
                         
@@ -585,7 +577,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: "{{ url('api/public-reforzamiento/delete') }}/" + id,
+                        url: "{{ url('admin/reforzamiento') }}/" + id,
                         type: 'DELETE',
                         data: { _token: '{{ csrf_token() }}' }
                     }).done(function(res) {

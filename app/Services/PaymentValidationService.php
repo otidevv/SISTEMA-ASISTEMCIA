@@ -39,7 +39,13 @@ class PaymentValidationService
                 $foundVouchers = [];
 
                 foreach ($payments as $voucher) {
-                    $serial = $voucher['serial_voucher'] ?? '---';
+                    // Intento de captura de serial con múltiples fallbacks (la API usa camelCase mayormente)
+                    $serial = $voucher['serialVoucher'] ?? 
+                              $voucher['serial_voucher'] ?? 
+                              $voucher['numero_operacion'] ?? 
+                              $voucher['cod_operacion'] ?? 
+                              $voucher['recibo'] ?? 
+                              '---';
                     
                     if (!isset($foundVouchers[$serial])) {
                         $foundVouchers[$serial] = [
@@ -97,8 +103,11 @@ class PaymentValidationService
                     $v['monto_matricula'] = number_format($v['monto_matricula'], 2, '.', '');
                     $v['monto_ensenanza'] = number_format($v['monto_ensenanza'], 2, '.', '');
                     
-                    // ALINEACIÓN CON JS: Añadir 'monto' y 'concepto' resumido
+                    // ALINEACIÓN CON FRONTEND: Añadir alias para campos comunes
                     $v['monto'] = $v['monto_total'];
+                    $v['total'] = $v['monto_total'];
+                    $v['serial_voucher'] = $v['serial'];
+                    
                     $v['concepto'] = !empty($v['items']) ? $v['items'][0]['descripcion'] : 'Pago CEPRE';
                     if (count($v['items']) > 1) {
                         $v['concepto'] .= ' (+ ' . (count($v['items']) - 1) . ' items)';

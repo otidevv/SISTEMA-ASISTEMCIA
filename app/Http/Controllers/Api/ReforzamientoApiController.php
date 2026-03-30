@@ -271,16 +271,27 @@ class ReforzamientoApiController extends BaseController
             }
 
             // Notificaciones
+            // Notificaciones en Tiempo Real (Reverb) síncrono pero protegido
             try {
-                NuevaPostulacionCreada::dispatch(
-                    $estudiante->nombre . ' ' . $estudiante->apellido_paterno, 
-                    'Reforzamiento'
-                );
-            } catch (\Exception $e) { Log::error("Error notificando: " . $e->getMessage()); }
+                $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
+                
+                // 1. Notificación Global (Broadcast)
+                event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
 
-            // Disparar Evento en Tiempo Real (Reverb)
-            $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
-            event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
+                // 2. Notificación Persistente (Campanita de Administradores)
+                $supervisores = \App\Models\User::all()->filter(function($u) {
+                    return $u->hasPermission('postulaciones.view') || $u->hasRole('admin');
+                });
+                
+                if ($supervisores->count() > 0) {
+                    \Illuminate\Support\Facades\Notification::send(
+                        $supervisores, 
+                        new \App\Notifications\NuevaInscripcionReforzamiento($nombreAlumno, $inscripcion->id)
+                    );
+                }
+            } catch (\Exception $e) { 
+                Log::error("Error enviando broadcast (Reverb): " . $e->getMessage()); 
+            }
 
             DB::commit();
             return $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
