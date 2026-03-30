@@ -247,7 +247,7 @@
                                             <button id="btn-validar-modal" class="btn btn-success fw-bold d-flex align-items-center justify-content-center py-2">
                                                 <i class="mdi mdi-check-decagram fs-18 mr-2 me-2"></i> VALIDAR INSCRIPCIÓN
                                             </button>
-                                            <button id="btn-constancia-modal" class="btn btn-dark fw-bold d-flex align-items-center justify-content-center py-2" style="display:none !important;">
+                                            <button id="btn-constancia-modal" class="btn btn-dark fw-bold d-flex align-items-center justify-content-center py-2 d-none">
                                                 <i class="mdi mdi-file-pdf-box fs-18 mr-2 me-2"></i> IMPRIMIR CONSTANCIA
                                             </button>
                                             <button id="btn-eliminar-modal" class="btn btn-outline-danger fw-bold d-flex align-items-center justify-content-center py-2">
@@ -484,19 +484,16 @@
                     $('#exp-pago-status').text('SIN PAGO').removeClass('payment-chip-paid').addClass('payment-chip-unpaid');
                 }
 
-                // Configurar Botones de Acción
-                const currentStatus = (data.estado_inscripcion || "PENDIENTE").toUpperCase();
-                $('#btn-validar-modal').toggle(currentStatus !== 'VALIDADO').off().on('click', () => approve(data.id));
-                $('#btn-eliminar-modal').off().on('click', () => deleteRecord(data.id));
+                // Configurar Botones de Acción: Gestión Limpia por Estados
+                const currentStatus = (data.estado_inscripcion || "PENDIENTE").toString().trim().toUpperCase();
+                const isValidated = (currentStatus === 'VALIDADO');
                 
-                // Botón de Constancia
-                if (currentStatus === 'VALIDADO') {
-                    $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
-                        window.open("{{ url('admin/reforzamiento') }}/" + data.id + "/print", '_blank');
-                    });
-                } else {
-                    $('#btn-constancia-modal').attr('style', 'display:none !important;');
-                }
+                $('#btn-validar-modal').toggleClass('d-none', isValidated).off().on('click', () => approve(data.id));
+                $('#btn-constancia-modal').toggleClass('d-none', !isValidated).off().on('click', () => {
+                    window.open("{{ url('admin/reforzamiento') }}/" + data.id + "/print", '_blank');
+                });
+
+                $('#btn-eliminar-modal').off().on('click', () => deleteRecord(data.id));
 
                 // Estado Inscripción
                 const status = (data.estado_inscripcion || "PENDIENTE").toUpperCase();
@@ -583,11 +580,12 @@
                             table.ajax.reload(null, false);
                         }
 
-                        // 2. Actualizar el UI del Modal en tiempo real si está abierto
+                        // 2. Actualizar el UI del Modal en tiempo real de forma profesional
                         $('#exp-status-main').text('VALIDADO').removeClass('badge-reforzamiento-warning').addClass('badge-reforzamiento-success');
                         $('#exp-pago-status').text('VALIDADO OK').removeClass('payment-chip-unpaid').addClass('payment-chip-paid');
-                        $('#btn-validar-modal').hide();
-                        $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
+                        
+                        $('#btn-validar-modal').addClass('d-none');
+                        $('#btn-constancia-modal').removeClass('d-none').off().on('click', () => {
                             window.open("{{ url('admin/reforzamiento') }}/" + id + "/print", '_blank');
                         });
 
