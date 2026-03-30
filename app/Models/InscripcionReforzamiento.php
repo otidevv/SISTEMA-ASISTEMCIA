@@ -28,6 +28,8 @@ class InscripcionReforzamiento extends Model
         'carnet_generado',
         'validado_por',
         'fecha_validacion',
+        'aula_id',
+        'nro_constancia',
         'observaciones',
     ];
 
@@ -65,5 +67,10 @@ class InscripcionReforzamiento extends Model
     public function validador()
     {
         return $this->belongsTo(User::class, 'validado_por');
+    }
+
+    public function aula()
+    {
+        return $this->belongsTo(Aula::class, 'aula_id');
     }
 }

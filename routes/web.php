@@ -189,6 +189,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [\App\Http\Controllers\ReforzamientoAdminController::class, 'index'])->name('admin.reforzamiento.index');
         Route::get('/data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'getData'])->name('admin.reforzamiento.data');
         Route::get('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'show'])->name('admin.reforzamiento.show');
+        Route::get('/{id}/print', [\App\Http\Controllers\ReforzamientoAdminController::class, 'print'])->name('admin.reforzamiento.print');
         Route::post('/{id}/status', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateStatus'])->name('admin.reforzamiento.update-status');
         Route::delete('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'destroy'])->name('admin.reforzamiento.destroy');
     });

@@ -53,7 +53,7 @@
     </div>
 
     <div class="title-box">
-        <h3>Constancia de Inscripción N° {{ str_pad($inscripcion->id, 6, '0', STR_PAD_LEFT) }}</h3>
+        <h3>Constancia de Inscripción N° {{ $inscripcion->nro_constancia ?? $inscripcion->id }}</h3>
     </div>
 
     <div class="main-container">
@@ -62,7 +62,7 @@
             <table class="info-table">
                 <tr>
                     <td class="label">Apellidos y Nombres:</td>
-                    <td>{{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }} {{ $estudiante->apellido_materno }}</td>
+                    <td style="font-weight: bold; font-size: 11pt;">{{ $estudiante->nombre_completo }}</td>
                 </tr>
                 <tr>
                     <td class="label">Documento Identidad:</td>
@@ -70,11 +70,15 @@
                 </tr>
                 <tr>
                     <td class="label">Grado / Turno:</td>
-                    <td>{{ strtoupper($inscripcion->grado) }} Secundaria - Turno {{ ucfirst($inscripcion->turno) }}</td>
+                    <td>{{ strtoupper($inscripcion->grado) }} Secundaria - Turno {{ strtoupper($inscripcion->turno) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Aula Asignada:</td>
+                    <td style="font-weight: bold; color: #003366; font-size: 11pt;">{{ $inscripcion->aula ? strtoupper($inscripcion->aula->nombre) : 'PENDIENTE DE ASIGNACIÓN' }}</td>
                 </tr>
                 <tr>
                     <td class="label">Colegio:</td>
-                    <td>{{ $inscripcion->colegio_procedencia }}</td>
+                    <td>{{ strtoupper($inscripcion->colegio_procedencia) }}</td>
                 </tr>
             </table>
 

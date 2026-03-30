@@ -266,15 +266,19 @@
                                         <div class="card border-0 shadow-none rounded-lg p-3">
                                             <h6 class="text-primary fw-bold text-uppercase fs-12 mb-3">INFORMACIÓN ACADÉMICA</h6>
                                             <div class="row align-items-center">
-                                                <div class="col-md-3 text-center border-end">
+                                                <div class="col-md-2 text-center border-end">
                                                     <div class="display-6 fw-bold text-dark" id="exp-grado"></div>
                                                     <small class="text-muted text-uppercase">Grado</small>
                                                 </div>
-                                                <div class="col-md-3 text-center border-end">
+                                                <div class="col-md-2 text-center border-end">
                                                     <div class="fs-24 fw-bold text-primary" id="exp-turno"></div>
                                                     <small class="text-muted text-uppercase">Turno</small>
                                                 </div>
-                                                <div class="col-md-6 px-4">
+                                                <div class="col-md-3 text-center border-end">
+                                                    <div class="fs-18 fw-bold text-success" id="exp-aula">---</div>
+                                                    <small class="text-muted text-uppercase">Aula</small>
+                                                </div>
+                                                <div class="col-md-5 px-3">
                                                     <small class="text-muted text-uppercase d-block mb-1" style="font-size: 10px; letter-spacing: 0.5px;">Institución de Procedencia</small>
                                                     <div class="fw-bold fs-15 text-dark" id="exp-colegio">Cargando...</div>
                                                 </div>
@@ -421,13 +425,15 @@
                 
                 // Formatear fecha nacimiento
                 if (s.fecha_nacimiento) {
-                    const date = new Date(s.fecha_nacimiento);
-                    $('#exp-nacimiento').text(date.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }));
+                    let d = s.fecha_nacimiento.toString().split('T')[0];
+                    let p = d.split('-');
+                    $('#exp-nacimiento').text(p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d);
                 } else { $('#exp-nacimiento').text('---'); }
 
                 // Académico
                 $('#exp-grado').text(data.grado || '---');
                 $('#exp-turno').text(data.turno ? (data.turno.charAt(0).toUpperCase() + data.turno.slice(1).toLowerCase()) : '---');
+                $('#exp-aula').text(data.aula ? data.aula.nombre.toUpperCase() : 'PENDIENTE').removeClass('text-success text-muted').addClass(data.aula ? 'text-success' : 'text-muted');
                 
                 // Escuela de procedencia
                 let colName = data.colegio_procedencia;
@@ -486,7 +492,7 @@
                 // Botón de Constancia
                 if (currentStatus === 'VALIDADO') {
                     $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
-                        window.open("{{ url('api/public-reforzamiento/constancia') }}/" + data.id, '_blank');
+                        window.open("{{ url('admin/reforzamiento') }}/" + data.id + "/print", '_blank');
                     });
                 } else {
                     $('#btn-constancia-modal').attr('style', 'display:none !important;');
@@ -532,33 +538,61 @@
 
         function approve(id) {
             Swal.fire({
-                title: '¿Confirmar Validación?',
-                text: "Se marcará la inscripción como validada y matriculada.",
-                icon: 'question', showCancelButton: true, confirmButtonColor: '#1b5e20',
-                confirmButtonText: 'Sí, validar'
+                title: 'Asignación de Aula',
+                text: "Seleccione el aula para finalizar la validación del estudiante:",
+                icon: 'info',
+                input: 'select',
+                inputOptions: {
+                    @foreach($aulas as $aula)
+                    '{{ $aula->id }}': '{{ $aula->codigo }} - {{ strtoupper($aula->nombre) }} (Capacidad: {{ $aula->capacidad }})',
+                    @endforeach
+                },
+                inputPlaceholder: '-- Seleccionar Aula --',
+                showCancelButton: true,
+                confirmButtonColor: '#1b5e20',
+                confirmButtonText: 'Validar y Matricular',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    return new Promise((resolve) => {
+                        if (value !== '') {
+                            resolve();
+                        } else {
+                            resolve('Es obligatorio asignar un aula para validar.');
+                        }
+                    });
+                }
             }).then(r => {
                 if (r.isConfirmed) {
                     $.post("{{ url('admin/reforzamiento') }}/" + id + "/status", {
                         _token: '{{ csrf_token() }}',
-                        estado: 'validado'
+                        estado: 'validado',
+                        aula_id: r.value
                     }).done(function(res) {
-                        Swal.fire('¡Validado!', 'La inscripción ha sido aprobada con éxito.', 'success');
+                        Swal.fire({
+                            title: '¡Sujeto Matriculado!',
+                            html: `<div class="text-center">
+                                    <i class="mdi mdi-check-circle-outline text-success" style="font-size: 50px;"></i>
+                                    <p class="mt-2">La inscripción ha sido validada correctamente.</p>
+                                    <h4 class="fw-bold text-primary">CONSTANCIA N° ${res.nro_constancia}</h4>
+                                   </div>`,
+                            icon: 'success'
+                        });
                         
                         // 1. Recargar la tabla sin refrescar la página
                         if (typeof table !== 'undefined') {
                             table.ajax.reload(null, false);
                         }
 
-                        // 2. Actualizar el UI del Modal en tiempo real
-                        $('#exp-status-main').text('VALIDADO').removeClass('bg-soft-warning text-warning').addClass('bg-soft-success text-success');
+                        // 2. Actualizar el UI del Modal en tiempo real si está abierto
+                        $('#exp-status-main').text('VALIDADO').removeClass('badge-reforzamiento-warning').addClass('badge-reforzamiento-success');
                         $('#exp-pago-status').text('VALIDADO OK').removeClass('payment-chip-unpaid').addClass('payment-chip-paid');
                         $('#btn-validar-modal').hide();
                         $('#btn-constancia-modal').attr('style', 'display:flex !important;').off().on('click', () => {
-                            window.open("{{ url('api/public-reforzamiento/constancia') }}/" + id, '_blank');
+                            window.open("{{ url('admin/reforzamiento') }}/" + id + "/print", '_blank');
                         });
 
                     }).fail(function(err) {
-                        Swal.fire('Error', 'No se pudo validar la inscripción.', 'error');
+                        Swal.fire('Error', 'No se pudo completar la validación.', 'error');
                     });
                 }
             });
@@ -566,14 +600,14 @@
 
         function deleteRecord(id) {
             Swal.fire({
-                title: '¿Estás seguro?',
-                text: "Esta acción no se puede deshacer.",
+                title: '¿Anular Inscripción?',
+                text: "Esta acción eliminará todos los datos asociados al programa de Reforzamiento.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ff0000',
+                confirmButtonColor: '#d33',
                 cancelButtonColor: '#74788d',
-                confirmButtonText: 'Sí, anular',
-                cancelButtonText: 'Regresar'
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
@@ -581,16 +615,9 @@
                         type: 'DELETE',
                         data: { _token: '{{ csrf_token() }}' }
                     }).done(function(res) {
-                        Swal.fire('Anulado', 'El registro ha sido eliminado.', 'success');
-                        
-                        // Recargar tabla en segundo plano
-                        if (typeof table !== 'undefined') {
-                            table.ajax.reload(null, false);
-                        }
-                        
-                        // Cerrar Modal si estaba abierto
+                        Swal.fire('Eliminado', 'El registro ha sido removido con éxito.', 'success');
+                        if (typeof table !== 'undefined') table.ajax.reload(null, false);
                         $('#modalExpediente').modal('hide');
-
                     }).fail(function(err) {
                         Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
                     });
