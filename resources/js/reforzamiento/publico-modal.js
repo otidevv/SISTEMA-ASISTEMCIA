@@ -49,7 +49,6 @@ function initPremiumWizard() {
     const modal = document.getElementById('reforzamientoModal');
     if (!modal) return;
 
-    console.log("Reforzamiento Wizard Initialized. Base URL:", getBaseUrl());
 
     // Navigation
     document.getElementById('btnNext').addEventListener('click', nextStep);
@@ -120,11 +119,15 @@ function validateCurrentStep() {
         const paterno = document.getElementById('ref_apellido_paterno').value.trim();
         const telefono = document.getElementById('ref_telefono').value.trim();
         const dni = document.getElementById('ref_dni').value.trim();
+        const fechaNac = document.getElementById('ref_fecha_nacimiento')?.value;
+        const genero = document.getElementById('ref_genero')?.value;
 
         if (!dni || dni.length !== 8) errors.push('DNI del estudiante (8 dígitos)');
         if (!nombre || nombre.length < 2) errors.push('Nombres completos');
         if (!paterno || paterno.length < 2) errors.push('Apellido paterno');
         if (!telefono || !/^[0-9]{9}$/.test(telefono)) errors.push('Teléfono (9 dígitos)');
+        if (!fechaNac) errors.push('Fecha de nacimiento');
+        if (!genero) errors.push('Seleccione el género');
     }
 
     if (currentStep === 2) {
@@ -267,7 +270,6 @@ async function verifyDni() {
     try {
         const baseUrl = getBaseUrl();
         const url = `${baseUrl}/api/public-reforzamiento/verify-dni/${dni}`;
-        console.log("Verificando DNI en:", url);
         
         const response = await fetch(url);
         const data = await response.json();
@@ -275,6 +277,42 @@ async function verifyDni() {
         if (response.ok) {
             const resData = data.data;
             document.getElementById('ref_ciclo_id').value = resData.ciclo.id;
+            
+            // Visualización Profesional del Ciclo Activo
+            const cicloDisp = document.getElementById('ref_ciclo_nombre_display');
+            const cicloBadge = document.getElementById('ref_ciclo_badge');
+            const sideCicloInfo = document.getElementById('sideCicloInfo');
+            const sideCicloNombre = document.getElementById('sideCicloNombre');
+            const sideCicloInicio = document.getElementById('sideCicloInicio');
+            const sideCicloFin = document.getElementById('sideCicloFin');
+
+            const formatDateStr = (str) => {
+                if (!str) return '--/--/--';
+                const parts = str.split('-');
+                if (parts.length < 3) return str;
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            };
+
+            if (resData.ciclo) {
+                // Actualizar badge principal (Paso 1)
+                const cBadge = document.getElementById('ref_ciclo_badge');
+                const cDisp = document.getElementById('ref_ciclo_nombre_display');
+                if (cDisp) cDisp.textContent = resData.ciclo.nombre;
+                if (cBadge) cBadge.style.display = 'block';
+
+                // Actualizar Sidebar (Detalles del Ciclo)
+                const sideInfo = document.getElementById('sideCicloInfo');
+                const sideNom = document.getElementById('sideCicloNombre');
+                const sideIni = document.getElementById('sideCicloInicio');
+                const sideFin = document.getElementById('sideCicloFin');
+
+                if (sideInfo) {
+                    if (sideNom) sideNom.textContent = resData.ciclo.nombre;
+                    if (sideIni) sideIni.textContent = formatDateStr(resData.ciclo.fecha_inicio);
+                    if (sideFin) sideFin.textContent = formatDateStr(resData.ciclo.fecha_fin);
+                    sideInfo.style.display = 'block';
+                }
+            }
 
             if (resData.pago_encontrado) {
                 pagoDetectado = true;
@@ -283,6 +321,10 @@ async function verifyDni() {
                 // Guardar serial real de la API UNAMAD (serial_voucher)
                 apiSerial = p.serial_voucher || p.serial || ''; 
                 document.getElementById('ref_pago_api_serial').value = apiSerial;
+                
+                // Guardar fecha real para el envío final
+                const realDate = (p.fecha || p.paymentDate || '').split(' ')[0].split('T')[0];
+                document.getElementById('ref_pago_api_fecha').value = realDate;
                 
                 resultDiv.innerHTML = `
                     <div class="rf-alert rf-alert-success animate__animated animate__pulse">
@@ -312,8 +354,14 @@ async function verifyDni() {
                 document.getElementById('planBBox').style.display = 'block';
             }
 
-            if (resData.estudiante_existente) fillStudentFields(resData.estudiante_existente);
-            else await fetchReniecStudent(dni);
+            if (resData.estudiante_existente) {
+                fillStudentFields(resData.estudiante_existente);
+                if (!resData.estudiante_existente.fecha_nacimiento || !resData.estudiante_existente.genero) {
+                    await fetchReniecStudent(dni);
+                }
+            } else {
+                await fetchReniecStudent(dni);
+            }
         } else {
             Swal.fire({
                 icon: 'warning',
@@ -324,7 +372,6 @@ async function verifyDni() {
             resultDiv.innerHTML = '';
         }
     } catch (e) { 
-        console.error(e);
         Swal.fire({
             icon: 'error',
             title: 'Error de Conexión',
@@ -353,13 +400,31 @@ function fillStudentFields(est) {
     const fields = [
         { id: 'ref_nombre', val: est.nombre || est.nombres || '' },
         { id: 'ref_apellido_paterno', val: est.paterno || est.apellido_paterno || '' },
-        { id: 'ref_apellido_materno', val: est.materno || est.apellido_materno || '' }
+        { id: 'ref_apellido_materno', val: est.materno || est.apellido_materno || '' },
+        { id: 'ref_fecha_nacimiento', val: est.fecha_nacimiento || est.nacimiento || '' },
+        { id: 'ref_genero', val: est.genero || est.sexo || '' }
     ];
 
     fields.forEach(f => {
         const el = document.getElementById(f.id);
         if (el && f.val) {
-            el.value = f.val;
+            let valueToSet = f.val;
+            
+            // Normalizar Fecha de Nacimiento (Si viene con hora "T00:00...")
+            if (f.id === 'ref_fecha_nacimiento' && typeof f.val === 'string' && f.val.includes('T')) {
+                valueToSet = f.val.split('T')[0];
+            }
+
+            // Normalizar Género (Debe ser MAYÚSCULAS)
+            if (f.id === 'ref_genero' && typeof f.val === 'string') {
+                const normalized = f.val.toUpperCase();
+                if (normalized === 'M' || normalized === '1' || normalized === 'MASCULINO') valueToSet = 'MASCULINO';
+                else if (normalized === 'F' || normalized === '2' || normalized === 'FEMENINO') valueToSet = 'FEMENINO';
+                else valueToSet = normalized;
+            }
+
+            el.value = valueToSet;
+            
             // Efecto Visual: Pintar verde momentáneamente
             el.style.transition = 'all 0.5s ease';
             el.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
@@ -759,7 +824,6 @@ window.consultarApoderado = async function(idx) {
             Swal.fire({ icon: 'info', title: 'DNI no encontrado', text: 'Por favor, ingresa los datos de los padres manualmente.', confirmButtonColor: '#ec008c' });
         }
     } catch(e) { 
-        console.error("Error apoderado:", e);
     } finally { 
         btn.innerHTML = oldHtml; 
         btn.disabled = false; 
@@ -863,8 +927,9 @@ function generateSummary() {
         const dni = card.querySelector(`[id^="ap_dni_"]`).value;
         const nombre = card.querySelector(`[id^="ap_nom_"]`).value;
         const paterno = card.querySelector(`[id^="ap_pat_"]`).value;
+        const tel = card.querySelector(`[id^="ap_tel_"]`)?.value || ''; // Capturar teléfono
         const parentesco = card.querySelector(`select`).value;
-        apoderados.push({ dni, nombre: `${nombre} ${paterno}`, parentesco });
+        apoderados.push({ dni, nombre: `${nombre} ${paterno}`, telefono: tel, parentesco });
     });
 
     sum.innerHTML = `
@@ -948,8 +1013,31 @@ async function handleFinalSubmit(e) {
     const btn = document.getElementById('btnSubmit');
     const fd = new FormData(e.target);
     
+    // Inyectar Apoderados Manualmente (Debido a nombres dinámicos)
+    const apoderados = [];
+    document.querySelectorAll('#apoderadosContainer .rf-card').forEach((card, i) => {
+        const dni = card.querySelector(`[id^="ap_dni_"]`).value;
+        const nombre = card.querySelector(`[id^="ap_nom_"]`).value;
+        const paterno = card.querySelector(`[id^="ap_pat_"]`).value;
+        const tel = card.querySelector(`[id^="ap_tel_"]`)?.value || '';
+        const parentesco = card.querySelector(`select`).value;
+        apoderados.push({ dni, nombre: `${nombre} ${paterno}`, telefono: tel, parentesco });
+    });
+
+    apoderados.forEach((ap, index) => {
+        fd.set(`apoderados[${index}][dni]`, ap.dni);
+        fd.set(`apoderados[${index}][nombre]`, ap.nombre);
+        fd.set(`apoderados[${index}][telefono]`, ap.telefono);
+        fd.set(`apoderados[${index}][parentesco]`, ap.parentesco);
+    });
+
     // Inyectar datos clave
     fd.set('dni', document.getElementById('ref_dni').value);
+    fd.set('fecha_nacimiento', document.getElementById('ref_fecha_nacimiento').value);
+    fd.set('genero', document.getElementById('ref_genero').value);
+    fd.set('apellido_paterno', document.getElementById('ref_apellido_paterno').value);
+    fd.set('apellido_materno', document.getElementById('ref_apellido_materno').value);
+    fd.set('ciclo_id', document.getElementById('ref_ciclo_id').value);
     fd.set('es_manual', !pagoDetectado);
     if (!pagoDetectado) {
         fd.set('voucher_secuencia', document.querySelector('[name="voucher_secuencia"]')?.value || '');
@@ -957,6 +1045,7 @@ async function handleFinalSubmit(e) {
         fd.set('voucher_fecha', document.querySelector('[name="voucher_fecha"]')?.value || '');
     } else {
         fd.set('pago_api_serial', apiSerial || '');
+        fd.set('pago_api_fecha', document.getElementById('ref_pago_api_fecha')?.value || '');
     }
 
     btn.disabled = true;
@@ -977,14 +1066,16 @@ async function handleFinalSubmit(e) {
             const targetContainer = wizardLayout || modalBody;
 
             targetContainer.innerHTML = `
-                <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem;">
-                    <div class="mb-4">
-                        <img src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" width="120" class="animate__animated animate__bounceIn">
+                <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+                    <div class="mb-4 text-center">
+                        <div style="width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                            <i class="material-icons-round" style="font-size: 5rem; color: #10b981;" class="animate__animated animate__bounceIn">check_circle</i>
+                        </div>
                     </div>
-                    <h2 style="font-family: var(--rf-font-titles); font-weight: 900; color: var(--rf-navy); font-size: 2.2rem; margin-bottom: 0.5rem;">¡Inscripción Registrada!</h2>
-                    <p style="color: var(--rf-text-muted); font-size: 1.1rem; margin-bottom: 2.5rem; font-weight: 600;">Hemos recibido tu expediente digital correctamente.</p>
+                    <h2 style="font-family: var(--rf-font-titles); font-weight: 900; color: var(--rf-navy); font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center;">¡Inscripción Registrada!</h2>
+                    <p style="color: var(--rf-text-muted); font-size: 1.1rem; margin-bottom: 2.5rem; font-weight: 600; text-align: center;">Hemos recibido tu expediente digital correctamente.</p>
                     
-                    <div style="max-width: 550px; margin: 0 auto; background: #f8fafc; border-radius: 1.5rem; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.02);">
+                    <div style="width: 100%; max-width: 550px; margin: 0 auto; background: #f8fafc; border-radius: 1.5rem; border: 1px solid #f1f5f9; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.02);">
                         <div style="background: linear-gradient(135deg, #1A237E 0%, #311B92 100%); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
                             <span style="color: rgba(255,255,255,0.8); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Estado de tu Solicitud</span>
                             <span style="background: #fbbf24; color: #78350f; padding: 0.4rem 1rem; border-radius: 0.5rem; font-weight: 900; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
@@ -1021,7 +1112,8 @@ async function handleFinalSubmit(e) {
                 </div>
             `;
             
-            // Ocultar Footer y Sidebar si existen
+            // Ocultar Header, Footer y Sidebar 
+            document.querySelector('.rf-header')?.style.setProperty('display', 'none', 'important');
             document.querySelector('.rf-footer')?.style.setProperty('display', 'none', 'important');
             document.querySelector('.rf-sidebar')?.style.setProperty('display', 'none', 'important');
 

@@ -62,7 +62,7 @@
             <table class="info-table">
                 <tr>
                     <td class="label">Apellidos y Nombres:</td>
-                    <td style="font-weight: bold; font-size: 11pt;">{{ $estudiante->nombre_completo }}</td>
+                    <td style="font-weight: bold; font-size: 11pt;">{{ mb_strtoupper(($estudiante->apellido_paterno ?? '') . ' ' . ($estudiante->apellido_materno ?? '') . ', ' . ($estudiante->nombre ?? '')) }}</td>
                 </tr>
                 <tr>
                     <td class="label">Documento Identidad:</td>
@@ -110,11 +110,11 @@
         <table style="width: 100%; border: none;">
             <tr>
                 <td style="width: 50%;">
-                    <strong>Concepto:</strong> Inscripción Reforzamiento Escolar<br>
+                    <strong>Concepto:</strong> 598 - REFORZAMIENTO PARA ESTUDIANTES DE SECUNDARIA CEPRE<br>
                     <strong>Monto Pagado:</strong> S/. 200.00
                 </td>
                 <td style="width: 50%; text-align: right;">
-                    <strong>Documento:</strong> {{ $pago->numero_operacion ?? 'Pendiente' }}<br>
+                    <strong>Recibo N°:</strong> {{ $pago->numero_operacion ?? 'Pendiente' }}<br>
                     <strong>Fecha Pago:</strong> {{ $pago ? \Carbon\Carbon::parse($pago->fecha_pago)->format('d/m/Y') : '--/--/----' }}
                 </td>
             </tr>

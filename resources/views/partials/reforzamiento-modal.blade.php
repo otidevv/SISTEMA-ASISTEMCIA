@@ -1,4 +1,10 @@
 {{-- resources/views/partials/reforzamiento-modal.blade.php --}}
+@php
+    $cicloActivoRef = \App\Models\Ciclo::where('es_activo', true)
+                        ->where('nombre', 'like', '%REFORZAMIENTO%')
+                        ->first() ?? \App\Models\Ciclo::where('es_activo', true)->first();
+@endphp
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -864,6 +870,26 @@
                     </div>
                 </div>
             </nav>
+            
+            <!-- DETALLES DEL CICLO ACTIVO (DINÁMICO) -->
+            <div id="sideCicloInfo" style="margin-top: 2rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="font-size: 0.65rem; color: var(--rf-magenta); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="material-icons-round" style="font-size: 0.9rem;">event_available</i> Periodo del Ciclo
+                </div>
+                <div id="sideCicloNombre" style="color: #fff; font-weight: 800; font-size: 0.85rem; line-height: 1.2; margin-bottom: 0.75rem;">{{ $cicloActivoRef->nombre ?? '---' }}</div>
+                
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Inicio</div>
+                        <div id="sideCicloInicio" style="color: #fff; font-size: 0.75rem; font-weight: 700;">{{ $cicloActivoRef && $cicloActivoRef->fecha_inicio ? $cicloActivoRef->fecha_inicio->format('d/m/Y') : '--/--/--' }}</div>
+                    </div>
+                    <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1);"></div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Término</div>
+                        <div id="sideCicloFin" style="color: #fff; font-size: 0.75rem; font-weight: 700;">{{ $cicloActivoRef && $cicloActivoRef->fecha_fin ? $cicloActivoRef->fecha_fin->format('d/m/Y') : '--/--/--' }}</div>
+                    </div>
+                </div>
+            </div>
 
             <div class="rf-sidebar-footer">
                 <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; color: var(--rf-cyan);">Asesoría y Consultas</div>
@@ -892,9 +918,10 @@
             <div class="rf-body">
                 <form id="reforzamientoForm" enctype="multipart/form-data">
                     @csrf
-                    <input type="hidden" name="ciclo_id" id="ref_ciclo_id">
-                    <input type="hidden" name="es_manual" id="ref_es_manual" value="0">
+                    <input type="hidden" name="ciclo_id" id="ref_ciclo_id" value="{{ $cicloActivoRef->id ?? '' }}">
+                    <input type="hidden" name="es_manual" id="ref_es_manual" value="1">
                     <input type="hidden" name="pago_api_serial" id="ref_pago_api_serial">
+                    <input type="hidden" id="ref_pago_api_fecha">
                     <input type="hidden" name="dni" id="ref_dni_hidden">
 
                     {{-- ==================== PASO 1: IDENTIFICACIÓN ==================== --}}
@@ -948,13 +975,27 @@
                                     <label class="rf-label">Teléfono / Celular <span style="color:var(--rf-red);">*</span></label>
                                     <input type="text" id="ref_telefono" name="telefono" class="rf-input" placeholder="987 654 321" maxlength="9" inputmode="tel" required>
                                     <span class="rf-field-icon material-icons-round"></span>
-                                    <small style="color:var(--rf-text-muted); font-size:0.72rem;">Celular del estudiante para contacto directo.</small>
                                 </div>
                                 <div class="rf-form-group">
                                     <label class="rf-label">Correo Electrónico</label>
                                     <input type="email" id="ref_email" name="email" class="rf-input" placeholder="estudiante@email.com">
                                     <span class="rf-field-icon material-icons-round"></span>
-                                    <small style="color:var(--rf-text-muted); font-size:0.72rem;">Opcional, para recibir notificaciones.</small>
+                                </div>
+                            </div>
+
+                            <div class="rf-grid-2">
+                                <div class="rf-form-group">
+                                    <label class="rf-label">Fecha de Nacimiento <span style="color:var(--rf-red);">*</span></label>
+                                    <input type="date" id="ref_fecha_nacimiento" name="fecha_nacimiento" class="rf-input" required>
+                                    <span class="rf-field-icon material-icons-round"></span>
+                                </div>
+                                <div class="rf-form-group">
+                                    <label class="rf-label">Género <span style="color:var(--rf-red);">*</span></label>
+                                    <select id="ref_genero" name="genero" class="rf-select" required>
+                                        <option value="">-- Seleccionar --</option>
+                                        <option value="MASCULINO">MASCULINO</option>
+                                        <option value="FEMENINO">FEMENINO</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -969,6 +1010,12 @@
                                         <span class="material-icons-round" style="font-size:1rem;">payments</span>
                                         S/. 200.00 /mes
                                     </span>
+                                    <div id="ref_ciclo_badge" style="margin-top:0.5rem; display: {{ $cicloActivoRef ? 'block' : 'none' }};">
+                                        <span class="rf-badge rf-badge-cyan" style="font-size: 0.75rem; background: rgba(0, 174, 239, 0.1); color: var(--rf-navy); border: 1px solid rgba(0, 174, 239, 0.2);">
+                                            <i class="material-icons-round" style="font-size:1rem; vertical-align:middle;">event</i>
+                                            Ciclo: <strong id="ref_ciclo_nombre_display">{{ $cicloActivoRef->nombre ?? '---' }}</strong>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                                     <span class="rf-tag">Raz. Matemático</span>
@@ -1198,6 +1245,13 @@
                             <span class="material-icons-round">privacy_tip</span>
                             <div style="font-size:0.85rem;">Al hacer clic en <strong>Finalizar Inscripción</strong>, declaras que toda la información proporcionada es verdadera y aceptas las políticas institucionales del CEPRE UNAMAD.</div>
                         </div>
+
+                        <!-- CAMPOS OCULTOS DE CONTROL -->
+                        <input type="hidden" id="ref_dni" name="dni">
+                        <input type="hidden" id="ref_pago_api_serial" name="pago_api_serial">
+                        <input type="hidden" id="ref_pago_api_fecha" name="pago_api_fecha">
+                        <input type="hidden" id="ref_es_manual" name="es_manual" value="1">
+                        <input type="hidden" id="ref_ciclo_id" name="ciclo_id">
                     </div>
                 </form>
             </div>

@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -78,7 +77,6 @@ class ReforzamientoApiController extends BaseController
             ->first();
 
         if (!$ciclo) {
-            Log::warning("Intento de verificación de DNI sin ciclo de Reforzamiento activo.", ['dni' => $dni]);
             return $this->sendError('No hay un ciclo de reforzamiento activo en este momento.', [], 422);
         }
 
@@ -99,23 +97,40 @@ class ReforzamientoApiController extends BaseController
         // 3. Consultar Pagos AUTOMÁTICOS
         $pagos = $this->paymentService->validateVoucher($dni, null);
         $pagoEncontrado = null;
-
         if ($pagos) {
             foreach ($pagos as $pago) {
-                if ((float)$pago['monto_total'] >= 200) {
+                if ((float)($pago['total'] ?? $pago['monto_total']) >= 200) {
                     $pagoEncontrado = $pago;
                     break;
                 }
             }
         }
 
+        // PROFESIONAL: Buscar el ciclo académico oficial de REFORZAMIENTO activo
+        $ciclo = Ciclo::where('es_activo', true)->where('nombre', 'like', '%REFORZAMIENTO%')->first();
+        if (!$ciclo) {
+            $ciclo = Ciclo::where('es_activo', true)->first(); // Fallback al activo general si no hay específico
+        }
+
+        if (!$ciclo) {
+            return $this->sendError('Operación bloqueada: No se encontró un ciclo académico activo para Reforzamiento.', [], 404);
+        }
+
         return $this->sendResponse([
-            'ciclo' => $ciclo,
+            'ciclo' => [
+                'id' => $ciclo->id,
+                'nombre' => $ciclo->nombre,
+                'fecha_inicio' => $ciclo->fecha_inicio ? $ciclo->fecha_inicio->format('Y-m-d') : null,
+                'fecha_fin' => $ciclo->fecha_fin ? $ciclo->fecha_fin->format('Y-m-d') : null,
+                'descripcion' => $ciclo->descripcion
+            ],
             'pago_encontrado' => $pagoEncontrado,
             'estudiante_existente' => $estudiante ? [
                 'nombre' => $estudiante->nombre,
                 'paterno' => $estudiante->apellido_paterno,
                 'materno' => $estudiante->apellido_materno,
+                'fecha_nacimiento' => $estudiante->fecha_nacimiento,
+                'genero' => $estudiante->genero,
             ] : null
         ], 'DNI verificado correctamente.');
     }
@@ -129,8 +144,11 @@ class ReforzamientoApiController extends BaseController
             'dni' => 'required|string|size:8',
             'nombre' => 'required|string|min:2',
             'apellido_paterno' => 'required|string|min:2',
+            'apellido_materno' => 'required|string|min:2',
             'telefono' => 'required|string|size:9',
             'email' => 'nullable|email',
+            'fecha_nacimiento' => 'required|date',
+            'genero' => 'required|string|in:MASCULINO,FEMENINO',
             'grado' => 'required|string',
             'seccion' => 'required|string',
             'colegio_id' => 'nullable',
@@ -138,10 +156,11 @@ class ReforzamientoApiController extends BaseController
             'apoderados' => 'required|array|min:1',
             'apoderados.*.dni' => 'required|string|size:8',
             'apoderados.*.nombre' => 'required|string|min:2',
-            'apoderados.*.telefono' => 'required|string',
+            'apoderados.*.telefono' => 'nullable|string',
+            'apoderados.*.parentesco' => 'nullable|string',
             'ciclo_id' => 'required|exists:ciclos,id',
             'es_manual' => 'required',
-            'foto' => 'required|image|max:5120',
+            'foto' => 'required|image|max:10240',
             'dni_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'dni_apoderado_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'voucher_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
@@ -149,7 +168,7 @@ class ReforzamientoApiController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Datos incompletos', $validator->errors()->toArray(), 422);
+            return $this->sendError('Validación fallida: ' . implode(', ', $validator->errors()->all()), $validator->errors()->toArray(), 422);
         }
 
         // Buscar ID del Programa de Reforzamiento
@@ -263,7 +282,7 @@ class ReforzamientoApiController extends BaseController
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $apiSerial ?: ('AUTO-' . $request->dni . '-' . time()),
                     'monto' => 200.00,
-                    'fecha_pago' => Carbon::now()->toDateString(),
+                    'fecha_pago' => $request->pago_api_fecha ?: Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
                     'verificado_api' => 1,
                     'estado_pago' => 'aprobado'
@@ -290,7 +309,7 @@ class ReforzamientoApiController extends BaseController
                     );
                 }
             } catch (\Exception $e) { 
-                Log::error("Error enviando broadcast (Reverb): " . $e->getMessage()); 
+                // Error silenciado para que no interrumpa el registro exitoso
             }
 
             DB::commit();
@@ -298,7 +317,6 @@ class ReforzamientoApiController extends BaseController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Error Reforzamiento: " . $e->getMessage());
             return $this->sendError('Error al procesar la inscripción: ' . $e->getMessage());
         }
     }

@@ -68,10 +68,10 @@ class PaymentValidationService
                             $desc = $detail['description'] ?? '';
                             if (str_contains($desc, '582')) {
                                 $foundVouchers[$serial]['monto_matricula'] += $monto;
-                            } else if (str_contains($desc, '583')) {
+                            } else if (str_contains($desc, '583') || str_contains($desc, '598')) {
+                                // 583 es enseñanza, 598 es reforzamiento (similar a enseñanza)
                                 $foundVouchers[$serial]['monto_ensenanza'] += $monto;
                             } else {
-                                // Cualquier otro concepto se suma a enseñanza o se puede manejar aparte
                                 $foundVouchers[$serial]['monto_ensenanza'] += $monto;
                             }
 
