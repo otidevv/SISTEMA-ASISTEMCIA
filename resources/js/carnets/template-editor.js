@@ -317,6 +317,69 @@ class CarnetTemplateEditor {
             newX = Math.max(-elementWidth + minVisible, Math.min(newX, canvasWidth - minVisible));
             newY = Math.max(-elementHeight + minVisible, Math.min(newY, canvasHeight - minVisible));
 
+            // LÓGICA DE GUÍAS MAGNÉTICAS (SMART GUIDES)
+            const snapPoints = { x: [], y: [] };
+            
+            // Añadir el centro absoluto del lienzo como punto de anclaje magnético
+            snapPoints.x.push({ pos: canvasWidth / 2, type: 'center' });
+            snapPoints.y.push({ pos: canvasHeight / 2, type: 'center' });
+
+            // Rastrear todos los bordes y centros de los demás campos
+            Object.entries(this.fields).forEach(([name, data]) => {
+                if (data.element === element) return; // Ignorar a sí mismo
+                
+                const left = parseFloat(data.element.style.left) || 0;
+                const top = parseFloat(data.element.style.top) || 0;
+                const right = left + data.element.offsetWidth;
+                const bottom = top + data.element.offsetHeight;
+                const cx = left + data.element.offsetWidth / 2;
+                const cy = top + data.element.offsetHeight / 2;
+
+                snapPoints.x.push({ pos: left }, { pos: right }, { pos: cx });
+                snapPoints.y.push({ pos: top }, { pos: bottom }, { pos: cy });
+            });
+
+            const THRESHOLD = 5 / this.zoom; // Fuerza del imán de 5px
+            let snapX = null;
+            let snapY = null;
+
+            const currentRight = newX + elementWidth;
+            const currentBottom = newY + elementHeight;
+            const currentCenterX = newX + elementWidth / 2;
+            const currentCenterY = newY + elementHeight / 2;
+
+            // Imán Horizontal (Eje X)
+            snapPoints.x.forEach(p => {
+                if (Math.abs(newX - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos; }
+                else if (Math.abs(currentRight - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos - elementWidth; }
+                else if (Math.abs(currentCenterX - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos - elementWidth / 2; }
+            });
+
+            // Imán Vertical (Eje Y)
+            snapPoints.y.forEach(p => {
+                if (Math.abs(newY - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos; }
+                else if (Math.abs(currentBottom - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos - elementHeight; }
+                else if (Math.abs(currentCenterY - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos - elementHeight / 2; }
+            });
+
+            // Prender o Apagar Luces Láser de las guías
+            const guideV = document.getElementById('smartGuideV');
+            const guideH = document.getElementById('smartGuideH');
+
+            if (snapX !== null) {
+                guideV.style.left = snapX + 'px';
+                guideV.style.display = 'block';
+            } else {
+                guideV.style.display = 'none';
+            }
+
+            if (snapY !== null) {
+                guideH.style.top = snapY + 'px';
+                guideH.style.display = 'block';
+            } else {
+                guideH.style.display = 'none';
+            }
+
             element.style.left = newX + 'px';
             element.style.top = newY + 'px';
         };
@@ -326,6 +389,10 @@ class CarnetTemplateEditor {
             element.classList.remove('dragging');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+
+            // Apagar láser magnético al soltar el click
+            if (document.getElementById('smartGuideV')) document.getElementById('smartGuideV').style.display = 'none';
+            if (document.getElementById('smartGuideH')) document.getElementById('smartGuideH').style.display = 'none';
         };
 
         document.addEventListener('mousemove', onMouseMove);

@@ -17,6 +17,8 @@
             border-radius: 8px;
             padding: 20px;
             position: relative;
+            overflow: auto; /* Corta o permite scroll si el contenido explota por Zoom gigante */
+            z-index: 1;
         }
         
         .controls-panel {
@@ -24,9 +26,30 @@
             background: white;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
             max-height: 800px;
             overflow-y: auto;
+            z-index: 10;
+        }
+
+        /* Smart Guides */
+        .smart-guide {
+            position: absolute;
+            background-color: #ff007f;
+            z-index: 999;
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 0 2px rgba(255, 0, 127, 0.5);
+        }
+        .smart-guide-v {
+            width: 1px;
+            height: 100%;
+            top: 0;
+        }
+        .smart-guide-h {
+            height: 1px;
+            width: 100%;
+            left: 0;
         }
         
         .carnet-canvas {
@@ -101,15 +124,36 @@
         .resize-handle.w { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
         
         .field-label {
+            position: absolute;
+            top: -24px;
+            left: -2px;
             font-size: 10px;
-            color: #666;
+            color: white;
+            background: rgba(0, 123, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .field-element:hover .field-label,
+        .field-element.selected .field-label {
+            opacity: 1;
         }
         
         .field-value {
             color: #333;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            word-break: break-word; /* Obliga a romper si sobrepasa el ancho ancho */
+            display: block;
         }
         
         .field-list {
@@ -296,6 +340,10 @@
                                      src="{{ isset($template) && $template->fondo_path ? asset('storage/' . $template->fondo_path) : '' }}" 
                                      style="display: {{ isset($template) && $template->fondo_path ? 'block' : 'none' }}">
                                 
+                                <!-- Smart Guides magnéticas -->
+                                <div class="smart-guide smart-guide-v" id="smartGuideV"></div>
+                                <div class="smart-guide smart-guide-h" id="smartGuideH"></div>
+
                                 <!-- Los campos se agregarán dinámicamente aquí -->
                             </div>
                         </div>
