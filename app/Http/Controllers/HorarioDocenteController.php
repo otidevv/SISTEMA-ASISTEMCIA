@@ -431,7 +431,7 @@ class HorarioDocenteController extends Controller
     }
 
     /**
-     * Obtener estadísticas de ocupación por aula y turno
+     * Obtener estadísticas de ocupación por aula y turno (Optimizado para Performance N+1)
      */
     public function estadisticas()
     {
@@ -440,6 +440,29 @@ class HorarioDocenteController extends Controller
         $aulas = Aula::all();
         $turnos = ['MAÑANA', 'TARDE', 'NOCHE'];
         
+        // 1. Cargar la matriz entera en 1 sola consulta (Adiós N+1)
+        $horarios = HorarioDocente::select('aula_id', 'turno', 'hora_inicio', 'hora_fin')->get();
+        
+        // 2. Pre-agrupar en memoria RAM en tiempo O(1)
+        $agrupados = [];
+        foreach ($horarios as $h) {
+            $inicio = Carbon::createFromFormat('H:i', substr($h->hora_inicio, 0, 5));
+            $fin = Carbon::createFromFormat('H:i', substr($h->hora_fin, 0, 5));
+            // Cálculo decimal de fracción temporal (ej. 1.5 horas = 1hr 30m)
+            $horasDif = $inicio->diffInMinutes($fin) / 60.0;
+            
+            if (!isset($agrupados[$h->aula_id])) {
+                $agrupados[$h->aula_id] = [];
+            }
+            if (!isset($agrupados[$h->aula_id][$h->turno])) {
+                $agrupados[$h->aula_id][$h->turno] = ['total_horas' => 0, 'total_clases' => 0];
+            }
+            
+            $agrupados[$h->aula_id][$h->turno]['total_horas'] += $horasDif;
+            $agrupados[$h->aula_id][$h->turno]['total_clases'] += 1;
+        }
+        
+        // 3. Cruzar los datos instantáneamente sin tocar la Base de Datos
         foreach ($aulas as $aula) {
             $estadisticas[$aula->id] = [
                 'aula' => $aula,
@@ -447,23 +470,16 @@ class HorarioDocenteController extends Controller
             ];
             
             foreach ($turnos as $turno) {
-                $totalHoras = HorarioDocente::where('aula_id', $aula->id)
-                    ->where('turno', $turno)
-                    ->get()
-                    ->sum(function ($horario) {
-                        $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
-                        $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
-                        return $inicio->diffInHours($fin);
-                    });
+                // Recuperación en microsegundos
+                $datos = isset($agrupados[$aula->id][$turno]) ? $agrupados[$aula->id][$turno] : ['total_horas' => 0, 'total_clases' => 0];
                 
-                $totalClases = HorarioDocente::where('aula_id', $aula->id)
-                    ->where('turno', $turno)
-                    ->count();
+                $totalHoras = $datos['total_horas'];
+                $totalClases = $datos['total_clases'];
                 
                 $estadisticas[$aula->id]['turnos'][$turno] = [
                     'total_horas' => $totalHoras,
                     'total_clases' => $totalClases,
-                    'ocupacion_porcentual' => ($totalHoras / 30) * 100 // Asumiendo 30 horas máximas por semana
+                    'ocupacion_porcentual' => ($totalHoras / 30) * 100 // Asumiendo 30 horas académicas semanales
                 ];
             }
         }
@@ -638,7 +654,7 @@ class HorarioDocenteController extends Controller
 
         // Organizar horarios por día y hora
         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        $horasRango = $this->obtenerRangoHoras($horarios);
+        $horasRango = $this->obtenerRangoHoras($horarios, $ciclo);
         
         $grilla = [];
         foreach ($horasRango as $hora) {
@@ -663,9 +679,9 @@ class HorarioDocenteController extends Controller
     }
 
     /**
-     * Obtener rango de horas de los horarios - MEJORADO con slots de 1 hora y recesos
+     * Obtener rango de horas de los horarios Dinaminamente
      */
-    private function obtenerRangoHoras($horarios)
+    private function obtenerRangoHoras($horarios, $ciclo = null)
     {
         // Determinar el rango necesario según los horarios existentes
         $minHora = 24; $maxHora = 0;
@@ -680,21 +696,44 @@ class HorarioDocenteController extends Controller
         if ($minHora == 24) $minHora = 7;
         if ($maxHora == 0) $maxHora = 21;
         
-        // Generar slots sincronizados (igual que en carga horaria)
         $slots = [];
         $curr = $minHora * 60; // En minutos
         $limit = $maxHora * 60;
+        
+        // Leer recesos del ciclo de la BD de forma dinámica
+        $recesoMananaInicioStr = $ciclo ? substr($ciclo->receso_manana_inicio, 0, 5) : null;
+        $recesoMananaFinStr    = $ciclo ? substr($ciclo->receso_manana_fin, 0, 5) : null;
+        $recesoTardeInicioStr  = $ciclo ? substr($ciclo->receso_tarde_inicio, 0, 5) : null;
+        $recesoTardeFinStr     = $ciclo ? substr($ciclo->receso_tarde_fin, 0, 5) : null;
+        
+        $recesoMananaMins    = $recesoMananaInicioStr ? (intval(substr($recesoMananaInicioStr, 0, 2)) * 60 + intval(substr($recesoMananaInicioStr, 3, 2))) : -1;
+        $recesoMananaFinMins = $recesoMananaFinStr    ? (intval(substr($recesoMananaFinStr, 0, 2)) * 60 + intval(substr($recesoMananaFinStr, 3, 2))) : -1;
+        
+        $recesoTardeMins     = $recesoTardeInicioStr  ? (intval(substr($recesoTardeInicioStr, 0, 2)) * 60 + intval(substr($recesoTardeInicioStr, 3, 2))) : -1;
+        $recesoTardeFinMins  = $recesoTardeFinStr     ? (intval(substr($recesoTardeFinStr, 0, 2)) * 60 + intval(substr($recesoTardeFinStr, 3, 2))) : -1;
         
         while ($curr < $limit) {
             $h = floor($curr / 60);
             $m = $curr % 60;
             $dur = 60; // Por defecto 1 hora
             
-            // Si es hora de receso oficial, el slot dura 30m
-            if ($curr == 10*60 || $curr == 18*60) {
-                $dur = 30;
+            // Si el puntero toca una hora oficial de receso
+            if ($recesoMananaMins !== -1 && $curr == $recesoMananaMins) {
+                $dur = $recesoMananaFinMins - $recesoMananaMins;
+            } elseif ($recesoTardeMins !== -1 && $curr == $recesoTardeMins) {
+                $dur = $recesoTardeFinMins - $recesoTardeMins;
+            } else {
+                // Verificar si una clase de 60 mins cruzaría o invadiría con la hora del receso venidero
+                if ($recesoMananaMins !== -1 && $recesoMananaMins > $curr && $recesoMananaMins < $curr + 60) {
+                    $dur = $recesoMananaMins - $curr;
+                } elseif ($recesoTardeMins !== -1 && $recesoTardeMins > $curr && $recesoTardeMins < $curr + 60) {
+                    $dur = $recesoTardeMins - $curr;
+                }
             }
             
+            // Salvaguarda
+            if ($dur <= 0) $dur = 60;
+
             $nxt = $curr + $dur;
             $slots[] = sprintf('%02d:%02d', $h, $m) . ' - ' . sprintf('%02d:%02d', floor($nxt/60), $nxt % 60);
             $curr = $nxt;
@@ -704,7 +743,7 @@ class HorarioDocenteController extends Controller
     }
 
     /**
-     * Obtener horario en una celda específica - MEJORADO para slots sincronizados
+     * Obtener horario en una celda específica
      */
     private function obtenerHorarioEnCelda($horarios, $dia, $horaRango)
     {

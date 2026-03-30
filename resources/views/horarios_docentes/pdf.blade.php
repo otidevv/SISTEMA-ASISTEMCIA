@@ -9,10 +9,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-size: 7px;
-            color: #1a1a1a;
-            line-height: 1.1;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 7.5px;
+            color: #0f172a; /* Azul corporativo muy oscuro */
+            line-height: 1.15;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* HEADER MODERNO CON LOGOS */
@@ -183,11 +184,11 @@
         AULA: {{ $aula->nombre }} &nbsp;|&nbsp; TURNO: {{ $turno }}
     </div>
 
-    <!-- TABLA DE HORARIO -->
+    <!-- TABLA DE HORARIO PREMIUM -->
     <table>
         <thead>
             <tr>
-                <th class="hora-col">HORARIO</th>
+                <th class="hora-col">BLOQUE HORARIO</th>
                 @foreach ($dias as $dia)
                     <th>{{ strtoupper($dia) }}</th>
                 @endforeach
@@ -196,15 +197,21 @@
         <tbody>
             @foreach ($grilla as $fila)
                 @php
-                    // Detectar si este slot es un receso (10:00 - 10:30 o 18:00 - 18:30)
-                    $esReceso = ($fila['hora'] === '10:00 - 10:30' || $fila['hora'] === '18:00 - 18:30');
+                    // Detección CIBERNÉTICA de Recesos (Enlace real con Base de Datos)
+                    $horaFilaParts = explode(' - ', $fila['hora']);
+                    $inicioFilaStr = trim($horaFilaParts[0]); 
+                    
+                    $recesoManana = $ciclo->receso_manana_inicio ? substr($ciclo->receso_manana_inicio, 0, 5) : 'NONE';
+                    $recesoTarde  = $ciclo->receso_tarde_inicio ? substr($ciclo->receso_tarde_inicio, 0, 5) : 'NONE';
+                    
+                    $esReceso = ($inicioFilaStr === $recesoManana || $inicioFilaStr === $recesoTarde);
                 @endphp
                 
                 @if($esReceso)
-                    <!-- RECESO HORIZONTAL -->
+                    <!-- RECESO HORIZONTAL CORPORATIVO -->
                     <tr>
                         <th class="hora-col">{{ $fila['hora'] }}</th>
-                        <td colspan="6" class="receso-horizontal">RECESO ACADÉMICO - 30 MINUTOS</td>
+                        <td colspan="6" class="receso-horizontal">RECESO DE DESCANSO INSTITUCIONAL</td>
                     </tr>
                 @else
                     <!-- FILA NORMAL DE CLASES -->

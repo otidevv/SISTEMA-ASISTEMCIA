@@ -182,10 +182,20 @@
                 $max_h = min(22, ceil($m_max/60));
             }
 
-            // GENERACIÓN DE SLOTS
+            // GENERACIÓN DE SLOTS DINÁMICOS (LEYENDO DE BASE DE DATOS)
             $slots = [];
             $curr = $min_h * 60;
             $limit = $max_h * 60;
+            
+            $recesoMananaInicioStr = $ciclo ? substr($ciclo->receso_manana_inicio, 0, 5) : null;
+            $recesoMananaFinStr    = $ciclo ? substr($ciclo->receso_manana_fin, 0, 5) : null;
+            $recesoTardeInicioStr  = $ciclo ? substr($ciclo->receso_tarde_inicio, 0, 5) : null;
+            $recesoTardeFinStr     = $ciclo ? substr($ciclo->receso_tarde_fin, 0, 5) : null;
+            
+            $recesoMananaMins    = $recesoMananaInicioStr ? (intval(substr($recesoMananaInicioStr, 0, 2)) * 60 + intval(substr($recesoMananaInicioStr, 3, 2))) : -1;
+            $recesoMananaFinMins = $recesoMananaFinStr    ? (intval(substr($recesoMananaFinStr, 0, 2)) * 60 + intval(substr($recesoMananaFinStr, 3, 2))) : -1;
+            $recesoTardeMins     = $recesoTardeInicioStr  ? (intval(substr($recesoTardeInicioStr, 0, 2)) * 60 + intval(substr($recesoTardeInicioStr, 3, 2))) : -1;
+            $recesoTardeFinMins  = $recesoTardeFinStr     ? (intval(substr($recesoTardeFinStr, 0, 2)) * 60 + intval(substr($recesoTardeFinStr, 3, 2))) : -1;
 
             while($curr < $limit) {
                 $h = floor($curr / 60);
@@ -193,10 +203,21 @@
                 $dur = 60; 
                 $isRec = false;
 
-                if ($curr == 10*60 || $curr == 18*60) {
-                    $dur = 30;
+                if ($recesoMananaMins !== -1 && $curr == $recesoMananaMins) {
+                    $dur = $recesoMananaFinMins - $recesoMananaMins;
                     $isRec = true;
+                } elseif ($recesoTardeMins !== -1 && $curr == $recesoTardeMins) {
+                    $dur = $recesoTardeFinMins - $recesoTardeMins;
+                    $isRec = true;
+                } else {
+                    if ($recesoMananaMins !== -1 && $recesoMananaMins > $curr && $recesoMananaMins < $curr + 60) {
+                        $dur = $recesoMananaMins - $curr;
+                    } elseif ($recesoTardeMins !== -1 && $recesoTardeMins > $curr && $recesoTardeMins < $curr + 60) {
+                        $dur = $recesoTardeMins - $curr;
+                    }
                 }
+                
+                if ($dur <= 0) $dur = 60;
                 
                 $nxt = $curr + $dur;
                 $slots[] = [

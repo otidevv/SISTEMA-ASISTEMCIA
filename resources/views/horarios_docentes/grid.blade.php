@@ -473,15 +473,24 @@
                     <div class="grid-cell header">Viernes</div>
                     <div class="grid-cell header">Sábado</div>
 
-                    <!-- Filas de horarios con slots sincronizados (1h + recesos de 30min) -->
+                    <!-- Filas de horarios con slots sincronizados (1h + recesos DINÁMICOS) -->
                     @php
                         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                         
-                        // Generar slots sincronizados (igual que en el módulo de carga horaria)
                         $slots = [];
                         $h_start = 7; $h_end = 21;
                         $curr = $h_start * 60;
                         $limit = $h_end * 60;
+                        
+                        $recesoMananaInicioStr = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_inicio, 0, 5) : null;
+                        $recesoMananaFinStr    = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_fin, 0, 5) : null;
+                        $recesoTardeInicioStr  = $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_inicio, 0, 5) : null;
+                        $recesoTardeFinStr     = $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_fin, 0, 5) : null;
+                        
+                        $recesoMananaMins    = $recesoMananaInicioStr ? (intval(substr($recesoMananaInicioStr, 0, 2)) * 60 + intval(substr($recesoMananaInicioStr, 3, 2))) : -1;
+                        $recesoMananaFinMins = $recesoMananaFinStr    ? (intval(substr($recesoMananaFinStr, 0, 2)) * 60 + intval(substr($recesoMananaFinStr, 3, 2))) : -1;
+                        $recesoTardeMins     = $recesoTardeInicioStr  ? (intval(substr($recesoTardeInicioStr, 0, 2)) * 60 + intval(substr($recesoTardeInicioStr, 3, 2))) : -1;
+                        $recesoTardeFinMins  = $recesoTardeFinStr     ? (intval(substr($recesoTardeFinStr, 0, 2)) * 60 + intval(substr($recesoTardeFinStr, 3, 2))) : -1;
                         
                         while($curr < $limit) {
                             $h = floor($curr / 60);
@@ -489,11 +498,24 @@
                             $dur = 60; // Por defecto 1 hora
                             $isReceso = false;
                             
-                            // Si es hora de receso oficial, el slot dura 30m
-                            if ($curr == 10*60 || $curr == 18*60) {
-                                $dur = 30;
+                            // Si toca justo la hora oficial de receso
+                            if ($recesoMananaMins !== -1 && $curr == $recesoMananaMins) {
+                                $dur = $recesoMananaFinMins - $recesoMananaMins;
                                 $isReceso = true;
+                            } elseif ($recesoTardeMins !== -1 && $curr == $recesoTardeMins) {
+                                $dur = $recesoTardeFinMins - $recesoTardeMins;
+                                $isReceso = true;
+                            } else {
+                                // Verificar empalmes previos
+                                if ($recesoMananaMins !== -1 && $recesoMananaMins > $curr && $recesoMananaMins < $curr + 60) {
+                                    $dur = $recesoMananaMins - $curr;
+                                } elseif ($recesoTardeMins !== -1 && $recesoTardeMins > $curr && $recesoTardeMins < $curr + 60) {
+                                    $dur = $recesoTardeMins - $curr;
+                                }
                             }
+                            
+                            // Salvaguarda visual
+                            if ($dur <= 0) $dur = 60;
                             
                             $nxt = $curr + $dur;
                             $slots[] = [
