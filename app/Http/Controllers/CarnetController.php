@@ -427,8 +427,19 @@ class CarnetController extends Controller
         $carnetsData = $carnets->map(function($carnet) {
             // Diferenciar entre Reforzamiento Colegio y otros para la plantilla
             $tipoTemplate = $carnet->modalidad === 'reforzamiento_colegio' ? 'reforzamiento_colegio' : 'postulante';
-            $template = \App\Models\CarnetTemplate::obtenerActiva($tipoTemplate, $carnet->ciclo_id) 
-                        ?? \App\Models\CarnetTemplate::obtenerActiva('postulante', $carnet->ciclo_id);
+
+            // 1. Intentar plantilla exacta para este tipo y ciclo
+            $template = \App\Models\CarnetTemplate::obtenerActiva($tipoTemplate, $carnet->ciclo_id);
+            
+            // 2. Rescate: Si el ciclo viejo no tiene plantilla, usar la última activa de ese mismo tipo
+            if (!$template) {
+                $template = \App\Models\CarnetTemplate::where('tipo', $tipoTemplate)->where('activa', true)->latest()->first();
+            }
+
+            // 3. Rescate extremo: Usar cualquiera de postulante si no hay nada más
+            if (!$template) {
+                $template = \App\Models\CarnetTemplate::where('tipo', 'postulante')->where('activa', true)->latest()->first();
+            }
             
             $foto = null;
             $codigoPostulante = $carnet->dni;
@@ -440,7 +451,7 @@ class CarnetController extends Controller
                 $codigoPostulante = $carnet->dni;
             } else {
                 $post = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)->first();
-                $codigoPostulante = $post->codigo_postulante ?? $carnet->dni;
+                $codigoPostulante = $post ? $post->codigo_postulante : $carnet->dni;
                 $infoAcademica = strtoupper($carnet->carrera->nombre ?? 'ADMISIÓN');
             }
 
@@ -483,7 +494,9 @@ class CarnetController extends Controller
 
         // Usamos la plantilla del primer carnet como base para las dimensiones del papel
         $templateBase = $carnetsData->first()['template'];
-        if (!$templateBase) abort(500, 'No hay plantillas activas para los carnets seleccionados');
+        if (!$templateBase) {
+            return redirect()->back()->with('error', 'No existe ninguna plantilla de diseño configurada en todo el sistema para este tipo de carnet. Debe crear una desde el diseñador.');
+        }
 
         $pdf = PDF::loadView('carnets.pdf-dynamic', [
             'carnets' => $carnetsData,
