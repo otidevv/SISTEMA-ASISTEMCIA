@@ -4,158 +4,154 @@
     <meta charset="UTF-8">
     <title>Horario - {{ $aula->nombre }}</title>
     <style>
-        /* CONFIGURACIÓN LANDSCAPE - PÁGINA ÚNICA */
-        @page { margin: 0.7cm; size: A4 landscape; }
+        /* CONFIGURACIÓN CORPORATIVA - PÁGINA ÚNICA A4 LANDSCAPE */
+        @page { margin: 1cm; size: A4 landscape; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            font-size: 7.5px;
-            color: #0f172a; /* Azul corporativo muy oscuro */
-            line-height: 1.15;
+            font-size: 8px; 
+            color: #334155; /* Slate 700 */
+            line-height: 1.3;
             -webkit-font-smoothing: antialiased;
+            background-color: white;
         }
 
-        /* HEADER MODERNO CON LOGOS */
+        /* HEADER CLEAN MODERNO */
         .header-modern {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
-            border-bottom: 2.5pt solid #4f32c2;
-            background-color: #ffffff;
+            margin-bottom: 8px;
         }
         
-        .logo-box { width: 45px; padding: 2px; }
-        .logo-img { width: 40px; height: auto; }
+        .logo-box { width: 45px; padding: 0; }
+        .logo-img { width: 50px; height: auto; }
         
         .title-box { text-align: center; vertical-align: middle; }
         .title-box h1 {
-            margin: 0;
-            font-size: 13px;
-            color: #4f32c2;
+            margin: 0 0 2px 0;
+            font-size: 15px;
+            color: #0f172a; /* Puro oscuro, muy serio */
             text-transform: uppercase;
-            font-weight: 900;
-            letter-spacing: 1.5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
         }
         .title-box p {
-            margin: 1px 0;
-            font-size: 9px;
+            margin: 2px 0;
+            font-size: 10.5px;
             font-weight: 700;
-            color: #333;
+            color: #475569;
         }
-        .sub-text { font-size: 6.5px; color: #666; font-style: italic; font-weight: 600; }
+        .sub-text { font-size: 7.5px; color: #64748b; font-weight: normal; }
 
-        /* INFO BAR MODERNA */
+        /* INFO BAR ELEGANTE */
         .info-bar {
-            background-color: #4f32c2;
-            color: white;
-            padding: 5px 12px;
-            margin-bottom: 4px;
-            text-align: center;
-            font-weight: 900;
-            font-size: 9px;
-            letter-spacing: 2px;
+            background-color: #f8fafc; /* Gris extra claro */
+            color: #1e293b;
+            border-left: 4px solid #3b82f6; /* Acento azul institucional */
+            border-top: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 2px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 9.5px;
+            letter-spacing: 1px;
         }
 
-        /* TABLA DE HORARIO */
-        table {
+        /* TABLA DE HORARIO CLEAN */
+        table.schedule {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
-            border: 1.2pt solid #4f32c2;
+            margin-bottom: 6px;
+            border: 1px solid #cbd5e1;
         }
 
-        th, td {
-            border: 0.5pt solid #dee2e6;
-            padding: 4px 3px;
+        table.schedule th, table.schedule td {
+            border: 1px solid #e2e8f0;
             text-align: center;
             vertical-align: middle;
         }
 
-        thead th {
-            background-color: #4f32c2;
-            color: white;
-            font-weight: bold;
-            font-size: 8px;
+        table.schedule thead th {
+            background-color: #f1f5f9; /* Slate 100 */
+            color: #475569;
+            font-weight: 800;
+            font-size: 8.5px;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 7px 3px;
-            height: 20px;
-            border: 0.5pt solid #3c26a0;
+            letter-spacing: 1px;
+            padding: 8px 4px;
+            border-bottom: 2px solid #cbd5e1;
         }
 
         th.hora-col {
-            background-color: #f8f9ff;
-            color: #4f32c2;
+            background-color: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
             width: 85px;
-            font-weight: bold;
-            font-size: 6.5px;
-            border-right: 1.5pt solid #4f32c2;
         }
 
-        td {
-            background: white;
-            height: 32px;
+        table.schedule td {
+            height: 38px;
             overflow: hidden;
+            padding: 2px;
         }
 
-        /* RECESO HORIZONTAL COMPLETO */
+        /* RECESO CORPORATIVO (Sutil, espaciado) */
         .receso-horizontal {
-            background-color: #7ade77 !important;
-            color: #004d00;
-            font-weight: 900;
+            background-color: #f8fafc !important; 
+            color: #64748b !important;
+            font-weight: 700;
             font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border: 1.2pt solid #4f32c2 !important;
-            padding: 6px !important;
+            letter-spacing: 6px; /* Separación amplia para efecto elegante */
+            padding: 8px !important;
+            border-top: 1.5px dashed #cbd5e1 !important;
+            border-bottom: 1.5px dashed #cbd5e1 !important;
         }
 
-        /* CELDAS DE CURSO MODERNAS */
+        /* CELDAS DE CURSO REFINADAS */
         .curso-cell {
-            padding: 4px 3px;
-            font-size: 6.5px;
-            line-height: 1.1;
+            padding: 5px;
+            font-size: 7px;
         }
 
         .curso-nombre {
             font-weight: 800;
-            margin-bottom: 2px;
-            font-size: 7.5px;
-            color: #000;
-            line-height: 1;
+            color: #0f172a;
+            margin-bottom: 3px;
         }
 
         .docente-nombre {
-            font-size: 5.8px;
-            color: #555;
-            font-weight: 600;
-            margin-top: 1px;
+            color: #475569;
+            font-weight: 500;
+            font-style: italic;
         }
 
-        /* FOOTER PROFESIONAL */
+        /* FOOTER */
         .footer-modern {
-            margin-top: 4px;
-            padding-top: 4px;
-            border-top: 1.5pt solid #4f32c2;
-            font-size: 6px;
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 7px;
             text-align: center;
-            color: #666;
+            color: #94a3b8;
         }
+        
+        .footer-modern strong { color: #64748b; }
 
-        .footer-modern strong { color: #4f32c2; }
-
-        /* Función PHP para aclarar colores */
+        /* Aclarado automático de color elegante */
         <?php
         function lightenColor($hex, $percent) {
             $hex = str_replace('#', '', $hex);
-            if (strlen($hex) != 6) return '#f0f7ff';
+            if (strlen($hex) != 6) return '#ffffff'; // Fallback a blanco limpio
             $r = hexdec(substr($hex, 0, 2));
             $g = hexdec(substr($hex, 2, 2));
             $b = hexdec(substr($hex, 4, 2));
-            $r = min(255, $r + (255 - $r) * $percent / 100);
-            $g = min(255, $g + (255 - $g) * $percent / 100);
-            $b = min(255, $b + (255 - $b) * $percent / 100);
+            $r = min(255, $r + (255 - $r) * ($percent + 5) / 100);
+            $g = min(255, $g + (255 - $g) * ($percent + 5) / 100);
+            $b = min(255, $b + (255 - $b) * ($percent + 5) / 100);
             return sprintf("#%02x%02x%02x", $r, $g, $b);
         }
         ?>
