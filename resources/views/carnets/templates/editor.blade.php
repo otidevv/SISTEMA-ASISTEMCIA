@@ -50,23 +50,23 @@
         .field-element {
             position: absolute;
             cursor: move;
-            padding: 4px 8px;
+            padding: 0;
             background: transparent;
-            border: 2px dashed #007bff;
-            border-radius: 4px;
+            outline: 2px dashed #007bff;
+            outline-offset: -2px;
             user-select: none;
             min-width: 50px;
             min-height: 20px;
         }
         
         .field-element:hover {
-            border-color: #0056b3;
-            background: rgba(255, 255, 255, 1);
+            outline-color: #0056b3;
+            background: rgba(255, 255, 255, 0.5);
         }
         
         .field-element.selected {
-            border-color: #28a745;
-            border-style: solid;
+            outline-color: #28a745;
+            outline-style: solid;
             box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
         }
         

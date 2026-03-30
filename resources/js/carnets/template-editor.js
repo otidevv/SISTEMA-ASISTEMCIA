@@ -191,6 +191,23 @@ class CarnetTemplateEditor {
         fieldElement.appendChild(label);
         fieldElement.appendChild(value);
 
+        // Aplicar estilos visuales por defecto para que coincida con el PDF exactamente
+        if (defaultConfig.fontFamily) value.style.fontFamily = defaultConfig.fontFamily;
+        if (defaultConfig.fontSize) {
+            // El campo fontSize puede venir como '7pt', lo asignamos directamente
+            value.style.fontSize = defaultConfig.fontSize;
+        }
+        if (defaultConfig.fontWeight) value.style.fontWeight = defaultConfig.fontWeight;
+        if (defaultConfig.color) value.style.color = defaultConfig.color;
+        if (defaultConfig.textAlign) {
+            value.style.display = 'block';
+            value.style.width = '100%';
+            value.style.textAlign = defaultConfig.textAlign;
+            label.style.display = 'block';
+            label.style.width = '100%';
+            label.style.textAlign = defaultConfig.textAlign;
+        }
+
         // Aplicar estilos por defecto si existen
         if (defaultConfig.backgroundColor && defaultConfig.backgroundColor !== 'transparent') {
             fieldElement.style.background = defaultConfig.backgroundColor;
@@ -286,8 +303,8 @@ class CarnetTemplateEditor {
             if (!this.isDragging) return;
 
             const canvasRect = this.canvas.getBoundingClientRect();
-            let newX = e.clientX - canvasRect.left - this.dragOffset.x;
-            let newY = e.clientY - canvasRect.top - this.dragOffset.y;
+            let newX = (e.clientX - canvasRect.left - this.dragOffset.x) / this.zoom;
+            let newY = (e.clientY - canvasRect.top - this.dragOffset.y) / this.zoom;
 
             // Obtener dimensiones reales del elemento
             const elementWidth = element.offsetWidth;
@@ -337,8 +354,8 @@ class CarnetTemplateEditor {
         const onMouseMove = (e) => {
             if (!this.isResizing) return;
 
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+            const deltaX = (e.clientX - startX) / this.zoom;
+            const deltaY = (e.clientY - startY) / this.zoom;
 
             let newWidth = startWidth;
             let newHeight = startHeight;
@@ -366,21 +383,9 @@ class CarnetTemplateEditor {
             element.style.left = newLeft + 'px';
             element.style.top = newTop + 'px';
 
-            // Calcular nuevo tamaño de fuente proporcional
-            const widthRatio = newWidth / startWidth;
-            const heightRatio = newHeight / startHeight;
-            const scaleRatio = Math.min(widthRatio, heightRatio); // Usar el menor para mantener proporción
-
-            let newFontSize = Math.round(initialFontSize * scaleRatio);
-            newFontSize = Math.max(6, Math.min(24, newFontSize)); // Limitar entre 6 y 24pt
-
-            // Aplicar nuevo tamaño de fuente
-            valueElement.style.fontSize = newFontSize + 'px';
-
-            // Actualizar inputs
+            // Actualizar inputs de la barra lateral visualmente
             document.getElementById('fieldWidth').value = this.pxToMmNumber(newWidth).toFixed(1);
             document.getElementById('fieldHeight').value = this.pxToMmNumber(newHeight).toFixed(1);
-            document.getElementById('fontSize').value = newFontSize;
         };
 
         const onMouseUp = () => {
@@ -389,15 +394,13 @@ class CarnetTemplateEditor {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
 
-            // Guardar tamaño en config
+            // Guardar nuevo tamaño en la configuración interna
             const fieldName = element.dataset.field;
-            const finalFontSize = parseInt(window.getComputedStyle(valueElement).fontSize);
 
             this.fields[fieldName].config.width = this.pxToMm(element.offsetWidth);
             this.fields[fieldName].config.height = this.pxToMm(element.offsetHeight);
-            this.fields[fieldName].config.fontSize = finalFontSize + 'pt';
 
-            toastr.info(`Tamaño ajustado: ${finalFontSize}pt`, '', { timeOut: 1000 });
+            toastr.info(`Tamaño de caja ajustado`, '', { timeOut: 1000 });
         };
 
         document.addEventListener('mousemove', onMouseMove);
@@ -700,8 +703,8 @@ class CarnetTemplateEditor {
 
     showCoordinates(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const x = (e.clientX - rect.left) / this.zoom;
+        const y = (e.clientY - rect.top) / this.zoom;
 
         const xMm = (x / this.MM_TO_PX_RATIO).toFixed(2);
         const yMm = (y / this.MM_TO_PX_RATIO).toFixed(2);

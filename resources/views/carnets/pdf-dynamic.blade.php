@@ -58,8 +58,8 @@
                 <img src="{{ $carnet['fondo'] }}" class="fondo" alt="Fondo">
             @endif
 
-            {{-- Campos dinámicos según configuración de la plantilla --}}
-            @foreach($template->campos_config as $campo => $config)
+            {{-- Campos dinámicos según configuración específica del carnet/plantilla --}}
+            @foreach($carnet['template']->campos_config as $campo => $config)
                 @if($config['visible'] ?? true)
                     @if($campo === 'foto' && $carnet['foto'])
                         {{-- Foto del estudiante --}}
@@ -205,6 +205,46 @@
                             @endif
                         ">
                             {{ $carnet['carrera'] }}
+                        </div>
+
+                    @elseif($campo === 'grado')
+                        {{-- Grado --}}
+                        <div class="campo campo-{{ $campo }}" style="
+                            left: {{ $config['left'] }};
+                            top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
+                            font-size: {{ $config['fontSize'] ?? '8pt' }};
+                            font-weight: {{ $config['fontWeight'] ?? 'bold' }};
+                            color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
+                        ">
+                            {{ $carnet['grado'] }}
+                        </div>
+
+                    @elseif($campo === 'colegio')
+                        {{-- Colegio --}}
+                        <div class="campo campo-{{ $campo }}" style="
+                            left: {{ $config['left'] }};
+                            top: {{ $config['top'] }};
+                            width: {{ $config['width'] ?? 'auto' }};
+                            height: {{ $config['height'] ?? 'auto' }};
+                            font-family: {{ $config['fontFamily'] ?? 'Arial' }};
+                            font-size: {{ $config['fontSize'] ?? '7pt' }};
+                            font-weight: {{ $config['fontWeight'] ?? 'normal' }};
+                            color: {{ $config['color'] ?? '#003d7a' }};
+                            text-align: {{ $config['textAlign'] ?? 'left' }};
+                            @if(isset($config['rotation']) && $config['rotation'] != 0)
+                            transform: rotate({{ $config['rotation'] }}deg);
+                            transform-origin: top left;
+                            @endif
+                        ">
+                            {{ $carnet['colegio'] }}
                         </div>
                     @endif
                 @endif

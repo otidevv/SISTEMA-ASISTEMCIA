@@ -481,10 +481,9 @@ class CarnetController extends Controller
             ];
         });
 
-        // Usamos la primera plantilla como base para las dimensiones del papel
-        $templateBase = \App\Models\CarnetTemplate::obtenerActiva('postulante', $carnets->first()->ciclo_id)
-                      ?? \App\Models\CarnetTemplate::obtenerActiva('postulante');
-        if (!$templateBase) abort(500, 'No hay plantillas activas');
+        // Usamos la plantilla del primer carnet como base para las dimensiones del papel
+        $templateBase = $carnetsData->first()['template'];
+        if (!$templateBase) abort(500, 'No hay plantillas activas para los carnets seleccionados');
 
         $pdf = PDF::loadView('carnets.pdf-dynamic', [
             'carnets' => $carnetsData,
