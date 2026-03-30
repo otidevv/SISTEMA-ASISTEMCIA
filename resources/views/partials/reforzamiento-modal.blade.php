@@ -983,6 +983,12 @@
                                 </div>
                             </div>
 
+                            <div class="rf-form-group">
+                                <label class="rf-label">Dirección / Domicilio <span style="color:var(--rf-red);">*</span></label>
+                                <input type="text" id="ref_direccion" name="direccion" class="rf-input" placeholder="Ej: Av. 2 de Mayo 123" required>
+                                <span class="rf-field-icon material-icons-round"></span>
+                            </div>
+
                             <div class="rf-grid-2">
                                 <div class="rf-form-group">
                                     <label class="rf-label">Fecha de Nacimiento <span style="color:var(--rf-red);">*</span></label>
@@ -1137,6 +1143,25 @@
                         <div class="rf-step-header">
                             <h3><span class="material-icons-round" style="vertical-align: middle; color: var(--rf-magenta); margin-right: 0.3rem;">upload_file</span> Documentos Requeridos</h3>
                             <p>Sube tus documentos oficiales en formato JPG, PNG o PDF (máx. 5MB cada uno).</p>
+                        </div>
+
+                        {{-- CARD PREMIUM PARA DESCARGA DE FORMATOS --}}
+                        <div class="rf-card" style="background: linear-gradient(135deg, var(--rf-navy) 0%, var(--rf-navy-light) 100%); color: #fff; border: none; margin-bottom: 2rem; padding: 1.75rem;">
+                            <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+                                <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="material-icons-round" style="font-size: 2.2rem; color: var(--rf-magenta);">picture_as_pdf</i>
+                                </div>
+                                <div style="flex: 1; min-width: 250px;">
+                                    <h4 style="margin: 0; font-family: var(--rf-font-titles); font-weight: 800; font-size: 1.05rem; color: #fff; letter-spacing: 0.5px;">PACK DE INSCRIPCIÓN PRE-LLENADO</h4>
+                                    <p style="margin: 0.3rem 0 0 0; font-size: 0.82rem; opacity: 0.85; line-height: 1.4;">
+                                        Hemos preparado tu <strong>Carta de Compromiso y Declaraciones</strong> con tus datos (Nombres, DNI, Ciclo). 
+                                        ¡Solo descárgalo, firma, pon tu huella y súbelo aquí mismo!
+                                    </p>
+                                </div>
+                                <button type="button" id="btnDownloadPack" class="rf-btn rf-btn-magenta" style="height: 3.25rem; box-shadow: 0 10px 25px rgba(236, 0, 140, 0.4); min-width: 220px;">
+                                    <span class="material-icons-round">download</span> DESCARGAR FORMATOS
+                                </button>
+                            </div>
                         </div>
 
                         <div class="rf-grid-2">

@@ -101,6 +101,11 @@ function initPremiumWizard() {
         });
     }
 
+    const btnDownload = document.getElementById('btnDownloadPack');
+    if (btnDownload) {
+        btnDownload.addEventListener('click', downloadRegistrationPack);
+    }
+
     initDropzones();
     if (apoderadoCount === 0) addApoderadoForm();
     loadDepartamentos();
@@ -1100,9 +1105,7 @@ async function handleFinalSubmit(e) {
                                     <h6 style="font-weight: 800; color: var(--rf-navy); margin-bottom: 0.2rem; font-size: 1rem;">Notificación de Resultados</h6>
                                     <p style="color: var(--rf-text-muted); font-size: 0.85rem; margin: 0; line-height: 1.4;">Se te notificará vía correo electrónico y llamada/WhatsApp cuando tu vacante sea confirmada.</p>
                                 </div>
-                            </div>
                         </div>
-                    </div>
 
                     <div style="margin-top: 3rem;">
                         <button type="button" class="rf-btn rf-btn-magenta" style="padding: 1.2rem 4rem; font-size: 1.1rem; border-radius: 1.25rem;" onclick="location.reload()">
@@ -1133,3 +1136,93 @@ window.closeReforzamientoModal = function() {
     const modal = document.getElementById('reforzamientoModal');
     if (modal) modal.classList.remove('modal-open');
 };
+
+// ==========================================
+// PDF GENERATION & DOWNLOAD
+// ==========================================
+async function downloadRegistrationPack() {
+    const btn = document.getElementById('btnDownloadPack');
+    const oldHtml = btn ? btn.innerHTML : '';
+    
+    // Recopilar Datos del Estudiante (Paso 1)
+    const estudianteNombre = document.getElementById('ref_nombre')?.value?.trim() || '';
+    const estudiantePaterno = document.getElementById('ref_apellido_paterno')?.value?.trim() || '';
+    const estudianteMaterno = document.getElementById('ref_apellido_materno')?.value?.trim() || '';
+    const estudianteDni = document.getElementById('ref_dni')?.value?.trim() || '';
+    const estudianteDireccion = document.getElementById('ref_direccion')?.value?.trim() || '';
+
+    // Validar Datos Personales Mínimos
+    if (!estudianteDni || !estudianteNombre || !estudiantePaterno) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Datos Incompletos',
+            text: 'Por favor, completa tus nombres y DNI en el Paso 1 antes de descargar.',
+            confirmButtonColor: '#ec008c'
+        });
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="rf-spin material-icons-round">cached</i> GENERANDO...';
+    }
+
+    try {
+        // Recopilar Datos del Primer Apoderado (Paso 2)
+        const apoderadoDni = document.querySelector('[name^="apoderados[1][dni]"]')?.value?.trim() || '';
+        const apoderadoNombre = document.querySelector('[name^="apoderados[1][nombre]"]')?.value?.trim() || '';
+        const apoderadoPaterno = document.querySelector('[name^="apoderados[1][apellido_paterno]"]')?.value?.trim() || '';
+        const apoderadoMaterno = document.querySelector('[name^="apoderados[1][apellido_materno]"]')?.value?.trim() || '';
+        const apoderadoCelular = document.querySelector('[name^="apoderados[1][telefono]"]')?.value?.trim() || '';
+
+        const payload = {
+            estudiante_nombre: `${estudianteNombre} ${estudiantePaterno} ${estudianteMaterno}`.trim(),
+            estudiante_dni: estudianteDni,
+            apoderado_nombre: `${apoderadoNombre} ${apoderadoPaterno} ${apoderadoMaterno}`.trim(),
+            apoderado_dni: apoderadoDni,
+            apoderado_celular: apoderadoCelular,
+            apoderado_direccion: estudianteDireccion
+        };
+
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/public-reforzamiento/download-pack`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/pdf'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Error al generar el PDF');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Pack_Inscripcion_${estudianteDni}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        Swal.fire({
+            icon: 'success',
+            title: '¡Pack Generado!',
+            text: 'Se ha descargado tu Carta de Compromiso pre-rellena. Firma, pon tu huella y súbela en este paso.',
+            confirmButtonColor: '#ec008c'
+        });
+
+    } catch (e) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el Pack de Inscripción. Inténtalo de nuevo.'
+        });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+        }
+    }
+}

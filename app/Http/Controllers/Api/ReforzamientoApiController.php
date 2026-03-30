@@ -16,17 +16,47 @@ use App\Models\ApoderadoReforzamiento;
 use App\Models\PagoReforzamiento;
 use App\Models\ProgramaAcademico;
 use App\Events\NuevaPostulacionCreada;
-use App\Notifications\NuevaPostulacionDatabaseNotification;
 use App\Services\PaymentValidationService;
+use App\Services\ReforzamientoPdfService;
 use Carbon\Carbon;
 
 class ReforzamientoApiController extends BaseController
 {
     protected $paymentService;
+    protected $pdfService;
 
-    public function __construct(PaymentValidationService $paymentService)
+    public function __construct(PaymentValidationService $paymentService, ReforzamientoPdfService $pdfService)
     {
         $this->paymentService = $paymentService;
+        $this->pdfService = $pdfService;
+    }
+
+    /**
+     * Generar Pack de Inscripción (Carta de Compromiso) dinámico
+     */
+    public function generateRegistrationPack(Request $request)
+    {
+        try {
+            // Validar datos mínimos necesarios para el PDF
+            $data = $request->only([
+                'estudiante_nombre', 'estudiante_dni', 
+                'apoderado_nombre', 'apoderado_dni', 
+                'apoderado_celular', 'apoderado_direccion'
+            ]);
+
+            if (!$data['estudiante_nombre'] || !$data['estudiante_dni']) {
+                return response()->json(['error' => 'Datos incompletos para generar el PDF'], 422);
+            }
+
+            $pdf = $this->pdfService->fillRegistrationPack($data);
+
+            return response($pdf->Output('S', 'Pack_Inscripcion_Reforzamiento.pdf'))
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_Reforzamiento_' . $data['estudiante_dni'] . '.pdf"');
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al generar Pack PDF: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -320,4 +350,5 @@ class ReforzamientoApiController extends BaseController
             return $this->sendError('Error al procesar la inscripción: ' . $e->getMessage());
         }
     }
+
 }
