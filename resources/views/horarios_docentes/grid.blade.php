@@ -693,12 +693,17 @@
     </div>
 </div>
 
-<!-- Data para JavaScript -->
 <script>
     window.scheduleData = {
         cicloId: {{ $cicloSeleccionado->id ?? 'null' }},
         aulaId: {{ $aulaSeleccionadaId ?? 'null' }},
         turno: '{{ $turnoSeleccionado }}',
+        recesos: {
+            manana_inicio: '{{ $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_inicio, 0, 5) : "" }}',
+            manana_fin: '{{ $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_fin, 0, 5) : "" }}',
+            tarde_inicio: '{{ $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_inicio, 0, 5) : "" }}',
+            tarde_fin: '{{ $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_fin, 0, 5) : "" }}'
+        },
         cursos: @json($cursos),
         docentes: @json($docentes),
         routes: {

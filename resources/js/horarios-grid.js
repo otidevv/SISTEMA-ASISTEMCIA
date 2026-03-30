@@ -109,6 +109,13 @@ async function cargarHorarios(mostrarAlerta = true) {
         return;
     }
 
+    // REDIBUJADO VITAL: Si el ciclo principal cambia, los recesos cambian. 
+    // Debemos recargar toda la página web para que el PHP Blade construya los huecos verdes nuevos del fondo.
+    if (String(cicloId) !== String(window.scheduleData.cicloId)) {
+        window.location.href = window.location.pathname + '?ciclo_id=' + cicloId + '&aula_id=' + aulaId + '&turno=' + turno;
+        return;
+    }
+
     mostrarCargando(true);
 
     try {
@@ -153,34 +160,45 @@ function renderizarHorarios() {
         const minInicio = hInicio * 60 + mInicio;
         const minFin = hFin * 60 + mFin;
 
-        // Horas de receso en minutos
-        const receso1Inicio = 10 * 60; // 10:00
-        const receso1Fin = 10 * 60 + 30; // 10:30
-        const receso2Inicio = 18 * 60; // 18:00
-        const receso2Fin = 18 * 60 + 30; // 18:30
+        // Detección de Colisiones contra Recesos dinámicos
+        const r1Start = window.scheduleData.recesos?.manana_inicio;
+        const r1End = window.scheduleData.recesos?.manana_fin;
+        const r2Start = window.scheduleData.recesos?.tarde_inicio;
+        const r2End = window.scheduleData.recesos?.tarde_fin;
 
-        // Verificar si atraviesa el receso de las 10:00
+        let receso1Inicio = 99999, receso1Fin = 99999;
+        let receso2Inicio = 99999, receso2Fin = 99999;
+
+        if (r1Start && r1End) {
+            receso1Inicio = parseInt(r1Start.split(':')[0]) * 60 + parseInt(r1Start.split(':')[1]);
+            receso1Fin = parseInt(r1End.split(':')[0]) * 60 + parseInt(r1End.split(':')[1]);
+        }
+        
+        if (r2Start && r2End) {
+            receso2Inicio = parseInt(r2Start.split(':')[0]) * 60 + parseInt(r2Start.split(':')[1]);
+            receso2Fin = parseInt(r2End.split(':')[0]) * 60 + parseInt(r2End.split(':')[1]);
+        }
+
+        // Verificar si atraviesa el receso de la mañana
         if (minInicio < receso1Inicio && minFin > receso1Fin) {
-            // Dividir en dos bloques
             renderizarBloqueSimple({
                 ...horario,
-                hora_fin: '10:00'
+                hora_fin: r1Start.substring(0, 5) // "10:00" -> "10:00"
             }, true);
             renderizarBloqueSimple({
                 ...horario,
-                hora_inicio: '10:30'
+                hora_inicio: r1End.substring(0, 5)
             }, true);
         }
-        // Verificar si atraviesa el receso de las 18:00
+        // Verificar si atraviesa el receso de la tarde
         else if (minInicio < receso2Inicio && minFin > receso2Fin) {
-            // Dividir en dos bloques
             renderizarBloqueSimple({
                 ...horario,
-                hora_fin: '18:00'
+                hora_fin: r2Start.substring(0, 5)
             }, true);
             renderizarBloqueSimple({
                 ...horario,
-                hora_inicio: '18:30'
+                hora_inicio: r2End.substring(0, 5)
             }, true);
         }
         else {

@@ -654,7 +654,7 @@ class HorarioDocenteController extends Controller
 
         // Organizar horarios por día y hora
         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        $horasRango = $this->obtenerRangoHoras($horarios, $ciclo);
+        $horasRango = $this->obtenerRangoHoras($horarios, $ciclo, $turno);
         
         $grilla = [];
         foreach ($horasRango as $hora) {
@@ -681,7 +681,7 @@ class HorarioDocenteController extends Controller
     /**
      * Obtener rango de horas de los horarios Dinaminamente
      */
-    private function obtenerRangoHoras($horarios, $ciclo = null)
+    private function obtenerRangoHoras($horarios, $ciclo = null, $turno = 'MAÑANA')
     {
         // Determinar el rango necesario según los horarios existentes
         $minHora = 24; $maxHora = 0;
@@ -692,9 +692,20 @@ class HorarioDocenteController extends Controller
             if ($fin->hour > $maxHora) $maxHora = $fin->hour;
         }
         
-        // Si no hay horarios, usar un rango por defecto
-        if ($minHora == 24) $minHora = 7;
-        if ($maxHora == 0) $maxHora = 21;
+        // CUBRIR TODO EL PDF DE FORMA PROFESIONAL Y COMPLETA SEGÚN TURNO
+        if ($turno === 'MAÑANA') {
+            if ($minHora > 7) $minHora = 7;
+            if ($maxHora < 14) $maxHora = 14; // Cubrir hasta 2pm
+        } elseif ($turno === 'TARDE') {
+            if ($minHora > 14) $minHora = 14;
+            if ($maxHora < 21) $maxHora = 21; // Cubrir hasta 9pm
+        } elseif ($turno === 'NOCHE') {
+            if ($minHora > 18) $minHora = 18;
+            if ($maxHora < 23) $maxHora = 23; 
+        } else {
+            if ($minHora == 24) $minHora = 7;
+            if ($maxHora == 0) $maxHora = 21;
+        }
         
         $slots = [];
         $curr = $minHora * 60; // En minutos
