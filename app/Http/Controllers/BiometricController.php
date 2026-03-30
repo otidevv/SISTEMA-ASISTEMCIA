@@ -53,6 +53,8 @@ class BiometricController extends Controller
             $query->where(function($q) use ($request) {
                 $q->whereHas('inscripciones', function($sq) use ($request) {
                     $sq->where('ciclo_id', $request->ciclo_id);
+                })->orWhereHas('inscripcionesReforzamiento', function($sq) use ($request) {
+                    $sq->where('ciclo_id', $request->ciclo_id);
                 })->orWhereHas('horarios', function($sq) use ($request) {
                     $sq->where('ciclo_id', $request->ciclo_id);
                 });

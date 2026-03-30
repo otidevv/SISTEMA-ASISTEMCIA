@@ -285,6 +285,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the inscripciones de reforzamiento for the user.
+     */
+    public function inscripcionesReforzamiento()
+    {
+        return $this->hasMany(\App\Models\InscripcionReforzamiento::class, 'estudiante_id');
+    }
+
+    /**
      * Obtener los horarios del docente
      */
     public function horarios()
