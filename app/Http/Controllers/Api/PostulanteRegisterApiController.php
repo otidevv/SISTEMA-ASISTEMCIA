@@ -330,7 +330,7 @@ class PostulanteRegisterApiController extends BaseController
     public function getFormDependencies()
     {
         $data = \Illuminate\Support\Facades\Cache::remember('public_postulation_dependencies', 60, function () {
-            $cicloActivo = Ciclo::activo()->first();
+            $cicloActivo = Ciclo::where('es_activo', true)->where('programa_id', 1)->first();
             if (!$cicloActivo) {
                 return null;
             }

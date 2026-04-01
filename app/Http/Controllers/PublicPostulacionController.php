@@ -31,7 +31,6 @@ class PublicPostulacionController extends Controller
     public function checkPostulante(Request $request)
     {
         // Log para debug (puedes revisarlo en storage/logs/laravel.log)
-        // Log::info('Verificando postulante', $request->all());
 
         $request->validate([
             'dni' => 'required|numeric|digits:8',
@@ -271,7 +270,7 @@ class PublicPostulacionController extends Controller
 
         DB::beginTransaction();
         try {
-            $cicloActivo = Ciclo::where('es_activo', 1)->firstOrFail();
+            $cicloActivo = Ciclo::where('es_activo', 1)->where('programa_id', 1)->firstOrFail();
             $rolPostulante = Role::where('nombre', 'postulante')->first();
             $rolPadre = Role::where('nombre', 'padre')->first();
 
@@ -454,7 +453,6 @@ class PublicPostulacionController extends Controller
                 if ($emailExistente) {
                     // Si el email existe, usar ese usuario como padre
                     $padre = $emailExistente;
-                    Log::info("Usando usuario existente con email {$email} como {$tipo}");
                 }
             }
             

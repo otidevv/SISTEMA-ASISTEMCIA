@@ -32,9 +32,10 @@ class DashboardController extends Controller
     {
         try {
             $user = Auth::user();
-            $cicloActivo = Cache::remember('ciclo_activo', 300, function () {
-                return Ciclo::where('es_activo', true)->first();
-            });
+            $programa_id = request('programa_id', 1);
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->where('programa_id', $programa_id)
+                ->first();
 
             $data = [
                 'user' => [
@@ -187,11 +188,14 @@ class DashboardController extends Controller
                 return response()->json(['error' => 'No autorizado'], 403);
             }
 
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            $programa_id = request('programa_id', 1);
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->where('programa_id', $programa_id)
+                ->first();
 
             if (!$cicloActivo) {
                 return response()->json([
-                    'error' => 'No hay ciclo activo',
+                    'error' => 'No hay ciclo activo para este programa',
                     'cicloActivo' => null
                 ]);
             }
@@ -400,11 +404,14 @@ class DashboardController extends Controller
                 return response()->json(['error' => 'No autorizado'], 403);
             }
 
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            $programa_id = request('programa_id', 1);
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->where('programa_id', $programa_id)
+                ->first();
 
             if (!$cicloActivo) {
                 return response()->json([
-                    'error' => 'No hay ciclo activo',
+                    'error' => 'No hay ciclo activo para este programa',
                     'estadisticas' => null
                 ]);
             }

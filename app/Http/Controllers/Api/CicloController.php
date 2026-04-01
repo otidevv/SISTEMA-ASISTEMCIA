@@ -43,6 +43,7 @@ class CicloController extends Controller
                 'porcentaje_avance' => $ciclo->porcentaje_avance,
                 'es_activo' => $ciclo->es_activo,
                 'estado' => $ciclo->estado,
+                'programa_id' => $ciclo->programa_id,
                 'inscripciones_count' => $ciclo->inscripciones_count,
                 'creado_por' => $ciclo->creadoPor ? $ciclo->creadoPor->nombre . ' ' . $ciclo->creadoPor->apellido_paterno : null,
                 'actions' => $this->getActionButtons($ciclo)
@@ -98,6 +99,7 @@ class CicloController extends Controller
             'receso_manana_fin' => 'nullable|date_format:H:i',
             'receso_tarde_inicio' => 'nullable|date_format:H:i',
             'receso_tarde_fin' => 'nullable|date_format:H:i',
+            'programa_id' => 'required|exists:programas_academicos,id',
         ]);
 
         if ($validator->fails()) {
@@ -198,6 +200,7 @@ class CicloController extends Controller
             'receso_manana_fin' => 'nullable|date_format:H:i',
             'receso_tarde_inicio' => 'nullable|date_format:H:i',
             'receso_tarde_fin' => 'nullable|date_format:H:i',
+            'programa_id' => 'required|exists:programas_academicos,id',
         ]);
 
         if ($validator->fails()) {

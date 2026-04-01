@@ -10,6 +10,7 @@ use App\Models\Aula;
 use App\Models\Curso;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class HorarioDocenteController extends Controller
 {
@@ -20,7 +21,8 @@ class HorarioDocenteController extends Controller
 
         // 2. Determinar el ciclo a mostrar
         $cicloSeleccionadoId = $request->input('ciclo_id');
-        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+        $cicloActivo = $ciclos->where('es_activo', true)->where('programa_id', 1)->first() 
+            ?? $ciclos->firstWhere('es_activo', true);
 
         if ($cicloSeleccionadoId) {
             $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
@@ -156,8 +158,9 @@ class HorarioDocenteController extends Controller
      */
    public function calendario()
 {
-    // Obtener el ciclo activo
-    $cicloActivo = Ciclo::where('es_activo', true)->first();
+    // Obtener el ciclo activo (Priorizamos CEPRE por defecto para el calendario general)
+    $cicloActivo = Ciclo::where('es_activo', true)->where('programa_id', 1)->first()
+        ?? Ciclo::where('es_activo', true)->first();
 
     if (!$cicloActivo) {
         // Si no hay ciclo activo, puedes redirigir o mostrar un mensaje
@@ -493,7 +496,8 @@ class HorarioDocenteController extends Controller
     public function grid(Request $request)
     {
         $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
-        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+        $cicloActivo = $ciclos->where('es_activo', true)->where('programa_id', 1)->first()
+            ?? $ciclos->firstWhere('es_activo', true);
         
         $cicloSeleccionadoId = $request->input('ciclo_id', $cicloActivo?->id);
         $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId) ?? $cicloActivo;
@@ -665,7 +669,7 @@ class HorarioDocenteController extends Controller
             $grilla[] = $fila;
         }
 
-        $pdf = \PDF::loadView('horarios_docentes.pdf', [
+        $pdf = Pdf::loadView('horarios_docentes.pdf', [
             'ciclo' => $ciclo,
             'aula' => $aula,
             'turno' => $turno,

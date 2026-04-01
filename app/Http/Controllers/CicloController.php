@@ -4,13 +4,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ciclo;
+use App\Models\ProgramaAcademico;
 use Illuminate\Http\Request;
 
 class CicloController extends Controller
 {
     public function index()
     {
-        return view('academico.ciclos.index');
+        $programas = ProgramaAcademico::where('estado', true)->get();
+        return view('academico.ciclos.index', compact('programas'));
     }
 
     public function create()

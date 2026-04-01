@@ -1,0 +1,10 @@
+feat/fix: Refactorizacion estructural de Segregacion de Programas
+
+- Agregado programa_id a la migracion y modelo Ciclo.php
+- Implementacion de scopes type-safe en Ciclo (scopeCepre, scopeReforzamiento)
+- Hardening en controladores (Postulacion, Reforzamiento) para prevenir cruce de inscripciones
+- Se restringe el lookup gobal (first()) para considerar siempre el programa que se usa
+- Creacion del Selector de Programas (dropdown) en modulos de administracion
+- El Ayudante de Asistencia ahora deduce el ciclo por contexto individual 
+- Solucion a bugs de visualizacion PDF (DomPDF) y linting
+- Limpieza total de logs residuales de desarrollo

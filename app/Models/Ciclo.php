@@ -35,6 +35,7 @@ class Ciclo extends Model
         'receso_tarde_inicio',
         'receso_tarde_fin',
         'estado',
+        'programa_id',
         'correlativo_inicial',
         'creado_por',
         'actualizado_por'
@@ -64,6 +65,11 @@ class Ciclo extends Model
         return $this->belongsTo(User::class, 'actualizado_por');
     }
 
+    public function programa()
+    {
+        return $this->belongsTo(ProgramaAcademico::class, 'programa_id');
+    }
+
     public function inscripciones()
     {
         return $this->hasMany(Inscripcion::class);
@@ -90,6 +96,16 @@ class Ciclo extends Model
     public function scopeEnCurso($query)
     {
         return $query->where('estado', 'en_curso');
+    }
+
+    public function scopeCepre($query)
+    {
+        return $query->where('programa_id', 1);
+    }
+
+    public function scopeReforzamiento($query)
+    {
+        return $query->where('programa_id', 2);
     }
 
     // Métodos

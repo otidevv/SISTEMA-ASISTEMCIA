@@ -255,7 +255,11 @@
                 </div>
                 <h4 class="page-title">
                     <i class="mdi mdi-fingerprint me-1"></i>
-                    Registros de Asistencia
+                    Asistencia: 
+                    <span class="text-primary">{{ $cicloActivo->nombre ?? 'Sin Ciclo' }}</span>
+                    @if ($cicloActivo && $cicloActivo->programa)
+                        <span class="badge bg-soft-primary text-primary ms-1" style="font-size: 0.7rem;">{{ $cicloActivo->programa->nombre }}</span>
+                    @endif
                     @if ($fecha)
                         <span class="badge bg-info fs-6 ms-2">{{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}</span>
                     @endif
@@ -276,20 +280,27 @@
         <div class="card-body">
             <!-- Filtros y Acciones -->
             <form action="{{ route('asistencia.index') }}" method="GET" class="row g-3 mb-4 align-items-end bg-light p-3 rounded">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="fecha" class="form-label fw-bold">Fecha</label>
                     <input type="date" class="form-control form-control-sm" id="fecha" name="fecha" value="{{ $fecha ?? date('Y-m-d') }}">
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-3">
+                    <label for="programa_id" class="form-label fw-bold">Programa Académico</label>
+                    <select class="form-select form-select-sm" id="programa_id" name="programa_id">
+                        @foreach($programas as $p)
+                            <option value="{{ $p->id }}" {{ $programa_id == $p->id ? 'selected' : '' }}>{{ $p->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
                     <label for="documento" class="form-label fw-bold">Estudiante (DNI o Nombre)</label>
                     <div class="search-container">
                         <input type="text" class="form-control form-control-sm" id="documento" name="documento" value="{{ $documento ?? '' }}" placeholder="Buscar..." autocomplete="off">
                         <div class="suggestions-dropdown" id="suggestions"></div>
                     </div>
                 </div>
-                <div class="col-md-3 d-flex align-items-end gap-2">
+                <div class="col-md-2 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary btn-sm w-100"><i class="mdi mdi-filter-variant"></i> Filtrar</button>
-                    <a href="{{ route('asistencia.index') }}" class="btn btn-secondary btn-sm w-100"><i class="mdi mdi-reload"></i> Limpiar</a>
                 </div>
             </form>
 

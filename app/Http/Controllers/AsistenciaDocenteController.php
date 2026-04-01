@@ -61,7 +61,9 @@ class AsistenciaDocenteController extends Controller
         // NUEVO: Determinar el ciclo a usar para filtrar docentes
         $cicloParaFiltroDocentes = $selectedCicloAcademico;
         if (!$cicloParaFiltroDocentes) {
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->orderBy('programa_id', 'asc') // Priorizar CEPRE
+                ->first();
             $cicloParaFiltroDocentes = $cicloActivo?->codigo;
         }
         
@@ -130,7 +132,9 @@ class AsistenciaDocenteController extends Controller
         }
         // NUEVO: Fallback al ciclo activo en lugar de últimos 30 días
         else {
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->orderBy('programa_id', 'asc')
+                ->first();
             if ($cicloActivo) {
                 $startDate = Carbon::parse($cicloActivo->fecha_inicio)->startOfDay();
                 $endDate = Carbon::parse($cicloActivo->fecha_fin)->endOfDay();
@@ -231,7 +235,9 @@ class AsistenciaDocenteController extends Controller
 
         // 6. OPTIMIZACIÓN: LÓGICA PARA DATOS DETALLADOS
         $processedDetailedAsistencias = [];
-        $cicloActivoParaRotacion = Ciclo::where('es_activo', true)->first();
+        $cicloActivoParaRotacion = Ciclo::where('es_activo', true)
+            ->orderBy('programa_id', 'asc')
+            ->first();
         
         $docentesQuery = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
@@ -495,8 +501,10 @@ class AsistenciaDocenteController extends Controller
                 ->count(),
         ];
 
-        // Obtener ciclo activo
-        $cicloActivo = Ciclo::where('es_activo', true)->first();
+        // Obtener ciclo activo (Priorizamos CEPRE o el primero encontrado si hay varios)
+        $cicloActivo = Ciclo::where('es_activo', true)
+            ->orderBy('programa_id', 'asc')
+            ->first();
 
         return view('asistencia-docente.monitor', compact('ultimasAsistencias', 'estadisticasHoy', 'cicloActivo'));
     }
@@ -510,8 +518,12 @@ class AsistenciaDocenteController extends Controller
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
             
-            // Obtener ciclo activo
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+            // Obtener ciclo activo (Priorizando CEPRE para visualización general)
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->orderBy('programa_id', 'asc')
+                ->first();
+            
+            $diaSemana = $fechaCarbon->locale('es')->dayName;
             
             // Obtener todos los horarios activos del día (considerando rotación por ciclo)
             $todosHorariosActivos = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
@@ -591,7 +603,7 @@ class AsistenciaDocenteController extends Controller
             return response()->json([
                 'success' => true,
                 'fecha' => $fechaCarbon->format('Y-m-d'),
-                'dia_semana' => ucfirst($diaSemana),
+                'dia_semana' => ucfirst($diaSemana ?? ''),
                 'schedule' => $schedule,
                 'total_clases' => $schedule->count(),
                 'hora_actual' => Carbon::now()->format('H:i:s'),
@@ -1204,26 +1216,6 @@ class AsistenciaDocenteController extends Controller
           ->orderBy('apellido_paterno', 'asc')
           ->get();
     
-        // 3. DEBUGGING MEJORADO
-        \Log::info('=== EDITANDO ASISTENCIA ===');
-        \Log::info('ID: ' . $id);
-        \Log::info('Usuario ID: ' . ($asistencia->usuario_id ?? 'NULL'));
-        \Log::info('Documento: ' . $asistencia->nro_documento);
-        \Log::info('Total docentes: ' . $docentes->count());
-        
-        // Verificar si existe el docente específico
-        $docenteEncontrado = $docentes->where('numero_documento', $asistencia->nro_documento)->first();
-        if ($docenteEncontrado) {
-            \Log::info('✅ DOCENTE ENCONTRADO: ID=' . $docenteEncontrado->id . ', NOMBRE=' . $docenteEncontrado->nombre . ' ' . $docenteEncontrado->apellido_paterno);
-        } else {
-            \Log::info('❌ DOCENTE NO ENCONTRADO para documento: ' . $asistencia->nro_documento);
-            
-            // Mostrar los primeros 5 docentes para debugging
-            \Log::info('Primeros 5 docentes disponibles:');
-            foreach ($docentes->take(5) as $doc) {
-                \Log::info('  - ID=' . $doc->id . ', DOC=' . $doc->numero_documento . ', NOMBRE=' . $doc->nombre . ' ' . $doc->apellido_paterno);
-            }
-        }
         
         // ✅ 4. CAMBIO CRÍTICO: usar 'edit' en lugar de 'editar'
         return view('asistencia-docente.edit', compact('asistencia', 'docentes'));
@@ -1587,7 +1579,7 @@ class AsistenciaDocenteController extends Controller
             // Determinar la hora de inicio efectiva para el cálculo, respetando la tolerancia de tardanza.
             $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_TARDE_MINUTOS);
             
-            $effectiveStartTime;
+            $effectiveStartTime = null;
             // Si la entrada es ANTES o DENTRO del umbral de tardanza, se usa la hora de inicio programada.
             if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
                 $effectiveStartTime = $horarioInicioHoy;

@@ -432,6 +432,7 @@ $(document).ready(function () {
                     $('#edit_estado').val(ciclo.estado);
                     $('#edit_correlativo_inicial').val(ciclo.correlativo_inicial || 1);
                     $('#edit_porcentaje').val(ciclo.porcentaje_avance || 0);
+                    $('#edit_programa_id').val(ciclo.programa_id || '');
 
                     // Manejar checkbox de rotación de sábados
                     $('#edit_incluye_sabados').prop('checked', ciclo.incluye_sabados || false);

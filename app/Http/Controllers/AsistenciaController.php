@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RegistroAsistencia;
+use App\Models\AsistenciaEvento;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ class AsistenciaController extends Controller
         // Obtener parámetros de filtrado
         $fecha = $request->get('fecha', Carbon::today()->format('Y-m-d'));
         $documento = $request->get('documento');
+        $programa_id = $request->get('programa_id', 1); // Default to CEPRE Regular
 
         // Crear la consulta base
         $query = RegistroAsistencia::query();
@@ -48,8 +50,14 @@ class AsistenciaController extends Controller
         // Obtener registros paginados
         $registros = $query->orderBy('fecha_registro', 'desc')->paginate(15);
 
-        // Obtener el ciclo activo para calcular días hábiles
-        $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
+        // Obtener el ciclo activo correspondiente al programa seleccionado
+        $cicloActivo = \App\Models\Ciclo::where('programa_id', $programa_id)
+            ->where('es_activo', true)
+            ->latest()
+            ->first();
+        
+        // Cargar programas para el filtro
+        $programas = \App\Models\ProgramaAcademico::all();
 
         // Calcular estadísticas de asistencias y faltas por estudiante
         foreach ($registros as $registro) {
@@ -66,9 +74,11 @@ class AsistenciaController extends Controller
         }
 
         // Obtener usuarios para el filtro (opcional)
-        $usuarios = User::select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
+        $usuarios = User::select('id', 'numero_documento', 'nombre', 'apellido_paterno')
+            ->whereHas('roles', fn($q) => $q->where('nombre', 'estudiante'))
+            ->get();
 
-        return view('asistencia.index', compact('registros', 'usuarios', 'fecha', 'documento'));
+        return view('asistencia.index', compact('registros', 'usuarios', 'fecha', 'documento', 'programa_id', 'programas', 'cicloActivo'));
     }
 
 
@@ -137,7 +147,9 @@ class AsistenciaController extends Controller
     {
         // Cargar datos para filtros de registro masivo y regularización
         $ciclos = \App\Models\Ciclo::orderBy('nombre', 'desc')->get();
-        $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
+        $cicloActivo = \App\Models\Ciclo::where('es_activo', true)
+            ->orderBy('programa_id', 'asc')
+            ->first();
         $aulas = \App\Models\Aula::where('estado', true)->orderBy('nombre')->get();
         $turnos = \App\Models\Turno::where('estado', true)->orderBy('orden')->get();
         $carreras = \App\Models\Carrera::where('estado', true)->orderBy('nombre')->get();

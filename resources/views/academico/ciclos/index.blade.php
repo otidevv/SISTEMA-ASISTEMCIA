@@ -118,6 +118,17 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12 mb-3">
+                                <label for="programa_id" class="form-label">Programa Académico <span class="text-danger">*</span></label>
+                                <select class="form-select" id="programa_id" name="programa_id" required>
+                                    <option value="">Seleccione Programa...</option>
+                                    @foreach($programas as $programa)
+                                        <option value="{{ $programa->id }}">{{ $programa->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
                                 <label for="descripcion" class="form-label">Descripción</label>
                                 <textarea class="form-control" id="descripcion" name="descripcion" rows="2"
                                     placeholder="Descripción del ciclo académico..."></textarea>
@@ -270,6 +281,17 @@
                                 <label for="edit_nombre" class="form-label">Nombre del Ciclo</label>
                                 <input type="text" class="form-control" id="edit_nombre" name="nombre" required
                                     placeholder="Ej: Ciclo I - 2025">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="edit_programa_id" class="form-label">Programa Académico <span class="text-danger">*</span></label>
+                                <select class="form-select" id="edit_programa_id" name="programa_id" required>
+                                    <option value="">Seleccione Programa...</option>
+                                    @foreach($programas as $programa)
+                                        <option value="{{ $programa->id }}">{{ $programa->nombre }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                         <div class="row">

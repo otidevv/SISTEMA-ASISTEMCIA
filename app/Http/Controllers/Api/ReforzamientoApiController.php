@@ -102,7 +102,7 @@ class ReforzamientoApiController extends BaseController
         }
 
         // 1. Buscar Ciclo de Reforzamiento Activo
-        $ciclo = Ciclo::where('nombre', 'like', '%Reforzamiento%')
+        $ciclo = Ciclo::where('programa_id', 2)
             ->where('es_activo', true)
             ->first();
 
@@ -137,9 +137,9 @@ class ReforzamientoApiController extends BaseController
         }
 
         // PROFESIONAL: Buscar el ciclo académico oficial de REFORZAMIENTO activo
-        $ciclo = Ciclo::where('es_activo', true)->where('nombre', 'like', '%REFORZAMIENTO%')->first();
+        $ciclo = Ciclo::where('es_activo', true)->where('programa_id', 2)->first();
         if (!$ciclo) {
-            $ciclo = Ciclo::where('es_activo', true)->first(); // Fallback al activo general si no hay específico
+            $ciclo = Ciclo::where('es_activo', true)->where('programa_id', 2)->first(); // Fallback
         }
 
         if (!$ciclo) {

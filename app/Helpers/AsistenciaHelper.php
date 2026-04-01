@@ -25,12 +25,18 @@ class AsistenciaHelper
                 $q->where('es_activo', true);
             })
             ->with(['ciclo', 'estudiante'])
+            ->latest()
             ->first();
 
             if ($inscripcion) {
                 $cicloActivo = $inscripcion->ciclo;
             } else {
-                $cicloActivo = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->first();
+                // Si no hay inscripción encontrada, buscar el ciclo más reciente marcado como activo
+                // Priorizando CEPRE si no se sabe nada
+                $cicloActivo = Ciclo::where('es_activo', true)
+                    ->orderBy('programa_id', 'asc') // Programa 1 (CEPRE) primero
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
             }
         } else {
             $cicloActivo = $ciclo;

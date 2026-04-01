@@ -39,7 +39,7 @@ class PostulacionController extends Controller
             abort(403, 'No tienes permisos para ver postulaciones');
         }
 
-        $cicloActivo = Ciclo::where('es_activo', true)->first();
+        $cicloActivo = Ciclo::where('es_activo', true)->where('programa_id', 1)->first();
 
         // Obtener ciclos y carreras activos para precargar los filtros (cacheados por 60s para evitar saturación web)
         $ciclos = \Illuminate\Support\Facades\Cache::remember('filtros_ciclos_admin', 60, function () {
@@ -71,10 +71,9 @@ class PostulacionController extends Controller
             $cicloId = $request->input('ciclo_id');
             if (empty($cicloId)) {
                 $cicloActivo = \Illuminate\Support\Facades\Cache::remember('ciclo_activo', 60, function() {
-                    return Ciclo::where('es_activo', true)->first();
+                    return Ciclo::where('es_activo', true)->where('programa_id', 1)->first();
                 });
-                // Si hay un ciclo activo, usamos su ID. Si no, usamos un ID inválido para no devolver nada. 
-                $cicloId = $cicloActivo ? $cicloActivo->id : -1; 
+                $cicloId = $cicloActivo ? $cicloActivo->id : -1;
             }
 
             $query->where('ciclo_id', $cicloId);
