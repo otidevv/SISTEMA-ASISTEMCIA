@@ -43,7 +43,7 @@ class PostulacionController extends Controller
 
         // Obtener ciclos y carreras activos para precargar los filtros (cacheados por 60s para evitar saturación web)
         $ciclos = \Illuminate\Support\Facades\Cache::remember('filtros_ciclos_admin', 60, function () {
-            return Ciclo::orderBy('fecha_inicio', 'desc')->get();
+            return Ciclo::where('programa_id', 1)->orderBy('fecha_inicio', 'desc')->get();
         });
         
         $carreras = \Illuminate\Support\Facades\Cache::remember('filtros_carreras_admin', 60, function () {

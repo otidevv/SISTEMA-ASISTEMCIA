@@ -21,7 +21,7 @@ class ReforzamientoAdminController extends Controller
 
     public function index()
     {
-        $ciclos = Ciclo::where('nombre', 'like', '%Reforzamiento%')->orderBy('id', 'desc')->get();
+        $ciclos = Ciclo::where('programa_id', 2)->orderBy('id', 'desc')->get();
         $aulas = \App\Models\Aula::where('estado', true)->get();
         return view('admin.reforzamiento.index', compact('ciclos', 'aulas'));
     }
