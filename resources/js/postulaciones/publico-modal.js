@@ -48,7 +48,7 @@ const Toast = Swal.mixin({
 });
 
 $(document).ready(function () {
-    console.log('Publico Modal JS Initialized with SweetAlert2 Toasts');
+
 
     // Inicializar wizard
     showStep(currentStep);
@@ -56,13 +56,33 @@ $(document).ready(function () {
     // Cargar departamentos
     loadDepartamentos();
 
+    // Función helper para resaltar campos autocompletados con un pulso (Verde institucional) - MÁS DURACIÓN
+    window.highlightFields = function (selector) {
+        const $els = $(selector);
+        $els.addClass('field-highlight');
+        setTimeout(() => {
+            $els.removeClass('field-highlight');
+        }, 3500); // 3.5 segundos para que sea imposible no verlo
+    };
+
+    // NUEVO: Función helper para generar email por defecto basado en DNI
+    window.autoGenerateEmail = function (dni, targetId) {
+        const $target = $(targetId);
+        // Solo autogenerar si el campo está vacío para no sobrescribir correos reales
+        if (dni && dni.length === 8 && $target.val().trim() === '') {
+            $target.val(dni + '@cepre.unamad.edu.pe');
+            // Resaltar para avisar al usuario que se autogeneró
+            highlightFields(targetId);
+        }
+    };
+
     // Event listeners para validación en tiempo real
     $('input[required], select[required], textarea[required]').on('blur input change', function () {
         const $el = $(this);
         if ($el.val()) {
             $el.removeClass('is-invalid').addClass('is-valid');
-            // Agregar ícono de éxito si no existe
-            if (!$el.parent().find('.valid-feedback-icon').length) {
+            // Agregar ícono de éxito si no existe (Excluir archivos de las tarjetas premium para no duplicar)
+            if (!$el.parent().find('.valid-feedback-icon').length && !$el.is('input[type="file"]')) {
                 $el.after('<div class="valid-feedback-icon"><i class="fas fa-check-circle"></i></div>');
             }
         } else {
@@ -73,6 +93,62 @@ $(document).ready(function () {
 
     $('input[type="tel"]').on('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Capitalización automática para nombres y apellidos
+    $('#estudiante_nombre, #estudiante_apellido_paterno, #estudiante_apellido_materno, #padre_nombre, #padre_apellidos, #madre_nombre, #madre_apellidos').on('input', function () {
+        this.value = this.value.toUpperCase();
+    });
+
+    // Auto-focus DNI -> DV y Verificación Automática (Postulante)
+    let verifPostulanteTimeout = null;
+    $(document).on('input', '#check_dni', function () {
+        const val = this.value;
+        if (val.length === 8) {
+            $('#check_dv').focus();
+        }
+    });
+
+    $(document).on('input', '#check_dv', function () {
+        const dv = this.value;
+        const dni = $('#check_dni').val();
+
+        if (dv.length === 1 && dni.length === 8) {
+            if (verifPostulanteTimeout) clearTimeout(verifPostulanteTimeout);
+            verifPostulanteTimeout = setTimeout(() => {
+                $('#btn-verificar-dni').trigger('click');
+                // Autogenerar email del estudiante si está vacío
+                autoGenerateEmail(dni, '#estudiante_email');
+            }, 300); // 300ms de espera por si el usuario corrige
+        }
+    });
+
+    // Verificación Automática (Padres)
+    let verifPadreTimeout = null;
+    let verifMadreTimeout = null;
+
+    $(document).on('input', '#padre_dni', function () {
+        const dni = this.value;
+        if (dni.length === 8) {
+            if (verifPadreTimeout) clearTimeout(verifPadreTimeout);
+            verifPadreTimeout = setTimeout(() => {
+                consultarDNIPadre('padre', $('#btn-consultar-padre'));
+                // Autogenerar email si está vacío
+                autoGenerateEmail(dni, '#padre_email');
+            }, 300);
+        }
+    });
+
+    $(document).on('input', '#madre_dni', function () {
+        const dni = this.value;
+        if (dni.length === 8) {
+            if (verifMadreTimeout) clearTimeout(verifMadreTimeout);
+            verifMadreTimeout = setTimeout(() => {
+                consultarDNIPadre('madre', $('#btn-consultar-madre'));
+                // Autogenerar email si está vacío
+                autoGenerateEmail(dni, '#madre_email');
+            }, 300);
+        }
     });
 
     // Manejo del formulario
@@ -162,7 +238,7 @@ $(document).ready(function () {
             const typeText = (val == '2') ? 'Carnet de Extranjería' : 'Pasaporte';
             labelDNI.text(typeText);
             inputDNI.prop('readonly', false).val('').focus();
-            
+
             // Limpiar campos para evitar mezclas con RENIEC previo
             $('#estudiante_nombre').val('');
             $('#estudiante_apellido_paterno').val('');
@@ -173,15 +249,27 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '#btn-verificar-dni', function () {
-        console.log('Click en verificar DNI detectado via jQuery');
-        verificarPostulante(this);
+
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+
+        // Mostrar spinner
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Verificando...');
+
+        verificarPostulante(this, function (success) {
+            $btn.prop('disabled', false).html(originalHtml);
+            if (success) {
+                $('#check_dni, #check_dv').addClass('is-valid').css('border-color', '#198754');
+                Toast.fire({ icon: 'success', title: 'DNI Verificado correctamente' });
+            }
+        });
     });
 
     // Manejar tecla Enter en el campo de DNI para verificación
     $(document).on('keypress', '#check_dni', function (e) {
         if (e.which === 13) { // Enter key
             e.preventDefault(); // Prevenir envío del formulario
-            console.log('Enter presionado en check_dni, disparando verificación');
+
             $('#btn-verificar-dni').trigger('click');
         }
     });
@@ -190,7 +278,7 @@ $(document).ready(function () {
     $(document).on('keypress', '#formPostulacionPublica input:not([type="submit"])', function (e) {
         if (e.which === 13) {
             e.preventDefault();
-            console.log('Enter bloqueado en input para prevenir envío prematuro del formulario');
+
             return false;
         }
     });
@@ -391,7 +479,7 @@ function ocultarColegioSeleccionado() {
 }
 
 function loadDepartamentos() {
-    console.log('Iniciando carga de departamentos...');
+
     const select = $('#departamento');
 
     if (select.length === 0) {
@@ -402,7 +490,7 @@ function loadDepartamentos() {
     // CARGA INICIAL (Profesional): Usar datos inyectados desde el servidor (Hydration)
     // Esto evita peticiones API redundantes y es instantáneo
     const departamentosSource = window.DEPARTAMENTOS_INICIALES || [];
-    
+
     if (departamentosSource.length > 0) {
         let html = '<option value="">Seleccione departamento</option>';
         departamentosSource.forEach(function (dep) {
@@ -412,12 +500,12 @@ function loadDepartamentos() {
             html += `<option value="${id}">${nombre}</option>`;
         });
         select.html(html).show();
-        console.log('Departamentos cargados mediante Hydration (Servidor -> Vista -> JS)');
+
     } else {
         // Fallback: Si por alguna razón la hidratación falló, intentar la API
         console.warn('Hydration vacía, intentando API como fallback...');
         select.html('<option value="">Cargando...</option>').show();
-        
+
         $.get('/api/public/departamentos', function (data) {
             if (data.success) {
                 let html = '<option value="">Seleccione departamento</option>';
@@ -457,7 +545,7 @@ function loadProvincias(dep) {
             select.html(html).prop('disabled', false).show();
         }
     }).fail(function () {
-            Toast.fire({ icon: 'error', title: 'Error al cargar provincias' });
+        Toast.fire({ icon: 'error', title: 'Error al cargar provincias' });
     });
 }
 
@@ -518,7 +606,26 @@ function showStep(n) {
     }
 
     currentStep = n;
+
+    // Actualizar barra de progreso animada
+    const progressPercent = ((n - 1) / (totalSteps - 1)) * 100;
+    $('#wizard-progress-fill').css('width', progressPercent + '%');
 }
+
+// Función global para actualizar el nombre del archivo en las tarjetas premium
+window.updateFileName = function (input) {
+    const $card = $(input).closest('.file-upload-card');
+    const $nameLabel = $card.find('.file-name');
+    const fileName = input.files.length > 0 ? input.files[0].name : 'Ningún archivo seleccionado';
+
+    $nameLabel.text(fileName);
+
+    if (input.files.length > 0) {
+        $card.addClass('has-file');
+    } else {
+        $card.removeClass('has-file');
+    }
+};
 
 function nextPrev(n) {
     // Si vamos adelante, validar paso actual
@@ -571,11 +678,7 @@ function validarVoucher() {
             _token: $('meta[name="csrf-token"]').attr('content')
         },
         success: function (response) {
-            console.log('=== RESPONSE FROM VALIDATE-PAYMENT API ===');
-            console.log('Full response:', response);
-            console.log('response.valid:', response.valid);
-            console.log('response.payments:', response.payments);
-            console.log('=========================================');
+
 
             if (response.valid && response.payments && response.payments.length > 0) {
                 mostrarDetallesPago(response.payments);
@@ -630,7 +733,7 @@ function validarVoucher() {
 }
 
 function mostrarDetallesPago(vouchers) {
-    console.log('=== MOSTRAR DETALLES PAGO ===');
+
 
     // CSS Inyectado para estilos de tarjeta personalizados (Mejorado)
     const customStyles = `
@@ -896,7 +999,7 @@ function actualizarPagosSeleccionados() {
 
         total += monto;
         secuencias.push(secuencia);
-        
+
         // Guardar detalles para el resumen final
         pagosSeleccionadosDetalles.push({
             secuencia: secuencia,
@@ -909,7 +1012,7 @@ function actualizarPagosSeleccionados() {
         }
     });
 
-    console.log('Pagos seleccionados:', secuencias.length, 'Total:', total);
+
 
     // Actualizar UI del total
     $('#total_seleccionado').text('S/ ' + total.toFixed(2));
@@ -950,39 +1053,39 @@ function validateForm() {
         const confirm = $('#estudiante_password_confirmation').val();
 
         if ($('#estudiante_password').is(':visible') && pass && confirm && pass !== confirm) {
-                Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
+            Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
             $('#estudiante_password_confirmation').addClass('is-invalid');
             valid = false;
         }
 
         // Validar DNI verificado
         if (!$('#estudiante_dni').val()) {
-                Toast.fire({ icon: 'error', title: 'Debe verificar su DNI primero' });
+            Toast.fire({ icon: 'error', title: 'Debe verificar su DNI primero' });
             valid = false;
         }
     }
 
-    if (currentStep == 5) {
+    if (currentStep == 4) {
         // Validar archivos
         const requiredDocs = ['foto', 'dni_pdf', 'certificado_estudios', 'voucher_pago'];
         requiredDocs.forEach(function (doc) {
             const input = $('#' + doc);
             if (input.length && !input.val()) {
-                input.addClass('is-invalid');
+                input.closest('.file-upload-card').addClass('border-danger');
                 valid = false;
             }
         });
     }
 
     if (!valid) {
-            Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
+        Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
     }
 
     return valid;
 }
 
-function verificarPostulante(btnElement) {
-    console.log('Iniciando verificación de postulante...');
+function verificarPostulante(btnElement, callback = null) {
+
     const dni = $('#check_dni').val();
     const digito = $('#check_dv').val();
 
@@ -1007,13 +1110,12 @@ function verificarPostulante(btnElement) {
     }
 
     let btn = $(btnElement);
-    if (btn.length === 0) {
+    if (!btn || btn.length === 0) {
         btn = $('#btn-verificar-dni');
     }
-
     const originalHtml = btn.html();
-    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Verificando...');
-
+    // Registramos isSuccess para el callback final en el block always()
+    let isSuccess = false;
     $.post('/postulacion/check-postulante', {
         dni: dni,
         digito: digito,
@@ -1021,42 +1123,43 @@ function verificarPostulante(btnElement) {
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
         try {
-            console.log('Respuesta servidor (check-postulante):', response);
-        let swalIcon = 'success';
-        let swalTitle = 'Verificación Exitosa';
-        let swalText = response.message || 'Datos listos para continuar.';
 
-        if (response.status === 'registered') {
-            // Preparar el HTML con información detallada
-            const postulacion = response.postulacion || {};
+            isSuccess = true;
+            let swalIcon = 'success';
+            let swalTitle = 'Verificación Exitosa';
+            let swalText = response.message || 'Datos listos para continuar.';
 
-            // Determinar el color del badge y el ícono según el estado
-            let estadoBadgeClass = 'badge bg-warning';
-            let estadoIcon = 'fas fa-clock';
-            let tituloModal = 'Postulación ya Registrada';
-            let iconoModal = 'warning';
+            if (response.status === 'registered') {
+                // Preparar el HTML con información detallada
+                const postulacion = response.postulacion || {};
 
-            if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                estadoBadgeClass = 'badge bg-success';
-                estadoIcon = 'fas fa-check-circle';
-                tituloModal = '¡Postulación Aprobada!';
-                iconoModal = 'success';
-            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
-                estadoBadgeClass = 'badge bg-danger';
-                estadoIcon = 'fas fa-times-circle';
-                tituloModal = 'Postulación Rechazada';
-                iconoModal = 'error';
-            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
-                estadoBadgeClass = 'badge bg-info';
-                estadoIcon = 'fas fa-exclamation-circle';
-                tituloModal = 'Postulación con Observaciones';
-                iconoModal = 'info';
-            }
+                // Determinar el color del badge y el ícono según el estado
+                let estadoBadgeClass = 'badge bg-warning';
+                let estadoIcon = 'fas fa-clock';
+                let tituloModal = 'Postulación ya Registrada';
+                let iconoModal = 'warning';
 
-            // Mensajes específicos según el estado
-            let mensajeInstrucciones = '';
-            if (postulacion.estado === 'pendiente') {
-                mensajeInstrucciones = `
+                if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                    estadoBadgeClass = 'badge bg-success';
+                    estadoIcon = 'fas fa-check-circle';
+                    tituloModal = '¡Postulación Aprobada!';
+                    iconoModal = 'success';
+                } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                    estadoBadgeClass = 'badge bg-danger';
+                    estadoIcon = 'fas fa-times-circle';
+                    tituloModal = 'Postulación Rechazada';
+                    iconoModal = 'error';
+                } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                    estadoBadgeClass = 'badge bg-info';
+                    estadoIcon = 'fas fa-exclamation-circle';
+                    tituloModal = 'Postulación con Observaciones';
+                    iconoModal = 'info';
+                }
+
+                // Mensajes específicos según el estado
+                let mensajeInstrucciones = '';
+                if (postulacion.estado === 'pendiente') {
+                    mensajeInstrucciones = `
                     <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #856404;">
                             <i class="fas fa-hourglass-half" style="margin-right: 5px;"></i>
@@ -1068,8 +1171,8 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            } else if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                    mensajeInstrucciones = `
                     <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #155724;">
                             <i class="fas fa-check-circle" style="margin-right: 5px;"></i>
@@ -1083,8 +1186,8 @@ function verificarPostulante(btnElement) {
                         </ol>
                     </div>
                 `;
-            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                    mensajeInstrucciones = `
                     <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #721c24;">
                             <i class="fas fa-times-circle" style="margin-right: 5px;"></i>
@@ -1096,8 +1199,8 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                    mensajeInstrucciones = `
                     <div style="background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #055160;">
                             <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i>
@@ -1109,9 +1212,9 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            }
+                }
 
-            const htmlContent = `
+                const htmlContent = `
                 <div style="text-align: left; padding: 10px;">
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                         <h6 style="color: #495057; margin-bottom: 10px; font-weight: bold;">
@@ -1168,109 +1271,115 @@ function verificarPostulante(btnElement) {
                 </div>
             `;
 
-            // Mostrar SweetAlert con HTML personalizado
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: iconoModal,
-                    title: tituloModal,
-                    html: htmlContent,
-                    confirmButtonText: 'Ir al Portal',
-                    showCancelButton: true,
-                    cancelButtonText: 'Cerrar',
-                    confirmButtonColor: '#0d6efd',
-                    cancelButtonColor: '#6c757d',
-                    width: '650px',
-                    didOpen: () => {
-                        // Si la postulación está aprobada, lanzar confetti
-                        if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                            lanzarConfetti();
+                // Mostrar SweetAlert con HTML personalizado
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: iconoModal,
+                        title: tituloModal,
+                        html: htmlContent,
+                        confirmButtonText: 'Ir al Portal',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar',
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        width: '650px',
+                        didOpen: () => {
+                            // Si la postulación está aprobada, lanzar confetti
+                            if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                                lanzarConfetti();
+                            }
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirigir al login del portal del estudiante
+                            window.location.href = '/login';
+                        }
+                    });
+                } else {
+                    Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
+                }
+            } else {
+                // Nuevo o Recurrente
+                $('#estudiante_dni').val(dni);
+                $('#personal_fields').slideDown();
+
+                if (response.estudiante) {
+                    // Llenar campos si el estudiante ya existe
+                    $('#estudiante_nombre').val(response.estudiante.nombre);
+                    $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
+                    $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
+                    const fechaNac = response.estudiante.fecha_nacimiento;
+                    $('#estudiante_fecha_nacimiento').val(fechaNac ? fechaNac.split('T')[0] : '');
+                    $('#estudiante_genero').val(response.estudiante.genero);
+                    $('#estudiante_telefono').val(response.estudiante.telefono);
+                    $('#estudiante_direccion').val(response.estudiante.direccion);
+                    $('#estudiante_email').val(response.estudiante.email);
+
+                    // RESALTAR CAMPOS (Pintar lo que se autocompletó con un delay mayor para asegurar visibilidad tras slideDown)
+                    setTimeout(() => {
+                        highlightFields('#estudiante_nombre, #estudiante_apellido_paterno, #estudiante_apellido_materno, #estudiante_fecha_nacimiento, #estudiante_genero');
+                    }, 600);
+
+                    // Ocultar y quitar required a contraseñas para recurrentes
+                    $('#estudiante_password').prop('required', false).closest('.col-md-3').hide();
+                    $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
+
+                    // NUEVO: Pre-cargar datos de padres si existen
+                    if (response.padres) {
+                        precargarDatosPadres(response.padres);
+                    }
+
+                    // NUEVO: Pre-cargar datos académicos y archivos si existen
+                    if (response.ultima_postulacion) {
+                        if (response.ultima_postulacion.datos_academicos) {
+                            precargarDatosAcademicos(response.ultima_postulacion.datos_academicos);
+                        }
+                        if (response.ultima_postulacion.archivos) {
+                            mostrarArchivosExistentes(response.ultima_postulacion.archivos);
                         }
                     }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Redirigir al login del portal del estudiante
-                        window.location.href = '/login';
-                    }
-                });
-            } else {
-                Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
-            }
-        } else {
-            // Nuevo o Recurrente
-            $('#estudiante_dni').val(dni);
-            $('#personal_fields').slideDown();
 
-            if (response.estudiante) {
-                // Llenar campos si el estudiante ya existe
-                $('#estudiante_nombre').val(response.estudiante.nombre);
-                $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
-                $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
-                $('#estudiante_fecha_nacimiento').val(response.estudiante.fecha_nacimiento);
-                $('#estudiante_genero').val(response.estudiante.genero);
-                $('#estudiante_telefono').val(response.estudiante.telefono);
-                $('#estudiante_direccion').val(response.estudiante.direccion);
-                $('#estudiante_email').val(response.estudiante.email);
+                    swalIcon = 'success';
+                    swalTitle = 'Estudiante Encontrado';
+                    swalText = 'Sus datos personales, de padres y académicos se han cargado automáticamente.';
 
-                // Ocultar y quitar required a contraseñas para recurrentes
-                $('#estudiante_password').prop('required', false).closest('.col-md-3').hide();
-                $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
+                } else {
+                    // Estudiante nuevo: asegurar que contraseñas sean requeridas y visibles
+                    $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
+                    $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
 
-                // NUEVO: Pre-cargar datos de padres si existen
-                if (response.padres) {
-                    precargarDatosPadres(response.padres);
+                    // Limpiar campos por si acaso
+                    $('#estudiante_nombre').val('');
+                    $('#estudiante_apellido_paterno').val('');
+                    $('#estudiante_apellido_materno').val('');
+                    $('#estudiante_fecha_nacimiento').val('');
+                    $('#estudiante_genero').val('');
+                    $('#estudiante_telefono').val('');
+                    $('#estudiante_direccion').val('');
+                    $('#estudiante_email').val('');
+                    $('#estudiante_password').val('');
+                    $('#estudiante_password_confirmation').val('');
+
+                    swalIcon = 'info';
+                    swalTitle = 'Postulante Nuevo';
+                    swalText = 'Consultando DATOS para autocompletar sus datos...';
+
+                    // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
+                    consultarReniecEstudiante(dni);
                 }
 
-                // NUEVO: Pre-cargar datos académicos y archivos si existen
-                if (response.ultima_postulacion) {
-                    if (response.ultima_postulacion.datos_academicos) {
-                        precargarDatosAcademicos(response.ultima_postulacion.datos_academicos);
-                    }
-                    if (response.ultima_postulacion.archivos) {
-                        mostrarArchivosExistentes(response.ultima_postulacion.archivos);
-                    }
+                // Ocultar sección de verificación al tener éxito
+                $('#section-verificacion').slideUp(400);
+
+                // Mostrar SweetAlert para casos que NO son 'registered'
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: swalIcon,
+                        title: swalTitle,
+                        text: swalText,
+                        confirmButtonText: 'Continuar'
+                    });
                 }
-
-                swalIcon = 'success';
-                swalTitle = 'Estudiante Encontrado';
-                swalText = 'Sus datos personales, de padres y académicos se han cargado automáticamente.';
-
-            } else {
-                // Estudiante nuevo: asegurar que contraseñas sean requeridas y visibles
-                $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
-                $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
-
-                // Limpiar campos por si acaso
-                $('#estudiante_nombre').val('');
-                $('#estudiante_apellido_paterno').val('');
-                $('#estudiante_apellido_materno').val('');
-                $('#estudiante_fecha_nacimiento').val('');
-                $('#estudiante_genero').val('');
-                $('#estudiante_telefono').val('');
-                $('#estudiante_direccion').val('');
-                $('#estudiante_email').val('');
-                $('#estudiante_password').val('');
-                $('#estudiante_password_confirmation').val('');
-
-                swalIcon = 'info';
-                swalTitle = 'Postulante Nuevo';
-                swalText = 'Consultando RENIEC para autocompletar sus datos...';
-
-                // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
-                consultarReniecEstudiante(dni);
-            }
-
-            // Ocultar sección de verificación al tener éxito
-            $('#section-verificacion').slideUp(400);
-
-            // Mostrar SweetAlert para casos que NO son 'registered'
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: swalIcon,
-                    title: swalTitle,
-                    text: swalText,
-                    confirmButtonText: 'Continuar'
-                });
-            }
             }
         } catch (err) {
             console.error('Error interno en success callback:', err);
@@ -1301,13 +1410,16 @@ function verificarPostulante(btnElement) {
         }
     }).always(function () {
         btn.prop('disabled', false).html(originalHtml);
+        if (typeof callback === 'function') {
+            callback(isSuccess);
+        }
     });
 }
 
 function consultarDNIPadre(tipo, btnElement) {
     const dni = $('#' + tipo + '_dni').val();
     if (dni.length !== 8) {
-            Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
+        Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
         return;
     }
 
@@ -1323,8 +1435,16 @@ function consultarDNIPadre(tipo, btnElement) {
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
         if (response.success && response.data) {
+            const nombreFull = response.data.apellido_paterno + ' ' + response.data.apellido_materno;
             $('#' + tipo + '_nombre').val(response.data.nombres);
-            $('#' + tipo + '_apellidos').val(response.data.apellido_paterno + ' ' + response.data.apellido_materno);
+            $('#' + tipo + '_apellidos').val(nombreFull);
+
+            // Autogenerar email si no tiene uno (RENIEC no devuelve emails)
+            autoGenerateEmail($('#' + tipo + '_dni').val(), '#' + tipo + '_email');
+
+            // Resaltar campos autocompletados
+            highlightFields('#' + tipo + '_nombre, #' + tipo + '_apellidos, #' + tipo + '_email');
+
             Toast.fire({ icon: 'success', title: 'Datos encontrados' });
         } else {
             Toast.fire({ icon: 'warning', title: 'No se encontraron datos' });
@@ -1338,10 +1458,10 @@ function consultarDNIPadre(tipo, btnElement) {
 
 // Nueva función para consultar RENIEC y autocompletar datos del estudiante
 function consultarReniecEstudiante(dni) {
-    console.log('Consultando RENIEC para DNI:', dni);
+
 
     // Mostrar indicador de carga
-    Toast.fire({ icon: 'info', title: 'Consultando RENIEC...', text: 'Por favor espere' });
+    Toast.fire({ icon: 'info', title: 'Consultando DATOS...', text: 'Por favor espere' });
 
     $.ajax({
         url: '/api/reniec/consultar',
@@ -1351,13 +1471,18 @@ function consultarReniecEstudiante(dni) {
             _token: $('meta[name="csrf-token"]').attr('content')
         },
         success: function (response) {
-            console.log('Respuesta RENIEC:', response);
+
 
             if (response.success && response.data) {
                 // Autocompletar campos con datos de RENIEC
                 $('#estudiante_nombre').val(response.data.nombres || '');
                 $('#estudiante_apellido_paterno').val(response.data.apellido_paterno || '');
                 $('#estudiante_apellido_materno').val(response.data.apellido_materno || '');
+
+                // Resaltar campos autocompletados (Damos un pequeño margen para que el usuario procese el éxito)
+                setTimeout(() => {
+                    highlightFields('#estudiante_nombre, #estudiante_apellido_paterno, #estudiante_apellido_materno, #estudiante_fecha_nacimiento, #estudiante_genero');
+                }, 500);
 
                 if (response.data.fecha_nacimiento) {
                     $('#estudiante_fecha_nacimiento').val(response.data.fecha_nacimiento);
@@ -1371,15 +1496,17 @@ function consultarReniecEstudiante(dni) {
                     $('#estudiante_direccion').val(response.data.direccion);
                 }
 
+                // Autogenerar email del estudiante si está vacío
+                autoGenerateEmail(dni, '#estudiante_email');
                 // Mostrar mensaje de éxito
-                Toast.fire({ icon: 'success', title: 'Datos cargados desde RENIEC' });
+                Toast.fire({ icon: 'success', title: 'Datos cargados desde el sistema' });
 
                 // Mostrar alerta informativa
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
                         title: 'Datos Autocompletos',
-                        html: 'Se han cargado automáticamente sus datos desde RENIEC:<br><br>' +
+                        html: 'Se han cargado automáticamente sus datos desde el sistema:<br><br>' +
                             '<strong>' + response.data.nombres + ' ' +
                             response.data.apellido_paterno + ' ' +
                             response.data.apellido_materno + '</strong><br><br>' +
@@ -1388,13 +1515,13 @@ function consultarReniecEstudiante(dni) {
                     });
                 }
             } else {
-                console.warn('No se encontraron datos en RENIEC');
-                Toast.fire({ icon: 'warning', title: 'No se encontraron datos en RENIEC', text: 'Por favor complete manualmente.' });
+                console.warn('No se encontraron datos en el sistema');
+                Toast.fire({ icon: 'warning', title: 'No se encontraron datos en el sistema', text: 'Por favor complete manualmente.' });
             }
         },
         error: function (xhr) {
-            console.error('Error consultando RENIEC:', xhr);
-            let errorMsg = 'No se pudo consultar RENIEC. Por favor complete los datos manualmente.';
+            console.error('Error consultando el sistema:', xhr);
+            let errorMsg = 'No se pudo consultar el sistema. Por favor complete los datos manualmente.';
 
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
@@ -1407,52 +1534,69 @@ function consultarReniecEstudiante(dni) {
 
 // Nueva función para pre-cargar datos de padres
 function precargarDatosPadres(padres) {
-    console.log('Pre-cargando datos de padres:', padres);
+
 
     let padresCargados = 0;
 
     // Pre-cargar datos del padre si existen
     if (padres.padre) {
-        console.log('Datos del padre encontrados:', padres.padre);
+
         $('#padre_dni').val(padres.padre.numero_documento || '');
         $('#padre_nombre').val(padres.padre.nombre || '');
         const apellidosPadre = (padres.padre.apellido_paterno || '') + ' ' + (padres.padre.apellido_materno || '');
         $('#padre_apellidos').val(apellidosPadre.trim());
         $('#padre_telefono').val(padres.padre.telefono || '');
-        $('#padre_email').val(padres.padre.email || '');
+
+        // Si no tiene correo guardado, generar el defaults
+        if (padres.padre.email) {
+            $('#padre_email').val(padres.padre.email);
+        } else {
+            autoGenerateEmail(padres.padre.numero_documento, '#padre_email');
+        }
+
         // Nota: ocupación no está en el modelo User, se deja vacío
         padresCargados++;
     } else {
-        console.log('No se encontraron datos del padre');
+
     }
 
     // Pre-cargar datos de la madre si existen
     if (padres.madre) {
-        console.log('Datos de la madre encontrados:', padres.madre);
+
         $('#madre_dni').val(padres.madre.numero_documento || '');
         $('#madre_nombre').val(padres.madre.nombre || '');
         const apellidosMadre = (padres.madre.apellido_paterno || '') + ' ' + (padres.madre.apellido_materno || '');
         $('#madre_apellidos').val(apellidosMadre.trim());
         $('#madre_telefono').val(padres.madre.telefono || '');
-        $('#madre_email').val(padres.madre.email || '');
+
+        // Si no tiene correo guardado, generar el defaults
+        if (padres.madre.email) {
+            $('#madre_email').val(padres.madre.email);
+        } else {
+            autoGenerateEmail(padres.madre.numero_documento, '#madre_email');
+        }
+
         padresCargados++;
     } else {
-        console.log('No se encontraron datos de la madre');
+
     }
 
     // Mostrar mensaje informativo si se cargaron datos
     if (padresCargados > 0) {
+        // Resaltar campos de padres
+        highlightFields('#padre_dni, #padre_nombre, #padre_apellidos, #padre_telefono, #padre_email, #madre_dni, #madre_nombre, #madre_apellidos, #madre_telefono, #madre_email');
+
         const mensaje = padresCargados === 2 ? 'Datos de padre y madre cargados' :
             padres.padre ? 'Datos del padre cargados' : 'Datos de la madre cargados';
         Toast.fire({ icon: 'success', title: mensaje + ' de postulación anterior' });
     } else {
-        console.log('No se encontraron datos de padres para pre-cargar');
+
     }
 }
 
 // Nueva función para pre-cargar datos académicos (colegio, carrera, etc.)
 function precargarDatosAcademicos(datosAcademicos) {
-    console.log('Pre-cargando datos académicos:', datosAcademicos);
+
 
     // Pre-cargar año de egreso
     if (datosAcademicos.anio_egreso) {
@@ -1474,7 +1618,7 @@ function precargarDatosAcademicos(datosAcademicos) {
     if (datosAcademicos.centro_educativo) {
         const colegio = datosAcademicos.centro_educativo;
 
-        console.log('Cargando ubicación del colegio:', colegio);
+
 
         // Si tenemos datos de ubicación, pre-cargar los selectores
         if (colegio.departamento) {
@@ -1521,13 +1665,16 @@ function precargarDatosAcademicos(datosAcademicos) {
             });
         }
 
+        // Resaltar campos académicos
+        highlightFields('#anio_egreso, #buscar_colegio, #carrera_id, #turno_id, #tipo_inscripcion');
+
         Toast.fire({ icon: 'success', title: 'Colegio cargado: ' + colegio.nombre });
     }
 }
 
 // Nueva función para mostrar archivos existentes
 function mostrarArchivosExistentes(archivos) {
-    console.log('Mostrando archivos existentes:', archivos);
+
 
     // Mapeo de campos de archivo a sus IDs en el formulario
     const mapeoArchivos = {
@@ -1581,7 +1728,7 @@ function mostrarArchivosExistentes(archivos) {
 
 // Nueva función para ver archivo en modal
 function verArchivoModal(url, tipo) {
-    console.log('Abriendo modal para ver archivo:', url, tipo);
+
 
     // Determinar si es imagen o PDF
     const esImagen = tipo === 'foto' || url.match(/\.(jpg|jpeg|png|gif)$/i);
@@ -1635,49 +1782,106 @@ function cerrarModalArchivo() {
     $('#modalVisualizarArchivo').fadeOut();
 }
 
-function generarResumen() { // <--- DEFINICIÓN CORRECTA de generarResumen
-    const fields = [
-        { label: 'DNI', id: 'estudiante_dni' },
-        { label: 'Nombre', id: 'estudiante_nombre' },
-        { label: 'Apellido Paterno', id: 'estudiante_apellido_paterno' },
-        { label: 'Apellido Materno', id: 'estudiante_apellido_materno' },
-        { label: 'Carrera', id: 'carrera_id', isSelect: true },
-        { label: 'Turno', id: 'turno_id', isSelect: true },
-        { label: 'Colegio', id: 'centro_educativo_id', isHidden: true, displayId: 'buscar_colegio' },
-        { label: 'Voucher', id: 'voucher_secuencia' }
-    ];
+function generarResumen() {
+    const fotoInput = $('#foto')[0];
+    let fotoUrl = 'https://placehold.co/100x100/e5e7eb/6b7280?text=Sin+Foto';
 
-    let html = '<ul class="list-group">';
-    fields.forEach(field => {
-        let el = $('#' + field.id);
-        let value = el.val();
+    if (fotoInput.files && fotoInput.files[0]) {
+        fotoUrl = URL.createObjectURL(fotoInput.files[0]);
+    } else if ($('input[name="foto_existente"]').val()) {
+        fotoUrl = $('input[name="foto_existente"]').val();
+    }
 
-        if (field.isSelect && el.length && el[0].selectedIndex >= 0) {
-            value = el.find('option:selected').text();
-        } else if (field.displayId) {
-            value = $('#' + field.displayId).val();
-        }
+    const dni = $('#estudiante_dni').val() || 'No proporcionado';
+    const nombre = $('#estudiante_nombre').val() || '';
+    const apPaterno = $('#estudiante_apellido_paterno').val() || '';
+    const apMaterno = $('#estudiante_apellido_materno').val() || '';
+    const nombreCompleto = `${nombre} ${apPaterno} ${apMaterno}`.trim() || 'Estudiante';
 
-        if (value) {
-            if (field.id === 'voucher_secuencia' && pagosSeleccionadosDetalles.length > 0) {
-                let pagosHtml = '<div class="mt-2 p-2 bg-white rounded border shadow-sm" style="font-size: 0.9em;">';
-                pagosHtml += '<strong class="d-block mb-1 text-primary"><i class="fas fa-receipt me-1"></i> Detalle de Pagos:</strong>';
-                pagosSeleccionadosDetalles.forEach((p, idx) => {
-                    pagosHtml += `<div class="mb-1 pb-1 ${idx < pagosSeleccionadosDetalles.length - 1 ? 'border-bottom' : ''}">
-                        <span class="text-muted small">#${p.secuencia}</span><br>
-                        <strong>${p.concepto}</strong>: S/ ${p.monto.toFixed(2)}
-                    </div>`;
-                });
-                pagosHtml += `</div>`;
-                html += `<li class="list-group-item"><strong>${field.label}:</strong> ${pagosHtml}</li>`;
-            } else {
-                html += `<li class="list-group-item"><strong>${field.label}:</strong> ${value}</li>`;
-            }
-        }
-    });
-    html += '</ul>';
+    const carrera = $('#carrera_id option:selected').text() || 'No seleccionada';
+    const turno = $('#turno_id option:selected').text() || 'No seleccionado';
+    // Obtener el nombre del colegio del contenedor visible ya que el input se limpia al seleccionar
+    const colegio = $('#nombre-colegio-seleccionado strong').text() || 'No seleccionado';
+    const email = $('#estudiante_email').val() || 'No proporcionado';
+    const telefono = $('#estudiante_telefono').val() || 'No proporcionado';
+
+    let pagosHtml = '';
+    if (pagosSeleccionadosDetalles.length > 0) {
+        pagosHtml = `
+            <div class="resumen-payments-box">
+                <div class="resumen-label mb-2"><i class="fas fa-receipt"></i> Detalle de Pagos</div>
+                <div class="d-flex flex-column gap-1">
+        `;
+        pagosSeleccionadosDetalles.forEach(p => {
+            pagosHtml += `
+                <div class="d-flex justify-content-between align-items-center bg-white p-2 border rounded-3 small">
+                    <div>
+                        <div class="fw-bold text-dark">${p.concepto}</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">Sec: ${p.secuencia}</div>
+                    </div>
+                    <div class="fw-bold text-success">S/ ${p.monto.toFixed(2)}</div>
+                </div>
+            `;
+        });
+        pagosHtml += `</div></div>`;
+    }
+
+    const html = `
+        <div class="resumen-card">
+            <div class="resumen-header">
+                <div class="resumen-photo-container">
+                    <img src="${fotoUrl}" alt="Foto Postulante">
+                </div>
+                <div class="resumen-student-info">
+                    <h4>${nombreCompleto}</h4>
+                    <p><i class="fas fa-id-card me-1"></i> DNI: ${dni}</p>
+                </div>
+            </div>
+            <div class="resumen-body">
+                <div class="resumen-grid">
+                    <div class="resumen-item">
+                        <span class="resumen-label"><i class="fas fa-graduation-cap"></i> Carrera</span>
+                        <span class="resumen-value">${carrera}</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label"><i class="fas fa-clock"></i> Turno</span>
+                        <span class="resumen-value">${turno}</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label"><i class="fas fa-school"></i> Colegio</span>
+                        <span class="resumen-value" style="font-size: 0.85rem;">${colegio}</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span class="resumen-label"><i class="fas fa-envelope"></i> Email</span>
+                        <span class="resumen-value" style="font-size: 0.85rem;">${email}</span>
+                    </div>
+                </div>
+                ${pagosHtml}
+            </div>
+        </div>
+    `;
+
     $('#resumen_final').html(html);
-} // <--- Cierre CORRECTO de generarResumen
+}
+
+// Función helper para resaltar campos autocompletados con un pulso (Verde institucional)
+function highlightFields(selector) {
+
+    const $els = $(selector);
+
+    // Remover clase previa si existe para reiniciar la animación
+    $els.removeClass('field-highlight');
+
+    // Forzar reflow para reiniciar la animación
+    void $els[0]?.offsetWidth;
+
+    $els.addClass('field-highlight');
+
+    // Mantener el resaltado por 3.5 segundos (sincronizado con CSS)
+    setTimeout(() => {
+        $els.removeClass('field-highlight');
+    }, 3500);
+}
 
 function submitPostulacion() {
     // Validar checkboxes de confirmación
@@ -1725,7 +1929,7 @@ function submitPostulacion() {
                 } else {
                     lanzarConfetti();
                     Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
-                    setTimeout(function() {
+                    setTimeout(function () {
                         location.reload();
                     }, 4000);
                 }
@@ -1752,7 +1956,7 @@ function buscarPagosAutomatico() {
 
     if (!dni || dni.length !== 8) {
         // No es error crítico, solo informativo, ya que esto se llama al entrar al paso
-        console.log('Advertencia: DNI no disponible para validación automática de pago.');
+
         return;
     }
 
@@ -2127,13 +2331,13 @@ window.validarPadres = validarPadres;
 // VALIDACIÓN DE ARCHIVOS (TAMAÑO Y TIPO)
 // ======================================================================
 
-$(document).on('change', 'input[type="file"]', function() {
+$(document).on('change', 'input[type="file"]', function () {
     const file = this.files[0];
     if (!file) return;
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     const allowedExtensions = $(this).attr('accept') ? $(this).attr('accept').split(',').map(ext => ext.trim()) : [];
-    
+
     // Validar tamaño
     if (file.size > maxSize) {
         Swal.fire({
@@ -2150,7 +2354,7 @@ $(document).on('change', 'input[type="file"]', function() {
     if (allowedExtensions.length > 0) {
         const fileName = file.name.toLowerCase();
         let isValid = false;
-        
+
         for (const ext of allowedExtensions) {
             if (ext.startsWith('image/')) {
                 if (file.type.startsWith('image/')) isValid = true;

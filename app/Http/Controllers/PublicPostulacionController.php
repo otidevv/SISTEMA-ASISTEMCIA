@@ -129,6 +129,58 @@ class PublicPostulacionController extends Controller
                 ]);
             }
 
+            // --- NUEVO: Autocompletado Proactivo desde el Servidor ---
+            // Verificamos si faltan datos básicos o si son inválidos (ej. fecha 0000-00-00 o género no asignado)
+            $faltaNombre = empty($estudiante->nombre) || empty($estudiante->apellido_paterno);
+            $faltaGenero = !in_array($estudiante->genero, ['M', 'F']);
+            $faltaFecha = empty($estudiante->fecha_nacimiento) || 
+                         ($estudiante->fecha_nacimiento instanceof \Carbon\Carbon && $estudiante->fecha_nacimiento->year < 1920);
+
+            if ($faltaNombre || $faltaGenero || $faltaFecha) {
+                try {
+                    // Consultar RENIEC si hay huecos en la información
+                    $responseReniec = \Illuminate\Support\Facades\Http::timeout(5)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
+                    
+                    if ($responseReniec->successful()) {
+                        $reniecData = $responseReniec->json();
+                        
+                        if (!empty($reniecData) && isset($reniecData['DNI'])) {
+                            // 1. Nombres y Apellidos
+                            if (empty($estudiante->nombre)) $estudiante->nombre = $reniecData['NOMBRES'] ?? '';
+                            if (empty($estudiante->apellido_paterno)) $estudiante->apellido_paterno = $reniecData['AP_PAT'] ?? '';
+                            if (empty($estudiante->apellido_materno)) $estudiante->apellido_materno = $reniecData['AP_MAT'] ?? '';
+                            
+                            // 2. Género (Mapping robusto)
+                            if ($faltaGenero) {
+                                $sexoRaw = $reniecData['SEXO'] ?? ($reniecData['sexo'] ?? null);
+                                if ($sexoRaw) {
+                                    $estudiante->genero = ($sexoRaw == '2' || strtoupper($sexoRaw) == 'F') ? 'F' : 'M';
+                                }
+                            }
+                            
+                            // 3. Fecha de Nacimiento (Parsing robusto)
+                            if ($faltaFecha) {
+                                $fechaRaw = $reniecData['FECHA_NAC'] ?? ($reniecData['fecha_nacimiento'] ?? null);
+                                if ($fechaRaw) {
+                                    try {
+                                        $estudiante->fecha_nacimiento = \Carbon\Carbon::parse($fechaRaw)->format('Y-m-d');
+                                    } catch (\Exception $e) {
+                                        \Log::error("Error parseando fecha RENIEC ($fechaRaw) para DNI $dni: " . $e->getMessage());
+                                    }
+                                }
+                            }
+                            
+                            // 4. Dirección (Opcional)
+                            if (empty($estudiante->direccion)) {
+                                $estudiante->direccion = $reniecData['DIRECCION'] ?? ($reniecData['direccion'] ?? '');
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("No se pudo completar datos de estudiante recurrente $dni desde RENIEC: " . $e->getMessage());
+                }
+            }
+
             // Cargar datos de padres (padre y madre)
             $parentescos = Parentesco::where('estudiante_id', $estudiante->id)
                 ->with('padre')
@@ -205,9 +257,16 @@ class PublicPostulacionController extends Controller
                 ];
             }
 
+            // Preparar el objeto estudiante para el JSON (Aseguramos formato de fecha para input type="date")
+            $estudianteData = $estudiante->toArray();
+            if ($estudiante->fecha_nacimiento) {
+                // Carbon parse/format para garantizar YYYY-MM-DD
+                $estudianteData['fecha_nacimiento'] = \Carbon\Carbon::parse($estudiante->fecha_nacimiento)->format('Y-m-d');
+            }
+
             return response()->json([
                 'status' => 'recurrent',
-                'estudiante' => $estudiante,
+                'estudiante' => $estudianteData,
                 'padres' => $padres,
                 'ultima_postulacion' => $datosPostulacion,
                 'message' => 'Estudiante encontrado. Sus datos serán cargados.'
