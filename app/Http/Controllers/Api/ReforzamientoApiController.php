@@ -146,20 +146,25 @@ class ReforzamientoApiController extends BaseController
                     $monto = (float)($p['total'] ?? $p['monto_total'] ?? 0);
                     $yearPago = substr($p['paymentDate'] ?? '', 0, 4);
 
-                    // Filtros estrictos: Solo Reforzamiento, de este año y Pagado (status 2)
-                    if (str_contains($desc, 'REFORZAMIENTO') && $yearPago === $yearActual && $status === 2) {
+                    // FILTRADO QUIRÚRGICO (Concepto Oficial 598 de UNAMAD)
+                    $isReforzamiento = str_contains($desc, 'REFORZAMIENTO PARA ESTUDIANTES DE SECUNDARIA CEPRE') 
+                                    || str_contains($desc, 'SECUNDARIA CEPRE')
+                                    || ($p['concept_id'] ?? $p['id_concepto'] ?? 0) == 598;
+                    
+                    if ($isReforzamiento && $yearPago === $yearActual && $status === 2) {
                         $totalRecibo += $monto;
                         $hayReforzamiento = true;
                         $fechaPago = $p['paymentDate'];
                     }
                 }
 
-                if ($hayReforzamiento && $totalRecibo >= 200) {
+                // Relajamos el monto a S/. 50 por si son pagos parciales o montos sociales
+                if ($hayReforzamiento && $totalRecibo >= 50) {
                     $recibosProcesados[] = [
                         'serial_voucher' => $serial,
                         'monto' => $totalRecibo,
                         'paymentDate' => $fechaPago,
-                        'description' => 'REFORZAMIENTO ESCOLAR (API SUM)'
+                        'description' => 'PAGO DETECTADO (SISTEMA SUM)'
                     ];
                 }
             }
