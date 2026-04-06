@@ -1041,25 +1041,11 @@ async function handleFinalSubmit(e) {
     const btn = document.getElementById('btnSubmit');
     const fd = new FormData(e.target);
     
-    // Inyectar Apoderados Manualmente (Debido a nombres dinámicos)
-    const apoderados = [];
-    document.querySelectorAll('#apoderadosContainer .rf-card').forEach((card, i) => {
-        const dni = card.querySelector(`[id^="ap_dni_"]`).value;
-        const nombre = card.querySelector(`[id^="ap_nom_"]`).value;
-        const paterno = card.querySelector(`[id^="ap_pat_"]`).value;
-        const tel = card.querySelector(`[id^="ap_tel_"]`)?.value || '';
-        const parentesco = card.querySelector(`select`).value;
-        apoderados.push({ dni, nombre: `${nombre} ${paterno}`, telefono: tel, parentesco });
-    });
-
-    apoderados.forEach((ap, index) => {
-        fd.set(`apoderados[${index}][dni]`, ap.dni);
-        fd.set(`apoderados[${index}][nombre]`, ap.nombre);
-        fd.set(`apoderados[${index}][telefono]`, ap.telefono);
-        fd.set(`apoderados[${index}][parentesco]`, ap.parentesco);
-    });
-
-    // Inyectar datos clave
+    // NOTA: Ya no inyectamos apoderados manualmente aquí porque los campos 
+    // en el HTML ya tienen el atributo 'name' correcto (apoderados[index][dni], etc)
+    // y FormData(e.target) los captura automáticamente. Inyectarlos de nuevo duplica los datos.
+    
+    // Inyectar datos clave adicionales no presentes en el formulario o que requieren pre-procesamiento
     fd.set('dni', document.getElementById('ref_dni').value);
     fd.set('fecha_nacimiento', document.getElementById('ref_fecha_nacimiento').value);
     fd.set('genero', document.getElementById('ref_genero').value);
