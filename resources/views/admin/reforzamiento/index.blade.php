@@ -458,16 +458,37 @@
 
                 const dniApoPath = data.dni_apoderado_path ? storageUrl + data.dni_apoderado_path : '#';
                 $('#link-dni-apo').attr('href', dniApoPath).toggle(!!data.dni_apoderado_path);
+                // Multimedia y Documentos
+                console.log("Cargando expediente con storage:", storageUrl); // Debug
 
-                const certPath = data.certificado_path ? storageUrl + data.certificado_path : '#';
-                $('#link-cert').attr('href', certPath).toggle(!!data.certificado_path);
+                // DNI Estudiante
+                $('#link-dni').attr('href', data.dni_estudiante_path ? storageUrl + data.dni_estudiante_path.replace(/^\/+/, '') : '#')
+                              .toggle(!!data.dni_estudiante_path);
+                
+                // DNI Apoderado
+                $('#link-dni-apoderado').attr('href', data.dni_apoderado_path ? storageUrl + data.dni_apoderado_path.replace(/^\/+/, '') : '#')
+                                       .toggle(!!data.dni_apoderado_path);
 
-                const compPath = data.carta_compromiso_path ? storageUrl + data.carta_compromiso_path : '#';
-                $('#link-compromiso').attr('href', compPath).toggle(!!data.carta_compromiso_path);
+                // Certificado (Opcional)
+                if (data.certificado_path) {
+                    $('#link-cert').attr('href', storageUrl + data.certificado_path.replace(/^\/+/, '')).show();
+                } else {
+                    $('#link-cert').hide();
+                }
 
+                // Carta de Compromiso - CORRECCIÓN CLAVE
+                if (data.carta_compromiso_path) {
+                    $('#link-compromiso').attr('href', storageUrl + data.carta_compromiso_path.replace(/^\/+/, '')).show();
+                    console.log("Compromiso URL:", storageUrl + data.carta_compromiso_path);
+                } else {
+                    $('#link-compromiso').hide();
+                }
+
+                // Fotografía
+                $('#detalle-foto').attr('src', data.foto_path ? storageUrl + data.foto_path.replace(/^\/+/, '') : 'https://via.placeholder.com/150');
+
+                // Información de Pago
                 const pago = data.pagos && data.pagos.length > 0 ? data.pagos[0] : null;
-
-                // Información de Pago y Semáforo
                 if (pago) {
                     $('#pago-operacion').text(pago.numero_operacion || 'AUTO');
                     const formattedMonto = 'S/. ' + parseFloat(pago.monto).toFixed(2);
