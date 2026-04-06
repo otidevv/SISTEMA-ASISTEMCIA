@@ -345,14 +345,25 @@ class ReforzamientoApiController extends BaseController
             }
 
             // 5. Procesar Pago
+            $meses = [
+                1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+            ];
+            $mesActual = $meses[date('n')];
+            $anioActual = date('Y');
 
             if ($esManual) {
+                $monto = floatval($request->monto_voucher ?: 200.00);
+                $numMeses = max(1, floor($monto / 200));
+                $mesPagadoDesc = ($numMeses > 1) ? "$numMeses MESES ($mesActual $anioActual)" : "$mesActual $anioActual";
+
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $request->voucher_secuencia ?? ('AUTO-M-' . time()),
-                    'monto' => $request->monto_voucher ?: 200.00,
+                    'monto' => $monto,
                     'fecha_pago' => $request->voucher_fecha ?? Carbon::now()->toDateString(),
-                    'mes_pagado' => Carbon::now()->format('F Y'),
+                    'mes_pagado' => $mesPagadoDesc,
                     'voucher_path' => $request->hasFile('voucher_file') ? $request->file('voucher_file')->store($path, 'public') : null,
                     'estado_pago' => 'pendiente',
                     'verificado_api' => 0
@@ -360,15 +371,18 @@ class ReforzamientoApiController extends BaseController
             } else {
                 // Pago Automático API
                 $apiSerial = $request->input('pago_api_serial');
-                $apiMonto = $request->input('monto_api');
+                $monto = floatval($request->input('monto_api') ?: 200.00);
                 $apiFecha = $request->input('pago_api_fecha');
+
+                $numMeses = max(1, floor($monto / 200));
+                $mesPagadoDesc = ($numMeses > 1) ? "$numMeses MESES ($mesActual $anioActual)" : "$mesActual $anioActual";
 
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $apiSerial ?: ('AUTO-' . $request->dni . '-' . time()),
-                    'monto' => $apiMonto ?: 200.00,
+                    'monto' => $monto,
                     'fecha_pago' => $apiFecha ? Carbon::parse($apiFecha)->toDateString() : Carbon::now()->toDateString(),
-                    'mes_pagado' => Carbon::now()->format('F Y'),
+                    'mes_pagado' => $mesPagadoDesc,
                     'voucher_path' => $request->hasFile('voucher_file') ? $request->file('voucher_file')->store($path, 'public') : null,
                     'verificado_api' => 1,
                     'estado_pago' => 'aprobado',

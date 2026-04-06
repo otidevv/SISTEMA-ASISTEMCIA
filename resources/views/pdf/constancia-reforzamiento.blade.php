@@ -110,8 +110,8 @@
         <table style="width: 100%; border: none;">
             <tr>
                 <td style="width: 50%;">
-                    <strong>Concepto:</strong> 598 - REFORZAMIENTO PARA ESTUDIANTES DE SECUNDARIA CEPRE<br>
-                    <strong>Monto Pagado:</strong> S/. 200.00
+                    <strong>Concepto:</strong> 598 - REFORZAMIENTO ({{ strtoupper($pago->mes_pagado ?? 'GENERAL') }})<br>
+                    <strong>Monto Pagado:</strong> S/. {{ number_format($pago->monto ?? 0, 2) }}
                 </td>
                 <td style="width: 50%; text-align: right;">
                     <strong>Recibo N°:</strong> {{ $pago->numero_operacion ?? 'Pendiente' }}<br>
