@@ -239,6 +239,18 @@
                                             </div>
                                             <i class="mdi mdi-open-in-new text-muted"></i>
                                         </a>
+                                        <a id="link-compromiso" href="#" target="_blank" class="list-group-item list-group-item-action border-0 px-2 py-2 d-flex align-items-center mb-1">
+                                            <div class="avatar-sm mr-2 me-2">
+                                                <span class="avatar-title rounded-circle bg-soft-secondary text-secondary">
+                                                    <i class="mdi mdi-draw-pen font-size-18"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <h6 class="mb-0 text-dark fs-13">Carta de Compromiso</h6>
+                                                <small class="text-muted">Documento Firmado</small>
+                                            </div>
+                                            <i class="mdi mdi-open-in-new text-muted"></i>
+                                        </a>
                                     </div>
 
                                     <div class="mt-4 pt-4 border-top">
@@ -449,6 +461,9 @@
 
                 const certPath = data.certificado_path ? storageUrl + data.certificado_path : '#';
                 $('#link-cert').attr('href', certPath).toggle(!!data.certificado_path);
+
+                const compPath = data.carta_compromiso_path ? storageUrl + data.carta_compromiso_path : '#';
+                $('#link-compromiso').attr('href', compPath).toggle(!!data.carta_compromiso_path);
 
                 const pago = data.pagos && data.pagos.length > 0 ? data.pagos[0] : null;
 
