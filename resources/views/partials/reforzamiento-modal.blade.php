@@ -1050,6 +1050,12 @@
                                     Activar Validación por Voucher
                                 </button>
                             </div>
+
+                            {{-- Campos Ocultos para Pago API --}}
+                            <input type="hidden" name="pago_api_serial" id="ref_pago_api_serial">
+                            <input type="hidden" name="pago_api_monto" id="ref_pago_api_monto">
+                            <input type="hidden" name="pago_api_fecha" id="ref_pago_api_fecha">
+                            <input type="hidden" name="es_manual" id="ref_es_manual" value="1">
                         </div>
                     </div>
 

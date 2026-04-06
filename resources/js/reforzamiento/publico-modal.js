@@ -331,6 +331,10 @@ async function verifyDni() {
                 const realDate = (p.fecha || p.paymentDate || '').split(' ')[0].split('T')[0];
                 document.getElementById('ref_pago_api_fecha').value = realDate;
                 
+                // Guardar monto real
+                const realMonto = p.total || p.monto_total || '0.00';
+                document.getElementById('ref_pago_api_monto').value = realMonto;
+                
                 resultDiv.innerHTML = `
                     <div class="rf-alert rf-alert-success animate__animated animate__pulse">
                         <i class="material-icons-round">verified</i>
@@ -1068,23 +1072,29 @@ async function handleFinalSubmit(e) {
     });
 
     // Inyectar datos clave adicionales no presentes en el formulario o que requieren pre-procesamiento
-    fd.set('dni', document.getElementById('ref_dni').value);
-    fd.set('pago_api_serial', document.getElementById('ref_pago_api_serial').value);
-    fd.set('monto_api', document.getElementById('ref_pago_api_monto').value);
-    fd.set('pago_api_fecha', document.getElementById('ref_pago_api_fecha').value);
-    fd.set('fecha_nacimiento', document.getElementById('ref_fecha_nacimiento').value);
-    fd.set('genero', document.getElementById('ref_genero').value);
-    fd.set('apellido_paterno', document.getElementById('ref_apellido_paterno').value);
-    fd.set('apellido_materno', document.getElementById('ref_apellido_materno').value);
-    fd.set('ciclo_id', document.getElementById('ref_ciclo_id').value);
-    fd.set('es_manual', !pagoDetectado);
+    // Inyectar datos clave adicionales con validación de existencia
+    const ge = (id) => document.getElementById(id);
+    const gv = (id) => ge(id)?.value || '';
+
+    fd.set('dni', gv('ref_dni'));
+    fd.set('pago_api_serial', gv('ref_pago_api_serial'));
+    fd.set('monto_api', gv('ref_pago_api_monto'));
+    fd.set('pago_api_fecha', gv('ref_pago_api_fecha'));
+    fd.set('fecha_nacimiento', gv('ref_fecha_nacimiento'));
+    fd.set('genero', gv('ref_genero'));
+    fd.set('apellido_paterno', gv('ref_apellido_paterno'));
+    fd.set('apellido_materno', gv('ref_apellido_materno'));
+    fd.set('ciclo_id', gv('ref_ciclo_id'));
+    
+    fd.set('es_manual', pagoDetectado ? '0' : '1');
+
     if (!pagoDetectado) {
         fd.set('voucher_secuencia', document.querySelector('[name="voucher_secuencia"]')?.value || '');
         fd.set('monto_voucher', document.querySelector('[name="monto_voucher"]')?.value || '200.00');
         fd.set('voucher_fecha', document.querySelector('[name="voucher_fecha"]')?.value || '');
     } else {
-        fd.set('pago_api_serial', apiSerial || '');
-        fd.set('pago_api_fecha', document.getElementById('ref_pago_api_fecha')?.value || '');
+        fd.set('pago_api_serial', apiSerial || gv('ref_pago_api_serial'));
+        fd.set('pago_api_fecha', gv('ref_pago_api_fecha'));
     }
 
     btn.disabled = true;
