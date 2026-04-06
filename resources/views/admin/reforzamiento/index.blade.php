@@ -625,6 +625,15 @@
             });
         }
 
+        function editInscripcion(id) {
+            // Reutilizamos la lógica, cargamos el modal y activamos la edición de inmediato
+            viewDetails(id);
+            setTimeout(() => {
+                const isEditing = !$('#btn-save-exp').hasClass('d-none');
+                if (!isEditing) toggleEditMode();
+            }, 500); // Pequeña espera para que los datos carguen primero
+        }
+
         function toggleEditMode() {
             const isEditing = !$('#btn-save-exp').hasClass('d-none');
             const currentId = $('#modalExpediente').data('id');
