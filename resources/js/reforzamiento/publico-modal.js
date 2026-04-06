@@ -1052,6 +1052,8 @@ async function handleFinalSubmit(e) {
     
     // Inyectar datos clave adicionales no presentes en el formulario o que requieren pre-procesamiento
     fd.set('dni', document.getElementById('ref_dni').value);
+    fd.set('pago_api_serial', document.getElementById('ref_pago_api_serial').value);
+    fd.set('monto_api', document.getElementById('ref_pago_api_monto').value);
     fd.set('fecha_nacimiento', document.getElementById('ref_fecha_nacimiento').value);
     fd.set('genero', document.getElementById('ref_genero').value);
     fd.set('apellido_paterno', document.getElementById('ref_apellido_paterno').value);

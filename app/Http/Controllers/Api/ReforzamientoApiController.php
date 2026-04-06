@@ -303,7 +303,7 @@ class ReforzamientoApiController extends BaseController
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $request->voucher_secuencia ?? ('AUTO-M-' . time()),
-                    'monto' => $request->monto_voucher ?? 200.00,
+                    'monto' => $request->monto_voucher ?: 200.00,
                     'fecha_pago' => $request->voucher_fecha ?? Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
                     'voucher_path' => $request->hasFile('voucher_file') ? $request->file('voucher_file')->store($path, 'public') : null,
@@ -312,10 +312,12 @@ class ReforzamientoApiController extends BaseController
             } else {
                 // Pago Automático API
                 $apiSerial = $request->input('pago_api_serial');
+                $apiMonto = $request->input('monto_api');
+
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $apiSerial ?: ('AUTO-' . $request->dni . '-' . time()),
-                    'monto' => 200.00,
+                    'monto' => $apiMonto ?: 200.00,
                     'fecha_pago' => $request->pago_api_fecha ?: Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
                     'verificado_api' => 1,
