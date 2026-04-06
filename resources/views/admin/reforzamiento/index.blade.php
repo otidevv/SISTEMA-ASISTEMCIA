@@ -453,8 +453,6 @@
                 }
 
                 // Multimedia y Documentos
-                const storageUrl = "{{ asset('storage') }}/";
-                
                 const cleanPath = (path) => path ? storageUrl + path.replace(/^\/+/, '') : '#';
 
                 // DNI Estudiante

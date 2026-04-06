@@ -28,22 +28,24 @@ class ReforzamientoAdminController extends Controller
 
     public function getData(Request $request)
     {
-        $baseQuery = InscripcionReforzamiento::query();
+        // Consulta base para conteos y datos
+        $queryBuilder = InscripcionReforzamiento::query();
         
-        if ($request->ciclo_id) {
-            $baseQuery->where('ciclo_id', $request->ciclo_id);
+        if ($request->filled('ciclo_id')) {
+            $queryBuilder->where('ciclo_id', $request->ciclo_id);
         }
 
-        // Obtener conteos para las tarjetas
+        // Obtener conteos para las tarjetas (usando el filtro aplicado)
         $counts = [
-            'total' => (clone $baseQuery)->count(),
-            'pendiente' => (clone $baseQuery)->where('estado_inscripcion', 'pendiente')->count(),
-            'aprobado' => (clone $baseQuery)->where('estado_inscripcion', 'validado')->count(),
+            'total' => (clone $queryBuilder)->count(),
+            'pendiente' => (clone $queryBuilder)->where('estado_inscripcion', 'pendiente')->count(),
+            'aprobado' => (clone $queryBuilder)->where('estado_inscripcion', 'validado')->count(),
         ];
 
+        // Preparar consulta para DataTables con relaciones
         $query = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'pagos', 'aula']);
-
-        if ($request->ciclo_id) {
+        
+        if ($request->filled('ciclo_id')) {
             $query->where('ciclo_id', $request->ciclo_id);
         }
 
