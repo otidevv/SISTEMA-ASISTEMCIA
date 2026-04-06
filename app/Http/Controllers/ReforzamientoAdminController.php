@@ -148,6 +148,18 @@ class ReforzamientoAdminController extends Controller
             $inscripcion->aula_id = $request->aula_id;
             $inscripcion->validado_por = auth()->id();
             $inscripcion->fecha_validacion = now();
+
+            // Sincronizar Pagos: El administrativo que valida la inscripción se convierte en el validador humano de sus pagos
+            $pagos = $inscripcion->pagos;
+            foreach ($pagos as $pago) {
+                $pago->estado_pago = 'aprobado';
+                $pago->validado_por = auth()->id(); // <--- Aquí capturamos al administrativo que está operando ahora
+                $pago->save();
+            }
+
+            // Actualizar total_pagado de la inscripción sumando todos los pagos aprobados
+            $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+            $inscripcion->save();
             
             // Generar nro_constancia secuencial basado en el ciclo
             if (!$inscripcion->nro_constancia) {

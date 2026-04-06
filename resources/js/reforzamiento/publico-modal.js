@@ -1050,10 +1050,28 @@ async function handleFinalSubmit(e) {
     // en el HTML ya tienen el atributo 'name' correcto (apoderados[index][dni], etc)
     // y FormData(e.target) los captura automáticamente. Inyectarlos de nuevo duplica los datos.
     
+    // Inyectar archivos explícitamente para asegurar su envío
+    const fileInputs = [
+        { name: 'foto', id: 'dropzone_foto' },
+        { name: 'dni_file', id: 'dropzone_dni' },
+        { name: 'dni_apoderado_file', id: 'dropzone_dni_apoderado' },
+        { name: 'voucher_file', id: 'dropzone_voucher' },
+        { name: 'certificado_file', id: 'dropzone_certificado' },
+        { name: 'compromiso_file', id: 'dropzone_compromiso' }
+    ];
+
+    fileInputs.forEach(input => {
+        const fileElement = document.querySelector(`#${input.id} input[type="file"]`);
+        if (fileElement && fileElement.files.length > 0) {
+            fd.set(input.name, fileElement.files[0]);
+        }
+    });
+
     // Inyectar datos clave adicionales no presentes en el formulario o que requieren pre-procesamiento
     fd.set('dni', document.getElementById('ref_dni').value);
     fd.set('pago_api_serial', document.getElementById('ref_pago_api_serial').value);
     fd.set('monto_api', document.getElementById('ref_pago_api_monto').value);
+    fd.set('pago_api_fecha', document.getElementById('ref_pago_api_fecha').value);
     fd.set('fecha_nacimiento', document.getElementById('ref_fecha_nacimiento').value);
     fd.set('genero', document.getElementById('ref_genero').value);
     fd.set('apellido_paterno', document.getElementById('ref_apellido_paterno').value);

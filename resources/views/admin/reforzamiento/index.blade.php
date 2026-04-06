@@ -452,46 +452,35 @@
                     $('#exp-colegio').text(colName);
                 }
 
-                // Documentos
-                const dniPath = data.dni_estudiante_path ? storageUrl + data.dni_estudiante_path : '#';
-                $('#link-dni').attr('href', dniPath).toggle(!!data.dni_estudiante_path);
-
-                const dniApoPath = data.dni_apoderado_path ? storageUrl + data.dni_apoderado_path : '#';
-                $('#link-dni-apo').attr('href', dniApoPath).toggle(!!data.dni_apoderado_path);
                 // Multimedia y Documentos
-                console.log("Cargando expediente con storage:", storageUrl); // Debug
+                const storageUrl = "{{ asset('storage') }}/";
+                
+                const cleanPath = (path) => path ? storageUrl + path.replace(/^\/+/, '') : '#';
 
                 // DNI Estudiante
-                $('#link-dni').attr('href', data.dni_estudiante_path ? storageUrl + data.dni_estudiante_path.replace(/^\/+/, '') : '#')
-                              .toggle(!!data.dni_estudiante_path);
+                const dniPath = cleanPath(data.dni_estudiante_path);
+                $('#link-dni').attr('href', dniPath).toggle(!!data.dni_estudiante_path);
                 
                 // DNI Apoderado
-                $('#link-dni-apoderado').attr('href', data.dni_apoderado_path ? storageUrl + data.dni_apoderado_path.replace(/^\/+/, '') : '#')
-                                       .toggle(!!data.dni_apoderado_path);
+                const dniApoPath = cleanPath(data.dni_apoderado_path);
+                $('#link-dni-apo').attr('href', dniApoPath).toggle(!!data.dni_apoderado_path);
 
-                // Certificado (Opcional)
-                if (data.certificado_path) {
-                    $('#link-cert').attr('href', storageUrl + data.certificado_path.replace(/^\/+/, '')).show();
-                } else {
-                    $('#link-cert').hide();
-                }
+                // Certificado
+                const certPath = cleanPath(data.certificado_path);
+                $('#link-cert').attr('href', certPath).toggle(!!data.certificado_path);
 
-                // Carta de Compromiso - CORRECCIÓN CLAVE
-                if (data.carta_compromiso_path) {
-                    $('#link-compromiso').attr('href', storageUrl + data.carta_compromiso_path.replace(/^\/+/, '')).show();
-                    console.log("Compromiso URL:", storageUrl + data.carta_compromiso_path);
-                } else {
-                    $('#link-compromiso').hide();
-                }
+                // Carta de Compromiso
+                const compPath = cleanPath(data.carta_compromiso_path);
+                $('#link-compromiso').attr('href', compPath).toggle(!!data.carta_compromiso_path);
 
                 // Fotografía
-                $('#detalle-foto').attr('src', data.foto_path ? storageUrl + data.foto_path.replace(/^\/+/, '') : 'https://via.placeholder.com/150');
+                $('#detalle-foto').attr('src', data.foto_path ? cleanPath(data.foto_path) : 'https://via.placeholder.com/150');
 
                 // Información de Pago
                 const pago = data.pagos && data.pagos.length > 0 ? data.pagos[0] : null;
                 if (pago) {
                     $('#pago-operacion').text(pago.numero_operacion || 'AUTO');
-                    const formattedMonto = 'S/. ' + parseFloat(pago.monto).toFixed(2);
+                    const formattedMonto = 'S/. ' + parseFloat(pago.monto || 0).toFixed(2);
                     $('#pago-monto').text(formattedMonto);
                     $('#row-monto-pago').text(formattedMonto);
                     
@@ -500,22 +489,24 @@
                         $('#pago-fecha').text(datePago.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
                     } else { $('#pago-fecha').text('---'); }
                     
+                    // Manejo del Link de Voucher
                     if (pago.voucher_path) {
-                        $('#link-voucher').attr('href', storageUrl + pago.voucher_path).show();
-                    } else { 
+                        $('#link-voucher').attr('href', cleanPath(pago.voucher_path)).show();
+                        $('#btn-voucher-text').text('Ver Voucher');
+                    } else if (pago.verificado_api) {
+                        $('#link-voucher').attr('href', 'javascript:void(0)').show();
+                        $('#btn-voucher-text').text('Validado por API');
+                        $('#link-voucher').off('click').on('click', function() {
+                            alert('Pago validado automáticamente vía API (Sin archivo físico).');
+                        });
+                    } else {
                         $('#link-voucher').hide();
                     }
-
-                    const isPaid = pago.estado_pago === 'aprobado';
-                    $('#exp-pago-status').text(isPaid ? 'VALIDADO OK' : 'PENDIENTE')
-                        .removeClass('payment-chip-paid payment-chip-unpaid')
-                        .addClass(isPaid ? 'payment-chip-paid' : 'payment-chip-unpaid');
                 } else {
                     $('#pago-operacion').text('---');
                     $('#pago-monto').text('---');
                     $('#pago-fecha').text('---');
                     $('#link-voucher').hide();
-                    $('#exp-pago-status').text('SIN PAGO').removeClass('payment-chip-paid').addClass('payment-chip-unpaid');
                 }
 
                 // Configurar Botones de Acción: Gestión Limpia por Estados

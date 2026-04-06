@@ -333,8 +333,28 @@ class ReforzamientoApiController extends BaseController
                 }
             }
 
+            // Guardar archivos
+            $path = "reforzamiento/" . $request->dni;
+            if ($request->hasFile('foto')) {
+                $inscripcion->foto_path = $request->file('foto')->store($path, 'public');
+            }
+            if ($request->hasFile('dni_file')) {
+                $inscripcion->dni_estudiante_path = $request->file('dni_file')->store($path, 'public');
+            }
+            if ($request->hasFile('dni_apoderado_file')) {
+                $inscripcion->dni_apoderado_path = $request->file('dni_apoderado_file')->store($path, 'public');
+            }
+            if ($request->hasFile('certificado_file')) {
+                $inscripcion->certificado_path = $request->file('certificado_file')->store($path, 'public');
+            }
+            if ($request->hasFile('compromiso_file')) {
+                $inscripcion->carta_compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+            }
+
+            $inscripcion->save();
+
             // 5. Procesar Pago
-            $isManual = ($request->es_manual === "true" || $request->es_manual === true || $request->es_manual === "1");
+            $isManual = ($request->input('es_manual') == '1');
 
             if ($isManual) {
                 PagoReforzamiento::create([
@@ -344,21 +364,25 @@ class ReforzamientoApiController extends BaseController
                     'fecha_pago' => $request->voucher_fecha ?? Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
                     'voucher_path' => $request->hasFile('voucher_file') ? $request->file('voucher_file')->store($path, 'public') : null,
-                    'estado_pago' => 'pendiente'
+                    'estado_pago' => 'pendiente',
+                    'verificado_api' => 0
                 ]);
             } else {
                 // Pago Automático API
                 $apiSerial = $request->input('pago_api_serial');
                 $apiMonto = $request->input('monto_api');
+                $apiFecha = $request->input('pago_api_fecha');
 
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $apiSerial ?: ('AUTO-' . $request->dni . '-' . time()),
                     'monto' => $apiMonto ?: 200.00,
-                    'fecha_pago' => $request->pago_api_fecha ?: Carbon::now()->toDateString(),
+                    'fecha_pago' => $apiFecha ? Carbon::parse($apiFecha)->toDateString() : Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
                     'verificado_api' => 1,
-                    'estado_pago' => 'aprobado'
+                    'estado_pago' => 'aprobado',
+                    'validado_por' => null, // Esperar a validacion humana en el panel administrativo
+                    'fecha_verificacion_api' => now()
                 ]);
             }
 
