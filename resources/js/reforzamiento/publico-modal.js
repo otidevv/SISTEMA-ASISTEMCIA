@@ -1195,7 +1195,12 @@ async function handleFinalSubmit(e) {
         } else {
             Swal.fire({ icon: 'error', title: 'Error', text: res.message || 'Error interno.' });
         }
-    } catch(e) { Swal.fire({ icon: 'error', title: 'Error de Red' }); }
+    } catch (e) {
+        console.error('Error al registrar:', e);
+        // Intentar dar un mensaje más descriptivo si es posible
+        let errorMsg = 'No pudimos procesar tu solicitud. El servidor tardó demasiado o hubo un problema de red. Por favor revisa si tu postulación ya aparece en el sistema administrativo.';
+        Swal.fire('Atención', errorMsg, 'warning');
+    }
     finally { btn.disabled = false; btn.innerHTML = 'Finalizar Inscripción'; }
 }
 
@@ -1285,12 +1290,11 @@ async function downloadRegistrationPack() {
             confirmButtonColor: '#ec008c'
         });
 
-    } catch (e) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'No se pudo generar el Pack de Inscripción. Inténtalo de nuevo.'
-        });
+    } catch (error) {
+        console.error('Error al generar pack:', error);
+        
+        let errorMsg = 'No pudimos generar tu archivo. Asegúrate de haber llenado todos los datos del apoderado.';
+        Swal.fire('Error en el Documento', errorMsg, 'error');
     } finally {
         if (btn) {
             btn.disabled = false;

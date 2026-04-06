@@ -398,35 +398,37 @@ class ReforzamientoApiController extends BaseController
             DB::commit();
 
             // Notificaciones en Tiempo Real (Reverb) - Ejecuatadas DESPUÉS del commit para evitar race conditions
+            // Notificaciones en Tiempo Real (Envolver en un try-catch global e independiente)
             try {
                 $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
                 
-                // 1. Notificación Global (Broadcast)
-                event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
+                // Solo enviar si las clases existen para evitar errores fatales
+                if (class_exists('App\Events\NuevaPostulacionCreada')) {
+                    event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
+                }
 
-                // 2. Notificación Persistente (Administradores con permiso)
-                // OPTIMIZADO: Filtro directo en base de datos para no cargar todos los usuarios
                 $supervisores = \App\Models\User::whereHas('roles.permissions', function($q) {
                     $q->where('nombre', 'postulaciones.view');
                 })->orWhereHas('roles', function($q) {
                     $q->where('nombre', 'admin');
                 })->get();
                 
-                if ($supervisores->isNotEmpty()) {
+                if ($supervisores->isNotEmpty() && class_exists('App\Notifications\NuevaInscripcionReforzamiento')) {
                     \Illuminate\Support\Facades\Notification::send(
                         $supervisores, 
                         new \App\Notifications\NuevaInscripcionReforzamiento($nombreAlumno, $inscripcion->id)
                     );
                 }
             } catch (\Exception $e) { 
-                // Error silenciado para no afectar la respuesta al cliente
+                \Log::error('Error en notificaciones Reforzamiento: ' . $e->getMessage());
             }
 
             return $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->sendError('Error al procesar la inscripción: ' . $e->getMessage());
+            if (DB::transactionLevel() > 0) DB::rollBack();
+            \Log::error('Error Crítico en Registro Reforzamiento: ' . $e->getMessage());
+            return $this->sendError('Error al procesar la inscripción: ' . $e->getMessage(), [], 500);
         }
     }
 
