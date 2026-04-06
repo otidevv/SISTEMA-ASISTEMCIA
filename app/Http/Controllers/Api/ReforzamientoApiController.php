@@ -268,7 +268,7 @@ class ReforzamientoApiController extends BaseController
                 $inscripcion->certificado_path = $request->file('certificado_file')->store($path, 'public');
             }
             if ($request->hasFile('compromiso_file')) {
-                $inscripcion->compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+                $inscripcion->carta_compromiso_path = $request->file('compromiso_file')->store($path, 'public');
             }
             
             $inscripcion->save();
