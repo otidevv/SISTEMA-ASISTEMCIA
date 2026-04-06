@@ -1128,19 +1128,34 @@ async function handleFinalSubmit(e) {
             method: 'POST', body: fd,
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         });
-        const res = await r.json();
+
+        // Leer como texto primero para evitar crash si no es JSON
+        const responseText = await r.text();
+        let res;
+        try {
+            res = JSON.parse(responseText);
+        } catch (parseErr) {
+            console.error('Respuesta no-JSON:', responseText.substring(0, 500));
+            Swal.close();
+            Swal.fire('Atención', 'El servidor respondió con un formato inesperado. Revisa si tu inscripción ya aparece en el panel administrativo.', 'warning');
+            return;
+        }
         
         // CERRAR EL TOAST DE CARGA
         Swal.close();
 
         if (res.success) {
             // Mostrar Vista de Éxito Ultra-Premium
-            const modalBody = document.querySelector('.rf-body');
-            const wizardLayout = document.querySelector('.rf-layout'); 
+            const targetContainer = document.querySelector('.rf-body') || document.querySelector('.rf-layout') || document.querySelector('.rf-container');
             
             // Achicar el modal para que no se vea vacío
             const container = document.querySelector('.rf-container');
             if (container) container.classList.add('rf-container-success');
+
+            if (!targetContainer) {
+                Swal.fire({ icon: 'success', title: '¡Inscripción Exitosa!', text: res.message, confirmButtonColor: '#ec008c' });
+                return;
+            }
 
             targetContainer.innerHTML = `
                 <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 500px; padding: 2rem;">
