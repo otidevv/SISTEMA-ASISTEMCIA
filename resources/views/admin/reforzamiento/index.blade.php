@@ -327,13 +327,13 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="ps-0 fs-14 fw-medium">REFORZAMIENTO ESCOLAR (CEPRE UNAMAD)</td>
-                                                                <td class="pe-0 text-end fw-bold">S/. 400.00</td>
+                                                                <td class="pe-0 text-end fw-bold" id="row-monto-pago">---</td>
                                                             </tr>
                                                         </tbody>
                                                         <tfoot>
                                                             <tr class="border-top">
                                                                 <td class="ps-0 pt-2 fw-bold text-dark">TOTAL PAGADO</td>
-                                                                <td class="pe-0 pt-2 text-end fw-bold text-success fs-18" id="pago-monto">S/. 400.00</td>
+                                                                <td class="pe-0 pt-2 text-end fw-bold text-success fs-18" id="pago-monto">---</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
@@ -470,7 +470,9 @@
                 // Información de Pago y Semáforo
                 if (pago) {
                     $('#pago-operacion').text(pago.numero_operacion || 'AUTO');
-                    $('#pago-monto').text('S/. ' + parseFloat(pago.monto).toFixed(2));
+                    const formattedMonto = 'S/. ' + parseFloat(pago.monto).toFixed(2);
+                    $('#pago-monto').text(formattedMonto);
+                    $('#row-monto-pago').text(formattedMonto);
                     
                     if (pago.fecha_pago) {
                         const datePago = new Date(pago.fecha_pago);

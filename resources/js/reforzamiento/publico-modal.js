@@ -941,6 +941,11 @@ function generateSummary() {
     const colegio = document.getElementById('nombre_colegio_sel').textContent;
     const apiSerial = document.getElementById('ref_pago_api_serial').value;
 
+    // Obtener monto real
+    const montoPlanA = document.getElementById('ref_pago_api_monto')?.value || '0.00';
+    const montoPlanB = document.querySelector('[name="monto_voucher"]')?.value || '0.00';
+    const montoFinal = pagoDetectado ? montoPlanA : montoPlanB;
+
     // Obtener vista previa de la foto
     const fotoInput = document.querySelector('input[name="foto"]');
     let fotoUrl = null;
@@ -992,7 +997,7 @@ function generateSummary() {
                 <div class="rf-card" style="margin:0; padding:1.25rem; border: 2px solid ${pagoDetectado ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; background: ${pagoDetectado ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.02)'};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                         <div style="font-weight: 800; font-size: 0.75rem; color: var(--rf-text-muted); text-transform: uppercase;">Estado del Pago</div>
-                        <div style="font-weight: 900; color: var(--rf-magenta); font-size: 0.95rem;">S/. 400.00</div>
+                        <div style="font-weight: 900; color: var(--rf-magenta); font-size: 0.95rem;">S/. ${parseFloat(montoFinal).toFixed(2)}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <div style="width: 40px; height: 40px; border-radius: 10px; background: ${pagoDetectado ? 'var(--rf-green)' : 'var(--rf-red)'}; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
