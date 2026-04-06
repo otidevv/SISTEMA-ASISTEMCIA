@@ -216,6 +216,8 @@ class ReforzamientoApiController extends BaseController
      */
     public function register(Request $request)
     {
+        $esManual = $request->input('es_manual') == '1';
+
         $validator = Validator::make($request->all(), [
             'dni' => 'required|string|size:8',
             'nombre' => 'required|string|min:2',
@@ -239,7 +241,7 @@ class ReforzamientoApiController extends BaseController
             'foto' => 'required|image|max:10240',
             'dni_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'dni_apoderado_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'voucher_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'voucher_file' => $esManual ? 'required|file|mimes:pdf,jpg,jpeg,png|max:10240' : 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'certificado_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'compromiso_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
@@ -342,30 +344,9 @@ class ReforzamientoApiController extends BaseController
                 }
             }
 
-            // Guardar archivos
-            $path = "reforzamiento/" . $request->dni;
-            if ($request->hasFile('foto')) {
-                $inscripcion->foto_path = $request->file('foto')->store($path, 'public');
-            }
-            if ($request->hasFile('dni_file')) {
-                $inscripcion->dni_estudiante_path = $request->file('dni_file')->store($path, 'public');
-            }
-            if ($request->hasFile('dni_apoderado_file')) {
-                $inscripcion->dni_apoderado_path = $request->file('dni_apoderado_file')->store($path, 'public');
-            }
-            if ($request->hasFile('certificado_file')) {
-                $inscripcion->certificado_path = $request->file('certificado_file')->store($path, 'public');
-            }
-            if ($request->hasFile('compromiso_file')) {
-                $inscripcion->carta_compromiso_path = $request->file('compromiso_file')->store($path, 'public');
-            }
-
-            $inscripcion->save();
-
             // 5. Procesar Pago
-            $isManual = ($request->input('es_manual') == '1');
 
-            if ($isManual) {
+            if ($esManual) {
                 PagoReforzamiento::create([
                     'inscripcion_id' => $inscripcion->id,
                     'numero_operacion' => $request->voucher_secuencia ?? ('AUTO-M-' . time()),
@@ -397,12 +378,13 @@ class ReforzamientoApiController extends BaseController
 
             DB::commit();
 
-            // Notificaciones en Tiempo Real (Reverb) - Ejecuatadas DESPUÉS del commit para evitar race conditions
-            // Notificaciones en Tiempo Real (Envolver en un try-catch global e independiente)
+            // RESPUESTA INMEDIATA al usuario — no esperar notificaciones
+            $response = $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
+
+            // Notificaciones en Tiempo Real (Reverb) — después de preparar la respuesta
             try {
                 $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
                 
-                // Solo enviar si las clases existen para evitar errores fatales
                 if (class_exists('App\Events\NuevaPostulacionCreada')) {
                     event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
                 }
@@ -420,10 +402,10 @@ class ReforzamientoApiController extends BaseController
                     );
                 }
             } catch (\Exception $e) { 
-                \Log::error('Error en notificaciones Reforzamiento: ' . $e->getMessage());
+                \Log::warning('Notificación Reforzamiento falló (no crítico): ' . $e->getMessage());
             }
 
-            return $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
+            return $response;
 
         } catch (\Exception $e) {
             if (DB::transactionLevel() > 0) DB::rollBack();
