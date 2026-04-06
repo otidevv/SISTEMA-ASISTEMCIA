@@ -362,162 +362,10 @@
         </div>
     </div>
 
-    <!-- Modal: Edición Completa de Reforzamiento -->
-    <div class="modal fade" id="modalEditFull" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-info py-3">
-                    <h5 class="modal-title font-size-16 text-white fw-bold">
-                        <i class="mdi mdi-account-edit-outline mr-2 me-2"></i> Editar Expediente de Reforzamiento
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <form id="form-edit-full" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" id="edit-full-id">
-                        
-                        <div class="p-4">
-                            <!-- Alerta de advertencia -->
-                            <div class="alert alert-soft-warning border-warning d-flex align-items-center mb-4" role="alert">
-                                <i class="mdi mdi-alert-outline fs-24 mr-3 me-3 text-warning"></i>
-                                <div>
-                                    <span class="fw-bold fs-14">Atención:</span> Esta inscripción ya está registrada. Los cambios realizados se reflejarán inmediatamente en el sistema.
-                                </div>
-                            </div>
 
-                            <div class="row">
-                                <!-- Columna Izquierda: Datos Personales -->
-                                <div class="col-lg-6 border-end px-4">
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Datos del Estudiante</h6>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted fs-12 mb-1">Número de Documento (DNI)</label>
-                                        <input type="text" id="ef-dni" class="form-control bg-light fw-bold" readonly>
-                                        <small class="text-muted" style="font-size: 10px;">El DNI es la llave del expediente y no es editable.</small>
-                                    </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted fs-12 mb-1">Nombres Completos</label>
-                                        <input type="text" name="nombre" id="ef-nombre" class="form-control">
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted fs-12 mb-1">Apellido Paterno</label>
-                                            <input type="text" name="apellido_paterno" id="ef-paterno" class="form-control">
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted fs-12 mb-1">Apellido Materno</label>
-                                            <input type="text" name="apellido_materno" id="ef-materno" class="form-control">
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted fs-12 mb-1">Teléfono de Contacto Celular</label>
-                                        <input type="text" name="telefono" id="ef-telefono" class="form-control">
-                                    </div>
-                                </div>
-
-                                <!-- Columna Derecha: Configuración -->
-                                <div class="col-lg-6 px-4">
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Configuración Académica</h6>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label class="form-label text-muted fs-12 mb-1">Grado Escolar</label>
-                                            <select name="grado" id="ef-grado" class="form-select">
-                                                <option value="1">1ero Secundaria</option>
-                                                <option value="2">2do Secundaria</option>
-                                                <option value="3">3ero Secundaria</option>
-                                                <option value="4">4to Secundaria</option>
-                                                <option value="5">5to Secundaria</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label text-muted fs-12 mb-1">Turno a Cursar</label>
-                                            <select name="seccion" id="ef-turno" class="form-select">
-                                                <option value="A">TURNO A (MAÑANA)</option>
-                                                <option value="B">TURNO B (TARDE)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mt-4 mb-3" style="letter-spacing: 1px;">Información de Pago</h6>
-                                    <div class="rounded-lg border p-3 bg-soft-info">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-12">
-                                                <label class="form-label text-info fw-bold fs-12 mb-1">Monto Total Pagado (S/.)</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-info text-white border-info fw-bold">S/.</span>
-                                                    <input type="number" step="0.01" name="monto_pago" id="ef-monto" class="form-control border-info fw-bold fs-18 text-dark">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Documentos (Visual) -->
-                            <div class="mt-4 pt-4 border-top">
-                                <h6 class="text-uppercase fw-bold text-dark fs-12 mb-3"><i class="mdi mdi-file-document-edit-outline mr-1"></i> GESTIÓN DE DOCUMENTOS (Pulsar para reemplazar)</h6>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="card border shadow-none mb-0 h-100 bg-light p-3 text-center border-dashed" style="border: 2px dashed #cbd5e0 !important;">
-                                            <div class="avatar-md mx-auto mb-3">
-                                                <span class="avatar-title rounded-circle bg-soft-primary text-primary font-size-24">
-                                                    <i class="mdi mdi-account-card-details-outline"></i>
-                                                </span>
-                                            </div>
-                                            <h5 class="fs-13">DNI Estudiante</h5>
-                                            <input type="file" name="dni_file" class="form-control form-control-sm mt-2 shadow-none border-0 bg-transparent text-center">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card border shadow-none mb-0 h-100 bg-light p-3 text-center border-dashed" style="border: 2px dashed #cbd5e0 !important;">
-                                            <div class="avatar-md mx-auto mb-3">
-                                                <span class="avatar-title rounded-circle bg-soft-success text-success font-size-24">
-                                                    <i class="mdi mdi-receipt-text-check-outline"></i>
-                                                </span>
-                                            </div>
-                                            <h5 class="fs-13">Voucher de Pago</h5>
-                                            <input type="file" name="voucher_file" class="form-control form-control-sm mt-2 shadow-none border-0 bg-transparent text-center">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card border shadow-none mb-0 h-100 bg-light p-3 text-center border-dashed" style="border: 2px dashed #cbd5e0 !important;">
-                                            <div class="avatar-md mx-auto mb-3">
-                                                <span class="avatar-title rounded-circle bg-soft-warning text-warning font-size-24">
-                                                    <i class="mdi mdi-draw-pen"></i>
-                                                </span>
-                                            </div>
-                                            <h5 class="fs-13">Carta Compromiso</h5>
-                                            <input type="file" name="compromiso_file" class="form-control form-control-sm mt-2 shadow-none border-0 bg-transparent text-center">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-2">
-                                <label class="form-label fs-12 fw-bold text-danger"><i class="mdi mdi-comment-plus-outline mr-1"></i> Por qué se modificó? (Observación requerida) *</label>
-                                <textarea name="observacion" id="ef-observacion" class="form-control border-danger" rows="2" placeholder="Escriba aquí el motivo de la corrección..." required></textarea>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer bg-light border-top p-3 d-flex justify-content-between">
-                            <button type="button" class="btn btn-outline-secondary px-5 fw-bold" data-bs-dismiss="modal">CANCELAR</button>
-                            <button type="submit" class="btn btn-info px-5 fw-bold shadow-none text-white">
-                                <i class="mdi mdi-check-decagram mr-1"></i> GUARDAR CAMBIOS
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Edición Integral Basada en Esquema Real -->
-    <div class="modal fade" id="modalEditFull" tabindex="-1" aria-hidden="true">
+    <!-- Modal: Edición Integral Basada en Esquema Real (Versión Giga) -->
+    <div class="modal fade" id="modalGigaEdicion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-dark py-3">
@@ -527,7 +375,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <form id="form-edit-full" enctype="multipart/form-data">
+                    <form id="form-reforzamiento-giga" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" id="ef-id" name="id">
                         

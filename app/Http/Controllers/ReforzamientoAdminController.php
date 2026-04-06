@@ -103,16 +103,16 @@ class ReforzamientoAdminController extends Controller
                             <i class="mdi mdi-eye text-primary"></i>
                          </a>';
 
+                // Botón Editar (Lápiz) - Ahora para TODOS
+                $btn .= '<a href="javascript:void(0);" onclick="editInscripcion(' . $row->id . ')" class="btn-action-reforzamiento" title="Editar Expediente">
+                            <i class="mdi mdi-pencil text-info"></i>
+                         </a>';
+
                 if ($row->estado_inscripcion === 'pendiente') {
                     $btn .= '<button type="button" class="btn-action-reforzamiento" onclick="approve(' . $row->id . ')" title="Aprobar Inscripción">
                                 <i class="mdi mdi-check-bold text-success"></i>
                              </button>';
                 } else {
-                    // Botón Editar (Lápiz)
-                    $btn .= '<a href="javascript:void(0);" onclick="editInscripcion(' . $row->id . ')" class="btn-action-reforzamiento" title="Editar Expediente">
-                                <i class="mdi mdi-pencil text-info"></i>
-                             </a>';
-
                     // Botón Imprimir (Impresora)
                     $btn .= '<a href="' . route('admin.reforzamiento.print', $row->id) . '" target="_blank" class="btn-action-reforzamiento" title="Imprimir Constancia">
                                 <i class="mdi mdi-printer text-dark"></i>
