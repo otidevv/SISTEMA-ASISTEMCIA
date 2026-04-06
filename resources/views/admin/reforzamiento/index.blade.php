@@ -782,14 +782,15 @@
         }
 
         function editInscripcion(id) {
-            $('#form-edit-full')[0].reset(); 
-            $('#loading-expediente').show(); 
+            const form = document.getElementById('form-reforzamiento-giga');
+            if (form) form.reset();
             
             $.get("{{ url('admin/reforzamiento') }}/" + id, data => {
                 const s = data.estudiante;
                 const insc = data;
                 const p = (insc.pagos && insc.pagos.length > 0) ? insc.pagos[0] : {};
 
+                // Cargar IDs y textos
                 $('#ef-id').val(insc.id);
                 $('#ef-dni').val(s.numero_documento);
                 $('#ef-nombre').val(s.nombre);
@@ -797,57 +798,58 @@
                 $('#ef-materno').val(s.apellido_materno);
                 $('#ef-telefono').val(s.telefono);
                 
-                // Datos Académicos
+                // Académicos
                 $('#ef-grado').val(insc.grado);
                 $('#ef-turno').val(insc.turno);
                 $('#ef-colegio').val(insc.colegio_procedencia);
 
-                // Datos de Pago
+                // Pagos
                 $('#ef-pago-recibo').val(p.numero_operacion);
                 $('#ef-pago-monto').val(p.monto);
                 $('#ef-pago-mes').val(p.mes_pagado);
                 
-                // Observaciones
                 $('#ef-observaciones').val(insc.observaciones);
                 
-                $('#modalEditFull').modal('show');
+                $('#modalGigaEdicion').modal('show');
             }).fail(() => {
                 toastr.error('No se pudieron cargar los datos del expediente.');
             });
         }
 
-        $('#form-edit-full').on('submit', function(e) {
-            e.preventDefault();
-            const id = $('#ef-id').val();
-            const fd = new FormData(this);
+        $(document).ready(function() {
+            $('#form-reforzamiento-giga').on('submit', function(e) {
+                e.preventDefault();
+                const id = $('#ef-id').val();
+                const fd = new FormData(this);
 
-            Swal.fire({
-                title: '¿Confirmar Cambios?',
-                text: "Se actualizará la información del expediente.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, guardar ahora',
-                cancelButtonText: 'Revisar'
-            }).then((r) => {
-                if (r.isConfirmed) {
-                    $('#btn-save-full').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> PROCESANDO...');
-                    
-                    $.ajax({
-                        url: "{{ url('admin/reforzamiento') }}/" + id + "/update-data",
-                        type: 'POST',
-                        data: fd,
-                        processData: false,
-                        contentType: false
-                    }).done(res => {
-                        toastr.success(res.message);
-                        $('#modalEditFull').modal('hide');
-                        table.ajax.reload(null, false);
-                    }).fail(err => {
-                        Swal.fire('Error', 'No se pudo actualizar el expediente. Verifique los datos.', 'error');
-                    }).always(() => {
-                        $('#btn-save-full').prop('disabled', false).html('<i class="mdi mdi-content-save-check-outline mr-1"></i> GUARDAR CAMBIO AHORA');
-                    });
-                }
+                Swal.fire({
+                    title: '¿Confirmar Cambios?',
+                    text: "Se actualizará la información del expediente.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, guardar ahora',
+                    cancelButtonText: 'Revisar'
+                }).then((r) => {
+                    if (r.isConfirmed) {
+                        $('#btn-save-full').prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> PROCESANDO...');
+                        
+                        $.ajax({
+                            url: "{{ url('admin/reforzamiento') }}/" + id + "/update-data",
+                            type: 'POST',
+                            data: fd,
+                            processData: false,
+                            contentType: false
+                        }).done(res => {
+                            toastr.success(res.message);
+                            $('#modalGigaEdicion').modal('hide');
+                            if (typeof table !== 'undefined') table.ajax.reload(null, false);
+                        }).fail(err => {
+                            Swal.fire('Error', 'No se pudo actualizar el expediente.', 'error');
+                        }).always(() => {
+                            $('#btn-save-full').prop('disabled', false).html('<i class="mdi mdi-content-save-check-outline mr-2 me-2"></i> ACTUALIZAR REGISTRO COMPLETO');
+                        });
+                    }
+                });
             });
         });
 
