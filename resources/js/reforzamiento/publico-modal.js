@@ -1085,6 +1085,10 @@ async function handleFinalSubmit(e) {
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
         });
         const res = await r.json();
+        
+        // CERRAR EL TOAST DE CARGA
+        Swal.close();
+
         if (res.success) {
             // Mostrar Vista de Éxito Ultra-Premium
             const modalBody = document.querySelector('.rf-body');
