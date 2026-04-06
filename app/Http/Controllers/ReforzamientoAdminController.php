@@ -98,24 +98,25 @@ class ReforzamientoAdminController extends Controller
                 $btn = '<div class="text-center">
                             <div class="d-flex justify-content-center">';
                 
-                $btn .= '<button type="button" class="btn-action-reforzamiento" onclick="viewDetails(' . $row->id . ')" title="Ver Expediente">
+                // Botón Ver Detalle (Ojito)
+                $btn .= '<a href="javascript:void(0);" onclick="viewDetails(' . $row->id . ')" class="btn-action-reforzamiento" title="Ver Expediente">
                             <i class="mdi mdi-eye text-primary"></i>
-                         </button>';
+                         </a>';
 
                 if ($row->estado_inscripcion === 'pendiente') {
                     $btn .= '<button type="button" class="btn-action-reforzamiento" onclick="approve(' . $row->id . ')" title="Aprobar Inscripción">
                                 <i class="mdi mdi-check-bold text-success"></i>
                              </button>';
                 } else {
-                    // Botón Editar
-                $btn .= '<button type="button" class="btn btn-soft-primary btn-sm rounded-circle me-1" onclick="editInscripcion(' . $row->id . ')" title="Editar Expediente">
-                            <i class="mdi mdi-pencil fs-14"></i>
-                        </button>';
+                    // Botón Editar (Lápiz)
+                    $btn .= '<a href="javascript:void(0);" onclick="editInscripcion(' . $row->id . ')" class="btn-action-reforzamiento" title="Editar Expediente">
+                                <i class="mdi mdi-pencil text-info"></i>
+                             </a>';
 
-                // Botón Imprimir
-                $btn .= '<a href="' . route('admin.reforzamiento.print', $row->id) . '" target="_blank" class="btn btn-soft-dark btn-sm rounded-circle me-1" title="Imprimir Constancia">
-                            <i class="mdi mdi-printer fs-14"></i>
-                        </a>';
+                    // Botón Imprimir (Impresora)
+                    $btn .= '<a href="' . route('admin.reforzamiento.print', $row->id) . '" target="_blank" class="btn-action-reforzamiento" title="Imprimir Constancia">
+                                <i class="mdi mdi-printer text-dark"></i>
+                             </a>';
                 }
 
                 if ($row->estudiante && $row->estudiante->telefono) {
