@@ -125,22 +125,59 @@ class ReforzamientoApiController extends BaseController
         }
 
         // 3. Consultar Pagos AUTOMÁTICOS
-        $pagos = $this->paymentService->validateVoucher($dni, null);
+        $pagosRaw = $this->paymentService->validateVoucher($dni, null);
         $pagoEncontrado = null;
-        if ($pagos) {
-            foreach ($pagos as $pago) {
-                if ((float)($pago['total'] ?? $pago['monto_total']) >= 200) {
-                    $pagoEncontrado = $pago;
-                    break;
+        $yearActual = '2026'; // Forzamos año actual o lo detectamos de Carbon::now()->year
+
+        if ($pagosRaw) {
+            $recibosProcesados = [];
+
+            foreach ($pagosRaw as $voucher) {
+                $serial = $voucher['serial_voucher'] ?? 'AUTO';
+                $totalRecibo = 0;
+                $hayReforzamiento = false;
+                $fechaPago = null;
+
+                if (!isset($voucher['payments']) || !is_array($voucher['payments'])) continue;
+
+                foreach ($voucher['payments'] as $p) {
+                    $desc = strtoupper($p['description'] ?? '');
+                    $status = (int)($p['status'] ?? 0);
+                    $monto = (float)($p['total'] ?? $p['monto_total'] ?? 0);
+                    $yearPago = substr($p['paymentDate'] ?? '', 0, 4);
+
+                    // Filtros estrictos: Solo Reforzamiento, de este año y Pagado (status 2)
+                    if (str_contains($desc, 'REFORZAMIENTO') && $yearPago === $yearActual && $status === 2) {
+                        $totalRecibo += $monto;
+                        $hayReforzamiento = true;
+                        $fechaPago = $p['paymentDate'];
+                    }
                 }
+
+                if ($hayReforzamiento && $totalRecibo >= 200) {
+                    $recibosProcesados[] = [
+                        'serial_voucher' => $serial,
+                        'monto' => $totalRecibo,
+                        'paymentDate' => $fechaPago,
+                        'description' => 'REFORZAMIENTO ESCOLAR (API SUM)'
+                    ];
+                }
+            }
+
+            // Ordenar por fecha descendente y tomar el más reciente
+            if (count($recibosProcesados) > 0) {
+                usort($recibosProcesados, function($a, $b) {
+                    return strcmp($b['paymentDate'], $a['paymentDate']);
+                });
+                $pagoEncontrado = $recibosProcesados[0];
+                // Formatear para que el frontend lo entienda como un objeto de pago estándar
+                $pagoEncontrado['total'] = $pagoEncontrado['monto'];
             }
         }
 
         // PROFESIONAL: Buscar el ciclo académico oficial de REFORZAMIENTO activo
-        $ciclo = Ciclo::where('es_activo', true)->where('programa_id', 2)->first();
-        if (!$ciclo) {
-            $ciclo = Ciclo::where('es_activo', true)->where('programa_id', 2)->first(); // Fallback
-        }
+        $ciclo = Ciclo::where('es_activo', true)->where('programa_id', 2)->first() 
+                 ?? Ciclo::where('es_activo', true)->where('nombre', 'like', '%REFORZAMIENTO%')->first();
 
         if (!$ciclo) {
             return $this->sendError('Operación bloqueada: No se encontró un ciclo académico activo para Reforzamiento.', [], 404);
