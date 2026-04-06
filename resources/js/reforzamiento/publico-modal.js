@@ -351,9 +351,9 @@ async function verifyDni() {
                 pagoDetectado = false;
                 document.getElementById('ref_pago_api_serial').value = "";
                 document.getElementById('ref_es_manual').value = "1";
-                resultDiv.innerHTML = `
+                 resultDiv.innerHTML = `
                     <div class="rf-alert rf-alert-warning">
-                        <i class="material-icons-round">payments</i>
+                        <i class="fas fa-exclamation-circle" style="font-size: 1.5rem;"></i>
                         <div><strong>Pago no detectado:</strong> Adjunta voucher en paso 4.</div>
                     </div>`;
                 document.getElementById('planBBox').style.display = 'block';

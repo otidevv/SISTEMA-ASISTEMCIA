@@ -138,9 +138,10 @@ class ReforzamientoApiController extends BaseController
                 $hayReforzamiento = false;
                 $fechaPago = null;
 
-                if (!isset($voucher['payments']) || !is_array($voucher['payments'])) continue;
+                $items = $voucher['items'] ?? $voucher['payments'] ?? [];
+                if (empty($items)) continue;
 
-                foreach ($voucher['payments'] as $p) {
+                foreach ($items as $p) {
                     $desc = strtoupper($p['description'] ?? '');
                     $status = (int)($p['status'] ?? 0);
                     $monto = (float)($p['total'] ?? $p['monto_total'] ?? 0);

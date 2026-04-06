@@ -1019,7 +1019,7 @@
                                         Programa de Reforzamiento
                                     </h5>
                                     <span class="rf-badge rf-badge-magenta" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
-                                        <span class="material-icons-round" style="font-size:1rem;">payments</span>
+                                        <i class="fas fa-coins" style="font-size:1rem; opacity: 0.8; margin-right: 0.4rem;"></i>
                                         S/. 200.00 /mes
                                     </span>
                                     <div id="ref_ciclo_badge" style="margin-top:0.5rem; display: {{ $cicloActivoRef ? 'block' : 'none' }};">
@@ -1042,7 +1042,7 @@
                         </div>
 
                         <div id="planBBox" class="rf-alert rf-alert-info" style="display:none; margin-top:1rem;">
-                            <span class="material-icons-round">payment</span>
+                            <i class="fas fa-money-bill-wave" style="margin-right:0.5rem; color:var(--rf-cyan);"></i>
                             <div style="flex:1;">
                                 <strong>¿Ya pagaste y no aparece?</strong> Si tu pago no se valida automáticamente, puedes adjuntar el voucher manualmente más adelante.
                                 <button type="button" id="btnPlanB" class="rf-btn rf-btn-outline" style="margin-top:0.5rem; height:2.5rem; font-size:0.8rem;">
@@ -1231,7 +1231,7 @@
                                 <div class="rf-dropzone" id="dropzone_voucher" style="border-color: var(--rf-magenta);">
                                     <input type="file" name="voucher_file" accept=".pdf,image/*" required>
                                     <div class="rf-dropzone-content" style="flex-direction: column; gap: 0.5rem;">
-                                        <i class="material-icons-round" style="font-size: 2.5rem; color: var(--rf-magenta);">monetization_on</i>
+                                        <i class="fas fa-receipt" style="font-size: 2.5rem; color: var(--rf-magenta);"></i>
                                         <strong style="font-size: 0.9rem; color: var(--rf-navy);">Arrastra tu Voucher aquí</strong>
                                         <p style="margin: 0; font-size: 0.75rem; color: var(--rf-magenta); font-weight:800;">Obligatorio para validación</p>
                                     </div>

@@ -75,10 +75,14 @@ class PaymentValidationService
                                 $foundVouchers[$serial]['monto_ensenanza'] += $monto;
                             }
 
-                            $foundVouchers[$serial]['items'][] = [
-                                'descripcion' => $desc,
-                                'monto' => number_format($monto, 2, '.', ''),
-                            ];
+                                $foundVouchers[$serial]['items'][] = [
+                                    'descripcion' => $desc,
+                                    'description' => $desc, // Aliasing para consistencia
+                                    'monto' => number_format($monto, 2, '.', ''),
+                                    'concept_id' => $detail['concept_id'] ?? $detail['id_concepto'] ?? 0,
+                                    'paymentDate' => $detail['paymentDate'] ?? null,
+                                    'status' => $detail['status'] ?? 0,
+                                ];
                         }
                     }
                 }
