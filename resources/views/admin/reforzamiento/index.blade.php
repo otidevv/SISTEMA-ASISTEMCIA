@@ -256,12 +256,7 @@
                                     <div class="mt-4 pt-4 border-top">
                                         <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Acciones Administrativas</h6>
                                         <div class="d-grid gap-2" id="panel-acciones">
-                                            <button type="button" id="btn-edit-exp" class="btn btn-outline-primary btn-sm px-3 shadow-none fw-bold" onclick="toggleEditMode()">
-                                                <i class="mdi mdi-pencil mr-1"></i> EDITAR DATOS
-                                            </button>
-                                            <button type="button" id="btn-save-exp" class="btn btn-success btn-sm px-3 shadow-none fw-bold d-none" onclick="saveExpediente()">
-                                                <i class="mdi mdi-content-save mr-1"></i> GUARDAR CAMBIOS
-                                            </button>
+
                                             <button id="btn-validar-modal" type="button" class="btn btn-primary btn-sm px-3 shadow-none fw-bold d-none" onclick="approveInscripcion()">
                                                 <i class="mdi mdi-check-circle mr-1"></i> VALIDAR INSCRIPCIÓN
                                             </button>
@@ -885,105 +880,7 @@
             });
         });
 
-        function toggleEditMode() {
-            const isEditing = !$('#btn-save-exp').hasClass('d-none');
-            const currentId = $('#modalExpediente').data('id');
 
-            if (!isEditing) {
-                // Entrar a modo edición
-                $('#btn-edit-exp').html('<i class="mdi mdi-close"></i> CANCELAR').removeClass('btn-outline-primary').addClass('btn-outline-danger');
-                $('#btn-save-exp').removeClass('d-none');
-                
-                // Convertir textos a inputs
-                const name = $('#exp-nombre').text();
-                const phone = $('#exp-telefono').text();
-                const monto = $('#exp-pago-monto').text().replace('S/. ', '');
-                const grado = $('#exp-grado').text();
-                const seccion = $('#exp-turno').text();
-
-                $('#exp-nombre').html(`<input type="text" id="edit-nombre" class="form-control form-control-sm" value="${name}">`);
-                $('#exp-telefono').html(`<input type="text" id="edit-telefono" class="form-control form-control-sm" value="${phone === '---' ? '' : phone}">`);
-                $('#exp-pago-monto').html(`S/. <input type="number" id="edit-monto" class="form-control form-control-sm d-inline-block w-50" value="${monto}">`);
-                
-                // --- Inputs para Archivos ---
-                $('<div class="file-edit-box mt-1"><input type="file" id="edit-dni-file" class="form-control form-control-xs" accept="application/pdf"></div>').insertAfter('#link-dni');
-                $('<div class="file-edit-box mt-1"><input type="file" id="edit-voucher-file" class="form-control form-control-xs" accept="application/pdf,image/*"></div>').insertAfter('#link-voucher');
-                $('<div class="file-edit-box mt-1"><input type="file" id="edit-compromiso-file" class="form-control form-control-xs" accept="application/pdf"></div>').insertAfter('#link-compromiso');
-
-                // Grado Select
-                $('#exp-grado').html(`
-                    <select id="edit-grado" class="form-control form-control-sm">
-                        <option value="1" ${grado.includes('1') ? 'selected' : ''}>1ero Secundaria</option>
-                        <option value="2" ${grado.includes('2') ? 'selected' : ''}>2do Secundaria</option>
-                        <option value="3" ${grado.includes('3') ? 'selected' : ''}>3ero Secundaria</option>
-                        <option value="4" ${grado.includes('4') ? 'selected' : ''}>4to Secundaria</option>
-                        <option value="5" ${grado.includes('5') ? 'selected' : ''}>5to Secundaria</option>
-                    </select>
-                `);
-
-                // Turno Select
-                $('#exp-turno').html(`
-                    <select id="edit-seccion" class="form-control form-control-sm">
-                        <option value="A" ${seccion === 'A' ? 'selected' : ''}>Turno A (Mañana)</option>
-                        <option value="B" ${seccion === 'B' ? 'selected' : ''}>Turno B (Tarde)</option>
-                    </select>
-                `);
-            } else {
-                // Cancelar edición (recargar datos)
-                $('.file-edit-box').remove();
-                viewDetails(currentId);
-                $('#btn-edit-exp').html('<i class="mdi mdi-pencil"></i> EDITAR DATOS').removeClass('btn-outline-danger').addClass('btn-outline-primary');
-                $('#btn-save-exp').addClass('d-none');
-            }
-        }
-
-        function saveExpediente() {
-            const id = $('#modalExpediente').data('id');
-            const fd = new FormData();
-            fd.append('_token', '{{ csrf_token() }}');
-            fd.append('nombre', $('#edit-nombre').val());
-            fd.append('telefono', $('#edit-telefono').val());
-            fd.append('grado', $('#edit-grado').val());
-            fd.append('seccion', $('#edit-seccion').val());
-            fd.append('monto_pago', $('#edit-monto').val());
-
-            // Archivos si existen
-            const dniFile = $('#edit-dni-file')[0].files[0];
-            const voucherFile = $('#edit-voucher-file')[0].files[0];
-            const compromisoFile = $('#edit-compromiso-file')[0].files[0];
-
-            if (dniFile) fd.append('dni_file', dniFile);
-            if (voucherFile) fd.append('voucher_file', voucherFile);
-            if (compromisoFile) fd.append('compromiso_file', compromisoFile);
-
-            Swal.fire({
-                title: '¿Guardar Cambios?',
-                text: "Se actualizará el expediente incluyendo los nuevos archivos si los hay.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, guardar',
-                cancelButtonText: 'Cancelar'
-            }).then((r) => {
-                if (r.isConfirmed) {
-                    $.ajax({
-                        url: "{{ url('admin/reforzamiento') }}/" + id + "/update-data",
-                        type: 'POST',
-                        data: fd,
-                        processData: false,
-                        contentType: false
-                    }).done(res => {
-                        toastr.success(res.message);
-                        $('.file-edit-box').remove();
-                        $('#btn-save-exp').addClass('d-none');
-                        $('#btn-edit-exp').html('<i class="mdi mdi-pencil"></i> EDITAR DATOS').removeClass('btn-outline-danger').addClass('btn-outline-primary');
-                        viewDetails(id);
-                        table.ajax.reload(null, false);
-                    }).fail(err => {
-                        Swal.fire('Error', 'No se pudieron guardar los cambios.', 'error');
-                    });
-                }
-            });
-        }
 
         function deleteRecord(id) {
             Swal.fire({
