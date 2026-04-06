@@ -319,8 +319,9 @@ class ReforzamientoApiController extends BaseController
                 ]);
             }
 
-            // Notificaciones
-            // Notificaciones en Tiempo Real (Reverb) síncrono pero protegido
+            DB::commit();
+
+            // Notificaciones en Tiempo Real (Reverb) - Ejecuatadas DESPUÉS del commit para evitar race conditions
             try {
                 $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
                 
@@ -339,10 +340,9 @@ class ReforzamientoApiController extends BaseController
                     );
                 }
             } catch (\Exception $e) { 
-                // Error silenciado para que no interrumpa el registro exitoso
+                // Error silenciado para no afectar la respuesta al cliente
             }
 
-            DB::commit();
             return $this->sendResponse($inscripcion, '¡Inscripción exitosa! Tu solicitud está en proceso.');
 
         } catch (\Exception $e) {

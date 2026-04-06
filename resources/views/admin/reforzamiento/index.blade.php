@@ -372,7 +372,7 @@
                     { data: 'semaforo_pagos', className: 'text-center' },
                     { data: 'acciones', className: 'text-center', orderable: false }
                 ],
-                language: { url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" },
+                language: { url: "{{ asset('assets/libs/datatables.net/i18n/Spanish.json') }}" },
                 drawCallback: function() {
                     // Animación sutil al redibujar la tabla
                     $('.badge').addClass('animate__animated animate__fadeIn');
@@ -380,16 +380,12 @@
             });
             $('#filtroCiclo').on('change', () => table.ajax.reload());
 
-            // --- ESCUCHA EN TIEMPO REAL (REVERB) ---
-            if (typeof Echo !== 'undefined') {
-                Echo.channel('postulaciones')
-                    .listen('.NuevaPostulacionCreada', (e) => {
-                        // Recargar tabla sutilmente
-                        if (typeof table !== 'undefined') {
-                            table.ajax.reload(null, false);
-                        }
-                    });
-            }
+            window.reforzamientoDataTable = table; // Para que el escuchador global en header.blade.php lo detecte
+
+            // Animación al redibujar
+            table.on('draw', function() {
+                $('.badge').addClass('animate__animated animate__fadeIn');
+            });
         });
 
         function animateCounter(id, target) {

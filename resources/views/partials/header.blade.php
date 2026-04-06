@@ -369,23 +369,34 @@
                                 updateNotifications();
                             }
 
-                            // 3. Recargar tabla si estamos en la página de postulaciones
-                            const dt = typeof window.postulacionesDataTable !== 'undefined' ? 
-                                       window.postulacionesDataTable : 
-                                       (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable('#postulaciones-datatable') ? $('#postulaciones-datatable').DataTable() : null);
-                                       
-                            if (dt) {
-                                dt.ajax.reload(() => {
-                                    // Pintar la fila de verde si existe
-                                    $('#postulaciones-datatable tbody tr').each(function() {
-                                        if ($(this).text().includes(e.nombre)) {
-                                            const fila = $(this);
-                                            fila.css({'background-color': '#d4edda', 'transition': 'background-color 1.5s ease'});
-                                            setTimeout(() => fila.css('background-color', ''), 6000);
-                                        }
-                                    });
-                                }, false);
-                            }
+                            // 3. Recargar tablas si existen en la página actual
+                            const tablesToReload = [
+                                { id: '#postulaciones-datatable', globalVar: 'window.postulacionesDataTable' },
+                                { id: '#reforzamientoTable', globalVar: 'window.reforzamientoDataTable' }
+                            ];
+
+                            tablesToReload.forEach(tableInfo => {
+                                let dt = null;
+                                // Intentar obtener por variable global o por ID directo
+                                if (typeof window !== 'undefined' && tableInfo.globalVar.split('.').reduce((o, i) => o?.[i], window)) {
+                                    dt = tableInfo.globalVar.split('.').reduce((o, i) => o?.[i], window);
+                                } else if (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable(tableInfo.id)) {
+                                    dt = $(tableInfo.id).DataTable();
+                                }
+
+                                if (dt) {
+                                    dt.ajax.reload(() => {
+                                        // Efecto visual: Pintar la fila de éxito temporalmente
+                                        $(`${tableInfo.id} tbody tr`).each(function() {
+                                            if ($(this).text().includes(e.nombre) || $(this).text().includes(e.dni)) {
+                                                const fila = $(this);
+                                                fila.css({'background-color': '#d4edda', 'transition': 'background-color 1.5s ease'});
+                                                setTimeout(() => fila.css('background-color', ''), 5000);
+                                            }
+                                        });
+                                    }, false);
+                                }
+                            });
                         });
                 }
             });
