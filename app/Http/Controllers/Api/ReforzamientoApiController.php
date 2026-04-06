@@ -150,6 +150,7 @@ class ReforzamientoApiController extends BaseController
                     // FILTRADO QUIRÚRGICO (Concepto Oficial 598 de UNAMAD)
                     $isReforzamiento = str_contains($desc, 'REFORZAMIENTO PARA ESTUDIANTES DE SECUNDARIA CEPRE') 
                                     || str_contains($desc, 'SECUNDARIA CEPRE')
+                                    || str_contains($desc, '598')
                                     || ($p['concept_id'] ?? $p['id_concepto'] ?? 0) == 598;
                     
                     if ($isReforzamiento && $yearPago === $yearActual && $status === 2) {

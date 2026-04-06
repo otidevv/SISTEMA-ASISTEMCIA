@@ -79,6 +79,7 @@ class PaymentValidationService
                                     'descripcion' => $desc,
                                     'description' => $desc, // Aliasing para consistencia
                                     'monto' => number_format($monto, 2, '.', ''),
+                                    'total' => $monto, // Agregado para compatibilidad con el controlador
                                     'concept_id' => $detail['concept_id'] ?? $detail['id_concepto'] ?? 0,
                                     'paymentDate' => $detail['paymentDate'] ?? null,
                                     'status' => $detail['status'] ?? 0,
