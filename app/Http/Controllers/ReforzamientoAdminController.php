@@ -165,8 +165,7 @@ class ReforzamientoAdminController extends Controller
                 $pago->save();
             }
 
-            // Actualizar total_pagado de la inscripción sumando todos los pagos aprobados
-            $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+            // El total pagado se calcula dinámicamente sumando los pagos aprobados
             $inscripcion->save();
             
             // Generar nro_constancia secuencial basado en el ciclo
@@ -272,8 +271,7 @@ class ReforzamientoAdminController extends Controller
                 if ($request->has('mes_pagado')) $pago->mes_pagado = $request->mes_pagado;
                 $pago->save();
                 
-                // Sincronizar el total de la inscripción
-                $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+                // El total se calcula dinámicamente
                 $inscripcion->save();
             }
 
