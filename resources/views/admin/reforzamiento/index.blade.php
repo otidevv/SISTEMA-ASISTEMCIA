@@ -941,8 +941,19 @@
                 $('#ef-telefono').val(s.telefono);
                 $('#ef-email').val(s.email);
                 
-                $('#ef-grado').val(insc.grado);
-                $('#ef-turno').val(insc.turno ? insc.turno.toUpperCase() : 'A');
+                // Mapeo Inteligente de Grado
+                let gradoRaw = (insc.grado || '').toString().toLowerCase();
+                if (gradoRaw.includes('1')) $('#ef-grado').val('1');
+                else if (gradoRaw.includes('2')) $('#ef-grado').val('2');
+                else if (gradoRaw.includes('3')) $('#ef-grado').val('3');
+                else if (gradoRaw.includes('4')) $('#ef-grado').val('4');
+                else if (gradoRaw.includes('5')) $('#ef-grado').val('5');
+
+                // Mapeo Inteligente de Turno
+                let turnoRaw = (insc.turno || '').toString().toUpperCase();
+                if (turnoRaw.includes('MAÑANA') || turnoRaw.includes('A')) $('#ef-turno').val('A');
+                else if (turnoRaw.includes('TARDE') || turnoRaw.includes('B')) $('#ef-turno').val('B');
+
                 $('#ef-monto').val(insc.pagos[0] ? insc.pagos[0].monto : 0);
                 
                 $('#modalEditFull').modal('show');
