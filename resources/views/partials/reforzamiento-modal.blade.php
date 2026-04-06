@@ -86,6 +86,12 @@
     #reforzamientoModal.modal-open .rf-container {
         transform: scale(1) translateY(0);
     }
+    .rf-container.rf-container-success {
+        max-width: 650px !important;
+        min-height: auto !important;
+        transition: all 0.5s var(--rf-transition);
+        margin: auto;
+    }
 
     /* ====== SIDEBAR ====== */
     .rf-sidebar {

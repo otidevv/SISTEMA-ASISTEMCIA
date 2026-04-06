@@ -1094,11 +1094,12 @@ async function handleFinalSubmit(e) {
             const modalBody = document.querySelector('.rf-body');
             const wizardLayout = document.querySelector('.rf-layout'); 
             
-            // Si no encontramos el layout rf-layout, usamos el modal body directo
-            const targetContainer = wizardLayout || modalBody;
+            // Achicar el modal para que no se vea vacío
+            const container = document.querySelector('.rf-container');
+            if (container) container.classList.add('rf-container-success');
 
             targetContainer.innerHTML = `
-                <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+                <div class="text-center py-5 animate__animated animate__fadeIn" style="background:#fff; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 500px; padding: 2rem;">
                     <div class="mb-4 text-center">
                         <div style="width: 100px; height: 100px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
                             <i class="material-icons-round" style="font-size: 5rem; color: #10b981;" class="animate__animated animate__bounceIn">check_circle</i>
