@@ -37,8 +37,16 @@
         .fingerprint-box { border: 1px solid #ccc; width: 70px; height: 90px; margin: 10px auto; }
         
         .watermark { position: fixed; top: 40%; left: 15%; font-size: 60pt; color: rgba(0, 0, 0, 0.03); transform: rotate(-45deg); z-index: -1; pointer-events: none; }
+        .footer-document { position: fixed; bottom: -10px; left: 0; right: 0; text-align: center; font-size: 8pt; color: #777; border-top: 1px solid #eee; padding-top: 10px; }
     </style>
 </head>
+@php
+    $nroConstancia = $inscripcion->nro_constancia ?? 'N-' . $inscripcion->id;
+    $nombreAlumno = mb_strtoupper(($estudiante->apellido_paterno ?? '') . ' ' . ($estudiante->apellido_materno ?? '') . ', ' . ($estudiante->nombre ?? ''));
+    $qrText = "CONSTANCIA REFORZAMIENTO\nNRO: $nroConstancia\nDNI: {$estudiante->numero_documento}\nALUMNO: $nombreAlumno";
+    $qrCodeBase64 = base64_encode(QrCode::format('png')->size(450)->margin(0)->color(0, 0, 0)->generate($qrText));
+@endphp
+
 <body>
     <div class="watermark">INSCRIPCIÓN REFORZAMIENTO</div>
 
@@ -53,7 +61,11 @@
     </div>
 
     <div class="title-box">
-        <h3>Constancia de Inscripción N° {{ $inscripcion->nro_constancia ?? $inscripcion->id }}</h3>
+        <h3 style="margin-bottom: 5px;">Constancia de Inscripción N° {{ $inscripcion->nro_constancia ?? 'N-'.$inscripcion->id }}</h3>
+        <p style="margin: 0; font-size: 9pt; color: #003366; font-weight: bold;">{{ strtoupper($ciclo->nombre ?? 'Reforzamiento Académico Escolar') }}</p>
+        @if($ciclo && $ciclo->fecha_inicio)
+        <p style="margin: 5px 0 0; font-size: 8pt; color: #555;">Inicio de Actividades: {{ \Carbon\Carbon::parse($ciclo->fecha_inicio)->format('d/m/Y') }}</p>
+        @endif
     </div>
 
     <div class="main-container">
@@ -101,7 +113,12 @@
                     <div style="width:120px; height:150px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999;">SIN FOTO</div>
                 @endif
             </div>
-            <p style="font-size: 8pt; margin-top: 5px; font-weight: bold; color: #003366;">IDENTIFICACIÓN</p>
+            
+            <div style="margin-top: 15px; border: 1px solid #eee; padding: 5px; display: inline-block; background: #fff;">
+                <img src="data:image/png;base64, {{ $qrCodeBase64 }} " style="width: 85px; height: 85px;">
+                <p style="font-size: 7pt; margin: 5px 0 0; font-weight: bold; color: #003366;">VALIDACIÓN QR</p>
+                <div style="font-size: 6pt; color: #999; margin-top: 3px; max-width: 100px; line-height: 1.1;">Veracidad verificable mediante escaneo digital</div>
+            </div>
         </div>
     </div>
 
@@ -121,23 +138,32 @@
         </table>
     </div>
 
-    <div class="footer-signatures">
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <strong>Firma del Estudiante</strong><br>
-            DNI: {{ $estudiante->numero_documento }}
-        </div>
-        <div style="display: inline-block; width: 5%;"></div>
-        <div class="signature-box">
-            <div class="fingerprint-box"></div>
-            <strong>Huella Digital</strong><br>
-            (Índice Derecho)
-        </div>
+    <div class="footer-signatures" style="margin-top: 40px;">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 33%; text-align: center; vertical-align: bottom;">
+                    <div class="signature-line" style="width: 85%; margin: 60px auto 5px;"></div>
+                    <strong style="font-size: 9pt;">Firma del Estudiante</strong><br>
+                    <span style="font-size: 8pt;">DNI: {{ $estudiante->numero_documento }}</span>
+                </td>
+                <td style="width: 34%; text-align: center; vertical-align: top;">
+                    <div class="fingerprint-box" style="margin: 0 auto 5px;"></div>
+                    <strong style="font-size: 9pt;">Huella Digital</strong><br>
+                    <span style="font-size: 7pt;">(Índice Derecho)</span>
+                </td>
+                <td style="width: 33%; text-align: center; vertical-align: bottom;">
+                    <div class="signature-line" style="width: 85%; margin: 60px auto 5px;"></div>
+                    <strong style="font-size: 9pt;">Coordinación CEPRE</strong><br>
+                    <span style="font-size: 8pt;">Dirección / Coordinador Académico</span>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <div style="margin-top: 30px; font-size: 8pt; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+
+    <div class="footer-document">
         Esta constancia certifica la reserva de vacante y participación en el programa de reforzamiento académico.<br>
-        Generado el {{ date('d/m/Y H:i:s') }} - Sistema de Asistencia UNAMAD
+        Generado el {{ date('d/m/Y H:i:s') }} - Portal CEPRE UNAMAD
     </div>
 </body>
 </html>
