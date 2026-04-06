@@ -775,6 +775,29 @@ window.consultarApoderado = async function(idx) {
     const dni = dniInput.value.trim();
     if (dni.length !== 8) return;
 
+    // VALIDACIÓN: Evitar que el estudiante sea su propio apoderado
+    const studentDni = document.getElementById('ref_dni').value.trim();
+    if (dni === studentDni) {
+        Swal.fire({ icon: 'warning', title: 'Error de Identidad', text: 'El estudiante no puede ser su propio apoderado.', confirmButtonColor: '#ec008c' });
+        dniInput.value = '';
+        return;
+    }
+
+    // VALIDACIÓN: Evitar duplicados en la lista de apoderados
+    const currentIputs = document.querySelectorAll('input[id^="ap_dni_"]');
+    let isDuplicated = false;
+    currentIputs.forEach(inp => {
+        if (inp.id !== `ap_dni_${idx}` && inp.value.trim() === dni) {
+            isDuplicated = true;
+        }
+    });
+
+    if (isDuplicated) {
+        Swal.fire({ icon: 'warning', title: 'DNI Duplicado', text: 'Este apoderado ya se encuentra en la lista.', confirmButtonColor: '#ec008c' });
+        dniInput.value = '';
+        return;
+    }
+
     const btn = dniInput.nextElementSibling;
     const oldHtml = btn.innerHTML;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; 
@@ -969,7 +992,7 @@ function generateSummary() {
                 <div class="rf-card" style="margin:0; padding:1.25rem; border: 2px solid ${pagoDetectado ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; background: ${pagoDetectado ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.02)'};">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                         <div style="font-weight: 800; font-size: 0.75rem; color: var(--rf-text-muted); text-transform: uppercase;">Estado del Pago</div>
-                        <div style="font-weight: 900; color: var(--rf-magenta); font-size: 0.95rem;">S/. 200.00</div>
+                        <div style="font-weight: 900; color: var(--rf-magenta); font-size: 0.95rem;">S/. 400.00</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <div style="width: 40px; height: 40px; border-radius: 10px; background: ${pagoDetectado ? 'var(--rf-green)' : 'var(--rf-red)'}; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">

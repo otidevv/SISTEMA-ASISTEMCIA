@@ -327,13 +327,13 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td class="ps-0 fs-14 fw-medium">REFORZAMIENTO ESCOLAR (CEPRE UNAMAD)</td>
-                                                                <td class="pe-0 text-end fw-bold">S/. 200.00</td>
+                                                                <td class="pe-0 text-end fw-bold">S/. 400.00</td>
                                                             </tr>
                                                         </tbody>
                                                         <tfoot>
                                                             <tr class="border-top">
                                                                 <td class="ps-0 pt-2 fw-bold text-dark">TOTAL PAGADO</td>
-                                                                <td class="pe-0 pt-2 text-end fw-bold text-success fs-18" id="pago-monto">S/. 200.00</td>
+                                                                <td class="pe-0 pt-2 text-end fw-bold text-success fs-18" id="pago-monto">S/. 400.00</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
