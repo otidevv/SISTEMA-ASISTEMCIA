@@ -222,39 +222,46 @@ class ReforzamientoAdminController extends Controller
 
             // 2. Actualizar Datos de Inscripción
             if ($request->has('grado')) $inscripcion->grado = $request->grado;
-            if ($request->has('seccion')) $inscripcion->seccion = $request->seccion;
+            if ($request->has('turno')) $inscripcion->turno = $request->turno;
+            if ($request->has('colegio_procedencia')) $inscripcion->colegio_procedencia = $request->colegio_procedencia;
+            if ($request->has('observaciones')) $inscripcion->observaciones = $request->observaciones;
             if ($request->has('aula_id')) $inscripcion->aula_id = $request->aula_id;
 
             // --- NUEVO: Manejo de Archivos Correctivos ---
             $path = "reforzamiento/{$estudiante->numero_documento}";
-
+            
             if ($request->hasFile('dni_file')) {
                 $inscripcion->dni_estudiante_path = $request->file('dni_file')->store($path, 'public');
             }
             if ($request->hasFile('voucher_file')) {
-                $pago = $inscripcion->pagos()->first();
-                if ($pago) {
-                    $pago->voucher_path = $request->file('voucher_file')->store($path, 'public');
-                    $pago->save();
-                }
+                $inscripcion->voucher_path = $request->file('voucher_file')->store($path, 'public');
             }
             if ($request->hasFile('compromiso_file')) {
-                $inscripcion->compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+                $inscripcion->carta_compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+            }
+            if ($request->hasFile('certificado_file')) {
+                $inscripcion->certificado_path = $request->file('certificado_file')->store($path, 'public');
+            }
+            if ($request->hasFile('dni_apoderado_file')) {
+                $inscripcion->dni_apoderado_path = $request->file('dni_apoderado_file')->store($path, 'public');
+            }
+            if ($request->hasFile('foto_file')) {
+                $inscripcion->foto_path = $request->file('foto_file')->store($path, 'public');
             }
 
             $inscripcion->save();
 
             // 3. Actualizar Datos de Pago
-            if ($request->has('monto_pago')) {
-                $pago = $inscripcion->pagos()->where('estado_pago', 'aprobado')->first();
-                if ($pago) {
-                    $pago->monto = $request->monto_pago;
-                    $pago->save();
-                    
-                    // Sincronizar el total de la inscripción
-                    $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
-                    $inscripcion->save();
-                }
+            $pago = $inscripcion->pagos()->first();
+            if ($pago) {
+                if ($request->has('numero_operacion')) $pago->numero_operacion = $request->numero_operacion;
+                if ($request->has('monto')) $pago->monto = $request->monto;
+                if ($request->has('mes_pagado')) $pago->mes_pagado = $request->mes_pagado;
+                $pago->save();
+                
+                // Sincronizar el total de la inscripción
+                $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+                $inscripcion->save();
             }
 
             DB::commit();

@@ -516,13 +516,13 @@
         </div>
     </div>
 
-    <!-- Modal: Edición Completa y Ultra Rápida de Reforzamiento -->
+    <!-- Modal: Edición Integral Basada en Esquema Real -->
     <div class="modal fade" id="modalEditFull" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-dark py-3">
                     <h5 class="modal-title font-size-15 text-white fw-bold">
-                        <i class="mdi mdi-account-edit-outline mr-2 me-2 text-warning"></i> EDITAR EXPEDIENTE DE REFORZAMIENTO
+                        <i class="mdi mdi-database-edit-outline mr-2 me-2 text-warning"></i> GESTIÓN INTEGRAL DE EXPEDIENTE
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -532,25 +532,17 @@
                         <input type="hidden" id="ef-id" name="id">
                         
                         <div class="p-4">
-                            <!-- Banner Informativo -->
-                            <div class="alert alert-soft-info border-info d-flex align-items-center mb-4" role="alert">
-                                <i class="mdi mdi-information-outline fs-24 mr-3 me-3 text-info"></i>
-                                <div>
-                                    <span class="fw-bold fs-13">Modo de Edición Administrativa:</span> Puede modificar los datos personales, académicos y pagos. Los archivos solo se reemplazarán si selecciona uno nuevo.
-                                </div>
-                            </div>
-
                             <div class="row">
-                                <!-- Columna Datos Personales -->
-                                <div class="col-lg-7 border-end px-4">
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">1. Datos del Estudiante</h6>
+                                <!-- Columna Datos del Estudiante (Persona) -->
+                                <div class="col-lg-6 border-end px-4">
+                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">1. Estudiante e Identidad</h6>
                                     
                                     <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label text-muted fs-11 mb-1">DNI (No editable)</label>
+                                        <div class="col-md-5">
+                                            <label class="form-label text-muted fs-11 mb-1">DNI (Identificador)</label>
                                             <input type="text" id="ef-dni" class="form-control bg-light fw-bold shadow-none" readonly>
                                         </div>
-                                        <div class="col-md-8">
+                                        <div class="col-md-7">
                                             <label class="form-label text-muted fs-11 mb-1">Nombres</label>
                                             <input type="text" name="nombre" id="ef-nombre" class="form-control shadow-none">
                                         </div>
@@ -567,93 +559,109 @@
                                         </div>
                                     </div>
 
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted fs-11 mb-1">Teléfono Móvil</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-light border-end-0"><i class="mdi mdi-phone text-muted font-size-15"></i></span>
-                                                <input type="text" name="telefono" id="ef-telefono" class="form-control shadow-none border-start-0">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted fs-11 mb-1">Teléfono Móvil</label>
+                                        <input type="text" name="telefono" id="ef-telefono" class="form-control shadow-none">
+                                    </div>
+
+                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mt-4 mb-3" style="letter-spacing: 1px;">2. Configuración Académica</h6>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted fs-11 mb-1">Grado</label>
+                                            <select name="grado" id="ef-grado" class="form-select shadow-none">
+                                                <option value="1ero Secundaria">1ero Secundaria</option>
+                                                <option value="2do Secundaria">2do Secundaria</option>
+                                                <option value="3ero Secundaria">3ero Secundaria</option>
+                                                <option value="4to Secundaria">4to Secundaria</option>
+                                                <option value="5to Secundaria">5to Secundaria</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted fs-11 mb-1">Turno</label>
+                                            <select name="turno" id="ef-turno" class="form-select shadow-none">
+                                                <option value="MAÑANA">MAÑANA</option>
+                                                <option value="TARDE">TARDE</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted fs-11 mb-1">Colegio de Procedencia</label>
+                                        <input type="text" name="colegio_procedencia" id="ef-colegio" class="form-control shadow-none">
+                                    </div>
+                                </div>
+
+                                <!-- Columna Financiera y Documental -->
+                                <div class="col-lg-6 px-4">
+                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">3. Información de Pago</h6>
+                                    <div class="card p-3 border shadow-none bg-soft-info mb-4">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-2">
+                                                <label class="form-label text-muted fs-10 mb-1">N° Operación (Recibo)</label>
+                                                <input type="text" name="numero_operacion" id="ef-pago-recibo" class="form-control form-control-sm shadow-none">
+                                            </div>
+                                            <div class="col-md-6 mb-2">
+                                                <label class="form-label text-muted fs-10 mb-1">Monto Pagado (S/.)</label>
+                                                <input type="number" step="0.01" name="monto" id="ef-pago-monto" class="form-control form-control-sm fw-bold shadow-none">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label text-muted fs-10 mb-1">Mes Pagado</label>
+                                                <input type="text" name="mes_pagado" id="ef-pago-mes" class="form-control form-control-sm shadow-none">
                                             </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label text-muted fs-11 mb-1">Email / Correo Institucional</label>
-                                            <input type="email" name="email" id="ef-email" class="form-control shadow-none">
+                                    </div>
+
+                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">4. Digitalización (6 Elementos del Expediente)</h6>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <div class="border p-2 rounded text-center bg-light">
+                                                <p class="fs-10 fw-bold mb-1 text-primary">DNI ESTUDIANTE</p>
+                                                <input type="file" name="dni_file" class="form-control form-control-xs">
+                                            </div>
                                         </div>
+                                        <div class="col-4">
+                                            <div class="border p-2 rounded text-center bg-light">
+                                                <p class="fs-10 fw-bold mb-1 text-success">VOUCHER PAGO</p>
+                                                <input type="file" name="voucher_file" class="form-control form-control-xs">
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="border p-2 rounded text-center bg-light">
+                                                <p class="fs-10 fw-bold mb-1 text-warning">CARTA COMPROMISO</p>
+                                                <input type="file" name="compromiso_file" class="form-control form-control-xs">
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mt-2">
+                                            <div class="border p-2 rounded text-center bg-light">
+                                                <p class="fs-10 fw-bold mb-1 text-info">CERTIFICADO EST.</p>
+                                                <input type="file" name="certificado_file" class="form-control form-control-xs">
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mt-2">
+                                            <div class="border p-2 rounded text-center bg-light">
+                                                <p class="fs-10 fw-bold mb-1 text-danger">DNI APODERADO</p>
+                                                <input type="file" name="dni_apoderado_file" class="form-control form-control-xs">
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mt-2">
+                                            <div class="border p-2 rounded text-center bg-dark">
+                                                <p class="fs-10 fw-bold mb-1 text-white">FOTO DEL ALUMNO</p>
+                                                <input type="file" name="foto_file" class="form-control form-control-xs">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 pt-2">
+                                        <label class="form-label fs-11 fw-bold text-danger"><i class="mdi mdi-comment-alert-outline mr-1"></i> Observaciones del cambio *</label>
+                                        <textarea name="observaciones" id="ef-observaciones" class="form-control border-danger shadow-none" rows="2" placeholder="Sustento administrativo de la corrección..." required></textarea>
                                     </div>
                                 </div>
-
-                                <!-- Columna Académica y Financiera -->
-                                <div class="col-lg-5 px-4">
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">2. Configuración</h6>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted fs-11 mb-1">Grado de Instrucción</label>
-                                        <select name="grado" id="ef-grado" class="form-select shadow-none">
-                                            <option value="1">1ero Secundaria</option>
-                                            <option value="2">2do Secundaria</option>
-                                            <option value="3">3ero Secundaria</option>
-                                            <option value="4">4to Secundaria</option>
-                                            <option value="5">5to Secundaria</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label text-muted fs-11 mb-1">Turno Solicitado</label>
-                                        <select name="seccion" id="ef-turno" class="form-select shadow-none">
-                                            <option value="A">TURNO A (MAÑANA)</option>
-                                            <option value="B">TURNO B (TARDE)</option>
-                                        </select>
-                                    </div>
-
-                                    <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">3. Gestión Financiera</h6>
-                                    <div class="card p-3 border-info bg-soft-info shadow-none">
-                                        <label class="form-label text-info fw-bold fs-11 mb-1">Monto de Matrícula (S/.)</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-info border-info text-white fw-bold">S/.</span>
-                                            <input type="number" step="0.01" name="monto_pago" id="ef-monto" class="form-control border-info fw-bold fs-16 shadow-none">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Documentos Visuales -->
-                            <div class="mt-4 pt-4 border-top">
-                                <h6 class="text-uppercase fw-bold text-dark fs-11 mb-3"><i class="mdi mdi-attachment mr-2"></i> Documentos Cargados (Click para Corregir)</h6>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="card border rounded-lg h-100 mb-0 shadow-none bg-light text-center p-3 border-dashed" style="border: 2px dashed #bdd0e1 !important;">
-                                            <i class="mdi mdi-account-details-outline fs-24 text-muted mb-2 text-primary"></i>
-                                            <h5 class="fs-12 mb-2">DNI Estudiante</h5>
-                                            <input type="file" name="dni_file" class="form-control form-control-xs bg-transparent border-0 text-center">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card border rounded-lg h-100 mb-0 shadow-none bg-light text-center p-3 border-dashed" style="border: 2px dashed #bdd0e1 !important;">
-                                            <i class="mdi mdi-receipt-text-outline fs-24 text-muted mb-2 text-success"></i>
-                                            <h5 class="fs-12 mb-2">Voucher Pago</h5>
-                                            <input type="file" name="voucher_file" class="form-control form-control-xs bg-transparent border-0 text-center">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="card border rounded-lg h-100 mb-0 shadow-none bg-light text-center p-3 border-dashed" style="border: 2px dashed #bdd0e1 !important;">
-                                            <i class="mdi mdi-note-edit-outline fs-24 text-muted mb-2 text-warning"></i>
-                                            <h5 class="fs-12 mb-2">Carta Compromiso</h5>
-                                            <input type="file" name="compromiso_file" class="form-control form-control-xs bg-transparent border-0 text-center">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-2">
-                                <label class="form-label fs-11 fw-bold text-danger"><i class="mdi mdi-comment-alert-outline mr-1"></i> Sustento del cambio *</label>
-                                <textarea name="observacion" id="ef-observacion" class="form-control border-danger shadow-none" rows="2" placeholder="Explique brevemente por qué se están modificando los datos originales..." required></textarea>
                             </div>
                         </div>
 
-                        <div class="modal-footer bg-light border-top p-3 d-flex justify-content-between px-4">
-                            <button type="button" class="btn btn-dark px-4 fw-bold shadow-none fs-12" data-bs-dismiss="modal">CANCELAR</button>
-                            <button type="submit" id="btn-save-full" class="btn btn-warning px-5 fw-bold shadow-none fs-12 text-dark">
-                                <i class="mdi mdi-content-save-check-outline mr-1"></i> GUARDAR CAMBIO AHORA
+                        <div class="modal-footer bg-light border-top p-3 px-4">
+                            <button type="button" class="btn btn-secondary px-4 fw-bold fs-12" data-bs-dismiss="modal">CERRAR</button>
+                            <button type="submit" id="btn-save-full" class="btn btn-info px-5 fw-bold shadow-none text-white fs-12">
+                                <i class="mdi mdi-content-save-check-outline mr-2 me-2"></i> ACTUALIZAR REGISTRO COMPLETO
                             </button>
                         </div>
                     </form>
@@ -932,6 +940,7 @@
             $.get("{{ url('admin/reforzamiento') }}/" + id, data => {
                 const s = data.estudiante;
                 const insc = data;
+                const p = (insc.pagos && insc.pagos.length > 0) ? insc.pagos[0] : {};
 
                 $('#ef-id').val(insc.id);
                 $('#ef-dni').val(s.numero_documento);
@@ -939,22 +948,19 @@
                 $('#ef-paterno').val(s.apellido_paterno);
                 $('#ef-materno').val(s.apellido_materno);
                 $('#ef-telefono').val(s.telefono);
-                $('#ef-email').val(s.email);
                 
-                // Mapeo Inteligente de Grado
-                let gradoRaw = (insc.grado || '').toString().toLowerCase();
-                if (gradoRaw.includes('1')) $('#ef-grado').val('1');
-                else if (gradoRaw.includes('2')) $('#ef-grado').val('2');
-                else if (gradoRaw.includes('3')) $('#ef-grado').val('3');
-                else if (gradoRaw.includes('4')) $('#ef-grado').val('4');
-                else if (gradoRaw.includes('5')) $('#ef-grado').val('5');
+                // Datos Académicos
+                $('#ef-grado').val(insc.grado);
+                $('#ef-turno').val(insc.turno);
+                $('#ef-colegio').val(insc.colegio_procedencia);
 
-                // Mapeo Inteligente de Turno
-                let turnoRaw = (insc.turno || '').toString().toUpperCase();
-                if (turnoRaw.includes('MAÑANA') || turnoRaw.includes('A')) $('#ef-turno').val('A');
-                else if (turnoRaw.includes('TARDE') || turnoRaw.includes('B')) $('#ef-turno').val('B');
-
-                $('#ef-monto').val(insc.pagos[0] ? insc.pagos[0].monto : 0);
+                // Datos de Pago
+                $('#ef-pago-recibo').val(p.numero_operacion);
+                $('#ef-pago-monto').val(p.monto);
+                $('#ef-pago-mes').val(p.mes_pagado);
+                
+                // Observaciones
+                $('#ef-observaciones').val(insc.observaciones);
                 
                 $('#modalEditFull').modal('show');
             }).fail(() => {
