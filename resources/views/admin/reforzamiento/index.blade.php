@@ -251,22 +251,24 @@
                                             </div>
                                             <i class="mdi mdi-open-in-new text-muted"></i>
                                         </a>
+                                    </div>
+
                                     <div class="mt-4 pt-4 border-top">
                                         <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Acciones Administrativas</h6>
                                         <div class="d-grid gap-2" id="panel-acciones">
-                                            <button type="button" id="btn-edit-exp" class="btn btn-outline-primary btn-sm px-3 shadow-none me-2 ml-2" onclick="toggleEditMode()">
-                        <i class="mdi mdi-pencil mr-1 ms-1"></i> EDITAR DATOS
-                    </button>
-                    <button type="button" id="btn-save-exp" class="btn btn-success btn-sm px-3 shadow-none me-2 ml-2 d-none" onclick="saveExpediente()">
-                        <i class="mdi mdi-content-save mr-1 ms-1"></i> GUARDAR CAMBIOS
-                    </button>
-                    <button id="btn-validar-modal" type="button" class="btn btn-primary btn-sm px-3 shadow-none d-none" onclick="approveInscripcion()">
-                        <i class="mdi mdi-check-circle mr-1 ms-1"></i> VALIDAR INSCRIPCIÓN
-                    </button>
-                                            <button id="btn-constancia-modal" class="btn btn-dark fw-bold d-flex align-items-center justify-content-center py-2 d-none">
+                                            <button type="button" id="btn-edit-exp" class="btn btn-outline-primary btn-sm px-3 shadow-none fw-bold" onclick="toggleEditMode()">
+                                                <i class="mdi mdi-pencil mr-1"></i> EDITAR DATOS
+                                            </button>
+                                            <button type="button" id="btn-save-exp" class="btn btn-success btn-sm px-3 shadow-none fw-bold d-none" onclick="saveExpediente()">
+                                                <i class="mdi mdi-content-save mr-1"></i> GUARDAR CAMBIOS
+                                            </button>
+                                            <button id="btn-validar-modal" type="button" class="btn btn-primary btn-sm px-3 shadow-none fw-bold d-none" onclick="approveInscripcion()">
+                                                <i class="mdi mdi-check-circle mr-1"></i> VALIDAR INSCRIPCIÓN
+                                            </button>
+                                            <button id="btn-constancia-modal" class="btn btn-dark fw-bold btn-sm d-none">
                                                 <i class="mdi mdi-file-pdf-box fs-18 mr-2 me-2"></i> IMPRIMIR CONSTANCIA
                                             </button>
-                                            <button id="btn-eliminar-modal" class="btn btn-outline-danger fw-bold d-flex align-items-center justify-content-center py-2">
+                                            <button id="btn-eliminar-modal" class="btn btn-outline-danger btn-sm fw-bold shadow-none" onclick="deleteRecord($('#modalExpediente').data('id'))">
                                                 <i class="mdi mdi-delete-outline fs-18 mr-2 me-2"></i> ANULAR REGISTRO
                                             </button>
                                         </div>
