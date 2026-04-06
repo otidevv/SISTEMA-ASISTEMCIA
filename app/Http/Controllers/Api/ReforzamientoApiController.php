@@ -194,7 +194,8 @@ class ReforzamientoApiController extends BaseController
             'dni_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'dni_apoderado_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'voucher_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'certificado_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'certificado_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'compromiso_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -266,6 +267,9 @@ class ReforzamientoApiController extends BaseController
             if ($request->hasFile('certificado_file')) {
                 $inscripcion->certificado_path = $request->file('certificado_file')->store($path, 'public');
             }
+            if ($request->hasFile('compromiso_file')) {
+                $inscripcion->compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+            }
             
             $inscripcion->save();
 
@@ -328,12 +332,15 @@ class ReforzamientoApiController extends BaseController
                 // 1. Notificación Global (Broadcast)
                 event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
 
-                // 2. Notificación Persistente (Campanita de Administradores)
-                $supervisores = \App\Models\User::all()->filter(function($u) {
-                    return $u->hasPermission('postulaciones.view') || $u->hasRole('admin');
-                });
+                // 2. Notificación Persistente (Administradores con permiso)
+                // OPTIMIZADO: Filtro directo en base de datos para no cargar todos los usuarios
+                $supervisores = \App\Models\User::whereHas('roles.permissions', function($q) {
+                    $q->where('nombre', 'postulaciones.view');
+                })->orWhereHas('roles', function($q) {
+                    $q->where('nombre', 'admin');
+                })->get();
                 
-                if ($supervisores->count() > 0) {
+                if ($supervisores->isNotEmpty()) {
                     \Illuminate\Support\Facades\Notification::send(
                         $supervisores, 
                         new \App\Notifications\NuevaInscripcionReforzamiento($nombreAlumno, $inscripcion->id)

@@ -1235,19 +1235,36 @@
                         </div>
 
                         {{-- Certificado o Constancia --}}
-                        <div class="rf-form-group" style="margin-top: 1.5rem;">
-                            <label class="rf-label">
-                                <span class="material-icons-round" style="font-size:1.1rem; vertical-align:middle; color:var(--rf-navy);">article</span>
-                                CERTIFICADO O CONSTANCIA DE ESTUDIOS <span style="color:var(--rf-red);">*</span>
-                            </label>
-                            <div class="rf-dropzone" id="dropzone_certificado" style="border: 2px dashed #ec008c; min-height: 120px; height: auto; padding: 1.5rem;">
-                                <input type="file" name="certificado_file" accept=".pdf,image/*" required>
-                                <div class="rf-dropzone-content" style="flex-direction: column; gap: 0.4rem; justify-content: center;">
-                                    <i class="material-icons-round" style="font-size: 2.2rem; color: #cbd5e1;">cloud_upload</i>
-                                    <strong style="font-weight: 800; font-size: 0.95rem; color: var(--rf-navy);">Arrastra tu certificado aquí</strong>
-                                    <p style="margin: 0; font-size: 0.75rem; color: var(--rf-text-muted);">PDF preferiblemente para documentos</p>
+                        <div class="rf-grid-2" style="margin-top: 1.5rem;">
+                            <div class="rf-form-group">
+                                <label class="rf-label">
+                                    <span class="material-icons-round" style="font-size:1.1rem; vertical-align:middle; color:var(--rf-navy);">article</span>
+                                    CERTIFICADO / CONSTANCIA (OPCIONAL)
+                                </label>
+                                <div class="rf-dropzone" id="dropzone_certificado" style="height: auto; padding: 1.5rem; min-height: 110px;">
+                                    <input type="file" name="certificado_file" accept=".pdf,image/*">
+                                    <div class="rf-dropzone-content" style="flex-direction: column; gap: 0.4rem; justify-content: center;">
+                                        <i class="material-icons-round" style="font-size: 2.2rem; color: #cbd5e1;">cloud_upload</i>
+                                        <p style="margin: 0; font-size: 0.75rem; color: var(--rf-text-muted);">Certificado de Estudios</p>
+                                    </div>
+                                    <div class="rf-file-preview"></div>
                                 </div>
-                                <div class="rf-file-preview"></div>
+                            </div>
+
+                            {{-- Carta de Compromiso --}}
+                            <div class="rf-form-group">
+                                <label class="rf-label">
+                                    <span class="material-icons-round" style="font-size:1.1rem; vertical-align:middle; color:var(--rf-magenta);">draw</span>
+                                    CARTA DE COMPROMISO FIRMADA <span style="color:var(--rf-red);">*</span>
+                                </label>
+                                <div class="rf-dropzone" id="dropzone_compromiso" style="height: auto; padding: 1.5rem; border-color: var(--rf-navy); min-height: 110px;">
+                                    <input type="file" name="compromiso_file" accept=".pdf,image/*" required>
+                                    <div class="rf-dropzone-content" style="flex-direction: column; gap: 0.4rem; justify-content: center;">
+                                        <i class="material-icons-round" style="font-size: 2.2rem; color: var(--rf-navy); opacity: 0.3;">description</i>
+                                        <p style="margin: 0; font-size: 0.75rem; color: var(--rf-text-muted);">Sube el PDF firmado</p>
+                                    </div>
+                                    <div class="rf-file-preview"></div>
+                                </div>
                             </div>
                         </div>
 

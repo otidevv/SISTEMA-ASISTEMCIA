@@ -166,13 +166,13 @@ function validateCurrentStep() {
         const dniFile = document.querySelector('[name="dni_file"]');
         const dniApoFile = document.querySelector('[name="dni_apoderado_file"]');
         const voucherFile = document.querySelector('[name="voucher_file"]');
-        const certFile = document.querySelector('[name="certificado_file"]');
+        const compFile = document.querySelector('[name="compromiso_file"]');
         
         if (!foto?.files?.length) errors.push('Falta subir la Foto (Rostro)');
         if (!dniFile?.files?.length) errors.push('Falta subir Copia de DNI del Estudiante');
         if (!dniApoFile?.files?.length) errors.push('Falta subir Copia de DNI del Apoderado');
         if (!voucherFile?.files?.length) errors.push('Falta subir el Voucher de Pago');
-        if (!certFile?.files?.length) errors.push('Falta subir Certificado/Constancia');
+        if (!compFile?.files?.length) errors.push('Falta subir la Carta de Compromiso');
     }
 
     return errors;
@@ -1004,7 +1004,7 @@ function generateSummary() {
                 </div>
                 <div style="flex: 1;">
                     <div style="font-weight: 900; color: #065f46; font-size: 0.95rem;">Documentación en Orden</div>
-                    <div style="font-size: 0.8rem; color: #065f46; opacity: 0.8; font-weight: 600;">Se han anexado Foto, DNIs, Voucher y Certificado.</div>
+                    <div style="font-size: 0.8rem; color: #065f46; opacity: 0.8; font-weight: 600;">Se han anexado Foto, DNIs, Voucher, Certificado y Compromiso.</div>
                 </div>
             </div>
         </div>`;
@@ -1054,7 +1054,30 @@ async function handleFinalSubmit(e) {
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="rf-spin">cached</span> Procesando...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+
+    // Mostrar Toast de Carga Premium
+    Swal.fire({
+        title: 'Procesando Inscripción',
+        html: `
+            <div class="text-center">
+                <div class="mb-3">
+                    <img src="https://cdn.pixabay.com/animation/2023/06/13/15/12/15-12-30-710_512.gif" style="width: 80px; filter: hue-rotate(280deg);">
+                </div>
+                <p style="font-weight:700; color:var(--rf-navy);">Subiendo archivos y generando expediente digital...</p>
+                <div class="progress mt-3" style="height: 10px; border-radius: 5px; background: #f1f5f9; overflow: hidden;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%; background: var(--rf-magenta);"></div>
+                </div>
+                <p class="mt-2" style="font-size: 0.75rem; color: var(--rf-text-muted);">Por favor, no cierres la ventana. Esto puede tardar unos segundos dependiendo de tu conexión.</p>
+            </div>
+        `,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
 
     try {
         const r = await fetch(`${getBaseUrl()}/api/public-reforzamiento/register`, { 
