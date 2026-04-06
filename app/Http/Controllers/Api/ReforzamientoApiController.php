@@ -369,9 +369,10 @@ class ReforzamientoApiController extends BaseController
                     'monto' => $apiMonto ?: 200.00,
                     'fecha_pago' => $apiFecha ? Carbon::parse($apiFecha)->toDateString() : Carbon::now()->toDateString(),
                     'mes_pagado' => Carbon::now()->format('F Y'),
+                    'voucher_path' => $request->hasFile('voucher_file') ? $request->file('voucher_file')->store($path, 'public') : null,
                     'verificado_api' => 1,
                     'estado_pago' => 'aprobado',
-                    'validado_por' => null, // Esperar a validacion humana en el panel administrativo
+                    'validado_por' => null,
                     'fecha_verificacion_api' => now()
                 ]);
             }
