@@ -166,7 +166,7 @@ class ReforzamientoApiController extends BaseController
                         'serial_voucher' => $serial,
                         'monto' => $totalRecibo,
                         'paymentDate' => $fechaPago,
-                        'description' => 'PAGO DETECTADO (SISTEMA SUM)'
+                        'description' => $desc ?: 'PAGO REFORZAMIENTO (CONCEPT 598)'
                     ];
                 }
             }
@@ -179,6 +179,8 @@ class ReforzamientoApiController extends BaseController
                 $pagoEncontrado = $recibosProcesados[0];
                 // Formatear para que el frontend lo entienda como un objeto de pago estándar
                 $pagoEncontrado['total'] = $pagoEncontrado['monto'];
+                $pagoEncontrado['fecha'] = $pagoEncontrado['paymentDate'];
+                $pagoEncontrado['concepto'] = $pagoEncontrado['description'];
             }
         }
 
