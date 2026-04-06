@@ -810,12 +810,11 @@
                 $('#ef-materno').val(s.apellido_materno);
                 $('#ef-telefono').val(s.telefono);
                 
-                // II. DATOS DEL APODERADO (Basado en el primer pago o registro)
-                // Usualmente el apoderado se guarda en el estudiante o en el pago
-                const apoderadoNombre = s.apoderado_nombre || (p ? p.nombre_apoderado : '');
-                $('#ef-apo-nombre').val(apoderadoNombre);
-                $('#ef-apo-dni').val(s.apoderado_dni || '');
-                $('#ef-apo-telefono').val(s.apoderado_telefono || '');
+                // II. DATOS DEL APODERADO (Carga desde tabla ApoderadoReforzamiento)
+                const apo = (insc.apoderados && insc.apoderados.length > 0) ? insc.apoderados[0] : {};
+                $('#ef-apo-nombre').val(apo.nombres || '');
+                $('#ef-apo-dni').val(apo.numero_documento || '');
+                $('#ef-apo-telefono').val(apo.celular || '');
 
                 // III. ACADÉMICO Y AULA
                 $('#ef-grado').val(insc.grado);

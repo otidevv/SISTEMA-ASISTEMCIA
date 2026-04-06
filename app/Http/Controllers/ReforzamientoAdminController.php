@@ -42,8 +42,8 @@ class ReforzamientoAdminController extends Controller
             'aprobado' => (clone $queryBuilder)->where('estado_inscripcion', 'validado')->count(),
         ];
 
-        // Preparar consulta para DataTables con relaciones
-        $query = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'pagos', 'aula']);
+        // Preparar consulta para DataTables con relaciones - Se añade 'apoderados'
+        $query = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'pagos', 'aula', 'apoderados']);
         
         if ($request->filled('ciclo_id')) {
             $query->where('ciclo_id', $request->ciclo_id);
@@ -207,20 +207,33 @@ class ReforzamientoAdminController extends Controller
     {
         DB::beginTransaction();
         try {
-            $inscripcion = InscripcionReforzamiento::with(['estudiante', 'pagos'])->findOrFail($id);
+            $inscripcion = InscripcionReforzamiento::with(['estudiante', 'pagos', 'apoderados'])->findOrFail($id);
             $estudiante = $inscripcion->estudiante;
 
-            // 1. Actualizar Datos Personales (Persona)
-            if ($estudiante) {
-                if ($request->has('nombre')) $estudiante->nombre = $request->nombre;
-                if ($request->has('apellido_paterno')) $estudiante->apellido_paterno = $request->apellido_paterno;
-                if ($request->has('apellido_materno')) $estudiante->apellido_materno = $request->apellido_materno;
-                if ($request->has('telefono')) $estudiante->telefono = $request->telefono;
-                if ($request->has('email')) $estudiante->email = $request->email;
-                $estudiante->save();
+            // 1. Actualizar Datos Personales del Estudiante
+            $estudiante->update([
+                'nombre' => $request->nombre,
+                'apellido_paterno' => $request->apellido_paterno,
+                'apellido_materno' => $request->apellido_materno,
+                'telefono' => $request->telefono,
+                'email' => $request->email,
+            ]);
+
+            // 2. Actualizar/Crear Datos del Apoderado (Tabla propia)
+            $apo = $inscripcion->apoderados()->first();
+            $apoData = [
+                'nombres' => $request->apoderado_nombre,
+                'numero_documento' => $request->apoderado_dni,
+                'celular' => $request->apoderado_telefono,
+            ];
+            
+            if ($apo) {
+                $apo->update($apoData);
+            } else {
+                $inscripcion->apoderados()->create($apoData);
             }
 
-            // 2. Actualizar Datos de Inscripción
+            // 3. Actualizar Datos de Inscripción
             if ($request->has('grado')) $inscripcion->grado = $request->grado;
             if ($request->has('turno')) $inscripcion->turno = $request->turno;
             if ($request->has('colegio_procedencia')) $inscripcion->colegio_procedencia = $request->colegio_procedencia;
