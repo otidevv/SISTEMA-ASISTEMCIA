@@ -197,6 +197,68 @@ class ReforzamientoAdminController extends Controller
         ]);
     }
 
+    public function updateData(Request $request, $id)
+    {
+        DB::beginTransaction();
+        try {
+            $inscripcion = InscripcionReforzamiento::with(['estudiante', 'pagos'])->findOrFail($id);
+            $estudiante = $inscripcion->estudiante;
+
+            // 1. Actualizar Datos Personales (Persona)
+            if ($estudiante) {
+                if ($request->has('nombre')) $estudiante->nombre = $request->nombre;
+                if ($request->has('apellido_paterno')) $estudiante->apellido_paterno = $request->apellido_paterno;
+                if ($request->has('apellido_materno')) $estudiante->apellido_materno = $request->apellido_materno;
+                if ($request->has('telefono')) $estudiante->telefono = $request->telefono;
+                if ($request->has('email')) $estudiante->email = $request->email;
+                $estudiante->save();
+            }
+
+            // 2. Actualizar Datos de Inscripción
+            if ($request->has('grado')) $inscripcion->grado = $request->grado;
+            if ($request->has('seccion')) $inscripcion->seccion = $request->seccion;
+            if ($request->has('aula_id')) $inscripcion->aula_id = $request->aula_id;
+
+            // --- NUEVO: Manejo de Archivos Correctivos ---
+            $path = "reforzamiento/{$estudiante->numero_documento}";
+
+            if ($request->hasFile('dni_file')) {
+                $inscripcion->dni_estudiante_path = $request->file('dni_file')->store($path, 'public');
+            }
+            if ($request->hasFile('voucher_file')) {
+                $pago = $inscripcion->pagos()->first();
+                if ($pago) {
+                    $pago->voucher_path = $request->file('voucher_file')->store($path, 'public');
+                    $pago->save();
+                }
+            }
+            if ($request->hasFile('compromiso_file')) {
+                $inscripcion->compromiso_path = $request->file('compromiso_file')->store($path, 'public');
+            }
+
+            $inscripcion->save();
+
+            // 3. Actualizar Datos de Pago
+            if ($request->has('monto_pago')) {
+                $pago = $inscripcion->pagos()->where('estado_pago', 'aprobado')->first();
+                if ($pago) {
+                    $pago->monto = $request->monto_pago;
+                    $pago->save();
+                    
+                    // Sincronizar el total de la inscripción
+                    $inscripcion->total_pagado = $inscripcion->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+                    $inscripcion->save();
+                }
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Expediente actualizado con éxito.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error al actualizar: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function destroy($id)
     {
         DB::beginTransaction();
