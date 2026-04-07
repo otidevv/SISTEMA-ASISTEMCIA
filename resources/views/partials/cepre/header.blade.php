@@ -19,7 +19,7 @@
 <header class="main-header">
     <div class="header-content">
         <a href="{{ route('home') }}">
-            <img src="{{ asset('assets_cepre/img/logo/logo2_0.svg') }}"
+            <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}"
                 onerror="this.onerror=null; this.src='https://placehold.co/150x60/ffffff/2C5F7C?text=CEPRE';"
                 alt="CEPRE UNAMAD" class="logo">
         </a>
