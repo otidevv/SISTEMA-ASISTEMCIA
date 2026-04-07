@@ -12,8 +12,8 @@
     <!-- Contenedor del Carrusel -->
     <div class="carousel-container">
         <div class="carousel-slides" id="carouselSlides">
-
-            <!-- SLIDE 1: Éxito (Original) -->
+            <!-- SLIDE 1, 2 Y 3: CÓDIGO ORIGINAL COMENTADO -->
+            <!--
             <div class="carousel-slide active">
                 <div class="hero-content">
                     <div class="hero-text">
@@ -43,7 +43,6 @@
                     </div>
 
                     <div class="hero-image-wrapper">
-                        <!-- RUTA DINÁMICA RESTAURADA -->
                         <img src="{{ asset('assets_cepre/img/portada/portada.png') }}"
                             onerror="this.onerror=null; this.src='https://placehold.co/600x400/2C5F7C/A4C639?text=CEPRE+UNAMAD+Slide+1';"
                             alt="Estudiantes CEPRE UNAMAD" class="hero-image">
@@ -56,7 +55,6 @@
                 </div>
             </div>
 
-            <!-- SLIDE 2: Ingreso Directo -->
             <div class="carousel-slide">
                 <div class="hero-content">
                     <div class="hero-text">
@@ -99,7 +97,6 @@
                 </div>
             </div>
 
-            <!-- SLIDE 3: Docentes Expertos -->
             <div class="carousel-slide">
                 <div class="hero-content">
                     <div class="hero-text">
@@ -140,18 +137,69 @@
                     </div>
                 </div>
             </div>
+            -->
 
+            <!-- PORTADA ACTUAL (Fija Plana) -->
+            <div class="carousel-slide active" style="padding:0; position: relative;">
+                <style>
+                    #inicio.hero-section {
+                        padding-top: 0 !important;
+                        padding-bottom: 0 !important;
+                        min-height: auto !important;
+                        height: auto !important;
+                        background: transparent !important;
+                    }
+                    #inicio .hero-bg-overlay, 
+                    #inicio .kene-pattern-overlay, 
+                    #inicio #hero-canvas-container {
+                        display: none !important;
+                    }
+                    #inicio .carousel-container, 
+                    #inicio .carousel-slide {
+                        height: auto !important;
+                        min-height: auto !important;
+                        padding: 0 !important;
+                    }
+                    @media(max-width: 768px) {
+                        #inicio .hero-buttons { bottom: 2% !important; gap: 5px !important; }
+                        #inicio .hero-buttons .btn { padding: 8px 15px !important; font-size: 13px !important; }
+                    }
+                </style>
+
+                <!-- Fondo Dinámico -->
+                <picture style="width: 100%; height: auto; display: flex;">
+                    <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.jpg') }}">
+                    <img src="{{ asset('assets_cepre/img/portada/portada_principal.jpg') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;">
+                </picture>
+
+                <!-- Capa oscurecedora inferior para resaltar los botones HTML -->
+                <div style="position: absolute; bottom: 0; width: 100%; height: 16%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); z-index: 5;"></div>
+
+                <!-- Botones HTML reales superpuestos sobre la imagen -->
+                <div style="position: absolute; bottom: 6%; left: 0; right: 0; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; z-index: 10;" class="hero-buttons">
+                    <a href="#cursos" class="btn btn-primary" style="box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+                        <i class="fas fa-book"></i>
+                        <span>EXPLORAR PROGRAMAS</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="openPostulacionModal()"
+                        class="btn btn-secondary btn-postulacion-main" style="box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+                        <i class="fas fa-edit"></i>
+                        <span>¡INSCRIBIRSE AHORA!</span>
+                    </a>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <!-- Navegación del Carrusel -->
+    <!--
     <button class="carousel-nav prev-nav" onclick="changeSlide(-1)"><i class="fas fa-chevron-left"></i></button>
     <button class="carousel-nav next-nav" onclick="changeSlide(1)"><i class="fas fa-chevron-right"></i></button>
 
-    <!-- Puntos de Paginación -->
     <div class="carousel-dots" id="carouselDots">
-        <!-- Los puntos se inyectan aquí por JavaScript -->
     </div>
+    -->
 
 </section>
 
@@ -251,7 +299,14 @@
 </section>
 
 <!-- Stats Section -->
-<section class="stats-section">
+<section class="stats-section statistics-wave">
+    <!-- Wave Top -->
+    <div class="custom-shape-divider-top">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+        </svg>
+    </div>
+
     <div class="stats-container">
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-users"></i>
@@ -260,7 +315,7 @@
         </div>
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-chalkboard-teacher"></i>
-            <h3 class="counter" data-target="{{ $stats['docentes'] ?? 25 }}">{{ $stats['docentes'] ?? 0 }}</h3>
+            <h3 class="counter" data-target="{{ $stats['docentes'] ?? 36 }}">{{ $stats['docentes'] ?? 0 }}</h3>
             <p>Docentes Expertos</p>
         </div>
         <div class="stat-box animate-on-scroll">
@@ -270,9 +325,16 @@
         </div>
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-university"></i>
-            <h3 class="counter" data-target="{{ \App\Models\Carrera::activas()->count() }}">0</h3>
+            <h3 class="counter" data-target="{{ \App\Models\Carrera::activas()->count() ?? 12 }}">0</h3>
             <p>Escuelas Profesionales</p>
         </div>
+    </div>
+
+    <!-- Wave Bottom -->
+    <div class="custom-shape-divider-bottom">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" transform="rotate(180 600 60)"></path>
+        </svg>
     </div>
 </section>
 
@@ -382,11 +444,9 @@
 
 <!-- CTA Banner -->
 <section class="cta-banner">
-    <div class="kene-pattern-overlay" style="opacity: 0.4;"></div>
     <div class="cta-banner-content">
-        <h2>¡SOMOS LOS <span style="color:var(--cyan-acento); text-shadow: none;">ÚNICOS</span> EN OTORGARTE INGRESO
-            DIRECTO A LA UNAMAD!</h2>
-        <a href="#" class="btn-cyan-cta" style="margin-top: 20px;">
+        <h2>¡SOMOS LOS <span class="highlight">ÚNICOS</span> EN OTORGARTE INGRESO DIRECTO A LA UNAMAD!</h2>
+        <a href="#contacto" class="btn-cyan-cta">
             <i class="fas fa-info-circle"></i>
             <span>VER MÁS DETALLES DE INGRESO</span>
         </a>
@@ -394,22 +454,23 @@
 </section>
 
 <!-- Contact Bar -->
-<section class="contact-bar" id="contacto">
+<section class="contact-bar animate-on-scroll" id="contacto">
     <div class="contact-bar-content">
         <div class="contact-bar-left">
             <div class="contact-bar-icon">
                 <i class="fas fa-phone-alt"></i>
             </div>
-            <div>
-                <p style="margin: 0; font-size: 16px; opacity: 0.9; color: var(--azul-oscuro);">Si tienes preguntas,
-                    solicita una consulta</p>
-                <p style="margin: 0; font-size: 14px; font-weight: 700; color: var(--azul-oscuro);">con nuestro asesor
-                    educativo.</p>
+            <div class="contact-bar-text">
+                <h4>Asesoría Educativa</h4>
+                <p>Si tienes preguntas, solicita una consulta personalizada.</p>
             </div>
         </div>
         <div class="contact-bar-right">
-            <p style="margin: 0; font-size: 14px; opacity: 0.9; color: var(--azul-oscuro);">USA NUESTRA LÍNEA 24H</p>
-            <h3>+51 993 110 927<br>+51 993 111 037</h3>
+            <span class="label">USA NUESTRA LÍNEA 24H</span>
+            <div class="phones">
+                <span>+51 993 110 927</span>
+                <span>+51 993 111 037</span>
+            </div>
         </div>
     </div>
 </section>
