@@ -80,65 +80,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     
     <style>
-        /* ESTILOS PROFESIONALES INYECTADOS DIRECTAMENTE */
+        /* ESTILOS DE IDENTIDAD CEPRE UNAMAD */
         :root {
-            --cepre-pink: #ec008c;
-            --cepre-dark-blue: #2b5a6f;
-        }
-
-        /* FONDO OSCURO INSTITUCIONAL (Dark Blue Puro) */
-        .left-side-menu {
-            background-color: var(--cepre-dark-blue) !important;
-            background-image: linear-gradient(180deg, var(--cepre-dark-blue) 0%, #1a3c4a 100%) !important;
-            box-shadow: 4px 0 20px rgba(43, 90, 111, 0.4) !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* TEXTOS BLANCOS (Contraste) */
-        .side-menu > li > a, 
-        .side-menu > li > a i, 
-        .side-menu .menu-title,
-        .user-box .dropdown-toggle,
-        .user-box p,
-        .nav-second-level li a {
-            color: rgba(255, 255, 255, 0.85) !important;
-        }
-
-        /* HOVER STATES */
-        .side-menu > li > a:hover {
-            color: #fff !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-        }
-        .side-menu > li > a:hover i {
-            color: var(--cepre-pink) !important;
-        }
-
-        /* ITEM ACTIVO (Rosa Institucional) */
-        .menuitem-active > a {
-            background: linear-gradient(90deg, rgba(236, 0, 140, 0.2) 0%, transparent 100%) !important;
-            border-right: 3px solid var(--cepre-pink) !important;
-            color: #fff !important;
-        }
-        .menuitem-active > a i {
-            color: var(--cepre-pink) !important;
-        }
-        .nav-second-level li a.active {
-            color: #fff !important;
-            font-weight: bold;
-        }
-
-        /* CAJA DE USUARIO */
-        .user-box {
-            background: rgba(0, 0, 0, 0.2) !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-            padding: 1.5rem 1rem !important;
-            margin-bottom: 1rem !important;
-            /* display: block !important; ELIMINADO PARA PERMITIR OCULTAR */
-        }
-        
-        /* LOGO */
-        .logo-box, html[data-bs-theme="light"] .logo-box {
-            background: transparent !important;
+            --cepre-magenta: #e91e63;
+            --cepre-cyan: #00bcd4;
+            --cepre-green: #8bc34a;
+            --cepre-gold: #ffd700;
+            --cepre-navy: #1a237e;
+            --cepre-dark-blue: #0d47a1;
+            --cepre-light-gray: #f8f9fa;
+            --cepre-dark-gray: #455a64;
+            --cepre-shadow: rgba(26, 35, 126, 0.15);
+            --cepre-pink: var(--cepre-magenta);
         }
     </style>
     

@@ -213,15 +213,15 @@
 
 
             <li class="dropdown notification-list topbar-dropdown">
+                @php
+                    $userAvatar = Auth::user()->foto_perfil 
+                        ? asset('storage/' . Auth::user()->foto_perfil) 
+                        : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->nombre . ' ' . Auth::user()->apellido_paterno) . '&background=e91e63&color=fff&size=100';
+                @endphp
                 <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
                     role="button" aria-haspopup="false" aria-expanded="false">
-                    @if (Auth::user()->foto_perfil)
-                        <img src="{{ asset('storage/' . Auth::user()->foto_perfil) }}" alt="user-image"
-                            class="rounded-circle">
-                    @else
-                        <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="user-image"
-                            class="rounded-circle">
-                    @endif
+                    <img src="{{ $userAvatar }}" alt="user-image"
+                        class="rounded-circle border border-2 border-white shadow-sm">
                     <span class="pro-user-name d-sm-inline d-none ms-1">
                         {{ Auth::user()->nombre }} <i class="uil uil-angle-down"></i>
                     </span>
@@ -406,21 +406,19 @@
         <div class="logo-box">
             <a href="{{ url('/dashboard') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo cepre.png') }}" alt="" height="35">
-                    <!-- <span class="logo-lg-text-light">Shreyu</span> -->
+                    <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}" alt="" height="35">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logocepre1.svg') }}" alt="" height="45">
-                    <!-- <span class="logo-lg-text-light">S</span> -->
+                    <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}" alt="" height="50">
                 </span>
             </a>
 
             <a href="{{ url('/') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo cepre black.png') }}" alt="" height="30">
+                    <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}" alt="" height="30">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo cepre black.svg') }}" alt="" height="45">
+                    <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}" alt="" height="50">
                 </span>
             </a>
         </div>
@@ -518,14 +516,14 @@
         <div class="h-100" data-simplebar>
 
             <!-- User box -->
-            <div class="user-box text-center">
-                @if (Auth::user()->foto_perfil)
-                    <img src="{{ asset('storage/' . Auth::user()->foto_perfil) }}" alt="user-image"
-                        title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md shadow-sm">
-                @else
-                    <img src="{{ asset('assets/images/users/default-avatar.jpg') }}" alt="user-image"
-                        class="rounded-circle avatar-md shadow-sm">
-                @endif
+            <div class="user-box text-center shadow-none border-0">
+                @php
+                    $userAvatar = Auth::user()->foto_perfil 
+                        ? asset('storage/' . Auth::user()->foto_perfil) 
+                        : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->nombre . ' ' . Auth::user()->apellido_paterno) . '&background=e91e63&color=fff&size=128';
+                @endphp
+                <img src="{{ $userAvatar }}" alt="user-image"
+                    title="{{ Auth::user()->nombre }}" class="rounded-circle avatar-md shadow-lg border border-2 border-white">
                 <div class="dropdown">
                     <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"
                         data-bs-toggle="dropdown">{{ Auth::user()->nombre }} {{ Auth::user()->apellido_paterno }}</a>

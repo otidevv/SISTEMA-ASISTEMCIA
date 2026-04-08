@@ -1,32 +1,41 @@
 :root {
-    /* Colores Institucionales CEPRE UNAMAD */
-    --cepre-pink: #ec008c;
-    --cepre-green: #8cc63f;
-    --cepre-blue: #00aeef;
-    --cepre-dark-blue: #2b5a6f;
-    --cepre-yellow: #fff200;
+    /* Colores Institucionales CEPRE UNAMAD - Estandarizados */
+    --cepre-magenta: #e91e63;
+    --cepre-cyan: #00bcd4;
+    --cepre-green: #8bc34a;
+    --cepre-gold: #ffd700;
+    --cepre-navy: #1a237e;
+    --cepre-dark-blue: #0d47a1;
+    --cepre-light-gray: #f8f9fa;
+    --cepre-dark-gray: #455a64;
+    --cepre-shadow: rgba(26, 35, 126, 0.15);
+
+    /* Alias para compatibilidad con código existente */
+    --cepre-pink: var(--cepre-magenta);
+    --cepre-blue: var(--cepre-cyan);
+    --cepre-yellow: var(--cepre-gold);
 
     /* Sobreescritura de Bootstrap/Shreyu */
-    --bs-primary: var(--cepre-pink);
-    --bs-primary-rgb: 236, 0, 140;
+    --bs-primary: var(--cepre-magenta);
+    --bs-primary-rgb: 233, 30, 99;
 
     --bs-success: var(--cepre-green);
-    --bs-success-rgb: 140, 198, 63;
+    --bs-success-rgb: 139, 195, 74;
 
-    --bs-info: var(--cepre-blue);
-    --bs-info-rgb: 0, 174, 239;
+    --bs-info: var(--cepre-cyan);
+    --bs-info-rgb: 0, 188, 212;
 
-    --bs-link-color: var(--cepre-pink);
-    --bs-link-hover-color: #d1007a;
+    --bs-link-color: var(--cepre-magenta);
+    --bs-link-hover-color: #c2185b;
 }
 
 /* Micro-detalles Premium de IU */
 ::selection {
-    background-color: rgba(236, 0, 140, 0.3);
+    background-color: rgba(233, 30, 99, 0.3);
     color: #fff;
 }
 
-/* Scrollbar Personalizado */
+/* Scrollbar Personalizado Global */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -37,16 +46,17 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: rgba(26, 35, 126, 0.2);
     border-radius: 10px;
-}
-
-[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
-    background: #444;
+    transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--cepre-pink);
+    background: var(--cepre-magenta);
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Barra de Carga Global (Top-bar) */
@@ -56,274 +66,208 @@
     left: 0;
     width: 0%;
     height: 3px;
-    background: var(--cepre-pink);
+    background: var(--cepre-magenta);
     z-index: 10000;
-    box-shadow: 0 0 10px var(--cepre-pink);
+    box-shadow: 0 0 10px var(--cepre-magenta);
     transition: width 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1);
     pointer-events: none;
 }
 
-/* Ajustes Premium para Componentes */
-
 /* Botones */
 .btn-primary {
-    background-color: var(--cepre-pink) !important;
-    border-color: var(--cepre-pink) !important;
+    background-color: var(--cepre-magenta) !important;
+    border-color: var(--cepre-magenta) !important;
     color: #fff !important;
-    box-shadow: 0 4px 6px rgba(236, 0, 140, 0.2);
+    box-shadow: 0 4px 6px rgba(233, 30, 99, 0.2);
     transition: all 0.3s ease !important;
 }
 
 .btn-primary:hover {
-    background-color: #d1007a !important;
-    border-color: #d1007a !important;
+    background-color: #c2185b !important;
+    border-color: #c2185b !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(236, 0, 140, 0.3) !important;
-}
-
-.btn-success {
-    background-color: var(--cepre-green) !important;
-    border-color: var(--cepre-green) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 6px rgba(140, 198, 63, 0.2);
-}
-
-/* Sidebar y Logo Box - CORRECCIÓN MODO OSCURO */
-
-/* Solo aplicar fondos blancos SI NO estamos en modo oscuro */
-html[data-bs-theme="light"] .left-side-menu,
-html[data-bs-theme="light"] .logo-box {
-    background-color: #fff !important;
-}
-
-/* En modo oscuro, dejar que Shreyu maneje los fondos, pero mantenemos sombras y transiciones */
-[data-bs-theme="dark"] .logo-box {
-    background-color: inherit;
-    /* Permite que el CSS del tema gane */
+    box-shadow: 0 6px 12px rgba(233, 30, 99, 0.3) !important;
 }
 
 /* =========================================
-   SIDEBAR PROFESIONAL / INSTITUCIONAL (DARK)
+   ESTRUCTURA GLOBAL (SIDEBAR Y HEADER)
    ========================================= */
 
-/* Fondo Oscuro Institucional */
-.left-side-menu {
-    background: linear-gradient(180deg, var(--cepre-dark-blue) 0%, #1e4251 100%) !important;
-    box-shadow: 4px 0 20px rgba(43, 90, 111, 0.2) !important;
-}
-
-/* Ajuste de Textos en Sidebar para Fondo Oscuro */
-.side-menu>li>a,
-.side-menu>li>a i,
-.side-menu .menu-title,
-.user-box .dropdown-toggle,
-.user-box p {
-    color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* Hover Items */
-.side-menu>li>a:hover {
-    color: #fff !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.side-menu>li>a:hover i {
-    color: var(--cepre-pink) !important;
-}
-
-/* Item Activo */
-.menuitem-active>a {
-    background: linear-gradient(90deg, rgba(236, 0, 140, 0.2) 0%, transparent 100%) !important;
-    border-right: 3px solid var(--cepre-pink) !important;
-    color: #fff !important;
-}
-
-.menuitem-active>a i {
-    color: var(--cepre-pink) !important;
-}
-
-/* CAJA DE USUARIO (User Box) */
-.user-box {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 1.5rem 1rem !important;
-    margin-bottom: 1rem !important;
-    display: block !important;
-    /* Fuerza visibilidad */
-}
-
-/* Submenús */
-.nav-second-level li a {
-    color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.nav-second-level li a:hover,
-.nav-second-level li a.active {
-    color: #fff !important;
-}
-
-/* Logo en Sidebar (si existe fondo blanco forzado, quitarlo) */
+/* Solo aplicar fondos blancos SI NO estamos en modo oscuro */
 html[data-bs-theme="light"] .logo-box {
-    background-color: transparent !important;
-}
-
-.logo-box {
-    background: transparent !important;
-}
-
-/* Títulos de sección */
-.side-menu .menu-title {
-    color: rgba(255, 255, 255, 0.5) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Header */
-html[data-bs-theme="light"] .navbar-custom {
     background-color: #fff !important;
     border-bottom: 1px solid #f1f3fa;
 }
 
-/* Tablas y Cards Premium */
-.table thead th {
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
+/* FONDO NAVY INSTITUCIONAL PARA EL MENU */
+.left-side-menu {
+    background-color: var(--cepre-navy) !important;
+    background-image: linear-gradient(180deg, var(--cepre-navy) 0%, #0a0e41 100%) !important;
+    box-shadow: 4px 0 20px rgba(10, 14, 65, 0.3) !important;
 }
 
-/* Quitar fondos forzados en modo oscuro para tablas */
-[data-bs-theme="dark"] .table thead th {
-    background-color: rgba(255, 255, 255, 0.05) !important;
+/* TOPBAR REFINADO (Inteligente con el Modo Oscuro) */
+html[data-bs-theme="light"] .navbar-custom {
+    background-color: #ffffff !important;
+    border-bottom: 2px solid var(--cepre-magenta) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
 }
+
+[data-bs-theme="dark"] .navbar-custom {
+    border-bottom: 2px solid var(--cepre-magenta) !important;
+}
+
+/* Ajuste de Textos en Sidebar */
+.side-menu>li>a,
+.side-menu>li>a i,
+.side-menu .menu-title,
+.nav-second-level li a {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+}
+
+.side-menu .menu-title {
+    color: rgba(255, 255, 255, 0.4) !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px !important;
+}
+
+/* Item Activo (Magenta) - MEJORADO */
+.side-menu li.mm-active > a,
+.side-menu li.active > a,
+.side-menu a.active,
+.menuitem-active > a {
+    background: linear-gradient(90deg, rgba(233, 30, 99, 0.25) 0%, transparent 100%) !important;
+    border-right: 4px solid var(--cepre-magenta) !important;
+    color: #ffffff !important;
+}
+
+.side-menu li.mm-active > a i,
+.side-menu li.active > a i,
+.side-menu a.active i,
+.menuitem-active > a i {
+    color: var(--cepre-magenta) !important;
+    transform: scale(1.1);
+}
+
+.nav-second-level li a.active {
+    color: var(--cepre-magenta) !important;
+    font-weight: 800 !important;
+}
+
+/* =========================================
+   DATATABLES Y TABLAS PREMIUM
+   ========================================= */
+
+.table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.table thead th {
+    background-color: var(--cepre-navy) !important;
+    color: #fff !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 15px 12px !important;
+    border: none !important;
+}
+
+/* Redondear esquinas del header */
+.table thead tr th:first-child { border-top-left-radius: 8px !important; }
+.table thead tr th:last-child { border-top-right-radius: 8px !important; }
+
+/* Efecto Hover en Filas */
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(233, 30, 99, 0.03) !important;
+    box-shadow: inset 4px 0 0 var(--cepre-magenta);
+}
+
+/* PAGINACIÓN Y CONTROLES DE TABLA */
+.dataTables_filter input {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    padding: 6px 15px !important;
+    transition: all 0.3s ease !important;
+    background-color: #f8fafc !important;
+}
+
+.dataTables_filter input:focus {
+    border-color: var(--cepre-magenta) !important;
+    box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.1) !important;
+    background-color: #fff !important;
+    outline: none !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--cepre-magenta) !important;
+    border-color: var(--cepre-magenta) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4) !important;
+}
+
+.page-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--cepre-navy) !important;
+    border-radius: 12px !important; /* Estilo píldora/redondeado premium */
+    margin: 0 5px !important;
+    border: 1px solid #e2e8f0 !important;
+    font-weight: 700 !important;
+    height: 38px !important;
+    min-width: 38px !important; /* Permite que el botón se estire con el texto */
+    width: auto !important;
+    padding: 0 15px !important; /* Espacio para que respire la palabra */
+    transition: all 0.2s ease !important;
+    font-size: 13px !important;
+}
+
+.page-item:not(.active) .page-link:hover {
+    background-color: var(--cepre-navy) !important;
+    color: #fff !important;
+    border-color: var(--cepre-navy) !important;
+    transform: translateY(-2px);
+}
+
+.page-item.disabled .page-link {
+    background-color: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+    opacity: 0.5;
+}
+
+/* =========================================
+   CARDS Y COMPONENTES
+   ========================================= */
 
 .card {
     border: none !important;
     border-radius: 0.75rem !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html[data-bs-theme="light"] .card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-}
-
 .card:hover {
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Enfoque de Inputs */
+/* Sutil Gradiente Institucional para Tarjetas Sólidas */
+.card-solid-warning, .card-solid-success, .card-solid-info, .bg-cepre-gradient {
+    background-image: radial-gradient(circle at 20% 0%, rgba(255,255,255,0.15) 0%, transparent 50%) !important;
+}
+
+/* Otros */
 .form-control:focus {
-    border-color: var(--cepre-pink) !important;
-    box-shadow: 0 0 0 0.15rem rgba(236, 0, 140, 0.15) !important;
-}
-
-/* degradados de Marca Premium */
-.bg-cepre-gradient {
-    background: linear-gradient(135deg, var(--cepre-pink) 0%, #ff4fb1 100%) !important;
-    color: #fff !important;
-}
-
-.bg-cepre-blue-gradient {
-    background: linear-gradient(135deg, var(--cepre-blue) 0%, #0081b1 100%) !important;
-    color: #fff !important;
-}
-
-.bg-cepre-success-gradient {
-    background: linear-gradient(135deg, var(--cepre-green) 0%, #6da12c 100%) !important;
-    color: #fff !important;
-}
-
-/* Elevación Corporativa */
-.shadow-cepre {
-    box-shadow: 0 10px 25px -5px rgba(236, 0, 140, 0.15) !important;
-}
-
-/* Animaciones */
-.skeleton-shimmer,
-.skeleton {
-    background-size: 1000px 100%;
-    animation: shimmer 1.5s infinite linear;
-    border-radius: 8px;
-}
-
-html[data-bs-theme="light"] .skeleton-shimmer,
-html[data-bs-theme="light"] .skeleton {
-    background-image: linear-gradient(90deg, #f0f2f5 25%, #e2e8f0 50%, #f0f2f5 75%);
-}
-
-[data-bs-theme="dark"] .skeleton-shimmer,
-[data-bs-theme="dark"] .skeleton {
-    background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: -1000px 0;
-    }
-
-    100% {
-        background-position: 1000px 0;
-    }
-}
-
-@keyframes fadeInSlide {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.content-page {
-    animation: fadeInSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Custom Utilities */
-.text-cepre-pink {
-    color: var(--cepre-pink) !important;
-}
-
-.text-cepre-green {
-    color: var(--cepre-green) !important;
-}
-
-.text-cepre-blue {
-    color: var(--cepre-blue) !important;
-}
-
-/* Estilos Premium para la Caja de Usuario en Sidebar */
-.user-box {
-    background: linear-gradient(to bottom, rgba(236, 0, 140, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
-    padding: 1.5rem 1rem;
-    border-bottom: 1px dashed rgba(236, 0, 140, 0.2);
-    margin-bottom: 1rem;
-}
-
-[data-bs-theme="dark"] .user-box {
-    background: linear-gradient(to bottom, rgba(236, 0, 140, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-    border-bottom: 1px dashed rgba(236, 0, 140, 0.15);
-}
-
-.user-box .dropdown-toggle {
-    color: var(--cepre-dark-blue) !important;
-    font-weight: 700;
-}
-
-[data-bs-theme="dark"] .user-box .dropdown-toggle {
-    color: #e2e8f0 !important;
-}
-
-/* Mejora al ítem activo del menú */
-.menuitem-active>a {
-    background: linear-gradient(90deg, rgba(236, 0, 140, 0.1) 0%, transparent 100%) !important;
-    border-right: 3px solid var(--cepre-pink) !important;
-    color: var(--cepre-pink) !important;
-}
-
-.side-menu .menu-title {
-    color: var(--cepre-pink) !important;
-    font-size: 0.70rem !important;
-    opacity: 0.9;
+    border-color: var(--cepre-magenta) !important;
+    box-shadow: 0 0 0 0.15rem rgba(233, 30, 99, 0.15) !important;
 }

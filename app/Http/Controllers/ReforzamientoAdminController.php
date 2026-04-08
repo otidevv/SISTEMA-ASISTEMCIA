@@ -51,16 +51,17 @@ class ReforzamientoAdminController extends Controller
 
         return DataTables::of($query)
             ->addColumn('estudiante_nombre', function($row) {
-                $foto = $row->estudiante->foto_perfil;
-                $avatar_url = $foto ? asset('storage/' . $foto) : 'https://ui-avatars.com/api/?name=' . urlencode($row->estudiante->nombre) . '&background=random&color=fff';
+                // Buscamos la foto: primero la de la inscripción actual, luego la de perfil del estudiante
+                $foto = $row->foto_path ?? $row->estudiante->foto_perfil;
+                $avatar_url = $foto ? asset('storage/' . $foto) : 'https://ui-avatars.com/api/?name=' . urlencode($row->estudiante->nombre) . '&background=2d3436&color=fff';
                 
-                $avatar = '<img src="' . $avatar_url . '" alt="" class="avatar-sm rounded-circle me-3 mr-2" style="width:36px; height:36px; object-fit:cover;">';
+                $avatar = '<img src="' . $avatar_url . '" alt="" class="avatar-sm rounded-circle me-3 mr-2 shadow-sm" style="width:38px; height:38px; object-fit:cover; border: 2px solid #fff;">';
                 
                 return '<div class="d-flex align-items-center">
                             ' . $avatar . '
                             <div>
-                                <h5 class="fs-14 my-1"><a href="javascript:void(0);" class="text-reset">' . $row->estudiante->nombre_completo . '</a></h5>
-                                <p class="text-muted mb-0 font-size-11" style="line-height:1;"><i class="mdi mdi-calendar-clock mr-1"></i> ' . $row->created_at->format('d/m/Y H:i') . '</p>
+                                <h5 class="fs-13 my-0 fw-bold"><a href="javascript:void(0);" onclick="viewDetails('.$row->id.')" class="text-reset">' . strtoupper($row->estudiante->nombre_completo) . '</a></h5>
+                                <p class="text-muted mb-0 font-size-10" style="line-height:1;"><i class="mdi mdi-calendar-clock mr-1"></i> ' . $row->created_at->format('d/m/Y H:i') . '</p>
                             </div>
                         </div>';
             })
@@ -99,34 +100,34 @@ class ReforzamientoAdminController extends Controller
                             <div class="d-flex justify-content-center">';
                 
                 // Botón Ver Detalle (Ojito)
-                $btn .= '<a href="javascript:void(0);" onclick="viewDetails(' . $row->id . ')" class="btn-action-reforzamiento" title="Ver Expediente">
-                            <i class="mdi mdi-eye text-primary"></i>
+                $btn .= '<a href="javascript:void(0);" onclick="viewDetails(' . $row->id . ')" class="btn-action-reforzamiento btn-solid-view" title="Ver Expediente">
+                            <i class="mdi mdi-eye"></i>
                          </a>';
 
                 // Botón Editar (Lápiz) - Ahora para TODOS
-                $btn .= '<a href="javascript:void(0);" onclick="editInscripcion(' . $row->id . ')" class="btn-action-reforzamiento" title="Editar Expediente">
-                            <i class="mdi mdi-pencil text-info"></i>
+                $btn .= '<a href="javascript:void(0);" onclick="editInscripcion(' . $row->id . ')" class="btn-action-reforzamiento btn-solid-edit" title="Editar Expediente">
+                            <i class="mdi mdi-pencil"></i>
                          </a>';
 
                 if ($row->estado_inscripcion === 'pendiente') {
-                    $btn .= '<button type="button" class="btn-action-reforzamiento" onclick="approve(' . $row->id . ')" title="Aprobar Inscripción">
-                                <i class="mdi mdi-check-bold text-success"></i>
+                    $btn .= '<button type="button" class="btn-action-reforzamiento btn-solid-approve" onclick="approve(' . $row->id . ')" title="Aprobar Inscripción">
+                                <i class="mdi mdi-check-bold"></i>
                              </button>';
                 } else {
                     // Botón Imprimir (Impresora)
-                    $btn .= '<a href="' . route('admin.reforzamiento.print', $row->id) . '" target="_blank" class="btn-action-reforzamiento" title="Imprimir Constancia">
-                                <i class="mdi mdi-printer text-dark"></i>
+                    $btn .= '<a href="' . route('admin.reforzamiento.print', $row->id) . '" target="_blank" class="btn-action-reforzamiento btn-solid-print" title="Imprimir Constancia">
+                                <i class="mdi mdi-printer"></i>
                              </a>';
                 }
 
                 if ($row->estudiante && $row->estudiante->telefono) {
-                    $btn .= '<a href="https://wa.me/51' . $row->estudiante->telefono . '" target="_blank" class="btn-action-reforzamiento" title="WhatsApp">
-                                <i class="mdi mdi-whatsapp text-success"></i>
+                    $btn .= '<a href="https://wa.me/51' . $row->estudiante->telefono . '" target="_blank" class="btn-action-reforzamiento btn-solid-wa" title="WhatsApp">
+                                <i class="mdi mdi-whatsapp"></i>
                              </a>';
                 }
 
-                $btn .= '<button type="button" class="btn-action-reforzamiento" onclick="deleteRecord(' . $row->id . ')" title="Eliminar">
-                            <i class="mdi mdi-trash-can-outline text-danger"></i>
+                $btn .= '<button type="button" class="btn-action-reforzamiento btn-solid-delete" onclick="deleteRecord(' . $row->id . ')" title="Eliminar">
+                            <i class="mdi mdi-trash-can-outline"></i>
                          </button>';
 
                 $btn .= '   </div>

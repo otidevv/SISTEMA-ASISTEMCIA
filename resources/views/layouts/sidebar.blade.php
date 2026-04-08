@@ -4,10 +4,15 @@
     <div class="h-100" data-simplebar>
 
         <!-- User box -->
-        <div class="user-box text-center" style="display: block !important;">
+        <div class="user-box text-center shadow-none border-0" style="display: block !important;">
             <!-- IMAGEN DE PERFIL GENERADA AUTOMATICAMENTE -->
-            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->nombre . ' ' . Auth::user()->apellido_paterno) }}&background=random&color=fff&size=128" 
-                 alt="user-image" class="rounded-circle avatar-md shadow-sm">
+            @php
+                $userAvatar = Auth::user()->foto_perfil 
+                    ? asset('storage/' . Auth::user()->foto_perfil) 
+                    : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->nombre . ' ' . Auth::user()->apellido_paterno) . '&background=e91e63&color=fff&size=128';
+            @endphp
+            <img src="{{ $userAvatar }}" 
+                 alt="user-image" class="rounded-circle avatar-md shadow-lg border border-2 border-white">
 
             <div class="dropdown">
                 <a href="javascript: void(0);" class="dropdown-toggle h5 mt-2 mb-1 d-block"

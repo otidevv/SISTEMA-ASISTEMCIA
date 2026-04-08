@@ -26,10 +26,10 @@
     <!-- Secciones de estadísticas rápidas -->
     <div class="row">
         <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm gradient-warning">
+            <div class="card shadow-sm card-solid-warning">
                 <div class="card-body">
                     <div class="d-flex">
-                        <div class="flex-grow-1 text-left">
+                        <div class="flex-grow-1 text-left text-start">
                             <span class="text-white-50 text-uppercase fs-12 fw-bold">Pendientes de Validación</span>
                             <h3 id="count-pendiente" class="mb-0 text-white">0</h3>
                         </div>
@@ -43,10 +43,10 @@
             </div>
         </div>
         <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm gradient-success">
+            <div class="card shadow-sm card-solid-success">
                 <div class="card-body">
                     <div class="d-flex">
-                        <div class="flex-grow-1 text-left">
+                        <div class="flex-grow-1 text-left text-start">
                             <span class="text-white-50 text-uppercase fs-12 fw-bold">Validados / Matriculados</span>
                             <h3 id="count-aprobado" class="mb-0 text-white">0</h3>
                         </div>
@@ -60,10 +60,10 @@
             </div>
         </div>
         <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm gradient-info">
+            <div class="card shadow-sm card-solid-info">
                 <div class="card-body">
                     <div class="d-flex">
-                        <div class="flex-grow-1 text-left">
+                        <div class="flex-grow-1 text-left text-start">
                             <span class="text-white-50 text-uppercase fs-12 fw-bold">Total Programa</span>
                             <h3 id="count-total" class="mb-0 text-white">0</h3>
                         </div>
@@ -79,21 +79,41 @@
     </div>
 
     <style>
-        .gradient-warning { background: linear-gradient(135deg, #FF8C00 0%, #FF4500 100%) !important; }
-        .gradient-success { background: linear-gradient(135deg, #008037 0%, #2ecc71 100%) !important; }
-        .gradient-info { background: linear-gradient(135deg, #1A237E 0%, #0277BD 100%) !important; }
+        .card-solid-warning { background-color: var(--cepre-magenta) !important; color: white !important; }
+        .card-solid-success { background-color: var(--cepre-green) !important; color: white !important; }
+        .card-solid-info { background-color: var(--cepre-navy) !important; color: white !important; }
         
-        #reforzamientoTable thead th { background-color: #1A237E !important; color: #FFFFFF !important; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 15px 12px !important; }
+        #reforzamientoTable thead th { background-color: var(--cepre-navy) !important; color: #FFFFFF !important; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 15px 12px !important; }
         .badge-reforzamiento { padding: 6px 14px; font-weight: 800; font-size: 10px; border-radius: 4px; display: inline-flex; align-items: center; }
-        .badge-reforzamiento-success { background-color: #138344; color: #fff; }
-        .badge-reforzamiento-warning { background-color: #E65100; color: #fff; }
+        .badge-reforzamiento-success { background-color: var(--cepre-green); color: #fff; }
+        .badge-reforzamiento-warning { background-color: var(--cepre-magenta); color: #fff; }
         
         .payment-chip { padding: 4px 10px; border-radius: 50px; font-weight: 700; font-size: 10px; }
         .payment-chip-paid { background-color: #E8F5E9; color: #1B5E20; }
         .payment-chip-unpaid { background-color: #FFEBEE; color: #C62828; }
 
-        .btn-action-reforzamiento { background: #fff; border: 1.5px solid #d1d5db; color: #374151; padding: 6px 10px; border-radius: 6px; }
-        .btn-action-reforzamiento:hover { border-color: #1A237E; color: #1A237E; }
+        .btn-action-reforzamiento { 
+            width: 32px; 
+            height: 32px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 6px; 
+            margin: 0 2px;
+            transition: all 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-action-reforzamiento i { font-size: 16px; color: white !important; }
+        .btn-action-reforzamiento:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); filter: brightness(1.1); }
+        
+        .btn-solid-view { background-color: #6c5ce7 !important; }
+        .btn-solid-edit { background-color: #00cec9 !important; }
+        .btn-solid-print { background-color: #2d3436 !important; }
+        .btn-solid-wa { background-color: #00b894 !important; }
+        .btn-solid-delete { background-color: #d63031 !important; }
+        .btn-solid-approve { background-color: #0984e3 !important; }
+
         .bg-white-50 { background-color: rgba(255, 255, 255, 0.2) !important; }
 
         /* Estilos para inputs de archivo compactos */
