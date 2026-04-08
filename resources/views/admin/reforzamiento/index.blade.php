@@ -95,6 +95,37 @@
         .btn-action-reforzamiento { background: #fff; border: 1.5px solid #d1d5db; color: #374151; padding: 6px 10px; border-radius: 6px; }
         .btn-action-reforzamiento:hover { border-color: #1A237E; color: #1A237E; }
         .bg-white-50 { background-color: rgba(255, 255, 255, 0.2) !important; }
+
+        /* Estilos para inputs de archivo compactos */
+        .form-control-xs {
+            padding: 0.15rem 0.4rem;
+            font-size: 0.75rem;
+            height: auto;
+            min-height: 28px;
+            line-height: 1.2;
+        }
+        
+        /* Ajuste para que el texto de "seleccionar archivo" no se corte */
+        input[type="file"].form-control-xs::-webkit-file-upload-button {
+            padding: 0.1rem 0.4rem;
+            margin: -0.15rem -0.4rem;
+            margin-inline-end: 0.4rem;
+            font-size: 0.7rem;
+            background-color: #f1f3f5;
+            border: none;
+            border-inline-end: 1px solid #ced4da;
+            color: #495057;
+        }
+
+        .doc-box {
+            transition: all 0.2s ease;
+            border: 1px solid #e9ecef;
+        }
+        .doc-box:hover {
+            border-color: #dee2e6;
+            background-color: #fff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
     </style>
 
     <div class="row">
@@ -468,39 +499,45 @@
                                     <h6 class="text-uppercase fw-bold text-indigo fs-11 mb-3" style="letter-spacing: 1px;">5. Gestión Documental</h6>
                                     <div class="row g-2">
                                         <div class="col-6">
-                                            <div class="border p-2 rounded text-center bg-light">
+                                            <div class="doc-box p-2 rounded text-center bg-light">
                                                 <p class="fs-9 fw-bold mb-1 text-primary">DNI ESTUDIANTE</p>
                                                 <input type="file" name="dni_file" class="form-control form-control-xs">
+                                                <div id="ef-dni-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="border p-2 rounded text-center bg-light">
+                                            <div class="doc-box p-2 rounded text-center bg-light">
                                                 <p class="fs-9 fw-bold mb-1 text-success">VOUCHER PAGO</p>
                                                 <input type="file" name="voucher_file" class="form-control form-control-xs">
+                                                <div id="ef-voucher-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
-                                        <div class="col-6 mt-1">
-                                            <div class="border p-2 rounded text-center bg-light">
+                                        <div class="col-6">
+                                            <div class="doc-box p-2 rounded text-center bg-light">
                                                 <p class="fs-9 fw-bold mb-1 text-warning">CARTA COMP.</p>
                                                 <input type="file" name="compromiso_file" class="form-control form-control-xs">
+                                                <div id="ef-compromiso-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
-                                        <div class="col-6 mt-1">
-                                            <div class="border p-2 rounded text-center bg-light">
+                                        <div class="col-6">
+                                            <div class="doc-box p-2 rounded text-center bg-light">
                                                 <p class="fs-9 fw-bold mb-1 text-info">CERTIFICADO</p>
                                                 <input type="file" name="certificado_file" class="form-control form-control-xs">
+                                                <div id="ef-certificado-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
-                                        <div class="col-6 mt-1">
-                                            <div class="border p-2 rounded text-center bg-light">
+                                        <div class="col-6">
+                                            <div class="doc-box p-2 rounded text-center bg-light">
                                                 <p class="fs-9 fw-bold mb-1 text-danger">DNI APODERADO</p>
                                                 <input type="file" name="dni_apoderado_file" class="form-control form-control-xs">
+                                                <div id="ef-dni-apoderado-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
-                                        <div class="col-6 mt-1">
-                                            <div class="border p-2 rounded text-center bg-dark">
-                                                <p class="fs-9 fw-bold mb-1 text-white">FOTO ALUMNO</p>
+                                        <div class="col-6">
+                                            <div class="doc-box p-2 rounded text-center bg-dark">
+                                                <p class="fs-9 fw-bold mb-1 text-white text-uppercase">Foto Alumno</p>
                                                 <input type="file" name="foto_file" class="form-control form-control-xs">
+                                                <div id="ef-foto-link" class="mt-1 small"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -531,6 +568,19 @@
     <script>
         let table;
         $(document).ready(function() {
+            // Configuración Global de Toastr
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "4000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+
             table = $('#reforzamientoTable').DataTable({
                 processing: true, serverSide: true,
                 ajax: {
@@ -837,6 +887,24 @@
                 
                 $('#ef-observaciones').val(insc.observaciones);
                 
+                // V. LINKS DE DOCUMENTOS EXISTENTES
+                const storageUrl = "{{ asset('storage') }}/";
+                const setFileLink = (elementId, path) => {
+                    const el = $(elementId);
+                    if (path) {
+                        el.html(`<a href="${storageUrl + path}" target="_blank" class="text-primary fw-bold"><i class="mdi mdi-eye"></i> Ver Actual</a>`);
+                    } else {
+                        el.html(`<span class="text-muted italic fs-10">Sin archivo</span>`);
+                    }
+                };
+
+                setFileLink('#ef-dni-link', insc.dni_estudiante_path);
+                setFileLink('#ef-voucher-link', insc.voucher_path);
+                setFileLink('#ef-compromiso-link', insc.carta_compromiso_path);
+                setFileLink('#ef-certificado-link', insc.certificado_path);
+                setFileLink('#ef-dni-apoderado-link', insc.dni_apoderado_path);
+                setFileLink('#ef-foto-link', insc.foto_path);
+                
                 $('#modalGigaEdicion').modal('show');
             }).fail(() => {
                 toastr.error('No se pudieron cargar los datos del expediente.');
@@ -867,11 +935,20 @@
                             processData: false,
                             contentType: false
                         }).done(res => {
-                            toastr.success(res.message);
+                            // Detectar si se subieron archivos para un mensaje más específico
+                            const hasFiles = fd.get('dni_file').size > 0 || fd.get('voucher_file').size > 0 || 
+                                             fd.get('compromiso_file').size > 0 || fd.get('certificado_file').size > 0 || 
+                                             fd.get('dni_apoderado_file').size > 0 || fd.get('foto_file').size > 0;
+                            
+                            const successMsg = hasFiles ? '¡Expediente y Archivos actualizados!' : res.message;
+                            
+                            toastr.success(successMsg, 'Proceso Completado');
                             $('#modalGigaEdicion').modal('hide');
                             if (typeof table !== 'undefined') table.ajax.reload(null, false);
                         }).fail(err => {
-                            Swal.fire('Error', 'No se pudo actualizar el expediente.', 'error');
+                            let msg = 'No se pudo actualizar el expediente.';
+                            if (err.responseJSON && err.responseJSON.message) msg = err.responseJSON.message;
+                            Swal.fire('Error', msg, 'error');
                         }).always(() => {
                             $('#btn-save-full').prop('disabled', false).html('<i class="mdi mdi-content-save-check-outline mr-2 me-2"></i> ACTUALIZAR EXPEDIENTE');
                         });

@@ -245,9 +245,7 @@ class ReforzamientoAdminController extends Controller
             if ($request->hasFile('dni_file')) {
                 $inscripcion->dni_estudiante_path = $request->file('dni_file')->store($path, 'public');
             }
-            if ($request->hasFile('voucher_file')) {
-                $inscripcion->voucher_path = $request->file('voucher_file')->store($path, 'public');
-            }
+            // El voucher_path se maneja abajo en la sección de pagos
             if ($request->hasFile('compromiso_file')) {
                 $inscripcion->carta_compromiso_path = $request->file('compromiso_file')->store($path, 'public');
             }
@@ -263,16 +261,28 @@ class ReforzamientoAdminController extends Controller
 
             $inscripcion->save();
 
-            // 3. Actualizar Datos de Pago
+            // 4. Actualizar Datos de Pago
             $pago = $inscripcion->pagos()->first();
             if ($pago) {
                 if ($request->has('numero_operacion')) $pago->numero_operacion = $request->numero_operacion;
                 if ($request->has('monto')) $pago->monto = $request->monto;
                 if ($request->has('mes_pagado')) $pago->mes_pagado = $request->mes_pagado;
-                $pago->save();
                 
-                // El total se calcula dinámicamente
-                $inscripcion->save();
+                // Mover el guardado del voucher aquí
+                if ($request->hasFile('voucher_file')) {
+                    $pago->voucher_path = $request->file('voucher_file')->store($path, 'public');
+                }
+                
+                $pago->save();
+            } else if ($request->hasFile('voucher_file')) {
+                // Si no hay pago pero se subió un voucher, creamos un registro de pago básico
+                $inscripcion->pagos()->create([
+                    'numero_operacion' => $request->numero_operacion ?? 'PENDIENTE',
+                    'monto' => $request->monto ?? 0,
+                    'mes_pagado' => $request->mes_pagado ?? now()->format('F'),
+                    'voucher_path' => $request->file('voucher_file')->store($path, 'public'),
+                    'estado_pago' => 'pendiente'
+                ]);
             }
 
             DB::commit();
