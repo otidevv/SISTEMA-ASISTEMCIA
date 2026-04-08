@@ -826,13 +826,39 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Carrera a Postular</label>
                                 <!-- Usando form-select limpio -->
-                                <select class="form-select" id="carrera_id" name="carrera_id" required>
-                                    <option value="">Seleccione</option>
-                                    <!-- NOTE: Asegúrate de que tu backend (Laravel Blade) renderice correctamente el foreach -->
-                                    @foreach(\App\Models\Carrera::where('estado', 1)->get() as $carrera)
-                                        <option value="{{ $carrera->id }}">{{ $carrera->nombre }}</option>
-                                    @endforeach
-                                </select>
+                                    <select class="form-select" id="carrera_id" name="carrera_id" required>
+                                        <option value="">Seleccione carrera</option>
+                                        @php
+                                            $carrerasAgrupadas = \App\Models\Carrera::where('estado', 1)
+                                                ->orderBy('nombre', 'asc')
+                                                ->get()
+                                                ->groupBy('grupo');
+                                            
+                                            $nombresGrupos = [
+                                                'A' => 'GRUPO A - INGENIERÍAS',
+                                                'B' => 'GRUPO B - CIENCIAS DE LA SALUD',
+                                                'C' => 'GRUPO C - CIENCIAS SOCIALES Y EDUCACIÓN',
+                                                'D' => 'GRUPO D - ALTA ESPECIALIZACIÓN / SALUD'
+                                            ];
+
+                                            $nuevasCarreras = ['MEDICINA HUMANA', 'BIOLOGÍA', 'ECONOMÍA'];
+                                        @endphp
+
+                                        @foreach(['A', 'B', 'C', 'D'] as $grupoKey)
+                                            @if(isset($carrerasAgrupadas[$grupoKey]))
+                                                <optgroup label="{{ $nombresGrupos[$grupoKey] ?? "GRUPO $grupoKey" }}">
+                                                    @foreach($carrerasAgrupadas[$grupoKey] as $carrera)
+                                                        @php
+                                                            $esNueva = in_array(strtoupper(trim($carrera->nombre)), $nuevasCarreras);
+                                                        @endphp
+                                                        <option value="{{ $carrera->id }}">
+                                                            {{ $carrera->nombre }} @if($esNueva) ✨ (NUEVO) @endif
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endif
+                                        @endforeach
+                                    </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Turno</label>
