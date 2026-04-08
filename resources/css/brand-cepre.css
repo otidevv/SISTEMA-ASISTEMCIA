@@ -1,37 +1,47 @@
 :root {
-    /* Colores Institucionales CEPRE UNAMAD - Estandarizados */
-    --cepre-magenta: #e91e63;
-    --cepre-cyan: #00bcd4;
-    --cepre-green: #8bc34a;
+    /* COLORES INSTITUCIONALES CEPRE UNAMAD - EXTRACCIÓN EXACTA DEL LOGO */
+    --cepre-magenta: #e2007a;
+    --cepre-green: #93c01f;
+    --cepre-cyan: #00aeef;
+    --cepre-dark-magenta: #9b0058;
     --cepre-gold: #ffd700;
     --cepre-navy: #1a237e;
     --cepre-dark-blue: #0d47a1;
-    --cepre-light-gray: #f8f9fa;
-    --cepre-dark-gray: #455a64;
-    --cepre-shadow: rgba(26, 35, 126, 0.15);
+    
+    /* Neutros Premium Dinámicos */
+    --cepre-bg-light: #f8f9fa;
+    --cepre-sidebar-bg: #ffffff;
+    --cepre-card-shadow: rgba(0, 174, 239, 0.08);
+    --cepre-text-main: #4a4a4a;
+    --cepre-border-color: #edf2f9;
 
-    /* Alias para compatibilidad con código existente */
+    /* Alias para compatibilidad */
     --cepre-pink: var(--cepre-magenta);
     --cepre-blue: var(--cepre-cyan);
     --cepre-yellow: var(--cepre-gold);
-
-    /* Sobreescritura de Bootstrap/Shreyu */
+    
+    /* Sobreescritura de Bootstrap */
     --bs-primary: var(--cepre-magenta);
-    --bs-primary-rgb: 233, 30, 99;
-
+    --bs-primary-rgb: 226, 0, 122;
     --bs-success: var(--cepre-green);
-    --bs-success-rgb: 139, 195, 74;
-
     --bs-info: var(--cepre-cyan);
-    --bs-info-rgb: 0, 188, 212;
-
     --bs-link-color: var(--cepre-magenta);
-    --bs-link-hover-color: #c2185b;
+    --bs-link-hover-color: #b30061;
+}
+
+/* SMART THEME: ADAPTACIÓN AUTOMÁTICA A MODO OSCURO */
+[data-bs-theme="dark"] {
+    --cepre-bg-light: #121417;
+    --cepre-sidebar-bg: #1a1e24;
+    --cepre-text-main: #e2e8f0;
+    --cepre-border-color: #2b323c;
+    --cepre-shadow: rgba(0, 0, 0, 0.4);
+    --cepre-card-shadow: rgba(0, 0, 0, 0.5);
 }
 
 /* Micro-detalles Premium de IU */
 ::selection {
-    background-color: rgba(233, 30, 99, 0.3);
+    background-color: rgba(226, 0, 122, 0.3);
     color: #fff;
 }
 
@@ -46,7 +56,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(26, 35, 126, 0.2);
+    background: rgba(0, 174, 239, 0.2);
     border-radius: 10px;
     transition: all 0.3s ease;
 }
@@ -73,201 +83,214 @@
     pointer-events: none;
 }
 
-/* Botones */
+/* Botones Premium */
 .btn-primary {
     background-color: var(--cepre-magenta) !important;
     border-color: var(--cepre-magenta) !important;
     color: #fff !important;
-    box-shadow: 0 4px 6px rgba(233, 30, 99, 0.2);
+    box-shadow: 0 4px 6px rgba(226, 0, 122, 0.2);
     transition: all 0.3s ease !important;
+    font-weight: 600;
 }
 
 .btn-primary:hover {
-    background-color: #c2185b !important;
-    border-color: #c2185b !important;
+    background-color: #b30061 !important;
+    border-color: #b30061 !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(233, 30, 99, 0.3) !important;
+    box-shadow: 0 6px 12px rgba(226, 0, 122, 0.3) !important;
+}
+
+/* GLOBAL UI POLISH */
+body {
+    background-color: var(--cepre-bg-light);
+    color: var(--cepre-text-main);
 }
 
 /* =========================================
-   ESTRUCTURA GLOBAL (SIDEBAR Y HEADER)
+   ESTRUCTURA: HEADER Y SIDEBAR (ADAPTATIVO)
    ========================================= */
 
-/* Solo aplicar fondos blancos SI NO estamos en modo oscuro */
-html[data-bs-theme="light"] .logo-box {
-    background-color: #fff !important;
-    border-bottom: 1px solid #f1f3fa;
-}
-
-/* FONDO NAVY INSTITUCIONAL PARA EL MENU */
-.left-side-menu {
-    background-color: var(--cepre-navy) !important;
-    background-image: linear-gradient(180deg, var(--cepre-navy) 0%, #0a0e41 100%) !important;
-    box-shadow: 4px 0 20px rgba(10, 14, 65, 0.3) !important;
-}
-
-/* TOPBAR REFINADO (Inteligente con el Modo Oscuro) */
-html[data-bs-theme="light"] .navbar-custom {
-    background-color: #ffffff !important;
-    border-bottom: 2px solid var(--cepre-magenta) !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+.navbar-custom {
+    background-color: var(--cepre-sidebar-bg) !important;
+    border-bottom: 2px solid var(--cepre-cyan) !important;
+    box-shadow: 0 2px 15px var(--cepre-shadow, rgba(0,0,0,0.05)) !important;
 }
 
 [data-bs-theme="dark"] .navbar-custom {
-    border-bottom: 2px solid var(--cepre-magenta) !important;
+    border-bottom-color: var(--cepre-magenta) !important;
 }
 
-/* Ajuste de Textos en Sidebar */
-.side-menu>li>a,
-.side-menu>li>a i,
-.side-menu .menu-title,
-.nav-second-level li a {
-    color: rgba(255, 255, 255, 0.7) !important;
+.navbar-custom .nav-link, 
+.navbar-custom .button-menu-mobile,
+.navbar-custom .pro-user-name,
+.navbar-custom .nav-link.dropdown-toggle {
+    color: var(--cepre-text-main) !important;
+    font-weight: 600;
+}
+
+/* Sidebar - Diseño Adaptativo Clean */
+.left-side-menu {
+    background-color: var(--cepre-sidebar-bg) !important;
+    background-image: none !important;
+    box-shadow: 2px 0 10px var(--cepre-shadow, rgba(0,0,0,0.03)) !important;
+    border-right: 1px solid var(--cepre-border-color);
+}
+
+.logo-box {
+    background-color: var(--cepre-sidebar-bg) !important;
+    border-bottom: 1px solid var(--cepre-border-color);
+}
+
+/* Menu Items */
+.side-menu>li>a {
+    color: var(--cepre-text-main) !important;
     font-weight: 500 !important;
+    border-left: 3px solid transparent;
     transition: all 0.2s ease;
 }
 
-.side-menu .menu-title {
-    color: rgba(255, 255, 255, 0.4) !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 10px !important;
+.side-menu>li>a i {
+    color: var(--cepre-cyan) !important;
 }
 
-/* Item Activo (Magenta) - MEJORADO */
+.side-menu .menu-title {
+    color: var(--cepre-text-main) !important;
+    opacity: 0.5;
+    text-transform: uppercase;
+    font-size: 10px !important;
+    letter-spacing: 1px;
+    padding: 15px 20px 10px !important;
+}
+
+/* Item Activo (Estilo Premium) */
 .side-menu li.mm-active > a,
 .side-menu li.active > a,
-.side-menu a.active,
-.menuitem-active > a {
-    background: linear-gradient(90deg, rgba(233, 30, 99, 0.25) 0%, transparent 100%) !important;
-    border-right: 4px solid var(--cepre-magenta) !important;
-    color: #ffffff !important;
+.side-menu a.active {
+    background: rgba(226, 0, 122, 0.05) !important;
+    color: var(--cepre-magenta) !important;
+    border-left: 3px solid var(--cepre-magenta) !important;
 }
 
 .side-menu li.mm-active > a i,
 .side-menu li.active > a i,
-.side-menu a.active i,
-.menuitem-active > a i {
+.side-menu a.active i {
     color: var(--cepre-magenta) !important;
     transform: scale(1.1);
 }
 
-.nav-second-level li a.active {
-    color: var(--cepre-magenta) !important;
-    font-weight: 800 !important;
-}
-
 /* =========================================
-   DATATABLES Y TABLAS PREMIUM
+   DATATABLES Y TABLAS PREMIUM (REESTITUCIÓN)
    ========================================= */
 
-.table {
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-}
-
 .table thead th {
-    background-color: var(--cepre-navy) !important;
-    color: #fff !important;
+    background-color: #f8f9fc !important;
+    color: var(--cepre-dark-magenta) !important;
+    border-bottom: 2px solid var(--cepre-cyan) !important;
     text-transform: uppercase;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800 !important;
     letter-spacing: 0.05em;
     padding: 15px 12px !important;
-    border: none !important;
 }
 
 /* Redondear esquinas del header */
-.table thead tr th:first-child { border-top-left-radius: 8px !important; }
-.table thead tr th:last-child { border-top-right-radius: 8px !important; }
-
-/* Efecto Hover en Filas */
-.table tbody tr {
-    transition: all 0.2s ease;
-}
+.table thead tr th:first-child { border-top-left-radius: 12px !important; }
+.table thead tr th:last-child { border-top-right-radius: 12px !important; }
 
 .table tbody tr:hover {
-    background-color: rgba(233, 30, 99, 0.03) !important;
+    background-color: rgba(0, 174, 239, 0.02) !important;
     box-shadow: inset 4px 0 0 var(--cepre-magenta);
 }
 
-/* PAGINACIÓN Y CONTROLES DE TABLA */
-.dataTables_filter input {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 20px !important;
-    padding: 6px 15px !important;
-    transition: all 0.3s ease !important;
-    background-color: #f8fafc !important;
+[data-bs-theme="dark"] .table thead th {
+    background-color: #2b323c !important;
 }
 
-.dataTables_filter input:focus {
-    border-color: var(--cepre-magenta) !important;
-    box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.1) !important;
-    background-color: #fff !important;
-    outline: none !important;
-}
-
+/* PAGINACIÓN "ESTILO NÚMEROS" PREMIUM */
 .page-item.active .page-link {
     background-color: var(--cepre-magenta) !important;
     border-color: var(--cepre-magenta) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(226, 0, 122, 0.4) !important;
 }
 
 .page-link {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    color: var(--cepre-navy) !important;
-    border-radius: 12px !important; /* Estilo píldora/redondeado premium */
+    color: var(--cepre-cyan) !important;
+    border-radius: 12px !important; /* Estilo píldora */
     margin: 0 5px !important;
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid var(--cepre-border-color) !important;
     font-weight: 700 !important;
-    height: 38px !important;
-    min-width: 38px !important; /* Permite que el botón se estire con el texto */
-    width: auto !important;
-    padding: 0 15px !important; /* Espacio para que respire la palabra */
+    height: 36px !important;
+    min-width: 36px !important;
+    padding: 0 12px !important;
     transition: all 0.2s ease !important;
     font-size: 13px !important;
+    background-color: transparent !important;
 }
 
 .page-item:not(.active) .page-link:hover {
-    background-color: var(--cepre-navy) !important;
+    background-color: var(--cepre-cyan) !important;
     color: #fff !important;
-    border-color: var(--cepre-navy) !important;
+    border-color: var(--cepre-cyan) !important;
     transform: translateY(-2px);
 }
 
-.page-item.disabled .page-link {
-    background-color: #f1f5f9 !important;
-    color: #94a3b8 !important;
-    border-color: #e2e8f0 !important;
-    opacity: 0.5;
-}
-
 /* =========================================
-   CARDS Y COMPONENTES
+   CARDS Y DASHBOARD (REESTITUCIÓN)
    ========================================= */
 
 .card {
-    border: none !important;
-    border-radius: 0.75rem !important;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    border: 1px solid var(--cepre-border-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 1rem 3rem var(--cepre-card-shadow) !important;
 }
 
-/* Sutil Gradiente Institucional para Tarjetas Sólidas */
-.card-solid-warning, .card-solid-success, .card-solid-info, .bg-cepre-gradient {
-    background-image: radial-gradient(circle at 20% 0%, rgba(255,255,255,0.15) 0%, transparent 50%) !important;
+/* Dashboard Widget Cards */
+.card-solid-magenta {
+    background: linear-gradient(135deg, var(--cepre-magenta) 0%, #b30061 100%) !important;
+    color: white !important;
 }
 
-/* Otros */
+.card-solid-green {
+    background: linear-gradient(135deg, var(--cepre-green) 0%, #769a19 100%) !important;
+    color: white !important;
+}
+
+.card-solid-cyan {
+    background: linear-gradient(135deg, var(--cepre-cyan) 0%, #0088ba 100%) !important;
+    color: white !important;
+}
+
+/* User Box in Sidebar */
+.user-box {
+    padding: 20px 0 !important;
+    background: var(--cepre-sidebar-bg) !important;
+    border-bottom: 1px solid var(--cepre-border-color);
+}
+
+.user-box img {
+    border: 3px solid var(--cepre-cyan) !important;
+    box-shadow: 0 0 10px rgba(0, 174, 239, 0.3);
+}
+
+/* Form Controls */
 .form-control:focus {
-    border-color: var(--cepre-magenta) !important;
-    box-shadow: 0 0 0 0.15rem rgba(233, 30, 99, 0.15) !important;
+    border-color: var(--cepre-cyan) !important;
+    box-shadow: 0 0 0 0.15rem rgba(0, 174, 239, 0.15) !important;
+}
+
+.app-search .form-control {
+    background-color: var(--cepre-bg-light) !important;
+    border: 1px solid var(--cepre-border-color) !important;
+    color: var(--cepre-text-main) !important;
+    border-radius: 8px !important;
 }
