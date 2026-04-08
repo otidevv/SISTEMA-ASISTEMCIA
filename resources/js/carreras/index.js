@@ -27,8 +27,8 @@ $(document).ready(function () {
                 data: 'grupo',
                 render: function (data) {
                     if (!data) return '<span class="badge bg-secondary">Sin grupo</span>';
-                    var badgeClass = data === 'A' ? 'bg-primary' : (data === 'B' ? 'bg-success' : 'bg-info');
-                    var grupoNombre = data === 'A' ? 'Grupo A' : (data === 'B' ? 'Grupo B' : 'Grupo C');
+                    var badgeClass = data === 'A' ? 'bg-primary' : (data === 'B' ? 'bg-success' : (data === 'C' ? 'bg-info' : 'bg-warning'));
+                    var grupoNombre = data === 'A' ? 'Grupo A' : (data === 'B' ? 'Grupo B' : (data === 'C' ? 'Grupo C' : 'Grupo D'));
                     return '<span class="badge ' + badgeClass + '">' + grupoNombre + '</span>';
                 }
             },

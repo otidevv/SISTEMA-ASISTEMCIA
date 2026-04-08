@@ -34,7 +34,8 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         'Grupo B' => [
             'carreras' => [
                 'ENFERMERÍA',
-                'MEDICINA VETERINARIA - ZOOTECNIA'
+                'MEDICINA VETERINARIA - ZOOTECNIA',
+                'BIOLOGÍA'
             ],
             'color' => 'F8E8E8' // Rosa claro
         ],
@@ -46,9 +47,16 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
                 'ECOTURISMO',
                 'EDUCACIÓN: ESPECIALIDAD INICIAL Y ESPECIAL',
                 'EDUCACIÓN: ESPECIALIDAD MATEMÁTICA Y COMPUTACIÓN',
-                'EDUCACIÓN: ESPECIALIDAD PRIMARIA E INFORMÁTICA'
+                'EDUCACIÓN: ESPECIALIDAD PRIMARIA E INFORMÁTICA',
+                'ECONOMÍA'
             ],
             'color' => 'F8F4E8' // Amarillo claro
+        ],
+        'Grupo D' => [
+            'carreras' => [
+                'MEDICINA HUMANA'
+            ],
+            'color' => 'E8F8E8' // Verde claro
         ]
     ];
 
@@ -138,7 +146,7 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         $numeroGrupo = 1;
         $totalesGeneral = 0;
 
-        $ordenGrupos = ['Grupo A', 'Grupo B', 'Grupo C'];
+        $ordenGrupos = ['Grupo A', 'Grupo B', 'Grupo C', 'Grupo D'];
         $gruposOrdenados = [];
         foreach ($ordenGrupos as $grupo) {
             if (isset($carrerasPorGrupo[$grupo])) $gruposOrdenados[$grupo] = $carrerasPorGrupo[$grupo];

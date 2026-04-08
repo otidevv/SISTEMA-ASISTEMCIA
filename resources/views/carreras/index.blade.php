@@ -123,6 +123,7 @@
                                     <option value="A">Grupo A - Ingenierías</option>
                                     <option value="B">Grupo B - Ciencias de la Salud</option>
                                     <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                                    <option value="D">Grupo D - Alta especialización / Salud</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -240,6 +241,7 @@
                                     <option value="A">Grupo A - Ingenierías</option>
                                     <option value="B">Grupo B - Ciencias de la Salud</option>
                                     <option value="C">Grupo C - Ciencias Sociales y Educación</option>
+                                    <option value="D">Grupo D - Alta especialización / Salud</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">

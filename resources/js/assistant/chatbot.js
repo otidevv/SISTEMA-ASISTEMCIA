@@ -38,8 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         grupos: {
             A: "💻 **Ingenierías**: Sistemas, Forestal, Agroindustrial.",
-            B: "🏥 **Salud**: Medicina Veterinaria, Enfermería.",
-            C: "⚖️ **Letras/Negocios**: Derecho, Contabilidad, Educación, Turismo."
+            B: "🏥 **Salud**: Medicina Veterinaria, Enfermería, Biología.",
+            C: "⚖️ **Letras/Negocios**: Derecho, Contabilidad, Educación, Turismo, Economía.",
+            D: "🩺 **Alta Especialización**: Medicina Humana."
         },
         vacantes: []
     };
@@ -92,7 +93,7 @@ Para postular al ciclo ${d.ciclo.nombre}:
             name: 'carreras',
             keywords: ['carrera', 'grupo', 'estudiar', 'escuela', 'profesional', 'opción', 'ofrecen'],
             response: (d) => `🏫 **Nuestras Carreras por Grupos**
-Contamos con 3 áreas de formación técnica:
+Contamos con 4 áreas de formación técnica:
 
 🅰️ **Grupo A**
 ${d.grupos.A}
@@ -102,6 +103,9 @@ ${d.grupos.B}
 
 🅲 **Grupo C**
 ${d.grupos.C}
+
+🩺 **Grupo D**
+${d.grupos.D}
 
 🎯 *Elige tu vocación y asegura tu futuro.*`
         },

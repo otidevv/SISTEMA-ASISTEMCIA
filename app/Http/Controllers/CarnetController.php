@@ -925,11 +925,17 @@ class CarnetController extends Controller
             return 'A';
         }
         
+        // Grupo D - Alta especialización / Salud
+        if (str_contains($nombreLower, 'medicina humana')) {
+            return 'D';
+        }
+        
         // Grupo B - Ciencias de la Salud
         if (str_contains($nombreLower, 'medicina') ||
             str_contains($nombreLower, 'veterinaria') ||
             str_contains($nombreLower, 'zootecnia') ||
-            str_contains($nombreLower, 'enfermeria')) {
+            str_contains($nombreLower, 'enfermeria') ||
+            str_contains($nombreLower, 'biologia')) {
             return 'B';
         }
         
@@ -946,7 +952,8 @@ class CarnetController extends Controller
             str_contains($nombreLower, 'inicial') ||
             str_contains($nombreLower, 'especial') ||
             str_contains($nombreLower, 'matematica') ||
-            str_contains($nombreLower, 'computacion')) {
+            str_contains($nombreLower, 'computacion') ||
+            str_contains($nombreLower, 'economia')) {
             return 'C';
         }
         
