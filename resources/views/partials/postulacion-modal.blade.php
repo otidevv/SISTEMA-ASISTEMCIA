@@ -847,18 +847,28 @@
                                         @foreach(['A', 'B', 'C', 'D'] as $grupoKey)
                                             @if(isset($carrerasAgrupadas[$grupoKey]))
                                                 <optgroup label="{{ $nombresGrupos[$grupoKey] ?? "GRUPO $grupoKey" }}">
-                                                    @foreach($carrerasAgrupadas[$grupoKey] as $carrera)
+                                                    @php
+                                                        // Ordenamos para que las NUEVAS aparezcan primero dentro de su grupo
+                                                        $carrerasDelGrupo = $carrerasAgrupadas[$grupoKey]->sortByDesc(function($c) use ($nuevasCarreras) {
+                                                            $nombreLimpio = strtoupper(trim($c->nombre));
+                                                            return (
+                                                                strpos($nombreLimpio, 'MEDICINA HUMANA') !== false || 
+                                                                strpos($nombreLimpio, 'BIOLOG') !== false || 
+                                                                strpos($nombreLimpio, 'ECONOM') !== false
+                                                            ) ? 1 : 0;
+                                                        });
+                                                    @endphp
+                                                    @foreach($carrerasDelGrupo as $carrera)
                                                         @php
                                                             $nombreLimpio = strtoupper(trim($carrera->nombre));
-                                                            // Buscamos coincidencia parcial o sin tildes para mayor seguridad
                                                             $esNueva = (
                                                                 strpos($nombreLimpio, 'MEDICINA HUMANA') !== false || 
                                                                 strpos($nombreLimpio, 'BIOLOG') !== false || 
                                                                 strpos($nombreLimpio, 'ECONOM') !== false
                                                             );
                                                         @endphp
-                                                        <option value="{{ $carrera->id }}">
-                                                            {{ $carrera->nombre }} @if($esNueva) ✨ (NUEVO) @endif
+                                                        <option value="{{ $carrera->id }}" @if($esNueva) style="background-color: #fff4e6; color: #e67e22; font-weight: bold;" @endif>
+                                                            @if($esNueva) 🔥 [¡NUEVA!] @endif {{ $carrera->nombre }}
                                                         </option>
                                                     @endforeach
                                                 </optgroup>
@@ -872,8 +882,11 @@
                                 <select class="form-select" id="turno_id" name="turno_id" required>
                                     <option value="">Seleccione</option>
                                     <!-- NOTE: Asegúrate de que tu backend (Laravel Blade) renderice correctamente el foreach -->
-                                    @foreach(\App\Models\Turno::where('estado', 1)->get() as $turno)
-                                        <option value="{{ $turno->id }}">{{ $turno->nombre }}</option>
+                                    @foreach(\App\Models\Turno::where('estado', 1)->orderBy('orden', 'asc')->get() as $turno)
+                                        <option value="{{ $turno->id }}">
+                                            @if($turno->nombre == 'Mañana') 🌅 @elseif($turno->nombre == 'Tarde') 🌆 @endif 
+                                            {{ $turno->nombre }} ({{ $turno->getHorarioCompleto() }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
