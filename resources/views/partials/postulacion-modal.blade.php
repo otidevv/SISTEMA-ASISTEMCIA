@@ -867,7 +867,7 @@
                                                                 strpos($nombreLimpio, 'ECONOM') !== false
                                                             );
                                                         @endphp
-                                                        <option value="{{ $carrera->id }}" @if($esNueva) style="background-color: #fff4e6; color: #e67e22; font-weight: bold;" @endif>
+                                                        <option value="{{ $carrera->id }}" @if($esNueva) style="background-color: #fff4e6; color: #000000; font-weight: bold;" @endif>
                                                             @if($esNueva) 🔥 [¡NUEVA!] @endif {{ $carrera->nombre }}
                                                         </option>
                                                     @endforeach
