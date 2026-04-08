@@ -14,783 +14,207 @@
     
     <!-- Fuente Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        /* Paleta de colores institucional basada en el logo CEPRE UNAMAD */
-        :root {
-            --cepre-magenta: #e91e63;
-            --cepre-cyan: #00bcd4;
-            --cepre-green: #8bc34a;
-            --cepre-gold: #ffd700;
-            --cepre-navy: #1a237e;
-            --cepre-dark-blue: #0d47a1;
-            --cepre-light-gray: #f8f9fa;
-            --cepre-dark-gray: #455a64;
-            --cepre-shadow: rgba(26, 35, 126, 0.15);
-            /* Colores para Dark Mode (guiados por tu imagen de asistencia) */
-            --cepre-dark-bg: #293142;
-            --cepre-dark-card: #364053;
-            --cepre-dark-text: #eef2f7;
-        }
+        /* MÓDULO DE POSTULACIONES - DISEÑO UNIFICADO CEPRE UNAMAD */
         
-        /* Estilos base para usar la fuente Inter y fondo */
         body {
             font-family: 'Inter', sans-serif !important; 
-            background-color: #f4f7f9;
+            background-color: var(--cepre-bg-light);
+            color: var(--cepre-text-main);
         }
-        
-        /* Contenedores principales de la página (APLICAMOS ESTÉTICA EXTERNA) */
+
+        /* Estética de Contenedor */
         .cepre-content-card {
-            border-radius: 1.5rem !important; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            margin-bottom: 1.5rem;
-        }
-        
-        /* ========================================================= */
-        /* SOLUCIÓN MODO OSCURO (Dark Mode) */
-        /* ========================================================= */
-        body[data-layout-mode="dark"] .cepre-content-card {
-            background-color: var(--cepre-dark-card) !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            border: none;
-        }
-        body[data-layout-mode="dark"] .border-b.border-gray-200 {
-            border-color: #4a5468 !important;
-        }
-        body[data-layout-mode="dark"] .cepre-content-card h4, 
-        body[data-layout-mode="dark"] .cepre-content-card h3, 
-        body[data-layout-mode="dark"] .cepre-content-card p, 
-        body[data-layout-mode="dark"] .cepre-content-card .form-label, 
-        body[data-layout-mode="dark"] .cepre-content-card .text-gray-700, 
-        body[data-layout-mode="dark"] .cepre-content-card .text-gray-600,
-        body[data-layout-mode="dark"] .cepre-content-card .text-muted,
-        body[data-layout-mode="dark"] .cepre-content-card .header-title {
-            color: var(--cepre-dark-text) !important;
-        }
-        body[data-layout-mode="dark"] .cepre-stat-card * {
-            color: var(--cepre-dark-text) !important;
-        }
-        body[data-layout-mode="dark"] .form-select, 
-        body[data-layout-mode="dark"] .form-control {
-            background-color: #4a5468 !important; 
-            border-color: #5a6374 !important;
-            color: var(--cepre-dark-text) !important;
-        }
-        body[data-layout-mode="dark"] .form-select option {
-            background-color: #364053 !important; 
-            color: var(--cepre-dark-text) !important;
-        }
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr td {
-            color: var(--cepre-dark-text) !important;
-            background-color: transparent !important; 
+            background-color: var(--cepre-sidebar-bg) !important;
+            border: 1px solid var(--cepre-border-color) !important;
+            border-radius: 1.25rem !important; 
+            box-shadow: 0 10px 15px -3px var(--cepre-shadow, rgba(0, 0, 0, 0.05));
+            transition: all 0.3s ease;
         }
 
-        /* Estilo para tarjetas de estadísticas (cepre-stat-card) */
+        [data-bs-theme="dark"] .cepre-content-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 📊 TARJETAS DE ESTADÍSTICAS (PREMIUM ADAPTATIVAS) */
         .cepre-stat-card {
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s;
-            overflow: hidden;
-            border-left: 5px solid;
-            padding: 1rem;
-            color: #333 !important;
-        }
-        body[data-layout-mode="dark"] .cepre-stat-card {
-             background-color: var(--cepre-dark-card) !important;
-             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-        .cepre-stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Estilos para encabezados de modal (mantenidos de Bootstrap con colores CEPRE) */
-        .modal-header.cepre-bg-navy,
-        .modal-header.cepre-bg-navy .modal-title {
-            background-color: var(--cepre-navy) !important;
-            color: white !important;
-        }
-        .modal-header.cepre-bg-cyan,
-        .modal-header.cepre-bg-cyan .modal-title {
-            background-color: var(--cepre-cyan) !important;
-            color: white !important;
-        }
-        .modal-header.cepre-bg-gradient,
-        .modal-header.cepre-bg-gradient .modal-title {
-            background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-navy) 100%) !important;
-            color: white !important;
-        }
-        
-        /* Íconos de las Tarjetas de Estadísticas */
-        .stat-icon {
-            font-size: 2.5rem; /* 40px */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .stat-icon-container {
-            width: 55px; /* Contenedor para el ícono */
-            height: 55px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            color: white; /* Asegurar que el ícono sea blanco por defecto */
-        }
-        /* Estilo del spinner institucional */
-        .cepre-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(233, 30, 99, 0.1);
-            border-left: 4px solid var(--cepre-magenta);
-            border-radius: 50%;
-            animation: cepreSpinAnimation 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes cepreSpinAnimation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* ========================================================= */
-        /* WIZARD HORIZONTAL MODERNIZADO (SOLUCIÓN FINAL) */
-        /* ========================================================= */
-        
-        #modalRegistroNuevo .modal-content {
-            flex-direction: column; /* Volvemos a columna para ocupar todo el ancho */
-            max-width: 1200px;
-            margin: auto;
-        }
-        
-        .registration-wizard {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-
-        /* 1. Barra de progreso HORIZONTAL */
-        .registration-wizard .wizard-progress-container {
-            width: 100%; /* Ocupar todo el ancho */
-            flex-direction: row; /* Horizontal */
-            justify-content: space-between;
-            padding: 1.5rem 2rem;
-            margin-bottom: 0;
-            border-bottom: 1px solid #dee2e6; /* Separador debajo del wizard */
-            border-right: none;
-            background-color: #f8f9fa;
-        }
-        body[data-layout-mode="dark"] .registration-wizard .wizard-progress-container {
-            border-bottom-color: #4a5468 !important;
-            background-color: var(--cepre-dark-card) !important;
-        }
-        .registration-wizard .step-indicator {
-            flex-grow: 1;
-            padding: 0 0.5rem;
-            text-align: center;
-            transition: none;
-        }
-        .registration-wizard .step-indicator:not(:last-child) {
-            margin-right: 2rem; /* Espacio entre pasos */
-        }
-        
-        /* Círculo e Ícono (Diseño horizontal limpio) */
-        .registration-wizard .step-circle {
+            background-color: var(--cepre-sidebar-bg) !important;
+            border: 1px solid var(--cepre-border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            transform: none;
-            left: auto;
-            margin: 0 auto 0.5rem; /* Centrado horizontalmente, espacio inferior */
-            width: 50px;
-            height: 50px;
-            border: 2px solid #ccc;
-            background-color: white;
-            transition: background-color 0.3s, border-color 0.3s;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
         }
-        .registration-wizard .step-indicator.active .step-circle {
+
+        .cepre-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px var(--cepre-card-shadow);
+        }
+
+        .stat-icon-container {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-right: 1rem;
+            color: white !important;
+        }
+
+        /* Colores por estado (Usa variables globales) */
+        .stat-pendientes { border-top: 4px solid var(--cepre-gold); }
+        .stat-pendientes .stat-icon-container { background: var(--cepre-gold); box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3); }
+        
+        .stat-aprobadas { border-top: 4px solid var(--cepre-green); }
+        .stat-aprobadas .stat-icon-container { background: var(--cepre-green); box-shadow: 0 4px 10px rgba(147, 192, 31, 0.3); }
+
+        .stat-rechazadas { border-top: 4px solid var(--cepre-magenta); }
+        .stat-rechazadas .stat-icon-container { background: var(--cepre-magenta); box-shadow: 0 4px 10px rgba(226, 0, 122, 0.3); }
+
+        .stat-observadas { border-top: 4px solid var(--cepre-cyan); }
+        .stat-observadas .stat-icon-container { background: var(--cepre-cyan); box-shadow: 0 4px 10px rgba(0, 174, 239, 0.3); }
+
+        .cepre-stat-card h3 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--cepre-text-main);
+        }
+
+        .cepre-stat-card p {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            opacity: 0.7;
+        }
+
+        /* 📋 TABLA GIGANTE (ESTILO LIGHT & CLEAN) */
+        #postulaciones-datatable thead th {
+            background-color: var(--cepre-bg-light) !important;
+            color: var(--cepre-dark-magenta) !important;
+            border-bottom: 2px solid var(--cepre-cyan) !important;
+            font-weight: 800 !important;
+            font-size: 11px !important;
+            text-transform: uppercase;
+            padding: 15px 10px !important;
+            letter-spacing: 0.5px;
+        }
+
+        #postulaciones-datatable tbody td {
+            vertical-align: middle !important;
+            font-size: 13px;
+            border-bottom: 1px solid var(--cepre-border-color);
+        }
+
+        #postulaciones-datatable tbody tr:hover {
+            background-color: rgba(0, 174, 239, 0.03) !important;
+            box-shadow: inset 3px 0 0 var(--cepre-magenta);
+        }
+
+        /* Colores de Filas por Estado (Sutiles) */
+        .estado-pendiente { border-left: 4px solid var(--cepre-gold); }
+        .estado-aprobado { border-left: 4px solid var(--cepre-green); }
+        .estado-rechazado { border-left: 4px solid var(--cepre-magenta); }
+        .estado-observado { border-left: 4px solid var(--cepre-cyan); }
+
+        /* MODO OSCURO - AJUSTE DE COLORES DE FILA */
+        [data-bs-theme="dark"] .estado-pendiente { background-color: rgba(255, 215, 0, 0.05) !important; }
+        [data-bs-theme="dark"] .estado-aprobado { background-color: rgba(147, 192, 31, 0.05) !important; }
+        [data-bs-theme="dark"] .estado-rechazado { background-color: rgba(226, 0, 122, 0.05) !important; }
+        [data-bs-theme="dark"] .estado-observado { background-color: rgba(0, 174, 239, 0.05) !important; }
+
+        /* 🔍 FILTROS REFINADOS */
+        .header-title {
+            color: var(--cepre-magenta) !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px;
+        }
+
+        .form-label {
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--cepre-text-main);
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+
+        .form-select, .form-control {
+            border-radius: 8px !important;
+            border: 1px solid var(--cepre-border-color) !important;
+            background-color: var(--cepre-bg-light) !important;
+            color: var(--cepre-text-main) !important;
+            font-weight: 600;
+        }
+
+        /* 🧙‍♂️ WIZARD MODERNO */
+        .step-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: var(--cepre-bg-light);
+            border: 2px solid var(--cepre-border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            transition: all 0.3s ease;
+        }
+
+        .step-indicator.active .step-circle {
+            background: var(--cepre-cyan);
             border-color: var(--cepre-cyan);
-            background-color: var(--cepre-cyan);
             color: white;
-            transform: none;
-            box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
+            box-shadow: 0 4px 10px rgba(0, 174, 239, 0.3);
         }
-        .registration-wizard .step-indicator.completed .step-circle {
-            background-color: var(--cepre-green);
+
+        .step-indicator.completed .step-circle {
+            background: var(--cepre-green);
             border-color: var(--cepre-green);
             color: white;
         }
 
-        /* Etiqueta (Texto) - Debajo del círculo */
-        .registration-wizard .step-label {
-            margin-left: 0;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #6c757d;
-            transform: none;
-            position: relative;
-            top: auto;
-            left: auto;
-            width: auto;
-        }
-        .registration-wizard .step-indicator.active .step-label {
-            color: var(--cepre-cyan);
-        }
-        .registration-wizard .step-indicator.completed .step-label {
-            color: var(--cepre-navy);
-        }
-        
-        /* Línea de Conexión (Horizontal) */
-        .registration-wizard .step-indicator:not(:last-child) {
-            /* Contenedor para el paso y la línea */
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .registration-wizard .step-indicator .progress-line {
-            display: block; /* Hacemos visible la línea para conexión horizontal */
-            position: absolute;
-            top: 25px; 
-            left: 50px; /* Inicio de la línea después del círculo */
-            right: -2rem; /* Termina antes del siguiente paso */
-            height: 4px;
-            background: #e0e0e0;
-            z-index: 1;
-            transform: translateY(-50%);
-            width: calc(100% - 70px); /* Ajustar el ancho de la línea */
-        }
-        .registration-wizard .step-indicator:last-child .progress-line {
-            display: none;
-        }
-        .registration-wizard .step-indicator.completed .progress-line {
-            background: var(--cepre-green);
+        /* Botones Especiales en Postulaciones */
+        .btn-success {
+            background-color: var(--cepre-green) !important;
+            border-color: var(--cepre-green) !important;
+            box-shadow: 0 4px 10px rgba(147, 192, 31, 0.2);
         }
 
-        /* 2. Contenido del Formulario (Alineación y Pasos) */
-        #formRegistroNuevo {
-            flex-grow: 1; /* Ocupar el espacio restante */
-            padding: 2rem; /* Padding interno */
+        .btn-info {
+            background-color: var(--cepre-cyan) !important;
+            border-color: var(--cepre-cyan) !important;
+            box-shadow: 0 4px 10px rgba(0, 174, 239, 0.2);
         }
 
-        .wizard-step {
-            min-height: 500px;
-            padding: 0; /* Quitamos padding duplicado */
+        /* Paginación DataTable Custom */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0 !important;
+            border: none !important;
         }
 
-        /* REGLA CRÍTICA PARA EL WIZARD: Ocultar pasos inactivos */
-        .wizard-step {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out; 
+        /* Spinner Institucional */
+        .cepre-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(226, 0, 122, 0.1);
+            border-left-color: var(--cepre-magenta);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .wizard-step.active {
-            display: block;
+        @keyframes spin {
+             to { transform: rotate(360deg); }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Alineación de inputs */
-        .wizard-step .step-content-card .row > div {
-             padding-left: 0.75rem !important;
-             padding-right: 0.75rem !important;
-             margin-bottom: 1rem; /* Espacio más compacto */
-        }
-
-        /* ========================================================= */
-        /* COLORES DE FILAS SEGÚN ESTADO DE POSTULACIÓN */
-        /* ========================================================= */
-        
-        /* Fila Pendiente - Amarillo suave */
-        #postulaciones-datatable tbody tr.estado-pendiente {
-            background-color: #fff9e6 !important;
-            border-left: 4px solid #ffc107;
-        }
-        #postulaciones-datatable tbody tr.estado-pendiente:hover {
-            background-color: #fff3cd !important;
-        }
-        
-        /* Fila Aprobado - Verde suave */
-        #postulaciones-datatable tbody tr.estado-aprobado {
-            background-color: #e8f5e9 !important;
-            border-left: 4px solid #28a745;
-        }
-        #postulaciones-datatable tbody tr.estado-aprobado:hover {
-            background-color: #d4edda !important;
-        }
-        
-        /* Fila Rechazado - Rojo suave */
-        #postulaciones-datatable tbody tr.estado-rechazado {
-            background-color: #ffebee !important;
-            border-left: 4px solid #dc3545;
-        }
-        #postulaciones-datatable tbody tr.estado-rechazado:hover {
-            background-color: #f8d7da !important;
-        }
-        
-        /* Fila Observado - Naranja suave */
-        #postulaciones-datatable tbody tr.estado-observado {
-            background-color: #fff3e0 !important;
-            border-left: 4px solid #ff9800;
-        }
-        #postulaciones-datatable tbody tr.estado-observado:hover {
-            background-color: #ffe0b2 !important;
-        }
-        
-        /* Modo Oscuro - Ajustes para las filas con color */
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-pendiente {
-            background-color: rgba(255, 193, 7, 0.15) !important;
-            border-left-color: #ffc107;
-        }
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-pendiente:hover {
-            background-color: rgba(255, 193, 7, 0.25) !important;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-aprobado {
-            background-color: rgba(40, 167, 69, 0.15) !important;
-            border-left-color: #28a745;
-        }
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-aprobado:hover {
-            background-color: rgba(40, 167, 69, 0.25) !important;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-rechazado {
-            background-color: rgba(220, 53, 69, 0.15) !important;
-            border-left-color: #dc3545;
-        }
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-rechazado:hover {
-            background-color: rgba(220, 53, 69, 0.25) !important;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-observado {
-            background-color: rgba(255, 152, 0, 0.15) !important;
-            border-left-color: #ff9800;
-        }
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr.estado-observado:hover {
-            background-color: rgba(255, 152, 0, 0.25) !important;
-        }
-        
-        /* Transición suave para hover */
-        #postulaciones-datatable tbody tr {
-            transition: background-color 0.2s ease-in-out;
-        }
-
-        /* ========================================================= */
-        /* BADGES DE ESTADO EN LA COLUMNA */
-        /* ========================================================= */
-        
-        /* Badge Pendiente */
-        .badge-estado-pendiente {
-            background-color: #ffc107 !important;
-            color: #000 !important;
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            font-size: 0.75rem;
-        }
-        
-        /* Badge Aprobado */
-        .badge-estado-aprobado {
-            background-color: #28a745 !important;
-            color: #fff !important;
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            font-size: 0.75rem;
-        }
-        
-        /* Badge Rechazado */
-        .badge-estado-rechazado {
-            background-color: #dc3545 !important;
-            color: #fff !important;
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            font-size: 0.75rem;
-        }
-        
-        /* Badge Observado */
-        .badge-estado-observado {
-            background-color: #ff9800 !important;
-            color: #fff !important;
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            font-size: 0.75rem;
-        }
-        
-        /* Modo Oscuro - Badges mantienen sus colores */
-        body[data-layout-mode="dark"] .badge-estado-pendiente,
-        body[data-layout-mode="dark"] .badge-estado-aprobado,
-        body[data-layout-mode="dark"] .badge-estado-rechazado,
-        body[data-layout-mode="dark"] .badge-estado-observado {
-            opacity: 0.95;
-        }
-
-        /* ========================================================= */
-        /* DISEÑO FORMAL Y CORPORATIVO PARA DATATABLE */
-        /* ========================================================= */
-        
-        /* Contenedor de la tabla - estilo corporativo */
-        .dataTables_wrapper {
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            padding: 0;
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-        
-        body[data-layout-mode="dark"] .dataTables_wrapper {
-            background: var(--cepre-dark-card);
-            border-color: #4a5468;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Tabla principal - diseño formal */
-        #postulaciones-datatable {
-            border-collapse: collapse !important;
-            width: 100% !important;
-            font-size: 0.875rem;
-            margin: 0 !important;
-        }
-        
-        /* Encabezado de la tabla - estilo corporativo azul marino */
-        #postulaciones-datatable thead th {
-            background: #1e3a8a !important;
-            color: #ffffff !important;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.8px;
-            padding: 1rem 1rem !important;
-            border-bottom: 2px solid #1e40af !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-            white-space: nowrap;
-            text-align: left;
-        }
-        
-        #postulaciones-datatable thead th:last-child {
-            border-right: none !important;
-        }
-        
-        /* Iconos de ordenamiento - estilo formal */
-        #postulaciones-datatable thead th.sorting:after,
-        #postulaciones-datatable thead th.sorting_asc:after,
-        #postulaciones-datatable thead th.sorting_desc:after {
-            opacity: 0.7;
-            font-size: 0.75em;
-            color: #ffffff;
-        }
-        
-        /* Cuerpo de la tabla - diseño limpio */
-        #postulaciones-datatable tbody td {
-            padding: 0.875rem 1rem !important;
-            vertical-align: middle !important;
-            border-bottom: 1px solid #e5e7eb !important;
-            border-right: 1px solid #f3f4f6 !important;
-            font-size: 0.875rem;
-            color: #1f2937;
-            background: #ffffff;
-        }
-        
-        #postulaciones-datatable tbody td:last-child {
-            border-right: none !important;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody td {
-            border-bottom-color: #4a5468 !important;
-            border-right-color: #3a4556 !important;
-            color: var(--cepre-dark-text);
-        }
-        
-        /* Filas alternas - estilo zebra formal */
-        #postulaciones-datatable tbody tr:nth-child(even) td {
-            background: #f9fafb;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr:nth-child(even) td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        
-        /* Efecto hover - sutil y profesional */
-        #postulaciones-datatable tbody tr:hover td {
-            background: #f3f4f6 !important;
-            cursor: pointer;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody tr:hover td {
-            background: rgba(255, 255, 255, 0.05) !important;
-        }
-        
-        /* Código de postulante - estilo formal */
-        #postulaciones-datatable tbody td:first-child {
-            font-weight: 700;
-            color: #1e3a8a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 0.8125rem;
-        }
-        
-        body[data-layout-mode="dark"] #postulaciones-datatable tbody td:first-child {
-            color: #60a5fa;
-        }
-        
-        /* Botones de acción - diseño corporativo */
-        #postulaciones-datatable .btn-group {
-            display: flex;
-            gap: 0.25rem;
-            flex-wrap: nowrap;
-            justify-content: center;
-        }
-        
-        #postulaciones-datatable .btn-sm {
-            padding: 0.375rem 0.5rem;
-            border-radius: 3px;
-            font-size: 0.75rem;
-            transition: all 0.15s ease-in-out;
-            border: 1px solid transparent;
-        }
-        
-        #postulaciones-datatable .btn-sm:hover {
-            opacity: 0.85;
-            border-color: rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Badges - diseño formal y sobrio */
-        #postulaciones-datatable .badge {
-            padding: 0.35em 0.65em;
-            border-radius: 3px;
-            font-weight: 600;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border: 1px solid transparent;
-        }
-        
-        /* Controles de DataTables - estilo formal */
-        .dataTables_length,
-        .dataTables_filter {
-            padding: 1rem 1.25rem;
-            background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        body[data-layout-mode="dark"] .dataTables_length,
-        body[data-layout-mode="dark"] .dataTables_filter {
-            background: rgba(255, 255, 255, 0.02);
-            border-bottom-color: #4a5468;
-        }
-        
-        .dataTables_length {
-            float: left;
-        }
-        
-        .dataTables_filter {
-            float: right;
-        }
-        
-        .dataTables_length label,
-        .dataTables_filter label {
-            font-weight: 500;
-            color: #374151;
-            font-size: 0.875rem;
-            margin: 0;
-        }
-        
-        body[data-layout-mode="dark"] .dataTables_length label,
-        body[data-layout-mode="dark"] .dataTables_filter label {
-            color: var(--cepre-dark-text);
-        }
-        
-        .dataTables_length select,
-        .dataTables_filter input {
-            border: 1px solid #d1d5db;
-            border-radius: 3px;
-            padding: 0.375rem 0.75rem;
-            margin-left: 0.5rem;
-            font-size: 0.875rem;
-            background: #ffffff;
-        }
-        
-        .dataTables_length select:focus,
-        .dataTables_filter input:focus {
-            outline: none;
-            border-color: #1e3a8a;
-            box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
-        }
-        
-        /* Información de paginación - estilo formal */
-        .dataTables_info {
-            font-size: 0.875rem;
-            color: #6b7280;
-            font-weight: 500;
-            padding: 1rem 1.25rem;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        body[data-layout-mode="dark"] .dataTables_info {
-            color: #9ca3af;
-            background: rgba(255, 255, 255, 0.02);
-            border-top-color: #4a5468;
-        }
-        
-        /* Paginación - diseño corporativo formal */
-        .dataTables_paginate {
-            padding: 1rem 1.25rem;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        body[data-layout-mode="dark"] .dataTables_paginate {
-            background: rgba(255, 255, 255, 0.02);
-            border-top-color: #4a5468;
-        }
-        
-        .pagination {
-            margin: 0;
-            gap: 0.25rem;
-        }
-        
-        .pagination .page-link {
-            border: 1px solid #d1d5db;
-            color: #374151;
-            padding: 0.5rem 0.875rem;
-            border-radius: 3px;
-            font-weight: 500;
-            transition: all 0.15s ease-in-out;
-            margin: 0 2px;
-            background: #ffffff;
-        }
-        
-        .pagination .page-link:hover {
-            background-color: #1e3a8a;
-            border-color: #1e3a8a;
-            color: #ffffff;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background: #1e3a8a;
-            border-color: #1e3a8a;
-            color: #ffffff;
-            font-weight: 600;
-        }
-        
-        .pagination .page-item.disabled .page-link {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #f9fafb;
-        }
-        
-        /* Mensaje de procesamiento - estilo formal */
-        .dataTables_processing {
-            background: #1e3a8a !important;
-            color: white !important;
-            border: 1px solid #1e40af !important;
-            border-radius: 3px !important;
-            padding: 1rem 2rem !important;
-            font-weight: 600 !important;
-            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2) !important;
-        }
-        
-        /* ========================================================= */
-        /* ESTILOS RESPONSIVE PARA LA TABLA */
-        /* ========================================================= */
-        
-        /* Reducir padding del card para dar más espacio a la tabla */
-        .cepre-content-card .card-body {
-            padding: 0.75rem !important;
-        }
-        
-        /* Tabla usa todo el ancho disponible */
-        .dataTables_wrapper {
-            width: 100%;
-            overflow-x: auto;
-        }
-        
-        /* Tabla responsive que se ajusta al contenedor */
-        #postulaciones-datatable {
-            width: 100% !important;
-            table-layout: auto;
-        }
-        
-        /* Ajustar tamaño de fuente y padding según pantalla */
-        #postulaciones-datatable tbody td,
-        #postulaciones-datatable thead th {
-            font-size: 0.75rem !important;
-            padding: 0.5rem 0.35rem !important;
-            white-space: nowrap;
-        }
-        
-        /* Código de postulante más compacto */
-        #postulaciones-datatable tbody td:first-child {
-            font-size: 0.7rem !important;
-        }
-        
-        /* Badges más compactos */
-        #postulaciones-datatable .badge {
-            padding: 0.2em 0.4em !important;
-            font-size: 0.6rem !important;
-            white-space: nowrap;
-        }
-        
-        /* Botones de acción más compactos */
-        #postulaciones-datatable .btn-sm {
-            padding: 0.2rem 0.3rem !important;
-            font-size: 0.65rem !important;
-        }
-        
-        #postulaciones-datatable .btn-sm i {
-            font-size: 0.75rem;
-        }
-        
-        /* Grupo de botones más compacto */
-        #postulaciones-datatable .btn-group {
-            gap: 0.15rem !important;
-        }
-        
-        /* Controles de DataTables más compactos */
-        .dataTables_length,
-        .dataTables_filter,
-        .dataTables_info,
-        .dataTables_paginate {
-            padding: 0.75rem 1rem !important;
-        }
-        
-        .dataTables_length label,
-        .dataTables_filter label {
-            font-size: 0.8rem !important;
-        }
-        
-        .dataTables_length select,
-        .dataTables_filter input {
-            padding: 0.25rem 0.5rem !important;
-            font-size: 0.8rem !important;
-        }
-        
-        /* Paginación más compacta */
-        .pagination .page-link {
-            padding: 0.35rem 0.6rem !important;
-            font-size: 0.75rem !important;
-        }
-        
-        /* Para pantallas grandes (desktop) - todo debe caber sin scroll */
-        @media (min-width: 1200px) {
-            #postulaciones-datatable tbody td,
-            #postulaciones-datatable thead th {
-                font-size: 0.8rem !important;
-                padding: 0.6rem 0.4rem !important;
-            }
-            
-            #postulaciones-datatable .badge {
-                font-size: 0.65rem !important;
-            }
-            
-            #postulaciones-datatable .btn-sm {
-                font-size: 0.7rem !important;
-                padding: 0.25rem 0.35rem !important;
-            }
-        }
-        
-        /* Para pantallas medianas (tablets) */
+        /* Table Responsive Adjustments */
         @media (max-width: 1199px) and (min-width: 768px) {
             #postulaciones-datatable tbody td,
             #postulaciones-datatable thead th {
@@ -798,155 +222,132 @@
                 padding: 0.5rem 0.3rem !important;
             }
         }
-        
-        /* Para pantallas pequeñas (móviles) - permitir scroll horizontal */
+
         @media (max-width: 767px) {
             .dataTables_wrapper {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            
-            #postulaciones-datatable {
-                min-width: 800px; /* Ancho mínimo solo en móviles */
-            }
-            
+            #postulaciones-datatable { min-width: 800px; }
             #postulaciones-datatable tbody td,
             #postulaciones-datatable thead th {
                 font-size: 0.7rem !important;
                 padding: 0.5rem 0.25rem !important;
-            }
-            
-            .cepre-content-card .card-body {
-                padding: 0.5rem !important;
             }
         }
 
         /* ========================================================= */
         /* DRAG & DROP DOCUMENT UPLOAD STYLES */
         /* ========================================================= */
-        .document-upload-card {
-            margin-bottom: 1rem;
-        }
-
+        .document-upload-card { margin-bottom: 1rem; }
         .drop-zone {
             position: relative;
-            border: 2px dashed #cbd5e0;
+            border: 2px dashed var(--cepre-border-color);
             border-radius: 12px;
             padding: 2rem 1rem;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
-            background-color: #f8f9fa;
+            background-color: var(--cepre-bg-light);
             min-height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        .drop-zone:hover { border-color: var(--cepre-cyan); background-color: rgba(0, 174, 239, 0.05); }
+        .drop-zone.drag-over { border-color: var(--cepre-magenta); background-color: rgba(226, 0, 122, 0.05); transform: scale(1.02); }
+        .drop-zone .file-input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .preview-container { position: relative; width: 100%; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .preview-image { max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .file-name { display: block; font-size: 0.875rem; font-weight: 600; color: var(--cepre-text-main); margin-bottom: 0.25rem; word-break: break-all; }
+        .file-size { display: block; font-size: 0.75rem; color: var(--cepre-text-main); opacity: 0.6; }
+/* =========================================
+   MODALES PREMIUM - ESTÉTICA COMPACT & CLEAN
+   ========================================= */
 
-        .drop-zone:hover {
-            border-color: var(--cepre-cyan);
-            background-color: #e3f2fd;
-        }
+.modal-content {
+    border-radius: 12px !important;
+    border: 1px solid var(--cepre-border-color) !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15) !important;
+}
 
-        .drop-zone.drag-over {
-            border-color: var(--cepre-magenta);
-            background-color: #fce4ec;
-            transform: scale(1.02);
-        }
+.modal-header.cepre-modal-header {
+    background-color: var(--cepre-sidebar-bg) !important;
+    color: var(--cepre-text-main) !important;
+    padding: 0.85rem 1.25rem !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom: 2px solid var(--cepre-cyan) !important;
+}
 
-        .drop-zone .file-input {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
+.modal-header.cepre-modal-header .modal-title {
+    color: var(--cepre-magenta) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.5px;
+}
 
-        .drop-zone-content {
-            pointer-events: none;
-        }
+.modal-header.cepre-modal-header .btn-close {
+    filter: none; /* No invertir filtros */
+    opacity: 0.5;
+}
 
-        .preview-container {
-            position: relative;
-            width: 100%;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+[data-bs-theme="dark"] .modal-header.cepre-modal-header .btn-close {
+    filter: invert(1) brightness(100%);
+}
 
-        .preview-image {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            object-fit: contain;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+[data-bs-theme="dark"] .modal-content {
+    background-color: var(--cepre-sidebar-bg) !important;
+    border: 1px solid var(--cepre-border-color) !important;
+}
 
-        .pdf-preview {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
+/* Secciones de Detalle (Compactas) */
+.detail-section {
+    background: rgba(0, 174, 239, 0.02);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--cepre-border-color);
+}
 
-        .preview-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+.detail-section-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--cepre-magenta);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--cepre-border-color);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
 
-        .preview-container:hover .preview-overlay {
-            opacity: 1;
-        }
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
 
-        .file-info {
-            margin-top: 0.75rem;
-            text-align: center;
-        }
+.detail-item {
+    padding: 2px 0;
+    font-size: 0.85rem;
+}
 
-        .file-name {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 0.25rem;
-            word-break: break-all;
-        }
+.detail-item strong {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--cepre-text-main);
+    opacity: 0.5;
+    margin-bottom: 1px;
+}
 
-        .file-size {
-            display: block;
-            font-size: 0.75rem;
-            color: #718096;
-        }
-
-        .btn-remove {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        /* Dark mode support */
-        body[data-layout-mode="dark"] .drop-zone {
-            background-color: var(--cepre-dark-card);
-            border-color: #5a6374;
-        }
-
-        body[data-layout-mode="dark"] .drop-zone:hover {
-            background-color: #4a5468;
-            border-color: var(--cepre-cyan);
-        }
-
-        body[data-layout-mode="dark"] .file-name {
-            color: var(--cepre-dark-text);
-        }
-
-        body[data-layout-mode="dark"] .file-size {
-            color: #a0aec0;
-        }
+.detail-item span {
+    font-weight: 600;
+    color: var(--cepre-text-main);
+    word-break: break-all;
+}
     </style>
 @endpush
 
@@ -2499,57 +1900,49 @@
             <div class="row pt-4 g-3">
                 <!-- Pendientes -->
                 <div class="col-md-3">
-                    <div class="cepre-stat-card" style="border-left-color: #ffc107;">
-                        <div class="d-flex align-items-center p-2">
-                            <div class="stat-icon-container me-3" style="background-color: #ffc107;">
-                                <i class="bi bi-timer stat-icon" style="color: black !important;"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-500">Pendientes</p>
-                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-pendientes">0</h3>
-                            </div>
+                    <div class="cepre-stat-card stat-pendientes">
+                        <div class="stat-icon-container">
+                            <i class="bi bi-timer"></i>
+                        </div>
+                        <div>
+                            <p>Pendientes</p>
+                            <h3 id="stat-pendientes">0</h3>
                         </div>
                     </div>
                 </div>
                 <!-- Aprobadas -->
                 <div class="col-md-3">
-                    <div class="cepre-stat-card" style="border-left-color: #28a745;">
-                        <div class="d-flex align-items-center p-2">
-                            <div class="stat-icon-container me-3" style="background-color: #28a745;">
-                                <i class="bi bi-check2-circle stat-icon" style="color: white !important;"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-500">Aprobadas</p>
-                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-aprobadas">263</h3>
-                            </div>
+                    <div class="cepre-stat-card stat-aprobadas">
+                        <div class="stat-icon-container">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                        <div>
+                            <p>Aprobadas</p>
+                            <h3 id="stat-aprobadas">0</h3>
                         </div>
                     </div>
                 </div>
                 <!-- Rechazadas -->
                 <div class="col-md-3">
-                    <div class="cepre-stat-card" style="border-left-color: #dc3545;">
-                        <div class="d-flex align-items-center p-2">
-                            <div class="stat-icon-container me-3" style="background-color: #dc3545;">
-                                <i class="bi bi-x-circle stat-icon" style="color: white !important;"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-500">Rechazadas</p>
-                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-rechazadas">0</h3>
-                            </div>
+                    <div class="cepre-stat-card stat-rechazadas">
+                        <div class="stat-icon-container">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div>
+                            <p>Rechazadas</p>
+                            <h3 id="stat-rechazadas">0</h3>
                         </div>
                     </div>
                 </div>
                 <!-- Observadas -->
                 <div class="col-md-3">
-                    <div class="cepre-stat-card" style="border-left-color: #17a2b8;">
-                        <div class="d-flex align-items-center p-2">
-                            <div class="stat-icon-container me-3" style="background-color: #17a2b8;">
-                                <i class="bi bi-eye-fill stat-icon" style="color: white !important;"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-semibold text-gray-500">Observadas</p>
-                                <h3 class="text-2xl font-extrabold text-gray-900" id="stat-observadas">0</h3>
-                            </div>
+                    <div class="cepre-stat-card stat-observadas">
+                        <div class="stat-icon-container">
+                            <i class="bi bi-eye-fill"></i>
+                        </div>
+                        <div>
+                            <p>Observadas</p>
+                            <h3 id="stat-observadas">0</h3>
                         </div>
                     </div>
                 </div>
@@ -2596,19 +1989,19 @@
                     <div class="col-12">
                         <div class="table-responsive">
                             <table id="postulaciones-datatable" class="table dt-responsive nowrap w-100">
-                                <thead class="bg-light border-bottom border-gray-200">
+                                <thead>
                                     <tr>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Código</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Estudiante</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">DNI</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Carrera</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Turno</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Tipo</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Fecha</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Estado</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Verificación</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Constancia</th>
-                                        <th class="p-3 text-sm font-semibold tracking-wider text-left text-gray-600">Acciones</th>
+                                        <th>Código</th>
+                                        <th>Estudiante</th>
+                                        <th>DNI</th>
+                                        <th>Carrera</th>
+                                        <th>Turno</th>
+                                        <th>Tipo</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                        <th>Verificación</th>
+                                        <th>Constancia</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2773,10 +2166,11 @@
     <div class="modal fade" id="viewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content rounded-xl shadow-lg">
-                <div class="modal-header cepre-bg-navy rounded-t-xl">
-                    <!-- CORRECCIÓN APLICADA AQUÍ: Aseguramos text-white -->
-                    <h5 class="modal-title text-white" id="viewModalLabel">Detalle de Postulación</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header cepre-modal-header shadow-sm">
+                    <h5 class="modal-title" id="viewModalLabel">
+                        <i class="bi bi-info-circle me-2"></i>Detalle de Postulación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="viewModalBody">
                     <!-- 
@@ -2891,8 +2285,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary rounded-lg" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-top-0 pb-4 justify-content-center">
+                    <button type="button" class="btn btn-dark px-5 shadow-sm" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 700;">
+                        Cerrar Detalle
+                    </button>
                 </div>
             </div>
         </div>
@@ -2902,8 +2298,10 @@
     <div class="modal fade" id="rejectModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content rounded-xl shadow-lg">
-                <div class="modal-header bg-danger text-white rounded-t-xl" style="background-color: #dc3545;">
-                    <h5 class="modal-title" id="rejectModalLabel">Rechazar Postulación</h5>
+                <div class="modal-header bg-danger text-white" style="border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom: 3px solid rgba(0,0,0,0.1);">
+                    <h5 class="modal-title font-weight-bold" id="rejectModalLabel">
+                        <i class="bi bi-x-octagon me-2"></i>Rechazar Postulación
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

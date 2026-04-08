@@ -79,18 +79,29 @@
     </div>
 
     <style>
-        .card-solid-warning { background-color: var(--cepre-magenta) !important; color: white !important; }
-        .card-solid-success { background-color: var(--cepre-green) !important; color: white !important; }
-        .card-solid-info { background-color: var(--cepre-navy) !important; color: white !important; }
+        /* Restablecer colores de tarjetas de estadísticas con degradados del logo */
+        .card-solid-warning { background: linear-gradient(135deg, var(--cepre-magenta) 0%, #b30061 100%) !important; color: white !important; }
+        .card-solid-success { background: linear-gradient(135deg, var(--cepre-green) 0%, #769a19 100%) !important; color: white !important; }
+        .card-solid-info { background: linear-gradient(135deg, var(--cepre-cyan) 0%, #0088ba 100%) !important; color: white !important; }
         
-        #reforzamientoTable thead th { background-color: var(--cepre-navy) !important; color: #FFFFFF !important; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 15px 12px !important; }
+        /* Estilo Clean para Cabecera de Tabla (Evolución de Navy a Light & Clean) */
+        #reforzamientoTable thead th { 
+            background-color: #f8f9fc !important; 
+            color: var(--cepre-dark-magenta) !important; 
+            border-bottom: 2px solid var(--cepre-cyan) !important;
+            font-size: 11px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            padding: 15px 12px !important; 
+        }
+        
         .badge-reforzamiento { padding: 6px 14px; font-weight: 800; font-size: 10px; border-radius: 4px; display: inline-flex; align-items: center; }
         .badge-reforzamiento-success { background-color: var(--cepre-green); color: #fff; }
         .badge-reforzamiento-warning { background-color: var(--cepre-magenta); color: #fff; }
         
         .payment-chip { padding: 4px 10px; border-radius: 50px; font-weight: 700; font-size: 10px; }
-        .payment-chip-paid { background-color: #E8F5E9; color: #1B5E20; }
-        .payment-chip-unpaid { background-color: #FFEBEE; color: #C62828; }
+        .payment-chip-paid { background-color: rgba(147, 192, 31, 0.1); color: var(--cepre-green); }
+        .payment-chip-unpaid { background-color: rgba(226, 0, 122, 0.1); color: var(--cepre-magenta); }
 
         .btn-action-reforzamiento { 
             width: 32px; 
@@ -98,55 +109,35 @@
             display: inline-flex; 
             align-items: center; 
             justify-content: center; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             margin: 0 2px;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .btn-action-reforzamiento i { font-size: 16px; color: white !important; }
-        .btn-action-reforzamiento:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); filter: brightness(1.1); }
+        .btn-action-reforzamiento:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); filter: brightness(1.1); }
         
-        .btn-solid-view { background-color: #6c5ce7 !important; }
-        .btn-solid-edit { background-color: #00cec9 !important; }
-        .btn-solid-print { background-color: #2d3436 !important; }
-        .btn-solid-wa { background-color: #00b894 !important; }
-        .btn-solid-delete { background-color: #d63031 !important; }
-        .btn-solid-approve { background-color: #0984e3 !important; }
+        .btn-solid-view { background-color: var(--cepre-cyan) !important; }
+        .btn-solid-edit { background-color: #31ce8e !important; }
+        .btn-solid-print { background-color: #2b323c !important; }
+        .btn-solid-wa { background-color: #25d366 !important; }
+        .btn-solid-delete { background-color: var(--cepre-magenta) !important; }
+        .btn-solid-approve { background-color: var(--cepre-cyan) !important; }
 
         .bg-white-50 { background-color: rgba(255, 255, 255, 0.2) !important; }
 
-        /* Estilos para inputs de archivo compactos */
-        .form-control-xs {
-            padding: 0.15rem 0.4rem;
-            font-size: 0.75rem;
-            height: auto;
-            min-height: 28px;
-            line-height: 1.2;
-        }
-        
-        /* Ajuste para que el texto de "seleccionar archivo" no se corte */
-        input[type="file"].form-control-xs::-webkit-file-upload-button {
-            padding: 0.1rem 0.4rem;
-            margin: -0.15rem -0.4rem;
-            margin-inline-end: 0.4rem;
-            font-size: 0.7rem;
-            background-color: #f1f3f5;
-            border: none;
-            border-inline-end: 1px solid #ced4da;
-            color: #495057;
-        }
-
         .doc-box {
             transition: all 0.2s ease;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--cepre-border-color);
         }
         .doc-box:hover {
-            border-color: #dee2e6;
+            border-color: var(--cepre-cyan);
             background-color: #fff !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 8px rgba(0, 174, 239, 0.05);
         }
     </style>
+
 
     <div class="row">
         <div class="col-12">

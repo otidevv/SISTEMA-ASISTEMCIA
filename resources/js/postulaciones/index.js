@@ -468,155 +468,98 @@ function viewPostulacion(id) {
                 const data = response.data;
                 const postulacion = data.postulacion;
                 const documentos = data.documentos;
-                const inscripcion = data.inscripcion; // Definir inscripcion aquí
+                const inscripcion = data.inscripcion;
 
-                let html = '<div class="row">';
+                let html = '<div class="postulacion-detail-container px-1">';
 
-                // Información del estudiante
-                html += '<div class="col-md-6">';
-                html += '<h5>Información del Estudiante</h5>';
-                html += '<div class="text-center mb-3">';
+                // 1. INFORMACIÓN DEL ESTUDIANTE + FOTO (MÁS COMPACTO)
+                html += '<div class="detail-section shadow-sm">';
+                html += '<h4 class="detail-section-title"><i class="bi bi-person-badge me-2"></i> Estudiante</h4>';
+                html += '<div class="row g-2 align-items-center">';
+                html += '<div class="col-md-2 text-center">';
                 const fotoPerfilUrl = postulacion.foto_path ? '/storage/' + postulacion.foto_path : null;
                 if (fotoPerfilUrl) {
-                    html += '<img src="' + fotoPerfilUrl + '" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;" alt="Foto de Perfil">';
+                    html += '<img src="' + fotoPerfilUrl + '" class="rounded-lg shadow-sm border border-2 border-primary" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto">';
                 } else {
-                    html += '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;" alt="Sin Foto">';
+                    html += '<div class="bg-light rounded-lg d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px; border: 1px dashed #ccc;"><i class="bi bi-person text-muted" style="font-size: 2rem;"></i> </div>';
                 }
                 html += '</div>';
-                html += '<table class="table table-sm">';
-                html += '<tr><td><strong>Nombre:</strong></td><td>' + postulacion.estudiante.nombre + ' ' +
-                    postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</td></tr>';
-                html += '<tr><td><strong>DNI:</strong></td><td>' + (postulacion.estudiante.numero_documento || 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Email:</strong></td><td>' + (postulacion.estudiante.email || 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Teléfono:</strong></td><td>' + (postulacion.estudiante.telefono || 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Fecha Nacimiento:</strong></td><td>' + (postulacion.estudiante.fecha_nacimiento ? new Date(postulacion.estudiante.fecha_nacimiento).toLocaleDateString() : 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Género:</strong></td><td>' + (postulacion.estudiante.genero ? (postulacion.estudiante.genero === 'M' ? 'Masculino' : 'Femenino') : 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Dirección:</strong></td><td>' + (postulacion.estudiante.direccion || 'N/A') + '</td></tr>';
-                html += '<tr><td><strong>Centro Educativo:</strong></td><td>' + (postulacion.centro_educativo?.nombre || 'N/A') + '</td></tr>';
-                html += '</table>';
-                html += '</div>';
+                html += '<div class="col-md-10">';
+                html += '<div class="detail-grid">';
+                html += '<div class="detail-item"><strong>Nombre Completo</strong><span>' + postulacion.estudiante.nombre + ' ' + postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</span></div>';
+                html += '<div class="detail-item"><strong>DNI / Documento</strong><span>' + (postulacion.estudiante.numero_documento || 'N/A') + '</span></div>';
+                html += '<div class="detail-item"><strong>Email</strong><span class="small">' + (postulacion.estudiante.email || 'N/A') + '</span></div>';
+                html += '<div class="detail-item"><strong>Teléfono</strong><span>' + (postulacion.estudiante.telefono || 'N/A') + '</span></div>';
+                html += '<div class="detail-item"><strong>Nacimiento</strong><span>' + (postulacion.estudiante.fecha_nacimiento ? new Date(postulacion.estudiante.fecha_nacimiento).toLocaleDateString() : 'N/A') + '</span></div>';
+                html += '<div class="detail-item"><strong>Género</strong><span>' + (postulacion.estudiante.genero ? (postulacion.estudiante.genero === 'M' ? 'Masculino' : 'Femenino') : 'N/A') + '</span></div>';
+                html += '</div></div></div></div>';
 
-                // Información de Padres
+                // 2. FILA DE PADRES Y POSTULACION (DOS COLUMNAS)
+                html += '<div class="row g-2">';
                 html += '<div class="col-md-6">';
-                html += '<h5>Información de Padres</h5>';
-                html += '<table class="table table-sm">';
-                if (data.padre && data.padre.nombre) { // Assuming 'data.padre' contains the parent object
-                    html += '<tr><td><strong>Nombre del Padre:</strong></td><td>' + data.padre.nombre + ' ' + data.padre.apellido_paterno + ' ' + data.padre.apellido_materno + '</td></tr>';
-                    html += '<tr><td><strong>Teléfono del Padre:</strong></td><td>' + (data.padre.telefono || 'N/A') + '</td></tr>';
+                html += '<div class="detail-section h-100 shadow-sm">';
+                html += '<h4 class="detail-section-title"><i class="bi bi-people me-2"></i> Padres</h4>';
+                if (data.padre || data.madre) {
+                    html += '<div class="detail-item mb-1"><strong>Padre</strong><span>' + (data.padre ? data.padre.nombre + ' ' + data.padre.apellido_paterno + ' (' + (data.padre.telefono || 'Sin telf') + ')' : 'No registrado') + '</span></div>';
+                    html += '<div class="detail-item"><strong>Madre</strong><span>' + (data.madre ? data.madre.nombre + ' ' + data.madre.apellido_paterno + ' (' + (data.madre.telefono || 'Sin telf') + ')' : 'No registrado') + '</span></div>';
+                } else {
+                    html += '<p class="text-muted extra-small py-2">Sin info de padres registrados.</p>';
                 }
-                if (data.madre && data.madre.nombre) { // Assuming 'data.madre' contains the mother object
-                    html += '<tr><td><strong>Nombre de la Madre:</strong></td><td>' + data.madre.nombre + ' ' + data.madre.apellido_paterno + ' ' + data.madre.apellido_materno + '</td></tr>';
-                    html += '<tr><td><strong>Teléfono de la Madre:</strong></td><td>' + (data.madre.telefono || 'N/A') + '</td></tr>';
-                }
-                if (!data.padre && !data.madre) {
-                    html += '<tr><td colspan="2" style="text-align: center; color: #666;">Información de padres no disponible</td></tr>';
-                }
-                html += '</table>';
-                html += '</div>';
+                html += '</div></div>';
 
-                // Información de la postulación
                 html += '<div class="col-md-6">';
-                html += '<h5>Información de la Postulación</h5>';
-                html += '<table class="table table-sm">';
-                html += '<tr><td><strong>Código:</strong></td><td>' + postulacion.codigo_postulante + '</td></tr>';
-                html += '<tr><td><strong>Ciclo:</strong></td><td>' + postulacion.ciclo.nombre + '</td></tr>';
-                html += '<tr><td><strong>Carrera:</strong></td><td>' + postulacion.carrera.nombre + '</td></tr>';
-                html += '<tr><td><strong>Turno:</strong></td><td>' + postulacion.turno.nombre + '</td></tr>';
-                const tipoLabel = postulacion.tipo_inscripcion ? 
-                    (postulacion.tipo_inscripcion.toString().toLowerCase().trim() === 'postulante' ? 'Postulante' : 'Reforzamiento') : 'N/A';
-                html += '<tr><td><strong>Tipo:</strong></td><td>' + tipoLabel + '</td></tr>';
-                html += '<tr><td><strong>Estado:</strong></td><td><span class="badge badge-estado-' +
-                    postulacion.estado + '"> ' + postulacion.estado.toUpperCase() + '</span></td></tr>';
-                // Mostrar aula si la postulación está aprobada y hay inscripción
+                html += '<div class="detail-section h-100 shadow-sm">';
+                html += '<h4 class="detail-section-title"><i class="bi bi-mortarboard me-2"></i> Postulación</h4>';
+                html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
+                html += '<div class="detail-item"><strong>Código</strong><span class="text-magenta font-weight-bold">' + postulacion.codigo_postulante + '</span></div>';
+                html += '<div class="detail-item"><strong>Estado</strong><span class="badge badge-estado-' + postulacion.estado + ' extra-small">' + postulacion.estado.toUpperCase() + '</span></div>';
+                html += '<div class="detail-item col-span-2"><strong>Carrera / Ciclo</strong><span>' + postulacion.carrera.nombre + ' (' + postulacion.ciclo.nombre + ')</span></div>';
+                html += '<div class="detail-item"><strong>Turno</strong><span>' + postulacion.turno.nombre + '</span></div>';
                 if (inscripcion && inscripcion.aula) {
-                    html += '<tr><td><strong>Aula Asignada:</strong></td><td>' + inscripcion.aula.nombre + '</td></tr>';
+                    html += '<div class="detail-item"><strong>Aula</strong><span class="text-success font-weight-bold">' + inscripcion.aula.nombre + '</span></div>';
                 }
-                html += '</table>';
-                html += '</div>';
+                html += '</div></div></div></div>';
 
-                // Documentos
+                // 3. DOCUMENTOS Y PAGO (MÁS COMPACTO)
+                html += '<div class="row g-2 mt-2">';
                 html += '<div class="col-md-6">';
-                html += '<h5>Documentos Subidos ';
-                html += '<button class="btn btn-sm btn-warning ms-2 edit-documents" data-id="' + postulacion.id + '" title="Editar documentos">';
-                html += '<i class="uil uil-edit"></i> Editar</button>';
-                html += '</h5>';
-                html += '<ul class="document-list">';
-
+                html += '<div class="detail-section h-100 shadow-sm">';
+                html += '<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">';
+                html += '<h4 class="detail-section-title mb-0 border-0"><i class="bi bi-file-earmark-text me-2"></i> Documentos</h4>';
+                html += '<button class="btn btn-xs btn-outline-primary edit-documents py-0" data-id="' + postulacion.id + '">Editar</button>';
+                html += '</div>';
+                html += '<div class="list-group list-group-flush bg-transparent">';
                 for (let key in documentos) {
                     const doc = documentos[key];
                     if (doc.existe) {
-                        html += '<li><i class="uil uil-check-circle text-success"></i> ' + doc.nombre +
-                            ' <a href="' + doc.url + '" target="_blank" class="btn btn-sm btn-primary">Ver</a></li>';
-                    } else {
-                        html += '<li><i class="uil uil-times-circle text-danger"></i> ' + doc.nombre + ' (No subido)</li>';
+                        html += '<div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-1 px-0 border-0">';
+                        html += '<div><i class="bi bi-check-circle-fill text-success me-1 small"></i><span class="extra-small">' + doc.nombre + '</span></div>';
+                        html += '<a href="' + doc.url + '" target="_blank" class="btn btn-xs btn-magenta py-0 px-2" style="font-size: 9px;">VER</a>';
+                        html += '</div>';
                     }
                 }
+                html += '</div></div></div>';
 
-                html += '</ul>';
-                html += '</div>';
-
-                // Información de la constancia
                 html += '<div class="col-md-6">';
-                html += '<h5>Constancia de Inscripción</h5>';
-                html += '<div class="p-3 bg-light rounded">';
-
-                if (postulacion.constancia_firmada) {
-                    html += '<p class="text-success"><i class="uil uil-check-circle"></i> <strong>Constancia firmada y subida</strong></p>';
-                    html += '<p>Fecha subida: ' + postulacion.fecha_constancia_subida + '</p>';
-                    html += '<button class="btn btn-success btn-sm view-constancia-firmada" data-id="' + postulacion.id + '">';
-                    html += '<i class="uil uil-file-check-alt"></i> Ver Constancia Firmada</button>';
-                } else if (postulacion.constancia_generada) {
-                    html += '<p class="text-warning"><i class="uil uil-file-download-alt"></i> <strong>Constancia generada, pendiente de firma</strong></p>';
-                    html += '<p>Fecha generación: ' + postulacion.fecha_constancia_generada + '</p>';
-                    html += '<button class="btn btn-info btn-sm download-constancia" data-id="' + postulacion.id + '">';
-                    html += '<i class="uil uil-download-alt"></i> Descargar Constancia</button>';
-                } else {
-                    html += '<p class="text-secondary"><i class="uil uil-times-circle"></i> <strong>Constancia no generada</strong></p>';
-                    html += '<p>El postulante aún no ha generado su constancia de inscripción.</p>';
-                }
-
-                html += '</div>';
-                html += '</div>';
-
-                // Información del voucher
+                html += '<div class="detail-section h-100 shadow-sm">';
+                html += '<h4 class="detail-section-title"><i class="bi bi-cash me-2"></i> Pagos</h4>';
                 if (postulacion.numero_recibo) {
-                    html += '<div class="col-md-6">';
-                    html += '<h5>Información del Pago</h5>';
-                    html += '<div class="voucher-details">';
-                    html += '<p><strong>N° Recibo:</strong> ' + postulacion.numero_recibo + '</p>';
-                    // Formatear fecha de emisión
-                    let fechaEmision = '';
-                    if (postulacion.fecha_emision_voucher) {
-                        let fecha = new Date(postulacion.fecha_emision_voucher);
-                        let dia = fecha.getDate().toString().padStart(2, '0');
-                        let mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-                        let año = fecha.getFullYear();
-                        fechaEmision = dia + '/' + mes + '/' + año;
-                    }
-                    html += '<p><strong>Fecha Emisión:</strong> ' + fechaEmision + '</p>';
-                    html += '<p><strong>Matrícula:</strong> S/. ' + postulacion.monto_matricula + '</p>';
-                    html += '<p><strong>Enseñanza:</strong> S/. ' + postulacion.monto_ensenanza + '</p>';
-                    html += '<p><strong>Total Pagado:</strong> S/. ' + postulacion.monto_total_pagado + '</p>';
+                    html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
+                    html += '<div class="detail-item"><strong>Recibo / Fecha</strong><span>' + postulacion.numero_recibo + ' (' + (postulacion.fecha_emision_voucher ? new Date(postulacion.fecha_emision_voucher).toLocaleDateString() : 'N/A') + ')</span></div>';
+                    html += '<div class="detail-item"><strong>Matrícula</strong><span>S/. ' + postulacion.monto_matricula + '</span></div>';
+                    html += '<div class="detail-item col-md-12"><div class="alert alert-info py-1 mb-0 mt-1 extra-small text-center"><strong>Total:</strong> S/. ' + postulacion.monto_total_pagado + '</div></div>';
                     html += '</div>';
-                    html += '</div>';
+                } else {
+                    html += '<p class="text-muted extra-small">Sin pagos registrados.</p>';
                 }
+                html += '</div></div></div>';
 
-                // Observaciones o motivo de rechazo
-                if (postulacion.observaciones) {
-                    html += '<div class="col-12 mt-3">';
-                    html += '<div class="alert alert-warning">';
-                    html += '<h6>Observaciones:</h6>';
-                    html += '<p>' + postulacion.observaciones + '</p>';
-                    html += '</div>';
-                    html += '</div>';
-                }
-
-                if (postulacion.motivo_rechazo) {
-                    html += '<div class="col-12 mt-3">';
-                    html += '<div class="alert alert-danger">';
-                    html += '<h6>Motivo de Rechazo:</h6>';
-                    html += '<p>' + postulacion.motivo_rechazo + '</p>';
-                    html += '</div>';
+                // 4. OBSERVACIONES (SI HAY)
+                if (postulacion.observaciones || postulacion.motivo_rechazo) {
+                    const tint = postulacion.observaciones ? 'warning' : 'danger';
+                    const text = postulacion.observaciones || postulacion.motivo_rechazo;
+                    html += '<div class="alert alert-' + tint + ' p-2 mt-2 extra-small border-0 shadow-sm">';
+                    html += '<strong><i class="bi bi-exclamation-triangle"></i> NOTA:</strong> ' + text;
                     html += '</div>';
                 }
 
