@@ -348,6 +348,41 @@
     color: var(--cepre-text-main);
     word-break: break-all;
 }
+
+/* Botones de acción dentro del modal */
+.btn-cepre-eye {
+    background: transparent;
+    color: var(--cepre-cyan);
+    border: 1px solid var(--cepre-cyan);
+    font-size: 10px !important;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+
+.btn-cepre-eye:hover {
+    background: var(--cepre-cyan);
+    color: white !important;
+    box-shadow: 0 3px 8px rgba(0, 174, 239, 0.3);
+}
+
+.btn-cepre-edit-modal {
+    background: var(--cepre-magenta);
+    color: white !important;
+    border: none;
+    font-size: 11px !important;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(226, 0, 122, 0.2);
+}
+
+.btn-cepre-edit-modal:hover {
+    background: var(--cepre-dark-magenta);
+    transform: translateY(-1px);
+}
     </style>
 @endpush
 

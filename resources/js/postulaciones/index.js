@@ -526,7 +526,7 @@ function viewPostulacion(id) {
                 html += '<div class="detail-section h-100 shadow-sm">';
                 html += '<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">';
                 html += '<h4 class="detail-section-title mb-0 border-0"><i class="bi bi-file-earmark-text me-2"></i> Documentos</h4>';
-                html += '<button class="btn btn-xs btn-outline-primary edit-documents py-0" data-id="' + postulacion.id + '">Editar</button>';
+                html += '<button class="btn btn-cepre-edit-modal edit-documents" data-id="' + postulacion.id + '"><i class="bi bi-pencil-square"></i> EDITAR</button>';
                 html += '</div>';
                 html += '<div class="list-group list-group-flush bg-transparent">';
                 for (let key in documentos) {
@@ -534,7 +534,7 @@ function viewPostulacion(id) {
                     if (doc.existe) {
                         html += '<div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-1 px-0 border-0">';
                         html += '<div><i class="bi bi-check-circle-fill text-success me-1 small"></i><span class="extra-small">' + doc.nombre + '</span></div>';
-                        html += '<a href="' + doc.url + '" target="_blank" class="btn btn-xs btn-magenta py-0 px-2" style="font-size: 9px;">VER</a>';
+                        html += '<a href="' + doc.url + '" target="_blank" class="btn-cepre-eye shadow-sm text-center"><i class="bi bi-eye"></i> VER</a>';
                         html += '</div>';
                     }
                 }
