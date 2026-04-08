@@ -158,18 +158,18 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="edit_mision" class="form-label">Misión</label>
-                                <textarea class="form-control" id="edit_mision" name="mision" rows="3"></textarea>
+                                <label for="mision" class="form-label">Misión</label>
+                                <textarea class="form-control" id="mision" name="mision" rows="3"></textarea>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="edit_vision" class="form-label">Visión</label>
-                                <textarea class="form-control" id="edit_vision" name="vision" rows="3"></textarea>
+                                <label for="vision" class="form-label">Visión</label>
+                                <textarea class="form-control" id="vision" name="vision" rows="3"></textarea>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_objetivos" class="form-label">Objetivos (Un objetivo por línea)</label>
-                            <textarea class="form-control" id="edit_objetivos" name="objetivos" rows="3" placeholder="Ingresa los objetivos separados por saltos de línea..."></textarea>
+                            <label for="objetivos" class="form-label">Objetivos (Un objetivo por línea)</label>
+                            <textarea class="form-control" id="objetivos" name="objetivos" rows="3" placeholder="Ingresa los objetivos separados por saltos de línea..."></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -178,8 +178,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="edit_perfil" class="form-label">Perfil del Egresado</label>
-                            <textarea class="form-control" id="edit_perfil" name="perfil" rows="3"></textarea>
+                            <label for="perfil" class="form-label">Perfil del Egresado</label>
+                            <textarea class="form-control" id="perfil" name="perfil" rows="3"></textarea>
                         </div>
 
                         <div class="row">

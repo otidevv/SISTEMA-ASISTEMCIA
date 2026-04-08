@@ -68,7 +68,7 @@ class CarreraController extends Controller
         $validator = Validator::make($request->all(), [
             'codigo' => 'required|string|max:20|unique:carreras',
             'nombre' => 'required|string|max:150',
-            'grupo' => 'required|in:A,B,C',
+            'grupo' => 'required|in:A,B,C,D',
             'descripcion' => 'nullable|string',
             'estado' => 'boolean',
             'grado' => 'nullable|string|max:255',
@@ -167,7 +167,7 @@ class CarreraController extends Controller
         $validator = Validator::make($request->all(), [
             'codigo' => 'required|string|max:20|unique:carreras,codigo,' . $id,
             'nombre' => 'required|string|max:150',
-            'grupo' => 'required|in:A,B,C',
+            'grupo' => 'required|in:A,B,C,D',
             'descripcion' => 'nullable|string',
             'estado' => 'boolean',
             'grado' => 'nullable|string|max:255',
