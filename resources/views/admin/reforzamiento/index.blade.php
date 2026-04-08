@@ -428,9 +428,19 @@
                                             <input type="text" name="apellido_materno" id="ef-materno" class="form-control form-control-sm">
                                         </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label text-muted fs-10 mb-1">Celular Estudiante</label>
-                                        <input type="text" name="telefono" id="ef-telefono" class="form-control form-control-sm">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fs-10 mb-1">Celular Estudiante</label>
+                                                <input type="text" name="telefono" id="ef-telefono" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fs-10 mb-1">Correo Electrónico</label>
+                                                <input type="email" name="email" id="ef-email" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <h6 class="text-uppercase fw-bold text-primary fs-11 mt-4 mb-3" style="letter-spacing: 1px;">2. Datos del Apoderado</h6>
@@ -854,6 +864,7 @@
                 $('#ef-paterno').val(s.apellido_paterno);
                 $('#ef-materno').val(s.apellido_materno);
                 $('#ef-telefono').val(s.telefono);
+                $('#ef-email').val(s.email);
                 
                 // II. DATOS DEL APODERADO (Carga desde tabla ApoderadoReforzamiento)
                 const apo = (insc.apoderados && insc.apoderados.length > 0) ? insc.apoderados[0] : {};
@@ -899,7 +910,11 @@
                 };
 
                 setFileLink('#ef-dni-link', insc.dni_estudiante_path);
-                setFileLink('#ef-voucher-link', insc.voucher_path);
+                
+                // El voucher está en la relación de pagos
+                const voucherPath = (insc.pagos && insc.pagos.length > 0) ? insc.pagos[0].voucher_path : null;
+                setFileLink('#ef-voucher-link', voucherPath);
+                
                 setFileLink('#ef-compromiso-link', insc.carta_compromiso_path);
                 setFileLink('#ef-certificado-link', insc.certificado_path);
                 setFileLink('#ef-dni-apoderado-link', insc.dni_apoderado_path);

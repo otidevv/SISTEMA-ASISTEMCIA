@@ -210,13 +210,15 @@ class ReforzamientoAdminController extends Controller
             $estudiante = $inscripcion->estudiante;
 
             // 1. Actualizar Datos Personales del Estudiante
-            $estudiante->update([
+            $estudiante->update(array_filter([
                 'nombre' => $request->nombre,
                 'apellido_paterno' => $request->apellido_paterno,
                 'apellido_materno' => $request->apellido_materno,
                 'telefono' => $request->telefono,
                 'email' => $request->email,
-            ]);
+            ], function($value) {
+                return !is_null($value);
+            }));
 
             // 2. Actualizar/Crear Datos del Apoderado (Tabla propia)
             $apo = $inscripcion->apoderados()->first();
