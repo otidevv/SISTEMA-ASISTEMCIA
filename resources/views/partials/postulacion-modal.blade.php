@@ -849,7 +849,13 @@
                                                 <optgroup label="{{ $nombresGrupos[$grupoKey] ?? "GRUPO $grupoKey" }}">
                                                     @foreach($carrerasAgrupadas[$grupoKey] as $carrera)
                                                         @php
-                                                            $esNueva = in_array(strtoupper(trim($carrera->nombre)), $nuevasCarreras);
+                                                            $nombreLimpio = strtoupper(trim($carrera->nombre));
+                                                            // Buscamos coincidencia parcial o sin tildes para mayor seguridad
+                                                            $esNueva = (
+                                                                strpos($nombreLimpio, 'MEDICINA HUMANA') !== false || 
+                                                                strpos($nombreLimpio, 'BIOLOG') !== false || 
+                                                                strpos($nombreLimpio, 'ECONOM') !== false
+                                                            );
                                                         @endphp
                                                         <option value="{{ $carrera->id }}">
                                                             {{ $carrera->nombre }} @if($esNueva) ✨ (NUEVO) @endif

@@ -70,6 +70,11 @@ class TarjetasController extends Controller
                 if ($tema === 'Q') $grupo = 'B';
                 if ($tema === 'R') $grupo = 'C';
 
+                // Usar el grupo real de la carrera si está disponible
+                if (isset($inscripcion->carrera) && !empty($inscripcion->carrera->grupo)) {
+                    $grupo = $inscripcion->carrera->grupo;
+                }
+
                 $postulacion = Postulacion::where('estudiante_id', $inscripcion->estudiante_id)
                                           ->where('ciclo_id', $inscripcion->ciclo_id)
                                           ->first();
@@ -355,6 +360,8 @@ class TarjetasController extends Controller
                 $cantidad = $conteoPorAula[$aula->id] ?? 0;
                 if ($cantidad > 0) {
                     $tema = $temas[$index % 3];
+                    // El grupo por tema es solo para temas genéricos. 
+                    // Las tarjetas individuales mostrarán su grupo real (A, B, C o D).
                     $grupo = ($tema === 'P') ? 'A' : (($tema === 'Q') ? 'B' : 'C');
 
                     \App\Models\ExamenDistribucion::updateOrCreate(
