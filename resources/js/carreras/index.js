@@ -8,6 +8,19 @@ $.ajaxSetup({
 });
 
 $(document).ready(function () {
+    // Configuración de Toast para notificaciones
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
     // Inicializar DataTables
     var table = $('#carreras-datatable').DataTable({
         processing: true,
