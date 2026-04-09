@@ -8,14 +8,21 @@
 <style>
     /* Diseño Institucional Vanguardista */
     :root {
+        --cepre-magenta: #e2007a;
+        --cepre-green: #93c01f;
+        --cepre-cyan: #00aeef;
+        --cepre-dark-magenta: #9b0058;
+        --cepre-gold: #ffd700;
+        --cepre-navy: #1a237e;
+        --cepre-dark-blue: #0d47a1;
         --glass-bg: rgba(255, 255, 255, 0.9);
         --glass-border: rgba(255, 255, 255, 0.2);
     }
 
     .gradient-hero { 
-        background: var(--cepre-pink) !important; 
+        background: linear-gradient(135deg, var(--cepre-magenta) 0%, var(--cepre-dark-magenta) 100%) !important; 
         border-radius: 20px !important;
-        box-shadow: 0 15px 35px rgba(236, 0, 140, 0.25) !important;
+        box-shadow: 0 15px 35px rgba(226, 0, 122, 0.2) !important;
         position: relative;
         overflow: hidden;
         transition: all 0.5s ease;
@@ -90,22 +97,39 @@
 
     /* Línea de Tiempo de Hitos */
     .timeline-milestones {
+        position: relative;
         display: flex;
         justify-content: space-between;
-        position: relative;
-        margin-top: 30px;
-        padding-top: 20px;
+        align-items: center;
+        width: 100%;
+        padding: 40px 0;
+        z-index: 10;
     }
 
+    /* Carril de fondo (Camino total) */
     .timeline-milestones::before {
         content: "";
         position: absolute;
-        top: 0;
+        top: 50%;
         left: 0;
         right: 0;
-        height: 4px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 10px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
+    /* Carril de progreso (Camino recorrido) */
+    .timeline-progress-bar {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 3px;
+        background: var(--cepre-gold);
+        transform: translateY(-50%);
+        z-index: 2;
+        transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     }
 
     .milestone-point {

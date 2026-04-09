@@ -1,15 +1,16 @@
-// Dashboard Progressive Loading - Motor de Diseño Elite V27 (Identidad Cromática Exacta)
+// Dashboard Progressive Loading - Motor de Diseño Elite V29 (Sincronización Cromática Final)
 document.addEventListener('DOMContentLoaded', function () {
     const apiToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     
-    // Paleta Oficial CEPRE UNAMAD
+    // PALETA OFICIAL CEPRE UNAMAD - DEFINICIÓN MAESTRA
     const COLORS = {
         MAGENTA: '#e2007a',
         DARK_MAGENTA: '#9b0058',
         GREEN: '#93c01f',
         CYAN: '#00aeef',
         NAVY: '#1a237e',
-        GOLD: '#ffd700'
+        GOLD: '#ffd700',
+        DARK_BLUE: '#0d47a1'
     };
 
     const getUsername = () => {
@@ -58,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderAlertas(adminData.alertas);
             }
             renderAnuncios(anuncios);
-        } catch (error) { console.error('Error dashboard data V27:', error); }
+        } catch (error) { console.error('Error dashboard data V29:', error); }
     }
 
     function startCountdown(hito) {
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!countdownEl) return;
 
         if (!hito) {
-            countdownEl.innerHTML = `<span class="badge bg-soft-success text-success px-3 border border-success" style="color: ${COLORS.GREEN} !important;">OBJETIVOS CUMPLIDOS</span>`;
+            countdownEl.innerHTML = `<span class="badge px-3 border" style="background: rgba(147, 192, 31, 0.15); color: ${COLORS.GREEN}; border-color: ${COLORS.GREEN} !important;">OBJETIVOS ALCANZADOS</span>`;
             return;
         }
 
@@ -76,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const now = new Date().getTime();
             const distance = targetDate - now;
             if (distance < 0) {
-                countdownEl.innerHTML = '<span class="badge bg-success shadow-sm px-3 border border-white">HITO ALCANZADO</span>';
+                countdownEl.innerHTML = `<span class="badge shadow-sm px-3 border border-white" style="background: ${COLORS.GREEN}; color: white;">HITO ALCANZADO</span>`;
                 clearInterval(countdownInterval);
                 return;
             }
@@ -99,9 +100,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <span class="fw-bold fs-6 d-block text-white">${minutes}</span>
                         <small class="text-white-50" style="font-size: 0.5rem">MIN</small>
                     </div>
-                    <div class="text-center rounded p-1 shadow-sm" style="min-width: 44px; background: ${COLORS.MAGENTA}; border: 1px solid rgba(255,255,255,0.3) !important; backdrop-filter: blur(5px); box-shadow: 0 0 15px rgba(226, 0, 122, 0.4);">
+                    <div class="text-center rounded p-1 shadow-sm" style="min-width: 44px; background: ${COLORS.MAGENTA}; border: 1px solid rgba(255,255,255,0.3) !important; backdrop-filter: blur(5px); box-shadow: 0 0 15px rgba(226, 0, 122, 0.5);">
                         <span class="fw-bold fs-6 d-block text-white fw-extra-bold h-flash">${seconds}</span>
-                        <small class="text-white-100" style="font-size: 0.5rem; opacity: 0.8">SEG</small>
+                        <small class="text-white-100 fw-bold" style="font-size: 0.5rem; opacity: 0.8">SEG</small>
                     </div>
                 </div>
             `;
@@ -118,9 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const bannerTitle = isGlobal ? "INTELIGENCIA ESTRATÉGICA" : ciclo.nombre;
         const proximoNombre = (ciclo.proximo_hito ? ciclo.proximo_hito.nombre : 'FINALIZADO').toUpperCase();
 
-        // Aplicación de Colores Oficiales
         const bannerBg = isGlobal 
-            ? `linear-gradient(135deg, ${COLORS.NAVY} 0%, ${COLORS.DARK_BLUE} 50%, ${COLORS.MAGENTA} 100%)` 
+            ? `linear-gradient(135deg, ${COLORS.NAVY} 0%, ${COLORS.DARK_BLUE} 50%, ${COLORS.DARK_MAGENTA} 100%)` 
             : `linear-gradient(135deg, ${COLORS.MAGENTA} 0%, ${COLORS.DARK_MAGENTA} 100%)`;
 
         let middleContent = '';
@@ -146,6 +146,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-2 p-2 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-10 d-flex align-items-center justify-content-center animate__animated animate__fadeIn">
+                    <span class="text-white fw-bold me-2 small uppercase" style="letter-spacing: 1px; font-size: 0.6rem">CUMPLIMIENTO GLOBAL:</span>
+                    <div class="progress flex-grow-1 mx-2" style="height: 8px; border-radius: 10px; background: rgba(255,255,255,0.1);">
+                        <div class="progress-bar" style="width: ${ciclo.progreso_porcentaje}%; background: ${COLORS.GOLD};"></div>
+                    </div>
+                    <span class="text-warning fw-bold small">${ciclo.progreso_porcentaje}%</span>
+                </div>
             `;
         } else {
             const hitos = [
@@ -167,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
 
                 <div class="timeline-milestones d-none d-xl-flex mt-2">
+                    <div class="timeline-progress-bar" style="width: ${ciclo.progreso_porcentaje}%"></div>
                     ${hitos.map((h, i) => {
                         const now = new Date().getTime();
                         const hitoDateMatch = h.date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -182,15 +191,9 @@ document.addEventListener('DOMContentLoaded', function () {
         container.innerHTML = `
             <div class="col-12 animate__animated animate__fadeIn">
                 <div class="card gradient-hero border-0 text-white overflow-hidden shadow-lg position-relative" style="min-height: 420px; background: ${bannerBg} !important;">
-                    
-                    <!-- CAPAS DE DECORACIÓN -->
                     <div class="position-absolute" style="top: -100px; left: -100px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); blur: 60px; z-index: 1;"></div>
-                    <div class="position-absolute" style="top: 20%; right: 10%; width: 300px; height: 300px; background: radial-gradient(circle, ${COLORS.CYAN}20 0%, transparent 70%); blur: 50px; z-index: 1;"></div>
-                    
                     <div class="card-body p-4 p-md-5 position-relative" style="z-index: 20">
                         <div class="row g-4 align-items-center">
-                            
-                            <!-- Columna 1: Bienvenida -->
                             <div class="col-xl-4 col-lg-5 order-1">
                                 <div class="d-flex align-items-center mb-4">
                                     <div class="rounded-pill p-2 px-3 fw-bold small shadow-lg d-flex align-items-center" 
@@ -198,13 +201,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                         <i class="mdi mdi-crown text-warning me-2"></i> ¡BIENVENIDO, ${name.toUpperCase()}!
                                     </div>
                                 </div>
-                                <h1 class="text-white fw-bold mb-4 display-5" style="text-shadow: 0 10px 30px rgba(0,0,0,0.3);">${bannerTitle}</h1>
-                                
+                                <h1 class="text-white fw-bold mb-4 display-5" style="text-shadow: 0 10px 30px rgba(0,0,0,0.3); line-height: 1.1;">${bannerTitle}</h1>
                                 <div class="mb-4 d-inline-block">
                                     <p class="mb-2 fw-bold text-uppercase" style="font-size: 0.55rem; letter-spacing: 2px; color: ${COLORS.GOLD}">PRÓXIMA META ACADÉMICA: <span class="text-warning fw-extra-bold font-italic">${proximoNombre}</span></p>
                                     <div id="live-countdown" class="d-flex align-items-center"></div>
                                 </div>
-
                                 <div class="mt-4" style="max-width: 300px">
                                     <div class="d-flex justify-content-between mb-1 text-uppercase fw-bold" style="font-size: 0.5rem; letter-spacing: 1.5px">
                                         <span class="text-white-50">AVANCE DEL PROCESO</span>
@@ -215,13 +216,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Columna 2: Central -->
                             <div class="col-xl-5 col-lg-7 order-2">
                                 ${middleContent}
                             </div>
-
-                            <!-- Columna 3: Jaguar -->
                             <div class="col-xl-3 d-none d-xl-block order-3 position-relative" style="height: 380px;">
                                 <div class="position-absolute" style="bottom: -130px; right: -60px; z-index: 10;">
                                     <img src="/assets/img/mascotadashboard.png" 
@@ -229,7 +226,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                          alt="Jaguar CEPRE">
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -272,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const items = [
             { lab: 'Regulares', val: stats.regulares, col: COLORS.GREEN, pct: Math.round((stats.regulares / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-check-outline' },
             { lab: 'Amonestados', val: stats.amonestados, col: COLORS.GOLD, pct: Math.round((stats.amonestados / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-alert-outline' },
-            { lab: 'Inhabilitados', val: stats.MAGENTA, col: COLORS.MAGENTA, pct: Math.round((stats.inhabilitados / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-remove-outline' }
+            { lab: 'Inhabilitados', val: stats.inhabilitados, col: COLORS.MAGENTA, pct: Math.round((stats.inhabilitados / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-remove-outline' }
         ];
         container.innerHTML = items.map(i => `<div class="mb-4"><div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold fs-6" style="color: ${i.col}"><i class="${i.icon} me-1"></i> ${i.lab}</span><span class="text-muted fw-bold">${i.val} alumnos (${i.pct}%)</span></div><div class="progress progress-custom overflow-hidden shadow-sm" style="height: 14px"><div class="progress-bar shadow-sm" style="width: ${i.pct}%; background: ${i.col}"></div></div></div>`).join('') + `<div class="p-3 rounded-4 bg-light text-center border mt-4 shadow-sm"><small class="text-muted text-uppercase fw-bold">Población Activa Total</small><h4 class="mb-0 fw-bold text-dark">${stats.total_estudiantes} Estudiantes</h4></div>`;
     }
