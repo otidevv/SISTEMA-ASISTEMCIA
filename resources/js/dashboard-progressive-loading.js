@@ -1,4 +1,4 @@
-// Dashboard Progressive Loading - Motor de Diseño Elite V16 (Inteligencia de Ciclos y Timeline)
+// Dashboard Progressive Loading - Motor de Diseño Elite V19 (RECONSTRUCCIÓN TOTAL - ESTABILIDAD)
 document.addEventListener('DOMContentLoaded', function () {
     const apiToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let currentCicloId = 'global';
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 renderAlertas(adminData.alertas);
             }
             renderAnuncios(anuncios);
-        } catch (error) { console.error('Error dashboard data V16:', error); }
+        } catch (error) { console.error('Error dashboard data V19:', error); }
     }
 
     function startCountdown(hito) {
@@ -63,10 +63,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             countdownEl.innerHTML = `
                 <div class="d-flex gap-2">
-                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${days}</span><small class="text-white-50" style="font-size: 0.5rem">DÍAS</small></div>
-                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${hours}</span><small class="text-white-50" style="font-size: 0.5rem">HRS</small></div>
-                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${minutes}</span><small class="text-white-50" style="font-size: 0.5rem">MIN</small></div>
-                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-warning">${seconds}</span><small class="text-white-50" style="font-size: 0.5rem">SEG</small></div>
+                    <div class="text-center bg-white rounded p-1 shadow-sm border" style="min-width: 44px"><span class="fw-bold fs-6 d-block text-dark">${days}</span><small class="text-muted" style="font-size: 0.5rem">DÍAS</small></div>
+                    <div class="text-center bg-white rounded p-1 shadow-sm border" style="min-width: 44px"><span class="fw-bold fs-6 d-block text-dark">${hours}</span><small class="text-muted" style="font-size: 0.5rem">HORA</small></div>
+                    <div class="text-center bg-white rounded p-1 shadow-sm border" style="min-width: 44px"><span class="fw-bold fs-6 d-block text-dark">${minutes}</span><small class="text-muted" style="font-size: 0.5rem">MIN</small></div>
+                    <div class="text-center bg-white rounded p-1 shadow-sm border" style="min-width: 44px"><span class="fw-bold fs-6 d-block text-magenta">${seconds}</span><small class="text-muted" style="font-size: 0.5rem">SEG</small></div>
                 </div>
             `;
         };
@@ -78,98 +78,72 @@ document.addEventListener('DOMContentLoaded', function () {
         const container = document.getElementById('ciclo-banner');
         if (!container) return;
 
-        // Lista de hitos inteligentes: solo los que tengan fecha
         const hitos = [
             { id: 'inicio', label: 'INICIO', date: ciclo.fecha_inicio },
             { id: 'examen1', label: '1er EX.', date: ciclo.fecha_examen_1 },
             { id: 'examen2', label: '2do EX.', date: ciclo.fecha_examen_2 },
             { id: 'examen3', label: '3er EX.', date: ciclo.fecha_examen_3 },
-            { id: 'fin', label: 'CLAUSURA', date: ciclo.fecha_fin }
+            { id: 'fin', label: 'FIN', date: ciclo.fecha_fin }
         ].filter(h => h.date && h.date !== '00/00/0000' && h.date !== '-');
 
         const proximoNombre = (ciclo.proximo_hito ? ciclo.proximo_hito.nombre : 'FINALIZADO').toUpperCase();
 
         container.innerHTML = `
             <div class="col-12">
-                <div class="card gradient-hero border-0 text-white overflow-hidden shadow-lg position-relative" style="min-height: 400px">
-                    <div class="card-body p-4 p-md-5 position-relative" style="z-index: 10">
-                        <div class="row h-100 align-items-center">
+                <div class="card gradient-hero border-0 text-white overflow-hidden shadow-lg position-relative" style="min-height: 420px">
+                    <div class="card-body p-4 p-md-5 position-relative" style="z-index: 20">
+                        <div class="row g-4 align-items-center">
                             
-                            <!-- Izquierda: Identidad y Avance -->
-                            <div class="col-xl-5 col-lg-6 mb-4 mb-lg-0">
+                            <!-- Columna 1: Título y Avance -->
+                            <div class="col-xl-4 col-lg-5 order-1">
                                 <span class="badge bg-white bg-opacity-10 text-white mb-3 p-2 px-3 rounded-pill text-uppercase fw-bold shadow-sm" style="letter-spacing: 2px; font-size: 0.7rem">
-                                    <i class="mdi mdi-shield-check-outline me-2 text-warning"></i> MONITOREO EN VIVO
+                                    <i class="mdi mdi-pulse me-1 text-warning"></i> MONITOREO OPERATIVO
                                 </span>
-                                <h1 class="text-white fw-bold mb-4 display-6" style="text-shadow: 0 5px 25px rgba(0,0,0,0.4)">${ciclo.nombre}</h1>
+                                <h1 class="text-white fw-bold mb-4 display-5" style="text-shadow: 0 5px 25px rgba(0,0,0,0.4); line-height: 1.1;">${ciclo.nombre}</h1>
                                 
-                                <div class="row g-3 mb-4">
-                                    <div class="col-auto">
-                                        <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 shadow-sm" style="backdrop-filter: blur(20px)">
-                                            <p class="mb-1 small fw-bold text-white-50" style="font-size: 0.6rem">SIGUIENTE META: <span class="text-warning">${proximoNombre}</span></p>
-                                            <div id="live-countdown"></div>
-                                        </div>
+                                <div class="p-3 mb-4 rounded-4 bg-white shadow-lg border border-white border-opacity-10 d-inline-block">
+                                    <p class="mb-1 fw-bold text-muted text-uppercase" style="font-size: 0.6rem">Siguiente Meta: <span class="text-magenta">${proximoNombre}</span></p>
+                                    <div id="live-countdown"></div>
+                                </div>
+
+                                <div class="mt-2" style="max-width: 300px">
+                                    <p class="mb-1 small fw-bold text-white-50">CUMPLIMIENTO: ${ciclo.progreso_porcentaje}%</p>
+                                    <div class="progress bg-white bg-opacity-20" style="height: 6px;">
+                                        <div class="progress-bar bg-white shadow-sm" style="width: ${ciclo.progreso_porcentaje}%"></div>
                                     </div>
-                                    <div class="col-md-6 col-12 px-md-3">
-                                        <p class="mb-2 fw-bold text-uppercase small text-white-50" style="font-size: 0.6rem">CUMPLIMIENTO TOTAL</p>
-                                        <div class="progress progress-custom bg-white bg-opacity-20 shadow-inner" style="height: 10px">
-                                            <div class="progress-bar bg-white shadow-lg" style="width: ${ciclo.progreso_porcentaje}%"></div>
-                                        </div>
-                                        <div class="d-flex justify-content-between mt-1 text-white fw-bold" style="font-size: 0.6rem">
-                                            <span>${ciclo.progreso_porcentaje}% COMPLETADO</span>
-                                        </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna 2: Hitos Centrales -->
+                            <div class="col-xl-5 col-lg-7 order-2">
+                                <div class="p-4 rounded-4 shadow-lg mb-4" 
+                                     style="background: rgba(0,0,0,0.3); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.1) !important;">
+                                    <h6 class="text-white mb-3 fw-bold text-uppercase small" style="letter-spacing: 1px">Cronograma Académico</h6>
+                                    <div class="row g-2">
+                                        <div class="col-sm-6"><div class="p-2 px-3 rounded-4 bg-white shadow-sm border-start border-4 border-info"><small class="text-muted fw-bold d-block small">INICIO</small><div class="text-dark fw-bold">${ciclo.fecha_inicio}</div></div></div>
+                                        <div class="col-sm-6"><div class="p-2 px-3 rounded-4 bg-white shadow-sm border-start border-4 border-danger"><small class="text-muted fw-bold d-block small">CLAUSURA</small><div class="text-dark fw-bold">${ciclo.fecha_fin}</div></div></div>
                                     </div>
                                 </div>
 
-                                <!-- Timeline Dinámica: Se adapta a cualquier cantidad de exámenes -->
-                                <div class="timeline-milestones d-none d-xl-flex mt-5">
+                                <div class="timeline-milestones d-none d-xl-flex mt-2">
                                     ${hitos.map((h, i) => {
                                         const now = new Date().getTime();
                                         const hitoDateMatch = h.date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
                                         const hitoTime = hitoDateMatch ? new Date(`${hitoDateMatch[3]}-${hitoDateMatch[2]}-${hitoDateMatch[1]}`).getTime() : 0;
-                                        
                                         const isCompleted = now > hitoTime;
-                                        const isNext = ciclo.proximo_hito && 
-                                                      (ciclo.proximo_hito.nombre.includes(h.label.replace(' EX.', '')) || 
-                                                       (h.id === 'inicio' && ciclo.proximo_hito.nombre === 'Inicio del Ciclo') ||
-                                                       (h.id === 'fin' && ciclo.proximo_hito.nombre === 'Fin del Ciclo'));
-
-                                        return `
-                                            <div class="milestone-point ${isCompleted ? 'completed' : ''} ${isNext ? 'next' : ''}">
-                                                <span class="milestone-label font-bold">${h.label}</span>
-                                                <span class="milestone-date text-white-50" style="font-size: 0.5rem">${h.date}</span>
-                                            </div>
-                                        `;
+                                        const isNext = ciclo.proximo_hito && (ciclo.proximo_hito.nombre.includes(h.label.replace(' EX.', '')) || (h.id === 'inicio' && ciclo.proximo_hito.nombre === 'Inicio del Ciclo') || (h.id === 'fin' && ciclo.proximo_hito.nombre === 'Fin del Ciclo'));
+                                        return `<div class="milestone-point ${isCompleted ? 'completed' : ''} ${isNext ? 'next' : ''}"><span class="milestone-label font-bold">${h.label}</span><span class="milestone-date text-white-50" style="font-size: 0.5rem">${h.date}</span></div>`;
                                     }).join('')}
                                 </div>
                             </div>
 
-                            <!-- Centro: Roadmap -->
-                            <div class="col-xl-4 col-lg-6 d-flex justify-content-center">
-                                <div class="p-4 rounded-4 shadow-lg position-relative overflow-hidden w-100" 
-                                     style="background: rgba(0,0,0,0.35); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.1) !important; max-width: 380px;">
-                                    <h6 class="text-white mb-4 fw-bold text-uppercase" style="letter-spacing: 1.5px; font-size: 0.7rem">Hitos Académicos</h6>
-                                    <div class="row g-2">
-                                        <div class="col-12">
-                                            <div class="p-2 px-3 rounded-4 bg-white shadow-lg border-start border-4 border-info">
-                                                <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.55rem">Apertura Oficial</small>
-                                                <div class="text-dark fw-bold fs-5">${ciclo.fecha_inicio}</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="p-2 px-3 rounded-4 bg-white shadow-lg border-start border-4 border-danger">
-                                                <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.55rem">Clausura Final</small>
-                                                <div class="text-dark fw-bold fs-5">${ciclo.fecha_fin}</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <!-- Columna 3: Jaguar Guardián -->
+                            <div class="col-xl-3 d-none d-xl-block order-3 position-relative" style="height: 380px;">
+                                <div class="position-absolute" style="bottom: -120px; right: -50px; z-index: 10;">
+                                    <img src="/assets/img/mascotadashboard.png" 
+                                         style="height: 520px; width: auto; filter: drop-shadow(0 40px 100px rgba(0,0,0,0.8));" 
+                                         alt="Jaguar CEPRE">
                                 </div>
-                            </div>
-
-                            <!-- Derecha: Jaguar (Ajuste Manual -250px mantenido) -->
-                            <div class="col-xl-3 d-none d-xl-block position-relative">
-                                <img src="/assets/img/mascotadashboard.png" class="position-absolute" 
-                                     style="right: -60px; bottom: -250px; height: 500px; filter: drop-shadow(0 40px 100px rgba(0,0,0,0.8)); 
-                                            z-index: 50 !important; cursor: default" alt="Jaguar CEPRE">
                             </div>
 
                         </div>
@@ -179,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
     }
 
-    // Funciones de renderizado secundario (Stats, Asistencia, etc.)
     function showSkeletons() {
         document.getElementById('stats-cards').innerHTML = Array(4).fill(`<div class="col-xl-3 col-md-6 mb-4"><div class="card modern-card shimmer" style="height: 120px;"></div></div>`).join('');
     }
