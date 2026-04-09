@@ -3,6 +3,8 @@
 @section('title', 'Dashboard Operativo')
 
 @section('content')
+<input type="hidden" id="auth-user-name" value="{{ Auth::user()->nombre }}">
+<div id="dashboard-metadata" data-user-name="{{ Auth::user()->nombre }}"></div>
 <style>
     /* Diseño Institucional Vanguardista */
     :root {
@@ -139,6 +141,13 @@
         width: 16px;
         height: 16px;
         top: -26px;
+        animation: pulse-milestone 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-milestone {
+        0% { transform: translateX(-50%) scale(1); opacity: 1; }
+        50% { transform: translateX(-50%) scale(1.5); opacity: 0.7; box-shadow: 0 0 20px white; }
+        100% { transform: translateX(-50%) scale(1); opacity: 1; }
     }
 
     .milestone-label {
