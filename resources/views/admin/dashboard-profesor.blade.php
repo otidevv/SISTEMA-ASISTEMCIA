@@ -933,6 +933,68 @@
         justify-content: center;
         font-size: 1.5rem;
     }
+    
+    /* Sidebar Stat Grid Refinements */
+    .sidebar-card .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.85rem;
+    }
+    
+    .sidebar-card .stat-box {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 70px;
+    }
+    
+    .sidebar-card .stat-box:hover {
+        background: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+        transform: translateY(-3px);
+        border-color: var(--primary-light);
+    }
+    
+    .sidebar-card .stat-box .h5 {
+        font-weight: 850;
+        margin-bottom: 2px;
+        line-height: 1;
+        font-size: 1.15rem;
+    }
+    
+    .sidebar-card .stat-box small {
+        font-size: 0.55rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-state-card {
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(15px);
+        border: 2px dashed #cbd5e1;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+        min-height: 450px;
+        transition: all 0.4s ease;
+    }
+    
+    .empty-state-card:hover {
+        background: rgba(255, 255, 255, 0.7);
+        border-color: var(--primary-color);
+    }
 
     .modern-modal-header .modal-title {
         margin: 0;
@@ -1488,7 +1550,7 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
                     <div>
                         <h4 class="fw-bold text-dark mb-1">
-                            Agenda del <span class="text-primary">{{ $fechaSeleccionada->translatedFormat('d de F') }}</span>
+                            Agenda del <span class="text-primary">{{ $fechaSeleccionada->translatedFormat('d \d\e F') }}</span>
                         </h4>
                         <p class="text-muted small mb-0">
                             <i class="mdi mdi-history me-1"></i> {{ ucfirst($fechaSeleccionada->diffForHumans()) }}
@@ -1496,14 +1558,13 @@
                     </div>
                     
                     <div class="d-flex align-items-center gap-3">
-                        {{-- Toggle de vista --}}
                         @if(isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0)
                             <div class="view-toggle d-none d-md-flex">
-                                <button class="toggle-btn active" data-view="course">
-                                    <i class="mdi mdi-view-module"></i> Por Curso
+                                <button class="toggle-btn active" data-view="course" title="Vista por Cursos">
+                                    <i class="mdi mdi-view-module"></i>
                                 </button>
-                                <button class="toggle-btn" data-view="timeline">
-                                    <i class="mdi mdi-timeline-clock"></i> Cronológica
+                                <button class="toggle-btn" data-view="timeline" title="Vista Cronológica">
+                                    <i class="mdi mdi-timeline-clock"></i>
                                 </button>
                             </div>
                         @endif
@@ -1512,8 +1573,8 @@
                             <i class="mdi mdi-calendar-search"></i>
                             <input type="date" name="fecha" id="fecha-agenda" 
                                    value="{{ $fechaSeleccionada->format('Y-m-d') }}"
-                                   onchange="document.getElementById('form-agenda').submit()"
-                                   title="Cambiar fecha de agenda">
+                                   onchange="this.form.submit()"
+                                   title="Cambiar fecha">
                         </form>
                     </div>
                 </div>
@@ -1853,12 +1914,12 @@
                             </div>
                         </div>
                     @empty
-                        <div class="empty-state-card mt-3">
-                            <div class="p-4 rounded-circle bg-white shadow-sm d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
-                                <i class="mdi mdi-calendar-blank-outline text-muted" style="font-size: 2.5rem;"></i>
+                        <div class="empty-state-card mt-4 p-5">
+                            <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px; border: 2px solid #f1f5f9;">
+                                <i class="mdi mdi-calendar-blank-outline text-muted" style="font-size: 3rem;"></i>
                             </div>
-                            <h4 class="fw-bold text-dark">Agenda Disponible</h4>
-                            <p class="text-muted small mx-auto" style="max-width: 300px;">
+                            <h3 class="fw-bold text-dark mb-2">Agenda Disponible</h3>
+                            <p class="text-muted mb-0" style="max-width: 350px;">
                                 No se detectan sesiones de enseñanza para la fecha seleccionada. 
                                 Relájate o revisa tus reportes semanales.
                             </p>
@@ -1925,38 +1986,32 @@
             
             <div class="sidebar-card">
                 <h6 class="sidebar-card-title"><i class="mdi mdi-chart-box-outline"></i> Logros de la Semana</h6>
-                <div class="row g-2 text-center">
-                    <div class="col-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="h4 fw-bold mb-0" style="color: var(--primary-color)">{{ $resumenSemanal['sesiones'] }}</div>
-                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">SESIONES</small>
-                        </div>
+                <div class="stat-grid mt-3">
+                    <div class="stat-box">
+                        <div class="h5" style="color: var(--primary-color)">{{ $resumenSemanal['sesiones'] }}</div>
+                        <small>SESIONES</small>
                     </div>
-                    <div class="col-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="h4 fw-bold mb-0" style="color: var(--success-color)">{{ $resumenSemanal['horas'] }}</div>
-                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">HORAS</small>
-                        </div>
+                    <div class="stat-box">
+                        <div class="h5" style="color: var(--success-color)">{{ $resumenSemanal['horas'] }}</div>
+                        <small>HORAS</small>
                     </div>
-                    <div class="col-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="h4 fw-bold mb-0" style="color: var(--info-color)">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
-                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">PAGO EST.</small>
-                        </div>
+                    <div class="stat-box">
+                        <div class="h5" style="color: var(--info-color)">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
+                        <small>PAGO EST.</small>
                     </div>
-                    <div class="col-6">
-                        <div class="p-3 rounded-4 bg-light">
-                            <div class="h4 fw-bold mb-0" style="color: var(--warning-color)">{{ $resumenSemanal['asistencia'] }}%</div>
-                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">DISCIPLINA</small>
-                        </div>
+                    <div class="stat-box">
+                        <div class="h5" style="color: var(--warning-color)">{{ $resumenSemanal['asistencia'] }}%</div>
+                        <small>DISCIPLINA</small>
                     </div>
                 </div>
                 
                 @if(isset($resumenSemanal['tendencia']))
-                    <div class="mt-3 p-2 rounded-pill text-center d-flex align-items-center justify-content-center gap-2" 
-                         style="background: var(--success-light); border: 1px solid var(--success-color);">
-                        <i class="mdi mdi-trending-up text-success"></i>
-                        <small class="text-success fw-bold uppercase" style="font-size: 0.65rem">Tendencia: {{ $resumenSemanal['tendencia'] }}</small>
+                    <div class="mt-3 text-center">
+                        <div class="d-inline-flex align-items-center gap-2 py-1 px-3 rounded-pill" 
+                             style="background: #ecfdf5; border: 1px solid #10b981;">
+                            <i class="mdi mdi-trending-up text-success"></i>
+                            <span class="text-success fw-bold" style="font-size: 0.6rem">TENDENCIA: {{ $resumenSemanal['tendencia'] }}</span>
+                        </div>
                     </div>
                 @endif
             </div>
