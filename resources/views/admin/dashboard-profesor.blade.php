@@ -31,135 +31,126 @@
     /* -------------------------------------------------------------------------- */
     :root {
         --font-family-sans-serif: 'Inter', sans-serif;
-        --bg-color: #f4f7fe;
+        --bg-color: #f8f9fa;
         --card-bg: rgba(255, 255, 255, 0.9);
         --text-color: #1e293b;
         --text-muted: #64748b;
-        --primary-color: #4f46e5;
-        --primary-hover: #4338ca;
-        --primary-light: #eef2ff;
-        --primary-text: #312e81;
-        --success-color: #22c55e;
+        --primary-color: #e2007a; /* MAGENTA CEPRE */
+        --primary-hover: #9b0058;
+        --primary-light: rgba(226, 0, 122, 0.1);
+        --primary-text: #e2007a;
+        --navy-color: #1a237e; /* NAVY CEPRE */
+        --success-color: #93c01f; /* VERDE CEPRE */
         --success-light: #f0fdf4;
         --success-text: #166534;
-        --warning-color: #f59e0b;
+        --warning-color: #ffd700; /* ORO CEPRE */
         --warning-light: #fffbeb;
         --warning-text: #78350f;
         --danger-color: #ef4444;
         --danger-light: #fef2f2;
         --danger-text: #991b1b;
-        --info-color: #3b82f6;
+        --info-color: #00aeef; /* CIAN CEPRE */
         --info-light: #eff6ff;
         --info-text: #1e40af;
-        --border-color: #e2e8f0;
-        --border-radius: 1rem; /* 16px */
-        --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-        --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
-        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --border-color: #edf2f9;
+        --border-radius: 1.25rem;
+        --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07);
+        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* -------------------------------------------------------------------------- */
-    /* Estilos Base y Fondo                                                       */
-    /* -------------------------------------------------------------------------- */
-    body {
-        font-family: var(--font-family-sans-serif);
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-
-    .dashboard-container {
-        max-width: 1400px;
-        margin: 2rem auto;
-        padding: 0 1.5rem;
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /* Encabezado de Bienvenida (Efecto Glass)                                    */
+    /* Encabezado de Bienvenida (Efecto Obsidian Glass)                           */
     /* -------------------------------------------------------------------------- */
     .welcome-header {
-        background: rgba(255, 255, 255, 0.6);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(135deg, var(--navy-color) 0%, var(--primary-hover) 100%);
         border-radius: var(--border-radius);
-        padding: 1.5rem 2.5rem;
-        margin-bottom: 2.5rem;
-        box-shadow: var(--shadow);
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1.5rem;
+        padding: 2rem 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 40px rgba(26, 35, 126, 0.25);
         position: relative;
         overflow: hidden;
-    }
-    .welcome-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(79, 70, 229, 0.1), transparent 40%);
-        animation: rotate 15s linear infinite;
-    }
-    @keyframes rotate {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        border: 1px solid rgba(255,255,255,0.15);
+        min-height: 260px;
+        display: flex;
+        align-items: center;
     }
 
     .welcome-header .welcome-text .welcome-title {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--text-color);
+        font-size: 2.2rem;
+        font-weight: 850;
+        color: #ffffff;
         letter-spacing: -0.5px;
+        text-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        line-height: 1.1;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-header .welcome-text {
+        position: relative;
+        z-index: 20;
     }
 
     .welcome-header .welcome-text .welcome-subtitle {
-        font-size: 1.1rem;
-        color: var(--text-muted);
+        font-size: 1.05rem;
+        color: rgba(255,255,255,0.95) !important;
         font-weight: 500;
+        margin-top: 0.5rem;
+        text-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
 
     .time-display {
-        background: var(--primary-color);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
         color: white;
-        padding: 0.75rem 1.5rem;
-        border-radius: 9999px;
-        font-size: 1rem;
-        font-weight: 600;
-        display: flex;
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        display: inline-flex;
         align-items: center;
-        gap: 0.75rem;
-        box-shadow: 0 4px 15px -3px rgb(79 70 229 / 40%);
+        gap: 0.6rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        position: relative;
+        z-index: 30;
+    }
+
+    .mascot-stage {
+        position: absolute;
+        bottom: -20px;
+        right: -60px;
+        width: 250px;
+        z-index: 10;
+        pointer-events: none;
+        transition: all 0.5s ease;
+        opacity: 0.85;
     }
 
     .btn-pdf-download {
-        background: white;
-        color: var(--primary-color);
+        background: linear-gradient(135deg, #ffd700 0%, #ffc107 100%);
+        color: var(--navy-color) !important;
         border: none;
         padding: 0.75rem 1.5rem;
-        border-radius: 9999px;
-        font-weight: 700;
-        display: flex;
+        border-radius: 12px;
+        font-weight: 850;
+        display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        box-shadow: var(--shadow-sm);
-        transition: var(--transition);
-        text-decoration: none;
-        z-index: 10;
+        gap: 8px;
+        box-shadow: 0 10px 25px rgba(255, 215, 0, 0.35);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none !important;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
+        position: relative;
+        z-index: 30;
     }
     .btn-pdf-download:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow);
-        background: var(--primary-light);
-        color: var(--primary-hover);
-    }
-    .btn-pdf-download i {
-        font-size: 1.25rem;
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(255, 215, 0, 0.4);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -171,22 +162,22 @@
         gap: 1.5rem;
         margin-bottom: 2.5rem;
     }
-
     .stat-card {
         background: var(--card-bg);
         border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
-        padding: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem;
         display: flex;
-        align-items: flex-start;
-        gap: 1rem;
+        align-items: center;
+        gap: 1.25rem;
         transition: var(--transition);
         position: relative;
         overflow: hidden;
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1), 0 8px 20px -6px rgba(0,0,0,0.05);
     }
     .stat-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-lg);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
         border-color: var(--primary-color);
     }
 
@@ -199,10 +190,10 @@
         background-image: linear-gradient(135deg, var(--color-from), var(--color-to));
         box-shadow: 0 4px 8px -2px rgba(0,0,0,0.2);
     }
-    .stat-card.primary .stat-icon { --color-from: #6366f1; --color-to: #4f46e5; }
-    .stat-card.warning .stat-icon { --color-from: #f59e0b; --color-to: #d97706; }
-    .stat-card.success .stat-icon { --color-from: #22c55e; --color-to: #16a34a; }
-    .stat-card.info .stat-icon { --color-from: #3b82f6; --color-to: #2563eb; }
+    .stat-card.primary .stat-icon { --color-from: var(--primary-color); --color-to: var(--primary-hover); }
+    .stat-card.warning .stat-icon { --color-from: var(--warning-color); --color-to: #d9b700; }
+    .stat-card.success .stat-icon { --color-from: var(--success-color); --color-to: #7da419; }
+    .stat-card.info .stat-icon { --color-from: var(--info-color); --color-to: #0081b3; }
 
     .stat-card .stat-info .stat-value {
         font-size: 2.25rem;
@@ -243,72 +234,80 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* Área de Contenido Principal                                                */
-    /* -------------------------------------------------------------------------- */
-    .main-content-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .main-content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    .main-content-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-color);
-    }
-
-    /* -------------------------------------------------------------------------- */
     /* Tarjetas de Sesión (Diseño Timeline + Tarjeta Completa y coloreada)        */
     /* -------------------------------------------------------------------------- */
     .session-timeline {
         position: relative;
     }
-    .session-timeline::before {
-        content: '';
+
+    /* Date Picker Styling */
+    .date-picker-container {
+        position: relative;
+        max-width: 250px;
+    }
+    .date-picker-container input {
+        background: white;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        padding-left: 2.5rem;
+        font-weight: 600;
+        color: var(--navy-color);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    .date-picker-container input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px var(--primary-light);
+        outline: none;
+    }
+    .date-picker-container i {
         position: absolute;
-        left: 14px;
-        top: 10px;
-        bottom: 10px;
-        width: 2px;
-        background-color: var(--border-color);
-        border-radius: 2px;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-color);
+        z-index: 5;
     }
 
     .session-card {
         position: relative;
-        padding-left: 3rem; /* Espacio para el punto y la línea */
-        margin-bottom: 2rem;
+        padding: 1.5rem;
+        padding-left: 3.5rem;
+        margin-bottom: 1.5rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        overflow: hidden;
     }
-    .session-card:last-child {
-        margin-bottom: 0;
+    .session-card:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow);
+        border-color: var(--primary-color);
     }
 
-    .session-card::before { /* El punto en la línea de tiempo */
+    .session-card::before { 
         content: '';
         position: absolute;
-        left: 8px; /* (14px de la línea) - (12px de ancho / 2) */
-        top: 2.25rem; /* Alineado con el centro del header de la tarjeta */
+        left: 1.25rem;
+        top: 2rem;
         width: 14px;
         height: 14px;
         border-radius: 50%;
         background-color: var(--dot-color);
-        border: 3px solid var(--bg-color);
         z-index: 1;
+        box-shadow: 0 0 10px var(--dot-color);
     }
 
-    /* Asignar colores al punto */
-    .session-card.programmed { --dot-color: var(--primary-color); }
+    .session-card.active {
+        background: linear-gradient(to right, rgba(226, 0, 122, 0.05), white);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    /* Colores Institucionales para la Línea de Tiempo */
+    .session-card.programmed { --dot-color: var(--navy-color); }
     .session-card.completed { --dot-color: var(--success-color); }
     .session-card.pending { --dot-color: var(--warning-color); }
     .session-card.active { --dot-color: var(--info-color); }
@@ -318,147 +317,119 @@
         border-radius: var(--border-radius);
         padding: 1.5rem;
         transition: var(--transition);
-        border: 1px solid;
+        border: 1px solid rgba(0,0,0,0.05);
+        background: white;
     }
 
     .session-card:hover .session-card-content {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: var(--shadow);
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
     }
 
-    /* Colores de Tarjeta por Estado */
-    .session-card.programmed .session-card-content {
-        background-color: var(--card-bg);
-        border-color: var(--border-color);
+    /* Estilos por Estado con Colores Oficiales */
+    .session-card.active .session-card-content { 
+        background-color: #f0f9ff; 
+        border-color: var(--info-color); 
+        box-shadow: 0 0 25px rgba(0, 174, 239, 0.15); 
     }
-    .session-card.programmed:hover .session-card-content {
-        border-color: var(--primary-color);
+    .session-card.completed .session-card-content { 
+        background-color: #f7fee7; 
+        border-color: var(--success-color); 
     }
-    .session-card.completed .session-card-content { background-color: var(--success-light); border-color: var(--success-color); }
-    .session-card.pending .session-card-content { background-color: var(--warning-light); border-color: var(--warning-color); }
-    .session-card.active .session-card-content { background-color: var(--info-light); border-color: var(--info-color); box-shadow: 0 0 20px 0 rgb(59 130 246 / 25%); }
-    .session-card.no-access .session-card-content { background-color: var(--danger-light); border-color: var(--danger-color); }
+    .session-card.pending .session-card-content { 
+        background-color: #fffbeb; 
+        border-color: var(--warning-color); 
+    }
     
-    .session-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    .course-name {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--text-color);
-    }
-    .session-time {
-        font-weight: 500;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        flex-shrink: 0;
-    }
     .session-details {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: var(--text-muted);
         display: flex;
         flex-wrap: wrap;
-        gap: 1rem 1.5rem;
-        margin-bottom: 1rem;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
     }
     .session-details strong {
-        color: var(--text-color);
-        font-weight: 600;
+        color: var(--navy-color);
+        font-weight: 700;
     }
     
     .tema-registrado {
-        background-color: rgba(255, 255, 255, 0.5);
-        border-radius: 0.75rem;
-        padding: 1rem;
+        background-color: var(--primary-light);
+        border-radius: 1rem;
+        padding: 1.25rem;
         margin-top: 1rem;
         font-size: 0.9rem;
+        border: 1px dashed var(--primary-color);
     }
     .tema-registrado strong {
-        color: var(--primary-text);
+        color: var(--primary-color);
     }
 
-    .session-footer {
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid rgba(0,0,0,0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-    .session-card.programmed .session-footer {
-        border-top-color: var(--border-color);
-    }
-
-    /* NUEVO: Estilos para información avanzada de sesión */
+    /* NUEVO: Estilos para información avanzada de sesión (Glass Metrics) */
     .session-metrics {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.75rem;
-        margin: 1rem 0;
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 0.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
     }
 
     .session-metric {
         text-align: center;
-        font-size: 0.8rem;
     }
 
     .session-metric-value {
         display: block;
-        font-weight: 700;
-        font-size: 1rem;
-        color: var(--text-color);
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--navy-color);
     }
 
     .session-metric-label {
         color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
         margin-top: 0.25rem;
     }
 
-    /* NUEVO: Barra de progreso para clases en curso */
+    /* Barra de progreso para clases en curso */
     .progress-container {
-        margin: 1rem 0;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: white;
+        border-radius: 1rem;
+        border: 1px solid var(--info-color);
+        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.05);
     }
 
     .progress-bar-container {
         width: 100%;
-        height: 8px;
-        background: rgba(255, 255, 255, 0.7);
-        border-radius: 4px;
+        height: 10px;
+        background: #f1f5f9;
+        border-radius: 10px;
         overflow: hidden;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
     }
 
     .progress-bar {
         height: 100%;
         background: linear-gradient(90deg, var(--info-color), var(--primary-color));
-        border-radius: 4px;
-        transition: width 0.3s ease;
+        border-radius: 10px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
     }
 
     .progress-bar::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        animation: shimmer 2s infinite;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        animation: shimmer 1.5s infinite;
     }
 
     @keyframes shimmer {
@@ -466,228 +437,83 @@
         100% { transform: translateX(100%); }
     }
 
-    .progress-text {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        display: flex;
-        justify-content: space-between;
+    /* Indicadores de estado de tiempo */
+    .time-pill {
+        font-size: 0.7rem;
+        padding: 0.35rem 1rem;
+        border-radius: 50px;
+        font-weight: 800;
+        display: inline-flex;
         align-items: center;
+        gap: 0.35rem;
+        text-transform: uppercase;
     }
-
-    /* NUEVO: Tooltips */
-    .tooltip-info {
-        position: relative;
-        cursor: help;
+    .time-pill.current {
+        background: rgba(0, 174, 239, 0.1);
         color: var(--info-color);
+        border: 1px solid var(--info-color);
+        box-shadow: 0 0 15px rgba(0, 174, 239, 0.2);
+        animation: pulse-active 2s infinite;
     }
-
-    .tooltip-info:hover::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--text-color);
-        color: white;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        z-index: 1000;
-        margin-bottom: 0.25rem;
+    @keyframes pulse-active {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
     }
-
-    .tooltip-info:hover::before {
-        content: '';
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 4px solid transparent;
-        border-top-color: var(--text-color);
-        z-index: 1000;
+    .time-pill.finished {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
     }
-
-    /* NUEVO: Indicadores de estado mejorados */
-    .time-indicator {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        margin-top: 0.25rem;
-    }
-
-    .time-indicator.upcoming {
+    .time-pill.upcoming {
         background: var(--primary-light);
-        color: var(--primary-text);
-    }
-
-    .time-indicator.current {
-        background: var(--info-light);
-        color: var(--info-text);
-        animation: pulse 2s infinite;
-    }
-
-    .time-indicator.finished {
-        background: var(--text-muted);
-        color: white;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-    }
-
-    /* NUEVO: Métricas de eficiencia */
-    .efficiency-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        font-size: 0.8rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-weight: 600;
-    }
-
-    .efficiency-indicator.excellent {
-        background: var(--success-light);
-        color: var(--success-text);
-    }
-
-    .efficiency-indicator.good {
-        background: var(--primary-light);
-        color: var(--primary-text);
-    }
-
-    .efficiency-indicator.average {
-        background: var(--warning-light);
-        color: var(--warning-text);
-    }
-
-    .efficiency-indicator.poor {
-        background: var(--danger-light);
-        color: var(--danger-text);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /* Sidebar                                                                    */
-    /* -------------------------------------------------------------------------- */
-    .sidebar-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-        margin-bottom: 1.5rem;
-        padding: 1.5rem;
-        transition: var(--transition);
-    }
-    .sidebar-card:hover {
-        box-shadow: var(--shadow-lg);
-    }
-    .sidebar-card-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .sidebar-card-title i {
         color: var(--primary-color);
-    }
-
-    /* NUEVO: Próxima clase mejorada */
-    .next-class-info {
-        position: relative;
-    }
-
-    .countdown-timer {
-        background: linear-gradient(135deg, var(--primary-color), #6d28d9);
-        color: white;
-        padding: 0.75rem;
-        border-radius: 0.75rem;
-        text-align: center;
-        margin-top: 1rem;
-        font-weight: 600;
-    }
-
-    .countdown-time {
-        font-size: 1.25rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .countdown-label {
-        font-size: 0.8rem;
-        opacity: 0.9;
+        border: 1px solid var(--primary-color);
     }
 
     /* -------------------------------------------------------------------------- */
     /* Componentes UI (Botones, Badges, etc)                                      */
     /* -------------------------------------------------------------------------- */
     .action-button {
-        background-image: linear-gradient(to right, var(--primary-color) 0%, #6d28d9 51%, var(--primary-color) 100%);
-        background-size: 200% auto;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--navy-color) 100%);
         color: white;
         border: none;
-        padding: 0.6rem 1.2rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
         transition: var(--transition);
         text-decoration: none;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 4px 12px rgba(226, 0, 122, 0.2);
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
     }
     .action-button:hover {
-        background-position: right center;
-        transform: scale(1.05);
-        box-shadow: var(--shadow);
-    }
-    .action-button.outline {
-        background-image: none;
-        background-color: transparent;
-        border: 1px solid var(--primary-color);
-        color: var(--primary-color);
-        box-shadow: none;
-    }
-    .action-button.outline:hover {
-        background-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(226, 0, 122, 0.3);
+        filter: brightness(1.1);
         color: white;
-        transform: scale(1.05);
-        box-shadow: var(--shadow);
-    }
-    .action-button:disabled {
-        background-image: none;
-        background-color: #e5e7eb !important;
-        color: var(--text-muted) !important;
-        cursor: not-allowed !important;
-        border-color: #e5e7eb !important;
-        transform: none;
-        box-shadow: none !important;
     }
 
     .status-badge {
-        padding: 0.4rem 1rem;
+        padding: 0.45rem 1.25rem;
         border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 700;
+        font-size: 0.7rem;
+        font-weight: 800;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.8px;
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
-        border: 1px solid;
+        gap: 0.5rem;
+        border: 1px solid transparent;
     }
     .status-badge.success { background-color: var(--success-light); color: var(--success-text); border-color: var(--success-color); }
     .status-badge.warning { background-color: var(--warning-light); color: var(--warning-text); border-color: var(--warning-color); }
-    .status-badge.info { background-color: var(--primary-light); color: var(--primary-text); border-color: var(--primary-color); }
-    .status-badge.danger { background-color: var(--danger-light); color: var(--danger-text); border-color: var(--danger-color); }
-    .status-badge.active { background-color: var(--info-light); color: var(--info-text); border-color: var(--info-color); }
+    .status-badge.info { background-color: var(--info-light); color: var(--info-text); border-color: var(--info-color); }
+    .status-badge.active { background-color: rgba(0, 174, 239, 0.1); color: var(--info-color); border-color: var(--info-color); box-shadow: 0 0 10px rgba(0, 174, 239, 0.2); }
 
     /* Modal */
     .modal-content {
@@ -1444,26 +1270,41 @@
 
 @section('content')
 <div class="dashboard-container">
-    <!-- Header de Bienvenida -->
+    <!-- Header de Bienvenida (NUEVO: Obsidian Stage con Jaguar Optimizado) -->
     <div class="welcome-header">
-        <div class="welcome-text">
-            <div class="welcome-title">¡Bienvenido de vuelta, {{ $user->nombre }}!</div>
-            <div class="welcome-subtitle">
-                {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}
-                @if(isset($eficiencia))
-                    • Eficiencia: <strong>{{ $eficiencia }}%</strong>
-                @endif
-                @if(isset($puntualidad))
-                    • Puntualidad: <strong>{{ $puntualidad }}%</strong>
-                @endif
+        <div class="row w-100 align-items-center">
+            <div class="col-xl-7 col-lg-6">
+                <div class="welcome-text">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge rounded-pill px-3 py-1 fw-bold shadow-sm" 
+                              style="background: rgba(255, 255, 255, 0.15); color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 0.6rem; letter-spacing: 1px;">
+                            <i class="mdi mdi-crown text-warning me-1"></i> DOCENTE MASTER CENTER
+                        </span>
+                    </div>
+                    <h1 class="welcome-title text-uppercase">¡Bienvenido, {{ $user->nombre }}!</h1>
+                    <div class="welcome-subtitle">
+                        <i class="mdi mdi-calendar-clock me-1 text-white"></i> {{ \Carbon\Carbon::now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}
+                        @if(isset($eficiencia))
+                            <span class="mx-2 opacity-50">|</span> <i class="mdi mdi-lightning-bolt text-warning me-1"></i> Eficiencia: <strong>{{ $eficiencia }}%</strong>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-2 mt-3 mt-lg-0" style="z-index: 50;">
+                <div class="time-display">
+                    <i class="mdi mdi-clock-digital"></i>
+                    <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i:s A') }}</span>
+                </div>
+                <a href="#" class="btn-pdf-download">
+                    <i class="mdi mdi-file-pdf-box"></i> REPORTE ACADÉMICO
+                </a>
             </div>
         </div>
 
-        <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
-            <div class="time-display">
-                <i class="mdi mdi-clock-outline"></i>
-                <span id="current-time">{{ \Carbon\Carbon::now()->format('H:i:s A') }}</span>
-            </div>
+        <div class="mascot-stage d-none d-xl-block">
+             <img src="{{ asset('assets/img/mascotadashboard.png') }}" 
+                  style="width: 100%; height: auto; transform: scaleX(-1) rotate(5deg); filter: drop-shadow(-15px 15px 30px rgba(0,0,0,0.4));"
+                  alt="Jaguar CEPRE">
         </div>
     </div>
 
@@ -1643,17 +1484,21 @@
         <!-- Columna Principal: Sesiones de Hoy -->
         <div class="col-lg-8">
             <div class="main-content-card" id="agenda-section">
-                <div class="main-content-header">
-                    <h5 class="main-content-title">
-                        Agenda del <span class="text-primary">{{ $fechaSeleccionada->isToday() ? 'Día' : $fechaSeleccionada->locale('es')->isoFormat('D [de] MMMM') }}</span>
-                        @if(!$fechaSeleccionada->isToday())
-                            <small class="text-muted">({{ $fechaSeleccionada->diffForHumans() }})</small>
-                        @endif
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        {{-- NUEVO: Toggle de vista --}}
+                <!-- Agenda Header con Selector Premium -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1">
+                            Agenda del <span class="text-primary">{{ $fechaSeleccionada->translatedFormat('d de F') }}</span>
+                        </h4>
+                        <p class="text-muted small mb-0">
+                            <i class="mdi mdi-history me-1"></i> {{ ucfirst($fechaSeleccionada->diffForHumans()) }}
+                        </p>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        {{-- Toggle de vista --}}
                         @if(isset($sesionesAgrupadasPorCurso) && count($sesionesAgrupadasPorCurso) > 0)
-                            <div class="view-toggle">
+                            <div class="view-toggle d-none d-md-flex">
                                 <button class="toggle-btn active" data-view="course">
                                     <i class="mdi mdi-view-module"></i> Por Curso
                                 </button>
@@ -1662,12 +1507,13 @@
                                 </button>
                             </div>
                         @endif
-                        
-                        <form action="{{ route('dashboard') }}" method="GET" id="form-agenda" class="d-flex gap-2 align-items-center">
-                            <div class="date-selector-wrapper">
-                                <i class="mdi mdi-calendar date-selector-icon"></i>
-                                <input type="text" class="form-control" id="fecha-agenda" name="fecha" placeholder="Seleccionar fecha" autocomplete="off" style="padding-right: 1rem;">
-                            </div>
+
+                        <form action="{{ route('dashboard') }}" method="GET" id="form-agenda" class="date-picker-container m-0">
+                            <i class="mdi mdi-calendar-search"></i>
+                            <input type="date" name="fecha" id="fecha-agenda" 
+                                   value="{{ $fechaSeleccionada->format('Y-m-d') }}"
+                                   onchange="document.getElementById('form-agenda').submit()"
+                                   title="Cambiar fecha de agenda">
                         </form>
                     </div>
                 </div>
@@ -1679,8 +1525,16 @@
                             @php
                                 $curso = $cursoData['curso'];
                                 $stats = $cursoData['estadisticas'];
-                                $colores = ['#6366f1', '#3b82f6', '#22c55e', '#f59e0b', '#ec4899', '#8b5cf6'];
-                                $colorIndex = $cursoId % count($colores);
+                                // PALETA INSTITUCIONAL DINÁMICA
+                                $colores = [
+                                    'var(--navy-color)',
+                                    'var(--primary-color)',
+                                    'var(--success-color)',
+                                    'var(--info-color)',
+                                    'var(--warning-color)',
+                                    'var(--primary-hover)'
+                                ];
+                                $colorIndex = $loop->index % count($colores);
                                 $colorCurso = $colores[$colorIndex];
                             @endphp
                             
@@ -1897,7 +1751,7 @@
                                         <i class="mdi mdi-clock-outline"></i>
                                         {{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}
                                         @if($tiempoInfo)
-                                            <div class="time-indicator {{ $tiempoInfo['estado'] == 'por_empezar' ? 'upcoming' : ($tiempoInfo['estado'] == 'en_curso' ? 'current' : 'finished') }}">
+                                            <div class="time-pill {{ $tiempoInfo['estado'] == 'por_empezar' ? 'upcoming' : ($tiempoInfo['estado'] == 'en_curso' ? 'current' : 'finished') }}">
                                                 <i class="mdi mdi-{{ $tiempoInfo['estado'] == 'por_empezar' ? 'clock-fast' : ($tiempoInfo['estado'] == 'en_curso' ? 'clock' : 'clock-check') }}"></i>
                                                 {{ $tiempoInfo['texto'] }}
                                             </div>
@@ -1905,15 +1759,15 @@
                                     </div>
                                 </div>
 
-                                <!-- NUEVO: Barra de progreso para clases en curso -->
+                                <!-- Barra de progreso dinámico para clases en vivo -->
                                 @if(isset($item['dentro_horario']) && $item['dentro_horario'] && $progreso > 0)
                                     <div class="progress-container">
                                         <div class="progress-bar-container">
                                             <div class="progress-bar" style="width: {{ $progreso }}%"></div>
                                         </div>
                                         <div class="progress-text">
-                                            <span><i class="mdi mdi-play-circle"></i> Clase en progreso</span>
-                                            <span><strong>{{ $progreso }}%</strong> completado</span>
+                                            <span><i class="mdi mdi-play-circle mdi-spin"></i> CLASE EN VIVO</span>
+                                            <span><strong>{{ $progreso }}%</strong> del tiempo transcurrido</span>
                                         </div>
                                     </div>
                                 @endif
@@ -1999,10 +1853,15 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-5 text-muted">
-                            <i class="mdi mdi-calendar-remove" style="font-size: 4rem;"></i>
-                            <h5 class="mt-3 fw-bold">Sin Sesiones</h5>
-                            <p>No se encontraron sesiones programadas para la fecha seleccionada.</p>
+                        <div class="empty-state-card mt-3">
+                            <div class="p-4 rounded-circle bg-white shadow-sm d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                <i class="mdi mdi-calendar-blank-outline text-muted" style="font-size: 2.5rem;"></i>
+                            </div>
+                            <h4 class="fw-bold text-dark">Agenda Disponible</h4>
+                            <p class="text-muted small mx-auto" style="max-width: 300px;">
+                                No se detectan sesiones de enseñanza para la fecha seleccionada. 
+                                Relájate o revisa tus reportes semanales.
+                            </p>
                         </div>
                     @endforelse
                 </div>
@@ -2014,12 +1873,17 @@
             @if($proximaClase)
                 <div class="sidebar-card">
                     <h6 class="sidebar-card-title"><i class="mdi mdi-skip-next-circle-outline"></i> Próxima Clase</h6>
-                    <div class="next-class-info">
-                        <h6 class="mb-1 fw-bold">{{ $proximaClase->curso->nombre ?? 'Sin curso' }}</h6>
-                        <p class="mb-2 text-muted"><i class="mdi mdi-map-marker-outline me-1"></i> {{ $proximaClase->aula->nombre ?? 'Sin aula' }}</p>
-                        <div class="p-2 rounded" style="background-color: var(--primary-light); color: var(--primary-text);">
-                            <i class="mdi mdi-calendar-clock me-1"></i>
-                            <strong>{{ ucfirst($proximaClase->dia_semana) }}</strong> a las <strong>{{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('h:i A') }}</strong>
+                    <div class="next-class-info mt-3">
+                        <div class="p-3 rounded-4 shadow-sm mb-3" style="background: var(--primary-light); border: 1px solid var(--primary-color); position: relative; overflow: hidden;">
+                            <div class="position-absolute opacity-10" style="top: -10px; right: -10px; font-size: 3rem;">
+                                <i class="mdi mdi-school"></i>
+                            </div>
+                            <h6 class="mb-1 fw-bold text-dark">{{ $proximaClase->curso->nombre ?? 'Sin curso' }}</h6>
+                            <p class="mb-2 text-muted small"><i class="mdi mdi-map-marker-outline me-1"></i> {{ $proximaClase->aula->nombre ?? 'Sin aula' }}</p>
+                            <div class="badge w-100 p-2" style="background-color: var(--navy-color); color: white;">
+                                <i class="mdi mdi-calendar-clock me-1"></i>
+                                <strong>{{ ucfirst($proximaClase->dia_semana) }}</strong> - <strong>{{ \Carbon\Carbon::parse($proximaClase->hora_inicio)->format('h:i A') }}</strong>
+                            </div>
                         </div>
                         
                         @if(isset($proximaClase->fecha_proxima))
@@ -2032,16 +1896,11 @@
                                 $tiempoRestante = $ahora->diffInMinutes($horaProxima, false);
                             @endphp
                             
-                            @if($tiempoRestante > 0 && $tiempoRestante <= 1440) {{-- Próximas 24 horas --}}
-                                <div class="countdown-timer" id="countdown-timer" data-target-time="{{ $horaProxima->toISOString() }}">
-                                    <div class="countdown-time" id="countdown-display">
-                                        @if($tiempoRestante < 60)
-                                            {{ $tiempoRestante }} minutos
-                                        @else
-                                            {{ floor($tiempoRestante / 60) }}h {{ $tiempoRestante % 60 }}m
-                                        @endif
-                                    </div>
-                                    <div class="countdown-label">para tu próxima clase</div>
+                            @if($tiempoRestante > 0 && $tiempoRestante <= 1440)
+                                <div class="countdown-timer mt-3" id="countdown-timer" data-target-time="{{ $horaProxima->toISOString() }}"
+                                     style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--navy-color) 100%);">
+                                    <div class="countdown-time fw-bold" id="countdown-display">Calculando...</div>
+                                    <div class="countdown-label x-small">para tu próxima sesión</div>
                                 </div>
                             @endif
                         @endif
@@ -2051,12 +1910,13 @@
 
             @if(count($recordatorios) > 0)
                 <div class="sidebar-card">
-                    <h6 class="sidebar-card-title"><i class="mdi mdi-bell-ring-outline"></i> Recordatorios</h6>
-                    <div>
+                    <h6 class="sidebar-card-title"><i class="mdi mdi-bell-ring-outline"></i> Notificaciones Críticas</h6>
+                    <div class="d-flex flex-column gap-2">
                         @foreach($recordatorios as $recordatorio)
-                            <div class="alert alert-{{ $recordatorio['tipo'] }} d-flex align-items-center p-2" role="alert">
-                                <i class="mdi mdi-alert-circle-outline me-2"></i>
-                                <small>{{ $recordatorio['mensaje'] }}</small>
+                            <div class="p-2 rounded-3 border-start border-4 border-{{ $recordatorio['tipo'] == 'danger' ? 'danger' : ($recordatorio['tipo'] == 'warning' ? 'warning' : 'primary') }}" 
+                                 style="background: #f8f9fa; font-size: 0.8rem;">
+                                <i class="mdi mdi-information-outline me-1 text-{{ $recordatorio['tipo'] }}"></i>
+                                {{ $recordatorio['mensaje'] }}
                             </div>
                         @endforeach
                     </div>
@@ -2064,35 +1924,39 @@
             @endif
             
             <div class="sidebar-card">
-                <h6 class="sidebar-card-title"><i class="mdi mdi-chart-donut"></i> Resumen Semanal</h6>
-                <div class="row text-center">
-                    <div class="col-6 mb-3">
-                        <div class="fs-4 fw-bold text-primary">{{ $resumenSemanal['sesiones'] }}</div>
-                        <small class="text-muted">Sesiones</small>
-                    </div>
-                    <div class="col-6 mb-3">
-                        <div class="fs-4 fw-bold text-success">{{ $resumenSemanal['horas'] }}</div>
-                        <small class="text-muted">Horas</small>
+                <h6 class="sidebar-card-title"><i class="mdi mdi-chart-box-outline"></i> Logros de la Semana</h6>
+                <div class="row g-2 text-center">
+                    <div class="col-6">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="h4 fw-bold mb-0" style="color: var(--primary-color)">{{ $resumenSemanal['sesiones'] }}</div>
+                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">SESIONES</small>
+                        </div>
                     </div>
                     <div class="col-6">
-                        <div class="fs-4 fw-bold text-info">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
-                        <small class="text-muted">Ingresos</small>
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="h4 fw-bold mb-0" style="color: var(--success-color)">{{ $resumenSemanal['horas'] }}</div>
+                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">HORAS</small>
+                        </div>
                     </div>
                     <div class="col-6">
-                        <div class="fs-4 fw-bold text-warning">{{ $resumenSemanal['asistencia'] }}%</div>
-                        <small class="text-muted">Asistencia</small>
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="h4 fw-bold mb-0" style="color: var(--info-color)">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
+                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">PAGO EST.</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-4 bg-light">
+                            <div class="h4 fw-bold mb-0" style="color: var(--warning-color)">{{ $resumenSemanal['asistencia'] }}%</div>
+                            <small class="text-muted fw-bold uppercase" style="font-size: 0.6rem">DISCIPLINA</small>
+                        </div>
                     </div>
                 </div>
                 
                 @if(isset($resumenSemanal['tendencia']))
-                    <div class="mt-3 p-2 rounded" style="background-color: var(--info-light);">
-                        <small class="text-muted">
-                            <i class="mdi mdi-trending-{{ $resumenSemanal['tendencia'] == 'up' ? 'up' : 'down' }}"></i>
-                            Tendencia semanal: 
-                            <strong class="text-{{ $resumenSemanal['tendencia'] == 'up' ? 'success' : 'danger' }}">
-                                {{ $resumenSemanal['tendencia'] == 'up' ? 'Mejorando' : 'Descendiendo' }}
-                            </strong>
-                        </small>
+                    <div class="mt-3 p-2 rounded-pill text-center d-flex align-items-center justify-content-center gap-2" 
+                         style="background: var(--success-light); border: 1px solid var(--success-color);">
+                        <i class="mdi mdi-trending-up text-success"></i>
+                        <small class="text-success fw-bold uppercase" style="font-size: 0.65rem">Tendencia: {{ $resumenSemanal['tendencia'] }}</small>
                     </div>
                 @endif
             </div>
