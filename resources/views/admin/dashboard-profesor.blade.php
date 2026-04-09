@@ -6,7 +6,7 @@
 {{-- Incluir Google Fonts y Material Design Icons --}}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 
 {{-- Flatpickr CSS --}}
@@ -60,6 +60,44 @@
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    /* Premium Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { 
+        background: linear-gradient(to bottom, var(--primary-color), var(--navy-color)); 
+        border-radius: 10px; 
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--navy-color); }
+
+    /* Staggered Reveal Animations */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .reveal-item { 
+        opacity: 0; 
+        animation: fadeInUp 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
+    }
+    .reveal-delay-1 { animation-delay: 0.1s; }
+    .reveal-delay-2 { animation-delay: 0.2s; }
+    .reveal-delay-3 { animation-delay: 0.3s; }
+
+    /* Glass Header Token */
+    .agenda-glass-header {
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07) !important;
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Outfit', 'Inter', sans-serif;
+        color: var(--text-color);
+        overflow-x: hidden;
+    }
+
     /* -------------------------------------------------------------------------- */
     /* Encabezado de Bienvenida (Efecto Obsidian Glass)                           */
     /* -------------------------------------------------------------------------- */
@@ -98,6 +136,109 @@
         font-weight: 500;
         margin-top: 0.5rem;
         text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    /* Premium Stat Box Depth & Vibrancy */
+    .sidebar-card .stat-box {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 1.25rem 0.5rem;
+        text-align: center;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 95px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sidebar-card .stat-box::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 6px; height: 100%;
+        background: currentColor;
+    }
+
+    .sidebar-card .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        border-color: currentColor;
+    }
+
+    .sidebar-card .stat-box .h5 {
+        font-weight: 850;
+        margin-bottom: 2px;
+        line-height: 1;
+        font-size: 1.4rem;
+        color: var(--navy-color); /* Contraste fuerte */
+    }
+
+    /* Performance Circular Rings Upgrade */
+    .performance-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    .performance-item {
+        position: relative;
+        text-align: center;
+    }
+
+    .performance-ring {
+        position: relative;
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 0.75rem;
+        filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    }
+
+    .performance-ring svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+    }
+
+    .performance-ring circle {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+    }
+
+    .performance-ring .ring-bg {
+        stroke: #f1f5f9;
+        stroke-opacity: 0.8;
+    }
+
+    .performance-ring .ring-progress {
+        transition: stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1);
+        stroke-dasharray: 219.9;
+        stroke-dashoffset: 219.9;
+        filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    .performance-value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--navy-color);
+        letter-spacing: -0.5px;
+    }
+
+    .performance-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
     }
 
     .time-display {
@@ -1333,7 +1474,7 @@
 @section('content')
 <div class="dashboard-container">
     <!-- Header de Bienvenida (NUEVO: Obsidian Stage con Jaguar Optimizado) -->
-    <div class="welcome-header">
+    <div class="welcome-header reveal-item">
         <div class="row w-100 align-items-center">
             <div class="col-xl-7 col-lg-6">
                 <div class="welcome-text">
@@ -1547,7 +1688,8 @@
         <div class="col-lg-8">
             <div class="main-content-card" id="agenda-section">
                 <!-- Agenda Header con Selector Premium -->
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 bg-white rounded-4 shadow-sm border">
+                <!-- Agenda Header con Selector Premium -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 agenda-glass-header reveal-item">
                     <div>
                         <h4 class="fw-bold text-dark mb-1">
                             Agenda del <span class="text-primary">{{ $fechaSeleccionada->translatedFormat('d \d\e F') }}</span>
@@ -1599,7 +1741,7 @@
                                 $colorCurso = $colores[$colorIndex];
                             @endphp
                             
-                            <div class="course-group" id="course-{{ $cursoId }}">
+                            <div class="course-group reveal-item reveal-delay-{{ ($loop->index % 4) + 1 }}" id="course-{{ $cursoId }}">
                                 <div class="course-group-header" style="background: linear-gradient(135deg, {{ $colorCurso }}, {{ $colorCurso }}dd);">
                                     <div class="course-group-title">
                                         <i class="mdi mdi-book-open-variant"></i>
@@ -1635,7 +1777,7 @@
                                             $eficienciaClase = $item['eficiencia'] ?? null;
                                         @endphp
 
-                                        <div class="session-card {{ $estadoConfig['clase'] }}" id="session-{{ $horario->id }}">
+                                        <div class="session-card {{ $estadoConfig['clase'] }} reveal-item reveal-delay-{{ ($loop->index % 4) + 1 }}" id="session-{{ $horario->id }}">
                                             <div class="session-card-content">
                                                 <div class="session-header">
                                                     <h6 class="course-name">{{ $horario->curso->nombre ?? 'Sin curso' }}</h6>
@@ -1914,7 +2056,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="empty-state-card mt-4 p-5">
+                        <div class="empty-state-card mt-4 p-5 reveal-item">
                             <div class="rounded-circle bg-white shadow-sm d-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px; border: 2px solid #f1f5f9;">
                                 <i class="mdi mdi-calendar-blank-outline text-muted" style="font-size: 3rem;"></i>
                             </div>
@@ -1932,7 +2074,7 @@
         <!-- Sidebar Derecho Mejorado -->
         <div class="col-lg-4">
             @if($proximaClase)
-                <div class="sidebar-card">
+                <div class="sidebar-card reveal-item reveal-delay-1">
                     <h6 class="sidebar-card-title"><i class="mdi mdi-skip-next-circle-outline"></i> Próxima Clase</h6>
                     <div class="next-class-info mt-3">
                         <div class="p-3 rounded-4 shadow-sm mb-3" style="background: var(--primary-light); border: 1px solid var(--primary-color); position: relative; overflow: hidden;">
@@ -1970,7 +2112,7 @@
             @endif
 
             @if(count($recordatorios) > 0)
-                <div class="sidebar-card">
+                <div class="sidebar-card reveal-item reveal-delay-2">
                     <h6 class="sidebar-card-title"><i class="mdi mdi-bell-ring-outline"></i> Notificaciones Críticas</h6>
                     <div class="d-flex flex-column gap-2">
                         @foreach($recordatorios as $recordatorio)
@@ -1984,23 +2126,23 @@
                 </div>
             @endif
             
-            <div class="sidebar-card">
+            <div class="sidebar-card reveal-item reveal-delay-3">
                 <h6 class="sidebar-card-title"><i class="mdi mdi-chart-box-outline"></i> Logros de la Semana</h6>
                 <div class="stat-grid mt-3">
-                    <div class="stat-box">
-                        <div class="h5" style="color: var(--primary-color)">{{ $resumenSemanal['sesiones'] }}</div>
+                    <div class="stat-box" style="color: var(--primary-color)">
+                        <div class="h5 m-0">{{ $resumenSemanal['sesiones'] }}</div>
                         <small>SESIONES</small>
                     </div>
-                    <div class="stat-box">
-                        <div class="h5" style="color: var(--success-color)">{{ $resumenSemanal['horas'] }}</div>
+                    <div class="stat-box" style="color: var(--success-color)">
+                        <div class="h5 m-0">{{ $resumenSemanal['horas'] }}</div>
                         <small>HORAS</small>
                     </div>
-                    <div class="stat-box">
-                        <div class="h5" style="color: var(--info-color)">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
+                    <div class="stat-box" style="color: var(--info-color)">
+                        <div class="h5 m-0" style="font-size: 1rem;">S/.{{ number_format($resumenSemanal['ingresos'], 0) }}</div>
                         <small>PAGO EST.</small>
                     </div>
-                    <div class="stat-box">
-                        <div class="h5" style="color: var(--warning-color)">{{ $resumenSemanal['asistencia'] }}%</div>
+                    <div class="stat-box" style="color: var(--warning-color)">
+                        <div class="h5 m-0">{{ $resumenSemanal['asistencia'] }}%</div>
                         <small>DISCIPLINA</small>
                     </div>
                 </div>
@@ -2016,21 +2158,40 @@
                 @endif
             </div>
 
-            <!-- NUEVO: Métricas de rendimiento -->
+            <!-- NUEVO: Métricas de rendimiento con Anillos SVG -->
             @if(isset($eficiencia) || isset($puntualidad))
-                <div class="sidebar-card">
-                    <h6 class="sidebar-card-title"><i class="mdi mdi-speedometer"></i> Rendimiento</h6>
-                    <div class="row text-center">
+                <div class="sidebar-card reveal-item reveal-delay-4">
+                    <h6 class="sidebar-card-title"><i class="mdi mdi-speedometer"></i> Rendimiento General</h6>
+                    <div class="performance-grid">
                         @if(isset($eficiencia))
-                            <div class="col-6 mb-3">
-                                <div class="fs-4 fw-bold text-{{ $eficiencia >= 90 ? 'success' : ($eficiencia >= 75 ? 'warning' : 'danger') }}">{{ $eficiencia }}%</div>
-                                <small class="text-muted">Eficiencia</small>
+                            <div class="performance-item">
+                                <div class="performance-ring">
+                                    <svg>
+                                        <circle class="ring-bg" cx="38" cy="38" r="35"></circle>
+                                        <circle class="ring-progress" cx="38" cy="38" r="35" 
+                                                style="stroke: var(--primary-color);"
+                                                data-offset="{{ 219.9 * (1 - $eficiencia/100) }}">
+                                        </circle>
+                                    </svg>
+                                    <div class="performance-value">{{ $eficiencia }}%</div>
+                                </div>
+                                <div class="performance-label">Eficiencia</div>
                             </div>
                         @endif
+                        
                         @if(isset($puntualidad))
-                            <div class="col-6 mb-3">
-                                <div class="fs-4 fw-bold text-{{ $puntualidad >= 95 ? 'success' : ($puntualidad >= 85 ? 'warning' : 'danger') }}">{{ $puntualidad }}%</div>
-                                <small class="text-muted">Puntualidad</small>
+                            <div class="performance-item">
+                                <div class="performance-ring">
+                                    <svg>
+                                        <circle class="ring-bg" cx="38" cy="38" r="35"></circle>
+                                        <circle class="ring-progress" cx="38" cy="38" r="35" 
+                                                style="stroke: var(--success-color);"
+                                                data-offset="{{ 219.9 * (1 - $puntualidad/100) }}">
+                                        </circle>
+                                    </svg>
+                                    <div class="performance-value">{{ $puntualidad }}%</div>
+                                </div>
+                                <div class="performance-label">Puntualidad</div>
                             </div>
                         @endif
                     </div>
@@ -2324,6 +2485,17 @@
                 }
             });
         });
+
+        // NUEVO: Animación de anillos de rendimiento
+        setTimeout(() => {
+            const rings = document.querySelectorAll('.ring-progress');
+            rings.forEach(ring => {
+                const targetOffset = ring.dataset.offset;
+                if (targetOffset) {
+                    ring.style.strokeDashoffset = targetOffset;
+                }
+            });
+        }, 800);
     });
 
     function actualizarContador() {
