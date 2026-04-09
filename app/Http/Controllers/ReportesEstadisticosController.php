@@ -1,0 +1,262 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Inscripcion;
+use App\Models\Carrera;
+use App\Models\Ciclo;
+use App\Models\Postulacion;
+use App\Models\RegistroAsistencia;
+use App\Models\Aula;
+use App\Models\User;
+use App\Models\Carnet;
+use App\Models\Curso;
+use App\Models\CentroEducativo;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Helpers\AsistenciaHelper;
+
+class ReportesEstadisticosController extends Controller
+{
+    public function index(Request $request)
+    {
+        $this->authorizePermission('reportes.estadisticos.ver');
+
+        $ciclo_id = $request->input('ciclo_id', 'global');
+        $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
+        
+        $selectedCiclo = null;
+        if ($ciclo_id !== 'global') {
+            $selectedCiclo = Ciclo::find($ciclo_id);
+        } else {
+            $selectedCiclo = Ciclo::where('es_activo', true)->first() ?? $ciclos->first();
+        }
+
+        $carrerasStats = $this->getCarrerasStats($ciclo_id);
+        $aulasStats = $this->getAulasStats($ciclo_id);
+        $documentosStats = $this->getDocumentosStats($ciclo_id);
+        $docentesStats = $this->getDocentesStats($ciclo_id);
+        $inhabilitadosStats = $this->getInhabilitadosStats($ciclo_id);
+        $asistenciaStats = $this->getAsistenciaStats($selectedCiclo);
+        $finanzasStats = $this->getFinanzasStats($ciclo_id);
+        $procedenciaStats = $this->getProcedenciaStats($ciclo_id);
+
+        $tipoInscripcionStats = DB::table('inscripciones')
+            ->select('tipo_inscripcion', DB::raw('count(*) as total'))
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+            ->whereNotNull('tipo_inscripcion')
+            ->groupBy('tipo_inscripcion')->get();
+
+        $turnosStats = DB::table('inscripciones as i')
+            ->join('turnos as t', 'i.turno_id', '=', 't.id')
+            ->select('t.nombre as turno', DB::raw('count(*) as total'))
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
+            ->groupBy('t.id', 't.nombre')->get();
+
+        // CORRECCIÓN DE SINTAXIS AQUÍ (COMILLAS EN 'u.id')
+        $edades = DB::table('inscripciones as i')
+            ->join('users as u', 'i.estudiante_id', '=', 'u.id')
+            ->select('u.fecha_nacimiento')
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
+            ->whereNotNull('u.fecha_nacimiento')
+            ->get()
+            ->groupBy(fn($i) => Carbon::parse($i->fecha_nacimiento)->age)
+            ->map->count()->sortKeys();
+
+        return view('reportes.estadisticos.index', compact(
+            'carrerasStats', 'aulasStats', 'documentosStats', 'docentesStats', 
+            'inhabilitadosStats', 'asistenciaStats', 'finanzasStats', 'procedenciaStats',
+            'tipoInscripcionStats', 'turnosStats', 'edades', 'ciclos', 'ciclo_id'
+        ));
+    }
+
+    private function getCarrerasStats($ciclo_id)
+    {
+        $query = Carrera::select('id', 'nombre');
+        $query->withCount(['postulaciones' => function($q) use ($ciclo_id) {
+            if ($ciclo_id && $ciclo_id !== 'global') $q->where('ciclo_id', $ciclo_id);
+        }]);
+        return $query->orderBy('postulaciones_count', 'desc')->get();
+    }
+
+    private function getAulasStats($ciclo_id)
+    {
+        return DB::table('inscripciones as i')
+            ->join('aulas as a', 'i.aula_id', '=', 'a.id')
+            ->select('a.nombre as aula', DB::raw('count(*) as total'))
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
+            ->groupBy('a.id', 'a.nombre')
+            ->orderBy('total', 'desc')
+            ->get();
+    }
+
+    private function getDocumentosStats($ciclo_id)
+    {
+        $carnets = DB::table('carnets')
+            ->select('entregado', DB::raw('count(*) as total'))
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+            ->groupBy('entregado')
+            ->get();
+        return ['carnets' => $carnets];
+    }
+
+    private function getDocentesStats($ciclo_id)
+    {
+        $docentes = DB::table('horarios_docentes')
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+            ->distinct('docente_id')
+            ->count('docente_id');
+        $cursos = DB::table('horarios_docentes')
+            ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+            ->distinct('curso_id')
+            ->count('curso_id');
+        return ['docentes' => $docentes, 'cursos' => $cursos];
+    }
+
+    private function getInhabilitadosStats($ciclo_id)
+    {
+        if ($ciclo_id === 'global') {
+            $statsGlobal = ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_activos' => 0, 'total_desercion' => 0];
+            $ciclos = Ciclo::has('inscripciones')->get();
+            foreach ($ciclos as $c) {
+                $h = $this->procesarEstadisticasBatch($c);
+                $statsGlobal['regulares'] += $h['regulares'];
+                $statsGlobal['amonestados'] += $h['amonestados'];
+                $statsGlobal['inhabilitados'] += $h['inhabilitados'];
+                $statsGlobal['total_activos'] += $h['total_estudiantes'];
+            }
+            $statsGlobal['total_desercion'] = $statsGlobal['inhabilitados'];
+            $statsGlobal['por_carrera'] = Carrera::withCount(['inscripciones'])->orderBy('inscripciones_count', 'desc')->take(5)->get()->map(fn($c) => ['nombre' => $c->nombre, 'total' => $c->inscripciones_count]);
+            return $statsGlobal;
+        }
+
+        $ciclo = Ciclo::find($ciclo_id);
+        if (!$ciclo) return $this->emptyInhabilitadosStats();
+
+        $h = $this->procesarEstadisticasBatch($ciclo);
+        return [
+            'regulares' => $h['regulares'],
+            'amonestados' => $h['amonestados'],
+            'inhabilitados' => $h['inhabilitados'],
+            'total_activos' => $h['total_estudiantes'],
+            'total_desercion' => $h['inhabilitados'],
+            'por_carrera' => Carrera::withCount(['inscripciones as total' => function($q) use ($ciclo_id) {
+                $q->where('ciclo_id', $ciclo_id);
+            }])->orderBy('total', 'desc')->take(5)->get()->map(fn($c) => ['nombre' => $c->nombre, 'total' => $c->total])
+        ];
+    }
+
+    private function procesarEstadisticasBatch($ciclo)
+    {
+        $periodoInicio = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+        $periodoFin = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+        $hoy = Carbon::now();
+        $fechaCalculoAsistencia = $hoy < $periodoFin ? $hoy : $periodoFin;
+
+        $inscritos = DB::table('inscripciones as i')
+            ->join('users as u', 'i.estudiante_id', '=', 'u.id')
+            ->where('i.ciclo_id', $ciclo->id)
+            ->whereIn('i.estado_inscripcion', ['activo', 'amonestado', 'registrado'])
+            ->select('u.numero_documento')
+            ->get();
+
+        $total = $inscritos->count();
+        if ($total == 0) return ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_estudiantes' => 0];
+
+        $documentos = $inscritos->pluck('numero_documento')->filter()->toArray();
+
+        $asistenciasCount = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentos)
+            ->whereBetween('fecha_registro', [$periodoInicio, $fechaCalculoAsistencia])
+            ->select('nro_documento', DB::raw('COUNT(DISTINCT DATE(fecha_registro)) as total'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('total', 'nro_documento')
+            ->toArray();
+
+        $primerasAsistencias = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentos)
+            ->where('fecha_registro', '>=', $periodoInicio)
+            ->select('nro_documento', DB::raw('MIN(fecha_registro) as fecha'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('fecha', 'nro_documento')
+            ->toArray();
+
+        $diasHabilesCiclo = AsistenciaHelper::contarDiasHabiles($periodoInicio, $periodoFin, $ciclo);
+        $limiteAmonestacion = ceil($diasHabilesCiclo * (($ciclo->porcentaje_amonestacion ?? 20) / 100));
+        $limiteInhabilitacion = ceil($diasHabilesCiclo * (($ciclo->porcentaje_inhabilitacion ?? 30) / 100));
+
+        $reg = 0; $amo = 0; $inh = 0;
+        foreach ($inscritos as $ins) {
+            $doc = $ins->numero_documento;
+            if (!$doc) { $reg++; continue; }
+            $diasAsistidos = $asistenciasCount[$doc] ?? 0;
+            $inicioReal = $periodoInicio;
+            if (isset($primerasAsistencias[$doc])) {
+                $f1 = Carbon::parse($primerasAsistencias[$doc])->startOfDay();
+                if ($f1->gt($periodoInicio)) $inicioReal = $f1;
+            }
+            $diasHabilesTranscurridos = AsistenciaHelper::contarDiasHabiles($inicioReal, $fechaCalculoAsistencia, $ciclo);
+            $faltas = max(0, $diasHabilesTranscurridos - $diasAsistidos);
+            if ($faltas >= $limiteInhabilitacion) { $inh++; } elseif ($faltas >= $limiteAmonestacion) { $amo++; } else { $reg++; }
+        }
+        return ['regulares' => $reg, 'amonestados' => $amo, 'inhabilitados' => $inh, 'total_estudiantes' => $total];
+    }
+
+    private function getAsistenciaStats($selectedCiclo = null)
+    {
+        $query = RegistroAsistencia::query();
+        if ($selectedCiclo && $selectedCiclo->fecha_inicio && $selectedCiclo->fecha_fin) {
+            $query->whereBetween('fecha_registro', [
+                Carbon::parse($selectedCiclo->fecha_inicio)->startOfDay(), 
+                Carbon::parse($selectedCiclo->fecha_fin)->endOfDay()
+            ]);
+        }
+        return [
+            'heatmap' => $query->selectRaw('HOUR(fecha_registro) as hora, COUNT(*) as total')->whereNotNull('nro_documento')->groupBy('hora')->orderBy('hora')->get(), 
+            'rango' => $selectedCiclo ? "Periodo: " . Carbon::parse($selectedCiclo->fecha_inicio)->format('d/m/Y') . " - " . Carbon::parse($selectedCiclo->fecha_fin)->format('d/m/Y') : 'Consolidado Actual'
+        ];
+    }
+
+    private function getFinanzasStats($ciclo_id)
+    {
+        $query = Postulacion::where('estado', 'aprobado');
+        if ($ciclo_id && $ciclo_id !== 'global') $query->where('ciclo_id', $ciclo_id);
+        return [
+            'total_recaudado' => $query->sum('monto_total_pagado'),
+            'por_carrera' => $query->selectRaw('carrera_id, sum(monto_total_pagado) as total')->groupBy('carrera_id')->get()->map(fn($item) => ['nombre' => Carrera::find($item->carrera_id)->nombre ?? 'N/A', 'total' => $item->total])
+        ];
+    }
+
+    private function getProcedenciaStats($ciclo_id)
+    {
+        $query = Postulacion::whereNotNull('centro_educativo_id');
+        if ($ciclo_id && $ciclo_id !== 'global') $query->where('ciclo_id', $ciclo_id);
+        $porColegio = (clone $query)->select('centro_educativo_id', DB::raw('count(*) as total'))->groupBy('centro_educativo_id')->orderBy('total', 'desc')->limit(10)->get();
+        $centros = CentroEducativo::whereIn('id', $porColegio->pluck('centro_educativo_id'))->get()->keyBy('id');
+        $colegiosResult = $porColegio->map(fn($item) => (object)['nombre' => $centros->get($item->centro_educativo_id)->cen_edu ?? 'C.E. #' . $item->centro_educativo_id, 'total' => $item->total]);
+
+        $ciudadesStats = [];
+        $todosLosCentrosIds = (clone $query)->pluck('centro_educativo_id')->unique();
+        $todosLosCentros = CentroEducativo::whereIn('id', $todosLosCentrosIds)->select('id', 'd_prov')->get()->keyBy('id');
+        foreach ((clone $query)->get() as $post) {
+            $centro = $todosLosCentros->get($post->centro_educativo_id);
+            if ($centro && $centro->d_prov) $ciudadesStats[$centro->d_prov] = ($ciudadesStats[$centro->d_prov] ?? 0) + 1;
+        }
+        return ['colegios' => $colegiosResult, 'ciudades' => collect($ciudadesStats)->map(fn($total, $ciudad) => (object)['ciudad' => $ciudad, 'total' => $total])->sortByDesc('total')->take(10)->values()];
+    }
+
+    private function emptyInhabilitadosStats()
+    {
+        return ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_activos' => 0, 'total_desercion' => 0, 'por_carrera' => []];
+    }
+
+    protected function authorizePermission($permission)
+    {
+        if (!auth()->user()->hasPermission($permission)) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
+        }
+    }
+}

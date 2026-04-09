@@ -1,213 +1,177 @@
-// Dashboard Progressive Loading - Carga optimizada por AJAX
-document.addEventListener('DOMContentLoaded', async function () {
+// Dashboard Progressive Loading - Motor de Diseño Elite V16 (Inteligencia de Ciclos y Timeline)
+document.addEventListener('DOMContentLoaded', function () {
     const apiToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    let currentCicloId = 'global';
+    let countdownInterval = null;
 
-    if (!apiToken) {
-        console.error('❌ CSRF token no encontrado');
-        showGlobalError('Error de configuración. Por favor, recarga la página.');
-        return;
-    }
+    if (!apiToken) return;
 
-    try {
-        console.log('📊 Iniciando carga del dashboard...');
+    loadDashboardData(currentCicloId);
 
-        // Cargar TODOS los datos en paralelo
-        const timestamp = new Date().getTime();
-        const [generalData, adminData, anuncios] = await Promise.all([
-            fetch(`/api/dashboard/datos-generales?_=${timestamp}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': apiToken,
-                    'Cache-Control': 'no-cache',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(async r => {
-                if (!r.ok) {
-                    const error = await r.text();
-                    console.error('Error datos generales:', error);
-                    throw new Error(`HTTP ${r.status}`);
-                }
-                return r.json();
-            }),
+    document.querySelectorAll('.cycle-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const newId = this.dataset.id;
+            if (newId === currentCicloId) return;
+            document.querySelectorAll('.cycle-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCicloId = newId;
+            showSkeletons();
+            loadDashboardData(currentCicloId);
+        });
+    });
 
-            fetch(`/api/dashboard/admin?_=${timestamp}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': apiToken,
-                    'Cache-Control': 'no-cache',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(async r => {
-                if (!r.ok) {
-                    const error = await r.text();
-                    console.error('Error datos admin:', error);
-                    throw new Error(`HTTP ${r.status}`);
-                }
-                return r.json();
-            }),
+    async function loadDashboardData(cicloId) {
+        try {
+            const timestamp = new Date().getTime();
+            const baseUrl = `/api/dashboard/admin?ciclo_id=${cicloId}&_=${timestamp}`;
+            const [adminData, anuncios] = await Promise.all([
+                fetch(baseUrl, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': apiToken } }).then(r => r.json()),
+                fetch(`/api/dashboard/anuncios?_=${timestamp}`, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': apiToken } }).then(r => r.json())
+            ]);
 
-            fetch(`/api/dashboard/anuncios?_=${timestamp}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': apiToken,
-                    'Cache-Control': 'no-cache',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).then(async r => {
-                if (!r.ok) {
-                    const error = await r.text();
-                    console.error('Error anuncios:', error);
-                    return []; // Anuncios no es crítico
-                }
-                return r.json();
-            })
-        ]);
-
-        console.log('✅ Datos cargados exitosamente');
-
-        // Renderizar banner
-        if (generalData && generalData.cicloActivo) {
-            renderBanner(generalData.cicloActivo);
-        } else {
-            renderNoCiclo();
-        }
-
-        // Renderizar stats
-        if (generalData) {
-            renderStats(generalData);
-        }
-
-        // Renderizar datos administrativos
-        if (adminData) {
-            // Estadísticas de asistencia (ya vienen en adminData)
-            if (adminData.estadisticasAsistencia) {
+            if (adminData && adminData.cicloActivo) {
+                renderBanner(adminData.cicloActivo);
+                startCountdown(adminData.cicloActivo.proximo_hito);
+                renderStats(adminData);
                 renderAsistenciaStats(adminData.estadisticasAsistencia);
-            } else {
-                document.getElementById('asistencia-chart').innerHTML =
-                    '<div class="alert alert-info mb-0"><i class="mdi mdi-information"></i> No hay datos de asistencia disponibles</div>';
-            }
-
-            // Postulaciones
-            if (adminData.postulaciones) {
                 renderPostulaciones(adminData.postulaciones);
-            }
-
-            // Carnets
-            if (adminData.carnets) {
                 renderCarnets(adminData.carnets);
-            }
-
-            // Alertas
-            if (adminData.alertas && adminData.alertas.length > 0) {
                 renderAlertas(adminData.alertas);
-            } else {
-                document.getElementById('alertas-content').innerHTML =
-                    '<div class="alert alert-success mb-0"><i class="mdi mdi-check-circle"></i> No hay alertas pendientes</div>';
             }
-        }
-
-        // Renderizar anuncios
-        if (anuncios && anuncios.length > 0) {
             renderAnuncios(anuncios);
-        } else {
-            document.getElementById('anuncios-content').innerHTML =
-                '<p class="text-muted small text-center py-3"><i class="mdi mdi-bullhorn-outline"></i> No hay anuncios activos</p>';
-        }
-
-        // Mostrar dashboard
-        const dashboardContent = document.getElementById('dashboard-content');
-        if (dashboardContent) {
-            dashboardContent.style.display = 'block';
-        }
-
-        console.log('✅ Dashboard renderizado completamente');
-
-    } catch (error) {
-        console.error('💥 Error crítico al cargar dashboard:', error);
-        showGlobalError('Error al cargar el dashboard. Por favor, recarga la página.');
+        } catch (error) { console.error('Error dashboard data V16:', error); }
     }
 
-    // ==================== FUNCIONES DE RENDERIZADO ====================
+    function startCountdown(hito) {
+        if (countdownInterval) clearInterval(countdownInterval);
+        const countdownEl = document.getElementById('live-countdown');
+        if (!countdownEl || !hito) return;
 
-    function showGlobalError(message) {
-        const cicloBanner = document.getElementById('ciclo-banner');
-        if (cicloBanner) {
-            cicloBanner.innerHTML = `
-                <div class="col-12">
-                    <div class="alert alert-danger">
-                        <i class="mdi mdi-alert-circle me-2"></i>
-                        <strong>Error:</strong> ${message}
-                    </div>
+        const targetDate = new Date(hito.fecha).getTime();
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+            if (distance < 0) {
+                countdownEl.innerHTML = '<span class="badge bg-success shadow-sm px-3">HITO ALCANZADO</span>';
+                clearInterval(countdownInterval);
+                return;
+            }
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownEl.innerHTML = `
+                <div class="d-flex gap-2">
+                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${days}</span><small class="text-white-50" style="font-size: 0.5rem">DÍAS</small></div>
+                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${hours}</span><small class="text-white-50" style="font-size: 0.5rem">HRS</small></div>
+                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-white">${minutes}</span><small class="text-white-50" style="font-size: 0.5rem">MIN</small></div>
+                    <div class="text-center bg-white bg-opacity-20 rounded p-1" style="min-width: 42px"><span class="fw-bold fs-6 d-block text-warning">${seconds}</span><small class="text-white-50" style="font-size: 0.5rem">SEG</small></div>
                 </div>
             `;
-        }
-    }
-
-    function renderNoCiclo() {
-        document.getElementById('ciclo-banner').innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-warning">
-                    <i class="mdi mdi-information me-2"></i>
-                    <strong>Atención:</strong> No hay un ciclo activo en este momento.
-                </div>
-            </div>
-        `;
+        };
+        updateTimer();
+        countdownInterval = setInterval(updateTimer, 1000);
     }
 
     function renderBanner(ciclo) {
-        const progreso = Math.round(ciclo.progreso_porcentaje || 0);
-        const exam = ciclo.proximo_examen;
+        const container = document.getElementById('ciclo-banner');
+        if (!container) return;
 
-        document.getElementById('ciclo-banner').innerHTML = `
+        // Lista de hitos inteligentes: solo los que tengan fecha
+        const hitos = [
+            { id: 'inicio', label: 'INICIO', date: ciclo.fecha_inicio },
+            { id: 'examen1', label: '1er EX.', date: ciclo.fecha_examen_1 },
+            { id: 'examen2', label: '2do EX.', date: ciclo.fecha_examen_2 },
+            { id: 'examen3', label: '3er EX.', date: ciclo.fecha_examen_3 },
+            { id: 'fin', label: 'CLAUSURA', date: ciclo.fecha_fin }
+        ].filter(h => h.date && h.date !== '00/00/0000' && h.date !== '-');
+
+        const proximoNombre = (ciclo.proximo_hito ? ciclo.proximo_hito.nombre : 'FINALIZADO').toUpperCase();
+
+        container.innerHTML = `
             <div class="col-12">
-                <div class="card modern-card gradient-primary text-white border-0">
-                    <div class="card-body p-4">
-                        <div class="row">
-                            <div class="col-md-${exam ? '8' : '12'}">
-                                <h3 class="text-white mb-3">
-                                    <i class="mdi mdi-school"></i> ${ciclo.nombre}
-                                </h3>
-                                <div class="progress modern-progress mb-3">
-                                    <div class="progress-bar bg-success" style="width: ${progreso}%">
-                                        ${progreso}%
+                <div class="card gradient-hero border-0 text-white overflow-hidden shadow-lg position-relative" style="min-height: 400px">
+                    <div class="card-body p-4 p-md-5 position-relative" style="z-index: 10">
+                        <div class="row h-100 align-items-center">
+                            
+                            <!-- Izquierda: Identidad y Avance -->
+                            <div class="col-xl-5 col-lg-6 mb-4 mb-lg-0">
+                                <span class="badge bg-white bg-opacity-10 text-white mb-3 p-2 px-3 rounded-pill text-uppercase fw-bold shadow-sm" style="letter-spacing: 2px; font-size: 0.7rem">
+                                    <i class="mdi mdi-shield-check-outline me-2 text-warning"></i> MONITOREO EN VIVO
+                                </span>
+                                <h1 class="text-white fw-bold mb-4 display-6" style="text-shadow: 0 5px 25px rgba(0,0,0,0.4)">${ciclo.nombre}</h1>
+                                
+                                <div class="row g-3 mb-4">
+                                    <div class="col-auto">
+                                        <div class="p-3 rounded-4 bg-white bg-opacity-10 border border-white border-opacity-15 shadow-sm" style="backdrop-filter: blur(20px)">
+                                            <p class="mb-1 small fw-bold text-white-50" style="font-size: 0.6rem">SIGUIENTE META: <span class="text-warning">${proximoNombre}</span></p>
+                                            <div id="live-countdown"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 col-12 px-md-3">
+                                        <p class="mb-2 fw-bold text-uppercase small text-white-50" style="font-size: 0.6rem">CUMPLIMIENTO TOTAL</p>
+                                        <div class="progress progress-custom bg-white bg-opacity-20 shadow-inner" style="height: 10px">
+                                            <div class="progress-bar bg-white shadow-lg" style="width: ${ciclo.progreso_porcentaje}%"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1 text-white fw-bold" style="font-size: 0.6rem">
+                                            <span>${ciclo.progreso_porcentaje}% COMPLETADO</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="p-2 rounded" style="background: rgba(255,255,255,0.15)">
-                                            <small class="d-block text-white" style="opacity: 0.8">INICIO</small>
-                                            <strong class="text-white">${ciclo.fecha_inicio}</strong>
+
+                                <!-- Timeline Dinámica: Se adapta a cualquier cantidad de exámenes -->
+                                <div class="timeline-milestones d-none d-xl-flex mt-5">
+                                    ${hitos.map((h, i) => {
+                                        const now = new Date().getTime();
+                                        const hitoDateMatch = h.date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                                        const hitoTime = hitoDateMatch ? new Date(`${hitoDateMatch[3]}-${hitoDateMatch[2]}-${hitoDateMatch[1]}`).getTime() : 0;
+                                        
+                                        const isCompleted = now > hitoTime;
+                                        const isNext = ciclo.proximo_hito && 
+                                                      (ciclo.proximo_hito.nombre.includes(h.label.replace(' EX.', '')) || 
+                                                       (h.id === 'inicio' && ciclo.proximo_hito.nombre === 'Inicio del Ciclo') ||
+                                                       (h.id === 'fin' && ciclo.proximo_hito.nombre === 'Fin del Ciclo'));
+
+                                        return `
+                                            <div class="milestone-point ${isCompleted ? 'completed' : ''} ${isNext ? 'next' : ''}">
+                                                <span class="milestone-label font-bold">${h.label}</span>
+                                                <span class="milestone-date text-white-50" style="font-size: 0.5rem">${h.date}</span>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Centro: Roadmap -->
+                            <div class="col-xl-4 col-lg-6 d-flex justify-content-center">
+                                <div class="p-4 rounded-4 shadow-lg position-relative overflow-hidden w-100" 
+                                     style="background: rgba(0,0,0,0.35); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.1) !important; max-width: 380px;">
+                                    <h6 class="text-white mb-4 fw-bold text-uppercase" style="letter-spacing: 1.5px; font-size: 0.7rem">Hitos Académicos</h6>
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <div class="p-2 px-3 rounded-4 bg-white shadow-lg border-start border-4 border-info">
+                                                <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.55rem">Apertura Oficial</small>
+                                                <div class="text-dark fw-bold fs-5">${ciclo.fecha_inicio}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2 rounded" style="background: rgba(255,255,255,0.15)">
-                                            <small class="d-block text-white" style="opacity: 0.8">FIN</small>
-                                            <strong class="text-white">${ciclo.fecha_fin}</strong>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2 rounded" style="background: rgba(255,255,255,0.15)">
-                                            <small class="d-block text-white" style="opacity: 0.8">DÍAS RESTANTES</small>
-                                            <strong class="text-white fs-5">${ciclo.dias_restantes}</strong>
+                                        <div class="col-12">
+                                            <div class="p-2 px-3 rounded-4 bg-white shadow-lg border-start border-4 border-danger">
+                                                <small class="text-muted fw-bold d-block text-uppercase" style="font-size: 0.55rem">Clausura Final</small>
+                                                <div class="text-dark fw-bold fs-5">${ciclo.fecha_fin}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            ${exam ? `
-                            <div class="col-md-4 mt-3 mt-md-0">
-                                <div class="text-center p-3 rounded" style="background: rgba(255,255,255,0.2)">
-                                    <i class="mdi mdi-calendar-alert text-white" style="font-size: 2.5rem"></i>
-                                    <h5 class="text-white mt-2">Próximo Examen</h5>
-                                    <h4 class="text-white">${exam.nombre}</h4>
-                                    <p class="text-white mb-2">
-                                        <i class="mdi mdi-calendar"></i> ${exam.fecha}
-                                    </p>
-                                    <span class="badge bg-warning text-dark" style="font-size: 0.9rem">
-                                        En ${Math.abs(Math.round(exam.dias_faltantes))} días
-                                    </span>
-                                </div>
+
+                            <!-- Derecha: Jaguar (Ajuste Manual -250px mantenido) -->
+                            <div class="col-xl-3 d-none d-xl-block position-relative">
+                                <img src="/assets/img/mascotadashboard.png" class="position-absolute" 
+                                     style="right: -60px; bottom: -250px; height: 500px; filter: drop-shadow(0 40px 100px rgba(0,0,0,0.8)); 
+                                            z-index: 50 !important; cursor: default" alt="Jaguar CEPRE">
                             </div>
-                            ` : ''}
+
                         </div>
                     </div>
                 </div>
@@ -215,54 +179,31 @@ document.addEventListener('DOMContentLoaded', async function () {
         `;
     }
 
-    function renderStats(data) {
-        const stats = [
-            {
-                title: 'Estudiantes',
-                subtitle: 'Inscritos Activos',
-                value: data.totalInscritosActivos || 0,
-                icon: 'mdi-account-group',
-                gradient: 'gradient-primary'
-            },
-            {
-                title: 'Asistencia Hoy',
-                subtitle: `${data.asistenciaHoy?.estudiantes_unicos || 0} presentes`,
-                value: `${Math.round(data.asistenciaHoy?.porcentaje_asistencia || 0)}%`,
-                icon: 'mdi-check-circle',
-                gradient: 'gradient-success'
-            },
-            {
-                title: 'Docentes',
-                subtitle: 'Activos en el Ciclo',
-                value: data.totalDocentesActivos || 0,
-                icon: 'mdi-account-tie',
-                gradient: 'gradient-info'
-            },
-            {
-                title: 'Aulas',
-                subtitle: 'Asignadas',
-                value: data.totalAulasAsignadas || 0,
-                icon: 'mdi-door',
-                gradient: 'gradient-warning'
-            }
-        ];
+    // Funciones de renderizado secundario (Stats, Asistencia, etc.)
+    function showSkeletons() {
+        document.getElementById('stats-cards').innerHTML = Array(4).fill(`<div class="col-xl-3 col-md-6 mb-4"><div class="card modern-card shimmer" style="height: 120px;"></div></div>`).join('');
+    }
 
-        document.getElementById('stats-cards').innerHTML = stats.map(s => `
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card modern-card ${s.gradient} text-white border-0">
-                    <div class="card-body p-3">
-                        <div class="d-flex align-items-center">
-                            <div class="widget-icon-modern bg-white bg-opacity-25 text-white me-3">
-                                <i class="mdi ${s.icon}"></i>
+    function renderStats(data) {
+        const container = document.getElementById('stats-cards');
+        const kpis = [
+            { label: 'ESTUDIANTES', val: data.totalInscripciones, icon: 'mdi mdi-account-group', grad: 'var(--cepre-pink)', sub: 'Inscritos Reales' },
+            { label: 'ASISTENCIA HOY', val: data.asistenciaHoy.porcentaje + '%', icon: 'mdi mdi-flash-outline', grad: 'var(--cepre-green)', sub: `${data.asistenciaHoy.estudiantes_unicos} presentes` },
+            { label: 'DOCENTES', val: data.totalDocentesActivos, icon: 'mdi mdi-account-tie-outline', grad: '#0077b6', sub: 'Activos hoy' },
+            { label: 'AULAS', val: data.totalAulas, icon: 'mdi mdi-door-open', grad: '#ff9f1c', sub: 'Ocupadas' }
+        ];
+        container.innerHTML = kpis.map(k => `
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card modern-card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="kpi-icon-container me-3 shadow-sm" style="background: ${k.grad}18; color: ${k.grad}">
+                                <i class="${k.icon}"></i>
                             </div>
-                            <div>
-                                <small class="text-white text-uppercase" style="font-size: 10px; opacity: 0.9">
-                                    ${s.title}
-                                </small>
-                                <h2 class="stat-number mb-0 text-white">${s.value}</h2>
-                                <small class="text-white" style="opacity: 0.9">${s.subtitle}</small>
-                            </div>
+                            <span class="fw-bold text-muted small text-uppercase" style="letter-spacing: 1px">${k.label}</span>
                         </div>
+                        <h2 class="stat-value mb-1" style="color: ${k.grad}">${k.val}</h2>
+                        <p class="text-muted mb-0 small fw-medium text-truncate"><i class="mdi mdi-arrow-right-circle-outline"></i> ${k.sub}</p>
                     </div>
                 </div>
             </div>
@@ -270,128 +211,43 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function renderAsistenciaStats(stats) {
+        const container = document.getElementById('asistencia-chart');
         const items = [
-            {
-                label: 'Regulares',
-                count: stats.regulares,
-                pct: stats.porcentaje_regulares,
-                color: 'success',
-                bg: '#11998e15'
-            },
-            {
-                label: 'Amonestados',
-                count: stats.amonestados,
-                pct: stats.porcentaje_amonestados,
-                color: 'warning',
-                bg: '#f093fb15'
-            },
-            {
-                label: 'Inhabilitados',
-                count: stats.inhabilitados,
-                pct: stats.porcentaje_inhabilitados,
-                color: 'danger',
-                bg: '#fa709a15'
-            },
-            {
-                label: 'Sin Registro',
-                count: stats.sin_asistencia,
-                pct: stats.porcentaje_sin_asistencia,
-                color: 'secondary',
-                bg: 'rgba(43, 90, 111, 0.12)'
-            }
+            { lab: 'Regulares', val: stats.regulares, col: 'var(--cepre-green)', pct: Math.round((stats.regulares / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-check-outline' },
+            { lab: 'Amonestados', val: stats.amonestados, col: '#ff9f1c', pct: Math.round((stats.amonestados / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-alert-outline' },
+            { lab: 'Inhabilitados', val: stats.inhabilitados, col: 'var(--cepre-pink)', pct: Math.round((stats.inhabilitados / stats.total_estudiantes) * 100) || 0, icon: 'mdi mdi-account-remove-outline' }
         ];
-
-        const html = items.map(i => `
-            <div class="mb-3 p-3 rounded" style="background: ${i.bg}">
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="fw-bold text-${i.color}">
-                        <i class="mdi mdi-circle"></i> ${i.label}
-                    </span>
-                    <span class="badge bg-${i.color}">${i.count} (${i.pct}%)</span>
-                </div>
-                <div class="progress" style="height: 25px">
-                    <div class="progress-bar bg-${i.color}" style="width: ${i.pct}%">
-                        ${i.pct}%
-                    </div>
-                </div>
-            </div>
-        `).join('') + `
-            <div class="alert alert-light mb-0">
-                <strong>Total Estudiantes:</strong> ${stats.total_estudiantes}
-            </div>
-        `;
-
-        document.getElementById('asistencia-chart').innerHTML = html;
+        container.innerHTML = items.map(i => `<div class="mb-4"><div class="d-flex justify-content-between align-items-center mb-2"><span class="fw-bold fs-6" style="color: ${i.col}"><i class="${i.icon} me-1"></i> ${i.lab}</span><span class="text-muted fw-bold">${i.val} alumnos (${i.pct}%)</span></div><div class="progress progress-custom overflow-hidden shadow-sm" style="height: 14px"><div class="progress-bar shadow-sm" style="width: ${i.pct}%; background: ${i.col}"></div></div></div>`).join('') + `<div class="p-3 rounded-4 bg-light text-center border mt-4 shadow-sm"><small class="text-muted text-uppercase fw-bold">Población Activa</small><h4 class="mb-0 fw-bold text-dark">${stats.total_estudiantes} Estudiantes</h4></div>`;
     }
 
     function renderPostulaciones(p) {
-        const items = [
-            { label: 'Total', value: p.total, color: 'primary' },
-            { label: 'Pendientes', value: p.pendientes, color: 'warning' },
-            { label: 'Aprobadas', value: p.aprobadas, color: 'success' },
-            { label: 'Rechazadas', value: p.rechazadas, color: 'danger' }
-        ];
-
-        document.getElementById('postulaciones-stats').innerHTML = '<div class="row g-2">' +
-            items.map(i => `
-                <div class="col-6">
-                    <div class="text-center p-2 rounded bg-${i.color} bg-opacity-10">
-                        <h4 class="mb-0 text-${i.color}">${i.value}</h4>
-                        <small class="text-muted">${i.label}</small>
-                    </div>
-                </div>
-            `).join('') +
-            '</div>';
+        document.getElementById('postulaciones-stats').innerHTML = `
+            <div class="row g-2 text-center">
+                <div class="col-12 mb-2"><div class="p-2 bg-light rounded-4 border"><small class="text-muted">Total</small><h4 class="mb-0 fw-bold text-primary">${p.total}</h4></div></div>
+                <div class="col-6"><div class="p-2 bg-white rounded-4 border shadow-sm"><small class="text-warning">Pen.</small><h5 class="mb-0 fw-bold">${p.pendientes}</h5></div></div>
+                <div class="col-6"><div class="p-2 bg-white rounded-4 border shadow-sm"><small class="text-success">Apr.</small><h5 class="mb-0 fw-bold">${p.aprobadas}</h5></div></div>
+            </div>`;
     }
 
     function renderCarnets(c) {
-        const items = [
-            { label: 'Generados', value: c.total, icon: 'mdi-card', color: 'primary' },
-            { label: 'Pend. Impresión', value: c.pendientes_impresion, icon: 'mdi-printer', color: 'warning' },
-            { label: 'Pend. Entrega', value: c.pendientes_entrega, icon: 'mdi-package', color: 'info' },
-            { label: 'Entregados', value: c.entregados, icon: 'mdi-check', color: 'success' }
-        ];
-
-        document.getElementById('carnets-stats').innerHTML = items.map(i => `
-            <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded bg-${i.color} bg-opacity-10">
-                <span>
-                    <i class="mdi ${i.icon} text-${i.color}"></i> ${i.label}
-                </span>
-                <span class="badge bg-${i.color}">${i.value}</span>
-            </div>
-        `).join('');
+        document.getElementById('carnets-stats').innerHTML = `
+            <div class="p-3 rounded-4 bg-white border shadow-sm mb-2 d-flex justify-content-between align-items-center"><span class="text-muted small">Total</span><span class="badge bg-primary rounded-pill px-3">${c.total}</span></div>
+            <div class="p-3 rounded-4 bg-white border shadow-sm d-flex justify-content-between align-items-center"><span class="text-muted small">Pendientes</span><span class="badge bg-warning text-dark rounded-pill px-3">${c.pendientes_impresion}</span></div>`;
     }
 
     function renderAlertas(alertas) {
-        document.getElementById('alertas-content').innerHTML = alertas.map(a => `
-            <div class="alert alert-${a.tipo} mb-2">
-                <i class="${a.icono} me-2"></i> ${a.mensaje}
-                ${a.url && a.url !== '#' ? `<a href="${a.url}" class="alert-link ms-2">Ver más →</a>` : ''}
-            </div>
-        `).join('');
+        const container = document.getElementById('alertas-content');
+        if (!alertas || alertas.length === 0) { container.innerHTML = '<p class="text-muted text-center py-4">Sin alertas.</p>'; return; }
+        container.innerHTML = alertas.map(a => `
+            <div class="alert border-0 border-start border-4 border-${a.tipo} bg-white shadow-sm rounded-4 mb-2 p-3 d-flex align-items-center">
+                <i class="${a.icono} text-${a.tipo} fs-4 me-3"></i><div class="fw-bold text-dark small text-uppercase">${a.mensaje}</div>
+            </div>`).join('');
     }
 
     function renderAnuncios(anuncios) {
-        document.getElementById('anuncios-content').innerHTML = anuncios.slice(0, 3).map(a => {
-            const fecha = new Date(a.fecha_publicacion).toLocaleDateString('es-PE', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-
-            return `
-                <div class="border-bottom pb-2 mb-2">
-                    <h6 class="mb-1">
-                        <i class="mdi mdi-bullhorn-outline text-success"></i> ${a.titulo}
-                    </h6>
-                    <small class="text-muted d-block mb-1">
-                        <i class="mdi mdi-calendar"></i> ${fecha}
-                    </small>
-                    <p class="mb-0 small mt-1 text-muted">
-                        ${a.contenido.substring(0, 100)}${a.contenido.length > 100 ? '...' : ''}
-                    </p>
-                </div>
-            `;
-        }).join('');
+        const container = document.getElementById('anuncios-content');
+        if (!anuncios || anuncios.length === 0) { container.innerHTML = '<p class="text-muted text-center py-2">Sin anuncios.</p>'; return; }
+        container.innerHTML = anuncios.slice(0, 2).map(a => `
+            <div class="p-3 rounded-4 bg-light mb-2"><small class="text-success fw-bold text-uppercase">Comunicado</small><h6 class="mb-1 fw-bold">${a.titulo}</h6><p class="small text-muted mb-0">${a.contenido.substring(0, 70)}...</p></div>`).join('');
     }
 });

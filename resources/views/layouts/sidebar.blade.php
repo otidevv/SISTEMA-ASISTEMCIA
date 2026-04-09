@@ -263,25 +263,54 @@
                     </li>
                 @endif
 
-                <!-- Módulo Programas Académicos -->
-                @if (Auth::user()->hasPermission('users.view'))
-                    <li>
-                        <a href="{{ route('programas.index') }}">
-                            <i data-feather="box"></i>
-                            <span> Programas Académicos </span>
-                        </a>
-                    </li>
-                @endif
+                <!-- CENTRO DE ANALÍTICA Y REPORTES -->
+                <li class="menu-title mt-2">Centro de Analítica y Reportes</li>
 
-                <!-- Módulo Auditoría - Reubicado para ser más administrativo -->
-                @if (Auth::user()->hasPermission('auditoria.view') || Auth::user()->hasPermission('users.view'))
-                    <li>
-                        <a href="{{ route('auditoria.index') }}">
-                            <i data-feather="activity"></i>
-                            <span> Auditoría del Sistema </span>
-                        </a>
-                    </li>
-                @endif
+                <li>
+                    <a href="#sidebarReportes" data-bs-toggle="collapse">
+                        <i data-feather="bar-chart-2"></i>
+                        <span class="badge bg-soft-success text-success float-end">PRO</span>
+                        <span> Inteligencia de Datos </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarReportes">
+                        <ul class="nav-second-level">
+                            @if (Auth::user()->hasPermission('reportes.estadisticos.ver'))
+                                <li>
+                                    <a href="{{ route('reportes.estadisticos.index') }}">
+                                        <i class="mdi mdi-view-dashboard-outline me-1"></i> Dashboard Estadístico
+                                    </a>
+                                </li>
+                            @endif
+                            
+                            @if (Auth::user()->hasPermission('reportes.financieros.ver'))
+                                <li>
+                                    <a href="{{ route('reportes.financieros.index') }}">
+                                        <i class="mdi mdi-cash-multiple me-1"></i> Análisis Financiero
+                                    </a>
+                                </li>
+                            @endif
+
+                            @if (Auth::user()->hasPermission('postulaciones.reportes.inhabilitados'))
+                                <li>
+                                    <a href="{{ route('postulaciones.reportes.inhabilitados') }}">
+                                        <i class="mdi mdi-account-off-outline me-1"></i> Alumnos Inhabilitados
+                                    </a>
+                                </li>
+                            @endif
+                            
+                            @if (Auth::user()->hasPermission('attendance.reports'))
+                                <li>
+                                    <a href="{{ route('asistencia.reportes') }}">
+                                        <i class="mdi mdi-calendar-check me-1"></i> Reportes de Asistencia
+                                    </a>
+                                </li>
+                            @endif
+                        </ul>
+                    </div>
+                </li>
+
+                <!-- Módulo Auditoría -->
 
                 <!-- Ajustes de perfil - Visible para todos -->
                 <li>

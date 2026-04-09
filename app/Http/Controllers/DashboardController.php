@@ -710,17 +710,8 @@ class DashboardController extends Controller
                 });
                 $data = array_merge($data, $adminData);
 
-                // Asistencia de estudiantes para hoy (datos en tiempo real, no cacheados)
-                $today = Carbon::today();
-                $data['asistenciaHoy'] = [
-                    'total_registros' => RegistroAsistencia::whereDate('fecha_registro', $today)->count(),
-                    'presentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
-                                    ->where('estado', 'presente')
-                                    ->count(),
-                    'ausentes' => RegistroAsistencia::whereDate('fecha_registro', $today)
-                                    ->where('estado', 'ausente')
-                                    ->count(),
-                ];
+                // Lista de ciclos activos para el selector
+                $data['ciclosActivos'] = Ciclo::where('es_activo', true)->get();
 
             }
             return view('admin.dashboard', $data);

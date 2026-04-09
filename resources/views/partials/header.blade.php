@@ -603,25 +603,6 @@
                             <div class="collapse" id="sidebarPostulaciones">
                                 <ul class="nav-second-level">
                                     <li><a href="{{ route('postulaciones.index') }}">Ver Postulaciones</a></li>
-                                    @if (Auth::user()->hasPermission('postulaciones.reports'))
-                                        <li>
-                                            <a href="#sidebarPostulacionesReportes" data-bs-toggle="collapse">
-                                                Reportes <span class="menu-arrow"></span>
-                                            </a>
-                                            <div class="collapse" id="sidebarPostulacionesReportes">
-                                                <ul class="nav-second-level">
-                                                    <li><a href="{{ route('postulaciones.reportes.completos') }}">Reporte Completo</a></li>
-                                                    <li><a href="{{ route('postulaciones.reportes.resumen') }}">Reporte Resumido</a></li>
-                                                    @if (Auth::user()->hasPermission('postulaciones.reportes.inhabilitados'))
-                                                        <li><a href="{{ route('postulaciones.reportes.inhabilitados') }}">Estudiantes Inhabilitados</a></li>
-                                                    @endif
-                                                </ul>
-                                            </div>
-                                        </li>
-                                    @endif
-                                    @if (Auth::user()->hasPermission('postulaciones.statistics'))
-                                        <li><a href="#">Estadísticas</a></li>
-                                    @endif
                                 </ul>
                             </div>
                         </li>
@@ -941,18 +922,63 @@
                             </div>
                         </li>
                     @endif
-                    <li class="menu-title mt-2">Modulos Reportes Contables</li>
-                    {{-- ============================== --}}
-                    {{-- Módulo: Reportes Financieros --}}
-                    {{-- ============================== --}}
-                    @if (Auth::user()->hasPermission('reportes.financieros.ver'))
-                        <li>
-                            <a href="{{ route('reportes.financieros.index') }}">
-                                <i data-feather="dollar-sign"></i>
-                                <span> Reportes Financieros </span>
-                            </a>
-                        </li>
-                    @endif
+                    <li class="menu-title mt-2">Centro de Analítica y Reportes</li>
+                    <li>
+                        <a href="#sidebarReportesPower" data-bs-toggle="collapse">
+                            <i data-feather="bar-chart-2"></i>
+                            <span class="badge bg-soft-success text-success float-end">PRO</span>
+                            <span> Inteligencia de Datos </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarReportesPower">
+                            <ul class="nav-second-level">
+                                @if (Auth::user()->hasPermission('reportes.estadisticos.ver'))
+                                    <li>
+                                        <a href="{{ route('reportes.estadisticos.index') }}">
+                                            <i class="mdi mdi-view-dashboard-outline me-1"></i> Dashboard Estadístico
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                @if (Auth::user()->hasPermission('reportes.financieros.ver'))
+                                    <li>
+                                        <a href="{{ route('reportes.financieros.index') }}">
+                                            <i class="mdi mdi-cash-multiple me-1"></i> Análisis Financiero
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if (Auth::user()->hasPermission('postulaciones.reports'))
+                                    <li>
+                                        <a href="{{ route('postulaciones.reportes.completos') }}">
+                                            <i class="mdi mdi-account-details me-1"></i> Reporte Postulantes Completo
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('postulaciones.reportes.resumen') }}">
+                                            <i class="mdi mdi-table-eye me-1"></i> Reporte Postulantes Resumido
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if (Auth::user()->hasPermission('postulaciones.reportes.inhabilitados'))
+                                    <li>
+                                        <a href="{{ route('postulaciones.reportes.inhabilitados') }}">
+                                            <i class="mdi mdi-account-off-outline me-1"></i> Alumnos Inhabilitados
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                @if (Auth::user()->hasPermission('attendance.reports'))
+                                    <li>
+                                        <a href="{{ route('asistencia.reportes') }}">
+                                            <i class="mdi mdi-calendar-check me-1"></i> Reportes de Asistencia
+                                        </a>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
 
                     <li class="menu-title mt-2">Modulos Docentes Cepre</li>
 

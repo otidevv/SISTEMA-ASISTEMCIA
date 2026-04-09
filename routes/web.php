@@ -561,6 +561,13 @@ Route::middleware('auth')->group(function () {
                 ->middleware('can:reportes.financieros.ver');
         });
 
+        // Reportes Estadísticos
+        Route::prefix('reportes/estadisticos')->name('reportes.estadisticos.')->group(function () {
+            Route::get('/', [App\Http\Controllers\ReportesEstadisticosController::class, 'index'])
+                ->name('index')
+                ->middleware('can:reportes.estadisticos.ver');
+        });
+
     // Boletines
     Route::prefix('boletines')->name('boletines.')->middleware('auth')->group(function () {
         Route::get('/', [App\Http\Controllers\BoletinController::class, 'index'])->name('index')->middleware('can:boletines.view');

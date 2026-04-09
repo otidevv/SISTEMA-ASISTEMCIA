@@ -68,7 +68,12 @@ class Carrera extends Model
 
     public function inscripciones()
     {
-        return $this->hasMany(Inscripcion::class);
+        return $this->hasMany(Inscripcion::class, 'carrera_id');
+    }
+
+    public function postulaciones()
+    {
+        return $this->hasMany(Postulacion::class, 'carrera_id');
     }
 
     public function vacantesCiclos()

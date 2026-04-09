@@ -25,718 +25,126 @@ use App\Helpers\AsistenciaHelper;
 
 class DashboardController extends Controller
 {
-    /**
-     * Obtener datos generales del dashboard CON CONTEXTO DEL CICLO ACTIVO
-     */
     public function getDatosGenerales()
     {
         try {
             $user = Auth::user();
-            $programa_id = request('programa_id', 1);
-            $cicloActivo = Ciclo::where('es_activo', true)
-                ->where('programa_id', $programa_id)
-                ->first();
+            $ciclosActivos = Ciclo::where('es_activo', true)->get();
+            $totalInscritos = 0;
+            
+            foreach ($ciclosActivos as $ciclo) {
+                $totalInscritos += Inscripcion::where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'activo')->count();
+            }
 
-            $data = [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email
+            $today = Carbon::today();
+            $estudiantesHoy = RegistroAsistencia::whereDate('fecha_registro', $today)->where('nro_documento', '!=', '')->distinct('nro_documento')->count('nro_documento');
+
+            return response()->json([
+                'user' => ['name' => $user->name],
+                'totalInscritosActivos' => $totalInscritos,
+                'asistenciaHoy' => [
+                    'estudiantes_unicos' => $estudiantesHoy,
+                    'porcentaje_asistencia' => $totalInscritos > 0 ? round(($estudiantesHoy / $totalInscritos) * 100, 1) : 0
                 ]
-            ];
-
-            if (!$cicloActivo) {
-                return response()->json(array_merge($data, [
-                    'cicloActivo' => null,
-                    'totalInscritosActivos' => 0,
-                    'estudiantesConAsistencia' => 0,
-                    'totalDocentesActivos' => 0,
-                    'totalAulasAsignadas' => 0,
-                    'asistenciaHoy' => [
-                        'total_registros' => 0,
-                        'estudiantes_unicos' => 0,
-                        'porcentaje_asistencia' => 0
-                    ]
-                ]));
-            }
-
-            // INFORMACIÓN DEL CICLO ACTIVO
-            $hoy = Carbon::now();
-            $totalDias = (int) $cicloActivo->fecha_inicio->diffInDays($cicloActivo->fecha_fin);
-            $diasTranscurridos = (int) max(0, $cicloActivo->fecha_inicio->diffInDays($hoy));
-            $diasRestantes = (int) max(0, $hoy->diffInDays($cicloActivo->fecha_fin));
-            
-            $proximoExamen = $cicloActivo->getProximoExamen();
-            
-            $data['cicloActivo'] = [
-                'id' => $cicloActivo->id,
-                'nombre' => $cicloActivo->nombre,
-                'fecha_inicio' => $cicloActivo->fecha_inicio->format('d/m/Y'),
-                'fecha_fin' => $cicloActivo->fecha_fin->format('d/m/Y'),
-                'total_dias' => $totalDias,
-                'dias_transcurridos' => $diasTranscurridos,
-                'dias_restantes' => $diasRestantes,
-                'progreso_porcentaje' => $totalDias > 0 ? round(($diasTranscurridos / $totalDias) * 100, 1) : 0,
-                'porcentaje_amonestacion' => $cicloActivo->porcentaje_amonestacion,
-                'porcentaje_inhabilitacion' => $cicloActivo->porcentaje_inhabilitacion,
-                'proximo_examen' => $proximoExamen ? [
-                    'nombre' => $proximoExamen['nombre'],
-                    'fecha' => $proximoExamen['fecha']->format('d/m/Y'),
-                    'dias_faltantes' => (int) max(0, $hoy->diffInDays($proximoExamen['fecha'], false))
-                ] : null
-            ];
-
-            // ESTADÍSTICAS DEL CICLO ACTIVO (con caché)
-            $stats = Cache::remember("dashboard.stats.{$cicloActivo->id}", 600, function () use ($cicloActivo) {
-                return [
-                    'totalInscritosActivos' => Inscripcion::where('ciclo_id', $cicloActivo->id)
-                        ->where('estado_inscripcion', 'activo')
-                        ->count(),
-                    
-                    'estudiantesConAsistencia' => DB::table('inscripciones as i')
-                        ->join('users as u', 'i.estudiante_id', '=', 'u.id')
-                        ->join('registros_asistencia as ra', 'u.numero_documento', '=', 'ra.nro_documento')
-                        ->where('i.ciclo_id', $cicloActivo->id)
-                        ->where('i.estado_inscripcion', 'activo')
-                        ->whereBetween('ra.fecha_registro', [$cicloActivo->fecha_inicio, $cicloActivo->fecha_fin])
-                        ->distinct('u.id')
-                        ->count('u.id'),
-                    
-                    'totalDocentesActivos' => HorarioDocente::where('ciclo_id', $cicloActivo->id)
-                        ->distinct('docente_id')
-                        ->count('docente_id'),
-                    
-                    'totalAulasAsignadas' => Inscripcion::where('ciclo_id', $cicloActivo->id)
-                        ->where('estado_inscripcion', 'activo')
-                        ->whereNotNull('aula_id')
-                        ->distinct('aula_id')
-                        ->count('aula_id')
-                ];
-            });
-
-            $data = array_merge($data, $stats);
-
-            // ASISTENCIA DE HOY (tiempo real, sin caché)
-            $today = Carbon::today();
-            $registrosHoy = RegistroAsistencia::whereDate('fecha_registro', $today)->count();
-            $estudiantesHoy = RegistroAsistencia::whereDate('fecha_registro', $today)
-                ->where('nro_documento', '!=', '')
-                ->distinct('nro_documento')
-                ->count('nro_documento');
-
-            $data['asistenciaHoy'] = [
-                'total_registros' => $registrosHoy,
-                'estudiantes_unicos' => $estudiantesHoy,
-                'porcentaje_asistencia' => $data['totalInscritosActivos'] > 0 
-                    ? round(($estudiantesHoy / $data['totalInscritosActivos']) * 100, 1) 
-                    : 0
-            ];
-
-            return response()->json($data);
-        } catch (\Exception $e) {
-            \Log::error('Error en getDatosGenerales: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener datos generales'], 500);
-        }
-    }
-
-    /**
-     * Obtener anuncios activos
-     */
-    public function getAnuncios()
-    {
-        try {
-            $anuncios = Cache::remember('dashboard.anuncios', 300, function () {
-                return Anuncio::select('id', 'titulo', 'contenido', 'fecha_publicacion')
-                    ->where('es_activo', true)
-                    ->where(function ($query) {
-                        $query->whereNull('fecha_expiracion')
-                               ->orWhere('fecha_expiracion', '>', now());
-                    })
-                    ->where('fecha_publicacion', '<=', now())
-                    ->orderBy('fecha_publicacion', 'desc')
-                    ->take(3)
-                    ->get();
-            });
-
-            return response()->json($anuncios);
-        } catch (\Exception $e) {
-            \Log::error('Error en getAnuncios: ' . $e->getMessage());
-            return response()->json([], 200);
-        }
-    }
-
-    /**
-     * Obtener datos COMPLETOS del dashboard administrativo
-     */
-    public function getDatosAdmin()
-    {
-        try {
-            $user = Auth::user();
-
-            // Verificar acceso
-            $rolesAdministrativos = [
-                'admin',
-                'ADMINISTRATIVOS',
-                'CEPRE UNAMAD MONITOREO',
-                'COORDINACIÓN ACADEMICA',
-                'ASISTENTE ADMINISTRATIVO II'
-            ];
-
-            $tieneAcceso = collect($rolesAdministrativos)->some(fn($rol) => $user->hasRole($rol));
-
-            if (!$tieneAcceso && !$user->hasPermission('dashboard.admin')) {
-                return response()->json(['error' => 'No autorizado'], 403);
-            }
-
-            $programa_id = request('programa_id', 1);
-            $cicloActivo = Ciclo::where('es_activo', true)
-                ->where('programa_id', $programa_id)
-                ->first();
-
-            if (!$cicloActivo) {
-                return response()->json([
-                    'error' => 'No hay ciclo activo para este programa',
-                    'cicloActivo' => null
-                ]);
-            }
-
-            $hoy = Carbon::now();
-            $data = [];
-
-            // INFORMACIÓN DEL CICLO
-            $totalDias = (int) $cicloActivo->fecha_inicio->diffInDays($cicloActivo->fecha_fin);
-            $diasTranscurridos = (int) max(0, $cicloActivo->fecha_inicio->diffInDays($hoy));
-            $diasRestantes = (int) max(0, $hoy->diffInDays($cicloActivo->fecha_fin));
-            $proximoExamen = $cicloActivo->getProximoExamen();
-
-            $data['cicloActivo'] = [
-                'id' => $cicloActivo->id,
-                'nombre' => $cicloActivo->nombre,
-                'fecha_inicio' => $cicloActivo->fecha_inicio->format('d/m/Y'),
-                'fecha_fin' => $cicloActivo->fecha_fin->format('d/m/Y'),
-                'dias_transcurridos' => $diasTranscurridos,
-                'dias_restantes' => $diasRestantes,
-                'progreso_porcentaje' => $totalDias > 0 ? round(($diasTranscurridos / $totalDias) * 100, 1) : 0,
-                'proximo_examen' => $proximoExamen ? [
-                    'nombre' => $proximoExamen['nombre'],
-                    'fecha' => $proximoExamen['fecha']->format('d/m/Y'),
-                    'dias_faltantes' => (int) max(0, $hoy->diffInDays($proximoExamen['fecha'], false))
-                ] : null
-            ];
-
-            // ESTADÍSTICAS EN PARALELO (optimizado)
-            $cacheKey = "dashboard.admin.{$cicloActivo->id}." . $hoy->format('Y-m-d');
-            
-            $estadisticas = Cache::remember($cacheKey, 900, function () use ($cicloActivo, $hoy) {
-                // Todas las consultas en una sola transacción
-                return DB::transaction(function () use ($cicloActivo, $hoy) {
-                    $stats = [];
-
-                    // Inscripciones
-                    $stats['totalInscripciones'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
-                        ->where('estado_inscripcion', 'activo')
-                        ->count();
-
-                    // Postulaciones
-                    $postulaciones = Postulacion::where('ciclo_id', $cicloActivo->id)
-                        ->selectRaw('
-                            COUNT(*) as total,
-                            SUM(CASE WHEN estado = "pendiente" THEN 1 ELSE 0 END) as pendientes,
-                            SUM(CASE WHEN estado = "aprobado" THEN 1 ELSE 0 END) as aprobadas,
-                            SUM(CASE WHEN estado = "rechazado" THEN 1 ELSE 0 END) as rechazadas
-                        ')
-                        ->first();
-
-                    $stats['postulaciones'] = [
-                        'total' => $postulaciones->total ?? 0,
-                        'pendientes' => $postulaciones->pendientes ?? 0,
-                        'aprobadas' => $postulaciones->aprobadas ?? 0,
-                        'rechazadas' => $postulaciones->rechazadas ?? 0
-                    ];
-
-                    // Carnets
-                    $carnets = Carnet::where('ciclo_id', $cicloActivo->id)
-                        ->selectRaw('
-                            COUNT(*) as total,
-                            SUM(CASE WHEN impreso = 0 THEN 1 ELSE 0 END) as pendientes_impresion,
-                            SUM(CASE WHEN impreso = 1 AND entregado = 0 THEN 1 ELSE 0 END) as pendientes_entrega,
-                            SUM(CASE WHEN entregado = 1 THEN 1 ELSE 0 END) as entregados
-                        ')
-                        ->first();
-
-                    $stats['carnets'] = [
-                        'total' => $carnets->total ?? 0,
-                        'pendientes_impresion' => $carnets->pendientes_impresion ?? 0,
-                        'pendientes_entrega' => $carnets->pendientes_entrega ?? 0,
-                        'entregados' => $carnets->entregados ?? 0
-                    ];
-
-                    // Docentes y horarios
-                    $stats['totalDocentesActivos'] = HorarioDocente::where('ciclo_id', $cicloActivo->id)
-                        ->distinct('docente_id')
-                        ->count('docente_id');
-
-                    $stats['sesionesHoy'] = HorarioDocente::where('ciclo_id', $cicloActivo->id)
-                        ->where('dia_semana', strtolower($hoy->locale('es')->dayName))
-                        ->count();
-
-                    // Resultados de exámenes
-                    $resultados = ResultadoExamen::where('ciclo_id', $cicloActivo->id)
-                        ->selectRaw('
-                            COUNT(*) as total,
-                            SUM(CASE WHEN visible = 1 THEN 1 ELSE 0 END) as publicados
-                        ')
-                        ->first();
-
-                    $stats['resultadosExamenes'] = [
-                        'total' => $resultados->total ?? 0,
-                        'publicados' => $resultados->publicados ?? 0
-                    ];
-
-                    // Carreras, aulas y cursos
-                    $stats['totalCarreras'] = Carrera::where('estado', true)->count();
-                    $stats['totalCursos'] = Curso::where('estado', true)->count();
-                    $stats['totalAulas'] = Inscripcion::where('ciclo_id', $cicloActivo->id)
-                        ->where('estado_inscripcion', 'activo')
-                        ->whereNotNull('aula_id')
-                        ->distinct('aula_id')
-                        ->count('aula_id');
-
-                    // Estadísticas de asistencia
-                    $stats['estadisticasAsistencia'] = $this->obtenerEstadisticasGenerales($cicloActivo);
-
-                    return $stats;
-                });
-            });
-
-            $data = array_merge($data, $estadisticas);
-
-            // ASISTENCIA DE HOY (tiempo real)
-            $today = Carbon::today();
-            $registrosHoy = RegistroAsistencia::whereDate('fecha_registro', $today)->count();
-            $estudiantesHoy = RegistroAsistencia::whereDate('fecha_registro', $today)
-                ->distinct('nro_documento')
-                ->count('nro_documento');
-
-            $data['asistenciaHoy'] = [
-                'total_registros' => $registrosHoy,
-                'estudiantes_unicos' => $estudiantesHoy,
-                'porcentaje' => $data['totalInscripciones'] > 0 
-                    ? round(($estudiantesHoy / $data['totalInscripciones']) * 100, 1) 
-                    : 0
-            ];
-
-            // ALERTAS INTELIGENTES
-            $alertas = [];
-
-            if ($data['postulaciones']['pendientes'] > 0) {
-                $alertas[] = [
-                    'tipo' => 'warning',
-                    'mensaje' => "{$data['postulaciones']['pendientes']} postulaciones pendientes de revisión",
-                    'icono' => 'mdi-alert-circle',
-                    'url' => route('postulaciones.index')
-                ];
-            }
-
-            if ($data['carnets']['pendientes_impresion'] > 0) {
-                $alertas[] = [
-                    'tipo' => 'info',
-                    'mensaje' => "{$data['carnets']['pendientes_impresion']} carnets pendientes de impresión",
-                    'icono' => 'mdi-card-account-details',
-                    'url' => route('carnets.index')
-                ];
-            }
-
-            $estudiantesEnRiesgo = $data['estadisticasAsistencia']['amonestados'] + 
-                                   $data['estadisticasAsistencia']['inhabilitados'];
-            
-            if ($estudiantesEnRiesgo > 0) {
-                $alertas[] = [
-                    'tipo' => 'danger',
-                    'mensaje' => "{$estudiantesEnRiesgo} estudiantes en riesgo (amonestados/inhabilitados)",
-                    'icono' => 'mdi-account-alert',
-                    'url' => route('asistencia.index')
-                ];
-            }
-
-            if ($proximoExamen) {
-                $diasFaltantes = max(0, $hoy->diffInDays($proximoExamen['fecha'], false));
-                
-                if ($diasFaltantes <= 7) {
-                    $alertas[] = [
-                        'tipo' => 'info',
-                        'mensaje' => "{$proximoExamen['nombre']} en {$diasFaltantes} días",
-                        'icono' => 'mdi-calendar-clock',
-                        'url' => '#'
-                    ];
-                }
-            }
-
-            $data['alertas'] = $alertas;
-
-            return response()->json($data);
-        } catch (\Exception $e) {
-            \Log::error('Error en getDatosAdmin: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            return response()->json(['error' => 'Error al obtener datos administrativos'], 500);
-        }
-    }
-
-    /**
-     * Obtener estadísticas de asistencia (endpoint separado)
-     */
-    public function getEstadisticasAsistencia()
-    {
-        try {
-            $user = Auth::user();
-
-            $rolesAdministrativos = [
-                'admin',
-                'ADMINISTRATIVOS',
-                'CEPRE UNAMAD MONITOREO',
-                'COORDINACIÓN ACADEMICA',
-                'ASISTENTE ADMINISTRATIVO II'
-            ];
-
-            $tieneAcceso = collect($rolesAdministrativos)->some(fn($rol) => $user->hasRole($rol));
-
-            if (!$tieneAcceso && !$user->hasPermission('dashboard.admin')) {
-                return response()->json(['error' => 'No autorizado'], 403);
-            }
-
-            $programa_id = request('programa_id', 1);
-            $cicloActivo = Ciclo::where('es_activo', true)
-                ->where('programa_id', $programa_id)
-                ->first();
-
-            if (!$cicloActivo) {
-                return response()->json([
-                    'error' => 'No hay ciclo activo para este programa',
-                    'estadisticas' => null
-                ]);
-            }
-
-            $estadisticas = $this->obtenerEstadisticasGenerales($cicloActivo);
-            
-            $estudiantesEnRiesgo = $estadisticas['amonestados'] + $estadisticas['inhabilitados'];
-            
-            $alerta = null;
-            if ($estudiantesEnRiesgo > 0) {
-                $alerta = [
-                    'tipo' => 'danger',
-                    'mensaje' => "{$estudiantesEnRiesgo} estudiantes en riesgo (amonestados/inhabilitados)",
-                    'icono' => 'mdi-account-alert',
-                    'url' => route('asistencia.index')
-                ];
-            }
-
-            return response()->json([
-                'estadisticas' => $estadisticas,
-                'alerta' => $alerta
             ]);
-        } catch (\Exception $e) {
-            \Log::error('Error en getEstadisticasAsistencia: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener estadísticas de asistencia'], 500);
-        }
+        } catch (\Exception $e) { return response()->json(['error' => $e->getMessage()], 500); }
     }
 
-    /**
-     * Obtener datos del dashboard de estudiante
-     */
-    public function getDatosEstudiante()
+    public function getDatosAdmin(Request $request)
     {
         try {
             $user = Auth::user();
+            $ciclo_id = $request->input('ciclo_id', 'global');
             
-            // Permitir tanto a estudiantes como a postulantes (que están en proceso)
-            if (!$user->hasRole('estudiante') && !$user->hasRole('postulante')) {
-                return response()->json(['error' => 'No autorizado'], 403);
+            $queryCiclos = Ciclo::query();
+            if ($ciclo_id === 'global') {
+                $queryCiclos->where('es_activo', true);
+            } else {
+                $queryCiclos->where('id', $ciclo_id);
+            }
+            $ciclosToProcess = $queryCiclos->get();
+
+            if ($ciclosToProcess->isEmpty()) {
+                return response()->json(['error' => 'No hay ciclos activos', 'cicloActivo' => null]);
             }
 
-            $inscripcionActiva = Inscripcion::where('estudiante_id', $user->id)
-                ->where('estado_inscripcion', 'activo')
-                ->whereHas('ciclo', fn($q) => $q->where('es_activo', true))
-                ->with(['ciclo', 'carrera', 'aula', 'turno'])
-                ->first();
-
-            $postulacion = null;
-            if (!$inscripcionActiva && $user->hasRole('postulante')) {
-                $postulacion = Postulacion::where('user_id', $user->id)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-            }
-
+            $hoy = Carbon::now();
             $data = [
-                'inscripcionActiva' => $inscripcionActiva,
-                'postulacion' => $postulacion,
-                'infoAsistencia' => (object)[] // Aseguramos que sea un objeto en JSON
+                'totalInscripciones' => 0,
+                'postulaciones' => ['total' => 0, 'pendientes' => 0, 'aprobadas' => 0, 'rechazadas' => 0],
+                'carnets' => ['total' => 0, 'pendientes_impresion' => 0, 'pendientes_entrega' => 0, 'entregados' => 0],
+                'totalDocentesActivos' => 0,
+                'totalAulas' => 0,
+                'estadisticasAsistencia' => ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_estudiantes' => 0],
+                'alertas' => []
             ];
 
-            if ($inscripcionActiva) {
-                $ciclo = $inscripcionActiva->ciclo;
-                $numeroDocumento = $user->numero_documento;
+            // Info estratégica del ciclo
+            $cRef = $ciclosToProcess->first();
+            $inicio = Carbon::parse($cRef->fecha_inicio);
+            $fin = Carbon::parse($cRef->fecha_fin);
+            
+            $totalDias = max(1, $inicio->diffInDays($fin));
+            $transcurridos = max(0, $inicio->diffInDays($hoy));
+            $pct = min(100, round(($transcurridos / $totalDias) * 100, 1));
+            
+            // Determinar próximo hito
+            $examenes = [
+                ['nombre' => '1er Examen', 'fecha' => $cRef->fecha_primer_examen],
+                ['nombre' => '2do Examen', 'fecha' => $cRef->fecha_segundo_examen],
+                ['nombre' => '3er Examen', 'fecha' => $cRef->fecha_tercer_examen],
+                ['nombre' => 'Cierre de Ciclo', 'fecha' => $cRef->fecha_fin]
+            ];
 
-                $data['infoAsistencia']['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                    $numeroDocumento,
-                    $ciclo->fecha_inicio,
-                    $ciclo->fecha_primer_examen,
-                    $ciclo
-                );
-
-                if ($ciclo->fecha_segundo_examen) {
-                    $data['infoAsistencia']['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                        $numeroDocumento,
-                        AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo),
-                        $ciclo->fecha_segundo_examen,
-                        $ciclo
-                    );
+            $proximoHito = null;
+            foreach ($examenes as $exa) {
+                if ($exa['fecha'] && Carbon::parse($exa['fecha'])->endOfDay()->greaterThan($hoy)) {
+                    $proximoHito = [
+                        'nombre' => $exa['nombre'],
+                        'fecha' => Carbon::parse($exa['fecha'])->format('Y-m-d H:i:s'),
+                        'dias_faltantes' => $hoy->diffInDays(Carbon::parse($exa['fecha']), false)
+                    ];
+                    break;
                 }
-
-                if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                    $data['infoAsistencia']['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                        $numeroDocumento,
-                        AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo),
-                        $ciclo->fecha_tercer_examen,
-                        $ciclo
-                    );
-                }
-
-                $data['infoAsistencia']['total_ciclo'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                    $numeroDocumento,
-                    $ciclo->fecha_inicio,
-                    min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
-                    $ciclo
-                );
-
-                $data['primerRegistro'] = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-                    ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
-                    ->orderBy('fecha_registro')
-                    ->first();
             }
+
+            $data['cicloActivo'] = [
+                'nombre' => $ciclo_id === 'global' ? "SISTEMA INTEGRAL CEPRE" : $cRef->nombre,
+                'fecha_inicio' => $inicio->format('d/m/Y'),
+                'fecha_fin' => $fin->format('d/m/Y'),
+                'fecha_examen_1' => $cRef->fecha_primer_examen ? Carbon::parse($cRef->fecha_primer_examen)->format('d/m/Y') : null,
+                'fecha_examen_2' => $cRef->fecha_segundo_examen ? Carbon::parse($cRef->fecha_segundo_examen)->format('d/m/Y') : null,
+                'fecha_examen_3' => $cRef->fecha_tercer_examen ? Carbon::parse($cRef->fecha_tercer_examen)->format('d/m/Y') : null,
+                'progreso_porcentaje' => $pct,
+                'proximo_hito' => $proximoHito,
+                'es_global' => $ciclo_id === 'global'
+            ];
+
+            foreach ($ciclosToProcess as $ciclo) {
+                $data['totalInscripciones'] += Inscripcion::where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'activo')->count();
+                $post = Postulacion::where('ciclo_id', $ciclo->id)->selectRaw('COUNT(*) as t, SUM(CASE WHEN estado="pendiente" THEN 1 ELSE 0 END) as p, SUM(CASE WHEN estado="aprobado" THEN 1 ELSE 0 END) as a')->first();
+                $data['postulaciones']['total'] += $post->t;
+                $data['postulaciones']['pendientes'] += $post->p;
+                $data['postulaciones']['aprobadas'] += $post->a;
+                $data['totalDocentesActivos'] += HorarioDocente::where('ciclo_id', $ciclo->id)->distinct('docente_id')->count('docente_id');
+                $data['totalAulas'] += Inscripcion::where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'activo')->whereNotNull('aula_id')->distinct('aula_id')->count('aula_id');
+                $stats = AsistenciaHelper::obtenerEstadisticasCiclo($ciclo);
+                $data['estadisticasAsistencia']['regulares'] += $stats['regulares'];
+                $data['estadisticasAsistencia']['amonestados'] += $stats['amonestados'];
+                $data['estadisticasAsistencia']['inhabilitados'] += $stats['inhabilitados'];
+                $data['estadisticasAsistencia']['total_estudiantes'] += $stats['total_estudiantes'];
+            }
+
+            $estudiantesHoy = RegistroAsistencia::whereDate('fecha_registro', Carbon::today())->distinct('nro_documento')->count('nro_documento');
+            $data['asistenciaHoy'] = [
+                'estudiantes_unicos' => $estudiantesHoy,
+                'porcentaje' => $data['totalInscripciones'] > 0 ? round(($estudiantesHoy / $data['totalInscripciones']) * 100, 1) : 0
+            ];
 
             return response()->json($data);
-        } catch (\Exception $e) {
-            \Log::error('Error en getDatosEstudiante: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener datos del estudiante'], 500);
-        }
+        } catch (\Exception $e) { return response()->json(['error' => $e->getMessage()], 500); }
     }
 
-    /**
-     * Obtener datos del dashboard de profesor
-     */
-    public function getDatosProfesor(Request $request)
-    {
-        try {
-            $user = Auth::user();
-            
-            if (!$user->hasRole('profesor')) {
-                return response()->json(['error' => 'No autorizado'], 403);
-            }
-
-            $fechaSeleccionada = $request->input('fecha') ? 
-                Carbon::parse($request->input('fecha')) : Carbon::today();
-            
-            $diaSemanaSeleccionada = strtolower($fechaSeleccionada->locale('es')->dayName);
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
-            
-            $horariosDelDia = HorarioDocente::where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemanaSeleccionada)
-                ->with(['aula', 'curso', 'ciclo'])
-                ->orderBy('hora_inicio')
-                ->get();
-            
-            $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $fechaSeleccionada)
-                ->orderBy('fecha_registro')
-                ->get();
-
-            $horasDelDia = 0;
-            $sesionesPendientes = 0;
-            $tarifaPorHora = $this->obtenerTarifaDocente($user->id, $cicloActivo);
-            
-            $horariosConDetalles = $horariosDelDia->map(function ($horario) use (
-                $registrosDelDia, 
-                &$horasDelDia, 
-                $user, 
-                &$sesionesPendientes, 
-                $fechaSeleccionada
-            ) {
-                $horaInicio = Carbon::parse($horario->hora_inicio);
-                $horaFin = Carbon::parse($horario->hora_fin);
-                
-                $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute);
-                $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute);
-                
-                $entrada = $registrosDelDia->filter(function($r) use ($horarioInicioHoy) {
-                    $horaRegistro = Carbon::parse($r->fecha_registro);
-                    return $horaRegistro->between(
-                        $horarioInicioHoy->copy()->subMinutes(15),
-                        $horarioInicioHoy->copy()->addMinutes(30)
-                    );
-                })->first();
-                
-                $salida = $registrosDelDia->filter(function($r) use ($horarioFinHoy) {
-                    $horaRegistro = Carbon::parse($r->fecha_registro);
-                    return $horaRegistro->between(
-                        $horarioFinHoy->copy()->subMinutes(15),
-                        $horarioFinHoy->copy()->addMinutes(60)
-                    );
-                })->sortByDesc('fecha_registro')->first();
-                
-                if ($entrada && $salida) {
-                    $hEntrada = Carbon::parse($entrada->fecha_registro);
-                    $hSalida = Carbon::parse($salida->fecha_registro);
-                    if ($hSalida->greaterThan($hEntrada)) {
-                        $horasDelDia += $hSalida->diffInMinutes($hEntrada) / 60;
-                    }
-                }
-                
-                $asistencia = AsistenciaDocente::where('docente_id', $user->id)
-                    ->where('horario_id', $horario->id)
-                    ->whereDate('fecha_hora', $fechaSeleccionada)
-                    ->first();
-                
-                $claseTerminada = Carbon::now()->greaterThan($horarioFinHoy);
-                if ($claseTerminada && !$asistencia && $entrada && $salida) {
-                    $sesionesPendientes++;
-                }
-                
-                return [
-                    'horario' => $horario,
-                    'hora_entrada_registrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i A') : null,
-                    'hora_salida_registrada' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i A') : null,
-                    'asistencia' => $asistencia,
-                    'tiene_registros' => $entrada && $salida,
-                    'clase_terminada' => $claseTerminada
-                ];
-            });
-
-            $pagoEstimadoHoy = $this->calcularPagoEstimado($user->id, $fechaSeleccionada, $horariosDelDia, $tarifaPorHora);
-            
-            $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
-                ->whereBetween('fecha_hora', [
-                    Carbon::now()->subDays(6)->startOfDay(), 
-                    Carbon::now()->endOfDay()
-                ])
-                ->selectRaw('
-                    COUNT(*) as total_sesiones,
-                    SUM(horas_dictadas) as total_horas,
-                    SUM(monto_total) as total_ingresos,
-                    AVG(CASE WHEN estado = "completada" THEN 1 ELSE 0 END) * 100 as porcentaje_asistencia
-                ')
-                ->first();
-            
-            return response()->json([
-                'fechaSeleccionada' => $fechaSeleccionada->format('Y-m-d'),
-                'horariosDelDia' => $horariosConDetalles,
-                'horasHoy' => round($horasDelDia, 2),
-                'sesionesHoy' => $horariosDelDia->count(),
-                'sesionesPendientes' => $sesionesPendientes,
-                'tarifaPorHora' => $tarifaPorHora,
-                'pagoEstimadoHoy' => $pagoEstimadoHoy,
-                'resumenSemanal' => [
-                    'sesiones' => $resumenSemanal->total_sesiones ?? 0,
-                    'horas' => round($resumenSemanal->total_horas ?? 0, 2),
-                    'ingresos' => $resumenSemanal->total_ingresos ?? 0,
-                    'asistencia' => round($resumenSemanal->porcentaje_asistencia ?? 0)
-                ],
-                'proximaClase' => $this->obtenerProximaClase($user->id)
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error en getDatosProfesor: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al obtener datos del profesor'], 500);
-        }
-    }
-
-    // ==================== MÉTODOS AUXILIARES ====================
-    
-    private function obtenerTarifaDocente($docenteId, $cicloActivo = null)
-    {
-        if (!$cicloActivo) {
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
-        }
-
-        if ($cicloActivo) {
-            $pagoDocente = PagoDocente::where('docente_id', $docenteId)
-                ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
-                ->where(function ($query) use ($cicloActivo) {
-                    $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
-                          ->orWhereNull('fecha_fin');
-                })
-                ->orderBy('fecha_inicio', 'desc')
-                ->first();
-
-            if ($pagoDocente) {
-                return $pagoDocente->tarifa_por_hora;
-            }
-        }
-
-        $user = User::find($docenteId);
-        return $user->tarifa_por_hora ?? 25.00;
-    }
-
-    private function calcularPagoEstimado($docenteId, $fechaSeleccionada, $horariosDelDia, $tarifaPorHora)
-    {
-        $pagoReal = AsistenciaDocente::where('docente_id', $docenteId)
-            ->whereDate('fecha_hora', $fechaSeleccionada)
-            ->sum('monto_total');
-
-        if ($pagoReal > 0) {
-            return $pagoReal;
-        }
-
-        $totalHorasEstimadas = 0;
-        foreach ($horariosDelDia as $horario) {
-            $horaInicio = Carbon::parse($horario->hora_inicio);
-            $horaFin = Carbon::parse($horario->hora_fin);
-            $totalHorasEstimadas += $horaInicio->diffInMinutes($horaFin) / 60;
-        }
-
-        return $totalHorasEstimadas * $tarifaPorHora;
-    }
-
-    private function obtenerProximaClase($docenteId)
-    {
-        $ahora = Carbon::now();
-        $diaActualSemana = strtolower($ahora->locale('es')->dayName);
-
-        $proximaClaseHoy = HorarioDocente::where('docente_id', $docenteId)
-            ->where('dia_semana', $diaActualSemana)
-            ->where('hora_inicio', '>', $ahora->format('H:i:s'))
-            ->with(['aula', 'curso'])
-            ->orderBy('hora_inicio')
-            ->first();
-
-        if ($proximaClaseHoy) {
-            return $proximaClaseHoy;
-        }
-
-        $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-        $diaActualIndex = array_search($diaActualSemana, $diasSemana);
-        
-        for ($i = 1; $i <= 7; $i++) {
-            $indexDia = ($diaActualIndex + $i) % 7;
-            $diaBuscado = $diasSemana[$indexDia];
-            
-            $claseEncontrada = HorarioDocente::where('docente_id', $docenteId)
-                ->where('dia_semana', $diaBuscado)
-                ->with(['aula', 'curso'])
-                ->orderBy('hora_inicio')
-                ->first();
-            
-            if ($claseEncontrada) {
-                return $claseEncontrada;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Obtener estadísticas generales de asistencia optimizadas
-     */
-    private function obtenerEstadisticasGenerales($ciclo)
-    {
-        return \App\Helpers\AsistenciaHelper::obtenerEstadisticasCiclo($ciclo);
-    }
+    public function getEstadisticasAsistencia(Request $request) { return $this->getDatosAdmin($request); }
+    public function getAnuncios() { return response()->json(Anuncio::where('es_activo', true)->orderBy('fecha_publicacion', 'desc')->take(3)->get()); }
 }
