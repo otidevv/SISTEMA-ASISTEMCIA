@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DocumentApiController;
 use App\Http\Controllers\Api\CargaHorariaApiController;
 use App\Http\Controllers\Api\MailNotificationController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\MaterialAcademicoApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,8 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/estudiante', [DashboardController::class, 'getDatosEstudiante']);
         Route::get('/profesor', [DashboardController::class, 'getDatosProfesor']);
         Route::post('/profesor/registrar-tema', [DashboardController::class, 'registrarTemaDesarrollado']);
+        Route::get('/profesor/reporte/carga-horaria/{type?}', [DashboardController::class, 'exportWorkloadPdf']);
+        Route::get('/profesor/reporte/asistencia', [DashboardController::class, 'exportAttendancePdf']);
         Route::get('/admin/monitoreo-diario', [\App\Http\Controllers\AsistenciaDocenteController::class, 'getDailySchedule']);
     });
 
@@ -103,6 +106,15 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/schedule', [TeacherApiController::class, 'getMySchedule']);
         Route::get('/class-students/{horario_id}', [TeacherApiController::class, 'getClassStudents']);
         Route::post('/upload-material', [TeacherApiController::class, 'uploadMaterial']);
+    });
+
+    // --- GESTIÓN DE MATERIAL ACADÉMICO ---
+    Route::group(['prefix' => 'materiales-academicos'], function () {
+        Route::get('/', [MaterialAcademicoApiController::class, 'index']);
+        Route::get('/form-data', [MaterialAcademicoApiController::class, 'getFormData']);
+        Route::post('/', [MaterialAcademicoApiController::class, 'store']);
+        Route::post('/{id}', [MaterialAcademicoApiController::class, 'update']); // Usar POST para update con files por limitaciones de PUT en multipart
+        Route::delete('/{id}', [MaterialAcademicoApiController::class, 'destroy']);
     });
 
     // --- PAGOS ---

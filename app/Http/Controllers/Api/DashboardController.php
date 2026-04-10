@@ -22,9 +22,309 @@ use App\Models\ResultadoExamen;
 use App\Models\Carrera;
 use App\Models\Curso;
 use App\Helpers\AsistenciaHelper;
+use App\Http\Controllers\Traits\ProcessesTeacherSessions;
+use App\Http\Controllers\Traits\HandlesSaturdayRotation;
+
+use App\Http\Controllers\Traits\TeacherDashboardHelpers;
 
 class DashboardController extends Controller
 {
+    use ProcessesTeacherSessions, HandlesSaturdayRotation, TeacherDashboardHelpers;
+
+    public function getDatosProfesor(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user->hasRole('profesor')) {
+                return response()->json(['error' => 'No autorizado'], 403);
+            }
+
+            $fechaSeleccionada = $request->input('fecha') ? Carbon::parse($request->input('fecha')) : Carbon::today();
+            $ciclosActivos = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->get();
+            $cicloActivo = $ciclosActivos->first();
+
+            if (!$cicloActivo) {
+                 return response()->json(['error' => 'No hay ciclo académico activo'], 404);
+            }
+
+            // 1. Horarios y Sesiones
+            $todosHorariosActivos = HorarioDocente::where('docente_id', $user->id)
+                ->whereHas('ciclo', function ($query) {
+                    $query->where('es_activo', true);
+                })
+                ->with(['aula', 'curso', 'ciclo'])
+                ->get();
+
+            $horariosDelDia = $todosHorariosActivos->filter(function ($horario) use ($fechaSeleccionada) {
+                $ciclo = $horario->ciclo;
+                if (!$ciclo) return false;
+                $diaHorarioNecesario = $ciclo->getDiaHorarioParaFecha($fechaSeleccionada);
+                return strtolower($diaHorarioNecesario) === strtolower($horario->dia_semana);
+            })->sortBy('hora_inicio');
+
+            $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+                ->orderBy('fecha_registro')
+                ->get();
+
+            $totalMinutosNetosHoy = 0;
+            $totalPagoHoy = 0;
+            $sesionesPendientes = 0;
+
+            $horariosDelDiaConDetalles = $horariosDelDia->map(function ($horario) use ($registrosDelDia, &$totalMinutosNetosHoy, &$totalPagoHoy, $user, &$sesionesPendientes, $fechaSeleccionada) {
+                $sessionDetails = $this->processTeacherSessionLogic($horario, $fechaSeleccionada, $registrosDelDia, $user);
+                
+                if (!$sessionDetails) return null;
+
+                $horaInicio = Carbon::parse($horario->hora_inicio);
+                $horaFin = Carbon::parse($horario->hora_fin);
+                $momentoActual = $fechaSeleccionada->isToday() ? Carbon::now() : $fechaSeleccionada->copy()->endOfDay();
+                $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute);
+                $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute);
+
+                $claseTerminada = $momentoActual->greaterThan($horarioFinHoy);
+                $asistencia = AsistenciaDocente::where('docente_id', $user->id)
+                    ->where('horario_id', $horario->id)
+                    ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
+                    ->first();
+
+                if ($claseTerminada && !$asistencia && $sessionDetails['tiene_registros']) {
+                    $sesionesPendientes++;
+                }
+
+                $totalMinutosNetosHoy += $sessionDetails['horas_dictadas'] * 60;
+                $totalPagoHoy += $sessionDetails['pago'];
+
+                return array_merge($sessionDetails, [
+                    'id' => $horario->id,
+                    'clase_terminada' => $claseTerminada,
+                    'asistencia_id' => $asistencia ? $asistencia->id : null,
+                    'tiempo_info' => $this->calcularInfoTiempo($horarioInicioHoy, $horarioFinHoy, $momentoActual, $fechaSeleccionada),
+                    'curso_nombre' => $horario->curso->nombre ?? 'N/A',
+                    'aula_nombre' => $horario->aula->nombre ?? 'N/A',
+                ]);
+            })->filter()->values();
+
+            // 2. Métricas
+            $eficienciaData = $this->calcularEficienciaYPuntualidad($user->id, $cicloActivo);
+            $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
+                ->whereBetween('fecha_hora', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
+                ->selectRaw('COUNT(*) as total_sesiones, SUM(horas_dictadas) as total_horas, SUM(monto_total) as total_ingresos')
+                ->first();
+
+            $proximaClase = $this->obtenerProximaClaseCorregida($user->id, $cicloActivo);
+
+            // 3. Anuncios
+            $anuncios = Anuncio::where('es_activo', true)
+                ->where('fecha_publicacion', '<=', now())
+                ->orderBy('fecha_publicacion', 'desc')
+                ->take(5)
+                ->get();
+
+            return response()->json([
+                'user' => [
+                    'id' => $user->id,
+                    'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
+                    'rol' => 'profesor'
+                ],
+                // Datos directos para el dashboard móvil
+                'sesionesHoy' => $horariosDelDia->count(),
+                'horasHoy' => round($totalMinutosNetosHoy / 60, 1),
+                'pagoHoy' => round($totalPagoHoy, 2),
+                'sesionesPendientes' => $sesionesPendientes,
+                'eficiencia' => $eficienciaData['eficiencia'],
+                'puntualidad' => $eficienciaData['puntualidad'],
+                
+                // Resumen semanal esperado por el UI
+                'resumenSemanal' => [
+                    'sesiones' => $resumenSemanal->total_sesiones ?? 0,
+                    'horas' => round($resumenSemanal->total_horas ?? 0, 1),
+                    'ingresos' => round($resumenSemanal->total_ingresos ?? 0, 2),
+                    'asistencia' => $eficienciaData['eficiencia'], // Mapeado a "Cumplimiento"
+                    'tendencia' => $this->calcularTendenciaSemanal($user->id)
+                ],
+                
+                // Lista de sesiones esperada por el UI
+                'horariosDelDia' => $horariosDelDiaConDetalles->map(function($s) {
+                    // El UI espera h['horario']['id'], etc.
+                    return [
+                        'horario' => [
+                            'id' => $s['id'],
+                            'curso' => ['nombre' => $s['curso_nombre']],
+                            'aula' => ['nombre' => $s['aula_nombre']],
+                            'hora_inicio' => $s['hora_entrada_prog'],
+                            'hora_fin' => $s['hora_salida_prog'],
+                        ],
+                        'asistencia' => [
+                            'tema_desarrollado' => $s['tema_desarrollado'],
+                            'hora_entrada' => $s['hora_entrada'],
+                            'hora_salida' => $s['hora_salida'],
+                            'estado' => $s['estado_sesion'],
+                        ],
+                        'clase_terminada' => $s['clase_terminada'],
+                        'tiempo_info' => $s['tiempo_info'],
+                        'tiene_registros' => $s['tiene_registros']
+                    ];
+                }),
+                
+                'proximaClase' => $proximaClase ? [
+                    'curso' => $proximaClase->curso->nombre,
+                    'aula' => $proximaClase->aula->nombre ?? 'N/A',
+                    'hora' => Carbon::parse($proximaClase->hora_inicio)->format('H:i'),
+                    'dia' => $proximaClase->dia_semana
+                ] : null,
+                
+                'anuncios' => $anuncios,
+                'fecha_actual' => $fechaSeleccionada->format('Y-m-d')
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function registrarTemaDesarrollado(Request $request)
+    {
+        try {
+            $request->validate([
+                'horario_id' => 'required|exists:horarios_docentes,id',
+                'fecha_seleccionada' => 'required|date',
+                'tema_desarrollado' => 'required|string|min:10|max:1000'
+            ]);
+
+            $user = Auth::user();
+            $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay();
+            $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            
+            $horario = HorarioDocente::where('id', $request->horario_id)
+                ->where('docente_id', $user->id)
+                ->where('dia_semana', $diaSemanaSeleccionada)
+                ->first();
+                
+            if (!$horario) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Horario no válido o no corresponde al día de la sesión.'
+                ], 400);
+            }
+
+            $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
+            $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
+            
+            $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+                ->orderBy('fecha_registro')
+                ->get();
+
+            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioInicioClase->copy()->subMinutes(15),
+                    $horarioInicioClase->copy()->addMinutes(120) // Tolerancia unificada con web
+                );
+            })->first();
+
+            $salida = $registrosDiaSeleccionado->filter(function($r) use ($horarioFinClase) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioFinClase->copy()->subMinutes(15),
+                    $horarioFinClase->copy()->addMinutes(60)
+                );
+            })->sortByDesc('fecha_registro')->first();
+
+            if (!$entrada || !$salida) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontraron registros biométricos de entrada/salida válidos.'
+                ], 400);
+            }
+
+            $horaEntrada = Carbon::parse($entrada->fecha_registro);
+            $horaSalida = Carbon::parse($salida->fecha_registro);
+            
+            $inicioEfectivo = $horaEntrada->max($horarioInicioClase);
+            $finEfectivo = $horaSalida->min($horarioFinClase);
+            
+            $horasTrabajadas = 0;
+            $montoTotal = 0;
+
+            if ($finEfectivo->greaterThan($inicioEfectivo)) {
+                $minutosBrutos = $inicioEfectivo->diffInMinutes($finEfectivo);
+
+                $cicloDelHorario = $horario->ciclo;
+                $minutosRecesoManana = 0;
+                $minutosRecesoTarde = 0;
+                
+                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+                    $recesoMananaInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+                    $recesoMananaFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+                    if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                        $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
+                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
+                }
+
+                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+                    $recesoTardeInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+                    $recesoTardeFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+                    if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                        $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
+                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
+                }
+
+                $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
+                $horasTrabajadas = max(0, $minutosNetos) / 60;
+                
+                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloDelHorario, $fechaSeleccionada);
+                $montoTotal = $horasTrabajadas * $tarifaHora;
+            } else {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'No hay tiempo de clase efectivo.'
+                ], 400);
+            }
+
+            $asistencia = AsistenciaDocente::updateOrCreate(
+                [
+                    'docente_id' => $user->id,
+                    'horario_id' => $request->horario_id,
+                    'fecha_hora' => $fechaSeleccionada->toDateString()
+                ],
+                [
+                    'tema_desarrollado' => $request->tema_desarrollado,
+                    'hora_entrada' => $horaEntrada->toDateTimeString(),
+                    'hora_salida' => $horaSalida->toDateTimeString(),
+                    'horas_dictadas' => round($horasTrabajadas, 2),
+                    'monto_total' => round($montoTotal, 2),
+                    'estado' => 'completada'
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tema desarrollado registrado exitosamente',
+                'data' => [
+                    'tema' => $asistencia->tema_desarrollado,
+                    'horas' => $asistencia->horas_dictadas,
+                    'monto' => $asistencia->monto_total
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getDatosGenerales()
     {
         try {
@@ -166,4 +466,54 @@ class DashboardController extends Controller
 
     public function getEstadisticasAsistencia(Request $request) { return $this->getDatosAdmin($request); }
     public function getAnuncios() { return response()->json(Anuncio::where('es_activo', true)->orderBy('fecha_publicacion', 'desc')->take(3)->get()); }
+
+    /**
+     * Exportar PDF de Carga Horaria (Visual o Detallado) para el docente autenticado.
+     */
+    public function exportWorkloadPdf(Request $request, $type = 'visual')
+    {
+        try {
+            $user = $request->user();
+            $cicloId = $request->input('ciclo_id');
+            
+            if (!$cicloId) {
+                $cicloActivo = Ciclo::where('es_activo', true)->first();
+                $cicloId = $cicloActivo ? $cicloActivo->id : null;
+            }
+
+            if (!$cicloId) {
+                return response()->json(['success' => false, 'message' => 'No hay ciclo activo o seleccionado.'], 404);
+            }
+
+            $controller = new \App\Http\Controllers\CargaHorariaController();
+            
+            if ($type === 'detallado') {
+                return $controller->pdfDetallado($user->id, $cicloId);
+            }
+            
+            return $controller->pdfVisual($user->id, $cicloId);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error al generar PDF de carga horaria: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Exportar PDF de Asistencia Individual para el docente autenticado.
+     */
+    public function exportAttendancePdf(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Forzar que el reporte sea solo para el usuario autenticado
+            $request->merge(['docente_id' => $user->id]);
+            
+            $controller = new \App\Http\Controllers\AsistenciaDocenteController();
+            return $controller->exportarPdfIndividual($request);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error al generar PDF de asistencia: ' . $e->getMessage()], 500);
+        }
+    }
 }

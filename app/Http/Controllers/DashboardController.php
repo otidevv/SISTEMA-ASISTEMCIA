@@ -25,9 +25,11 @@ use App\Models\Carrera;
 use App\Models\Aula; 
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Http\Controllers\Traits\TeacherDashboardHelpers;
+
 class DashboardController extends Controller
 {
-    use ProcessesTeacherSessions, HandlesSaturdayRotation;
+    use ProcessesTeacherSessions, HandlesSaturdayRotation, TeacherDashboardHelpers;
 
     /**
      * Muestra el dashboard principal basado en el rol del usuario.
