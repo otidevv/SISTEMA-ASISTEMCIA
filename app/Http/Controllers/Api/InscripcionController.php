@@ -47,9 +47,25 @@ class InscripcionController extends Controller
             $query->where('estado_inscripcion', $request->estado);
         }
 
+        set_time_limit(120);
+        
+        // --- OPTIMIZACIÓN: EVITAR N+1 EN CAPACIDAD DISPONIBLE ---
+        // Pre-calculamos la ocupación de todas las aulas en el ciclo activo
+        $aulaOccupancies = DB::table('inscripciones')
+            ->join('ciclos', 'inscripciones.ciclo_id', '=', 'ciclos.id')
+            ->where('inscripciones.estado_inscripcion', 'activo')
+            ->where('ciclos.es_activo', true)
+            ->select('inscripciones.aula_id', DB::raw('count(*) as total'))
+            ->groupBy('inscripciones.aula_id')
+            ->pluck('total', 'inscripciones.aula_id')
+            ->toArray();
+
         $inscripciones = $query->orderBy('created_at', 'desc')->get();
 
-        $data = $inscripciones->map(function ($inscripcion) {
+        $data = $inscripciones->map(function ($inscripcion) use ($aulaOccupancies) {
+            $ocupacionActual = $aulaOccupancies[$inscripcion->aula_id] ?? 0;
+            $disponible = $inscripcion->aula->capacidad - $ocupacionActual;
+
             return [
                 'id' => $inscripcion->id,
                 'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
@@ -58,7 +74,7 @@ class InscripcionController extends Controller
                     'nombre_completo' => $inscripcion->estudiante->nombre . ' ' .
                         $inscripcion->estudiante->apellido_paterno . ' ' .
                         $inscripcion->estudiante->apellido_materno,
-                    'codigo' => $inscripcion->estudiante->numero_documento, // Usando numero_documento como código
+                    'codigo' => $inscripcion->estudiante->numero_documento,
                     'email' => $inscripcion->estudiante->email
                 ],
                 'carrera' => [
@@ -80,11 +96,7 @@ class InscripcionController extends Controller
                     'codigo' => $inscripcion->aula->codigo,
                     'nombre' => $inscripcion->aula->nombre,
                     'capacidad' => $inscripcion->aula->capacidad,
-                    'disponible' => $inscripcion->aula->getCapacidadDisponible(
-                        $inscripcion->ciclo_id,
-                        $inscripcion->carrera_id,
-                        $inscripcion->turno_id
-                    )
+                    'disponible' => $disponible
                 ],
                 'fecha_inscripcion' => $inscripcion->fecha_inscripcion->format('Y-m-d'),
                 'estado_inscripcion' => $inscripcion->estado_inscripcion,

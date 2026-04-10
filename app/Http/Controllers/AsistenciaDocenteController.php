@@ -233,7 +233,7 @@ class AsistenciaDocenteController extends Controller
             ->groupBy('docente_id')
             ->get();
 
-        // 6. OPTIMIZACIÓN: LÓGICA PARA DATOS DETALLADOS
+        // 6. OPTIMIZACIÓN: LÓGICA PARA DATOS DETALLADOS (POR LOTES)
         $processedDetailedAsistencias = [];
         $cicloActivoParaRotacion = Ciclo::where('es_activo', true)
             ->orderBy('programa_id', 'asc')
@@ -259,24 +259,50 @@ class AsistenciaDocenteController extends Controller
         }
         
         $docentesParaProcesar = $docentesQuery->get();
+        if ($docentesParaProcesar->isEmpty()) {
+             return [
+                'totalRegistrosPeriodo' => $totalRegistrosPeriodo, 
+                'asistenciaSemana' => $asistenciaSemana, 
+                'asistenciaPorDocente' => $asistenciaPorDocente, 
+                'docentes' => $docentes,
+                'ciclosAcademicos' => $ciclosAcademicos, 
+                'selectedDocenteId' => $selectedDocenteId, 
+                'selectedMonth' => $selectedMonth,    
+                'selectedYear' => $selectedYear,     
+                'fechaInicio' => $fechaInicio,      
+                'fechaFin' => $fechaFin,         
+                'selectedCicloAcademico' => $selectedCicloAcademico,
+                'processedDetailedAsistencias' => [],
+                'startDate' => $startDate,
+                'endDate' => $endDate
+            ];
+        }
+
+        $idsDocentes = $docentesParaProcesar->pluck('id')->toArray();
+        $docsDocentes = $docentesParaProcesar->pluck('numero_documento')->filter()->toArray();
+
+        // ⚡ BULK FETCH: Todos los horarios de los docentes relevantes
+        $horariosQuery = HorarioDocente::whereIn('docente_id', $idsDocentes)->with(['curso', 'aula', 'ciclo']);
+        if ($selectedCicloAcademico) {
+            $horariosQuery->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
+                $q->where('codigo', $selectedCicloAcademico);
+            });
+        }
+        $todosHorarios = $horariosQuery->get()->groupBy('docente_id');
+
+        // ⚡ BULK FETCH: Todos los registros biométricos del rango para todos los docentes
+        $todosRegistros = RegistroAsistencia::whereIn('nro_documento', $docsDocentes)
+            ->whereBetween('fecha_registro', [$startDate, $endDate])
+            ->orderBy('fecha_registro', 'asc')
+            ->get()
+            ->groupBy('nro_documento');
 
         foreach ($docentesParaProcesar as $docente) {
             $docenteSessions = [];
-            $todosHorariosDocente = HorarioDocente::where('docente_id', $docente->id)->with(['curso', 'aula', 'ciclo']);
+            $horariosDocente = $todosHorarios->get($docente->id, collect());
+            $registrosDocente = $todosRegistros->get($docente->numero_documento, collect());
             
-            if ($selectedCicloAcademico) {
-                $todosHorariosDocente->whereHas('ciclo', function ($q) use ($selectedCicloAcademico) {
-                    $q->where('codigo', $selectedCicloAcademico);
-                });
-            }
-            $todosHorariosDocente = $todosHorariosDocente->get();
-            
-            $todosRegistrosDocente = RegistroAsistencia::where('nro_documento', $docente->numero_documento)
-                ->whereBetween('fecha_registro', [$startDate, $endDate])
-                ->orderBy('fecha_registro', 'asc')
-                ->get();
-            
-            $registrosPorFecha = $todosRegistrosDocente->groupBy(function($item) {
+            $registrosPorFecha = $registrosDocente->groupBy(function($item) {
                 return Carbon::parse($item->fecha_registro)->toDateString();
             });
 
@@ -285,7 +311,7 @@ class AsistenciaDocenteController extends Controller
                 $fechaString = $currentDateLoop->toDateString();
                 $registrosBiometricosDelDia = $registrosPorFecha->get($fechaString, collect([]));
 
-                foreach ($todosHorariosDocente as $horario) {
+                foreach ($horariosDocente as $horario) {
                     if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) continue;
                     
                     // Obtener el día que le corresponde a este horario según SU ciclo

@@ -1482,34 +1482,108 @@ class PostulacionController extends Controller
         }
 
         $inscripciones = $queryInscripciones->get();
+        if ($inscripciones->isEmpty()) {
+            return $this->formatEmptyInhabilitadosData($ciclo, $labelPeriodo, $tipoInscripcion);
+        }
+
+        // --- OPTIMIZACIÓN: PROCESAMIENTO POR LOTES ---
+        $documentos = $inscripciones->pluck('estudiante.numero_documento')->unique()->toArray();
+        
+        // 1. Obtener primer registro en ciclo para todos
+        $primerasAsistencias = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentos)
+            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+            ->select('nro_documento', DB::raw('MIN(fecha_registro) as first_reg'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('first_reg', 'nro_documento');
+
+        // 2. Definir rango de conteo del periodo
+        $fechaInicioConteoOriginal = Carbon::parse($examenPeriodo['fecha_inicio'])->startOfDay();
+        $fechaExamenCarbon = Carbon::parse($examenPeriodo['fecha_examen'])->endOfDay();
+        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
+
+        // 3. Obtener asistencias del periodo para todos
+        $todasAsistencias = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentos)
+            ->whereBetween('fecha_registro', [$fechaInicioConteoOriginal, $fechaFinCalculo])
+            ->select('nro_documento', DB::raw('DATE(fecha_registro) as fecha'))
+            ->distinct()
+            ->get()
+            ->groupBy('nro_documento');
+
+        // 4. Pre-calcular mapa de días hábiles del ciclo para rapidez
+        $cumulativeDays = [];
+        $count = 0;
+        $temp = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+        $cicloFin = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+        while ($temp <= $cicloFin) {
+            if ($ciclo->esDiaHabil($temp)) $count++;
+            $cumulativeDays[$temp->toDateString()] = $count;
+            $temp->addDay();
+        }
 
         $inhabilitados = [];
-        $totalEstudiantes = $inscripciones->count();
         $estudiantesRegulares = 0;
         $estudiantesAmonestados = 0;
         $estudiantesInhabilitadosCount = 0;
 
         foreach ($inscripciones as $inscripcion) {
-            $estudiante = $inscripcion->estudiante;
-            if (!$estudiante) continue;
+            $doc = $inscripcion->estudiante->numero_documento ?? null;
+            if (!$doc) continue;
 
-            $info = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($estudiante->numero_documento, $ciclo, $periodoId);
+            $firstReg = $primerasAsistencias->get($doc);
+            if (!$firstReg) {
+                $estudiantesRegulares++; // O manejar según lógica de negocio
+                continue;
+            }
 
-            if ($info['estado'] === 'inhabilitado') {
+            // Ajuste de inicio si es primer examen
+            $currentInicio = $fechaInicioConteoOriginal->copy();
+            if (($examenPeriodo['nombre'] ?? '') === 'Primer Examen') {
+                $fRegC = Carbon::parse($firstReg)->startOfDay();
+                if ($fRegC->gt($currentInicio)) $currentInicio = $fRegC;
+            }
+
+            if ($currentInicio > $hoy) {
+                $estudiantesRegulares++;
+                continue;
+            }
+
+            // Calcular días hábiles dinámicamente usando el mapa
+            $diasHabilesTotales = $this->getBusinessDaysFromMap($currentInicio, $fechaExamenCarbon, $cumulativeDays, $ciclo);
+            $diasHabilesTranscurridos = $this->getBusinessDaysFromMap($currentInicio, $fechaFinCalculo, $cumulativeDays, $ciclo);
+
+            // Contar asistencias en memoria
+            $registrosEstudiante = $todasAsistencias->get($doc, collect());
+            $asistenciasCount = 0;
+            foreach ($registrosEstudiante as $reg) {
+                $fC = Carbon::parse($reg->fecha);
+                if ($fC->between($currentInicio, $fechaFinCalculo) && $ciclo->esDiaHabil($fC)) {
+                    $asistenciasCount++;
+                }
+            }
+
+            $faltas = max(0, $diasHabilesTranscurridos - $asistenciasCount);
+            $limiteAmonestacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_amonestacion ?? 20) / 100));
+            $limiteInhabilitacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_inhabilitacion ?? 30) / 100));
+
+            if ($faltas >= $limiteInhabilitacion) {
                 $inhabilitados[] = [
-                    'nombres' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno . ' ' . $estudiante->apellido_materno,
-                    'dni' => $estudiante->numero_documento,
+                    'nombres' => $inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido_paterno . ' ' . $inscripcion->estudiante->apellido_materno,
+                    'dni' => $doc,
                     'carrera' => $inscripcion->carrera ? $inscripcion->carrera->nombre : 'N/A',
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'turno' => $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
-                    'faltas' => $info['faltas'],
-                    'asistencias' => $info['asistencias'],
-                    'total_dias' => $info['dias_habiles_totales'] ?? 0,
-                    'porcentaje' => $info['dias_habiles_totales'] > 0 ? round(($info['asistencias'] / $info['dias_habiles_totales']) * 100, 2) : 100,
-                    'limite' => $info['limite_inhabilitacion']
+                    'faltas' => $faltas,
+                    'asistencias' => $asistenciasCount,
+                    'total_dias' => $diasHabilesTotales,
+                    'porcentaje' => $diasHabilesTotales > 0 ? round(($asistenciasCount / $diasHabilesTotales) * 100, 2) : 100,
+                    'limite' => $limiteInhabilitacion
                 ];
                 $estudiantesInhabilitadosCount++;
-            } elseif ($info['estado'] === 'amonestado') {
+            } elseif ($faltas >= $limiteAmonestacion) {
                 $estudiantesAmonestados++;
             } else {
                 $estudiantesRegulares++;
@@ -1520,10 +1594,7 @@ class PostulacionController extends Controller
             return strcmp($a['nombres'], $b['nombres']);
         });
 
-        $modalidad_label = "Todas las modalidades";
-        if ($tipoInscripcion) {
-            $modalidad_label = ucfirst($tipoInscripcion);
-        }
+        $modalidad_label = $tipoInscripcion ? ucfirst($tipoInscripcion) : "Todas las modalidades";
 
         return [
             'ciclo' => $ciclo,
@@ -1531,13 +1602,48 @@ class PostulacionController extends Controller
             'modalidad_label' => $modalidad_label,
             'inhabilitados' => $inhabilitados,
             'fecha_generacion' => Carbon::now()->format('d/m/Y H:i A'),
-            'total_general' => $totalEstudiantes,
+            'total_general' => $inscripciones->count(),
             'total_inhabilitados' => $estudiantesInhabilitadosCount,
             'total_regulares' => $estudiantesRegulares,
             'total_amonestados' => $estudiantesAmonestados,
             'resumen' => [
-                'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? round(($estudiantesInhabilitadosCount / $totalEstudiantes) * 100, 2) : 0,
+                'porcentaje_inhabilitados' => $inscripciones->count() > 0 ? round(($estudiantesInhabilitadosCount / $inscripciones->count()) * 100, 2) : 0,
             ]
+        ];
+    }
+
+    private function getBusinessDaysFromMap($from, $to, $map, $ciclo)
+    {
+        $fStr = $from->toDateString();
+        $tStr = $to->toDateString();
+        
+        $countTo = $map[$tStr] ?? $map[array_key_last($map)] ?? 0;
+        
+        $countFromBefore = 0;
+        $prevDay = $from->copy()->subDay()->toDateString();
+        if (isset($map[$prevDay])) {
+            $countFromBefore = $map[$prevDay];
+        } else {
+             // Si el día anterior no está en el mapa, es probable que estemos al inicio del ciclo
+             $countFromBefore = 0;
+        }
+
+        return max(0, $countTo - $countFromBefore);
+    }
+
+    private function formatEmptyInhabilitadosData($ciclo, $labelPeriodo, $tipoInscripcion)
+    {
+        return [
+            'ciclo' => $ciclo,
+            'periodo_label' => $labelPeriodo,
+            'modalidad_label' => $tipoInscripcion ? ucfirst($tipoInscripcion) : "Todas las modalidades",
+            'inhabilitados' => [],
+            'fecha_generacion' => Carbon::now()->format('d/m/Y H:i A'),
+            'total_general' => 0,
+            'total_inhabilitados' => 0,
+            'total_regulares' => 0,
+            'total_amonestados' => 0,
+            'resumen' => ['porcentaje_inhabilitados' => 0]
         ];
     }
 

@@ -35,11 +35,20 @@ class ReforzamientoAdminController extends Controller
             $queryBuilder->where('ciclo_id', $request->ciclo_id);
         }
 
-        // Obtener conteos para las tarjetas (usando el filtro aplicado)
+        // Obtener conteos para las tarjetas en una sola consulta
+        $countsData = DB::table('inscripciones_reforzamiento')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('SUM(CASE WHEN estado_inscripcion = "pendiente" THEN 1 ELSE 0 END) as pendiente')
+            ->selectRaw('SUM(CASE WHEN estado_inscripcion = "validado" THEN 1 ELSE 0 END) as aprobado')
+            ->when($request->filled('ciclo_id'), function($q) use ($request) {
+                return $q->where('ciclo_id', $request->ciclo_id);
+            })
+            ->first();
+
         $counts = [
-            'total' => (clone $queryBuilder)->count(),
-            'pendiente' => (clone $queryBuilder)->where('estado_inscripcion', 'pendiente')->count(),
-            'aprobado' => (clone $queryBuilder)->where('estado_inscripcion', 'validado')->count(),
+            'total' => $countsData->total,
+            'pendiente' => $countsData->pendiente,
+            'aprobado' => $countsData->aprobado,
         ];
 
         // Preparar consulta para DataTables con relaciones - Se añade 'apoderados'

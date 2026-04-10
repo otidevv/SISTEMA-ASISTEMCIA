@@ -17,48 +17,97 @@ class UserController extends Controller
     /**
      * Muestra una lista de todos los usuarios para DataTables.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->get();
+        // Obtener permisos del usuario autenticado
+        $currentUser = auth()->user();
+        $canEdit = $currentUser->hasPermission('users.edit');
+        $canChangeStatus = $currentUser->hasPermission('users.change_status');
+        $canDelete = $currentUser->hasPermission('users.delete');
 
-        // Formatear los datos para DataTables
-        $data = $users->map(function ($user) {
+        // Columnas para ordenamiento
+        $columns = [
+            0 => 'id',
+            1 => 'username',
+            2 => 'nombre', // Para full_name concatenado sería más complejo, usamos nombre como fallback
+            3 => 'email',
+            4 => 'id', // roles no es columna directa
+            5 => 'estado',
+            6 => 'numero_documento'
+        ];
+
+        $query = User::with('roles');
+
+        // Búsqueda
+        if ($search = $request->input('search.value')) {
+            $query->where(function($q) use ($search) {
+                $q->where('username', 'LIKE', "%{$search}%")
+                  ->orWhere('nombre', 'LIKE', "%{$search}%")
+                  ->orWhere('apellido_paterno', 'LIKE', "%{$search}%")
+                  ->orWhere('apellido_materno', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('numero_documento', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $recordsTotal = User::count();
+        $recordsFiltered = $query->count();
+
+        // Ordenamiento
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDirection = $request->input('order.0.dir', 'asc');
+        $columnName = $columns[$orderColumnIndex] ?? 'id';
+        
+        $query->orderBy($columnName, $orderDirection);
+
+        // Paginación
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        
+        // Si length es -1, mostrar todos (Datatables feature)
+        if ($length != -1) {
+            $query->skip($start)->take($length);
+        }
+
+        $users = $query->get();
+
+        // Formatear los datos
+        $data = $users->map(function ($user) use ($canEdit, $canChangeStatus, $canDelete) {
             return [
                 'id' => $user->id,
                 'username' => $user->username,
-                'full_name' => $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno,
+                'full_name' => trim($user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno),
                 'email' => $user->email,
                 'roles' => $user->roles->pluck('nombre')->toArray(),
-                'estado' => $user->estado,
+                'estado' => (bool)$user->estado,
                 'numero_documento' => $user->numero_documento,
-                'actions' => $this->getActionButtons($user)
+                'actions' => $this->getActionButtons($user, $canEdit, $canChangeStatus, $canDelete)
             ];
         });
 
         return response()->json([
-            'draw' => request()->input('draw', 1),
-            'recordsTotal' => $users->count(),
-            'recordsFiltered' => $users->count(),
+            'draw' => intval($request->input('draw', 1)),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
             'data' => $data
         ]);
     }
 
     /**
      * Genera los botones de acción para cada usuario.
-     * Verifica permisos antes de mostrar cada botón.
+     * Utiliza permisos ya verificados para optimizar el rendimiento.
      */
-    private function getActionButtons($user)
+    private function getActionButtons($user, $canEdit, $canChangeStatus, $canDelete)
     {
         $buttons = '';
-        $currentUser = auth()->user();
 
-        // ✅ Botón de editar - SOLO si tiene permiso
-        if ($currentUser->hasPermission('users.edit')) {
+        // ✅ Botón de editar
+        if ($canEdit) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-user" data-id="' . $user->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
         }
 
-        // ✅ Botón de cambiar estado - SOLO si tiene permiso
-        if ($currentUser->hasPermission('users.change_status')) {
+        // ✅ Botón de cambiar estado
+        if ($canChangeStatus) {
             $statusIcon = $user->estado ? 'uil-ban' : 'uil-check';
             $statusTitle = $user->estado ? 'Desactivar' : 'Activar';
             $statusClass = $user->estado ? 'warning' : 'success';
@@ -66,14 +115,14 @@ class UserController extends Controller
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-' . $statusClass . ' change-status" data-id="' . $user->id . '" title="' . $statusTitle . '"><i class="uil ' . $statusIcon . '"></i></a> ';
         }
 
-        // ✅ Botón de eliminar - SOLO si tiene permiso
-        if ($currentUser->hasPermission('users.delete')) {
+        // ✅ Botón de eliminar
+        if ($canDelete) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-danger delete-user" data-id="' . $user->id . '" title="Eliminar"><i class="uil uil-trash-alt"></i></a>';
         }
 
-        // Si no tiene ningún permiso, mostrar mensaje o botón de solo lectura
+        // Si no tiene ningún permiso, mostrar mensaje
         if (empty(trim($buttons))) {
-            $buttons = '<span class="text-muted">Sin acciones disponibles</span>';
+            $buttons = '<span class="text-muted">Sin acciones</span>';
         }
 
         return $buttons;

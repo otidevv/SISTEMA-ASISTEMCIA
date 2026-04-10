@@ -79,139 +79,133 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
     
     private function obtenerInscripcionesProcesadas()
     {
-        return Inscripcion::with(['estudiante', 'aula', 'ciclo', 'carrera', 'turno'])
+        $ciclo = \App\Models\Ciclo::find($this->cicloId);
+        $hoy = Carbon::now();
+        
+        // 1. Obtener todas las inscripciones con sus relaciones
+        $inscripciones = Inscripcion::with(['estudiante', 'aula', 'ciclo', 'carrera', 'turno'])
             ->where('ciclo_id', $this->cicloId)
             ->where('estado_inscripcion', 'activo')
-            ->get()
-            ->map(function ($inscripcion) {
-                $estudiante = $inscripcion->estudiante;
-                $ciclo = $inscripcion->ciclo;
+            ->get();
 
-                $primerRegistro = RegistroAsistencia::where('nro_documento', $estudiante->numero_documento)
-                    ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
-                    ->orderBy('fecha_registro')
-                    ->first();
-
-                $data = [
-                    'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
-                    'nombre_completo' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno . ' ' . $estudiante->apellido_materno,
-                    'documento' => $estudiante->numero_documento,
-                    'carrera' => $inscripcion->carrera->nombre,
-                    'aula' => $inscripcion->aula->codigo . ' - ' . $inscripcion->aula->nombre,
-                    'turno' => $inscripcion->turno->nombre,
-                    'celular' => $estudiante->telefono ?? 'No registrado',
-                    'primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : 'Sin registro'
-                ];
-
-                if (!$primerRegistro) {
-                    $data['primer_examen'] = $this->getExamenVacio();
-                    $data['segundo_examen'] = $this->getExamenVacio();
-                    $data['tercer_examen'] = $this->getExamenVacio();
-                    $data['total_ciclo'] = $this->getExamenVacio();
-                    return $data;
-                }
-
-                // Primer Examen
-                if ($ciclo->fecha_primer_examen) {
-                    $data['primer_examen'] = $this->calcularAsistenciaExamen(
-                        $estudiante->numero_documento,
-                        $primerRegistro->fecha_registro,
-                        $ciclo->fecha_primer_examen,
-                        $ciclo
-                    );
-                } else {
-                    $data['primer_examen'] = $this->getExamenVacio();
-                }
-
-                // Segundo Examen
-                if ($ciclo->fecha_segundo_examen) {
-                    $inicioSegundo = $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
-                    $data['segundo_examen'] = $this->calcularAsistenciaExamen(
-                        $estudiante->numero_documento,
-                        $inicioSegundo,
-                        $ciclo->fecha_segundo_examen,
-                        $ciclo
-                    );
-                } else {
-                    $data['segundo_examen'] = $this->getExamenVacio();
-                }
-
-                // Tercer Examen
-                if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                    $inicioTercero = $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
-                    $data['tercer_examen'] = $this->calcularAsistenciaExamen(
-                        $estudiante->numero_documento,
-                        $inicioTercero,
-                        $ciclo->fecha_tercer_examen,
-                        $ciclo
-                    );
-                } else {
-                    $data['tercer_examen'] = $this->getExamenVacio();
-                }
-
-                // Total del ciclo
-                $data['total_ciclo'] = $this->calcularAsistenciaExamen(
-                    $estudiante->numero_documento,
-                    $primerRegistro->fecha_registro,
-                    min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
-                    $ciclo
-                );
-
-                return $data;
-            });
-    }
-
-    private function calcularAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
-    {
-        $hoy = Carbon::now();
-        $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
-        $fechaExamenCarbon = Carbon::parse($fechaExamen)->endOfDay();
-        $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
-
-        if ($fechaInicioCarbon > $hoy) {
-            return [
-                'dias_habiles' => 0,
-                'dias_asistidos' => 0,
-                'dias_falta' => 0,
-                'porcentaje_asistencia' => 0,
-                'porcentaje_falta' => 0,
-                'condicion' => 'Pendiente',
-                'puede_rendir' => '-'
-            ];
+        if ($inscripciones->isEmpty()) {
+            return collect();
         }
 
-        $diasHabilesTotales = $this->contarDiasHabiles(
-            $fechaInicioCarbon->format('Y-m-d'),
-            $fechaExamenCarbon->format('Y-m-d'),
-            $ciclo
-        );
+        // 2. Obtener TODOS los números de documento de los estudiantes
+        $documentos = $inscripciones->pluck('estudiante.numero_documento')->unique()->toArray();
 
-        $diasHabilesTranscurridos = $this->contarDiasHabiles(
-            $fechaInicioCarbon->format('Y-m-d'),
-            $fechaFinCalculo->format('Y-m-d'),
-            $ciclo
-        );
-
-        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
-            ->whereBetween('fecha_registro', [$fechaInicioCarbon, $fechaFinCalculo])
-            ->select(DB::raw('DATE(fecha_registro) as fecha'))
+        // 3. Obtener TODAS las asistencias del ciclo para TODOS los estudiantes de una sola vez
+        // Agrupamos por documento y fecha para procesar en memoria
+        $todasAsistencias = RegistroAsistencia::whereIn('nro_documento', $documentos)
+            ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
+            ->select('nro_documento', DB::raw('DATE(fecha_registro) as fecha'))
             ->distinct()
             ->get()
-            ->pluck('fecha');
+            ->groupBy('nro_documento');
 
-        $diasConAsistencia = 0;
-        foreach ($registros as $fecha) {
-            $fechaCarbon = Carbon::parse($fecha);
-            if ($ciclo->esDiaHabil($fechaCarbon)) {
-                $diasConAsistencia++;
+        // 4. Pre-calcular días hábiles para cada período del ciclo una sola vez
+        $periodos = [
+            'total' => ['inicio' => $ciclo->fecha_inicio, 'fin' => min($hoy, Carbon::parse($ciclo->fecha_fin))],
+            'p1' => ['inicio' => $ciclo->fecha_inicio, 'fin' => $ciclo->fecha_primer_examen],
+        ];
+
+        if ($ciclo->fecha_segundo_examen) {
+            $periodos['p2'] = ['inicio' => $this->getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo), 'fin' => $ciclo->fecha_segundo_examen];
+        }
+        if ($ciclo->fecha_tercer_examen) {
+            $periodos['p3'] = ['inicio' => $this->getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo), 'fin' => $ciclo->fecha_tercer_examen];
+        }
+
+        $diasHabilesPorPeriodo = [];
+        foreach ($periodos as $key => $p) {
+            if ($p['inicio'] && $p['fin']) {
+                $diasHabilesPorPeriodo[$key] = [
+                    'totales' => $this->contarDiasHabiles($p['inicio'], $p['fin'], $ciclo),
+                    'transcurridos' => $this->contarDiasHabiles($p['inicio'], min($hoy, Carbon::parse($p['fin'])), $ciclo)
+                ];
             }
         }
 
-        $diasFalta = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-        $porcentajeAsistencia = $diasHabilesTotales > 0 ?
-            round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-        $porcentajeFalta = $diasHabilesTotales > 0 ?
-            round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
+        // 5. Mapear inscripciones procesando todo en memoria
+        return $inscripciones->map(function ($inscripcion) use ($ciclo, $todasAsistencias, $diasHabilesPorPeriodo, $hoy) {
+            $estudiante = $inscripcion->estudiante;
+            $documento = $estudiante->numero_documento;
+            
+            // Obtener fechas de asistencia del estudiante (de la colección cargada en memoria)
+            $registrosEstudiante = $todasAsistencias->get($documento, collect())->pluck('fecha')->toArray();
+            
+            // Buscar primer registro en memoria
+            $primerRegistroStr = !empty($registrosEstudiante) ? min($registrosEstudiante) : null;
+            $primerRegistro = $primerRegistroStr ? Carbon::parse($primerRegistroStr) : null;
+
+            $data = [
+                'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
+                'nombre_completo' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno . ' ' . $estudiante->apellido_materno,
+                'documento' => $documento,
+                'carrera' => $inscripcion->carrera->nombre,
+                'aula' => $inscripcion->aula->codigo . ' - ' . $inscripcion->aula->nombre,
+                'turno' => $inscripcion->turno->nombre,
+                'celular' => $estudiante->telefono ?? 'No registrado',
+                'primer_registro' => $primerRegistro ? $primerRegistro->format('d/m/Y') : 'Sin registro'
+            ];
+
+            if (!$primerRegistro) {
+                $vacio = $this->getExamenVacio();
+                $data['primer_examen'] = $vacio;
+                $data['segundo_examen'] = $vacio;
+                $data['tercer_examen'] = $vacio;
+                $data['total_ciclo'] = $vacio;
+                return $data;
+            }
+
+            // Procesar cada examen usando los datos pre-calculados y registros en memoria
+            $examenesMapping = [
+                'primer_examen' => 'p1',
+                'segundo_examen' => 'p2',
+                'tercer_examen' => 'p3',
+                'total_ciclo' => 'total'
+            ];
+
+            foreach ($examenesMapping as $key => $periodoKey) {
+                if (isset($diasHabilesPorPeriodo[$periodoKey])) {
+                    $inicioPeriodo = Carbon::parse($periodos[$periodoKey]['inicio']);
+                    $finCalculo = min($hoy, Carbon::parse($periodos[$periodoKey]['fin']));
+                    
+                    // Contar asistencias dentro del rango del período (en memoria)
+                    $asistenciasEnPeriodo = 0;
+                    foreach ($registrosEstudiante as $f) {
+                        $fC = Carbon::parse($f);
+                        if ($fC->between($inicioPeriodo, $finCalculo) && $ciclo->esDiaHabil($fC)) {
+                            $asistenciasEnPeriodo++;
+                        }
+                    }
+
+                    $data[$key] = $this->calcularEstadisticasMemoria(
+                        $asistenciasEnPeriodo,
+                        $diasHabilesPorPeriodo[$periodoKey]['totales'],
+                        $diasHabilesPorPeriodo[$periodoKey]['transcurridos'],
+                        $ciclo,
+                        $inicioPeriodo
+                    );
+                } else {
+                    $data[$key] = $this->getExamenVacio();
+                }
+            }
+
+            return $data;
+        });
+    }
+
+    private function calcularEstadisticasMemoria($asistencias, $diasHabilesTotales, $diasHabilesTranscurridos, $ciclo, $fechaInicio)
+    {
+        if ($fechaInicio > Carbon::now()) {
+            return $this->getExamenVacio();
+        }
+
+        $diasFalta = max(0, $diasHabilesTranscurridos - $asistencias);
+        $porcentajeAsistencia = $diasHabilesTotales > 0 ? round(($asistencias / $diasHabilesTotales) * 100, 2) : 0;
+        $porcentajeFalta = $diasHabilesTotales > 0 ? round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
 
         $limiteAmonestacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_amonestacion / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * ($ciclo->porcentaje_inhabilitacion / 100));
@@ -228,7 +222,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
         $resultado = [
             'dias_habiles' => $diasHabilesTotales,
-            'dias_asistidos' => $diasConAsistencia,
+            'dias_asistidos' => $asistencias,
             'dias_falta' => $diasFalta,
             'porcentaje_asistencia' => $porcentajeAsistencia,
             'porcentaje_falta' => $porcentajeFalta,
@@ -262,15 +256,14 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
     private function getSiguienteDiaHabil($fecha, $ciclo = null)
     {
+        if (!$fecha) return null;
         $dia = Carbon::parse($fecha)->addDay();
         
-        // Si no hay ciclo, usar lógica por defecto (lunes a viernes)
         if (!$ciclo) {
             while (!$dia->isWeekday()) {
                 $dia->addDay();
             }
         } else {
-            // Usar lógica del ciclo
             while (!$ciclo->esDiaHabil($dia)) {
                 $dia->addDay();
             }
