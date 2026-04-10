@@ -128,7 +128,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         }
 
         // 5. Mapear inscripciones procesando todo en memoria
-        return $inscripciones->map(function ($inscripcion) use ($ciclo, $todasAsistencias, $diasHabilesPorPeriodo, $hoy) {
+        return $inscripciones->map(function ($inscripcion) use ($ciclo, $todasAsistencias, $diasHabilesPorPeriodo, $hoy, $periodos) {
             $estudiante = $inscripcion->estudiante;
             $documento = $estudiante->numero_documento;
             
