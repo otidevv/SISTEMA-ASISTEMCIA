@@ -40,13 +40,10 @@ $(document).ready(function() {
     // Inicializar DataTables
     table = $('#inscripciones-datatable').DataTable({
         processing: true,
-        serverSide: false,
+        serverSide: true,
         ajax: {
             url: default_server + "/json/inscripciones",
-            type: 'GET',
-            dataSrc: function(json) {
-                return json.data;
-            }
+            type: 'GET'
         },
         columns: [
             { data: 'codigo_inscripcion' },

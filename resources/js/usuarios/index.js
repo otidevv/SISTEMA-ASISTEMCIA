@@ -72,13 +72,10 @@ $(document).ready(function() {
     // Inicializar DataTables con AJAX
     var table = $('#usuarios-datatable').DataTable({
         processing: true,
-        serverSide: false,
+        serverSide: true,
         ajax: {
             url: default_server + "/json/usuarios",
-            type: 'GET',
-            dataSrc: function(json) {
-                return json.data;
-            }
+            type: 'GET'
         },
         columns: [
             { data: 'id' },

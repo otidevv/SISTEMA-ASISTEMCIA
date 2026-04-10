@@ -24,33 +24,79 @@ class InscripcionController extends Controller
 {
     public function index(Request $request)
     {
+        $columns = [
+            0 => 'codigo_inscripcion',
+            1 => 'estudiante_id', // Para nombre completo usaríamos join, pero por simplicidad usamos relación
+            2 => 'carrera_id',
+            3 => 'ciclo_id',
+            4 => 'turno_id',
+            5 => 'aula_id',
+            6 => 'fecha_inscripcion',
+            7 => 'estado_inscripcion'
+        ];
+
         $query = Inscripcion::with(['estudiante', 'carrera', 'ciclo', 'turno', 'aula', 'registradoPor', 'actualizadoPor']);
 
-        // Aplicar filtros
-        if ($request->has('ciclo_id')) {
+        // Aplicar filtros manuales (Selects arriba de la tabla)
+        if ($request->filled('ciclo_id')) {
             $query->where('ciclo_id', $request->ciclo_id);
         }
-
-        if ($request->has('carrera_id')) {
+        if ($request->filled('carrera_id')) {
             $query->where('carrera_id', $request->carrera_id);
         }
-
-        if ($request->has('turno_id')) {
+        if ($request->filled('turno_id')) {
             $query->where('turno_id', $request->turno_id);
         }
-
-        if ($request->has('aula_id')) {
+        if ($request->filled('aula_id')) {
             $query->where('aula_id', $request->aula_id);
         }
-
-        if ($request->has('estado')) {
+        if ($request->filled('estado')) {
             $query->where('estado_inscripcion', $request->estado);
+        }
+
+        // Búsqueda Global (Barra de búsqueda DataTables)
+        if ($search = $request->input('search.value')) {
+            $query->where(function($q) use ($search) {
+                $q->where('codigo_inscripcion', 'LIKE', "%{$search}%")
+                  ->orWhereHas('estudiante', function($sq) use ($search) {
+                      $sq->where('nombre', 'LIKE', "%{$search}%")
+                        ->orWhere('apellido_paterno', 'LIKE', "%{$search}%")
+                        ->orWhere('apellido_materno', 'LIKE', "%{$search}%")
+                        ->orWhere('numero_documento', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('aula', function($sq) use ($search) {
+                      $sq->where('nombre', 'LIKE', "%{$search}%")
+                        ->orWhere('codigo', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        $recordsTotal = Inscripcion::count();
+        $recordsFiltered = (clone $query)->count();
+
+        // Ordenamiento
+        $orderColumnIndex = $request->input('order.0.column', 0);
+        $orderDirection = $request->input('order.0.dir', 'desc');
+        $columnName = $columns[$orderColumnIndex] ?? 'created_at';
+        
+        // Manejar ordenamiento por relaciones simples si es posible
+        if (in_array($columnName, ['codigo_inscripcion', 'fecha_inscripcion', 'estado_inscripcion'])) {
+            $query->orderBy($columnName, $orderDirection);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Paginación
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        
+        if ($length != -1) {
+            $query->skip($start)->take($length);
         }
 
         set_time_limit(120);
         
         // --- OPTIMIZACIÓN: EVITAR N+1 EN CAPACIDAD DISPONIBLE ---
-        // Pre-calculamos la ocupación de todas las aulas en el ciclo activo
         $aulaOccupancies = DB::table('inscripciones')
             ->join('ciclos', 'inscripciones.ciclo_id', '=', 'ciclos.id')
             ->where('inscripciones.estado_inscripcion', 'activo')
@@ -60,7 +106,7 @@ class InscripcionController extends Controller
             ->pluck('total', 'inscripciones.aula_id')
             ->toArray();
 
-        $inscripciones = $query->orderBy('created_at', 'desc')->get();
+        $inscripciones = $query->get();
 
         $data = $inscripciones->map(function ($inscripcion) use ($aulaOccupancies) {
             $ocupacionActual = $aulaOccupancies[$inscripcion->aula_id] ?? 0;
@@ -71,9 +117,9 @@ class InscripcionController extends Controller
                 'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
                 'estudiante' => [
                     'id' => $inscripcion->estudiante->id,
-                    'nombre_completo' => $inscripcion->estudiante->nombre . ' ' .
+                    'nombre_completo' => trim($inscripcion->estudiante->nombre . ' ' .
                         $inscripcion->estudiante->apellido_paterno . ' ' .
-                        $inscripcion->estudiante->apellido_materno,
+                        $inscripcion->estudiante->apellido_materno),
                     'codigo' => $inscripcion->estudiante->numero_documento,
                     'email' => $inscripcion->estudiante->email
                 ],
@@ -98,7 +144,7 @@ class InscripcionController extends Controller
                     'capacidad' => $inscripcion->aula->capacidad,
                     'disponible' => $disponible
                 ],
-                'fecha_inscripcion' => $inscripcion->fecha_inscripcion->format('Y-m-d'),
+                'fecha_inscripcion' => $inscripcion->fecha_inscripcion ? $inscripcion->fecha_inscripcion->format('Y-m-d') : null,
                 'estado_inscripcion' => $inscripcion->estado_inscripcion,
                 'fecha_retiro' => $inscripcion->fecha_retiro ? $inscripcion->fecha_retiro->format('Y-m-d') : null,
                 'motivo_retiro' => $inscripcion->motivo_retiro,
@@ -108,7 +154,9 @@ class InscripcionController extends Controller
         });
 
         return response()->json([
-            'success' => true,
+            'draw' => intval($request->input('draw', 1)),
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
             'data' => $data
         ]);
     }

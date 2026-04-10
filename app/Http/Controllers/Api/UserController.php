@@ -51,7 +51,7 @@ class UserController extends Controller
         }
 
         $recordsTotal = User::count();
-        $recordsFiltered = $query->count();
+        $recordsFiltered = (clone $query)->count();
 
         // Ordenamiento
         $orderColumnIndex = $request->input('order.0.column', 0);
