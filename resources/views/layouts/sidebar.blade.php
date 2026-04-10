@@ -185,7 +185,7 @@
                 @endif
 
                 <!-- Módulo Reforzamiento - Gestión Independiente -->
-                @if (Auth::user()->hasPermission('postulaciones.view'))
+                @if (Auth::user()->hasPermission('reforzamiento.view'))
                     <li>
                         <a href="{{ route('admin.reforzamiento.index') }}">
                             <i data-feather="star"></i>

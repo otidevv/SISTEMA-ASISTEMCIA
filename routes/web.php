@@ -185,14 +185,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // --- GESTIÓN DE REFORZAMIENTO ---
-    Route::prefix('admin/reforzamiento')->group(function () {
+    Route::prefix('admin/reforzamiento')->middleware('can:reforzamiento.view')->group(function () {
         Route::get('/', [\App\Http\Controllers\ReforzamientoAdminController::class, 'index'])->name('admin.reforzamiento.index');
         Route::get('/data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'getData'])->name('admin.reforzamiento.data');
         Route::get('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'show'])->name('admin.reforzamiento.show');
-        Route::get('/{id}/print', [\App\Http\Controllers\ReforzamientoAdminController::class, 'print'])->name('admin.reforzamiento.print');
-        Route::post('/{id}/status', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateStatus'])->name('admin.reforzamiento.update-status');
-        Route::post('/{id}/update-data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateData'])->name('admin.reforzamiento.update-data');
-        Route::delete('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'destroy'])->name('admin.reforzamiento.destroy');
+        Route::get('/{id}/print', [\App\Http\Controllers\ReforzamientoAdminController::class, 'print'])->name('admin.reforzamiento.print')->middleware('can:reforzamiento.print');
+        Route::post('/{id}/status', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateStatus'])->name('admin.reforzamiento.update-status')->middleware('can:reforzamiento.approve');
+        Route::post('/{id}/update-data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateData'])->name('admin.reforzamiento.update-data')->middleware('can:reforzamiento.edit');
+        Route::delete('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'destroy'])->name('admin.reforzamiento.destroy')->middleware('can:reforzamiento.delete');
     });
 
     // Notificaciones

@@ -610,18 +610,20 @@
 
 
                     <!-- Módulo Reforzamiento - Gestión Especializada -->
-                    <li>
-                        <a href="#sidebarReforzamiento" data-bs-toggle="collapse">
-                            <i data-feather="book-open"></i>
-                            <span> Reforzamiento </span>
-                            <span class="menu-arrow"></span>
-                        </a>
-                        <div class="collapse" id="sidebarReforzamiento">
-                            <ul class="nav-second-level">
-                                <li><a href="{{ route('admin.reforzamiento.index') }}">Gestión de Alumnos</a></li>
-                            </ul>
-                        </div>
-                    </li>
+                    @if (Auth::user()->hasPermission('reforzamiento.view'))
+                        <li>
+                            <a href="#sidebarReforzamiento" data-bs-toggle="collapse">
+                                <i data-feather="book-open"></i>
+                                <span> Reforzamiento </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <div class="collapse" id="sidebarReforzamiento">
+                                <ul class="nav-second-level">
+                                    <li><a href="{{ route('admin.reforzamiento.index') }}">Gestión de Alumnos</a></li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
 
                     <!-- Módulo Resultados de Exámenes -->
                     @if (Auth::user()->hasPermission('resultados-examenes.view'))
