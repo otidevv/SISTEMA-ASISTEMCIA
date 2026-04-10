@@ -86,9 +86,9 @@ class UserController extends Controller
         });
 
         return response()->json([
-            'draw' => intval($request->input('draw', 1)),
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
+            'draw' => (int)$request->input('draw', 1),
+            'recordsTotal' => (int)$recordsTotal,
+            'recordsFiltered' => (int)$recordsFiltered,
             'data' => $data
         ]);
     }
