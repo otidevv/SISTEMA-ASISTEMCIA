@@ -106,7 +106,7 @@ class DashboardController extends Controller
             })->filter()->values();
 
             // 2. Métricas
-            $eficienciaData = $this->calcularEficienciaYPuntualidad($user->id, $cicloActivo);
+            $eficienciaData = $this->calcularEficienciaYPuntualidad($user->id, $cicloActivo) ?? ['eficiencia' => 0, 'puntualidad' => 0];
             $resumenSemanal = AsistenciaDocente::where('docente_id', $user->id)
                 ->whereBetween('fecha_hora', [Carbon::now()->subDays(6)->startOfDay(), Carbon::now()->endOfDay()])
                 ->selectRaw('COUNT(*) as total_sesiones, SUM(horas_dictadas) as total_horas, SUM(monto_total) as total_ingresos')
@@ -137,23 +137,22 @@ class DashboardController extends Controller
                 
                 // Resumen semanal esperado por el UI
                 'resumenSemanal' => [
-                    'sesiones' => $resumenSemanal->total_sesiones ?? 0,
-                    'horas' => round($resumenSemanal->total_horas ?? 0, 1),
-                    'ingresos' => round($resumenSemanal->total_ingresos ?? 0, 2),
+                    'sesiones' => ($resumenSemanal) ? ($resumenSemanal->total_sesiones ?? 0) : 0,
+                    'horas' => round(($resumenSemanal) ? ($resumenSemanal->total_horas ?? 0) : 0, 1),
+                    'ingresos' => round(($resumenSemanal) ? ($resumenSemanal->total_ingresos ?? 0) : 0, 2),
                     'asistencia' => $eficienciaData['eficiencia'], // Mapeado a "Cumplimiento"
                     'tendencia' => $this->calcularTendenciaSemanal($user->id)
                 ],
                 
                 // Lista de sesiones esperada por el UI
                 'horariosDelDia' => $horariosDelDiaConDetalles->map(function($s) {
-                    // El UI espera h['horario']['id'], etc.
                     return [
                         'horario' => [
                             'id' => $s['id'],
                             'curso' => ['nombre' => $s['curso_nombre']],
                             'aula' => ['nombre' => $s['aula_nombre']],
-                            'hora_inicio' => $s['hora_entrada_prog'],
-                            'hora_fin' => $s['hora_salida_prog'],
+                            'hora_inicio' => Carbon::parse($s['horario']->hora_inicio)->format('H:i'),
+                            'hora_fin' => Carbon::parse($s['horario']->hora_fin)->format('H:i'),
                         ],
                         'asistencia' => [
                             'tema_desarrollado' => $s['tema_desarrollado'],
@@ -167,7 +166,7 @@ class DashboardController extends Controller
                     ];
                 }),
                 
-                'proximaClase' => $proximaClase ? [
+                'proximaClase' => ($proximaClase && $proximaClase->curso) ? [
                     'curso' => $proximaClase->curso->nombre,
                     'aula' => $proximaClase->aula->nombre ?? 'N/A',
                     'hora' => Carbon::parse($proximaClase->hora_inicio)->format('H:i'),

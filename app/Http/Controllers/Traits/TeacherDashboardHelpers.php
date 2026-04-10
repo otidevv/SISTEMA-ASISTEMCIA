@@ -48,7 +48,7 @@ trait TeacherDashboardHelpers
         }
 
         $user = User::find($docenteId);
-        return $user->tarifa_por_hora ?? 25.00;
+        return ($user) ? ($user->tarifa_por_hora ?? 25.00) : 25.00;
     }
 
     /**

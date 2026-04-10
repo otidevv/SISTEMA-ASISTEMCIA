@@ -9,11 +9,11 @@ use Carbon\Carbon;
 trait ProcessesTeacherSessions
 {
     // Tolerancias (unificadas)
-    const TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 15;
-    const TOLERANCIA_ENTRADA_TARDE_MINUTOS = 5;
-    const TOLERANCIA_VENTANA_ENTRADA_MINUTOS = 120;
-    const TOLERANCIA_VENTANA_SALIDA_MINUTOS = 60;
-    const TOLERANCIA_SALIDA_ANTICIPADA_MINUTOS = 15;
+    private static $TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 15;
+    private static $TOLERANCIA_ENTRADA_TARDE_MINUTOS = 5;
+    private static $TOLERANCIA_VENTANA_ENTRADA_MINUTOS = 120;
+    private static $TOLERANCIA_VENTANA_SALIDA_MINUTOS = 60;
+    private static $TOLERANCIA_SALIDA_ANTICIPADA_MINUTOS = 15;
     
     // ⚡ OPTIMIZACIÓN: Cache para asistencias procesadas
     private static $asistenciasCache = [];
@@ -44,8 +44,8 @@ trait ProcessesTeacherSessions
             ->filter(function($r) use ($horarioInicioHoy) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
-                    $horarioInicioHoy->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS),
-                    $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_VENTANA_ENTRADA_MINUTOS)
+                    $horarioInicioHoy->copy()->subMinutes(self::$TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS),
+                    $horarioInicioHoy->copy()->addMinutes(self::$TOLERANCIA_VENTANA_ENTRADA_MINUTOS)
                 );
             })
             ->sortBy('fecha_registro')
@@ -55,8 +55,8 @@ trait ProcessesTeacherSessions
             ->filter(function($r) use ($horarioFinHoy) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
-                    $horarioFinHoy->copy()->subMinutes(self::TOLERANCIA_SALIDA_ANTICIPADA_MINUTOS),
-                    $horarioFinHoy->copy()->addMinutes(self::TOLERANCIA_VENTANA_SALIDA_MINUTOS)
+                    $horarioFinHoy->copy()->subMinutes(self::$TOLERANCIA_SALIDA_ANTICIPADA_MINUTOS),
+                    $horarioFinHoy->copy()->addMinutes(self::$TOLERANCIA_VENTANA_SALIDA_MINUTOS)
                 );
             })
             ->sortByDesc('fecha_registro')
@@ -73,7 +73,7 @@ trait ProcessesTeacherSessions
         }
         
         $asistenciaDocenteProcesada = self::$asistenciasCache[$cacheKey];
-        $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
+        $temaDesarrollado = ($asistenciaDocenteProcesada) ? $asistenciaDocenteProcesada->tema_desarrollado : 'Pendiente';
 
         // Inicialización de variables
         $horasDictadas = 0;
@@ -87,9 +87,9 @@ trait ProcessesTeacherSessions
             $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
 
             // Determinar la hora de inicio efectiva para el cálculo, respetando la tolerancia de tardanza.
-            $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_ENTRADA_TARDE_MINUTOS);
+            $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::$TOLERANCIA_ENTRADA_TARDE_MINUTOS);
             
-            $effectiveStartTime;
+            $effectiveStartTime = null;
             // Si la entrada es ANTES o DENTRO del umbral de tardanza, se usa la hora de inicio programada.
             if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
                 $effectiveStartTime = $horarioInicioHoy;
@@ -159,7 +159,7 @@ trait ProcessesTeacherSessions
         // La tardanza representa los minutos que se están DESCONTANDO de las horas trabajadas
         if ($entradaBiometrica) {
             $horaEntradaReal = Carbon::parse($entradaBiometrica->fecha_registro);
-            $tolerancia = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_ENTRADA_TARDE_MINUTOS);
+            $tolerancia = $horarioInicioHoy->copy()->addMinutes(self::$TOLERANCIA_ENTRADA_TARDE_MINUTOS);
             
             // Solo hay tardanza si llega DESPUÉS de la tolerancia
             if ($horaEntradaReal->gt($tolerancia)) {
