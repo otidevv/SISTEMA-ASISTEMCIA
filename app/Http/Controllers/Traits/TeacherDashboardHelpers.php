@@ -85,13 +85,17 @@ trait TeacherDashboardHelpers
             $minutosTotales = $horaInicio->diffInMinutes($horaFin);
             $minutosTranscurridos = $horaInicio->diffInMinutes($momentoActual);
             $progreso = $minutosTotales > 0 ? round(($minutosTranscurridos / $minutosTotales) * 100) : 0;
-            $minutosRestantes = $momentoActual->diffInMinutes($horaFin);
+            
+            $segundosRestantes = $momentoActual->diffInSeconds($horaFin);
+            $minutosRestantes = floor($segundosRestantes / 60);
+            $segundosRestantesSolo = $segundosRestantes % 60;
             
             return [
                 'estado' => 'en_curso',
                 'palo_color' => 'green',
-                'texto' => "Termina en {$minutosRestantes} min",
-                'minutos_restantes' => $minutosRestantes,
+                'texto' => "Termina en " . sprintf("%02d:%02d", $minutosRestantes, $segundosRestantesSolo),
+                'minutos_restantes' => round($segundosRestantes / 60, 2),
+                'segundos_restantes' => $segundosRestantes,
                 'progreso_clase' => $progreso
             ];
         } else {
