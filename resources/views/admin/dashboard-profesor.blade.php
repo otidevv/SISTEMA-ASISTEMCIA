@@ -2654,12 +2654,48 @@
         document.querySelector('.modal-body').scrollTop = 0;
     }
 </script>
-@if (isset($anuncios) && $anuncios->count() > 0)
-<script>
+    // --- LÓGICA DE CRONÓMETRO EN VIVO PARA CLASES EN CURSO ---
+    function iniciarCronometrosVivo() {
+        const indicadores = document.querySelectorAll('.time-indicator.current');
+        
+        indicadores.forEach(indicador => {
+            const textoOriginal = indicador.textContent.trim();
+            const match = textoOriginal.match(/(\d{2}):(\d{2})/);
+            
+            if (match) {
+                let minutos = parseInt(match[1]);
+                let segundos = parseInt(match[2]);
+                let tiempoTotalSegundos = (minutos * 60) + segundos;
+                
+                const interval = setInterval(() => {
+                    if (tiempoTotalSegundos <= 0) {
+                        clearInterval(interval);
+                        indicador.innerHTML = '<i class="mdi mdi-clock-check"></i> Finalizada';
+                        indicador.className = 'time-indicator finished';
+                        // Opcional: recargar para actualizar estado completo del dashboard
+                        setTimeout(() => location.reload(), 2000);
+                        return;
+                    }
+                    
+                    tiempoTotalSegundos--;
+                    minutos = Math.floor(tiempoTotalSegundos / 60);
+                    segundos = tiempoTotalSegundos % 60;
+                    
+                    const mm = minutos.toString().padStart(2, '0');
+                    const ss = segundos.toString().padStart(2, '0');
+                    
+                    indicador.innerHTML = `<i class="mdi mdi-clock"></i> Termina en ${mm}:${ss}`;
+                }, 1000);
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        var anunciosModal = new bootstrap.Modal(document.getElementById('anunciosModal'));
-        anunciosModal.show();
+        iniciarCronometrosVivo();
+        @if (isset($anuncios) && $anuncios->count() > 0)
+            var anunciosModal = new bootstrap.Modal(document.getElementById('anunciosModal'));
+            anunciosModal.show();
+        @endif
     });
 </script>
-@endif
 @endpush
