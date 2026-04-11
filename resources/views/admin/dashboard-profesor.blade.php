@@ -12,6 +12,9 @@
 {{-- Flatpickr CSS --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+{{-- Quill.js CSS para Editor Enriquecido --}}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
 <style>
     /* Estilos para resaltar días con clases en Flatpickr */
     .flatpickr-day.has-clases {
@@ -1041,252 +1044,177 @@
     }
 
     /* -------------------------------------------------------------------------- */
-    /* NUEVO: Modal Moderno de Registro de Tema                                  */
+    /* NUEVO: Modal Moderno de Registro de Tema - CLEAN & PROFESSIONAL           */
     /* -------------------------------------------------------------------------- */
     .modern-modal .modal-content {
         border: none;
-        border-radius: 1rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        background: #ffffff;
     }
 
     .modern-modal-header {
-        background: linear-gradient(135deg, var(--primary-color), #6d28d9);
-        color: white;
-        padding: 1.5rem 2rem;
-        border-radius: 1rem 1rem 0 0;
-        border: none;
+        background: #ffffff;
+        color: var(--navy-color);
+        padding: 1.5rem 2.5rem;
+        border-radius: 20px 20px 0 0;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
     }
 
     .modal-header-content {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.25rem;
         flex: 1;
     }
 
     .modal-icon {
-        width: 50px;
-        height: 50px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 0.75rem;
+        width: 48px;
+        height: 48px;
+        background: var(--primary-light);
+        color: var(--primary-color);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.5rem;
     }
-    
-    /* Sidebar Stat Grid Refinements */
-    .sidebar-card .stat-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.85rem;
-    }
-    
-    .sidebar-card .stat-box {
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 0.75rem 0.5rem;
-        text-align: center;
-        border: 1px solid #f1f5f9;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: 70px;
-    }
-    
-    .sidebar-card .stat-box:hover {
-        background: white;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.06);
-        transform: translateY(-3px);
-        border-color: var(--primary-light);
-    }
-    
-    .sidebar-card .stat-box .h5 {
-        font-weight: 850;
-        margin-bottom: 2px;
-        line-height: 1;
-        font-size: 1.15rem;
-    }
-    
-    .sidebar-card .stat-box small {
-        font-size: 0.55rem;
-        font-weight: 700;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .empty-state-card {
-        background: rgba(255, 255, 255, 0.4);
-        backdrop-filter: blur(15px);
-        border: 2px dashed #cbd5e1;
-        border-radius: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        width: 100%;
-        min-height: 450px;
-        transition: all 0.4s ease;
-    }
-    
-    .empty-state-card:hover {
-        background: rgba(255, 255, 255, 0.7);
-        border-color: var(--primary-color);
-    }
 
     .modern-modal-header .modal-title {
         margin: 0;
         font-size: 1.25rem;
-        font-weight: 700;
+        font-weight: 800;
+        color: var(--navy-color);
+        letter-spacing: -0.5px;
     }
 
     .modern-modal-header small {
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--text-muted);
         font-size: 0.85rem;
+        font-weight: 500;
     }
 
     .modern-modal-header .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.8;
-    }
-
-    .modern-modal-header .btn-close:hover {
-        opacity: 1;
+        opacity: 0.5;
+        transition: all 0.3s ease;
     }
 
     .modern-modal-body {
-        padding: 2rem;
+        padding: 2.5rem;
     }
 
     .session-info-card {
         display: flex;
-        gap: 1.5rem;
-        padding: 1rem;
-        background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(109, 40, 217, 0.05));
-        border-radius: 0.75rem;
-        border: 1px solid rgba(79, 70, 229, 0.1);
+        gap: 2rem;
+        padding: 1.25rem;
+        background: #f8fafc;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
     }
 
     .session-info-item {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 0.9rem;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
         color: var(--text-color);
-    }
-
-    .session-info-item i {
-        font-size: 1.2rem;
     }
 
     .modern-label {
-        font-weight: 600;
-        color: var(--text-color);
+        font-weight: 800;
+        color: var(--navy-color);
         margin-bottom: 0.75rem;
         display: flex;
         align-items: center;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .textarea-wrapper {
-        position: relative;
+    /* Editor Wrapper Styling (Quill) */
+    .editor-wrapper {
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        overflow: hidden;
+        background: white;
+        transition: all 0.3s ease;
     }
 
-    .modern-textarea {
-        border: 2px solid var(--border-color);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        font-size: 0.95rem;
-        transition: var(--transition);
-        resize: vertical;
-        min-height: 150px;
-    }
-
-    .modern-textarea:focus {
+    .editor-wrapper:focus-within {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .ql-toolbar.ql-snow {
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        background: #f8fafc;
+        padding: 10px 15px !important;
+    }
+
+    .ql-container.ql-snow {
+        border: none !important;
+        font-family: 'Inter', sans-serif !important;
     }
 
     .textarea-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 0.5rem;
-        padding: 0 0.25rem;
-    }
-
-    .char-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        padding: 10px 15px;
+        background: #f8fafc;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.75rem;
         color: var(--text-muted);
-        font-size: 0.85rem;
-    }
-
-    .char-counter {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--text-color);
-    }
-
-    .char-counter .text-muted {
-        font-weight: 400;
     }
 
     .tips-card {
-        background: rgba(79, 70, 229, 0.05);
-        border-left: 4px solid var(--primary-color);
-        border-radius: 0.5rem;
-        padding: 1rem 1.25rem;
+        background: rgba(147, 192, 31, 0.05);
+        border-left: 4px solid var(--success-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-top: 2rem;
     }
 
     .tips-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        color: var(--primary-color);
-        margin-bottom: 0.75rem;
-    }
-
-    .tips-header i {
-        font-size: 1.2rem;
-    }
-
-    .tips-list {
-        margin: 0;
-        padding-left: 1.5rem;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .tips-list li {
-        margin-bottom: 0.5rem;
-    }
-
-    .tips-list li:last-child {
-        margin-bottom: 0;
+        font-weight: 700;
+        color: #3f6212;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
     }
 
     .modern-modal-footer {
-        padding: 1.5rem 2rem;
-        border-top: 1px solid var(--border-color);
-        background: rgba(0, 0, 0, 0.02);
+        padding: 1.5rem 2.5rem;
+        border-top: 1px solid #f1f5f9;
+        background: #f8fafc;
+        border-radius: 0 0 20px 20px;
     }
 
     .btn-save-theme {
-        background: linear-gradient(135deg, var(--primary-color), #6d28d9);
+        background: var(--navy-color);
+        color: white;
         border: none;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        transition: var(--transition);
+        padding: 0.85rem 2.5rem;
+        font-weight: 700;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 15px -3px rgba(26, 35, 126, 0.2);
     }
 
     .btn-save-theme:hover {
+        background: var(--primary-color);
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+        box-shadow: 0 20px 25px -5px rgba(226, 0, 122, 0.25);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 0.85rem 1.5rem;
+        border-color: #e2e8f0;
+        color: var(--text-muted);
     }
 
     /* --- RESPONSIVE FIXES --- */
@@ -2242,29 +2170,22 @@
                         </div>
                     </div>
                     
-                    {{-- Campo de tema --}}
+                    {{-- Campo de tema con Quill Editor --}}
                     <div class="mb-3">
-                        <label for="tema_desarrollado" class="form-label modern-label">
+                        <label class="form-label modern-label">
                             <i class="mdi mdi-text-box-outline me-2"></i>
                             Tema y Actividades Realizadas *
                         </label>
-                        <div class="textarea-wrapper">
-                            <textarea 
-                                class="form-control modern-textarea" 
-                                id="tema_desarrollado" 
-                                name="tema_desarrollado" 
-                                rows="6" 
-                                required 
-                                maxlength="1000"
-                                placeholder="Ejemplo:&#10;• Ecuaciones de segundo grado: fórmula general&#10;• Discriminante y tipos de soluciones&#10;• Ejercicios prácticos resueltos en clase&#10;• Tarea asignada: problemas 1-10 del libro"></textarea>
-                            <div class="textarea-footer">
-                                <div class="char-info">
+                        <div class="editor-wrapper" style="border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: white;">
+                            <div id="editor-container" style="height: 250px; font-size: 14px; border: none;"></div>
+                            <input type="hidden" id="tema_desarrollado" name="tema_desarrollado">
+                            <div class="textarea-footer p-2 border-top bg-light d-flex justify-content-between align-items-center">
+                                <div class="char-info x-small text-muted">
                                     <i class="mdi mdi-information-outline"></i>
-                                    <span>Mínimo 10 caracteres</span>
+                                    <span>Presiona Ctrl+B para negrita</span>
                                 </div>
-                                <div class="char-counter">
-                                    <span id="contador">0</span>
-                                    <span class="text-muted">/1000</span>
+                                <div class="char-counter x-small fw-bold">
+                                    <span id="contador">0</span>/1000
                                 </div>
                             </div>
                         </div>
@@ -2337,8 +2258,40 @@
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<!-- Quill.js JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
 <script>
+    // Inicializar Quill Editor Globalmente
+    var quill;
     document.addEventListener('DOMContentLoaded', function() {
+        quill = new Quill('#editor-container', {
+            theme: 'snow',
+            placeholder: 'Describe los temas tratados, ejercicios realizados, etc...',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Contador de caracteres para Quill
+        quill.on('text-change', function() {
+            actualizarContador();
+        });
+
+        function actualizarContador() {
+            const contador = document.getElementById('contador');
+            if (!contador) return;
+            const actual = quill.getText().trim().length;
+            const max = 1000;
+            contador.textContent = `${actual}/${max}`;
+            if (actual < 5) contador.style.color = 'var(--danger-text)';
+            else if (actual > max * 0.9) contador.style.color = 'var(--warning-text)';
+            else contador.style.color = 'var(--success-text)';
+        }
         // Reloj en tiempo real
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
@@ -2498,23 +2451,19 @@
         }, 800);
     });
 
-    function actualizarContador() {
-        const textarea = document.getElementById('tema_desarrollado');
-        const contador = document.getElementById('contador');
-        const actual = textarea.value.length;
-        const max = 1000;
-        contador.textContent = `${actual}/${max}`;
-        if (actual < 10) contador.style.color = 'var(--danger-text)';
-        else if (actual > max * 0.9) contador.style.color = 'var(--warning-text)';
-        else contador.style.color = 'var(--success-text)';
-    }
 
     function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null, cursoNombre = '', horario = '') {
         const modalElement = document.getElementById('modalTemaDesarrollado');
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
         document.getElementById('horario_id').value = horarioId;
-        document.getElementById('tema_desarrollado').value = temaExistente;
         document.getElementById('asistencia_id_para_editar').value = asistenciaId;
+
+        // Cargar contenido en Quill
+        if (temaExistente && temaExistente !== 'null' && temaExistente !== 'No registrado.') {
+            quill.root.innerHTML = temaExistente;
+        } else {
+            quill.setContents([]);
+        }
 
         const fechaAgendaInput = document.getElementById('fecha-agenda');
         if (fechaAgendaInput) {
@@ -2533,16 +2482,16 @@
 
         const titulo = document.getElementById('modalTemaDesarrolladoLabel');
         const subtitle = document.getElementById('modal-subtitle');
-        const btnGuardar = document.getElementById('btnGuardarTema').querySelector('span');
+        const btnGuardarSpan = document.getElementById('btnGuardarTema').querySelector('span');
         
-        if (temaExistente) {
+        if (temaExistente && temaExistente !== 'null') {
             titulo.textContent = 'Editar Tema Desarrollado';
             if (subtitle) subtitle.textContent = 'Actualiza el contenido de tu sesión';
-            btnGuardar.textContent = 'Actualizar Tema';
+            if (btnGuardarSpan) btnGuardarSpan.textContent = 'Actualizar Tema';
         } else {
             titulo.textContent = 'Registrar Tema Desarrollado';
             if (subtitle) subtitle.textContent = 'Documenta el contenido de tu sesión';
-            btnGuardar.textContent = 'Guardar Tema';
+            if (btnGuardarSpan) btnGuardarSpan.textContent = 'Guardar Tema';
         }
         
         document.getElementById('alertContainer').innerHTML = '';
@@ -2556,8 +2505,13 @@
         const btnText = btnGuardar.querySelector('span');
         const originalText = btnText.textContent;
         
-        if (document.getElementById('tema_desarrollado').value.trim().length < 10) {
-            mostrarAlertEnModal('danger', 'El tema debe tener al menos 10 caracteres.');
+        // Sincronizar Quill con el input oculto
+        const temaHtml = quill.root.innerHTML;
+        const temaText = quill.getText().trim();
+        document.getElementById('tema_desarrollado').value = temaHtml;
+
+        if (temaText.length < 5) {
+            mostrarAlertEnModal('danger', 'El tema debe tener al menos 5 caracteres.');
             return;
         }
         

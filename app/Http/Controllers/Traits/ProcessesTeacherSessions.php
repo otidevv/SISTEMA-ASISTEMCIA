@@ -73,7 +73,7 @@ trait ProcessesTeacherSessions
         }
         
         $asistenciaDocenteProcesada = self::$asistenciasCache[$cacheKey];
-        $temaDesarrollado = ($asistenciaDocenteProcesada) ? $asistenciaDocenteProcesada->tema_desarrollado : 'Pendiente';
+        $temaDesarrollado = ($asistenciaDocenteProcesada) ? $asistenciaDocenteProcesada->tema_desarrollado : null;
 
         // Inicialización de variables
         $horasDictadas = 0;
