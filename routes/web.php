@@ -183,6 +183,7 @@ Route::middleware('auth')->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/teacher/dashboard/poll', [DashboardController::class, 'teacherPoll'])->name('teacher.dashboard.poll');
 
     // --- GESTIÓN DE REFORZAMIENTO ---
     Route::prefix('admin/reforzamiento')->middleware('can:reforzamiento.view')->group(function () {

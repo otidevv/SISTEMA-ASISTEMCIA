@@ -308,7 +308,7 @@ class DashboardController extends Controller
                         $asistencia->tema_desarrollado = $sessionDetails['tema_desarrollado'];
                     }
 
-                    $puedeRegistrarTema = $asistencia || ($claseTerminada && $sessionDetails['tiene_registros']) || ($fechaSeleccionada->isToday() && $dentroDelHorario && $sessionDetails['hora_entrada'] === '--');
+                    $puedeRegistrarTema = ($sessionDetails['estado'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
 
                     if ($claseTerminada && !$asistencia && $sessionDetails['tiene_registros']) {
                         $sesionesPendientes++;
@@ -1619,5 +1619,78 @@ private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fec
             'porcentaje_amonestados' => $totalEstudiantes > 0 ? round(($estudiantesAmonestados / $totalEstudiantes) * 100, 2) : 0,
             'porcentaje_inhabilitados' => $totalEstudiantes > 0 ? round(($estudiantesInhabilitados / $totalEstudiantes) * 100, 2) : 0
         ];
+    }
+
+    /**
+     * Endpoint para polling AJAX del dashboard del profesor.
+     * Retorna solo la información necesaria para los cronómetros y progreso.
+     */
+    public function teacherPoll(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user->hasRole('profesor')) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        $fechaSeleccionada = $request->input('fecha') ? \Carbon\Carbon::parse($request->input('fecha')) : \Carbon\Carbon::today();
+        
+        $horarios = \App\Models\HorarioDocente::where('docente_id', $user->id)
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
+            ->with(['aula', 'curso', 'ciclo'])
+            ->get();
+            
+        $horariosDelDia = $horarios->filter(function ($horario) use ($fechaSeleccionada) {
+            $ciclo = $horario->ciclo;
+            return $ciclo && $ciclo->getDiaHorarioParaFecha($fechaSeleccionada) === $horario->dia_semana;
+        })->sortBy('hora_inicio');
+
+        $registrosDelDia = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
+            ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+            ->get();
+
+        $polledData = $horariosDelDia->map(function ($horario) use ($registrosDelDia, $user, $fechaSeleccionada) {
+            $sessionDetails = $this->processTeacherSessionLogic($horario, $fechaSeleccionada, $registrosDelDia, $user);
+            if (!$sessionDetails) return null;
+
+            $horaInicio = \Carbon\Carbon::parse($horario->hora_inicio);
+            $horaFin = \Carbon\Carbon::parse($horario->hora_fin);
+            $momentoActual = $fechaSeleccionada->isToday() ? \Carbon\Carbon::now() : $fechaSeleccionada->copy()->endOfDay();
+            
+            $horarioInicioHoy = $fechaSeleccionada->copy()->setTime($horaInicio->hour, $horaInicio->minute, $horaInicio->second);
+            $horarioFinHoy = $fechaSeleccionada->copy()->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
+
+            $tiempoInfo = $this->calcularInfoTiempo($horarioInicioHoy, $horarioFinHoy, $momentoActual, $fechaSeleccionada);
+            
+            $progresoClase = 0;
+            if ($momentoActual->between($horarioInicioHoy, $horarioFinHoy) && $fechaSeleccionada->isToday()) {
+                $totalMin = $horarioInicioHoy->diffInMinutes($horarioFinHoy);
+                $progresoClase = $totalMin > 0 ? round(($horarioInicioHoy->diffInMinutes($momentoActual) / $totalMin) * 100) : 0;
+            }
+
+            $asistencia = \App\Models\AsistenciaDocente::where('docente_id', $user->id)
+                ->where('horario_id', $horario->id)
+                ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
+                ->first();
+
+            $puedeRegistrarTema = ($sessionDetails['estado'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
+
+            return [
+                'horario_id' => $horario->id,
+                'tiempo_info' => $tiempoInfo,
+                'progreso_clase' => $progresoClase,
+                'esta_activo' => $momentoActual->between($horarioInicioHoy, $horarioFinHoy),
+                'terminada' => $momentoActual->greaterThan($horarioFinHoy),
+                'puede_registrar_tema' => $puedeRegistrarTema,
+                'asistencia_id' => $asistencia ? $asistencia->id : null,
+                'tema_desarrollado' => $asistencia ? $asistencia->tema_desarrollado : null
+            ];
+        })->filter()->values();
+
+        return response()->json([
+            'horarios' => $polledData,
+            'timestamp' => now()->toIso8601String()
+        ]);
     }
 }

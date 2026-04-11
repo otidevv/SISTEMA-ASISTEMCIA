@@ -1785,9 +1785,9 @@
                                                         <i class="mdi mdi-clock-outline"></i>
                                                         {{ $horaInicio->format('h:i A') }} - {{ $horaFin->format('h:i A') }}
                                                         @if($tiempoInfo)
-                                                            <div class="time-indicator {{ $tiempoInfo['estado'] == 'por_empezar' ? 'upcoming' : ($tiempoInfo['estado'] == 'en_curso' ? 'current' : 'finished') }}">
+                                                            <div id="timer-{{ $horario->id }}" class="time-indicator {{ $tiempoInfo['estado'] == 'por_empezar' ? 'upcoming' : ($tiempoInfo['estado'] == 'en_curso' ? 'current' : 'finished') }}">
                                                                 <i class="mdi mdi-{{ $tiempoInfo['estado'] == 'por_empezar' ? 'clock-fast' : ($tiempoInfo['estado'] == 'en_curso' ? 'clock' : 'clock-check') }}"></i>
-                                                                {{ $tiempoInfo['texto'] }}
+                                                                <span class="timer-text">{{ $tiempoInfo['texto'] }}</span>
                                                             </div>
                                                         @endif
                                                     </div>
@@ -1796,11 +1796,11 @@
                                                 @if(isset($item['dentro_horario']) && $item['dentro_horario'] && $progreso > 0)
                                                     <div class="progress-container">
                                                         <div class="progress-bar-container">
-                                                            <div class="progress-bar" style="width: {{ $progreso }}%"></div>
+                                                            <div id="progress-{{ $horario->id }}" class="progress-bar" style="width: {{ $progreso }}%"></div>
                                                         </div>
                                                         <div class="progress-text">
                                                             <span><i class="mdi mdi-play-circle"></i> Clase en progreso</span>
-                                                            <span><strong>{{ $progreso }}%</strong> completado</span>
+                                                            <span><strong id="progress-text-{{ $horario->id }}">{{ $progreso }}%</strong> completado</span>
                                                         </div>
                                                     </div>
                                                 @endif
@@ -1897,13 +1897,13 @@
                                                     </div>
                                                     <div class="d-flex gap-2">
                                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
-                                                            <button class="action-button btn-sm" 
+                                                            <button id="btn-tema-{{ $horario->id }}" class="action-button btn-sm" 
                                                                     onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS))'>
                                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                                             </button>
                                                         @else
-                                                            <button class="action-button outline btn-sm" disabled title="Solo se puede registrar el tema de clases finalizadas y con registro de entrada/salida.">
+                                                            <button id="btn-tema-{{ $horario->id }}" class="action-button outline btn-sm" disabled title="Solo se puede registrar el tema de clases finalizadas y con registro de entrada/salida.">
                                                                 <i class="mdi mdi-lock-outline"></i>
                                                                 <span>Registrar Tema</span>
                                                             </button>
@@ -2654,44 +2654,94 @@
         document.querySelector('.modal-body').scrollTop = 0;
     }
 
-    // --- LÓGICA DE CRONÓMETRO EN VIVO PARA CLASES EN CURSO ---
-    function iniciarCronometrosVivo() {
-        const indicadores = document.querySelectorAll('.time-indicator.current');
-        
-        indicadores.forEach(indicador => {
-            const textoOriginal = indicador.textContent.trim();
-            const match = textoOriginal.match(/(\d{2}):(\d{2})/);
+    // --- LÓGICA DE SINCRONIZACIÓN EN TIEMPO REAL (PROFESIONAL) ---
+    function sincronizarDashboard() {
+        const urlPoll = "{{ route('teacher.dashboard.poll') }}";
+        const fechaActual = "{{ $fechaSeleccionada->format('Y-m-d') }}";
+
+        fetch(`${urlPoll}?fecha=${fechaActual}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.horarios) {
+                    data.horarios.forEach(item => {
+                        actualizarElementoSesion(item);
+                    });
+                }
+            })
+            .catch(error => console.error('Error sincronizando dashboard:', error));
+    }
+
+    function actualizarElementoSesion(item) {
+        const timerElement = document.getElementById(`timer-${item.horario_id}`);
+        const progressElement = document.getElementById(`progress-${item.horario_id}`);
+        const progressTextElement = document.getElementById(`progress-text-${item.horario_id}`);
+        const btnTema = document.getElementById(`btn-tema-${item.horario_id}`);
+
+        if (timerElement) {
+            const timerText = timerElement.querySelector('.timer-text');
+            const timerIcon = timerElement.querySelector('i');
             
-            if (match) {
-                let minutos = parseInt(match[1]);
-                let segundos = parseInt(match[2]);
-                let tiempoTotalSegundos = (minutos * 60) + segundos;
-                
-                const interval = setInterval(() => {
-                    if (tiempoTotalSegundos <= 0) {
-                        clearInterval(interval);
-                        indicador.innerHTML = '<i class="mdi mdi-clock-check"></i> Finalizada';
-                        indicador.className = 'time-indicator finished';
-                        // Opcional: recargar para actualizar estado completo del dashboard
-                        setTimeout(() => location.reload(), 2000);
-                        return;
+            if (timerText) timerText.textContent = item.tiempo_info.texto;
+            
+            const nuevoEstado = item.tiempo_info.estado;
+            const claseEstado = nuevoEstado === 'por_empezar' ? 'upcoming' : (nuevoEstado === 'en_curso' ? 'current' : 'finished');
+            
+            if (!timerElement.classList.contains(claseEstado)) {
+                if (!document.querySelector('.modal.show')) {
+                    if (timerElement.classList.contains('current') && nuevoEstado === 'finished') {
+                         setTimeout(() => location.reload(), 1000);
+                    } else if (timerElement.classList.contains('upcoming') && nuevoEstado === 'en_curso') {
+                         setTimeout(() => location.reload(), 1000);
                     }
-                    
-                    tiempoTotalSegundos--;
-                    minutos = Math.floor(tiempoTotalSegundos / 60);
-                    segundos = tiempoTotalSegundos % 60;
-                    
-                    const mm = minutos.toString().padStart(2, '0');
-                    const ss = segundos.toString().padStart(2, '0');
-                    
-                    indicador.innerHTML = `<i class="mdi mdi-clock"></i> Termina en ${mm}:${ss}`;
-                }, 1000);
+                }
+                
+                timerElement.className = `time-indicator ${claseEstado}`;
+                if (timerIcon) {
+                    const iconClass = nuevoEstado === 'por_empezar' ? 'mdi-clock-fast' : (nuevoEstado === 'en_curso' ? 'mdi-clock' : 'mdi-clock-check');
+                    timerIcon.className = `mdi ${iconClass}`;
+                }
             }
-        });
+        }
+
+        if (progressElement && item.progreso_clase > 0) {
+            progressElement.style.width = `${item.progreso_clase}%`;
+            if (progressTextElement) progressTextElement.textContent = `${item.progreso_clase}%`;
+        }
+
+        // --- Actualizar botón de tema (Regla: Entrada y Salida obligatoria) ---
+        if (btnTema) {
+            if (item.puede_registrar_tema) {
+                if (btnTema.disabled) {
+                    btnTema.disabled = false;
+                    btnTema.classList.remove('outline');
+                    btnTema.title = "";
+                    const icon = btnTema.querySelector('i');
+                    if (icon) icon.className = `mdi mdi-${item.tema_desarrollado ? 'pencil' : 'plus'}`;
+                    const span = btnTema.querySelector('span') || btnTema;
+                    if (span === btnTema) {
+                         // Si no tiene span, el texto está directo. Lo actualizamos.
+                         // Pero en nuestro Blade el texto está después del icono.
+                    }
+                }
+            } else {
+                if (!btnTema.disabled) {
+                    btnTema.disabled = true;
+                    btnTema.classList.add('outline');
+                    btnTema.title = "Solo se puede registrar el tema de clases con registro de entrada/salida.";
+                    const icon = btnTema.querySelector('i');
+                    if (icon) icon.className = 'mdi mdi-lock-outline';
+                }
+            }
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        iniciarCronometrosVivo();
+        // Ejecutar sincronización cada 10 segundos
+        setInterval(sincronizarDashboard, 10000);
+        
+        // Sincronizar inmediatamente al cargar
+        sincronizarDashboard();
+
         @if (isset($anuncios) && $anuncios->count() > 0)
             var anunciosModal = new bootstrap.Modal(document.getElementById('anunciosModal'));
             anunciosModal.show();
