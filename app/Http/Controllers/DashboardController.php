@@ -260,7 +260,7 @@ class DashboardController extends Controller
                     if (!$ciclo) return false;
                     
                     $diaHorarioNecesario = $ciclo->getDiaHorarioParaFecha($fechaSeleccionada);
-                    return $diaHorarioNecesario === $horario->dia_semana;
+                    return mb_strtolower($diaHorarioNecesario, 'UTF-8') === mb_strtolower($horario->dia_semana, 'UTF-8');
                 })->sortBy('hora_inicio');
                 
                 // Para compatibilidad con el resto del código, mantenemos infoRotacion usando el primer ciclo activo
@@ -308,7 +308,7 @@ class DashboardController extends Controller
                         $asistencia->tema_desarrollado = $sessionDetails['tema_desarrollado'];
                     }
 
-                    $puedeRegistrarTema = ($sessionDetails['estado'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
+                    $puedeRegistrarTema = ($sessionDetails['estado_sesion'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
 
                     if ($claseTerminada && !$asistencia && $sessionDetails['tiene_registros']) {
                         $sesionesPendientes++;
@@ -1643,7 +1643,9 @@ private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fec
             
         $horariosDelDia = $horarios->filter(function ($horario) use ($fechaSeleccionada) {
             $ciclo = $horario->ciclo;
-            return $ciclo && $ciclo->getDiaHorarioParaFecha($fechaSeleccionada) === $horario->dia_semana;
+            if (!$ciclo) return false;
+            $diaHorarioNecesario = $ciclo->getDiaHorarioParaFecha($fechaSeleccionada);
+            return mb_strtolower($diaHorarioNecesario, 'UTF-8') === mb_strtolower($horario->dia_semana, 'UTF-8');
         })->sortBy('hora_inicio');
 
         $registrosDelDia = \App\Models\RegistroAsistencia::where('nro_documento', $user->numero_documento)
@@ -1674,7 +1676,7 @@ private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fec
                 ->whereDate('fecha_hora', $fechaSeleccionada->format('Y-m-d'))
                 ->first();
 
-            $puedeRegistrarTema = ($sessionDetails['estado'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
+            $puedeRegistrarTema = ($sessionDetails['estado_sesion'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
 
             return [
                 'horario_id' => $horario->id,
