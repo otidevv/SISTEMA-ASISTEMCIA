@@ -2282,16 +2282,9 @@
             actualizarContador();
         });
 
-        function actualizarContador() {
-            const contador = document.getElementById('contador');
-            if (!contador) return;
-            const actual = quill.getText().trim().length;
-            const max = 1000;
-            contador.textContent = `${actual}/${max}`;
-            if (actual < 5) contador.style.color = 'var(--danger-text)';
-            else if (actual > max * 0.9) contador.style.color = 'var(--warning-text)';
-            else contador.style.color = 'var(--success-text)';
         }
+        
+        // Reloj en tiempo real
         // Reloj en tiempo real
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
@@ -2451,6 +2444,17 @@
         }, 800);
     });
 
+
+    function actualizarContador() {
+        const contador = document.getElementById('contador');
+        if (!contador || !quill) return;
+        const actual = quill.getText().trim().length;
+        const max = 1000;
+        contador.textContent = `${actual}/${max}`;
+        if (actual < 5) contador.style.color = 'var(--danger-text)';
+        else if (actual > max * 0.9) contador.style.color = 'var(--warning-text)';
+        else contador.style.color = 'var(--success-text)';
+    }
 
     function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null, cursoNombre = '', horario = '') {
         const modalElement = document.getElementById('modalTemaDesarrollado');
