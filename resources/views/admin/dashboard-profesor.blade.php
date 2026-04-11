@@ -2282,9 +2282,6 @@
             actualizarContador();
         });
 
-        }
-        
-        // Reloj en tiempo real
         // Reloj en tiempo real
         const timeElement = document.getElementById('current-time');
         if (timeElement) {
