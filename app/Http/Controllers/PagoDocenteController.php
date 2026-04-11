@@ -29,7 +29,6 @@ class PagoDocenteController extends Controller
             $cicloSeleccionado = Ciclo::where('es_activo', true)->orderBy('fecha_inicio', 'desc')->first();
             
             // Si no hay activos pero hay pagos sin ciclo, quizás convenga mostrarlos, 
-            // pero mantendremos la lógica de mostrar el primer ciclo si existe.
             if (!$cicloSeleccionado && $ciclos->isNotEmpty()) {
                 $cicloSeleccionado = $ciclos->first();
             }
@@ -38,7 +37,7 @@ class PagoDocenteController extends Controller
         // 3. Construir la consulta de pagos
         $query = PagoDocente::with('docente');
 
-        // --- NUEVO: Filtro de Búsqueda Server-side ---
+        // Filtro de Búsqueda Server-side
         $search = $request->input('search');
         if ($search) {
             $query->whereHas('docente', function($q) use ($search) {
@@ -54,9 +53,8 @@ class PagoDocenteController extends Controller
         } elseif ($cicloSeleccionado instanceof Ciclo) {
             $query->where('ciclo_id', $cicloSeleccionado->id);
         }
-        // Si es null o 'all', no filtramos por ciclo (muestra todo)
 
-        // --- NUEVO: Estadísticas para el Dashboard ---
+        // Estadísticas para el Dashboard
         $stats = [
             'total' => (clone $query)->count(),
             'activos' => (clone $query)->whereNull('fecha_fin')->count(),
@@ -66,15 +64,15 @@ class PagoDocenteController extends Controller
         // Persistir todos los parámetros en la paginación
         $pagos = $query->latest()->paginate(10)->appends($request->all());
 
-    // --- NUEVO: Datos para Modales (Create/Edit) ---
-    $docentes = \App\Models\User::whereHas('roles', function($q) {
-        $q->where('nombre', 'profesor');
-    })->get();
+        // Datos para Modales (Create/Edit)
+        $docentes = User::whereHas('roles', function($q) {
+            $q->where('nombre', 'profesor');
+        })->get();
 
-    $cicloActivo = $ciclos->where('es_activo', true)->first();
+        $cicloActivo = $ciclos->where('es_activo', true)->first();
 
-    // 5. Pasar los datos a la vista
-    return view('pagos-docentes.index', compact('pagos', 'ciclos', 'cicloSeleccionado', 'stats', 'docentes', 'cicloActivo'));
+        // 5. Pasar los datos a la vista
+        return view('pagos-docentes.index', compact('pagos', 'ciclos', 'cicloSeleccionado', 'stats', 'docentes', 'cicloActivo'));
     }
 
     public function create()
@@ -100,17 +98,13 @@ class PagoDocenteController extends Controller
 
         $ciclo = Ciclo::findOrFail($request->ciclo_id);
 
-        \Log::info('Guardando PagoDocente:', $request->all());
-
-        $pago = PagoDocente::create([
+        PagoDocente::create([
             'docente_id' => $request->docente_id,
             'ciclo_id' => $request->ciclo_id,
             'tarifa_por_hora' => $request->tarifa_por_hora,
             'fecha_inicio' => $ciclo->fecha_inicio,
             'fecha_fin' => $ciclo->fecha_fin,
         ]);
-
-        \Log::info('PagoDocente guardado:', ['id' => $pago->id]);
 
         return redirect()->route('pagos-docentes.index')->with('success', 'Pago registrado correctamente.');
     }
