@@ -2653,7 +2653,7 @@
         alertContainer.innerHTML = `<div class="${alertClass}" role="alert"><i class="mdi ${icon} me-2 fs-5"></i><div>${mensaje}</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
         document.querySelector('.modal-body').scrollTop = 0;
     }
-</script>
+
     // --- LÓGICA DE CRONÓMETRO EN VIVO PARA CLASES EN CURSO ---
     function iniciarCronometrosVivo() {
         const indicadores = document.querySelectorAll('.time-indicator.current');

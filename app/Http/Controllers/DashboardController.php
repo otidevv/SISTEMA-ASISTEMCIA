@@ -1005,43 +1005,6 @@ class DashboardController extends Controller
     /**
      * NUEVO: Calcular información de tiempo
      */
-    private function calcularInfoTiempo($horaInicio, $horaFin, $momentoActual, $fechaSeleccionada)
-    {
-        if (!$fechaSeleccionada->isToday()) {
-            if ($fechaSeleccionada->isPast()) {
-                return [
-                    'estado' => 'terminada',
-                    'texto' => 'Clase finalizada'
-                ];
-            } else {
-                return [
-                    'estado' => 'por_empezar',
-                    'texto' => 'Clase programada'
-                ];
-            }
-        }
-        
-        if ($momentoActual->lt($horaInicio)) {
-            $minutosParaInicio = $momentoActual->diffInMinutes($horaInicio);
-            return [
-                'estado' => 'por_empezar',
-                'texto' => $minutosParaInicio < 60 ? 
-                    "En {$minutosParaInicio} min" : 
-                    "En " . $momentoActual->diffForHumans($horaInicio, true)
-            ];
-        } elseif ($momentoActual->between($horaInicio, $horaFin)) {
-            $minutosRestantes = $momentoActual->diffInMinutes($horaFin);
-            return [
-                'estado' => 'en_curso',
-                'texto' => "Termina en {$minutosRestantes} min"
-            ];
-        } else {
-            return [
-                'estado' => 'terminada',
-                'texto' => "Terminó " . $horaFin->diffForHumans()
-            ];
-        }
-    }
 
     /**
      * NUEVO: Calcular eficiencia del docente
