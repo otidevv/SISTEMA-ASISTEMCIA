@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 $ciclo = $horario->ciclo;
                 if (!$ciclo) return false;
                 $diaHorarioNecesario = $ciclo->getDiaHorarioParaFecha($fechaSeleccionada);
-                return strtolower($diaHorarioNecesario) === strtolower($horario->dia_semana);
+                return mb_strtolower($diaHorarioNecesario, 'UTF-8') === mb_strtolower($horario->dia_semana, 'UTF-8');
             })->sortBy('hora_inicio');
 
             $registrosDelDia = RegistroAsistencia::where('nro_documento', $user->numero_documento)
@@ -193,17 +193,27 @@ class DashboardController extends Controller
 
             $user = Auth::user();
             $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay();
-            $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            
+            // Corregido: Usar el día rotativo si es sábado
+            $cicloActivo = Ciclo::where('es_activo', true)->find(HorarioDocente::find($request->horario_id)->ciclo_id ?? 0);
+            if ($cicloActivo) {
+                $diaSemanaSeleccionada = $cicloActivo->getDiaHorarioParaFecha($fechaSeleccionada);
+            } else {
+                $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            }
             
             $horario = HorarioDocente::where('id', $request->horario_id)
                 ->where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemanaSeleccionada)
+                ->where(function($q) use ($diaSemanaSeleccionada) {
+                    $q->where('dia_semana', $diaSemanaSeleccionada)
+                      ->orWhere(DB::raw('LOWER(dia_semana)'), mb_strtolower($diaSemanaSeleccionada, 'UTF-8'));
+                })
                 ->first();
                 
             if (!$horario) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Horario no válido o no corresponde al día de la sesión.'
+                    'message' => 'Horario no válido o no corresponde al día de la sesión (Día detectado: ' . $diaSemanaSeleccionada . ').'
                 ], 400);
             }
 

@@ -175,7 +175,7 @@ trait TeacherDashboardHelpers
         }
 
         $diasSemana = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-        $diaActualIndex = array_search(strtolower($diaActualSemana), $diasSemana);
+        $diaActualIndex = array_search(mb_strtolower($diaActualSemana, 'UTF-8'), $diasSemana);
         
         for ($i = 1; $i <= 14; $i++) {
             $indexDia = ($diaActualIndex + $i) % 7;
@@ -347,7 +347,7 @@ trait TeacherDashboardHelpers
             'viernes' => 5, 'sábado' => 6, 'domingo' => 0
         ];
         
-        $targetDay = $diasMap[strtolower($diaSemana)];
+        $targetDay = $diasMap[mb_strtolower($diaSemana, 'UTF-8')];
         $ahora = Carbon::now();
         $daysUntilTarget = ($targetDay - $ahora->dayOfWeek + 7) % 7;
         
