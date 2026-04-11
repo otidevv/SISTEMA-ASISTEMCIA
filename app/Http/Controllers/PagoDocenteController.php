@@ -79,15 +79,12 @@ class PagoDocenteController extends Controller
 
     public function create()
     {
-        // CORRECCIÓN 2: Usar User directamente (ya está importado)
         $docentes = User::whereHas('roles', function($q){
             $q->where('nombre', 'profesor');
         })->get();
 
-        // Traer todos los ciclos para mayor flexibilidad
         $ciclos = Ciclo::orderBy('fecha_inicio', 'desc')->get();
         
-        // Pero marcar cuál es el preferido (el más reciente activo)
         $cicloActivo = $ciclos->where('es_activo', true)->first();
 
         return view('pagos-docentes.create', compact('docentes', 'ciclos', 'cicloActivo'));
@@ -139,7 +136,6 @@ class PagoDocenteController extends Controller
             'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
         ]);
 
-        // CORRECCIÓN 4: Usar solo los campos necesarios en lugar de $request->all()
         $pago->update([
             'docente_id' => $request->docente_id,
             'ciclo_id' => $request->ciclo_id,
@@ -155,7 +151,6 @@ class PagoDocenteController extends Controller
     {
         $pago = PagoDocente::findOrFail($id);
         
-        // CORRECCIÓN 5: Agregar try-catch para manejar errores de eliminación
         try {
             $pago->delete();
             return redirect()->route('pagos-docentes.index')->with('success', 'Pago eliminado correctamente.');
@@ -183,5 +178,17 @@ class PagoDocenteController extends Controller
         }
 
         return response()->json(['tarifa_por_hora' => null]);
+    }
+
+    // Nuevo método para obtener la última tarifa registrada del docente
+    public function getUltimaTarifa($docenteId)
+    {
+        $pago = PagoDocente::where('docente_id', $docenteId)
+            ->latest('fecha_inicio')
+            ->first();
+
+        return response()->json([
+            'tarifa' => $pago ? $pago->tarifa_por_hora : null
+        ]);
     }
 }

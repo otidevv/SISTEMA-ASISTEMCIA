@@ -119,6 +119,11 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
 
     // --- PAGOS ---
     Route::get('/payments/validate/{dni}', [PaymentApiController::class, 'validateByDni']);
+
+    // --- API V1 (Servicios para Gestión Administrativa) ---
+    Route::prefix('v1')->group(function () {
+        Route::get('/pagos-docentes/ultima-tarifa/{docenteId}', [\App\Http\Controllers\PagoDocenteController::class, 'getUltimaTarifa']);
+    });
 });
 
 // --- SERVICIOS PÚBLICOS O INTERNOS ---
