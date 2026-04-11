@@ -2672,11 +2672,13 @@
     }
 
     function actualizarElementoSesion(item) {
+        const sessionCard = document.getElementById(`session-${item.horario_id}`);
         const timerElement = document.getElementById(`timer-${item.horario_id}`);
         const progressElement = document.getElementById(`progress-${item.horario_id}`);
         const progressTextElement = document.getElementById(`progress-text-${item.horario_id}`);
         const btnTema = document.getElementById(`btn-tema-${item.horario_id}`);
 
+        // --- Actualizar Tiempos e Iconos ---
         if (timerElement) {
             const timerText = timerElement.querySelector('.timer-text');
             const timerIcon = timerElement.querySelector('i');
@@ -2687,14 +2689,12 @@
             const claseEstado = nuevoEstado === 'por_empezar' ? 'upcoming' : (nuevoEstado === 'en_curso' ? 'current' : 'finished');
             
             if (!timerElement.classList.contains(claseEstado)) {
+                // Si el estado cambia de verdad, recargar para asegurar consistencia (opcional)
                 if (!document.querySelector('.modal.show')) {
-                    if (timerElement.classList.contains('current') && nuevoEstado === 'finished') {
-                         setTimeout(() => location.reload(), 1000);
-                    } else if (timerElement.classList.contains('upcoming') && nuevoEstado === 'en_curso') {
-                         setTimeout(() => location.reload(), 1000);
+                    if (timerElement.classList.contains('upcoming') && nuevoEstado === 'en_curso') {
+                         setTimeout(() => location.reload(), 500);
                     }
                 }
-                
                 timerElement.className = `time-indicator ${claseEstado}`;
                 if (timerIcon) {
                     const iconClass = nuevoEstado === 'por_empezar' ? 'mdi-clock-fast' : (nuevoEstado === 'en_curso' ? 'mdi-clock' : 'mdi-clock-check');
@@ -2703,12 +2703,44 @@
             }
         }
 
+        // --- Actualizar Registros (Entrada/Salida) en tiempo real ---
+        if (sessionCard) {
+            // Actualizar entrada
+            const entradaStrong = sessionCard.querySelector('.mdi-login + strong');
+            if (entradaStrong && entradaStrong.nextSibling) {
+                entradaStrong.nextSibling.textContent = ' ' + (item.hora_entrada || '---');
+            }
+            // Actualizar salida
+            const salidaStrong = sessionCard.querySelector('.mdi-logout + strong');
+            if (salidaStrong && salidaStrong.nextSibling) {
+                salidaStrong.nextSibling.textContent = ' ' + (item.hora_salida || '---');
+            }
+            
+            // Actualizar Métrica "REAL"
+            const metrics = sessionCard.querySelectorAll('.session-metric');
+            metrics.forEach(metric => {
+                const label = metric.querySelector('.session-metric-label');
+                if (label && label.textContent.trim() === 'Real') {
+                    const value = metric.querySelector('.session-metric-value');
+                    if (value) value.textContent = item.duracion_real + 'h';
+                }
+            });
+
+            // Actualizar Badge de Estado
+            const badge = sessionCard.querySelector('.status-badge');
+            if (badge && item.estado_ui) {
+                badge.className = `status-badge ${item.estado_ui.color}`;
+                badge.innerHTML = `<i class="mdi ${item.estado_ui.icono}"></i> ${item.estado_ui.texto}`;
+            }
+        }
+
+        // --- Barra de Progreso ---
         if (progressElement && item.progreso_clase > 0) {
             progressElement.style.width = `${item.progreso_clase}%`;
             if (progressTextElement) progressTextElement.textContent = `${item.progreso_clase}%`;
         }
 
-        // --- Actualizar botón de tema (Regla: Entrada y Salida obligatoria) ---
+        // --- Botón de Registro de Tema ---
         if (btnTema) {
             if (item.puede_registrar_tema) {
                 if (btnTema.disabled) {
@@ -2717,10 +2749,11 @@
                     btnTema.title = "";
                     const icon = btnTema.querySelector('i');
                     if (icon) icon.className = `mdi mdi-${item.tema_desarrollado ? 'pencil' : 'plus'}`;
-                    const span = btnTema.querySelector('span') || btnTema;
-                    if (span === btnTema) {
-                         // Si no tiene span, el texto está directo. Lo actualizamos.
-                         // Pero en nuestro Blade el texto está después del icono.
+                    const btnText = btnTema.querySelector('span') || btnTema;
+                    if (btnText === btnTema) {
+                        // fallback si no hay span
+                    } else {
+                        btnText.textContent = item.tema_desarrollado ? ' Editar Tema' : ' Registrar Tema';
                     }
                 }
             } else {
@@ -2736,8 +2769,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Ejecutar sincronización cada 10 segundos
-        setInterval(sincronizarDashboard, 10000);
+        // Ejecutar sincronización cada 6 segundos (Más rápido)
+        setInterval(sincronizarDashboard, 6000);
         
         // Sincronizar inmediatamente al cargar
         sincronizarDashboard();

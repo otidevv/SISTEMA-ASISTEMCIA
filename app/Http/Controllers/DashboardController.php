@@ -1677,6 +1677,18 @@ private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fec
                 ->first();
 
             $puedeRegistrarTema = ($sessionDetails['estado_sesion'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
+            
+            // Determinar configuración de estado para la UI
+            $estadoConfig = ['texto' => 'PROGRAMADA', 'color' => 'info', 'icono' => 'mdi-clock-outline'];
+            if ($asistencia) { 
+                $estadoConfig = ['texto' => 'COMPLETADA', 'color' => 'success', 'icono' => 'mdi-check-all']; 
+            } elseif ($momentoActual->between($horarioInicioHoy, $horarioFinHoy)) { 
+                $estadoConfig = ['texto' => 'EN CURSO', 'color' => 'active', 'icono' => 'mdi-play-circle']; 
+            } elseif ($momentoActual->greaterThan($horarioFinHoy) && $sessionDetails['tiene_registros']) { 
+                $estadoConfig = ['texto' => 'PENDIENTE', 'color' => 'warning', 'icono' => 'mdi-alert-circle-check-outline']; 
+            } elseif ($momentoActual->greaterThan($horarioFinHoy) && !$sessionDetails['tiene_registros']) { 
+                $estadoConfig = ['texto' => 'SIN REGISTRO', 'color' => 'danger', 'icono' => 'mdi-close-circle-outline']; 
+            }
 
             return [
                 'horario_id' => $horario->id,
@@ -1686,7 +1698,12 @@ private function getFechasAsistenciaPeriodo($numeroDocumento, $fechaInicio, $fec
                 'terminada' => $momentoActual->greaterThan($horarioFinHoy),
                 'puede_registrar_tema' => $puedeRegistrarTema,
                 'asistencia_id' => $asistencia ? $asistencia->id : null,
-                'tema_desarrollado' => $asistencia ? $asistencia->tema_desarrollado : null
+                'tema_desarrollado' => $asistencia ? $asistencia->tema_desarrollado : null,
+                'hora_entrada' => $sessionDetails['hora_entrada'],
+                'hora_salida' => $sessionDetails['hora_salida'],
+                'duracion_real' => round($sessionDetails['horas_dictadas'], 1),
+                'minutos_tardanza' => round($sessionDetails['minutos_tardanza']),
+                'estado_ui' => $estadoConfig
             ];
         })->filter()->values();
 
