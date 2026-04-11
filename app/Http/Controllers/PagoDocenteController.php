@@ -100,13 +100,17 @@ class PagoDocenteController extends Controller
 
         $ciclo = Ciclo::findOrFail($request->ciclo_id);
 
-        PagoDocente::create([
+        \Log::info('Guardando PagoDocente:', $request->all());
+
+        $pago = PagoDocente::create([
             'docente_id' => $request->docente_id,
             'ciclo_id' => $request->ciclo_id,
             'tarifa_por_hora' => $request->tarifa_por_hora,
             'fecha_inicio' => $ciclo->fecha_inicio,
             'fecha_fin' => $ciclo->fecha_fin,
         ]);
+
+        \Log::info('PagoDocente guardado:', ['id' => $pago->id]);
 
         return redirect()->route('pagos-docentes.index')->with('success', 'Pago registrado correctamente.');
     }
