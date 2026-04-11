@@ -74,20 +74,32 @@ trait TeacherDashboardHelpers
             $minutosParaInicio = $momentoActual->diffInMinutes($horaInicio);
             return [
                 'estado' => 'por_empezar',
+                'palo_color' => 'blue',
                 'texto' => $minutosParaInicio < 60 ? 
                     "En {$minutosParaInicio} min" : 
-                    "En " . $momentoActual->diffForHumans($horaInicio, true)
+                    "En " . $momentoActual->diffForHumans($horaInicio, true),
+                'minutos_faltantes' => $minutosParaInicio,
+                'progreso_clase' => 0
             ];
         } elseif ($momentoActual->between($horaInicio, $horaFin)) {
+            $minutosTotales = $horaInicio->diffInMinutes($horaFin);
+            $minutosTranscurridos = $horaInicio->diffInMinutes($momentoActual);
+            $progreso = $minutosTotales > 0 ? round(($minutosTranscurridos / $minutosTotales) * 100) : 0;
             $minutosRestantes = $momentoActual->diffInMinutes($horaFin);
+            
             return [
                 'estado' => 'en_curso',
-                'texto' => "Termina en {$minutosRestantes} min"
+                'palo_color' => 'green',
+                'texto' => "Termina en {$minutosRestantes} min",
+                'minutos_restantes' => $minutosRestantes,
+                'progreso_clase' => $progreso
             ];
         } else {
             return [
                 'estado' => 'terminada',
-                'texto' => "Terminó " . $horaFin->diffForHumans()
+                'palo_color' => 'gray',
+                'texto' => "Terminó " . $horaFin->diffForHumans(),
+                'progreso_clase' => 100
             ];
         }
     }

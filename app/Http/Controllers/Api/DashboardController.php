@@ -102,6 +102,8 @@ class DashboardController extends Controller
                     'tiempo_info' => $this->calcularInfoTiempo($horarioInicioHoy, $horarioFinHoy, $momentoActual, $fechaSeleccionada),
                     'curso_nombre' => $horario->curso->nombre ?? 'N/A',
                     'aula_nombre' => $horario->aula->nombre ?? 'N/A',
+                    'tarifa_sesion' => $this->obtenerTarifaDocente($user->id, $horario->ciclo, $fechaSeleccionada),
+                    'ciclo_nombre' => $horario->ciclo->nombre ?? 'N/A',
                 ]);
             })->filter()->values();
 
@@ -162,7 +164,9 @@ class DashboardController extends Controller
                         ],
                         'clase_terminada' => $s['clase_terminada'],
                         'tiempo_info' => $s['tiempo_info'],
-                        'tiene_registros' => $s['tiene_registros']
+                        'tiene_registros' => $s['tiene_registros'],
+                        'tarifa_sesion' => $s['tarifa_sesion'],
+                        'ciclo_nombre' => $s['ciclo_nombre'],
                     ];
                 }),
                 
