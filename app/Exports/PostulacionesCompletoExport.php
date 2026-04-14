@@ -418,44 +418,83 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
                     'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
                 ]);
 
-                // 2. FILA DE CATEGORÍAS (Fila 6)
-                // Categoría: DATOS DEL POSTULANTE (A6-J6) - Azul
-                $sheet->mergeCells('A6:J6');
-                $sheet->setCellValue('A6', 'DATOS DEL POSTULANTE');
-                $this->applyHeaderGroupStyle($sheet, 'A6:J6', 'FF3498DB');
+                $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+                $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
 
-                // Categoría: DATOS ACADÉMICOS (K6-O6) - Verde
-                $sheet->mergeCells('K6:O6');
-                $sheet->setCellValue('K6', 'DATOS ACADÉMICOS');
-                $this->applyHeaderGroupStyle($sheet, 'K6:O6', 'FF2ECC71');
+                if ($isReforzamiento) {
+                    // --- DISEÑO PARA REFORZAMIENTO ---
+                    // Categoría: DATOS DEL ESTUDIANTE (A6-G6) - Azul
+                    $sheet->mergeCells('A6:G6');
+                    $sheet->setCellValue('A6', 'DATOS DEL ESTUDIANTE');
+                    $this->applyHeaderGroupStyle($sheet, 'A6:G6', 'FF3498DB');
 
-                // Categoría: PROCESO Y ESTADO (P6-U6) - Naranja
-                $sheet->mergeCells('P6:U6');
-                $sheet->setCellValue('P6', 'PROCESO Y ESTADO');
-                $this->applyHeaderGroupStyle($sheet, 'P6:U6', 'FFE67E22');
+                    // Categoría: DATOS ACADÉMICOS (H6-J6) - Verde
+                    $sheet->mergeCells('H6:J6');
+                    $sheet->setCellValue('H6', 'DATOS ACADÉMICOS');
+                    $this->applyHeaderGroupStyle($sheet, 'H6:J6', 'FF2ECC71');
 
-                // Categoría: DATOS DEL COLEGIO (V6-AD6) - Púrpura
-                $sheet->mergeCells('V6:AD6');
-                $sheet->setCellValue('V6', 'DATOS DEL COLEGIO');
-                $this->applyHeaderGroupStyle($sheet, 'V6:AD6', 'FF9B59B6');
+                    // Categoría: PROCESO Y ESTADO (K6-M6) - Naranja
+                    $sheet->mergeCells('K6:M6');
+                    $sheet->setCellValue('K6', 'PROCESO Y ESTADO');
+                    $this->applyHeaderGroupStyle($sheet, 'K6:M6', 'FFE67E22');
 
-                // Categoría: VALIDACIÓN RENIEC (AE6-AF6) - Turquesa
-                $sheet->mergeCells('AE6:AF6');
-                $sheet->setCellValue('AE6', 'VALIDACIÓN RENIEC');
-                $this->applyHeaderGroupStyle($sheet, 'AE6:AF6', 'FF1ABC9C');
+                    // Categoría: DATOS DEL APODERADO (N6-P6) - Púrpura
+                    $sheet->mergeCells('N6:P6');
+                    $sheet->setCellValue('N6', 'DATOS DEL APODERADO');
+                    $this->applyHeaderGroupStyle($sheet, 'N6:P6', 'FF9B59B6');
 
-                // Categoría: REFERENCIAS (AG6-AI6) - Gris
-                $sheet->mergeCells('AG6:AI6');
-                $sheet->setCellValue('AG6', 'REFERENCIAS Y REGISTRO');
-                $this->applyHeaderGroupStyle($sheet, 'AG6:AI6', 'FF95A5A6');
+                    // Categoría: PAGOS (Q6-S6) - Turquesa
+                    $sheet->mergeCells('Q6:S6');
+                    $sheet->setCellValue('Q6', 'PAGOS');
+                    $this->applyHeaderGroupStyle($sheet, 'Q6:S6', 'FF1ABC9C');
 
-                // 3. Estilo de Cabecera Detallada (Fila 7) - Color un poco más oscuro que la categoría
-                $this->applySubHeaderStyle($sheet, 'A7:J7', 'FF2980B9'); // Azul oscuro
-                $this->applySubHeaderStyle($sheet, 'K7:O7', 'FF27AE60'); // Verde oscuro
-                $this->applySubHeaderStyle($sheet, 'P7:U7', 'FFD35400'); // Naranja oscuro
-                $this->applySubHeaderStyle($sheet, 'V7:AD7', 'FF8E44AD'); // Púrpura oscuro
-                $this->applySubHeaderStyle($sheet, 'AE7:AF7', 'FF16A085'); // Turquesa oscuro
-                $this->applySubHeaderStyle($sheet, 'AG7:AI7', 'FF7F8C8D'); // Gris oscuro
+                    // Estilo sub-header (Fila 7)
+                    $this->applySubHeaderStyle($sheet, 'A7:G7', 'FF2980B9');
+                    $this->applySubHeaderStyle($sheet, 'H7:J7', 'FF27AE60');
+                    $this->applySubHeaderStyle($sheet, 'K7:M7', 'FFD35400');
+                    $this->applySubHeaderStyle($sheet, 'N7:P7', 'FF8E44AD');
+                    $this->applySubHeaderStyle($sheet, 'Q7:S7', 'FF16A085');
+
+                } else {
+                    // --- DISEÑO PARA CEPRE REGULAR ---
+                    // Categoría: DATOS DEL POSTULANTE (A6-J6) - Azul
+                    $sheet->mergeCells('A6:J6');
+                    $sheet->setCellValue('A6', 'DATOS DEL POSTULANTE');
+                    $this->applyHeaderGroupStyle($sheet, 'A6:J6', 'FF3498DB');
+
+                    // Categoría: DATOS ACADÉMICOS (K6-O6) - Verde
+                    $sheet->mergeCells('K6:O6');
+                    $sheet->setCellValue('K6', 'DATOS ACADÉMICOS');
+                    $this->applyHeaderGroupStyle($sheet, 'K6:O6', 'FF2ECC71');
+
+                    // Categoría: PROCESO Y ESTADO (P6-U6) - Naranja
+                    $sheet->mergeCells('P6:U6');
+                    $sheet->setCellValue('P6', 'PROCESO Y ESTADO');
+                    $this->applyHeaderGroupStyle($sheet, 'P6:U6', 'FFE67E22');
+
+                    // Categoría: DATOS DEL COLEGIO (V6-AD6) - Púrpura
+                    $sheet->mergeCells('V6:AD6');
+                    $sheet->setCellValue('V6', 'DATOS DEL COLEGIO');
+                    $this->applyHeaderGroupStyle($sheet, 'V6:AD6', 'FF9B59B6');
+
+                    // Categoría: VALIDACIÓN RENIEC (AE6-AF6) - Turquesa
+                    $sheet->mergeCells('AE6:AF6');
+                    $sheet->setCellValue('AE6', 'VALIDACIÓN RENIEC');
+                    $this->applyHeaderGroupStyle($sheet, 'AE6:AF6', 'FF1ABC9C');
+
+                    // Categoría: REFERENCIAS (AG6-AI6) - Gris
+                    $sheet->mergeCells('AG6:AI6');
+                    $sheet->setCellValue('AG6', 'REFERENCIAS Y REGISTRO');
+                    $this->applyHeaderGroupStyle($sheet, 'AG6:AI6', 'FF95A5A6');
+
+                    // Estilo de Cabecera Detallada (Fila 7)
+                    $this->applySubHeaderStyle($sheet, 'A7:J7', 'FF2980B9');
+                    $this->applySubHeaderStyle($sheet, 'K7:O7', 'FF27AE60');
+                    $this->applySubHeaderStyle($sheet, 'P7:U7', 'FFD35400');
+                    $this->applySubHeaderStyle($sheet, 'V7:AD7', 'FF8E44AD');
+                    $this->applySubHeaderStyle($sheet, 'AE7:AF7', 'FF16A085');
+                    $this->applySubHeaderStyle($sheet, 'AG7:AI7', 'FF7F8C8D');
+                }
                 
                 // Set row heights
                 $sheet->getRowDimension('1')->setRowHeight(30);
