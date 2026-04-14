@@ -150,13 +150,11 @@ class ReportesEstadisticosController extends Controller
         if ($ciclo_id === 'global') {
             $statsGlobal = ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_activos' => 0, 'total_desercion' => 0];
             
-            // Solo procesamos los ciclos activos o el último si no hay activos (para no saturar)
-            $ciclosAProcesar = Ciclo::where('es_activo', true)->get();
-            if ($ciclosAProcesar->isEmpty()) {
-                $ciclosAProcesar = Ciclo::orderBy('fecha_inicio', 'desc')->take(1)->get();
-            }
+            // Ahora procesamos TODOS los ciclos (ativos y no activos) de forma inteligente
+            // Usamos caché para que solo tarde la primera vez
+            $ciclosConDatos = Ciclo::has('inscripciones')->orHas('inscripcionesReforzamiento')->get();
 
-            foreach ($ciclosAProcesar as $c) {
+            foreach ($ciclosConDatos as $c) {
                 $h = $this->procesarEstadisticasBatch($c);
                 $statsGlobal['regulares'] += $h['regulares'];
                 $statsGlobal['amonestados'] += $h['amonestados'];
@@ -194,6 +192,23 @@ class ReportesEstadisticosController extends Controller
     }
 
     private function procesarEstadisticasBatch($ciclo)
+    {
+        // Caché dinámico: Si el ciclo terminó, el caché es para siempre. Si es activo, dura 5 minutos.
+        $cacheKey = 'stats_batch_ciclo_' . $ciclo->id;
+        $isFin = Carbon::parse($ciclo->fecha_fin)->isPast();
+        
+        if (!$ciclo->es_activo && $isFin) {
+            return \Illuminate\Support\Facades\Cache::rememberForever($cacheKey, function() use ($ciclo) {
+                return $this->calcularEstadisticasRaw($ciclo);
+            });
+        }
+
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($ciclo) {
+            return $this->calcularEstadisticasRaw($ciclo);
+        });
+    }
+
+    private function calcularEstadisticasRaw($ciclo)
     {
         $periodoInicio = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
         $periodoFin = Carbon::parse($ciclo->fecha_fin)->endOfDay();
