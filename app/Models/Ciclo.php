@@ -75,6 +75,11 @@ class Ciclo extends Model
         return $this->hasMany(Inscripcion::class);
     }
 
+    public function inscripcionesReforzamiento()
+    {
+        return $this->hasMany(InscripcionReforzamiento::class);
+    }
+
     public function vacantesCarreras()
     {
         return $this->hasMany(CicloCarreraVacante::class);

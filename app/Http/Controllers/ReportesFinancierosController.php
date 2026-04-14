@@ -99,10 +99,10 @@ class ReportesFinancierosController extends Controller
             ->first();
 
         return [
-            'resumen_por_carrera' => $resumenQuery,
+            'resumen_por_carrera' => $resumenQuery->toArray(),
             'pagos_pendientes'    => $pagosPendientes,
-            'resumen_mensual'     => $resumenMensual,
-            'total_general'       => $totales,
+            'resumen_mensual'     => $resumenMensual->toArray(),
+            'total_general'       => $totales->toArray(),
         ];
     }
 }
