@@ -46,12 +46,20 @@ class ReportesEstadisticosController extends Controller
         $finanzasStats = $this->getFinanzasStats($ciclo_id);
         $procedenciaStats = $this->getProcedenciaStats($ciclo_id);
 
-        $tipoInscripcionStats = DB::table($inscripcionesTable)
-            ->select('tipo_inscripcion', DB::raw('count(*) as total'))
-            ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
-            ->when($isReforzamiento, fn($q) => $q->where('estado_inscripcion', 'validado'))
-            ->whereNotNull('tipo_inscripcion')
-            ->groupBy('tipo_inscripcion')->get();
+        if ($isReforzamiento) {
+            $tipoInscripcionStats = DB::table($inscripcionesTable)
+                ->select('grado as tipo_inscripcion', DB::raw('count(*) as total'))
+                ->where('ciclo_id', $ciclo_id)
+                ->where('estado_inscripcion', 'validado')
+                ->whereNotNull('grado')
+                ->groupBy('grado')->get();
+        } else {
+            $tipoInscripcionStats = DB::table($inscripcionesTable)
+                ->select('tipo_inscripcion', DB::raw('count(*) as total'))
+                ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+                ->whereNotNull('tipo_inscripcion')
+                ->groupBy('tipo_inscripcion')->get();
+        }
 
         if ($isReforzamiento) {
             $turnosStats = DB::table($inscripcionesTable)
@@ -85,6 +93,15 @@ class ReportesEstadisticosController extends Controller
 
     private function getCarrerasStats($ciclo_id)
     {
+        $ciclo = null;
+        if ($ciclo_id && $ciclo_id !== 'global') {
+            $ciclo = Ciclo::find($ciclo_id);
+        }
+
+        if ($ciclo && $ciclo->programa_id == 2) {
+            return collect([]); // Reforzamiento no tiene carreras
+        }
+
         $query = Carrera::select('id', 'nombre');
         $query->withCount(['postulaciones' => function($q) use ($ciclo_id) {
             if ($ciclo_id && $ciclo_id !== 'global') $q->where('ciclo_id', $ciclo_id);
