@@ -99,9 +99,55 @@
         .badge-reforzamiento-success { background-color: var(--cepre-green); color: #fff; }
         .badge-reforzamiento-warning { background-color: var(--cepre-magenta); color: #fff; }
         
-        .payment-chip { padding: 4px 10px; border-radius: 50px; font-weight: 700; font-size: 10px; }
-        .payment-chip-paid { background-color: rgba(147, 192, 31, 0.1); color: var(--cepre-green); }
-        .payment-chip-unpaid { background-color: rgba(226, 0, 122, 0.1); color: var(--cepre-magenta); }
+        .bg-soft-success { background-color: rgba(16, 196, 105, 0.1) !important; color: #10c469 !important; }
+        .bg-soft-primary { background-color: rgba(59, 93, 231, 0.1) !important; color: #3b5de7 !important; }
+        .bg-vibrant-success { background-color: #10c469 !important; color: #fff !important; }
+        .bg-vibrant-primary { background-color: #3b5de7 !important; color: #fff !important; }
+        
+        .payment-chip { padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .payment-chip-paid { background-color: #10c469; color: white; box-shadow: 0 2px 6px rgba(16, 196, 105, 0.4); }
+        .payment-chip-unpaid { background-color: #f755a6; color: white; box-shadow: 0 2px 6px rgba(247, 85, 166, 0.4); }
+
+        .btn-sync-premium {
+            background: linear-gradient(135deg, #05d1c1 0%, #00a896 100%);
+            color: white !important;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 168, 150, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-sync-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 168, 150, 0.4);
+            filter: brightness(1.1);
+        }
+        
+        .card-reforzamiento {
+            border-radius: 12px;
+            border: none !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important;
+            overflow: hidden;
+        }
+        
+        .header-reforzamiento {
+            background: linear-gradient(90deg, #10c469 0%, #05d1c1 100%);
+            color: white !important;
+        }
+
+    .badge-dna { background: #fef0f5; color: #f755a6; border: 1px solid #fbd3e4; border-radius: 6px; padding: 2px 8px; font-weight: 700; margin-bottom: 15px; }
+    
+    .modal-premium-header {
+        background: linear-gradient(135deg, #3023ae 0%, #c86dd7 100%);
+        color: white;
+    }
+    
+    .table-reforzamiento {
+        border-collapse: separate;
+        border-spacing: 0 4px;
+    }
+    .table-reforzamiento tr {
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
 
         .btn-action-reforzamiento { 
             width: 32px; 
@@ -209,7 +255,7 @@
                                         </div>
                                     </div>
                                     <h4 class="mb-1 fw-bold text-dark" id="exp-nombre"></h4>
-                                    <div id="exp-dni-badge" class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill mb-3 fs-13"></div>
+                                     <div id="exp-dni-badge" class="badge badge-dna px-3 py-2 fs-13"></div>
                                     <div class="d-block">
                                         <div class="badge badge-reforzamiento" id="exp-status-main">PENDIENTE</div>
                                     </div>
@@ -299,7 +345,7 @@
                                         <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Acciones Administrativas</h6>
                                         <div class="d-grid gap-2" id="panel-acciones">
 
-                                            <button id="btn-sync-modal" type="button" class="btn btn-soft-success btn-sm px-3 shadow-none fw-bold" onclick="syncPayments()">
+                                            <button id="btn-sync-modal" type="button" class="btn btn-sync-premium btn-sm px-3 shadow-none fw-bold" onclick="syncPayments()">
                                                 <i class="mdi mdi-sync mr-1"></i> SINCRONIZAR PAGOS
                                             </button>
                                             <button id="btn-validar-modal" type="button" class="btn btn-primary btn-sm px-3 shadow-none fw-bold d-none" onclick="approveInscripcion()">
@@ -346,9 +392,9 @@
 
                                     <!-- Comprobante de Pago Digital -->
                                     <div class="col-12 mb-4">
-                                        <div class="card border-0 shadow-none rounded-lg p-0 overflow-hidden" style="border: 1px solid #e0e0e0 !important;">
-                                            <div class="bg-soft-success px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                                <h6 class="text-success fw-bold text-uppercase fs-12 mb-0"><i class="mdi mdi-receipt-text mr-1"></i> HISTORIAL DE PAGOS (UNAMAD)</h6>
+                                        <div class="card card-reforzamiento">
+                                            <div class="header-reforzamiento px-4 py-2 d-flex justify-content-between align-items-center">
+                                                <h6 class="text-white fw-bold text-uppercase fs-12 mb-0"><i class="mdi mdi-receipt-text mr-1"></i> HISTORIAL DE PAGOS (UNAMAD)</h6>
                                                 <div id="exp-pago-status" class="payment-chip"></div>
                                             </div>
                                             <div class="p-0">
@@ -396,9 +442,9 @@
     <div class="modal fade" id="modalGigaEdicion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-dark py-3">
-                    <h5 class="modal-title font-size-15 text-white fw-bold">
-                        <i class="mdi mdi-database-edit-outline mr-2 me-2 text-warning"></i> GESTIÓN INTEGRAL DE EXPEDIENTE
+                <div class="modal-header modal-premium-header py-3">
+                    <h5 class="modal-title fw-bold text-white text-uppercase" id="modalExpedienteLabel">
+                        <i class="mdi mdi-account-card-details-outline mr-2 me-2"></i> EXPEDIENTE DIGITAL DE REFORZAMIENTO
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -743,7 +789,11 @@
                 const pStatus = $('#exp-pago-status');
                 pStatus.text(hasAprovedPayment ? 'SI PAGÓ' : 'DEUDA PENDIENTE')
                        .removeClass('payment-chip-paid payment-chip-unpaid')
-                       .addClass(hasAprovedPayment ? 'payment-chip-paid' : 'payment-chip-unpaid');
+                       .addClass(hasAprovedPayment ? 'payment-chip-paid' : 'payment-chip-unpaid')
+                       .css({
+                           'box-shadow': hasAprovedPayment ? '0 4px 10px rgba(16, 196, 105, 0.4)' : '0 4px 10px rgba(247, 85, 166, 0.4)',
+                           'border': 'none'
+                       });
 
                 $('#modalExpediente').data('id', id); // Guardar ID actual
 

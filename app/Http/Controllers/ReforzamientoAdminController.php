@@ -397,13 +397,23 @@ class ReforzamientoAdminController extends Controller
                     ->first();
 
                 if (!$existe) {
+                    // Detectar qué número de pago es para este alumno (+1 porque aún no se inserta)
+                    $ordenPago = $inscripcion->pagos()->count();
+                    $mesAtribuido = null;
+                    
+                    if ($inscripcion->ciclo && $inscripcion->ciclo->fecha_inicio) {
+                        $mesAtribuido = \Carbon\Carbon::parse($inscripcion->ciclo->fecha_inicio)
+                            ->addMonths($ordenPago)
+                            ->translatedFormat('F Y');
+                    }
+
                     // Crear el nuevo pago detectado
                     \App\Models\PagoReforzamiento::create([
                         'inscripcion_id' => $inscripcion->id,
                         'numero_operacion' => $serial,
                         'monto' => $montoReforzamiento,
                         'fecha_pago' => $voucher['fecha'] ? \Carbon\Carbon::parse($voucher['fecha'])->toDateString() : now()->toDateString(),
-                        'mes_pagado' => \Carbon\Carbon::parse($voucher['fecha'])->translatedFormat('F Y'),
+                        'mes_pagado' => $mesAtribuido ? ucwords($mesAtribuido) : \Carbon\Carbon::parse($voucher['fecha'])->translatedFormat('F Y'),
                         'verificado_api' => true,
                         'estado_pago' => 'aprobado',
                         'fecha_verificacion_api' => now()

@@ -190,14 +190,37 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
         if ($item instanceof \App\Models\InscripcionReforzamiento) {
             $estudiante = $item->estudiante;
             $apoderado = $item->apoderados->first();
-            $pago = $item->pagos->first();
+            $pagos = $item->pagos;
             
+            // Lógica de Pagos Múltiples
+            $montoTotal = $pagos->where('estado_pago', 'aprobado')->sum('monto');
+            if ($montoTotal == 0) $montoTotal = $pagos->sum('monto'); // Fallback si no hay 'aprobados' explícitos
+            
+            $operaciones = $pagos->pluck('numero_operacion')->filter()->implode(', ');
+            
+            // Atribución de Meses (Abril, Mayo, etc.)
+            $meses = [];
+            $ciclo = $item->ciclo;
+            
+            foreach ($pagos as $index => $pago) {
+                if ($pago->mes_pagado && !str_contains(strtolower($pago->mes_pagado), 'inscrip')) {
+                    $meses[] = $pago->mes_pagado;
+                } else if ($ciclo && $ciclo->fecha_inicio) {
+                    // Si el pago no tiene mes claro, lo atribuimos por orden a partir del inicio del ciclo
+                    $mesAtribuido = \Carbon\Carbon::parse($ciclo->fecha_inicio)->addMonths($index)->translatedFormat('F Y');
+                    $meses[] = ucwords($mesAtribuido);
+                } else {
+                    $meses[] = $pago->mes_pagado ?: 'N/A';
+                }
+            }
+            $mesesList = !empty($meses) ? implode(', ', array_unique($meses)) : 'N/A';
+
             return [
                 $item->id,
                 $estudiante ? $estudiante->numero_documento : 'N/A',
                 $estudiante ? $estudiante->apellido_paterno : 'N/A',
                 $estudiante ? $estudiante->apellido_materno : 'N/A',
-                $estudiante ? $estudiante->nombre : 'N/A',
+                $estudiante ? $item->estudiante->nombre : 'N/A',
                 $estudiante ? $estudiante->telefono : 'N/A',
                 $estudiante ? $estudiante->email : 'N/A',
                 $item->grado,
@@ -209,9 +232,9 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
                 $apoderado ? $apoderado->nombres : 'N/A',
                 $apoderado ? $apoderado->numero_documento : 'N/A',
                 $apoderado ? $apoderado->celular : 'N/A',
-                $pago ? $pago->monto : 0,
-                $pago ? $pago->mes_pagado : 'N/A',
-                $pago ? $pago->numero_operacion : 'N/A'
+                $montoTotal,
+                $mesesList,
+                $operaciones ?: 'N/A'
             ];
         }
 
