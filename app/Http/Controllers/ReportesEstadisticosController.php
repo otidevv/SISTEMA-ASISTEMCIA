@@ -87,7 +87,7 @@ class ReportesEstadisticosController extends Controller
         return view('reportes.estadisticos.index', compact(
             'carrerasStats', 'aulasStats', 'documentosStats', 'docentesStats', 
             'inhabilitadosStats', 'asistenciaStats', 'finanzasStats', 'procedenciaStats',
-            'tipoInscripcionStats', 'turnosStats', 'edades', 'ciclos', 'ciclo_id'
+            'tipoInscripcionStats', 'turnosStats', 'edades', 'ciclos', 'ciclo_id', 'isReforzamiento'
         ));
     }
 
@@ -228,18 +228,39 @@ class ReportesEstadisticosController extends Controller
         $limiteInhabilitacion = ceil($diasHabilesCiclo * (($ciclo->porcentaje_inhabilitacion ?? 30) / 100));
 
         $reg = 0; $amo = 0; $inh = 0;
+        $cacheDiasHabiles = [];
+        
+        // Pre-calcular para el periodo base
+        $diasBase = AsistenciaHelper::contarDiasHabiles($periodoInicio, $fechaCalculoAsistencia, $ciclo);
+        $cacheDiasHabiles[$periodoInicio->format('Y-m-d')] = $diasBase;
+
         foreach ($inscritos as $ins) {
             $doc = $ins->numero_documento;
             if (!$doc) { $reg++; continue; }
+            
             $diasAsistidos = $asistenciasCount[$doc] ?? 0;
-            $inicioReal = $periodoInicio;
+            $inicioRealRaw = $periodoInicio;
+            
             if (isset($primerasAsistencias[$doc])) {
                 $f1 = Carbon::parse($primerasAsistencias[$doc])->startOfDay();
-                if ($f1->gt($periodoInicio)) $inicioReal = $f1;
+                if ($f1->gt($periodoInicio)) $inicioRealRaw = $f1;
             }
-            $diasHabilesTranscurridos = AsistenciaHelper::contarDiasHabiles($inicioReal, $fechaCalculoAsistencia, $ciclo);
+            
+            $key = $inicioRealRaw->format('Y-m-d');
+            if (!isset($cacheDiasHabiles[$key])) {
+                $cacheDiasHabiles[$key] = AsistenciaHelper::contarDiasHabiles($inicioRealRaw, $fechaCalculoAsistencia, $ciclo);
+            }
+            
+            $diasHabilesTranscurridos = $cacheDiasHabiles[$key];
             $faltas = max(0, $diasHabilesTranscurridos - $diasAsistidos);
-            if ($faltas >= $limiteInhabilitacion) { $inh++; } elseif ($faltas >= $limiteAmonestacion) { $amo++; } else { $reg++; }
+            
+            if ($faltas >= $limiteInhabilitacion) { 
+                $inh++; 
+            } elseif ($faltas >= $limiteAmonestacion) { 
+                $amo++; 
+            } else { 
+                $reg++; 
+            }
         }
         return ['regulares' => $reg, 'amonestados' => $amo, 'inhabilitados' => $inh, 'total_estudiantes' => $total];
     }

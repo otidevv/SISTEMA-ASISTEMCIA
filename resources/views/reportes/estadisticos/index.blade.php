@@ -71,6 +71,7 @@
 
     <!-- MAIN GRAPHS -->
     <div class="row g-4">
+        @if(!$isReforzamiento)
         <div class="col-xl-6">
             <div class="card analytics-card shadow border-0 h-100">
                 <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
@@ -82,7 +83,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-6">
+        @endif
+        <div class="col-xl-{{ $isReforzamiento ? '12' : '6' }}">
             <div class="card analytics-card shadow border-0 h-100">
                 <div class="card-header bg-white py-3 border-0">
                     <h5 class="card-title mb-0 fw-bold text-dark"><i class="mdi mdi-door-open text-info me-2"></i>Ocupación de Aulas</h5>
@@ -110,7 +112,7 @@
         </div>
         <div class="col-xl-3">
             <div class="card analytics-card shadow border-0 h-100">
-                <div class="card-header bg-white py-3 border-0 text-center"><h6 class="fw-bold">Tipo de Inscripción</h6></div>
+                <div class="card-header bg-white py-3 border-0 text-center"><h6 class="fw-bold">{{ $isReforzamiento ? 'Distribución por Grados' : 'Tipo de Inscripción' }}</h6></div>
                 <div class="card-body"><div style="height: 250px;"><canvas id="typePieChart"></canvas></div></div>
             </div>
         </div>
@@ -174,6 +176,7 @@
                 </div>
             </div>
         </div>
+        @if(!$isReforzamiento)
         <div class="col-xl-4 col-lg-6">
             <div class="card shadow border-0 rounded-4 h-100">
                 <div class="card-header bg-info text-white rounded-top-4 py-3"><h6 class="mb-0 fw-bold"><i class="mdi mdi-map-marker me-2"></i>Alumnos por Provincia</h6></div>
@@ -193,7 +196,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-4 col-lg-12">
+        @endif
+        <div class="col-xl-{{ $isReforzamiento ? '8' : '4' }} col-lg-12">
             <div class="card shadow border-0 rounded-4 h-100">
                 <div class="card-header bg-success text-white rounded-top-4 py-3"><h6 class="mb-0 fw-bold"><i class="mdi mdi-currency-usd me-2"></i>Ingresos por Programa Académico</h6></div>
                 <div class="card-body p-0">
@@ -234,6 +238,7 @@
         Chart.defaults.font.family = "'Inter', sans-serif";
         Chart.defaults.color = cText;
 
+        @if(!$isReforzamiento)
         // POPULARIDAD
         new Chart(document.getElementById('popularityChart'), {
             type: 'bar',
@@ -253,6 +258,7 @@
                 scales: { x: { grid: { color: cGrid } }, y: { grid: { display: false } } }
             }
         });
+        @endif
 
         // AULAS
         new Chart(document.getElementById('aulasBarChart'), {
