@@ -288,6 +288,9 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
 
     public function styles(Worksheet $sheet)
     {
+        $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+        $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
+
         $highestRow = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
 
