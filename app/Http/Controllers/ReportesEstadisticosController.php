@@ -84,10 +84,30 @@ class ReportesEstadisticosController extends Controller
             ->groupBy(fn($i) => Carbon::parse($i->fecha_nacimiento)->age)
             ->map->count()->sortKeys();
 
+        $historicoStats = null;
+        if ($ciclo_id === 'global') {
+            $historicoStats = Ciclo::orderBy('id', 'asc')->get()->map(function($c) {
+                $inscritosCount = DB::table('inscripciones')->where('ciclo_id', $c->id)->count();
+                $reforzamientoCount = DB::table('inscripciones_reforzamiento')->where('ciclo_id', $c->id)->count();
+                
+                $recaudadoCepre = DB::table('postulaciones')->where('ciclo_id', $c->id)->where('pago_verificado', true)->sum(DB::raw('monto_matricula + monto_ensenanza'));
+                $recaudadoRefor = DB::table('pagos_reforzamiento as p')
+                    ->join('inscripciones_reforzamiento as i', 'p.inscripcion_id', '=', 'i.id')
+                    ->where('i.ciclo_id', $c->id)->sum('p.monto');
+
+                return (object)[
+                    'ciclo' => $c->nombre,
+                    'alumnos' => $inscritosCount + $reforzamientoCount,
+                    'recaudado' => $recaudadoCepre + $recaudadoRefor
+                ];
+            });
+        }
+
         return view('reportes.estadisticos.index', compact(
             'carrerasStats', 'aulasStats', 'documentosStats', 'docentesStats', 
             'inhabilitadosStats', 'asistenciaStats', 'finanzasStats', 'procedenciaStats',
-            'tipoInscripcionStats', 'turnosStats', 'edades', 'ciclos', 'ciclo_id', 'isReforzamiento'
+            'tipoInscripcionStats', 'turnosStats', 'edades', 'ciclos', 'ciclo_id', 
+            'isReforzamiento', 'historicoStats'
         ));
     }
 

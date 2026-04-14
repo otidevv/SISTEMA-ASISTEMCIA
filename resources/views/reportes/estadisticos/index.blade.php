@@ -68,6 +68,23 @@
             </div>
         </div>
     </div>
+    
+    <!-- ANALISIS HISTORICO (SOLO GLOBAL) -->
+    @if($ciclo_id === 'global' && $historicoStats)
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card analytics-card shadow border-0 overflow-hidden">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold text-dark"><i class="mdi mdi-trending-up text-primary me-2"></i>Tendencia de Crecimiento Institucional (Por Ciclos)</h5>
+                    <span class="badge bg-soft-success text-success px-3 rounded-pill">Análisis de Desempeño</span>
+                </div>
+                <div class="card-body bg-light-soft">
+                    <div style="height: 350px;"><canvas id="historicalTrendChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- MAIN GRAPHS -->
     <div class="row g-4">
@@ -353,6 +370,45 @@
                 scales: { y: { beginAtZero: true, grid: { color: cGrid } }, x: { grid: { display: false } } }
             }
         });
+        @endif
+
+        // HISTORICO COMPUESTO (SOLO GLOBAL)
+        @if($ciclo_id === 'global' && $historicoStats)
+        new Chart(document.getElementById('historicalTrendChart'), {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($historicoStats->pluck('ciclo')) !!},
+                datasets: [
+                    {
+                        label: 'Alumnos Inscritos',
+                        data: {!! json_encode($historicoStats->pluck('alumnos')) !!},
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Recaudación (S/)',
+                        data: {!! json_encode($historicoStats->pluck('recaudado')) !!},
+                        type: 'bar',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Alumnos' } },
+                    y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Soles (S/)' } }
+                }
+            }
+        });
+        @endif
     });
 </script>
 @endpush
