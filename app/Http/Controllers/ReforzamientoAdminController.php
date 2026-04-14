@@ -43,8 +43,8 @@ class ReforzamientoAdminController extends Controller
                      ->where('p.estado_pago', '=', 'aprobado');
             })
             ->selectRaw('count(DISTINCT i.id) as total')
-            ->selectRaw('SUM(CASE WHEN i.estado_inscripcion = "pendiente" THEN 1 ELSE 0 END) as pendiente')
-            ->selectRaw('SUM(CASE WHEN i.estado_inscripcion = "validado" THEN 1 ELSE 0 END) as aprobado')
+            ->selectRaw('count(DISTINCT CASE WHEN i.estado_inscripcion = "pendiente" THEN i.id END) as pendiente')
+            ->selectRaw('count(DISTINCT CASE WHEN i.estado_inscripcion = "validado" THEN i.id END) as aprobado')
             ->selectRaw('COALESCE(SUM(p.monto), 0) as recaudado')
             ->when($request->filled('ciclo_id'), function($q) use ($request) {
                 return $q->where('i.ciclo_id', $request->ciclo_id);
