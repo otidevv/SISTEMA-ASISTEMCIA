@@ -59,7 +59,8 @@ class ReforzamientoAdminController extends Controller
         ];
 
         // Preparar consulta para DataTables con relaciones - Se añade 'apoderados'
-        $query = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'pagos', 'aula', 'apoderados']);
+        $query = InscripcionReforzamiento::with(['estudiante', 'ciclo', 'pagos', 'aula', 'apoderados'])
+            ->orderBy('created_at', 'desc');
         
         if ($request->filled('ciclo_id')) {
             $query->where('ciclo_id', $request->ciclo_id);
