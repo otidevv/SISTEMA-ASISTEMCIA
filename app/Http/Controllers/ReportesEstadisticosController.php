@@ -149,8 +149,14 @@ class ReportesEstadisticosController extends Controller
     {
         if ($ciclo_id === 'global') {
             $statsGlobal = ['regulares' => 0, 'amonestados' => 0, 'inhabilitados' => 0, 'total_activos' => 0, 'total_desercion' => 0];
-            $ciclos = Ciclo::has('inscripciones')->get();
-            foreach ($ciclos as $c) {
+            
+            // Solo procesamos los ciclos activos o el último si no hay activos (para no saturar)
+            $ciclosAProcesar = Ciclo::where('es_activo', true)->get();
+            if ($ciclosAProcesar->isEmpty()) {
+                $ciclosAProcesar = Ciclo::orderBy('fecha_inicio', 'desc')->take(1)->get();
+            }
+
+            foreach ($ciclosAProcesar as $c) {
                 $h = $this->procesarEstadisticasBatch($c);
                 $statsGlobal['regulares'] += $h['regulares'];
                 $statsGlobal['amonestados'] += $h['amonestados'];
@@ -158,7 +164,12 @@ class ReportesEstadisticosController extends Controller
                 $statsGlobal['total_activos'] += $h['total_estudiantes'];
             }
             $statsGlobal['total_desercion'] = $statsGlobal['inhabilitados'];
-            $statsGlobal['por_carrera'] = Carrera::withCount(['inscripciones'])->orderBy('inscripciones_count', 'desc')->take(5)->get()->map(fn($c) => ['nombre' => $c->nombre, 'total' => $c->inscripciones_count]);
+            
+            // Top 5 carreras global (esto ya es rápido por SQL)
+            $statsGlobal['por_carrera'] = Carrera::withCount(['inscripciones'])
+                ->orderBy('inscripciones_count', 'desc')->take(5)->get()
+                ->map(fn($c) => ['nombre' => $c->nombre, 'total' => $c->inscripciones_count]);
+            
             return $statsGlobal;
         }
 

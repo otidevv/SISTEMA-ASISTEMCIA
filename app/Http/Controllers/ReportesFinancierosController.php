@@ -49,31 +49,22 @@ class ReportesFinancierosController extends Controller
 
     private function obtenerDatosConsolidados()
     {
-        // Postulaciones con pagos verificados
-        $postulaciones = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
-            ->where('pago_verificado', true)
-            ->orderBy('fecha_postulacion', 'desc')
+        // Resumen por Ciclo y Carrera usando SQL (mucho más rápido)
+        $resumenQuery = Postulacion::join('ciclos', 'postulaciones.ciclo_id', '=', 'ciclos.id')
+            ->join('carreras', 'postulaciones.carrera_id', '=', 'carreras.id')
+            ->where('postulaciones.pago_verificado', true)
+            ->selectRaw('
+                ciclos.nombre as ciclo, 
+                carreras.nombre as carrera, 
+                COUNT(*) as total_postulantes,
+                SUM(monto_matricula) as total_matricula,
+                SUM(monto_ensenanza) as total_ensenanza,
+                SUM(monto_matricula + monto_ensenanza) as total_recaudado,
+                COUNT(postulaciones.voucher_path) as vouchers_emitidos
+            ')
+            ->groupBy('ciclos.nombre', 'carreras.nombre')
+            ->orderBy('ciclos.nombre', 'desc')
             ->get();
-
-        // Agrupar por ciclo y carrera
-        $agrupadoPorCicloCarrera = $postulaciones->groupBy(['ciclo.nombre', 'carrera.nombre']);
-
-        $resumen = [];
-
-        foreach ($agrupadoPorCicloCarrera as $cicloNombre => $carreras) {
-            foreach ($carreras as $carreraNombre => $posts) {
-                $resumen[] = [
-                    'ciclo'             => $cicloNombre,
-                    'carrera'           => $carreraNombre,
-                    'total_postulantes' => $posts->count(),
-                    'total_matricula'   => $posts->sum('monto_matricula'),
-                    'total_ensenanza'   => $posts->sum('monto_ensenanza'),
-                    'total_recaudado'   => $posts->sum('monto_matricula') + $posts->sum('monto_ensenanza'),
-                    'vouchers_emitidos' => $posts->whereNotNull('voucher_path')->count(),
-                    'postulaciones'     => $posts, // Para mostrar detalle con vouchers
-                ];
-            }
-        }
 
         // Pagos pendientes
         $pagosPendientes = Postulacion::where('estado', 'aprobado')
@@ -98,15 +89,20 @@ class ReportesFinancierosController extends Controller
                 return $item;
             });
 
+        // Totales Generales
+        $totales = Postulacion::where('pago_verificado', true)
+            ->selectRaw('
+                COUNT(*) as postulantes,
+                SUM(monto_matricula + monto_ensenanza) as recaudado,
+                COUNT(voucher_path) as vouchers
+            ')
+            ->first();
+
         return [
-            'resumen_por_carrera' => $resumen,
+            'resumen_por_carrera' => $resumenQuery,
             'pagos_pendientes'    => $pagosPendientes,
             'resumen_mensual'     => $resumenMensual,
-            'total_general'       => [
-                'postulantes' => $postulaciones->count(),
-                'recaudado'   => $postulaciones->sum('monto_matricula') + $postulaciones->sum('monto_ensenanza'),
-                'vouchers'    => $postulaciones->whereNotNull('voucher_path')->count(),
-            ],
+            'total_general'       => $totales,
         ];
     }
 }
