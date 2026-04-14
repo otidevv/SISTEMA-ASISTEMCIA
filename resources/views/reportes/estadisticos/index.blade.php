@@ -370,7 +370,7 @@
                 scales: { y: { beginAtZero: true, grid: { color: cGrid } }, x: { grid: { display: false } } }
             }
         });
-        @endif
+
 
         // HISTORICO COMPUESTO (SOLO GLOBAL)
         @if($ciclo_id === 'global' && $historicoStats)
