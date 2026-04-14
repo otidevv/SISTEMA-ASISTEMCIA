@@ -148,11 +148,15 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
 
         $logoCepre = public_path('assets/images/logo cepre costancia.png');
         if (file_exists($logoCepre)) {
+            $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+            $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
+            $colLogo = $isReforzamiento ? 'Q1' : 'AE1';
+
             $drawing2 = new Drawing();
             $drawing2->setName('CEPRE');
             $drawing2->setPath($logoCepre);
             $drawing2->setHeight(80);
-            $drawing2->setCoordinates('N1'); // Adjust based on columns
+            $drawing2->setCoordinates($colLogo);
             $drawings[] = $drawing2;
         }
 
@@ -172,31 +176,12 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
         }
 
         return [
-            'ID',
-            'Codigo Postulante',
-            'DNI',
-            'Apellido Paterno',
-            'Apellido Materno',
-            'Nombres',
-            'Telefono',
-            'Email',
-            'Ciclo',
-            'Carrera',
-            'Turno',
-            'Aula',
-            'Estado',
-            'Monto Total',
-            'Numero Recibo',
-            'Fecha Postulacion',
-            'Colegio',
-            'Año Egreso',
-            'Ubigeo Dpto',
-            'Ubigeo Prov',
-            'Ubigeo Dist',
-            'Ubigeo Nacimiento',
-            'Apoderado',
-            'Teléfono Apoderado',
-            'Registrado Por',
+            'ID', 'Codigo Postulante', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'DNI', 'Email', 'Telefono', 'Género', 'Dirección',
+            'Ciclo', 'Carrera', 'Turno', 'Aula', 'Tipo Inscripcion', 
+            'Fecha Postulacion', 'Estado', 'Documentos Verificados', 'Pago Verificado', 'Numero Recibo', 'Monto Total',
+            'Colegio', 'Cod. Modular', 'Ubigeo Col.', 'Dpto Col.', 'Prov Col.', 'Dist Col.', 'Dirección Col.', 'Nivel Col.', 'Gestión Col.',
+            'Lugar Residencia (RENIEC)', 'Ubigeo Nacimiento (RENIEC)',
+            'Apoderado', 'Teléfono Apoderado', 'Registrado Por',
         ];
     }
 
@@ -350,11 +335,15 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
             ],
         ]);
 
-        // 4. Formatear DNI y Teléfonos como Texto para evitar notación científica (E+)
-        // Columnas F (DNI), H (Teléfono), AI (Teléfono Apoderado)
-        $sheet->getStyle('F8:F' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-        $sheet->getStyle('H8:H' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-        $sheet->getStyle('AH8:AH' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        // 4. Formatear DNI y Teléfonos como Texto
+        if ($isReforzamiento) {
+            $sheet->getStyle('B8:B' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+            $sheet->getStyle('O8:O' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        } else {
+            $sheet->getStyle('F8:F' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+            $sheet->getStyle('H8:H' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+            $sheet->getStyle('AH8:AH' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+        }
 
         // 5. Ajuste de columnas inteligente + Manual para las más largas
         foreach (range('A', $highestColumn) as $col) {
@@ -387,7 +376,9 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
         return [
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $highestColumn = $sheet->getHighestColumn();
+                $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+                $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
+                $highestColumn = $isReforzamiento ? 'S' : 'AI';
 
                 // 1. Títulos Institucionales (A1:A4)
                 $sheet->mergeCells("A1:{$highestColumn}1");
