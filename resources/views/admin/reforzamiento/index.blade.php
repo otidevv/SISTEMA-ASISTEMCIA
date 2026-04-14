@@ -285,13 +285,13 @@
                         <div class="col-lg-8">
                             <div class="d-flex flex-wrap gap-2">
                                 <button type="button" class="btn btn-dark btn-rounded waves-effect waves-light filter-btn active" data-filter="all">Todos los Alumnos</button>
-                                <button type="button" class="btn btn-outline-danger btn-rounded waves-effect waves-light filter-btn" data-filter="debtors">
-                                    <i class="mdi mdi-account-cash mr-1"></i> Ver Solo Deudores
+                                <button type="button" class="btn btn-danger btn-rounded waves-effect waves-light filter-btn" data-filter="debtors" style="opacity: 0.6;">
+                                    <i class="mdi mdi-account-cash mr-1"></i> Solo Deudores
                                 </button>
-                                <button type="button" class="btn btn-outline-success btn-rounded waves-effect waves-light filter-btn" data-filter="validated">
-                                    <i class="mdi mdi-account-check mr-1"></i> Ver Solo Validados
+                                <button type="button" class="btn btn-success btn-rounded waves-effect waves-light filter-btn" data-filter="validated" style="opacity: 0.6;">
+                                    <i class="mdi mdi-account-check mr-1"></i> Solo Validados
                                 </button>
-                                <button type="button" class="btn btn-outline-primary btn-rounded waves-effect waves-light filter-btn" data-filter="today">
+                                <button type="button" class="btn btn-primary btn-rounded waves-effect waves-light filter-btn" data-filter="today" style="opacity: 0.6;">
                                     <i class="mdi mdi-calendar-today mr-1"></i> Registros de Hoy
                                 </button>
                             </div>
@@ -750,6 +750,7 @@
                 responsive: true,
                 serverSide: true,
                 pageLength: 25,
+                order: [[0, 'desc']], // Ordenar por ID/Fecha (asumiendo que la col 0 tiene el ID oculto o el backend lo maneja)
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 ajax: {
                     url: "{{ route('admin.reforzamiento.data') }}",
@@ -782,21 +783,9 @@
             
             // Eventos para Filtros Rápidos
             $('.filter-btn').on('click', function() {
-                $('.filter-btn').removeClass('active btn-dark btn-danger btn-success btn-primary');
-                // Restaurar outlines para todos
-                $('.filter-btn[data-filter="all"]').addClass('btn-outline-dark');
-                $('.filter-btn[data-filter="debtors"]').addClass('btn-outline-danger');
-                $('.filter-btn[data-filter="validated"]').addClass('btn-outline-success');
-                $('.filter-btn[data-filter="today"]').addClass('btn-outline-primary');
+                $('.filter-btn').removeClass('active').css('opacity', '0.6').css('box-shadow', 'none');
                 
-                $(this).addClass('active');
-                
-                // Cambiar a fondo sólido para el activo
-                const filter = $(this).data('filter');
-                if(filter === 'all') $(this).removeClass('btn-outline-dark').addClass('btn-dark');
-                if(filter === 'debtors') $(this).removeClass('btn-outline-danger').addClass('btn-danger text-white');
-                if(filter === 'validated') $(this).removeClass('btn-outline-success').addClass('btn-success text-white');
-                if(filter === 'today') $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');
+                $(this).addClass('active').css('opacity', '1').css('box-shadow', '0 4px 12px rgba(0,0,0,0.2)');
                 
                 table.ajax.reload();
             });
