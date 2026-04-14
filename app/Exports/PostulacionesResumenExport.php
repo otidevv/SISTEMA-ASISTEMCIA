@@ -18,6 +18,7 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
     protected $carrera_id;
     protected $turno_id;
     protected $aula_id;
+    protected $ciclo;
     protected $carrerasPorGrupo = [];
     protected $table1RowCount = 0;
 
@@ -66,6 +67,7 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         $this->carrera_id = $carrera_id;
         $this->turno_id = $turno_id;
         $this->aula_id = $aula_id;
+        $this->ciclo = \App\Models\Ciclo::find($ciclo_id);
     }
 
     private function encontrarGrupo($carrera)
@@ -88,8 +90,12 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         if ($this->ciclo_id) $baseQuery->where('postulaciones.ciclo_id', $this->ciclo_id);
         if ($this->carrera_id) $baseQuery->where('postulaciones.carrera_id', $this->carrera_id);
         if ($this->turno_id) $baseQuery->where('postulaciones.turno_id', $this->turno_id);
+        
+        // Relación dinámica de inscripción
+        $relacionInscripcion = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripcionReforzamiento' : 'inscripcion';
+
         if ($this->aula_id) {
-            $baseQuery->whereHas('inscripcion', function ($q) {
+            $baseQuery->whereHas($relacionInscripcion, function ($q) {
                 $q->where('aula_id', $this->aula_id);
             });
         }
@@ -117,10 +123,12 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
 
     private function generateMainTableData($baseQuery): array
     {
+        $inscripcionesTable = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripciones_reforzamiento' : 'inscripciones';
+
         $datos = (clone $baseQuery)
             ->join('carreras', 'postulaciones.carrera_id', '=', 'carreras.id')
-            ->join('inscripciones', 'postulaciones.codigo_postulante', '=', 'inscripciones.codigo_inscripcion')
-            ->join('aulas', 'inscripciones.aula_id', '=', 'aulas.id')
+            ->join($inscripcionesTable, 'postulaciones.codigo_postulante', '=', $inscripcionesTable . '.codigo_inscripcion')
+            ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
             ->select('carreras.nombre as carrera', 'aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
             ->groupBy('carreras.nombre', 'aulas.nombre')
             ->orderBy('carreras.nombre')->orderBy('aulas.nombre')
@@ -186,9 +194,11 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         $report[] = ['RESUMEN GENERAL POR AULA'];
         $report[] = ['Aula', 'N° de Postulantes'];
 
+        $inscripcionesTable = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripciones_reforzamiento' : 'inscripciones';
+
         $resumenPorAula = (clone $baseQuery)
-            ->join('inscripciones', 'postulaciones.codigo_postulante', '=', 'inscripciones.codigo_inscripcion')
-            ->join('aulas', 'inscripciones.aula_id', '=', 'aulas.id')
+            ->join($inscripcionesTable, 'postulaciones.codigo_postulante', '=', $inscripcionesTable . '.codigo_inscripcion')
+            ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
             ->select('aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
             ->groupBy('aulas.nombre')
             ->orderBy('aulas.nombre')

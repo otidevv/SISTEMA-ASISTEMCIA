@@ -33,8 +33,12 @@ class ReportesEstadisticosController extends Controller
             $selectedCiclo = Ciclo::where('es_activo', true)->first() ?? $ciclos->first();
         }
 
+        $isReforzamiento = $ciclo_id !== 'global' && $selectedCiclo && $selectedCiclo->programa_id == 2;
+        $inscripcionesTable = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $statusActivo = $isReforzamiento ? 'validado' : 'activo';
+
         $carrerasStats = $this->getCarrerasStats($ciclo_id);
-        $aulasStats = $this->getAulasStats($ciclo_id);
+        $aulasStats = $this->getAulasStats($ciclo_id, $isReforzamiento);
         $documentosStats = $this->getDocumentosStats($ciclo_id);
         $docentesStats = $this->getDocentesStats($ciclo_id);
         $inhabilitadosStats = $this->getInhabilitadosStats($ciclo_id);
@@ -42,20 +46,28 @@ class ReportesEstadisticosController extends Controller
         $finanzasStats = $this->getFinanzasStats($ciclo_id);
         $procedenciaStats = $this->getProcedenciaStats($ciclo_id);
 
-        $tipoInscripcionStats = DB::table('inscripciones')
+        $tipoInscripcionStats = DB::table($inscripcionesTable)
             ->select('tipo_inscripcion', DB::raw('count(*) as total'))
             ->when($ciclo_id !== 'global', fn($q) => $q->where('ciclo_id', $ciclo_id))
+            ->when($isReforzamiento, fn($q) => $q->where('estado_inscripcion', 'validado'))
             ->whereNotNull('tipo_inscripcion')
             ->groupBy('tipo_inscripcion')->get();
 
-        $turnosStats = DB::table('inscripciones as i')
-            ->join('turnos as t', 'i.turno_id', '=', 't.id')
-            ->select('t.nombre as turno', DB::raw('count(*) as total'))
-            ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
-            ->groupBy('t.id', 't.nombre')->get();
+        if ($isReforzamiento) {
+            $turnosStats = DB::table($inscripcionesTable)
+                ->select('turno', DB::raw('count(*) as total'))
+                ->where('ciclo_id', $ciclo_id)
+                ->groupBy('turno')->get()
+                ->map(fn($t) => (object)['turno' => $t->turno, 'total' => $t->total]);
+        } else {
+            $turnosStats = DB::table('inscripciones as i')
+                ->join('turnos as t', 'i.turno_id', '=', 't.id')
+                ->select('t.nombre as turno', DB::raw('count(*) as total'))
+                ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
+                ->groupBy('t.id', 't.nombre')->get();
+        }
 
-        // CORRECCIÓN DE SINTAXIS AQUÍ (COMILLAS EN 'u.id')
-        $edades = DB::table('inscripciones as i')
+        $edades = DB::table($inscripcionesTable . ' as i')
             ->join('users as u', 'i.estudiante_id', '=', 'u.id')
             ->select('u.fecha_nacimiento')
             ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
@@ -80,9 +92,11 @@ class ReportesEstadisticosController extends Controller
         return $query->orderBy('postulaciones_count', 'desc')->get();
     }
 
-    private function getAulasStats($ciclo_id)
+    private function getAulasStats($ciclo_id, $isReforzamiento = false)
     {
-        return DB::table('inscripciones as i')
+        $table = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
+        
+        return DB::table($table . ' as i')
             ->join('aulas as a', 'i.aula_id', '=', 'a.id')
             ->select('a.nombre as aula', DB::raw('count(*) as total'))
             ->when($ciclo_id !== 'global', fn($q) => $q->where('i.ciclo_id', $ciclo_id))
@@ -135,13 +149,17 @@ class ReportesEstadisticosController extends Controller
         if (!$ciclo) return $this->emptyInhabilitadosStats();
 
         $h = $this->procesarEstadisticasBatch($ciclo);
+        
+        $isReforzamiento = $ciclo->programa_id == 2;
+        $relation = $isReforzamiento ? 'inscripcionesReforzamiento' : 'inscripciones';
+
         return [
             'regulares' => $h['regulares'],
             'amonestados' => $h['amonestados'],
             'inhabilitados' => $h['inhabilitados'],
             'total_activos' => $h['total_estudiantes'],
             'total_desercion' => $h['inhabilitados'],
-            'por_carrera' => Carrera::withCount(['inscripciones as total' => function($q) use ($ciclo_id) {
+            'por_carrera' => $isReforzamiento ? collect([]) : Carrera::withCount(['inscripciones as total' => function($q) use ($ciclo_id) {
                 $q->where('ciclo_id', $ciclo_id);
             }])->orderBy('total', 'desc')->take(5)->get()->map(fn($c) => ['nombre' => $c->nombre, 'total' => $c->total])
         ];
@@ -154,10 +172,14 @@ class ReportesEstadisticosController extends Controller
         $hoy = Carbon::now();
         $fechaCalculoAsistencia = $hoy < $periodoFin ? $hoy : $periodoFin;
 
-        $inscritos = DB::table('inscripciones as i')
+        $isReforzamiento = $ciclo->programa_id == 2;
+        $table = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $statusActivo = $isReforzamiento ? ['validado'] : ['activo', 'amonestado', 'registrado'];
+
+        $inscritos = DB::table($table . ' as i')
             ->join('users as u', 'i.estudiante_id', '=', 'u.id')
             ->where('i.ciclo_id', $ciclo->id)
-            ->whereIn('i.estado_inscripcion', ['activo', 'amonestado', 'registrado'])
+            ->whereIn('i.estado_inscripcion', $statusActivo)
             ->select('u.numero_documento')
             ->get();
 
@@ -222,8 +244,28 @@ class ReportesEstadisticosController extends Controller
 
     private function getFinanzasStats($ciclo_id)
     {
+        $ciclo = null;
+        if ($ciclo_id !== 'global') {
+            $ciclo = Ciclo::find($ciclo_id);
+        }
+
+        if ($ciclo && $ciclo->programa_id == 2) {
+            // Finanzas para Reforzamiento
+            $total = DB::table('pagos_reforzamiento as p')
+                ->join('inscripciones_reforzamiento as i', 'p.inscripcion_id', '=', 'i.id')
+                ->where('i.ciclo_id', $ciclo_id)
+                ->sum('p.monto');
+            
+            return [
+                'total_recaudado' => $total,
+                'por_carrera' => [] // Reforzamiento no suele tener carreras en esta vista
+            ];
+        }
+
+        // Finanzas para CEPRE Regular
         $query = Postulacion::where('estado', 'aprobado');
         if ($ciclo_id && $ciclo_id !== 'global') $query->where('ciclo_id', $ciclo_id);
+        
         return [
             'total_recaudado' => $query->sum('monto_total_pagado'),
             'por_carrera' => $query->selectRaw('carrera_id, sum(monto_total_pagado) as total')->groupBy('carrera_id')->get()->map(fn($item) => ['nombre' => Carrera::find($item->carrera_id)->nombre ?? 'N/A', 'total' => $item->total])
@@ -232,8 +274,31 @@ class ReportesEstadisticosController extends Controller
 
     private function getProcedenciaStats($ciclo_id)
     {
+        $ciclo = null;
+        if ($ciclo_id !== 'global') {
+            $ciclo = Ciclo::find($ciclo_id);
+        }
+
+        if ($ciclo && $ciclo->programa_id == 2) {
+            // Procedencia para Reforzamiento
+            $porColegio = DB::table('inscripciones_reforzamiento')
+                ->where('ciclo_id', $ciclo_id)
+                ->whereNotNull('colegio_procedencia')
+                ->select('colegio_procedencia as nombre', DB::raw('count(*) as total'))
+                ->groupBy('colegio_procedencia')
+                ->orderBy('total', 'desc')
+                ->limit(10)->get();
+            
+            return [
+                'colegios' => $porColegio,
+                'ciudades' => collect([]) // Reforzamiento no tiene ubigeo mapeado directamente en esta tabla
+            ];
+        }
+
+        // Procedencia para CEPRE Regular
         $query = Postulacion::whereNotNull('centro_educativo_id');
         if ($ciclo_id && $ciclo_id !== 'global') $query->where('ciclo_id', $ciclo_id);
+        
         $porColegio = (clone $query)->select('centro_educativo_id', DB::raw('count(*) as total'))->groupBy('centro_educativo_id')->orderBy('total', 'desc')->limit(10)->get();
         $centros = CentroEducativo::whereIn('id', $porColegio->pluck('centro_educativo_id'))->get()->keyBy('id');
         $colegiosResult = $porColegio->map(fn($item) => (object)['nombre' => $centros->get($item->centro_educativo_id)->cen_edu ?? 'C.E. #' . $item->centro_educativo_id, 'total' => $item->total]);
@@ -241,11 +306,16 @@ class ReportesEstadisticosController extends Controller
         $ciudadesStats = [];
         $todosLosCentrosIds = (clone $query)->pluck('centro_educativo_id')->unique();
         $todosLosCentros = CentroEducativo::whereIn('id', $todosLosCentrosIds)->select('id', 'd_prov')->get()->keyBy('id');
+        
         foreach ((clone $query)->get() as $post) {
             $centro = $todosLosCentros->get($post->centro_educativo_id);
             if ($centro && $centro->d_prov) $ciudadesStats[$centro->d_prov] = ($ciudadesStats[$centro->d_prov] ?? 0) + 1;
         }
-        return ['colegios' => $colegiosResult, 'ciudades' => collect($ciudadesStats)->map(fn($total, $ciudad) => (object)['ciudad' => $ciudad, 'total' => $total])->sortByDesc('total')->take(10)->values()];
+        
+        return [
+            'colegios' => $colegiosResult, 
+            'ciudades' => collect($ciudadesStats)->map(fn($total, $ciudad) => (object)['ciudad' => $ciudad, 'total' => $total])->sortByDesc('total')->take(10)->values()
+        ];
     }
 
     private function emptyInhabilitadosStats()

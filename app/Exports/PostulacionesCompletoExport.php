@@ -44,7 +44,26 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
 
     public function collection()
     {
-        $query = Postulacion::with(['estudiante.parentescos.padre', 'ciclo', 'carrera', 'turno', 'centroEducativo', 'inscripcion.aula', 'inscripcion.registradoPor']);
+        $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+        $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
+        
+        $relaciones = [
+            'estudiante.parentescos.padre', 
+            'ciclo', 
+            'carrera', 
+            'turno', 
+            'centroEducativo'
+        ];
+
+        if ($isReforzamiento) {
+            $relaciones[] = 'inscripcionReforzamiento.aula';
+            $relaciones[] = 'inscripcionReforzamiento.validador';
+        } else {
+            $relaciones[] = 'inscripcion.aula';
+            $relaciones[] = 'inscripcion.registradoPor';
+        }
+
+        $query = Postulacion::with($relaciones);
 
         if ($this->ciclo_id) {
             $query->where('ciclo_id', $this->ciclo_id);
@@ -186,9 +205,16 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
         $estudiante = $postulacion->estudiante;
         $apoderado = $estudiante ? $estudiante->parentescos->first() : null;
         $padre = $apoderado ? $apoderado->padre : null;
-        $inscripcion = $postulacion->inscripcion;
+        
+        // Detectar si es reforzamiento para usar la relación correcta
+        $isReforzamiento = $postulacion->ciclo && $postulacion->ciclo->programa_id == 2;
+        $inscripcion = $isReforzamiento ? $postulacion->inscripcionReforzamiento : $postulacion->inscripcion;
+        
         $aula = $inscripcion ? $inscripcion->aula : null;
-        $registradoPor = $inscripcion ? $inscripcion->registradoPor : null;
+        $registradoPor = null;
+        if ($inscripcion) {
+            $registradoPor = $isReforzamiento ? $inscripcion->validador : $inscripcion->registradoPor;
+        }
         $colegio = $postulacion->centroEducativo;
 
         // Datos de RENIEC vía API con Cache
@@ -247,7 +273,7 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
             $reniecData['UBIGEO_NAC'],
             $padre ? ($padre->nombre . ' ' . $padre->apellido_paterno) : 'N/A',
             $padre ? $padre->telefono : 'N/A',
-            $registradoPor ? $registradoPor->nombre_completo : 'N/A',
+            $registradoPor ? ($registradoPor->nombre_completo ?? $registradoPor->nombre) : 'N/A',
         ];
     }
 
