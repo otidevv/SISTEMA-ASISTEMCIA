@@ -299,6 +299,9 @@
                                         <h6 class="text-uppercase fw-bold text-muted fs-11 mb-3" style="letter-spacing: 1px;">Acciones Administrativas</h6>
                                         <div class="d-grid gap-2" id="panel-acciones">
 
+                                            <button id="btn-sync-modal" type="button" class="btn btn-soft-success btn-sm px-3 shadow-none fw-bold" onclick="syncPayments()">
+                                                <i class="mdi mdi-sync mr-1"></i> SINCRONIZAR PAGOS
+                                            </button>
                                             <button id="btn-validar-modal" type="button" class="btn btn-primary btn-sm px-3 shadow-none fw-bold d-none" onclick="approveInscripcion()">
                                                 <i class="mdi mdi-check-circle mr-1"></i> VALIDAR INSCRIPCIÓN
                                             </button>
@@ -345,38 +348,26 @@
                                     <div class="col-12 mb-4">
                                         <div class="card border-0 shadow-none rounded-lg p-0 overflow-hidden" style="border: 1px solid #e0e0e0 !important;">
                                             <div class="bg-soft-success px-4 py-2 border-bottom d-flex justify-content-between align-items-center">
-                                                <h6 class="text-success fw-bold text-uppercase fs-12 mb-0"><i class="mdi mdi-receipt-text mr-1"></i> INFORMACIÓN DEL PAGO (UNAMAD)</h6>
+                                                <h6 class="text-success fw-bold text-uppercase fs-12 mb-0"><i class="mdi mdi-receipt-text mr-1"></i> HISTORIAL DE PAGOS (UNAMAD)</h6>
                                                 <div id="exp-pago-status" class="payment-chip"></div>
                                             </div>
-                                            <div class="p-4">
-                                                <div class="row mb-3">
-                                                    <div class="col-6">
-                                                        <small class="text-muted d-block text-uppercase lh-1 mb-1" style="font-size:10px;">N° Recibo</small>
-                                                        <span class="fw-bold fs-16 text-dark" id="pago-operacion">---</span>
-                                                    </div>
-                                                    <div class="col-6 text-end">
-                                                        <small class="text-muted d-block text-uppercase lh-1 mb-1" style="font-size:10px;">Fecha Emisión</small>
-                                                        <span class="fw-bold fs-15 text-dark" id="pago-fecha">---</span>
-                                                    </div>
-                                                </div>
+                                            <div class="p-0">
                                                 <div class="table-responsive">
-                                                    <table class="table table-sm table-borderless mb-0">
-                                                        <thead>
-                                                            <tr class="border-bottom">
-                                                                <th class="text-muted small ps-0">CONCEPTO</th>
-                                                                <th class="text-muted small text-end pe-0">IMPORTE</th>
+                                                    <table class="table table-sm table-hover mb-0">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th class="ps-3 py-2 text-muted small">RECIBO / FECHA</th>
+                                                                <th class="py-2 text-muted small">CONCEPTO / MES</th>
+                                                                <th class="pe-3 py-2 text-muted small text-end">IMPORTE</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td class="ps-0 fs-14 fw-medium">REFORZAMIENTO ESCOLAR (CEPRE UNAMAD)</td>
-                                                                <td class="pe-0 text-end fw-bold" id="row-monto-pago">---</td>
-                                                            </tr>
+                                                        <tbody id="tbody-pagos">
+                                                            <!-- Contenido dinámico -->
                                                         </tbody>
-                                                        <tfoot>
-                                                            <tr class="border-top">
-                                                                <td class="ps-0 pt-2 fw-bold text-dark">TOTAL PAGADO</td>
-                                                                <td class="pe-0 pt-2 text-end fw-bold text-success fs-18" id="pago-monto">---</td>
+                                                        <tfoot class="bg-light fw-bold">
+                                                            <tr>
+                                                                <td colspan="2" class="ps-3 py-2 text-dark">SUMATORIA TOTAL</td>
+                                                                <td class="pe-3 py-2 text-end text-success fs-15" id="pago-monto-total">---</td>
                                                             </tr>
                                                         </tfoot>
                                                     </table>
@@ -714,38 +705,47 @@
                 // Fotografía
                 $('#detalle-foto').attr('src', data.foto_path ? cleanPath(data.foto_path) : 'https://via.placeholder.com/150');
 
-                // Información de Pago
-                const pago = data.pagos && data.pagos.length > 0 ? data.pagos[0] : null;
-                if (pago) {
-                    $('#pago-operacion').text(pago.numero_operacion || 'AUTO');
-                    const formattedMonto = 'S/. ' + parseFloat(pago.monto || 0).toFixed(2);
-                    $('#pago-monto').text(formattedMonto);
-                    $('#row-monto-pago').text(formattedMonto);
-                    
-                    if (pago.fecha_pago) {
-                        const datePago = new Date(pago.fecha_pago);
-                        $('#pago-fecha').text(datePago.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }));
-                    } else { $('#pago-fecha').text('---'); }
-                    
-                    // Manejo del Link de Voucher
-                    if (pago.voucher_path) {
-                        $('#link-voucher').attr('href', cleanPath(pago.voucher_path)).show();
-                        $('#btn-voucher-text').text('Ver Voucher');
-                    } else if (pago.verificado_api) {
-                        $('#link-voucher').attr('href', 'javascript:void(0)').show();
-                        $('#btn-voucher-text').text('Validado por API');
-                        $('#link-voucher').off('click').on('click', function() {
-                            alert('Pago validado automáticamente vía API (Sin archivo físico).');
-                        });
-                    } else {
-                        $('#link-voucher').hide();
-                    }
+                // Información de Pagos (Historial)
+                let pagosHTML = '';
+                let totalSoles = 0;
+                
+                if (data.pagos && data.pagos.length > 0) {
+                    data.pagos.forEach(pago => {
+                        const monto = parseFloat(pago.monto || 0);
+                        totalSoles += monto;
+                        const fecha = pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '---';
+                        
+                        pagosHTML += `
+                            <tr>
+                                <td class="ps-3 py-2">
+                                    <div class="fw-bold text-dark">${pago.numero_operacion || 'AUTO'}</div>
+                                    <div class="text-muted small">${fecha}</div>
+                                </td>
+                                <td class="py-2">
+                                    <div class="fw-medium fs-13">${pago.mes_pagado || 'Inscripción'}</div>
+                                    <div class="text-muted fs-11">${pago.verificado_api ? '<i class="mdi mdi-check-decagram text-info"></i> Validado API' : 'Manual'}</div>
+                                </td>
+                                <td class="pe-3 py-2 text-end font-weight-bold text-dark">
+                                    S/. ${monto.toFixed(2)}
+                                </td>
+                            </tr>
+                        `;
+                    });
                 } else {
-                    $('#pago-operacion').text('---');
-                    $('#pago-monto').text('---');
-                    $('#pago-fecha').text('---');
-                    $('#link-voucher').hide();
+                    pagosHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No se registraron pagos electrónicos</td></tr>';
                 }
+                
+                $('#tbody-pagos').html(pagosHTML);
+                $('#pago-monto-total').text('S/. ' + totalSoles.toFixed(2));
+                
+                // Semaforo de pago global en el modal
+                const hasAprovedPayment = data.pagos.some(p => p.estado_pago === 'aprobado');
+                const pStatus = $('#exp-pago-status');
+                pStatus.text(hasAprovedPayment ? 'SI PAGÓ' : 'DEUDA PENDIENTE')
+                       .removeClass('payment-chip-paid payment-chip-unpaid')
+                       .addClass(hasAprovedPayment ? 'payment-chip-paid' : 'payment-chip-unpaid');
+
+                $('#modalExpediente').data('id', id); // Guardar ID actual
 
                 // Configurar Botones de Acción: Gestión Limpia por Estados
                 const currentStatus = (data.estado_inscripcion || "PENDIENTE").toString().trim().toUpperCase();
@@ -793,6 +793,33 @@
                 $('#container-apoderados').html(apHTML);
 
                 $('#loading-expediente').hide(); $('#content-expediente').fadeIn(400);
+            });
+        }
+
+        function syncPayments() {
+            const id = $('#modalExpediente').data('id');
+            if (!id) return;
+
+            const btn = $('#btn-sync-modal');
+            const originalHTML = btn.html();
+            
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm mr-2 me-2"></span> SINCRONIZANDO...');
+
+            $.get(`{{ url('admin/reforzamiento') }}/${id}/sync-payments`, function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    // Recargar detalles del modal para ver los nuevos pagos
+                    viewDetails(id);
+                    // Recargar tabla principal para actualizar semáforo
+                    table.ajax.reload(null, false);
+                } else {
+                    toastr.warning(res.message);
+                }
+            }).fail(err => {
+                toastr.error('Error de conexión o servidor al sincronizar pagos.');
+                console.error(err);
+            }).always(() => {
+                btn.prop('disabled', false).html(originalHTML);
             });
         }
 

@@ -335,4 +335,98 @@ class ReforzamientoAdminController extends Controller
         
         return $pdf->stream("Constancia_Reforzamiento_{$estudiante->numero_documento}.pdf");
     }
+
+    /**
+     * Sincronizar Pagos desde la API de UNAMAD para un estudiante específico
+     */
+    public function syncPayments($id)
+    {
+        try {
+            $inscripcion = InscripcionReforzamiento::with('estudiante')->findOrFail($id);
+            $estudiante = $inscripcion->estudiante;
+            
+            if (!$estudiante || !$estudiante->numero_documento) {
+                return response()->json(['success' => false, 'message' => 'No se encontró el DNI del estudiante.'], 422);
+            }
+
+            $pagosApi = $this->paymentService->validateVoucher($estudiante->numero_documento, null);
+            
+            if (!$pagosApi || empty($pagosApi)) {
+                return response()->json(['success' => false, 'message' => 'No se encontraron pagos nuevos en la API de UNAMAD.'], 404);
+            }
+
+            $nuevosPagosCount = 0;
+            $pagosEncontrados = 0;
+
+            foreach ($pagosApi as $voucher) {
+                $serial = $voucher['serial_voucher'] ?? $voucher['serial'] ?? null;
+                if (!$serial) continue;
+
+                $pagosEncontrados++;
+                
+                // Mapeo selectivo para filtrar solo lo que es reforzamiento 598
+                $montoReforzamiento = 0;
+                $hayReforzamiento = false;
+                $items = $voucher['items'] ?? [];
+                
+                foreach ($items as $item) {
+                    $desc = strtoupper($item['description'] ?? '');
+                    if (str_contains($desc, '598') || str_contains($desc, 'REFORZAMIENTO')) {
+                        $montoReforzamiento += (float)$item['total'];
+                        $hayReforzamiento = true;
+                    }
+                }
+
+                if (!$hayReforzamiento) continue;
+
+                // FILTRO DE SEGURIDAD: Solo pagos relacionados al ciclo actual
+                // Permitimos pagos desde 2 meses antes del inicio del ciclo
+                $fechaVoucher = $voucher['fecha'] ? \Carbon\Carbon::parse($voucher['fecha']) : null;
+                $ciclo = $inscripcion->ciclo;
+                
+                if ($fechaVoucher && $ciclo && $ciclo->fecha_inicio) {
+                    $fechaLimite = \Carbon\Carbon::parse($ciclo->fecha_inicio)->subMonths(2);
+                    if ($fechaVoucher->lt($fechaLimite)) {
+                        continue;
+                    }
+                }
+
+                // Verificar si ya existe este pago
+                $existe = \App\Models\PagoReforzamiento::where('inscripcion_id', $inscripcion->id)
+                    ->where('numero_operacion', $serial)
+                    ->first();
+
+                if (!$existe) {
+                    // Crear el nuevo pago detectado
+                    \App\Models\PagoReforzamiento::create([
+                        'inscripcion_id' => $inscripcion->id,
+                        'numero_operacion' => $serial,
+                        'monto' => $montoReforzamiento,
+                        'fecha_pago' => $voucher['fecha'] ? \Carbon\Carbon::parse($voucher['fecha'])->toDateString() : now()->toDateString(),
+                        'mes_pagado' => \Carbon\Carbon::parse($voucher['fecha'])->translatedFormat('F Y'),
+                        'verificado_api' => true,
+                        'estado_pago' => 'aprobado',
+                        'fecha_verificacion_api' => now()
+                    ]);
+                    $nuevosPagosCount++;
+                } else {
+                    // Actualizar si es necesario
+                    $existe->update([
+                        'monto' => $montoReforzamiento,
+                        'verificado_api' => true,
+                        'estado_pago' => 'aprobado'
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true, 
+                'message' => "Sincronización completa. Se encontraron $pagosEncontrados vouchers y se procesaron $nuevosPagosCount pagos nuevos.",
+                'nuevos' => $nuevosPagosCount
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error al sincronizar: ' . $e->getMessage()], 500);
+        }
+    }
 }

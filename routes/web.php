@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/print', [\App\Http\Controllers\ReforzamientoAdminController::class, 'print'])->name('admin.reforzamiento.print')->middleware('can:reforzamiento.print');
         Route::post('/{id}/status', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateStatus'])->name('admin.reforzamiento.update-status')->middleware('can:reforzamiento.approve');
         Route::post('/{id}/update-data', [\App\Http\Controllers\ReforzamientoAdminController::class, 'updateData'])->name('admin.reforzamiento.update-data')->middleware('can:reforzamiento.edit');
+        Route::get('/{id}/sync-payments', [\App\Http\Controllers\ReforzamientoAdminController::class, 'syncPayments'])->name('admin.reforzamiento.sync-payments')->middleware('can:reforzamiento.edit');
         Route::delete('/{id}', [\App\Http\Controllers\ReforzamientoAdminController::class, 'destroy'])->name('admin.reforzamiento.destroy')->middleware('can:reforzamiento.delete');
     });
 

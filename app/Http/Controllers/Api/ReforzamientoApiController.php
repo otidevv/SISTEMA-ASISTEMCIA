@@ -127,7 +127,7 @@ class ReforzamientoApiController extends BaseController
         // 3. Consultar Pagos AUTOMÁTICOS
         $pagosRaw = $this->paymentService->validateVoucher($dni, null);
         $pagoEncontrado = null;
-        $yearActual = '2026'; // Forzamos año actual o lo detectamos de Carbon::now()->year
+        $yearActual = (string)date('Y'); // Detectamos el año actual dinámicamente
 
         if ($pagosRaw) {
             $recibosProcesados = [];
@@ -153,10 +153,16 @@ class ReforzamientoApiController extends BaseController
                                     || str_contains($desc, '598')
                                     || ($p['concept_id'] ?? $p['id_concepto'] ?? 0) == 598;
                     
-                    if ($isReforzamiento && $yearPago === $yearActual && $status === 2) {
-                        $totalRecibo += $monto;
-                        $hayReforzamiento = true;
-                        $fechaPago = $p['paymentDate'];
+                    if ($isReforzamiento && $status === 2) {
+                        // FILTRO DINÁMICO POR CICLO: Permitir pagos hasta 2 meses antes del inicio
+                        $fechaPagoObj = \Carbon\Carbon::parse($p['paymentDate']);
+                        $fechaLimite = \Carbon\Carbon::parse($ciclo->fecha_inicio)->subMonths(2);
+
+                        if ($fechaPagoObj->gte($fechaLimite)) {
+                            $totalRecibo += $monto;
+                            $hayReforzamiento = true;
+                            $fechaPago = $p['paymentDate'];
+                        }
                     }
                 }
 
