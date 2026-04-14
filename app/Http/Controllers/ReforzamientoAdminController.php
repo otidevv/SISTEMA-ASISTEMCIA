@@ -35,20 +35,26 @@ class ReforzamientoAdminController extends Controller
             $queryBuilder->where('ciclo_id', $request->ciclo_id);
         }
 
-        // Obtener conteos para las tarjetas en una sola consulta
-        $countsData = DB::table('inscripciones_reforzamiento')
-            ->selectRaw('count(*) as total')
-            ->selectRaw('SUM(CASE WHEN estado_inscripcion = "pendiente" THEN 1 ELSE 0 END) as pendiente')
-            ->selectRaw('SUM(CASE WHEN estado_inscripcion = "validado" THEN 1 ELSE 0 END) as aprobado')
+        // Obtener conteos y RECAUDACIÓN TOTAL en una sola consulta
+        $stats = DB::table('inscripciones_reforzamiento as i')
+            ->leftJoin('pagos_reforzamiento as p', function($join) {
+                $join->on('i.id', '=', 'p.inscripcion_id')
+                     ->where('p.estado_pago', '=', 'aprobado');
+            })
+            ->selectRaw('count(DISTINCT i.id) as total')
+            ->selectRaw('SUM(CASE WHEN i.estado_inscripcion = "pendiente" THEN 1 ELSE 0 END) as pendiente')
+            ->selectRaw('SUM(CASE WHEN i.estado_inscripcion = "validado" THEN 1 ELSE 0 END) as aprobado')
+            ->selectRaw('COALESCE(SUM(p.monto), 0) as recaudado')
             ->when($request->filled('ciclo_id'), function($q) use ($request) {
-                return $q->where('ciclo_id', $request->ciclo_id);
+                return $q->where('i.ciclo_id', $request->ciclo_id);
             })
             ->first();
 
         $counts = [
-            'total' => $countsData->total,
-            'pendiente' => $countsData->pendiente,
-            'aprobado' => $countsData->aprobado,
+            'total' => $stats->total,
+            'pendiente' => $stats->pendiente,
+            'aprobado' => $stats->aprobado,
+            'recaudado' => number_format($stats->recaudado, 2, '.', ','),
         ];
 
         // Preparar consulta para DataTables con relaciones - Se añade 'apoderados'
@@ -58,7 +64,40 @@ class ReforzamientoAdminController extends Controller
             $query->where('ciclo_id', $request->ciclo_id);
         }
 
+        // Filtros Rápidos
+        if ($request->filled('quick_filter')) {
+            switch ($request->quick_filter) {
+                case 'debtors':
+                    // Alumnos que no han completado el pago (Asumimos 400 como meta)
+                    $query->where(function($q) {
+                        $q->whereDoesntHave('pagos')
+                          ->orWhereHas('pagos', function($p) {
+                              $p->select(DB::raw('SUM(monto)'))->havingRaw('SUM(monto) < 400');
+                          });
+                    });
+                    break;
+                case 'validated':
+                    $query->where('estado_inscripcion', 'validado');
+                    break;
+                case 'today':
+                    $query->whereDate('created_at', \Carbon\Carbon::today());
+                    break;
+            }
+        }
+
         return DataTables::of($query)
+            ->filterColumn('estudiante_nombre', function($query, $keyword) {
+                $query->whereHas('estudiante', function($q) use ($keyword) {
+                    $q->where('nombre', 'like', "%{$keyword}%")
+                      ->orWhere('apellido_paterno', 'like', "%{$keyword}%")
+                      ->orWhere('apellido_materno', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('dni', function($query, $keyword) {
+                $query->whereHas('estudiante', function($q) use ($keyword) {
+                    $q->where('numero_documento', 'like', "%{$keyword}%");
+                });
+            })
             ->addColumn('estudiante_nombre', function($row) {
                 // Buscamos la foto: primero la de la inscripción actual, luego la de perfil del estudiante
                 $foto = $row->foto_path ?? $row->estudiante->foto_perfil;
@@ -94,13 +133,26 @@ class ReforzamientoAdminController extends Controller
                         </div>';
             })
             ->addColumn('semaforo_pagos', function($row) {
-                $pago = $row->pagos()->where('estado_pago', 'aprobado')->first();
-                $class = $pago ? 'paid' : 'unpaid';
-                $icon = $pago ? 'check-circle' : 'close-circle';
-                $text = $pago ? 'PAGO OK' : 'PENDIENTE';
+                $totalPagado = $row->pagos()->where('estado_pago', 'aprobado')->sum('monto');
+                $meta = 400; // Meta de Reforzamiento
+                
+                if ($totalPagado >= $meta) {
+                    $class = 'paid';
+                    $icon = 'check-circle';
+                    $text = 'PAGO COMPLETO';
+                } elseif ($totalPagado > 0) {
+                    $class = 'partial'; // Nueva clase CSS para naranja
+                    $icon = 'clock-alert';
+                    $text = 'PAGO PARCIAL (S/. '.$totalPagado.')';
+                } else {
+                    $class = 'unpaid';
+                    $icon = 'close-circle';
+                    $text = 'DEUDOR';
+                }
+
                 return '<div class="text-center">
-                            <span class="payment-chip payment-chip-'.$class.' shadow-none">
-                                <i class="mdi mdi-'.$icon.' mr-1"></i>'.$text.'
+                            <span class="payment-chip payment-chip-'.$class.'">
+                                <i class="mdi mdi-'.$icon.' mr-1"></i>' . $text . '
                             </span>
                         </div>';
             })

@@ -23,56 +23,45 @@
     </div>
     <!-- end page title -->
 
-    <!-- Secciones de estadísticas rápidas -->
-    <div class="row">
-        <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm card-solid-warning">
+    <!-- Dashboard Stats Premium -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card card-stat-premium stat-gradient-pink">
                 <div class="card-body">
-                    <div class="d-flex">
-                        <div class="flex-grow-1 text-left text-start">
-                            <span class="text-white-50 text-uppercase fs-12 fw-bold">Pendientes de Validación</span>
-                            <h3 id="count-pendiente" class="mb-0 text-white">0</h3>
-                        </div>
-                        <div class="align-self-center flex-shrink-0">
-                            <span class="avatar-title bg-white-50 text-white rounded-circle" style="width: 48px; height: 48px; display: flex; align-items:center; justify-content:center;">
-                                <i class="mdi mdi-clock-outline fs-24"></i>
-                            </span>
-                        </div>
-                    </div>
+                    <div class="mini-stat-icon"><i class="mdi mdi-clock-alert text-white fs-20"></i></div>
+                    <span class="stat-label">Pendientes</span>
+                    <h3 class="stat-value" id="count-pending">0</h3>
+                    <i class="mdi mdi-clock-outline stat-icon"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm card-solid-success">
+        <div class="col-md-3">
+            <div class="card card-stat-premium stat-gradient-green">
                 <div class="card-body">
-                    <div class="d-flex">
-                        <div class="flex-grow-1 text-left text-start">
-                            <span class="text-white-50 text-uppercase fs-12 fw-bold">Validados / Matriculados</span>
-                            <h3 id="count-aprobado" class="mb-0 text-white">0</h3>
-                        </div>
-                        <div class="align-self-center flex-shrink-0">
-                            <span class="avatar-title bg-white-50 text-white rounded-circle" style="width: 48px; height: 48px; display: flex; align-items:center; justify-content:center;">
-                                <i class="mdi mdi-check-circle-outline fs-24"></i>
-                            </span>
-                        </div>
-                    </div>
+                    <div class="mini-stat-icon"><i class="mdi mdi-check-decagram text-white fs-20"></i></div>
+                    <span class="stat-label">Matriculados</span>
+                    <h3 class="stat-value" id="count-approved">0</h3>
+                    <i class="mdi mdi-account-check stat-icon"></i>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-xl-4 text-center">
-            <div class="card shadow-sm card-solid-info">
+        <div class="col-md-3">
+            <div class="card card-stat-premium stat-gradient-blue">
                 <div class="card-body">
-                    <div class="d-flex">
-                        <div class="flex-grow-1 text-left text-start">
-                            <span class="text-white-50 text-uppercase fs-12 fw-bold">Total Programa</span>
-                            <h3 id="count-total" class="mb-0 text-white">0</h3>
-                        </div>
-                        <div class="align-self-center flex-shrink-0">
-                            <span class="avatar-title bg-white-50 text-white rounded-circle" style="width: 48px; height: 48px; display: flex; align-items:center; justify-content:center;">
-                                <i class="mdi mdi-account-multiple-outline fs-24"></i>
-                            </span>
-                        </div>
-                    </div>
+                    <div class="mini-stat-icon"><i class="mdi mdi-cash-multiple text-white fs-20"></i></div>
+                    <span class="stat-label">Recaudado (S/.)</span>
+                    <h3 class="stat-value" id="count-revenue">0.00</h3>
+                    <i class="mdi mdi-cash-register stat-icon"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stat-premium stat-gradient-dark">
+                <div class="card-body">
+                    <div class="mini-stat-icon"><i class="mdi mdi-account-group text-white fs-20"></i></div>
+                    <span class="stat-label">Inscritos</span>
+                    <h3 class="stat-value" id="count-total">0</h3>
+                    <i class="mdi mdi-face-man-profile stat-icon"></i>
                 </div>
             </div>
         </div>
@@ -99,6 +88,66 @@
         .badge-reforzamiento-success { background-color: var(--cepre-green); color: #fff; }
         .badge-reforzamiento-warning { background-color: var(--cepre-magenta); color: #fff; }
         
+    .card-stat-premium {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        min-height: 110px;
+    }
+    .card-stat-premium:hover {
+        transform: translateY(-5px);
+    }
+    .card-stat-premium .card-body {
+        padding: 1.5rem;
+        z-index: 2;
+        position: relative;
+    }
+    .card-stat-premium .stat-icon {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 80px;
+        opacity: 0.15;
+        z-index: 1;
+        transform: rotate(-15deg);
+        color: white;
+    }
+    .card-stat-premium .mini-stat-icon {
+        width: 45px;
+        height: 45px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+    }
+    .stat-label {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+        display: block;
+        color: rgba(255, 255, 255, 0.85);
+    }
+    .stat-value {
+        font-size: 28px;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 0;
+        line-height: 1;
+    }
+
+    /* Gradiantes Premium */
+    .stat-gradient-pink { background: linear-gradient(135deg, #FF0080 0%, #7928CA 100%); box-shadow: 0 10px 20px rgba(121, 40, 202, 0.3); }
+    .stat-gradient-green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); box-shadow: 0 10px 20px rgba(56, 239, 125, 0.3); }
+    .stat-gradient-blue { background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%); box-shadow: 0 10px 20px rgba(0, 131, 176, 0.3); }
+    .stat-gradient-dark { background: linear-gradient(135deg, #434343 0%, #000000 100%); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
+        
         .bg-soft-success { background-color: rgba(16, 196, 105, 0.1) !important; color: #10c469 !important; }
         .bg-soft-primary { background-color: rgba(59, 93, 231, 0.1) !important; color: #3b5de7 !important; }
         .bg-vibrant-success { background-color: #10c469 !important; color: #fff !important; }
@@ -106,6 +155,7 @@
         
         .payment-chip { padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .payment-chip-paid { background-color: #10c469; color: white; box-shadow: 0 2px 6px rgba(16, 196, 105, 0.4); }
+        .payment-chip-partial { background-color: #ff9f43; color: white; box-shadow: 0 2px 6px rgba(255, 159, 67, 0.4); }
         .payment-chip-unpaid { background-color: #f755a6; color: white; box-shadow: 0 2px 6px rgba(247, 85, 166, 0.4); }
 
         .btn-sync-premium {
@@ -144,9 +194,51 @@
         border-collapse: separate;
         border-spacing: 0 4px;
     }
-    .table-reforzamiento tr {
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    /* Dark Mode Adaptations */
+    body[data-layout-mode="dark"] .card-reforzamiento {
+        background-color: #2a3042 !important;
+        border: 1px solid #32394e !important;
+    }
+    body[data-layout-mode="dark"] .header-reforzamiento {
+        background: linear-gradient(90deg, #0e8a4d 0%, #038a7c 100%);
+    }
+    body[data-layout-mode="dark"] .table-reforzamiento tr {
+        background-color: #2e3548;
+    }
+    body[data-layout-mode="dark"] .text-dark {
+        color: #eff2f7 !important;
+    }
+    body[data-layout-mode="dark"] .bg-light {
+        background-color: #32394e !important;
+    }
+    body[data-layout-mode="dark"] .modal-content {
+        background-color: #2a3042;
+    }
+    body[data-layout-mode="dark"] .badge-dna {
+        background: rgba(247, 85, 166, 0.1);
+        border-color: rgba(247, 85, 166, 0.3);
+    }
+    body[data-layout-mode="dark"] .card {
+        background-color: #2a3042 !important;
+        border-color: #32394e !important;
+    }
+    body[data-layout-mode="dark"] .filter-btn {
+        color: #eff2f7;
+    }
+    body[data-layout-mode="dark"] .form-select, 
+    body[data-layout-mode="dark"] .form-control {
+        background-color: #2e3548 !important;
+        border-color: #32394e !important;
+        color: #eff2f7 !important;
+    }
+    body[data-layout-mode="dark"] .table {
+        color: #eff2f7 !important;
+    }
+    body[data-layout-mode="dark"] .text-muted {
+        color: #a6b0cf !important;
+    }
+    body[data-layout-mode="dark"] .card-stat-premium {
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
         .btn-action-reforzamiento { 
@@ -185,43 +277,58 @@
     </style>
 
 
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <div class="row mb-4 align-items-center">
-                        <div class="col-sm-5">
-                            <h4 class="mb-1 fw-bold text-dark">Listado de Inscripciones</h4>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-dark btn-rounded waves-effect waves-light filter-btn active" data-filter="all">Todos los Alumnos</button>
+                                <button type="button" class="btn btn-outline-danger btn-rounded waves-effect waves-light filter-btn" data-filter="debtors">
+                                    <i class="mdi mdi-account-cash mr-1"></i> Ver Solo Deudores
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-rounded waves-effect waves-light filter-btn" data-filter="validated">
+                                    <i class="mdi mdi-account-check mr-1"></i> Ver Solo Validados
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-rounded waves-effect waves-light filter-btn" data-filter="today">
+                                    <i class="mdi mdi-calendar-today mr-1"></i> Registros de Hoy
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-sm-7 text-sm-end">
-                            <div class="d-flex justify-content-end align-items-center">
-                                <select id="filtroCiclo" class="form-control w-auto me-3 mr-3 shadow-none fw-medium">
-                                    <option value="">TODOS LOS CICLOS</option>
-                                    @foreach($ciclos as $ciclo)
-                                        <option value="{{ $ciclo->id }}">{{ strtoupper($ciclo->nombre) }}</option>
+                        <div class="col-lg-4 text-end mt-3 mt-lg-0">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <select id="filtroCiclo" class="form-select w-auto">
+                                    @foreach($ciclos as $c)
+                                        <option value="{{ $c->id }}" {{ $c->id == $cicloActual->id ? 'selected' : '' }}>{{ $c->nombre }}</option>
                                     @endforeach
                                 </select>
-                                <button class="btn btn-dark" onclick="table.ajax.reload()">Actualizar</button>
+                                <button class="btn btn-dark px-4" onclick="table.ajax.reload()"><i class="mdi mdi-refresh"></i></button>
                             </div>
                         </div>
                     </div>
-
-                    <div class="table-responsive">
-                        <table id="reforzamientoTable" class="table table-centered nowrap w-100">
-                            <thead>
-                                <tr>
-                                    <th>Estudiante</th>
-                                    <th>DNI</th>
-                                    <th>Grado / Turno</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Pago</th>
-                                    <th class="text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Principal -->
+    <div class="card border-0 shadow-sm rounded-lg overflow-hidden">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="reforzamientoTable" class="table table-centered nowrap w-100">
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>DNI</th>
+                            <th>Grado / Turno</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Pago</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -640,16 +747,21 @@
             };
 
             table = $('#reforzamientoTable').DataTable({
-                processing: true, serverSide: true,
+                responsive: true,
+                serverSide: true,
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 ajax: {
                     url: "{{ route('admin.reforzamiento.data') }}",
-                    data: d => { d.ciclo_id = $('#filtroCiclo').val(); },
+                    data: d => { 
+                        d.ciclo_id = $('#filtroCiclo').val(); 
+                        d.quick_filter = $('.filter-btn.active').data('filter');
+                    },
                     dataSrc: json => {
-                        if(json.counts) {
-                            animateCounter('#count-pendiente', json.counts.pendiente);
-                            animateCounter('#count-aprobado', json.counts.aprobado);
-                            animateCounter('#count-total', json.counts.total);
-                        }
+                        $('#count-total').text(json.counts.total);
+                        $('#count-pending').text(json.counts.pendiente);
+                        $('#count-approved').text(json.counts.aprobado);
+                        $('#count-revenue').text(json.counts.recaudado);
                         return json.data;
                     }
                 },
@@ -667,7 +779,31 @@
                     $('.badge').addClass('animate__animated animate__fadeIn');
                 }
             });
-            $('#filtroCiclo').on('change', () => table.ajax.reload());
+            
+            // Eventos para Filtros Rápidos
+            $('.filter-btn').on('click', function() {
+                $('.filter-btn').removeClass('active btn-dark btn-danger btn-success btn-primary');
+                // Restaurar outlines para todos
+                $('.filter-btn[data-filter="all"]').addClass('btn-outline-dark');
+                $('.filter-btn[data-filter="debtors"]').addClass('btn-outline-danger');
+                $('.filter-btn[data-filter="validated"]').addClass('btn-outline-success');
+                $('.filter-btn[data-filter="today"]').addClass('btn-outline-primary');
+                
+                $(this).addClass('active');
+                
+                // Cambiar a fondo sólido para el activo
+                const filter = $(this).data('filter');
+                if(filter === 'all') $(this).removeClass('btn-outline-dark').addClass('btn-dark');
+                if(filter === 'debtors') $(this).removeClass('btn-outline-danger').addClass('btn-danger text-white');
+                if(filter === 'validated') $(this).removeClass('btn-outline-success').addClass('btn-success text-white');
+                if(filter === 'today') $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');
+                
+                table.ajax.reload();
+            });
+
+            $('#filtroCiclo').on('change', function() {
+                table.ajax.reload();
+            });
 
             window.reforzamientoDataTable = table; // Para que el escuchador global en header.blade.php lo detecte
 
