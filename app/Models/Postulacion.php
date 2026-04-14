@@ -129,7 +129,7 @@ class Postulacion extends Model
 
     public function inscripcionReforzamiento()
     {
-        return $this->hasOne(InscripcionReforzamiento::class, 'codigo_inscripcion', 'codigo_postulante');
+        return $this->hasOne(InscripcionReforzamiento::class, 'estudiante_id', 'estudiante_id');
     }
 
     // Scopes

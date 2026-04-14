@@ -123,11 +123,14 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
 
     private function generateMainTableData($baseQuery): array
     {
-        $inscripcionesTable = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $isReforzamiento = ($this->ciclo && $this->ciclo->programa_id == 2);
+        $inscripcionesTable = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $joinColumnPost = $isReforzamiento ? 'estudiante_id' : 'codigo_postulante';
+        $joinColumnIns = $isReforzamiento ? 'estudiante_id' : 'codigo_inscripcion';
 
         $datos = (clone $baseQuery)
             ->join('carreras', 'postulaciones.carrera_id', '=', 'carreras.id')
-            ->join($inscripcionesTable, 'postulaciones.codigo_postulante', '=', $inscripcionesTable . '.codigo_inscripcion')
+            ->join($inscripcionesTable, 'postulaciones.' . $joinColumnPost, '=', $inscripcionesTable . '.' . $joinColumnIns)
             ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
             ->select('carreras.nombre as carrera', 'aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
             ->groupBy('carreras.nombre', 'aulas.nombre')
@@ -194,10 +197,13 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         $report[] = ['RESUMEN GENERAL POR AULA'];
         $report[] = ['Aula', 'N° de Postulantes'];
 
-        $inscripcionesTable = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $isReforzamiento = ($this->ciclo && $this->ciclo->programa_id == 2);
+        $inscripcionesTable = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
+        $joinColumnPost = $isReforzamiento ? 'estudiante_id' : 'codigo_postulante';
+        $joinColumnIns = $isReforzamiento ? 'estudiante_id' : 'codigo_inscripcion';
 
         $resumenPorAula = (clone $baseQuery)
-            ->join($inscripcionesTable, 'postulaciones.codigo_postulante', '=', $inscripcionesTable . '.codigo_inscripcion')
+            ->join($inscripcionesTable, 'postulaciones.' . $joinColumnPost, '=', $inscripcionesTable . '.' . $joinColumnIns)
             ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
             ->select('aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
             ->groupBy('aulas.nombre')
