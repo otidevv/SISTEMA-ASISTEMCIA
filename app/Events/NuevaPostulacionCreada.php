@@ -17,25 +17,30 @@ class NuevaPostulacionCreada implements ShouldBroadcastNow
 
     public $nombrePostulante;
     public $carrera;
+    public $dni;
+    public $grado;
+    public $foto;
+    public $tipo;
 
     /**
      * Create a new event instance.
-     *
-     * @param string $nombrePostulante
-     * @param string $carrera
      */
-    public function __construct($nombrePostulante = 'Un postulante', $carrera = '')
+    public function __construct($nombrePostulante = 'Un postulante', $carrera = '', $dni = null, $grado = null, $foto = null, $tipo = 'cepre')
     {
         $this->nombrePostulante = $nombrePostulante;
         $this->carrera = $carrera;
+        $this->dni = $dni;
+        $this->grado = $grado;
+        $this->foto = $foto;
+        $this->tipo = $tipo;
     }
 
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return \Illuminate\Broadcasting\Channel|array
      */
-    public function broadcastOn(): array
+    public function broadcastOn()
     {
         return [
             new Channel('postulaciones'),
@@ -60,6 +65,10 @@ class NuevaPostulacionCreada implements ShouldBroadcastNow
         return [
             'nombre' => $this->nombrePostulante,
             'carrera' => $this->carrera,
+            'dni' => $this->dni ?? '',
+            'grado' => $this->grado ?? '',
+            'foto' => $this->foto ?? null,
+            'tipo' => $this->tipo,
             'mensaje' => 'Nueva postulación recibida en tiempo real'
         ];
     }

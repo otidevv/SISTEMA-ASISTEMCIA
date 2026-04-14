@@ -275,129 +275,220 @@
                 const itemsContainer = document.getElementById('notification-items-container');
                 const sound = document.getElementById('notification-sound');
 
+                // --- GESTIÓN DE NOTIFICACIONES Y SONIDO MULTICANAL (Web Audio API) ---
+                let beepAudioBuffer = null;
+                let webAudioContext = null;
+
+                try {
+                    webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    fetch('{{ asset("assets/audio/sonido_notificacion.mp3") }}')
+                        .then(response => response.arrayBuffer())
+                        .then(buffer => webAudioContext.decodeAudioData(buffer))
+                        .then(decoded => { beepAudioBuffer = decoded; })
+                        .catch(err => console.log('Error decoding audio:', err));
+                } catch(e) {}
+                
                 function playNotificationSound() {
-                    if (sound) {
-                        sound.currentTime = 0;
-                        sound.play().catch(e => console.log('Error al reproducir audio:', e));
+                    if (webAudioContext && beepAudioBuffer) {
+                        try {
+                            if (webAudioContext.state === 'suspended') webAudioContext.resume();
+                            const source = webAudioContext.createBufferSource();
+                            source.buffer = beepAudioBuffer;
+                            const gainNode = webAudioContext.createGain();
+                            gainNode.gain.value = 1.0; 
+                            source.connect(gainNode);
+                            gainNode.connect(webAudioContext.destination);
+                            source.start(0);
+                        } catch(e) {}
+                    } else {
+                        const originalSound = document.getElementById('notification-sound');
+                        if (originalSound) {
+                            originalSound.currentTime = 0;
+                            originalSound.volume = 1.0;
+                            originalSound.play().catch(e => {});
+                        }
                     }
+                }
+
+                // --- SISTEMA DE RESALTADO PERSISTENTE ---
+                const tablesToCheck = [
+                    { id: '#postulaciones-datatable', globalVar: 'window.postulacionesDataTable' },
+                    { id: '#reforzamientoTable', globalVar: 'window.reforzamientoDataTable' }
+                ];
+
+                function applyPersistentHighlights() {
+                    const unseen = JSON.parse(localStorage.getItem('newRecordsUnseen') || '[]');
+                    if (unseen.length === 0) return;
+
+                    tablesToCheck.forEach(tableInfo => {
+                        if(typeof $ !== 'undefined') {
+                            $(`${tableInfo.id} tbody tr`).each(function() {
+                                const fila = $(this);
+                                const filaTexto = fila.text();
+                                const identifierFound = unseen.find(ident => ident && filaTexto.includes(ident));
+                                
+                                if (identifierFound) {
+                                    fila.addClass('fila-reciente-neon').removeClass('fila-reciente-neon-removida');
+                                    if (fila.find('.badge-nuevo-registro').length === 0) {
+                                        const nameCell = fila.find('td').eq(1).length > 0 ? fila.find('td').eq(1) : fila.find('td:first');
+                                        nameCell.append(' <span class="badge bg-danger badge-nuevo-registro ms-2 animate__animated animate__pulse animate__infinite shadow-sm">NUEVO</span>');
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+
+                // Delegación de eventos para marcar como visto (Funciona para todas las tablas siempre)
+                if(typeof $ !== 'undefined') {
+                    $('body').on('click.visto', 'table tbody a, table tbody button, table tbody .btn', function() {
+                        let fila = $(this).closest('tr');
+                        
+                        // Si está en modo responsive (child row), su padre "real" es la fila anterior
+                        if (fila.hasClass('child')) fila = fila.prev('tr');
+
+                        if (fila.hasClass('fila-reciente-neon')) {
+                            const filaTexto = fila.text();
+                            let unseen = JSON.parse(localStorage.getItem('newRecordsUnseen') || '[]');
+                            const identifierFound = unseen.find(ident => ident && filaTexto.includes(ident));
+                            
+                            if (identifierFound) {
+                                unseen = unseen.filter(ident => ident !== identifierFound);
+                                localStorage.setItem('newRecordsUnseen', JSON.stringify(unseen));
+                                fila.removeClass('fila-reciente-neon').addClass('fila-reciente-neon-removida');
+                                fila.find('.badge-nuevo-registro').fadeOut(300, function() { $(this).remove(); });
+                            }
+                        }
+                    });
+                }
+
+                // Inyectar CSS Dinámico
+                if (typeof document !== 'undefined' && !document.getElementById('style-fila-nueva')) {
+                    const style = document.createElement('style');
+                    style.id = 'style-fila-nueva';
+                    style.innerHTML = `
+                        tr.fila-reciente-neon { --bs-table-accent-bg: #fff8c6 !important; --bs-table-bg: #fff8c6 !important; }
+                        tr.fila-reciente-neon > td { background-color: #fff8c6 !important; transition: background-color 0.8s ease; }
+                        tr.fila-reciente-neon-removida > td { background-color: transparent !important; transition: background-color 0.8s ease; }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // Contenedor Toasts
+                let customNotifyContainer = document.getElementById('custom-notify-container');
+                if (!customNotifyContainer) {
+                    customNotifyContainer = document.createElement('div');
+                    customNotifyContainer.id = 'custom-notify-container';
+                    customNotifyContainer.style.cssText = 'position: fixed; top: 85px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 12px; width: 340px; max-height: calc(100vh - 100px); overflow-y: auto; overflow-x: hidden; pointer-events: none; padding-right: 5px;';
+                    document.body.appendChild(customNotifyContainer);
+                    const style = document.createElement('style');
+                    style.innerHTML = '#custom-notify-container::-webkit-scrollbar { width: 0px; background: transparent; }';
+                    document.body.appendChild(style);
+                }
+
+                function showSingleToast(e) {
+                    const isRef = (e.tipo === 'reforzamiento' || (e.carrera && e.carrera.toUpperCase().includes('REFORZAMIENTO')));
+                    const colorPrimary = isRef ? '#f39c12' : '#28a745';
+                    const titulo = isRef ? '¡NUEVA INSCRIPCIÓN ESCOLAR!' : '¡NUEVA POSTULACIÓN UNIVERSITARIA!';
+                    let fotoUrl = e.foto ? (e.foto.startsWith('http') ? e.foto : '{{ asset("storage") }}/' + e.foto) : 'https://ui-avatars.com/api/?name='+encodeURIComponent(e.nombre||'PS')+'&background='+colorPrimary.replace('#','')+'&color=fff';
+                    const labelExtra = isRef ? 'Grado' : 'Carrera';
+                    const valorExtra = isRef ? (e.grado || 'Por asignar') : (e.carrera || 'N/A');
+
+                    const toast = document.createElement('div');
+                    toast.style.cssText = `background:#fff; pointer-events:auto; border-radius:8px; box-shadow:0 8px 25px rgba(0,0,0,0.15); border-left:5px solid ${colorPrimary}; padding:15px; opacity:0; transform:translateX(100px); transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position:relative; overflow:hidden; flex-shrink:0;`;
+                    toast.innerHTML = `
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="font-size:10px;" onclick="this.parentElement.remove()"></button>
+                        <div style="font-size:11px; font-weight:800; color:#555; margin-bottom:10px;">${titulo}</div>
+                        <div class="d-flex align-items-center mb-1">
+                            <div class="me-3 position-relative" style="width:55px; height:55px; flex-shrink:0;">
+                                <img src="${fotoUrl}" class="rounded-circle shadow-sm" style="width:100%; height:100%; object-fit:cover; border:2px solid ${colorPrimary};">
+                                <span class="position-absolute bottom-0 end-0 badge rounded-pill" style="background:${colorPrimary}; font-size:9px; border:1.5px solid white;">${isRef?'ESC':'UNI'}</span>
+                            </div>
+                            <div class="text-start" style="flex-grow:1;">
+                                <h6 class="mb-1 fw-bold text-dark" style="font-size:14px;">${e.nombre || 'Nuevo Ingreso'}</h6>
+                                <div class="text-muted" style="font-size:11.5px; line-height:1.4;">
+                                    <div><i class="fas fa-id-card"></i> DNI: ${e.dni || '---'}</div>
+                                    <div class="mt-1 text-dark"><i class="fas ${isRef?'fa-graduation-cap':'fa-university'}"></i> <b>${labelExtra}:</b> ${valorExtra}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-bar-toast" style="position:absolute; bottom:0; left:0; height:4px; background:${colorPrimary}; width:100%; transition:width 8s linear;"></div>
+                    `;
+                    customNotifyContainer.prepend(toast);
+                    void toast.offsetWidth;
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(0)';
+                    setTimeout(() => {
+                        const pb = toast.querySelector('.progress-bar-toast');
+                        if(pb) { void pb.offsetWidth; pb.style.width = '0%'; }
+                    }, 50);
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(50px)';
+                        setTimeout(() => toast.remove(), 400);
+                    }, 8000);
                 }
 
                 function updateNotifications() {
-                    fetch('{{ route('notifications.fetch') }}')
-                        .then(response => response.json())
-                        .then(data => {
-                            renderNotifications(data.notifications, data.unread_count);
-                        });
+                    fetch('{{ route('notifications.fetch') }}').then(r => r.json()).then(d => renderNotifications(d.notifications, d.unread_count));
                 }
 
                 function renderNotifications(notifications, unreadCount) {
-                    // Actualizar contador
                     if (unreadCount > 0) {
                         countBadge.innerText = unreadCount > 9 ? '+9' : unreadCount;
                         countBadge.classList.remove('d-none');
-                    } else {
-                        countBadge.classList.add('d-none');
-                    }
-
-                    // Actualizar items
+                    } else { countBadge.classList.add('d-none'); }
                     if (notifications.length === 0) {
-                        itemsContainer.innerHTML = '<div class="text-center p-3 text-muted">No tienes notificaciones nuevas</div>';
+                        itemsContainer.innerHTML = '<div class="text-center p-3 text-muted">Vacio</div>';
                         return;
                     }
-
                     let html = '';
                     notifications.forEach(noti => {
-                        const data = noti.data;
-                        const timeAgo = moment(noti.created_at).fromNow();
-                        
-                        html += `
-                            <a href="/notificaciones/${noti.id}/read" class="dropdown-item notify-item border-bottom">
-                                <div class="notify-icon bg-${data.color || 'primary'}">
-                                    <i class="uil ${data.icon || 'uil-bell'}"></i>
-                                </div>
-                                <p class="notify-details">${data.title}</p>
-                                <p class="text-muted mb-0 user-msg">
-                                    <small>${data.message}</small>
-                                    <br>
-                                    <small class="text-muted">${timeAgo}</small>
-                                </p>
-                            </a>
-                        `;
+                        html += `<a href="/notificaciones/${noti.id}/read" class="dropdown-item notify-item border-bottom">
+                            <div class="notify-icon bg-${noti.data.color || 'primary'}"><i class="uil ${noti.data.icon || 'uil-bell'}"></i></div>
+                            <p class="notify-details">${noti.data.title}</p>
+                            <p class="text-muted mb-0 user-msg"><small>${noti.data.message}</small></p>
+                        </a>`;
                     });
                     itemsContainer.innerHTML = html;
                 }
 
-                // Carga inicial
                 updateNotifications();
+                // Ejecutar resaltado inicial al cargar la página
+                setTimeout(applyPersistentHighlights, 1000); 
 
-                // WebSockets - Tiempo Real (Notificaciones Privadas)
                 if (typeof window.Echo !== 'undefined') {
-                    const userId = {{ Auth::id() }};
-                    window.Echo.private(`App.Models.User.${userId}`)
-                        .notification((notification) => {
-                            console.log('Notificación recibida en tiempo real:', notification);
+                    const userId = {{ Auth::id() ?? 'null' }};
+                    if (userId) {
+                        window.Echo.private(`App.Models.User.${userId}`).notification(() => {
                             playNotificationSound();
-                            updateNotifications(); // Recargar lista al recibir nueva
+                            updateNotifications();
                         });
+                    }
 
-                    // 🟢 ESCUCHADOR GLOBAL DE POSTULACIONES (Canal Público)
-                    window.Echo.channel('postulaciones')
-                        .listen('.NuevaPostulacionCreada', (e) => {
-                            // 1. Sonido
-                            playNotificationSound();
-                            
-                            // 2. Toast Alert (SweetAlert2)
-                            if(typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    title: '¡Nueva Postulación!',
-                                    html: `Se registró <b>${e.nombre}</b><br>Carrera: <b>${e.carrera}</b>`,
-                                    icon: 'success',
-                                    toast: true,
-                                    position: 'top-end',
-                                    showConfirmButton: false,
-                                    timer: 15000,
-                                    timerProgressBar: true,
-                                    showCloseButton: true,
-                                    background: '#f8f9fa',
-                                    color: '#333',
-                                    iconColor: '#28a745'
-                                });
+                    window.Echo.channel('postulaciones').listen('.NuevaPostulacionCreada', (e) => {
+                        playNotificationSound();
+                        showSingleToast(e);
+                        updateNotifications();
+                        
+                        // Guardar en memoria persistente
+                        let unseen = JSON.parse(localStorage.getItem('newRecordsUnseen') || '[]');
+                        unseen.push(e.dni || e.nombre);
+                        localStorage.setItem('newRecordsUnseen', JSON.stringify([...new Set(unseen)]));
+
+                        // Recargar tablas y aplicar resaltado
+                        tablesToCheck.forEach(tableInfo => {
+                            let dt = null;
+                            if (typeof window !== 'undefined' && tableInfo.globalVar && typeof window[tableInfo.globalVar.replace('window.','')] !== 'undefined') {
+                                dt = window[tableInfo.globalVar.replace('window.','')];
+                            } else if (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable(tableInfo.id)) {
+                                dt = $(tableInfo.id).DataTable();
                             }
-
-                            // 2.5 Actualizar el contador y la lista de la campana (NUEVO)
-                            if (typeof updateNotifications === 'function') {
-                                updateNotifications();
-                            }
-
-                            // 3. Recargar tablas si existen en la página actual
-                            const tablesToReload = [
-                                { id: '#postulaciones-datatable', globalVar: 'window.postulacionesDataTable' },
-                                { id: '#reforzamientoTable', globalVar: 'window.reforzamientoDataTable' }
-                            ];
-
-                            tablesToReload.forEach(tableInfo => {
-                                let dt = null;
-                                // Intentar obtener por variable global o por ID directo
-                                if (typeof window !== 'undefined' && tableInfo.globalVar.split('.').reduce((o, i) => o?.[i], window)) {
-                                    dt = tableInfo.globalVar.split('.').reduce((o, i) => o?.[i], window);
-                                } else if (typeof $ !== 'undefined' && $.fn.DataTable.isDataTable(tableInfo.id)) {
-                                    dt = $(tableInfo.id).DataTable();
-                                }
-
-                                if (dt) {
-                                    dt.ajax.reload(() => {
-                                        // Efecto visual: Pintar la fila de éxito temporalmente
-                                        $(`${tableInfo.id} tbody tr`).each(function() {
-                                            if ($(this).text().includes(e.nombre) || $(this).text().includes(e.dni)) {
-                                                const fila = $(this);
-                                                fila.css({'background-color': '#d4edda', 'transition': 'background-color 1.5s ease'});
-                                                setTimeout(() => fila.css('background-color', ''), 5000);
-                                            }
-                                        });
-                                    }, false);
-                                }
-                            });
+                            if (dt) dt.ajax.reload(applyPersistentHighlights, false);
                         });
+                    });
+                } else {
+                    console.warn('⚠️ Laravel Echo no está inicializado.');
                 }
             });
         </script>

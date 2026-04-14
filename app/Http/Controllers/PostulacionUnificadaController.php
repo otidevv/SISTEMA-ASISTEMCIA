@@ -347,7 +347,7 @@ class PostulacionUnificadaController extends Controller
 
             // Disparar Evento en Tiempo Real (Reverb)
             $nombreCarrera = \App\Models\Carrera::find($request->carrera_id)->nombre ?? 'Carrera';
-            \App\Events\NuevaPostulacionCreada::dispatch($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera);
+            \App\Events\NuevaPostulacionCreada::dispatch($estudiante->nombre . ' ' . $estudiante->apellido_paterno, $nombreCarrera, $estudiante->numero_documento, null, $postulacion->foto_path, 'cepre');
 
             // Notificar a administradores (Base de Datos + Campana)
             $admins = \App\Models\User::whereHas('roles', function($q) {

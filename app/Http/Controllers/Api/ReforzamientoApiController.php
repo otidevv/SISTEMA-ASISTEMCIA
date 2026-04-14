@@ -407,7 +407,7 @@ class ReforzamientoApiController extends BaseController
                 $nombreAlumno = ($estudiante->nombre ?? 'Un estudiante') . ' ' . ($estudiante->apellido_paterno ?? '');
                 
                 if (class_exists('App\Events\NuevaPostulacionCreada')) {
-                    event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR'));
+                    event(new \App\Events\NuevaPostulacionCreada($nombreAlumno, 'REFORZAMIENTO ESCOLAR', $request->dni, $inscripcion->grado, $inscripcion->foto_path, 'reforzamiento'));
                 }
 
                 $supervisores = \App\Models\User::whereHas('roles.permissions', function($q) {

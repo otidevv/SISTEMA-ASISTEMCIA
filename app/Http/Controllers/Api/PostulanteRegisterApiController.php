@@ -224,7 +224,7 @@ class PostulanteRegisterApiController extends BaseController
             $nombreCarrera = \App\Models\Carrera::find($request->carrera_id)->nombre ?? 'Carrera';
             $nombreCompleto = $estudiante->nombre . ' ' . $estudiante->apellido_paterno;
             
-            \App\Events\NuevaPostulacionCreada::dispatch($nombreCompleto, $nombreCarrera);
+            \App\Events\NuevaPostulacionCreada::dispatch($nombreCompleto, $nombreCarrera, $estudiante->numero_documento, null, $postulacion->foto_path, 'cepre');
 
             // Notificar a administradores (Base de Datos + Campana)
             $admins = \App\Models\User::whereHas('roles', function($q) {
