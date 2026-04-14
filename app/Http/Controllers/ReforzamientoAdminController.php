@@ -22,8 +22,9 @@ class ReforzamientoAdminController extends Controller
     public function index()
     {
         $ciclos = Ciclo::where('programa_id', 2)->orderBy('id', 'desc')->get();
+        $cicloActual = $ciclos->first(); // El más reciente
         $aulas = \App\Models\Aula::where('estado', true)->get();
-        return view('admin.reforzamiento.index', compact('ciclos', 'aulas'));
+        return view('admin.reforzamiento.index', compact('ciclos', 'aulas', 'cicloActual'));
     }
 
     public function getData(Request $request)
