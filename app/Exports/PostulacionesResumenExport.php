@@ -85,6 +85,8 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
 
     public function array(): array
     {
+        $isReforzamiento = ($this->ciclo && $this->ciclo->programa_id == 2);
+
         // --- Base Query ---
         $baseQuery = Postulacion::query();
         if ($this->ciclo_id) $baseQuery->where('postulaciones.ciclo_id', $this->ciclo_id);
@@ -92,7 +94,7 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         if ($this->turno_id) $baseQuery->where('postulaciones.turno_id', $this->turno_id);
         
         // Relación dinámica de inscripción
-        $relacionInscripcion = ($this->ciclo && $this->ciclo->programa_id == 2) ? 'inscripcionReforzamiento' : 'inscripcion';
+        $relacionInscripcion = $isReforzamiento ? 'inscripcionReforzamiento' : 'inscripcion';
 
         if ($this->aula_id) {
             $baseQuery->whereHas($relacionInscripcion, function ($q) {
@@ -124,18 +126,26 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
     private function generateMainTableData($baseQuery): array
     {
         $isReforzamiento = ($this->ciclo && $this->ciclo->programa_id == 2);
-        $inscripcionesTable = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
-        $joinColumnPost = $isReforzamiento ? 'estudiante_id' : 'codigo_postulante';
-        $joinColumnIns = $isReforzamiento ? 'estudiante_id' : 'codigo_inscripcion';
-
-        $datos = (clone $baseQuery)
-            ->join('carreras', 'postulaciones.carrera_id', '=', 'carreras.id')
-            ->join($inscripcionesTable, 'postulaciones.' . $joinColumnPost, '=', $inscripcionesTable . '.' . $joinColumnIns)
-            ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
-            ->select('carreras.nombre as carrera', 'aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
-            ->groupBy('carreras.nombre', 'aulas.nombre')
-            ->orderBy('carreras.nombre')->orderBy('aulas.nombre')
-            ->get();
+        
+        if ($isReforzamiento) {
+            $datos = DB::table('inscripciones_reforzamiento as i')
+                ->join('aulas as a', 'i.aula_id', '=', 'a.id')
+                ->where('i.ciclo_id', $this->ciclo_id)
+                ->when($this->aula_id, fn($q) => $q->where('i.aula_id', $this->aula_id))
+                ->select('i.grado as carrera', 'a.nombre as aula', DB::raw('count(i.id) as total'))
+                ->groupBy('i.grado', 'a.nombre')
+                ->orderBy('i.grado')->orderBy('a.nombre')
+                ->get();
+        } else {
+            $datos = (clone $baseQuery)
+                ->join('carreras', 'postulaciones.carrera_id', '=', 'carreras.id')
+                ->join('inscripciones', 'postulaciones.codigo_postulante', '=', 'inscripciones.codigo_inscripcion')
+                ->join('aulas', 'inscripciones.aula_id', '=', 'aulas.id')
+                ->select('carreras.nombre as carrera', 'aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
+                ->groupBy('carreras.nombre', 'aulas.nombre')
+                ->orderBy('carreras.nombre')->orderBy('aulas.nombre')
+                ->get();
+        }
 
         $datosOrganizados = [];
         foreach ($datos as $item) {
@@ -144,15 +154,18 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
 
         $carrerasPorGrupo = [];
         foreach ($datosOrganizados as $carrera => $aulas) {
-            $grupo = $this->encontrarGrupo($carrera);
+            $grupo = $isReforzamiento ? 'Reforzamiento' : $this->encontrarGrupo($carrera);
             if (!isset($carrerasPorGrupo[$grupo])) $carrerasPorGrupo[$grupo] = [];
             $carrerasPorGrupo[$grupo][$carrera] = count($aulas);
         }
         $this->carrerasPorGrupo = $carrerasPorGrupo;
 
         $report = [];
-        $report[] = ['RESUMEN DE POSTULANTES POR CARRERA'];
-        $report[] = ['#', 'Grupo', 'Carrera Profesional:', 'AULA', 'Total'];
+        $titulo = $isReforzamiento ? 'RESUMEN DE INSCRITOS POR GRADO' : 'RESUMEN DE POSTULANTES POR CARRERA';
+        $colCarrera = $isReforzamiento ? 'Grado:' : 'Carrera Profesional:';
+        
+        $report[] = [$titulo];
+        $report[] = ['#', 'Grupo', $colCarrera, 'AULA', 'Total'];
         
         $numeroGrupo = 1;
         $totalesGeneral = 0;
@@ -198,17 +211,25 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
         $report[] = ['Aula', 'N° de Postulantes'];
 
         $isReforzamiento = ($this->ciclo && $this->ciclo->programa_id == 2);
-        $inscripcionesTable = $isReforzamiento ? 'inscripciones_reforzamiento' : 'inscripciones';
-        $joinColumnPost = $isReforzamiento ? 'estudiante_id' : 'codigo_postulante';
-        $joinColumnIns = $isReforzamiento ? 'estudiante_id' : 'codigo_inscripcion';
-
-        $resumenPorAula = (clone $baseQuery)
-            ->join($inscripcionesTable, 'postulaciones.' . $joinColumnPost, '=', $inscripcionesTable . '.' . $joinColumnIns)
-            ->join('aulas', $inscripcionesTable . '.aula_id', '=', 'aulas.id')
-            ->select('aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
-            ->groupBy('aulas.nombre')
-            ->orderBy('aulas.nombre')
-            ->get();
+        
+        if ($isReforzamiento) {
+            $resumenPorAula = DB::table('inscripciones_reforzamiento as i')
+                ->join('aulas as a', 'i.aula_id', '=', 'a.id')
+                ->where('i.ciclo_id', $this->ciclo_id)
+                ->when($this->aula_id, fn($q) => $q->where('i.aula_id', $this->aula_id))
+                ->select('a.nombre as aula', DB::raw('count(i.id) as total'))
+                ->groupBy('a.nombre')
+                ->orderBy('a.nombre')
+                ->get();
+        } else {
+            $resumenPorAula = (clone $baseQuery)
+                ->join('inscripciones', 'postulaciones.codigo_postulante', '=', 'inscripciones.codigo_inscripcion')
+                ->join('aulas', 'inscripciones.aula_id', '=', 'aulas.id')
+                ->select('aulas.nombre as aula', DB::raw('count(postulaciones.id) as total'))
+                ->groupBy('aulas.nombre')
+                ->orderBy('aulas.nombre')
+                ->get();
+        }
 
         $totalResumenAula = 0;
         foreach ($resumenPorAula as $item) {

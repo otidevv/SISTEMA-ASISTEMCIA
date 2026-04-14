@@ -46,22 +46,22 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
     {
         $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
         $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
+
+        if ($isReforzamiento) {
+            return \App\Models\InscripcionReforzamiento::with(['estudiante', 'apoderados', 'pagos', 'aula'])
+                ->where('ciclo_id', $this->ciclo_id)
+                ->get();
+        }
         
         $relaciones = [
             'estudiante.parentescos.padre', 
             'ciclo', 
             'carrera', 
             'turno', 
-            'centroEducativo'
+            'centroEducativo',
+            'inscripcion.aula',
+            'inscripcion.registradoPor'
         ];
-
-        if ($isReforzamiento) {
-            $relaciones[] = 'inscripcionReforzamiento.aula';
-            $relaciones[] = 'inscripcionReforzamiento.validador';
-        } else {
-            $relaciones[] = 'inscripcion.aula';
-            $relaciones[] = 'inscripcion.registradoPor';
-        }
 
         $query = Postulacion::with($relaciones);
 
@@ -161,64 +161,88 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
 
     public function headings(): array
     {
+        $ciclo = \App\Models\Ciclo::find($this->ciclo_id);
+        if ($ciclo && $ciclo->programa_id == 2) {
+            return [
+                'ID', 'DNI Estudiante', 'Apellido Paterno', 'Apellido Materno', 'Nombres', 
+                'Telefono', 'Email', 'Grado', 'Turno/Sección', 'Colegio Procedencia', 
+                'Estado', 'Nro Constancia', 'Fecha Registro', 'Apoderado', 'DNI Apoderado', 'Celular Apoderado', 
+                'Monto Pagado', 'Mes Pagado', 'Nro Operación'
+            ];
+        }
+
         return [
             'ID',
             'Codigo Postulante',
-            'Nombres',
+            'DNI',
             'Apellido Paterno',
             'Apellido Materno',
-            'DNI',
-            'Email',
+            'Nombres',
             'Telefono',
-            'Género',
-            'Dirección',
+            'Email',
             'Ciclo',
             'Carrera',
             'Turno',
             'Aula',
-            'Tipo Inscripcion',
-            'Fecha Postulacion',
             'Estado',
-            'Documentos Verificados',
-            'Pago Verificado',
-            'Numero Recibo',
             'Monto Total',
+            'Numero Recibo',
+            'Fecha Postulacion',
             'Colegio',
-            'Cod. Modular',
-            'Ubigeo Col.',
-            'Dpto Col.',
-            'Prov Col.',
-            'Dist Col.',
-            'Dirección Col.',
-            'Nivel Col.',
-            'Gestión Col.',
-            'Lugar Residencia (RENIEC)',
-            'Ubigeo Nacimiento (RENIEC)',
+            'Año Egreso',
+            'Ubigeo Dpto',
+            'Ubigeo Prov',
+            'Ubigeo Dist',
+            'Ubigeo Nacimiento',
             'Apoderado',
             'Teléfono Apoderado',
             'Registrado Por',
         ];
     }
 
-    public function map($postulacion): array
+    public function map($item): array
     {
+        if ($item instanceof \App\Models\InscripcionReforzamiento) {
+            $estudiante = $item->estudiante;
+            $apoderado = $item->apoderados->first();
+            $pago = $item->pagos->first();
+            
+            return [
+                $item->id,
+                $estudiante ? $estudiante->numero_documento : 'N/A',
+                $estudiante ? $estudiante->apellido_paterno : 'N/A',
+                $estudiante ? $estudiante->apellido_materno : 'N/A',
+                $estudiante ? $estudiante->nombre : 'N/A',
+                $estudiante ? $estudiante->telefono : 'N/A',
+                $estudiante ? $estudiante->email : 'N/A',
+                $item->grado,
+                $item->turno,
+                $item->colegio_procedencia,
+                $item->estado_inscripcion,
+                $item->nro_constancia ?: 'Pte',
+                $item->created_at->format('d/m/Y H:i'),
+                $apoderado ? $apoderado->nombres : 'N/A',
+                $apoderado ? $apoderado->numero_documento : 'N/A',
+                $apoderado ? $apoderado->celular : 'N/A',
+                $pago ? $pago->monto : 0,
+                $pago ? $pago->mes_pagado : 'N/A',
+                $pago ? $pago->numero_operacion : 'N/A'
+            ];
+        }
+
+        $postulacion = $item;
         $estudiante = $postulacion->estudiante;
         $apoderado = $estudiante ? $estudiante->parentescos->first() : null;
         $padre = $apoderado ? $apoderado->padre : null;
         
-        // Detectar si es reforzamiento para usar la relación correcta
-        $isReforzamiento = $postulacion->ciclo && $postulacion->ciclo->programa_id == 2;
-        $inscripcion = $isReforzamiento ? $postulacion->inscripcionReforzamiento : $postulacion->inscripcion;
+        $inscripcion = $postulacion->inscripcion;
         
         $aula = $inscripcion ? $inscripcion->aula : null;
-        $registradoPor = null;
-        if ($inscripcion) {
-            $registradoPor = $isReforzamiento ? $inscripcion->validador : $inscripcion->registradoPor;
-        }
+        $registradoPor = $inscripcion ? $inscripcion->registradoPor : null;
         $colegio = $postulacion->centroEducativo;
 
         // Datos de RENIEC vía API con Cache
-        $reniecData = ['UBIGEO_DIR' => 'N/A', 'UBIGEO_NAC' => 'N/A'];
+        $reniecData = ['UBIGEO_DEP' => 'N/A', 'UBIGEO_PRO' => 'N/A', 'UBIGEO_DIS' => 'N/A', 'UBIGEO_NAC' => 'N/A'];
         if ($estudiante && $estudiante->numero_documento) {
             $dni = $estudiante->numero_documento;
             $reniecData = Cache::remember("reniec_data_{$dni}", 86400, function () use ($dni) {
