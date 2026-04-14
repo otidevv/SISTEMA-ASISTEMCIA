@@ -414,11 +414,18 @@ class AsistenciaHelper
         $ahora = Carbon::now();
         $fechaFinCalculo = $ahora < $periodoExamen ? $ahora->copy()->endOfDay() : $periodoExamen;
 
-        // 2. Obtener inscripciones
-        $inscripciones = \App\Models\Inscripcion::where('ciclo_id', $ciclo->id)
-            ->where('estado_inscripcion', 'activo')
-            ->with('estudiante:id,numero_documento')
-            ->get();
+        // 2. Obtener inscripciones según programa
+        if ($ciclo->programa_id == 2) {
+            $inscripciones = \App\Models\InscripcionReforzamiento::where('ciclo_id', $ciclo->id)
+                ->where('estado_inscripcion', 'validado')
+                ->with('estudiante:id,numero_documento')
+                ->get();
+        } else {
+            $inscripciones = \App\Models\Inscripcion::where('ciclo_id', $ciclo->id)
+                ->where('estado_inscripcion', 'activo')
+                ->with('estudiante:id,numero_documento')
+                ->get();
+        }
         
         $totalEstudiantes = $inscripciones->count();
         if ($totalEstudiantes === 0) {

@@ -450,18 +450,36 @@ class DashboardController extends Controller
             }
 
             foreach ($ciclosToProcess as $ciclo) {
-                // Agregar datos con seguridad
-                $data['totalInscripciones'] += Inscripcion::where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'activo')->count();
+                // Seleccionar modelo según programa
+                if ($ciclo->programa_id == 2) {
+                    $inscModel = \App\Models\InscripcionReforzamiento::query();
+                    $postModel = \App\Models\InscripcionReforzamiento::query();
+                    $estadoActivo = 'validado'; // Reforzamiento usa 'validado'
+                } else {
+                    $inscModel = Inscripcion::query();
+                    $postModel = Postulacion::query();
+                    $estadoActivo = 'activo'; // CEPRE usa 'activo'
+                }
+
+                $data['totalInscripciones'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', $estadoActivo)->count();
                 
-                $post = Postulacion::where('ciclo_id', $ciclo->id)
-                    ->selectRaw('COUNT(*) as t, SUM(CASE WHEN estado="pendiente" THEN 1 ELSE 0 END) as p, SUM(CASE WHEN estado="aprobado" THEN 1 ELSE 0 END) as a')
-                    ->first();
-                $data['postulaciones']['total'] += $post->t ?? 0;
-                $data['postulaciones']['pendientes'] += $post->p ?? 0;
-                $data['postulaciones']['aprobadas'] += $post->a ?? 0;
+                if ($ciclo->programa_id == 2) {
+                    // Para reforzamiento, las postulaciones y inscripciones están en la misma tabla o se manejan distinto
+                    // Basado en ReforzamientoAdminController, cuentan 'total', 'pendiente', 'aprobado' (validado)
+                    $data['postulaciones']['total'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->count();
+                    $data['postulaciones']['pendientes'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'pendiente')->count();
+                    $data['postulaciones']['aprobadas'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'validado')->count();
+                } else {
+                    $post = Postulacion::where('ciclo_id', $ciclo->id)
+                        ->selectRaw('COUNT(*) as t, SUM(CASE WHEN estado="pendiente" THEN 1 ELSE 0 END) as p, SUM(CASE WHEN estado="aprobado" THEN 1 ELSE 0 END) as a')
+                        ->first();
+                    $data['postulaciones']['total'] += $post->t ?? 0;
+                    $data['postulaciones']['pendientes'] += $post->p ?? 0;
+                    $data['postulaciones']['aprobadas'] += $post->a ?? 0;
+                }
 
                 $data['totalDocentesActivos'] += HorarioDocente::where('ciclo_id', $ciclo->id)->distinct('docente_id')->count('docente_id');
-                $data['totalAulas'] += Inscripcion::where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'activo')->whereNotNull('aula_id')->distinct('aula_id')->count('aula_id');
+                $data['totalAulas'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', $estadoActivo)->whereNotNull('aula_id')->distinct('aula_id')->count('aula_id');
                 
                 $stats = AsistenciaHelper::obtenerEstadisticasCiclo($ciclo);
                 $data['estadisticasAsistencia']['regulares'] += $stats['regulares'];
