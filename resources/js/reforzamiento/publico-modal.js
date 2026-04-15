@@ -101,10 +101,7 @@ function initPremiumWizard() {
         });
     }
 
-    const btnDownload = document.getElementById('btnDownloadPack');
-    if (btnDownload) {
-        btnDownload.addEventListener('click', downloadRegistrationPack);
-    }
+    // El botón btnDownloadPack ya tiene un onclick en el HTML. Evitar doble listener.
 
     initDropzones();
     if (apoderadoCount === 0) addApoderadoForm();
@@ -1232,35 +1229,34 @@ window.closeReforzamientoModal = function() {
 // ==========================================
 // PDF GENERATION & DOWNLOAD
 // ==========================================
-window.downloadRegistrationPack = async function() {
-    const btn = document.getElementById('btnDownloadPack');
-    const oldHtml = btn ? btn.innerHTML : '';
-    
-    // Recopilar Datos del Estudiante (Paso 1)
-    const estudianteNombre = document.getElementById('ref_nombre')?.value?.trim() || '';
-    const estudiantePaterno = document.getElementById('ref_apellido_paterno')?.value?.trim() || '';
-    const estudianteMaterno = document.getElementById('ref_apellido_materno')?.value?.trim() || '';
-    const estudianteDni = document.getElementById('ref_dni')?.value?.trim() || '';
-    const estudianteDireccion = document.getElementById('ref_direccion')?.value?.trim() || '';
-    const estudianteFechaNac = document.getElementById('ref_fecha_nacimiento')?.value || '';
+window.downloadRegistrationPack = async function(event) {
+    const btn = event ? (event.currentTarget || event.target) : document.getElementById('btnDownloadPack');
+    if (!btn || btn.disabled) return; // Prevenir doble clic o re-entrada
 
-    // Validar Datos Personales Mínimos
-    if (!estudianteDni || !estudianteNombre || !estudiantePaterno) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Datos Incompletos',
-            text: 'Por favor, completa tus nombres y DNI en el Paso 1 antes de descargar.',
-            confirmButtonColor: '#ec008c'
-        });
-        return;
-    }
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="rf-spin material-icons-round">cached</i> GENERANDO...';
-    }
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="rf-spin material-icons-round">cached</i> GENERANDO...';
 
     try {
+        // Recopilar Datos del Estudiante (Paso 1)
+        const estudianteNombre = document.getElementById('ref_nombre')?.value?.trim() || '';
+        const estudiantePaterno = document.getElementById('ref_apellido_paterno')?.value?.trim() || '';
+        const estudianteMaterno = document.getElementById('ref_apellido_materno')?.value?.trim() || '';
+        const estudianteDni = document.getElementById('ref_dni')?.value?.trim() || '';
+        const estudianteDireccion = document.getElementById('ref_direccion')?.value?.trim() || '';
+        const estudianteFechaNac = document.getElementById('ref_fecha_nacimiento')?.value || '';
+
+        // Validar Datos Personales Mínimos
+        if (!estudianteDni || !estudianteNombre || !estudiantePaterno) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Datos Incompletos',
+                text: 'Por favor complete el Paso 1 (Datos Personales) para generar su pack pre-relleno.',
+                confirmButtonColor: '#ec008c'
+            });
+            return;
+        }
+
         // Recopilar Datos del Primer Apoderado (Paso 2)
         const apoderadoDni = document.querySelector('[name^="apoderados[1][dni]"]')?.value?.trim() || '';
         const apoderadoNombre = document.querySelector('[name^="apoderados[1][nombre]"]')?.value?.trim() || '';
@@ -1278,15 +1274,25 @@ window.downloadRegistrationPack = async function() {
             apoderado_direccion: estudianteDireccion
         };
 
+        // Feedback visual
+        Swal.fire({
+            title: 'Generando Pack...',
+            text: 'Estamos preparando tu expediente pre-relleno con tus datos actuales.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         const baseUrl = getBaseUrl();
-        const response = await fetch(`${baseUrl}/api/public-reforzamiento/download-pack`, {
+        const response = await fetch(`${baseUrl}/reforzamiento/download-pack`, {
             method: 'POST',
+            body: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                 'Accept': 'application/pdf'
-            },
-            body: JSON.stringify(payload)
+            }
         });
 
         if (!response.ok) {
