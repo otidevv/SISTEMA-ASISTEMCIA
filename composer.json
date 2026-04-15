@@ -17,9 +17,7 @@
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "setasign/fpdf": "^1.8",
-        "setasign/fpdi": "^2.6",
         "simplesoftwareio/simple-qrcode": "*",
-        "smalot/pdfparser": "^2.12",
         "spatie/laravel-activitylog": "^4.12",
         "yajra/laravel-datatables-oracle": "^12.0"
     },
