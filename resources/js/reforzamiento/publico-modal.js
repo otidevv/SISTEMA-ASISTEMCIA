@@ -1242,6 +1242,7 @@ window.downloadRegistrationPack = async function() {
     const estudianteMaterno = document.getElementById('ref_apellido_materno')?.value?.trim() || '';
     const estudianteDni = document.getElementById('ref_dni')?.value?.trim() || '';
     const estudianteDireccion = document.getElementById('ref_direccion')?.value?.trim() || '';
+    const estudianteFechaNac = document.getElementById('ref_fecha_nacimiento')?.value || '';
 
     // Validar Datos Personales Mínimos
     if (!estudianteDni || !estudianteNombre || !estudiantePaterno) {
@@ -1268,8 +1269,11 @@ window.downloadRegistrationPack = async function() {
         const apoderadoCelular = document.querySelector('[name^="apoderados[1][telefono]"]')?.value?.trim() || '';
 
         const payload = {
-            estudiante_nombre: `${estudianteNombre} ${estudiantePaterno} ${estudianteMaterno}`.trim(),
+            nombre: estudianteNombre,
+            apellido_paterno: estudiantePaterno,
+            apellido_materno: estudianteMaterno,
             estudiante_dni: estudianteDni,
+            fecha_nacimiento: estudianteFechaNac,
             apoderado_nombre: `${apoderadoNombre} ${apoderadoPaterno} ${apoderadoMaterno}`.trim(),
             apoderado_dni: apoderadoDni,
             apoderado_celular: apoderadoCelular,

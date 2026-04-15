@@ -421,12 +421,28 @@
     
     <div style="margin: 10px 0;">
         <span style="font-weight: bold;">Marque su CICLO ACADÉMICO:</span>
-        <span style="margin-left: 10px;"><span class="check-box"></span> Intensivo 2026-0</span>
-        <span style="margin-left: 10px;"><span class="check-box"></span> Ordinario 2026-1</span><br>
-        <span style="margin-left: 168px;"><span class="check-box"></span> Ordinario 2026-2</span>
+        @php
+            $nombreCicloDoc = strtoupper($ciclo_nombre ?? '');
+            $esIntensivo = str_contains($nombreCicloDoc, 'INTENSIVO');
+            $esOrdinario1 = str_contains($nombreCicloDoc, 'ORDINARIO') && str_contains($nombreCicloDoc, '1');
+            $esOrdinario2 = str_contains($nombreCicloDoc, 'ORDINARIO') && str_contains($nombreCicloDoc, '2');
+            $esReforzamiento = ($programa_id == 2) || str_contains($nombreCicloDoc, 'REFORZAMIENTO');
+        @endphp
         <span style="margin-left: 10px;">
-            <span class="check-box" {!! $programa_id == 2 ? 'style="background: #eef;"' : '' !!}>{{ $programa_id == 2 ? 'X' : '' }}</span> 
-            <span style="{{ $programa_id == 2 ? 'color: #ec008c; font-weight: bold;' : 'color: #777;' }}">Reforzamiento para Secundaria</span>
+            <span class="check-box" {!! $esIntensivo ? 'style="background: #eef;"' : '' !!}>{{ $esIntensivo ? 'X' : '' }}</span> 
+            <span style="{{ $esIntensivo ? 'color: #003366; font-weight: bold;' : 'color: #777;' }}">Intensivo 2026-0</span>
+        </span>
+        <span style="margin-left: 10px;">
+            <span class="check-box" {!! $esOrdinario1 ? 'style="background: #eef;"' : '' !!}>{{ $esOrdinario1 ? 'X' : '' }}</span> 
+            <span style="{{ $esOrdinario1 ? 'color: #003366; font-weight: bold;' : 'color: #777;' }}">Ordinario 2026-1</span>
+        </span><br>
+        <span style="margin-left: 168px;">
+            <span class="check-box" {!! $esOrdinario2 ? 'style="background: #eef;"' : '' !!}>{{ $esOrdinario2 ? 'X' : '' }}</span> 
+            <span style="{{ $esOrdinario2 ? 'color: #003366; font-weight: bold;' : 'color: #777;' }}">Ordinario 2026-2</span>
+        </span>
+        <span style="margin-left: 10px;">
+            <span class="check-box" {!! $esReforzamiento ? 'style="background: #eef;"' : '' !!}>{{ $esReforzamiento ? 'X' : '' }}</span> 
+            <span style="{{ $esReforzamiento ? 'color: #ec008c; font-weight: bold;' : 'color: #777;' }}">Reforzamiento para Secundaria</span>
         </span>
     </div>
 

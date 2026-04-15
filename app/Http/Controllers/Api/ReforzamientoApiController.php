@@ -38,24 +38,41 @@ class ReforzamientoApiController extends BaseController
     {
         try {
             // Validar datos mínimos necesarios para el PDF
-            $data = $request->only([
-                'estudiante_nombre', 'estudiante_dni', 
-                'apoderado_nombre', 'apoderado_dni', 
-                'apoderado_celular', 'apoderado_direccion'
-            ]);
+            // Mapear campos si vienen con nombres diferentes desde el frontend
+            $estudianteNombre = $request->input('estudiante_nombre', '');
+            $estudianteDni = $request->input('estudiante_dni', '');
 
-            if (!$data['estudiante_nombre'] || !$data['estudiante_dni']) {
-                return response()->json(['error' => 'Datos incompletos para generar el PDF'], 422);
+            // Obtener ciclo activo para el PDF
+            $cicloActivo = \App\Models\Ciclo::where('programa_id', 2)->where('es_activo', 1)->first();
+            $cicloNombre = $cicloActivo ? $cicloActivo->nombre : date('Y');
+
+            // Calcular edad si hay fecha de nacimiento en el request
+            $edad = $request->input('edad', '_____');
+            $fechaNac = $request->input('fecha_nacimiento');
+            if (!empty($fechaNac)) {
+                try {
+                    $edad = \Carbon\Carbon::parse($fechaNac)->age;
+                } catch (\Exception $e) {}
             }
 
-            // Indicar que es para Reforzamiento (ID: 2)
-            $data['programa_id'] = 2;
+            $pdfData = [
+                'estudiante_nombre' => strtoupper($estudianteNombre),
+                'estudiante_dni' => $estudianteDni,
+                'estudiante_edad' => $edad,
+                'apoderado_nombre' => strtoupper($request->input('apoderado_nombre', '')),
+                'apoderado_dni' => $request->input('apoderado_dni', ''),
+                'apoderado_celular' => $request->input('apoderado_celular', ''),
+                'apoderado_direccion' => $request->input('apoderado_direccion', ''),
+                'apoderado_parentesco' => 'Apoderado',
+                'programa_id' => 2, // Reforzamiento
+                'ciclo_nombre' => $cicloNombre
+            ];
 
-            $pdf = $this->pdfService->generateRegistrationPack($data);
+            $pdf = $this->pdfService->generateRegistrationPack($pdfData);
 
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_Reforzamiento_' . $data['estudiante_dni'] . '.pdf"');
+                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_Reforzamiento_' . $pdfData['estudiante_dni'] . '.pdf"');
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al generar Pack PDF: ' . $e->getMessage()], 500);

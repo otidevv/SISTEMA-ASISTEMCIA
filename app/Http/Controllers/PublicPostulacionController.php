@@ -744,18 +744,42 @@ class PublicPostulacionController extends Controller
         try {
             $data = $request->all();
 
-            // Mapear campos si vienen con nombres diferentes desde el frontend (estudiante_dni -> dni, etc)
+            // Obtener ciclo activo para el PDF
+            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->first();
+            $cicloNombre = $cicloActivo ? $cicloActivo->nombre : date('Y');
+
+            // Calcular edad si hay fecha de nacimiento
+            $edad = $data['edad'] ?? '_____';
+            if (!empty($data['fecha_nacimiento'])) {
+                try {
+                    $fechaNac = \Carbon\Carbon::parse($data['fecha_nacimiento']);
+                    $edad = $fechaNac->age;
+                } catch (\Exception $e) {
+                    // Mantener la edad del request si falla el parseo
+                }
+            }
+
+            // Capturar DNI (puede venir como check_dni, estudiante_dni o dni)
+            $estudianteDni = $data['check_dni'] ?? ($data['estudiante_dni'] ?? ($data['dni'] ?? ''));
+
+            // Mapear campos si vienen con nombres diferentes desde el frontend
             $pdfData = [
-                'estudiante_nombre' => trim($data['estudiante_nombre'] ?? (($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? ''))),
-                'estudiante_dni' => $data['estudiante_dni'] ?? ($data['dni'] ?? ''),
-                'estudiante_edad' => $data['edad'] ?? '_____',
+                'estudiante_nombre' => trim(($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? '')),
+                'estudiante_dni' => $estudianteDni,
+                'estudiante_edad' => $edad,
                 'apoderado_nombre' => '',
                 'apoderado_dni' => '',
                 'apoderado_celular' => '',
                 'apoderado_direccion' => '',
                 'apoderado_parentesco' => 'Padre/Madre',
-                'programa_id' => 1 // CEPRE
+                'programa_id' => 1, // CEPRE por defecto en este controlador
+                'ciclo_nombre' => $cicloNombre
             ];
+
+            // Si el nombre resultante está vacío, intentar usar 'estudiante_nombre' directo si existe
+            if (empty($pdfData['estudiante_nombre']) && !empty($data['estudiante_nombre'])) {
+                $pdfData['estudiante_nombre'] = $data['estudiante_nombre'];
+            }
 
             // Prioridad al Padre, luego Madre para el Pack de Inscripción
             if (!empty($data['padre_nombre'])) {
