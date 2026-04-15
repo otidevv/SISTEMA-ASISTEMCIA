@@ -1285,7 +1285,7 @@ window.downloadRegistrationPack = async function(event) {
         });
 
         const baseUrl = getBaseUrl();
-        const response = await fetch(`${baseUrl}/reforzamiento/download-pack`, {
+        const response = await fetch(`${baseUrl}/api/public-reforzamiento/download-pack`, {
             method: 'POST',
             body: JSON.stringify(payload),
             headers: {
