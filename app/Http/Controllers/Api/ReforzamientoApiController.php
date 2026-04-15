@@ -39,8 +39,19 @@ class ReforzamientoApiController extends BaseController
         try {
             // Validar datos mínimos necesarios para el PDF
             // Mapear campos si vienen con nombres diferentes desde el frontend
-            $estudianteNombre = $request->input('estudiante_nombre', '');
+            $estudianteNombre = $request->input('estudiante_nombre');
+            if (!$estudianteNombre) {
+                $estudianteNombre = trim(($request->input('nombre', '') . ' ' . $request->input('apellido_paterno', '') . ' ' . $request->input('apellido_materno', '')));
+            }
             $estudianteDni = $request->input('estudiante_dni', '');
+
+            // Si el nombre sigue vacío, buscar en la DB por DNI
+            if (empty($estudianteNombre) && !empty($estudianteDni)) {
+                $user = \App\Models\User::where('numero_documento', $estudianteDni)->first();
+                if ($user) {
+                    $estudianteNombre = $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno;
+                }
+            }
 
             // Obtener ciclo activo para el PDF
             $cicloActivo = \App\Models\Ciclo::where('programa_id', 2)->where('es_activo', 1)->first();

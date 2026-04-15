@@ -1269,9 +1269,7 @@ window.downloadRegistrationPack = async function() {
         const apoderadoCelular = document.querySelector('[name^="apoderados[1][telefono]"]')?.value?.trim() || '';
 
         const payload = {
-            nombre: estudianteNombre,
-            apellido_paterno: estudiantePaterno,
-            apellido_materno: estudianteMaterno,
+            estudiante_nombre: `${estudianteNombre} ${estudiantePaterno} ${estudianteMaterno}`.trim(),
             estudiante_dni: estudianteDni,
             fecha_nacimiento: estudianteFechaNac,
             apoderado_nombre: `${apoderadoNombre} ${apoderadoPaterno} ${apoderadoMaterno}`.trim(),
