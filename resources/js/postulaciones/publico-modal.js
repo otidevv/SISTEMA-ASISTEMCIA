@@ -47,6 +47,18 @@ const Toast = Swal.mixin({
     }
 });
 
+function getBaseUrl() {
+    const origin = window.location.origin;
+    const path = window.location.pathname;
+    const parts = path.split('/').filter(p => p.length > 0);
+    
+    // Si estamos en una subcarpeta (común en XAMPP como /SISTEMA-ASISTEMCIA/)
+    if (parts.length > 0 && parts[0] !== 'api' && parts[0] !== 'postulacion') {
+        return origin + '/' + parts[0];
+    }
+    return origin;
+}
+
 $(document).ready(function () {
 
 
@@ -1979,7 +1991,8 @@ window.descargarPackInscripcion = async function() {
     });
 
     try {
-        const response = await fetch('/postulacion/download-pack', {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/postulacion/download-pack`, {
             method: 'POST',
             body: formData,
             headers: {

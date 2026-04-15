@@ -804,8 +804,11 @@ class PublicPostulacionController extends Controller
                 ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_CEPRE_' . ($pdfData['estudiante_dni']) . '.pdf"');
 
         } catch (\Exception $e) {
-            Log::error("Error generando PDF de postulación: " . $e->getMessage());
-            return response()->json(['error' => 'Error al generar el documento'], 500);
+            \Log::error('Error en downloadRegistrationPack: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
+            return response()->json(['error' => 'Error al generar Pack PDF: ' . $e->getMessage()], 500);
         }
     }
 }
