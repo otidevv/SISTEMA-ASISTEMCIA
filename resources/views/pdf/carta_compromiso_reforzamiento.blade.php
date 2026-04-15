@@ -14,11 +14,12 @@
             padding: 0;
         }
         
-        .header { position: relative; width: 100%; border-bottom: 3px solid #00aeef; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
+        .header { position: relative; width: 100%; border-bottom: 3px solid #00aeef; padding-bottom: 5px; margin-bottom: 10px; text-align: center; }
         .header-logo { position: absolute; left: 0; top: 0; width: 85px; }
         .header-logo-right { position: absolute; right: 0; top: 0; width: 90px; }
         .header-text h1 { font-size: 14pt; margin: 0; color: #003366; text-transform: uppercase; font-family: 'Arial Black', 'Arial Bold', sans-serif; }
-        .header-text h2 { font-size: 12pt; margin: 5px 0; color: #00aeef; font-weight: bold; }
+        .header-text h2 { font-size: 12pt; margin: 2px 0; color: #00aeef; font-weight: bold; }
+        .header-text p { margin: 0; font-size: 10pt; }
         
         .watermark { 
             position: fixed; 
@@ -126,11 +127,57 @@
             margin-right: 5px;
         }
         
+        .qr-seal {
+            position: fixed;
+            bottom: -22px;
+            right: 15px;
+            width: 105px;
+            text-align: center;
+            z-index: 1000;
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .qr-seal img {
+            width: 85px;
+            height: 85px;
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-label {
+            font-size: 7pt;
+            font-weight: bold;
+            color: #003366;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+        .qr-desc {
+            font-size: 5.5pt;
+            color: #999;
+            margin-top: 2px;
+            line-height: 1.1;
+        }
+        
         strong { color: #000; }
         ol li { margin-bottom: 10px; padding-left: 5px; }
     </style>
 </head>
 <body>
+
+@php
+    // URL de validación oficial (usando un prefijo especial para Reforzamiento)
+    $urlValidacion = route('constancias.validar', 'REF-' . $estudiante_dni);
+    
+    // Generación del código QR con la URL de validación
+    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(400)->margin(0)->generate($urlValidacion));
+@endphp
+
+<div class="qr-seal">
+    <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Validation">
+    <div class="qr-label">VALIDACIÓN QR</div>
+    <div class="qr-desc">Veracidad verificable mediante escaneo digital</div>
+</div>
 
 <div class="footer-doc">
     “UNAMAD: Parque científico Tecnológico sostenible con Investigación e Innovación”<br>

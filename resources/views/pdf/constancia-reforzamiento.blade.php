@@ -43,8 +43,10 @@
 @php
     $nroConstancia = $inscripcion->nro_constancia ?? 'N-' . $inscripcion->id;
     $nombreAlumno = mb_strtoupper(($estudiante->apellido_paterno ?? '') . ' ' . ($estudiante->apellido_materno ?? '') . ', ' . ($estudiante->nombre ?? ''));
-    $qrText = "CONSTANCIA REFORZAMIENTO\nNRO: $nroConstancia\nDNI: {$estudiante->numero_documento}\nALUMNO: $nombreAlumno";
-    $qrCodeBase64 = base64_encode(QrCode::format('png')->size(450)->margin(0)->color(0, 0, 0)->generate($qrText));
+    
+    // URL de validación oficial para que el escaneo funcione
+    $urlValidacion = route('constancias.validar', 'REF-' . $estudiante->numero_documento);
+    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(450)->margin(0)->color(0, 0, 0)->generate($urlValidacion));
 @endphp
 
 <body>

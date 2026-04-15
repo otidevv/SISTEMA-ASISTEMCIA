@@ -264,6 +264,51 @@ class ConstanciaEstudiosController extends Controller
                 ->first();
 
             if (!$constancia) {
+                // ✅ NUEVO: Soporte para validación dinámica de Reforzamiento vía DNI
+                if (str_starts_with($codigoVerificacion, 'REF-')) {
+                    $dni = str_replace('REF-', '', $codigoVerificacion);
+                    
+                    $inscripcion = \App\Models\InscripcionReforzamiento::with(['estudiante', 'ciclo', 'aula'])
+                        ->whereHas('estudiante', function($q) use ($dni) {
+                            $q->where('numero_documento', $dni);
+                        })
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    if ($inscripcion) {
+                        $estudiante = $inscripcion->estudiante;
+                        
+                        // Mapear datos al formato que espera la vista de validación
+                        $datosFake = [
+                            'estudiante' => [
+                                'nombre' => $estudiante->nombre,
+                                'apellido_paterno' => $estudiante->apellido_paterno,
+                                'apellido_materno' => $estudiante->apellido_materno,
+                                'numero_documento' => $estudiante->numero_documento,
+                            ],
+                            'carrera' => [
+                                'nombre' => 'PROGRAMA DE REFORZAMIENTO ESCOLAR'
+                            ],
+                            'ciclo' => [
+                                'nombre' => $inscripcion->ciclo->nombre ?? 'Reforzamiento ' . date('Y')
+                            ],
+                            'numero_constancia' => $inscripcion->nro_constancia ?: ('REF-' . $estudiante->numero_documento),
+                            'turno' => [
+                                'nombre' => strtoupper($inscripcion->turno)
+                            ],
+                            'constancia_firmada_path' => $inscripcion->carta_compromiso_path // Mostramos el compromiso si existe
+                        ];
+
+                        return view('constancias.validacion', [
+                            'valida' => true,
+                            'tipo' => 'reforzamiento',
+                            'datos' => $datosFake,
+                            'fecha_generacion' => $inscripcion->created_at,
+                            'constancia_firmada' => $inscripcion->carta_compromiso_path
+                        ]);
+                    }
+                }
+
                 return view('constancias.validacion', [
                     'valida' => false,
                     'mensaje' => 'Código de verificación no encontrado o inválido'
