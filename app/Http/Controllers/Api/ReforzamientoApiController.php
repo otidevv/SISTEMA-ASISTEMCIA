@@ -59,6 +59,8 @@ class ReforzamientoApiController extends BaseController
                 'estudiante_nombre' => strtoupper($estudianteNombre),
                 'estudiante_dni' => $estudianteDni,
                 'estudiante_edad' => $edad,
+                'estudiante_grado' => $request->input('grado', ''),
+                'turno_nombre' => $request->input('seccion', $request->input('turno', '')),
                 'apoderado_nombre' => strtoupper($request->input('apoderado_nombre', '')),
                 'apoderado_dni' => $request->input('apoderado_dni', ''),
                 'apoderado_celular' => $request->input('apoderado_celular', ''),

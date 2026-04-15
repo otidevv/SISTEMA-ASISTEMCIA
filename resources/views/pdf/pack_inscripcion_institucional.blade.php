@@ -225,11 +225,48 @@
 
     <div class="section-header">5. Relación del Tutor con el estudiante</div>
     <div style="padding: 10px 20px;">
-        <p><span class="check-box"></span> Padre/Madre</p>
-        <p><span class="check-box"></span> Hermano/Hermana</p>
-        <p><span class="check-box"></span> Familiar (Abuelo, tío, primo)</p>
+        @php
+            $parDoc = strtoupper($apoderado_parentesco ?? '');
+            $isPadreMadre = str_contains($parDoc, 'PADRE') || str_contains($parDoc, 'MADRE');
+            $isHermano = str_contains($parDoc, 'HERMANO');
+            $isFamiliar = str_contains($parDoc, 'ABUELO') || str_contains($parDoc, 'TIO') || str_contains($parDoc, 'PRIMO') || str_contains($parDoc, 'TUTOR');
+        @endphp
+        <p><span class="check-box" {!! $isPadreMadre ? 'style="background: #eef;"' : '' !!}>{{ $isPadreMadre ? 'X' : '' }}</span> Padre/Madre</p>
+        <p><span class="check-box" {!! $isHermano ? 'style="background: #eef;"' : '' !!}>{{ $isHermano ? 'X' : '' }}</span> Hermano/Hermana</p>
+        <p><span class="check-box" {!! $isFamiliar ? 'style="background: #eef;"' : '' !!}>{{ $isFamiliar ? 'X' : '' }}</span> Familiar (Abuelo, tío, primo)</p>
         <p><span class="check-box"></span> No tiene (Trabaja o se solventa sus estudios)</p>
     </div>
+
+    <div class="section-header">DATOS DEL ESTUDIANTE POSTULANTE</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">6. Estudiante:</td>
+            <td class="value"><strong>{{ strtoupper($estudiante_nombre) }}</strong></td>
+        </tr>
+        <tr>
+            <td class="label">7. DNI Estudiante:</td>
+            <td class="value"><strong>{{ $estudiante_dni }}</strong></td>
+        </tr>
+        @if($programa_id == 1)
+            <tr>
+                <td class="label">8. Carrera a Postular:</td>
+                <td class="value"><strong>{{ strtoupper($carrera_nombre ?? 'N/A') }}</strong></td>
+            </tr>
+            <tr>
+                <td class="label">9. Turno Elegido:</td>
+                <td class="value"><strong>{{ strtoupper($turno_nombre ?? 'N/A') }}</strong></td>
+            </tr>
+        @else
+            <tr>
+                <td class="label">8. Grado Escolar:</td>
+                <td class="value"><strong>{{ strtoupper($estudiante_grado ?? 'N/A') }}</strong></td>
+            </tr>
+            <tr>
+                <td class="label">9. Turno/Sección:</td>
+                <td class="value"><strong>{{ strtoupper($turno_nombre ?? 'N/A') }}</strong></td>
+            </tr>
+        @endif
+    </table>
 
     <div style="text-align: right; margin-top: 80px; margin-bottom: 50px; font-weight: bold; color: #003366;">
         Puerto Maldonado, {{ date('d') }} de {{ $mes_actual }} del {{ date('Y') }}
@@ -542,8 +579,12 @@
             </span>
         </div>
         <div style="margin-top: 5px;">
-            • <strong>Grupo:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;">__________</span>
-            &nbsp;&nbsp; <strong>Turno:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;">__________</span>
+            @if($programa_id == 1)
+                • <strong>Carrera:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 170px;"><strong>{{ strtoupper($carrera_nombre ?? '__________') }}</strong></span>
+            @else
+                • <strong>Grado:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 170px;"><strong>{{ strtoupper($estudiante_grado ?? '__________') }}</strong></span>
+            @endif
+            &nbsp;&nbsp; <strong>Turno:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;"><strong>{{ strtoupper($turno_nombre ?? '__________') }}</strong></span>
         </div>
     </div>
 

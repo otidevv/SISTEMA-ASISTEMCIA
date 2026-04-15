@@ -762,6 +762,19 @@ class PublicPostulacionController extends Controller
             // Capturar DNI (puede venir como check_dni, estudiante_dni o dni)
             $estudianteDni = $data['check_dni'] ?? ($data['estudiante_dni'] ?? ($data['dni'] ?? ''));
 
+            // Obtener carrera y turno si están presentes (Solo CEPRE)
+            $carreraNombre = '';
+            if (!empty($data['carrera_id'])) {
+                $carrera = \App\Models\Carrera::find($data['carrera_id']);
+                $carreraNombre = $carrera ? $carrera->nombre : '';
+            }
+
+            $turnoNombre = '';
+            if (!empty($data['turno_id'])) {
+                $turno = \App\Models\Turno::find($data['turno_id']);
+                $turnoNombre = $turno ? $turno->nombre : '';
+            }
+
             // Mapear campos si vienen con nombres diferentes desde el frontend
             $pdfData = [
                 'estudiante_nombre' => trim(($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? '')),
@@ -773,7 +786,9 @@ class PublicPostulacionController extends Controller
                 'apoderado_direccion' => '',
                 'apoderado_parentesco' => 'Padre/Madre',
                 'programa_id' => 1, // CEPRE por defecto en este controlador
-                'ciclo_nombre' => $cicloNombre
+                'ciclo_nombre' => $cicloNombre,
+                'carrera_nombre' => $carreraNombre,
+                'turno_nombre' => $turnoNombre
             ];
 
             // Si el nombre resultante está vacío, intentar usar 'estudiante_nombre' directo si existe
