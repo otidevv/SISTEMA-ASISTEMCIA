@@ -474,10 +474,18 @@ class PostulacionController extends Controller
         
         // 1. Obtener el grupo de la carrera desde la base de datos
         $grupoCarrera = $carrera->grupo;
-        $turnoNombre = strtoupper($turno->nombre); // MAÑANA o TARDE
+        $nombreCompletoTurno = strtoupper($turno->nombre);
+        
+        // Limpiar el nombre del turno para la búsqueda (ignorar emojis/iconos)
+        if (str_contains($nombreCompletoTurno, 'MAÑANA')) {
+            $turnoNombre = 'MAÑANA';
+        } elseif (str_contains($nombreCompletoTurno, 'TARDE')) {
+            $turnoNombre = 'TARDE';
+        } else {
+            $turnoNombre = $nombreCompletoTurno;
+        }
         
         // 2. Construir la consulta completa ANTES de withCount
-        // Esto asegura que inscripciones_count se calcule correctamente solo para las aulas filtradas
         $queryAulas = Aula::activas()
             ->where('nombre', 'like', '%' . $turnoNombre . '%');
         
