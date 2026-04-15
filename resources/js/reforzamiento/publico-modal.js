@@ -1287,7 +1287,10 @@ async function downloadRegistrationPack() {
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Error al generar el PDF');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error('Error al generar el PDF: ' + errorText);
+        }
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -1309,6 +1312,9 @@ async function downloadRegistrationPack() {
         console.error('Error al generar pack:', error);
         
         let errorMsg = 'No pudimos generar tu archivo. Asegúrate de haber llenado todos los datos del apoderado.';
+        if (error.message) {
+            errorMsg += ' Detalle: ' + error.message;
+        }
         Swal.fire('Error en el Documento', errorMsg, 'error');
     } finally {
         if (btn) {
