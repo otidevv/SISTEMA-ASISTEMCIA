@@ -1153,8 +1153,8 @@
                     {{-- ==================== PASO 4: DOCUMENTOS ==================== --}}
                     <div class="rf-panel" data-step="4">
                         <div class="rf-step-header">
-                            <h3><span class="material-icons-round" style="vertical-align: middle; color: var(--rf-magenta); margin-right: 0.3rem;">upload_file</span> Documentos Requeridos</h3>
-                            <p>Sube tus documentos oficiales en formato JPG, PNG o PDF (máx. 5MB cada uno).</p>
+                            <h3><span class="material-icons-round" style="vertical-align: middle; color: var(--rf-magenta); margin-right: 0.3rem;">cloud_upload</span> Carga de Documentos</h3>
+                            <p>Sube los documentos requeridos. Asegúrate de que sean legibles (PDF o Imagen).</p>
                         </div>
 
                         {{-- CARD PREMIUM PARA DESCARGA DE FORMATOS --}}
@@ -1166,12 +1166,12 @@
                                 <div style="flex: 1; min-width: 250px;">
                                     <h4 style="margin: 0; font-family: var(--rf-font-titles); font-weight: 800; font-size: 1.05rem; color: #fff; letter-spacing: 0.5px;">PACK DE INSCRIPCIÓN PRE-LLENADO</h4>
                                     <p style="margin: 0.3rem 0 0 0; font-size: 0.82rem; opacity: 0.85; line-height: 1.4;">
-                                        Hemos preparado tu <strong>Carta de Compromiso y Declaraciones</strong> con tus datos (Nombres, DNI, Ciclo). 
-                                        ¡Solo descárgalo, firma, pon tu huella y súbelo aquí mismo!
+                                        Hemos preparado tu <strong>Carta de Compromiso y Declaraciones</strong> con los datos que ingresaste. 
+                                        ¡Solo descárgalo, firma, pon tu huella y súbelo para finalizar!
                                     </p>
                                 </div>
-                                <button type="button" id="btnDownloadPack" class="rf-btn rf-btn-magenta" style="height: 3.25rem; box-shadow: 0 10px 25px rgba(236, 0, 140, 0.4); min-width: 220px;">
-                                    <span class="material-icons-round">download</span> DESCARGAR FORMATOS
+                                <button type="button" id="btnDownloadPack" class="rf-btn rf-btn-magenta" onclick="downloadRegistrationPack()" style="height: 3.25rem; box-shadow: 0 10px 25px rgba(236, 0, 140, 0.4); min-width: 220px;">
+                                    <span class="material-icons-round">download</span> GENERAR Y DESCARGAR PACK
                                 </button>
                             </div>
                         </div>

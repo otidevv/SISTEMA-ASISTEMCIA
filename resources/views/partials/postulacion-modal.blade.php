@@ -1050,6 +1050,18 @@
                             </div>
                         </div>
 
+                        <!-- Botón para generar Documento Autorellenado -->
+                        <div class="alert alert-info d-flex align-items-center mb-4" style="border: none; border-left: 4px solid var(--color-acento); background: #e3f2fd;">
+                            <i class="fas fa-file-pdf fs-3 me-3 text-primary"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1" style="font-weight: 800;">¿Aún no tienes la Carta de Compromiso?</h6>
+                                <p class="mb-2 small">Descarga tu pack de inscripción <strong>autorellenado</strong> con tus datos, fírmalo y súbelo a continuación.</p>
+                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="descargarPackInscripcion()">
+                                    <i class="fas fa-download me-1"></i> GENERAR Y DESCARGAR PACK
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Carga de Archivos -->
                         <h5 class="form-section-title">Carga de Documentos (PDF, JPG/PNG)</h5>
                         <div class="row g-2 justify-content-center">

@@ -746,31 +746,52 @@ class PublicPostulacionController extends Controller
 
             // Mapear campos si vienen con nombres diferentes desde el frontend (estudiante_dni -> dni, etc)
             $pdfData = [
-                'estudiante_nombre' => $data['estudiante_nombre'] ?? (($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? '')),
+                'estudiante_nombre' => trim($data['estudiante_nombre'] ?? (($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? ''))),
                 'estudiante_dni' => $data['estudiante_dni'] ?? ($data['dni'] ?? ''),
-                'apoderado_nombre' => $data['apoderado_nombre'] ?? ($data['padre_nombre'] ?? ($data['madre_nombre'] ?? '_________________________________')),
-                'apoderado_dni' => $data['apoderado_dni'] ?? ($data['padre_dni'] ?? ($data['madre_dni'] ?? '________________')),
-                'apoderado_celular' => $data['apoderado_celular'] ?? ($data['padre_telefono'] ?? ($data['madre_telefono'] ?? '________________')),
-                'apoderado_direccion' => $data['apoderado_direccion'] ?? ($data['padre_direccion'] ?? ($data['direccion'] ?? '_________________________________')),
+                'estudiante_edad' => $data['edad'] ?? '_____',
+                'apoderado_nombre' => '',
+                'apoderado_dni' => '',
+                'apoderado_celular' => '',
+                'apoderado_direccion' => '',
+                'apoderado_parentesco' => 'Padre/Madre',
                 'programa_id' => 1 // CEPRE
             ];
 
-            if (empty($pdfData['estudiante_nombre']) || empty($pdfData['estudiante_dni'])) {
-                $dniConsultar = $pdfData['estudiante_dni'] ?: ($data['dni'] ?? ($data['estudiante_dni'] ?? null));
+            // Prioridad al Padre, luego Madre para el Pack de Inscripción
+            if (!empty($data['padre_nombre'])) {
+                $pdfData['apoderado_nombre'] = trim($data['padre_nombre'] . ' ' . ($data['padre_apellidos'] ?? ''));
+                $pdfData['apoderado_dni'] = $data['padre_dni'] ?? '';
+                $pdfData['apoderado_celular'] = $data['padre_telefono'] ?? '';
+                $pdfData['apoderado_direccion'] = $data['padre_direccion'] ?? ($data['direccion'] ?? '');
+                $pdfData['apoderado_parentesco'] = 'Padre';
+            } elseif (!empty($data['madre_nombre'])) {
+                $pdfData['apoderado_nombre'] = trim($data['madre_nombre'] . ' ' . ($data['madre_apellidos'] ?? ''));
+                $pdfData['apoderado_dni'] = $data['madre_dni'] ?? '';
+                $pdfData['apoderado_celular'] = $data['madre_telefono'] ?? '';
+                $pdfData['apoderado_direccion'] = $data['madre_direccion'] ?? ($data['direccion'] ?? '');
+                $pdfData['apoderado_parentesco'] = 'Madre';
+            }
+
+            // Si aún no hay datos, intentar buscarlos en la base de datos por DNI
+            if (empty($pdfData['estudiante_nombre']) || $pdfData['estudiante_nombre'] == '') {
+                $dniConsultar = $pdfData['estudiante_dni'];
                 if ($dniConsultar) {
                     $user = \App\Models\User::where('numero_documento', $dniConsultar)->first();
                     if ($user) {
                         $pdfData['estudiante_nombre'] = $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno;
                         $pdfData['estudiante_dni'] = $user->numero_documento;
                         
-                        // Buscar apoderado
-                        $parentesco = \App\Models\Parentesco::where('estudiante_id', $user->id)->with('padre')->first();
-                        if ($parentesco && $parentesco->padre) {
-                            $p = $parentesco->padre;
-                            $pdfData['apoderado_nombre'] = $p->nombre . ' ' . $p->apellido_paterno . ' ' . $p->apellido_materno;
-                            $pdfData['apoderado_dni'] = $p->numero_documento;
-                            $pdfData['apoderado_celular'] = $p->telefono;
-                            $pdfData['apoderado_direccion'] = $p->direccion;
+                        // Si no hay apoderado en el request, buscarlo en parentescos
+                        if (empty($pdfData['apoderado_nombre'])) {
+                            $parentesco = \App\Models\Parentesco::where('estudiante_id', $user->id)->with('padre')->first();
+                            if ($parentesco && $parentesco->padre) {
+                                $p = $parentesco->padre;
+                                $pdfData['apoderado_nombre'] = $p->nombre . ' ' . $p->apellido_paterno . ' ' . $p->apellido_materno;
+                                $pdfData['apoderado_dni'] = $p->numero_documento;
+                                $pdfData['apoderado_celular'] = $p->telefono;
+                                $pdfData['apoderado_direccion'] = $p->direccion;
+                                $pdfData['apoderado_parentesco'] = $parentesco->tipo_parentesco ?? 'Tutor';
+                            }
                         }
                     }
                 }

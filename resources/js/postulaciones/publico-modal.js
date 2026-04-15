@@ -1964,42 +1964,56 @@ function submitPostulacion() {
     });
 }
 
-function descargarPackInscripcion() {
-    const formData = new FormData($('#formPostulacionPublica')[0]);
+window.descargarPackInscripcion = async function() {
+    const form = $('#formPostulacionPublica')[0];
+    const formData = new FormData(form);
     
     // Feedback visual
-    Toast.fire({
-        icon: 'info',
-        title: 'Generando pack de inscripción...',
-        timer: 2000
-    });
-
-    $.ajax({
-        url: '/postulacion/download-pack',
-        method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        xhrFields: {
-            responseType: 'blob'
-        },
-        success: function (response, status, xhr) {
-            const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'Pack_Inscripcion_CEPRE.pdf';
-            const blob = new Blob([response], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            Toast.fire({ icon: 'success', title: 'Documento descargado con éxito' });
-        },
-        error: function (xhr) {
-            console.error('Error descargando PDF:', xhr);
-            Toast.fire({ icon: 'error', title: 'No se pudo generar el documento para descarga' });
+    Swal.fire({
+        title: 'Generando Pack...',
+        text: 'Estamos preparando tu expediente pre-relleno con tus datos actuales.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
     });
+
+    try {
+        const response = await fetch('/postulacion/download-pack', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/pdf'
+            }
+        });
+
+        if (!response.ok) throw new Error('Error en la generación del PDF');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dni = $('#dni').val() || 'documento';
+        a.href = url;
+        a.download = `Pack_Inscripcion_CEPRE_${dni}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        Swal.fire({
+            icon: 'success',
+            title: '¡Documento Listo!',
+            text: 'Se ha descargado tu pack de inscripción. Firma, pon tu huella y súbelo en el paso 4 para finalizar.',
+            confirmButtonColor: 'var(--color-principal)'
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Generación',
+            text: 'No se pudo generar el pack. Asegúrese de haber ingresado sus datos y los de su apoderado correctamente.'
+        });
+    }
 }
 
 // Función para buscar pagos automáticamente usando el DNI del estudiante

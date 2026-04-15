@@ -1232,7 +1232,7 @@ window.closeReforzamientoModal = function() {
 // ==========================================
 // PDF GENERATION & DOWNLOAD
 // ==========================================
-async function downloadRegistrationPack() {
+window.downloadRegistrationPack = async function() {
     const btn = document.getElementById('btnDownloadPack');
     const oldHtml = btn ? btn.innerHTML : '';
     
