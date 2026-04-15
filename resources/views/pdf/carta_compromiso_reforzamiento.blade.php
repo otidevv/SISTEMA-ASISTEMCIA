@@ -4,57 +4,59 @@
     <meta charset="UTF-8">
     <title>Pack de Inscripción - Reforzamiento</title>
     <style>
+        @page { margin: 1cm; size: A4; }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            color: #000;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: #333;
             line-height: 1.5;
             margin: 0;
             padding: 0;
         }
+        
+        .header { position: relative; width: 100%; border-bottom: 3px solid #00aeef; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }
+        .header-logo { position: absolute; left: 0; top: 0; width: 85px; }
+        .header-logo-right { position: absolute; right: 0; top: 0; width: 90px; }
+        .header-text h1 { font-size: 14pt; margin: 0; color: #003366; text-transform: uppercase; font-family: 'Arial Black', 'Arial Bold', sans-serif; }
+        .header-text h2 { font-size: 12pt; margin: 5px 0; color: #00aeef; font-weight: bold; }
+        
+        .watermark { 
+            position: fixed; 
+            top: 40%; 
+            left: 10%; 
+            font-size: 60pt; 
+            color: rgba(0, 0, 0, 0.04); 
+            transform: rotate(-45deg); 
+            z-index: -1; 
+            pointer-events: none; 
+            font-weight: bold;
+        }
         .page-break {
             page-break-after: always;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            font-size: 16px;
-            margin: 0;
-            padding: 0;
-            font-weight: bold;
-        }
-        .header h2 {
-            font-size: 12px;
-            margin: 5px 0;
-            font-weight: normal;
-        }
-        .header h3 {
-            font-size: 14px;
-            margin: 5px 0;
-            font-weight: bold;
-        }
-        .separator {
-            text-align: center;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 12px;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            white-space: nowrap;
-        }
+
+        .title-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; text-align: center; margin-bottom: 20px; border-radius: 8px; }
+        .title-box h3 { margin: 0; font-size: 13pt; color: #ec008c; text-transform: uppercase; letter-spacing: 1px; }
+
         .title {
             text-align: center;
-            font-size: 16px;
+            font-size: 14pt;
             font-weight: bold;
             margin-bottom: 20px;
-            text-decoration: underline;
+            color: #ec008c;
+            text-transform: uppercase;
         }
         .content {
-            margin: 0 40px;
+            margin: 0;
             text-align: justify;
         }
+        .section-title { background: #003366; color: white; padding: 5px 10px; font-weight: bold; font-size: 11pt; margin-top: 15px; margin-bottom: 10px; border-radius: 4px; }
+        
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .info-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+        .info-table td.label { font-weight: bold; width: 35%; color: #555; background: #fcfcfc; }
+        .info-table td.value { font-weight: bold; font-size: 11pt; text-transform: uppercase; color: #000; }
+
         .form-row {
             margin-bottom: 12px;
         }
@@ -77,32 +79,22 @@
         .mt-5 { margin-top: 50px; }
         .mt-3 { margin-top: 30px; }
         .mb-3 { margin-bottom: 30px; }
-        .signature-box {
-            width: 250px;
-            margin: 80px auto 20px auto;
-            text-align: center;
-        }
-        .signature-line {
-            border-top: 1px solid #000;
-            margin-bottom: 5px;
-        }
-        .fingerprint {
-            float: right;
-            border: 1px solid #000;
-            width: 80px;
-            height: 100px;
-            margin-top: -60px;
-            text-align: center;
-            font-size: 10px;
-        }
+        
+        .footer-signatures { margin-top: 70px; width: 100%; padding-bottom: 40px;}
+        .signature-box { text-align: center; width: 45%; display: inline-block; vertical-align: top; }
+        .signature-line { border-top: 1px solid #333; width: 80%; margin: 60px auto 5px; }
+        .fingerprint-box { border: 1px solid #ccc; width: 70px; height: 90px; margin: 10px auto; }
+        
         .footer {
             position: fixed;
-            bottom: 0px;
+            bottom: -15px;
+            left: 0;
             width: 100%;
             text-align: center;
-            font-size: 10px;
-            color: #555;
-            padding-bottom: 20px;
+            font-size: 8pt;
+            color: #777;
+            padding-top: 10px;
+            border-top: 1px dotted #ccc;
         }
     </style>
 </head>
@@ -110,11 +102,14 @@
 
 <!-- PÁGINA 1: FICHA DEL APODERADO O TUTOR -->
 <div class="header">
-    <h1>UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-    <h2>“Madre de Dios, Capital de la Biodiversidad del Perú”</h2>
-    <h3>CENTRO PRE UNIVERSITARIO</h3>
+    <img class="header-logo" src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="UNAMAD">
+    <img class="header-logo-right" src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="CEPRE">
+    <div class="header-text">
+        <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+        <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
+        <p style="margin:2px 0; font-weight:bold; font-size: 10pt; color: #333;">Registros Generales - Nivel Secundaria {{ date('Y') }}</p>
+    </div>
 </div>
-<div class="separator">************************************************************************************************</div>
 
 <div class="title">FICHA DEL APODERADO O TUTOR</div>
 
@@ -163,11 +158,14 @@
 
 <!-- PÁGINA 2: CARTA COMPROMISO -->
 <div class="header">
-    <h1>UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-    <h2>“Madre de Dios, Capital de la Biodiversidad del Perú”</h2>
-    <h3>CENTRO PRE UNIVERSITARIO</h3>
+    <img class="header-logo" src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="UNAMAD">
+    <img class="header-logo-right" src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="CEPRE">
+    <div class="header-text">
+        <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+        <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
+        <p style="margin:2px 0; font-weight:bold; font-size: 10pt; color: #333;">Registros Generales - Nivel Secundaria {{ date('Y') }}</p>
+    </div>
 </div>
-<div class="separator">************************************************************************************************</div>
 
 <div class="content">
     <div class="text-right mb-3">
@@ -207,11 +205,14 @@
 
 <!-- PÁGINA 3: DECLARACIÓN JURADA -->
 <div class="header">
-    <h1>UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-    <h2>“Madre de Dios, Capital de la Biodiversidad del Perú”</h2>
-    <h3>CENTRO PRE UNIVERSITARIO</h3>
+    <img class="header-logo" src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="UNAMAD">
+    <img class="header-logo-right" src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="CEPRE">
+    <div class="header-text">
+        <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+        <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
+        <p style="margin:2px 0; font-weight:bold; font-size: 10pt; color: #333;">Registros Generales - Nivel Secundaria {{ date('Y') }}</p>
+    </div>
 </div>
-<div class="separator">************************************************************************************************</div>
 
 <div class="title" style="font-size: 14px;">DECLARACIÓN JURADA DE CONOCER Y ACEPTAR EL REGLAMENTO INTERNO DEL CEPRE</div>
 
@@ -276,9 +277,13 @@
 
 <!-- PÁGINA 5: FORMATO DATOS BIOMÉTRICOS -->
 <div class="header">
-    <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
-    <h2>“Centro Pre Universitario”</h2>
-    <h3>“Madre de Dios, Capital de la Biodiversidad del Perú”</h3>
+    <img class="header-logo" src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="UNAMAD">
+    <img class="header-logo-right" src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="CEPRE">
+    <div class="header-text">
+        <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+        <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
+        <p style="margin:2px 0; font-weight:bold; font-size: 10pt; color: #333;">Registros Generales - Nivel Secundaria {{ date('Y') }}</p>
+    </div>
 </div>
 
 <div class="title" style="font-size: 14px; text-decoration:none;">FORMATO DE AUTORIZACIÓN PARA TRATAMIENTO DE DATOS BIOMÉTRICOS - CEPRE UNAMAD</div>
