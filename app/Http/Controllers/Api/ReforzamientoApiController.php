@@ -38,12 +38,15 @@ class ReforzamientoApiController extends BaseController
     {
         try {
             // Validar datos mínimos necesarios para el PDF
-            // Mapear campos si vienen con nombres diferentes desde el frontend
+            // Para Reforzamiento, los inputs en el HTML tienen name="nombre", "apellido_paterno", etc.
             $estudianteNombre = $request->input('estudiante_nombre');
-            if (!$estudianteNombre) {
-                $estudianteNombre = trim(($request->input('nombre', '') . ' ' . $request->input('apellido_paterno', '') . ' ' . $request->input('apellido_materno', '')));
+            if (empty($estudianteNombre)) {
+                $nombre = $request->input('nombre', '');
+                $paterno = $request->input('apellido_paterno', '');
+                $materno = $request->input('apellido_materno', '');
+                $estudianteNombre = trim($nombre . ' ' . $paterno . ' ' . $materno);
             }
-            $estudianteDni = $request->input('estudiante_dni', '');
+            $estudianteDni = $request->input('estudiante_dni', $request->input('dni', ''));
 
             // Si el nombre sigue vacío, buscar en la DB por DNI
             if (empty($estudianteNombre) && !empty($estudianteDni)) {
@@ -85,7 +88,7 @@ class ReforzamientoApiController extends BaseController
 
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_Reforzamiento_' . $pdfData['estudiante_dni'] . '.pdf"');
+                ->header('Content-Disposition', 'inline; filename="Pack_Inscripcion_Reforzamiento_' . $pdfData['estudiante_dni'] . '.pdf"');
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al generar Pack PDF: ' . $e->getMessage()], 500);

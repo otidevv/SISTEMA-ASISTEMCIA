@@ -1297,11 +1297,17 @@ window.downloadRegistrationPack = async function() {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         a.download = `Pack_Inscripcion_${estudianteDni}.pdf`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        
+        // Pequeño delay antes de limpiar para asegurar que el navegador inicie la descarga
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
         
         Swal.fire({
             icon: 'success',

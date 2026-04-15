@@ -1170,7 +1170,7 @@
                                         ¡Solo descárgalo, firma, pon tu huella y súbelo para finalizar!
                                     </p>
                                 </div>
-                                <button type="button" id="btnDownloadPack" class="rf-btn rf-btn-magenta" onclick="downloadRegistrationPack()" style="height: 3.25rem; box-shadow: 0 10px 25px rgba(236, 0, 140, 0.4); min-width: 220px;">
+                                <button type="button" id="btnDownloadPack" class="rf-btn rf-btn-magenta" onclick="downloadRegistrationPack(event)" style="height: 3.25rem; box-shadow: 0 10px 25px rgba(236, 0, 140, 0.4); min-width: 220px;">
                                     <span class="material-icons-round">download</span> GENERAR Y DESCARGAR PACK
                                 </button>
                             </div>

@@ -1946,7 +1946,7 @@ function submitPostulacion() {
                             <div class="mt-4 p-3 rounded-4 border-dashed" style="background: rgba(140, 198, 63, 0.1); border: 2px dashed #8cc63f;">
                                 <p class="mb-2" style="color: #2c5f2d; font-weight: 800;">¡IMPORTANTE!</p>
                                 <p class="small text-muted mb-3">Descargue su ficha oficial firmada digitalmente con QR para sus archivos.</p>
-                                <button type="button" class="btn btn-success w-100 py-3 rounded-pill shadow-lg" onclick="window.descargarPackInscripcion()" style="font-weight: 800;">
+                                <button type="button" class="btn btn-success w-100 py-3 rounded-pill shadow-lg" onclick="window.descargarPackInscripcion(event)" style="font-weight: 800;">
                                     <i class="fas fa-file-pdf me-2"></i> DESCARGAR PACK DE INSCRIPCIÓN
                                 </button>
                             </div>
@@ -1976,10 +1976,19 @@ function submitPostulacion() {
     });
 }
 
-window.descargarPackInscripcion = async function() {
+window.descargarPackInscripcion = async function(event) {
+    const btn = event ? (event.currentTarget || event.target) : null;
+    if (btn && btn.disabled) return; // Prevenir doble clic
+
     const form = $('#formPostulacionPublica')[0];
     const formData = new FormData(form);
     
+    const oldHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERANDO...';
+    }
+
     // Feedback visual
     Swal.fire({
         title: 'Generando Pack...',
@@ -2001,17 +2010,24 @@ window.descargarPackInscripcion = async function() {
             }
         });
 
-        if (!response.ok) throw new Error('Error en la generación del PDF');
+        if (!response.ok) throw new Error('Error en la generación del PDF. Verifique los datos ingresados.');
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         const dni = $('#dni').val() || 'documento';
+        
+        a.style.display = 'none';
         a.href = url;
         a.download = `Pack_Inscripcion_CEPRE_${dni}.pdf`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        
+        // Pequeño delay antes de limpiar para asegurar que el navegador inicie la descarga
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
         
         Swal.fire({
             icon: 'success',
@@ -2019,13 +2035,19 @@ window.descargarPackInscripcion = async function() {
             text: 'Se ha descargado tu pack de inscripción. Firma, pon tu huella y súbelo en el paso 4 para finalizar.',
             confirmButtonColor: 'var(--color-principal)'
         });
+
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error al descargar pack:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error de Generación',
             text: 'No se pudo generar el pack. Asegúrese de haber ingresado sus datos y los de su apoderado correctamente.'
         });
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = oldHtml;
+        }
     }
 }
 
@@ -2121,7 +2143,7 @@ window.precargarDatosAcademicos = precargarDatosAcademicos;
 window.mostrarArchivosExistentes = mostrarArchivosExistentes;
 window.verArchivoModal = verArchivoModal;
 window.cerrarModalArchivo = cerrarModalArchivo;
-window.descargarPackInscripcion = descargarPackInscripcion;
+// window.descargarPackInscripcion = descargarPackInscripcion; // Ya asignada arriba asíncronamente
 
 // ======================================================================
 // FUNCIONES PARA INGRESO MANUAL DE VOUCHER

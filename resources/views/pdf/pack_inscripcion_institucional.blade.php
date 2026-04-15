@@ -538,16 +538,21 @@
             • <strong>Ciclo Académico:</strong> 
             <span style="margin-left: 5px; {!! $programa_id == 1 ? 'background: #eef7ff; padding: 2px 5px; border-radius: 4px;' : '' !!}">
                 <span class="check-box" {!! $programa_id == 1 ? 'style="background: #003366; color: white; border-color: #003366;"' : '' !!}>{{ $programa_id == 1 ? 'X' : '' }}</span> 
-                <strong {!! $programa_id == 1 ? 'style="color: #003366;"' : 'style="color: #777;"' !!}>CEPRE UNAMAD.</strong>
+                <strong {!! $programa_id == 1 ? 'style="color: #003366;"' : 'style="color: #777;"' !!}>CEPRE UNAMAD - {{ $ciclo_nombre ?? '2026-I' }}</strong>
             </span>
             <span style="margin-left: 5px; {!! $programa_id == 2 ? 'background: #fff4f9; padding: 2px 5px; border-radius: 4px;' : '' !!}">
                 <span class="check-box" {!! $programa_id == 2 ? 'style="background: #ec008c; color: white; border-color: #ec008c;"' : '' !!}>{{ $programa_id == 2 ? 'X' : '' }}</span> 
-                <strong {!! $programa_id == 2 ? 'style="color: #ec008c;"' : 'style="color: #777;"' !!}>Reforzamiento para Secundaria.</strong>
+                <strong {!! $programa_id == 2 ? 'style="color: #ec008c;"' : 'style="color: #777;"' !!}>Reforzamiento para Secundaria - {{ $ciclo_nombre ?? '2026' }}</strong>
             </span>
         </div>
         <div style="margin-top: 5px;">
-            • <strong>Grupo:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;">__________</span>
-            &nbsp;&nbsp; <strong>Turno:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;">__________</span>
+            @if($programa_id == 1)
+                • <strong>Carrera:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 250px;"><strong>{{ $carrera_nombre ?? '________________' }}</strong></span>
+                &nbsp; <strong>Turno:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 100px;"><strong>{{ $turno_nombre ?? '__________' }}</strong></span>
+            @else
+                • <strong>Grado:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 150px;"><strong>{{ $estudiante_grado ?? '__________' }}</strong></span>
+                &nbsp; <strong>Sección/Turno:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 150px;"><strong>{{ $turno_nombre ?? '__________' }}</strong></span>
+            @endif
         </div>
     </div>
 

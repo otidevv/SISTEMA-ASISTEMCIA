@@ -775,9 +775,23 @@ class PublicPostulacionController extends Controller
                 $turnoNombre = $turno ? $turno->nombre : '';
             }
 
+            // Calcular edad basándose en fecha de nacimiento
+            $fechaNac = $data['estudiante_fecha_nacimiento'] ?? $data['fecha_nacimiento'] ?? null;
+            $edad = '____';
+            if ($fechaNac) {
+                try {
+                    $edad = \Carbon\Carbon::parse($fechaNac)->age;
+                } catch (\Exception $e) {}
+            }
+
             // Mapear campos si vienen con nombres diferentes desde el frontend
+            // Intentar capturar nombres con los prefijos correctos 'estudiante_' como vienen del modal
+            $nombreOriginal = $data['estudiante_nombre'] ?? $data['nombre'] ?? '';
+            $paternoOriginal = $data['estudiante_apellido_paterno'] ?? $data['apellido_paterno'] ?? '';
+            $maternoOriginal = $data['estudiante_apellido_materno'] ?? $data['apellido_materno'] ?? '';
+
             $pdfData = [
-                'estudiante_nombre' => trim(($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? '')),
+                'estudiante_nombre' => trim($nombreOriginal . ' ' . $paternoOriginal . ' ' . $maternoOriginal),
                 'estudiante_dni' => $estudianteDni,
                 'estudiante_edad' => $edad,
                 'apoderado_nombre' => '',
@@ -791,9 +805,9 @@ class PublicPostulacionController extends Controller
                 'turno_nombre' => $turnoNombre
             ];
 
-            // Si el nombre resultante está vacío, intentar usar 'estudiante_nombre' directo si existe
-            if (empty($pdfData['estudiante_nombre']) && !empty($data['estudiante_nombre'])) {
-                $pdfData['estudiante_nombre'] = $data['estudiante_nombre'];
+            // Si el nombre resultante está vacío (posiblemente por inputs mal nombrados), fallback de seguridad
+            if (empty($pdfData['estudiante_nombre'])) {
+                $pdfData['estudiante_nombre'] = $data['estudiante_nombre'] ?? $data['nombre'] ?? 'Estudiante';
             }
 
             // Prioridad al Padre, luego Madre para el Pack de Inscripción
@@ -840,7 +854,7 @@ class PublicPostulacionController extends Controller
 
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_CEPRE_' . ($pdfData['estudiante_dni']) . '.pdf"');
+                ->header('Content-Disposition', 'inline; filename="Pack_Inscripcion_CEPRE_' . ($pdfData['estudiante_dni']) . '.pdf"');
 
         } catch (\Exception $e) {
             \Log::error('Error en downloadRegistrationPack: ' . $e->getMessage(), [

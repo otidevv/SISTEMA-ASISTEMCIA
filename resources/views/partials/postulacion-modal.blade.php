@@ -1056,7 +1056,7 @@
                             <div class="flex-grow-1">
                                 <h6 class="mb-1" style="font-weight: 800;">¿Aún no tienes la Carta de Compromiso?</h6>
                                 <p class="mb-2 small">Descarga tu pack de inscripción <strong>autorellenado</strong> con tus datos, fírmalo y súbelo a continuación.</p>
-                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="descargarPackInscripcion()">
+                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="descargarPackInscripcion(event)">
                                     <i class="fas fa-download me-1"></i> GENERAR Y DESCARGAR PACK
                                 </button>
                             </div>
