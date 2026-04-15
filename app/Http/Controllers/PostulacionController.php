@@ -450,7 +450,7 @@ class PostulacionController extends Controller
                     'inscripcion_id' => $inscripcion->id,
                     'codigo_inscripcion' => $inscripcion->codigo_inscripcion,
                     'aula' => $aula->nombre,
-                    'aula_capacidad_disponible' => $aula->getCapacidadDisponible() - 1,
+                    'aula_capacidad_disponible' => $aula->getCapacidadDisponible(),
                     'grupo_carrera' => $postulacion->carrera->grupo
                 ]
             ]);
