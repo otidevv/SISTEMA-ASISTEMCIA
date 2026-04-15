@@ -362,7 +362,8 @@ async function verifyDni() {
 
             if (resData.estudiante_existente) {
                 fillStudentFields(resData.estudiante_existente);
-                if (!resData.estudiante_existente.fecha_nacimiento || !resData.estudiante_existente.genero) {
+                // Si faltan datos críticos en la BD local, intentar completar con RENIEC
+                if (!resData.estudiante_existente.fecha_nacimiento || !resData.estudiante_existente.genero || !resData.estudiante_existente.direccion) {
                     await fetchReniecStudent(dni);
                 }
             } else {
@@ -404,17 +405,20 @@ async function fetchReniecStudent(dni) {
 
 function fillStudentFields(est) {
     const fields = [
-        { id: 'ref_nombre', val: est.nombre || est.nombres || '' },
-        { id: 'ref_apellido_paterno', val: est.paterno || est.apellido_paterno || '' },
-        { id: 'ref_apellido_materno', val: est.materno || est.apellido_materno || '' },
-        { id: 'ref_fecha_nacimiento', val: est.fecha_nacimiento || est.nacimiento || '' },
-        { id: 'ref_genero', val: est.genero || est.sexo || '' }
+        { id: 'ref_nombre', val: est.nombre || est.nombres || est.NOMBRES || '' },
+        { id: 'ref_apellido_paterno', val: est.paterno || est.apellido_paterno || est.AP_PAT || '' },
+        { id: 'ref_apellido_materno', val: est.materno || est.apellido_materno || est.AP_MAT || '' },
+        { id: 'ref_fecha_nacimiento', val: est.fecha_nacimiento || est.nacimiento || est.FECHA_NAC || '' },
+        { id: 'ref_genero', val: est.genero || est.sexo || est.SEXO || '' },
+        { id: 'ref_direccion', val: est.direccion || est.domicilio || est.DIRECCION || '' },
+        { id: 'ref_email', val: est.email || est.correo || (document.getElementById('ref_dni')?.value ? document.getElementById('ref_dni').value + '@gmail.com' : '') },
+        { id: 'ref_telefono', val: est.telefono || est.celular || est.movil || '' }
     ];
 
     fields.forEach(f => {
         const el = document.getElementById(f.id);
-        if (el && f.val) {
-            let valueToSet = f.val;
+        if (el) {
+            let valueToSet = f.val || '';
             
             // Normalizar Fecha de Nacimiento (Si viene con hora "T00:00...")
             if (f.id === 'ref_fecha_nacimiento' && typeof f.val === 'string' && f.val.includes('T')) {
@@ -424,24 +428,40 @@ function fillStudentFields(est) {
             // Normalizar Género (Debe ser MAYÚSCULAS)
             if (f.id === 'ref_genero' && typeof f.val === 'string') {
                 const normalized = f.val.toUpperCase();
-                if (normalized === 'M' || normalized === '1' || normalized === 'MASCULINO') valueToSet = 'MASCULINO';
-                else if (normalized === 'F' || normalized === '2' || normalized === 'FEMENINO') valueToSet = 'FEMENINO';
+                if (normalized === 'M' || normalized === '1' || normalized === 'MASCULINO' || normalized === 'HOMBRE') valueToSet = 'MASCULINO';
+                else if (normalized === 'F' || normalized === '2' || normalized === 'FEMENINO' || normalized === 'MUJER') valueToSet = 'FEMENINO';
                 else valueToSet = normalized;
             }
 
             el.value = valueToSet;
             
-            // Efecto Visual: Pintar verde momentáneamente
-            el.style.transition = 'all 0.5s ease';
-            el.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-            el.style.borderColor = '#10b981';
-            el.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.1)';
+            // Efecto Visual
+            el.style.transition = 'all 0.4s ease';
+            if (valueToSet) {
+                // Pintar verde si se llenó automáticamente
+                el.style.backgroundColor = 'rgba(16, 185, 129, 0.08)';
+                el.style.borderColor = '#10b981';
+                el.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.05)';
+            } else if (el.required) {
+                // Resaltar en naranja si es OBLIGATORIO y quedó vacío (ej: Dirección)
+                el.style.backgroundColor = 'rgba(245, 158, 11, 0.08)'; 
+                el.style.borderColor = '#f59e0b';
+                el.style.boxShadow = '0 0 0 4px rgba(245, 158, 11, 0.1)';
+                
+                // Pequeño shake solo para llamar la atención a lo que falta
+                el.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(5px)' },
+                    { transform: 'translateX(-5px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 300, iterations: 2 });
+            }
             
             setTimeout(() => {
                 el.style.backgroundColor = '';
                 el.style.borderColor = '';
                 el.style.boxShadow = '';
-            }, 2000);
+            }, 3000);
         }
     });
 

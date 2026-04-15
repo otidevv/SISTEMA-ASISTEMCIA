@@ -81,7 +81,8 @@ class ReforzamientoApiController extends BaseController
                 'apoderado_nombre' => strtoupper($request->input('apoderado_nombre', '')),
                 'apoderado_dni' => $request->input('apoderado_dni', ''),
                 'apoderado_celular' => $request->input('apoderado_celular', ''),
-                'apoderado_direccion' => $request->input('apoderado_direccion', ''),
+                'apoderado_email' => $request->input('apoderado_email', $request->input('email', '')),
+                'apoderado_direccion' => $request->input('apoderado_direccion', $request->input('estudiante_direccion', $request->input('direccion', ''))),
                 'apoderado_parentesco' => 'Apoderado',
                 'programa_id' => 2, // Reforzamiento
                 'ciclo_nombre' => $cicloNombre
@@ -251,6 +252,9 @@ class ReforzamientoApiController extends BaseController
                 'materno' => $estudiante->apellido_materno,
                 'fecha_nacimiento' => $estudiante->fecha_nacimiento,
                 'genero' => $estudiante->genero,
+                'direccion' => $estudiante->direccion,
+                'email' => $estudiante->email,
+                'telefono' => $estudiante->telefono,
             ] : null
         ], 'DNI verificado correctamente.');
     }

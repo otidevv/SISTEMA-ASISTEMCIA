@@ -800,7 +800,8 @@ class PublicPostulacionController extends Controller
                 'apoderado_nombre' => '',
                 'apoderado_dni' => '',
                 'apoderado_celular' => '',
-                'apoderado_direccion' => '',
+                'apoderado_email' => $request->input('apoderado_email', $request->input('estudiante_email', $request->input('email', ''))),
+                'apoderado_direccion' => $request->input('apoderado_direccion', $request->input('estudiante_direccion', $request->input('direccion', ''))),
                 'apoderado_parentesco' => 'Padre/Madre',
                 'programa_id' => 1, // CEPRE por defecto en este controlador
                 'ciclo_nombre' => $cicloNombre,
@@ -818,13 +819,15 @@ class PublicPostulacionController extends Controller
                 $pdfData['apoderado_nombre'] = trim($data['padre_nombre'] . ' ' . ($data['padre_apellidos'] ?? ''));
                 $pdfData['apoderado_dni'] = $data['padre_dni'] ?? '';
                 $pdfData['apoderado_celular'] = $data['padre_telefono'] ?? '';
-                $pdfData['apoderado_direccion'] = $data['padre_direccion'] ?? ($data['direccion'] ?? '');
+                $pdfData['apoderado_email'] = $data['padre_email'] ?? '';
+                $pdfData['apoderado_direccion'] = $data['apoderado_direccion'] ?? $data['estudiante_direccion'] ?? $data['direccion'] ?? '';
                 $pdfData['apoderado_parentesco'] = 'Padre';
             } elseif (!empty($data['madre_nombre'])) {
                 $pdfData['apoderado_nombre'] = trim($data['madre_nombre'] . ' ' . ($data['madre_apellidos'] ?? ''));
                 $pdfData['apoderado_dni'] = $data['madre_dni'] ?? '';
                 $pdfData['apoderado_celular'] = $data['madre_telefono'] ?? '';
-                $pdfData['apoderado_direccion'] = $data['madre_direccion'] ?? ($data['direccion'] ?? '');
+                $pdfData['apoderado_email'] = $data['madre_email'] ?? '';
+                $pdfData['apoderado_direccion'] = $data['apoderado_direccion'] ?? $data['estudiante_direccion'] ?? $data['direccion'] ?? '';
                 $pdfData['apoderado_parentesco'] = 'Madre';
             }
 
