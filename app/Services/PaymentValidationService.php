@@ -23,6 +23,14 @@ class PaymentValidationService
     public function validateVoucher($dni, $voucherCode, $onlyPostulation = false)
     {
         try {
+            // FILTRO DE SEGURIDAD: Obtener el inicio del ciclo activo para evitar jalar pagos antiguos
+            $fechaLimite = null;
+            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->first();
+            if ($cicloActivo && $cicloActivo->fecha_inicio) {
+                // Permitimos pagos desde 2 meses antes del inicio del ciclo (igual que en Reforzamiento)
+                $fechaLimite = \Carbon\Carbon::parse($cicloActivo->fecha_inicio)->subMonths(2);
+            }
+
             // Query API by DNI to get all payments with increased timeout
             $response = Http::withToken($this->token)
                 ->withoutVerifying()
@@ -61,6 +69,15 @@ class PaymentValidationService
 
                     if (isset($voucher['payments']) && is_array($voucher['payments'])) {
                         foreach ($voucher['payments'] as $detail) {
+                            $paymentDate = $detail['paymentDate'] ?? null;
+                            
+                            // Si existe fecha límite, omitir pagos anteriores
+                            if ($fechaLimite && $paymentDate) {
+                                if (\Carbon\Carbon::parse($paymentDate)->lt($fechaLimite)) {
+                                    continue;
+                                }
+                            }
+
                             $monto = (float)($detail['total'] ?? 0);
                             $foundVouchers[$serial]['monto_total'] += $monto;
                             $foundVouchers[$serial]['fecha'] = $detail['paymentDate'] ?? $foundVouchers[$serial]['fecha'];
@@ -87,6 +104,11 @@ class PaymentValidationService
                         }
                     }
                 }
+
+                // Filtrar vouchers que quedaron vacíos o con monto 0 después del filtro de fecha
+                $foundVouchers = array_filter($foundVouchers, function($v) {
+                    return (float)$v['monto_total'] > 0;
+                });
 
                 // Convertir a lista
                 $result = array_values($foundVouchers);

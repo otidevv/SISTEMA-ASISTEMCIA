@@ -865,6 +865,8 @@ function mostrarDetallesPago(vouchers) {
                     secuencia: pago.serial,
                     concepto: pago.concepto,
                     monto: parseFloat(montoLimpio),
+                    monto_matricula: parseFloat(pago.monto_matricula || 0),
+                    monto_ensenanza: parseFloat(pago.monto_ensenanza || 0),
                     fecha: pago.fecha,
                     items: pago.items || [], // Guardar items
                     original: pago
@@ -952,6 +954,8 @@ function mostrarDetallesPago(vouchers) {
                                     <input class="form-check-input payment-checkbox" type="checkbox" 
                                             value="${pago.secuencia}" 
                                             data-monto="${monto}" 
+                                            data-matricula="${pago.monto_matricula}" 
+                                            data-ensenanza="${pago.monto_ensenanza}" 
                                             data-fecha="${fecha}"
                                             data-index="${index}"
                                             id="pago_${index}" 
@@ -993,6 +997,8 @@ function mostrarDetallesPago(vouchers) {
 
 function actualizarPagosSeleccionados() {
     let total = 0;
+    let totalMatricula = 0;
+    let totalEnsenanza = 0;
     let secuencias = [];
     let fechaReciente = null;
     pagosSeleccionadosDetalles = []; // Limpiar para el resumen
@@ -1002,6 +1008,8 @@ function actualizarPagosSeleccionados() {
 
     $('.payment-checkbox:checked').each(function () {
         const monto = parseFloat($(this).data('monto'));
+        const matricula = parseFloat($(this).data('matricula')) || 0;
+        const ensenanza = parseFloat($(this).data('ensenanza')) || 0;
         const secuencia = $(this).val();
         const fecha = $(this).data('fecha');
         const index = $(this).data('index');
@@ -1012,6 +1020,8 @@ function actualizarPagosSeleccionados() {
         card.addClass('selected-card');
 
         total += monto;
+        totalMatricula += matricula;
+        totalEnsenanza += ensenanza;
         secuencias.push(secuencia);
 
         // Guardar detalles para el resumen final
@@ -1026,14 +1036,13 @@ function actualizarPagosSeleccionados() {
         }
     });
 
-
-
     // Actualizar UI del total
     $('#total_seleccionado').text('S/ ' + total.toFixed(2));
 
     // Actualizar campos ocultos
-    $('#monto_matricula').val(total.toFixed(2));
-    $('#monto_ensenanza').val(0);
+    $('#monto_matricula').val(totalMatricula.toFixed(2));
+    $('#monto_ensenanza').val(totalEnsenanza.toFixed(2));
+    $('#monto_total_pagado').val(total.toFixed(2));
     $('#voucher_secuencia').val(secuencias.join(','));
 
     if (fechaReciente) {

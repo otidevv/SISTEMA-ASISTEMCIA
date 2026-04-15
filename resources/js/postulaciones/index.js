@@ -901,7 +901,12 @@ function loadApprovedPostulationForEdit(id) {
                     // Llenar datos académicos
                     $('#edit-approved-ciclo').val(data.postulacion.ciclo_id);
                     $('#edit-approved-carrera').val(data.postulacion.carrera_id);
-                    $('#edit-approved-tipo').val(data.postulacion.tipo_inscripcion);
+                    
+                    // Asegurar que el tipo de inscripción coincida con las opciones del select (minúsculas)
+                    if (data.postulacion.tipo_inscripcion) {
+                        $('#edit-approved-tipo').val(data.postulacion.tipo_inscripcion.toLowerCase());
+                    }
+                    
                     $('#edit-approved-codigo').val(data.postulacion.codigo_postulante);
 
                     // Cargar turnos disponibles y seleccionar el actual
