@@ -214,10 +214,21 @@ class PostulantesImport implements ToCollection, WithHeadingRow
                             continue;
                         }
                     } else {
-                        $ultimoCodigo = Postulacion::max('codigo_postulante') ?? 100000;
-                        $nuevoCodigo = $ultimoCodigo + 1;
+                        // Generar código postulante correlativo único (Respetando el Correlativo Inicial del Ciclo)
+                        $correlativoBase = $this->cicloActivo->correlativo_inicial ?? 100000;
+                        
+                        // Buscar el último correlativo para ESTE ciclo específicamente
+                        $ultimoDelCiclo = Postulacion::where('ciclo_id', $this->cicloActivo->id)->max('codigo_postulante');
+                        
+                        if (!$ultimoDelCiclo) {
+                            $nuevoCodigo = $correlativoBase;
+                        } else {
+                            $nuevoCodigo = $ultimoDelCiclo + 1;
+                        }
+
+                        // Asegurar unicidad global por si acaso hubo solapamientos
                         while (Postulacion::where('codigo_postulante', $nuevoCodigo)->exists()) {
-                             $nuevoCodigo++;
+                            $nuevoCodigo++;
                         }
                     }
 

@@ -332,11 +332,21 @@ class PostulacionUnificadaController extends Controller
                 $datosPostulacion[$key] = $value;
             }
             
-            // Generar código postulante correlativo único
-            $ultimoCodigo = Postulacion::max('codigo_postulante') ?? 1000000;
-            $nuevoCodigo = $ultimoCodigo + 1;
+            // Generar código postulante correlativo único (Respetando el Correlativo Inicial del Ciclo)
+            $correlativoBase = $cicloActivo->correlativo_inicial ?? 100000;
             
-            // Asegurar que sea único
+            // Buscar el último correlativo para ESTE ciclo específicamente
+            $ultimoDelCiclo = Postulacion::where('ciclo_id', $cicloActivo->id)->max('codigo_postulante');
+            
+            if (!$ultimoDelCiclo) {
+                // Si es el primero del ciclo, iniciamos en el correlativo configurado
+                $nuevoCodigo = $correlativoBase;
+            } else {
+                // Si ya existen, incrementamos el último
+                $nuevoCodigo = $ultimoDelCiclo + 1;
+            }
+
+            // Asegurar unicidad global por si acaso hubo solapamientos con ciclos antiguos
             while (Postulacion::where('codigo_postulante', $nuevoCodigo)->exists()) {
                 $nuevoCodigo++;
             }
