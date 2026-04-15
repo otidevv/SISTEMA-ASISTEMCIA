@@ -61,11 +61,14 @@ class ReforzamientoApiController extends BaseController
             $cicloNombre = $cicloActivo ? $cicloActivo->nombre : date('Y');
 
             // Calcular edad si hay fecha de nacimiento en el request
-            $edad = $request->input('edad', '_____');
+            $edad = '_____';
             $fechaNac = $request->input('fecha_nacimiento');
-            if (!empty($fechaNac)) {
+            if ($fechaNac && strlen($fechaNac) > 6) {
                 try {
-                    $edad = \Carbon\Carbon::parse($fechaNac)->age;
+                    $birthDate = \Carbon\Carbon::parse($fechaNac);
+                    if ($birthDate->year > 1900 && $birthDate->year <= date('Y')) {
+                        $edad = $birthDate->age;
+                    }
                 } catch (\Exception $e) {}
             }
 
@@ -87,8 +90,7 @@ class ReforzamientoApiController extends BaseController
             $pdf = $this->pdfService->generateRegistrationPack($pdfData);
 
             return response($pdf->output())
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="Pack_Inscripcion_Reforzamiento_' . $pdfData['estudiante_dni'] . '.pdf"');
+                ->header('Content-Type', 'application/pdf');
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al generar Pack PDF: ' . $e->getMessage()], 500);

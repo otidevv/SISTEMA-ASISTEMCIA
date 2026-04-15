@@ -1305,9 +1305,9 @@ window.downloadRegistrationPack = async function() {
         
         // Pequeño delay antes de limpiar para asegurar que el navegador inicie la descarga
         setTimeout(() => {
-            document.body.removeChild(a);
+            if (document.body.contains(a)) document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
-        }, 100);
+        }, 500);
         
         Swal.fire({
             icon: 'success',

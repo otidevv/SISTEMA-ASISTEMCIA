@@ -538,11 +538,11 @@
             • <strong>Ciclo Académico:</strong> 
             <span style="margin-left: 5px; {!! $programa_id == 1 ? 'background: #eef7ff; padding: 2px 5px; border-radius: 4px;' : '' !!}">
                 <span class="check-box" {!! $programa_id == 1 ? 'style="background: #003366; color: white; border-color: #003366;"' : '' !!}>{{ $programa_id == 1 ? 'X' : '' }}</span> 
-                <strong {!! $programa_id == 1 ? 'style="color: #003366;"' : 'style="color: #777;"' !!}>CEPRE UNAMAD - {{ $ciclo_nombre ?? '2026-I' }}</strong>
+                <strong {!! $programa_id == 1 ? 'style="color: #003366;"' : 'style="color: #777;"' !!}>CEPRE UNAMAD</strong>{!! $programa_id == 1 ? ' - <strong>' . ($ciclo_nombre ?? '2026-I') . '</strong>' : '' !!}
             </span>
             <span style="margin-left: 5px; {!! $programa_id == 2 ? 'background: #fff4f9; padding: 2px 5px; border-radius: 4px;' : '' !!}">
                 <span class="check-box" {!! $programa_id == 2 ? 'style="background: #ec008c; color: white; border-color: #ec008c;"' : '' !!}>{{ $programa_id == 2 ? 'X' : '' }}</span> 
-                <strong {!! $programa_id == 2 ? 'style="color: #ec008c;"' : 'style="color: #777;"' !!}>Reforzamiento para Secundaria - {{ $ciclo_nombre ?? '2026' }}</strong>
+                <strong {!! $programa_id == 2 ? 'style="color: #ec008c;"' : 'style="color: #777;"' !!}>Reforzamiento para Secundaria</strong>{!! $programa_id == 2 ? ' - <strong>' . ($ciclo_nombre ?? '2026') . '</strong>' : '' !!}
             </span>
         </div>
         <div style="margin-top: 5px;">

@@ -775,12 +775,15 @@ class PublicPostulacionController extends Controller
                 $turnoNombre = $turno ? $turno->nombre : '';
             }
 
-            // Calcular edad basándose en fecha de nacimiento
+            // Calcular edad basándose en fecha de nacimiento (Solo si es una fecha lógica)
             $fechaNac = $data['estudiante_fecha_nacimiento'] ?? $data['fecha_nacimiento'] ?? null;
             $edad = '____';
-            if ($fechaNac) {
+            if ($fechaNac && strlen($fechaNac) > 6) {
                 try {
-                    $edad = \Carbon\Carbon::parse($fechaNac)->age;
+                    $birthDate = \Carbon\Carbon::parse($fechaNac);
+                    if ($birthDate->year > 1900 && $birthDate->year <= date('Y')) {
+                        $edad = $birthDate->age;
+                    }
                 } catch (\Exception $e) {}
             }
 
@@ -853,8 +856,7 @@ class PublicPostulacionController extends Controller
             $pdf = $this->pdfService->generateRegistrationPack($pdfData);
 
             return response($pdf->output())
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="Pack_Inscripcion_CEPRE_' . ($pdfData['estudiante_dni']) . '.pdf"');
+                ->header('Content-Type', 'application/pdf');
 
         } catch (\Exception $e) {
             \Log::error('Error en downloadRegistrationPack: ' . $e->getMessage(), [
