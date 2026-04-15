@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pack de Inscripción - Reforzamiento</title>
+    <title>Pack de Inscripción - {{ $programa_nombre ?? 'CEPRE UNAMAD' }}</title>
     <style>
         @page { margin: 1cm; size: A4; }
         body {
@@ -164,8 +164,9 @@
 <body>
 
 @php
-    // URL de validación oficial (usando un prefijo especial para Reforzamiento)
-    $urlValidacion = route('constancias.validar', 'REF-' . $estudiante_dni);
+    // URL de validación oficial (usando el código del programa como prefijo)
+    $prefix = $programa_id == 2 ? 'REF' : 'CEP';
+    $urlValidacion = route('constancias.validar', $prefix . '-' . $estudiante_dni);
     
     // Generación del código QR con la URL de validación
     $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(400)->margin(0)->generate($urlValidacion));
@@ -182,7 +183,7 @@
     Av. Dos de Mayo Nº 960 – Puerto Maldonado – CEL: 993111037 – 993110327
 </div>
 
-<div class="watermark">INSCRIPCIÓN REFORZAMIENTO</div>
+<div class="watermark">{{ strtoupper($programa_nombre ?? 'INSCRIPCIÓN CEPRE') }}</div>
 
 <!-- PÁGINA 1: FICHA DEL APODERADO -->
 <div class="header">
@@ -192,13 +193,13 @@
     <div class="header-text">
         <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
         <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
-        <p>Programa de Reforzamiento Escolar {{ date('Y') }}</p>
+        <p>{{ $programa_titulo ?? 'Ciclo Académico CEPRE' }} {{ date('Y') }}</p>
     </div>
 </div>
 
 <div class="title-box">
     <h3>FICHA DEL APODERADO O TUTOR</h3>
-    <p>PROGRAMA DE REFORZAMIENTO PARA NIVEL SECUNDARIA</p>
+    <p>{{ strtoupper($programa_descripcion ?? 'CENTRO PREUNIVERSITARIO') }}</p>
 </div>
 
 <div class="content">
@@ -274,7 +275,7 @@
     <div class="header-text">
         <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
         <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
-        <p>Programa de Reforzamiento Escolar {{ date('Y') }}</p>
+        <p>{{ $programa_titulo ?? 'Ciclo Académico CEPRE' }} {{ date('Y') }}</p>
     </div>
 </div>
 
@@ -345,7 +346,7 @@
     <div class="header-text">
         <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
         <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
-        <p>Programa de Reforzamiento Escolar {{ date('Y') }}</p>
+        <p>{{ $programa_titulo ?? 'Ciclo Académico CEPRE' }} {{ date('Y') }}</p>
     </div>
 </div>
 
@@ -407,7 +408,7 @@
     <div class="header-text">
         <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
         <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
-        <p>Programa de Reforzamiento Escolar {{ date('Y') }}</p>
+        <p>{{ $programa_titulo ?? 'Ciclo Académico CEPRE' }} {{ date('Y') }}</p>
     </div>
 </div>
 
@@ -423,7 +424,10 @@
         <span style="margin-left: 10px;"><span class="check-box"></span> Intensivo 2026-0</span>
         <span style="margin-left: 10px;"><span class="check-box"></span> Ordinario 2026-1</span><br>
         <span style="margin-left: 168px;"><span class="check-box"></span> Ordinario 2026-2</span>
-        <span style="margin-left: 10px;"><span class="check-box" style="background: #eef;" align="center">X</span> <span style="color: #ec008c; font-weight: bold;">Reforzamiento para Secundaria</span></span>
+        <span style="margin-left: 10px;">
+            <span class="check-box" {!! $programa_id == 2 ? 'style="background: #eef;"' : '' !!}>{{ $programa_id == 2 ? 'X' : '' }}</span> 
+            <span style="{{ $programa_id == 2 ? 'color: #ec008c; font-weight: bold;' : 'color: #777;' }}">Reforzamiento para Secundaria</span>
+        </span>
     </div>
 
     <p style="font-weight: bold; margin-bottom: 10px;">Marque con una X una de las dos casillas la opción que desee:</p>
@@ -487,7 +491,7 @@
     <div class="header-text">
         <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
         <h2>Centro Preuniversitario - CEPRE UNAMAD</h2>
-        <p>Programa de Reforzamiento Escolar {{ date('Y') }}</p>
+        <p>{{ $programa_titulo ?? 'Ciclo Académico CEPRE' }} {{ date('Y') }}</p>
     </div>
 </div>
 
@@ -516,10 +520,10 @@
         <div style="margin-bottom: 5px;">• <strong>DNI:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 150px;"><strong>{{ $estudiante_dni }}</strong></span></div>
         <div style="margin-bottom: 5px;">
             • <strong>Ciclo Académico:</strong> 
-            <span style="margin-left: 5px;"><span class="check-box"></span> Intensivo 2026-0</span>
-            <span style="margin-left: 5px;"><span class="check-box"></span> Ordinario 2026-1</span>
-            <span style="margin-left: 5px;"><span class="check-box"></span> Ordinario 2026-2</span>
-            <span style="margin-left: 5px; background: #fff4f9; padding: 2px 5px; border-radius: 4px;"><span class="check-box" style="background: #ec008c; color: white; border-color: #ec008c;">X</span> <strong style="color: #ec008c;">Reforzamiento para Secundaria.</strong></span>
+            <span style="margin-left: 5px; {!! $programa_id == 2 ? 'background: #fff4f9; padding: 2px 5px; border-radius: 4px;' : '' !!}">
+                <span class="check-box" {!! $programa_id == 2 ? 'style="background: #ec008c; color: white; border-color: #ec008c;"' : '' !!}>{{ $programa_id == 2 ? 'X' : '' }}</span> 
+                <strong {!! $programa_id == 2 ? 'style="color: #ec008c;"' : 'style="color: #777;"' !!}>Reforzamiento para Secundaria.</strong>
+            </span>
         </div>
         <div style="margin-top: 5px;">
             • <strong>Grupo:</strong> <span style="border-bottom: 1px solid #666; display: inline-block; min-width: 120px;">__________</span>

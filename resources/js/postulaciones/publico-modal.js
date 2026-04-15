@@ -1926,6 +1926,20 @@ function submitPostulacion() {
                         }
                         location.reload();
                     });
+
+                    // Añadir un botón extra de descarga al Swal (opcional, pero mejor inyectar HTML)
+                    Swal.update({
+                        html: `
+                            <p>Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.</p>
+                            <div class="mt-4 p-3 rounded-4 border-dashed" style="background: rgba(140, 198, 63, 0.1); border: 2px dashed #8cc63f;">
+                                <p class="mb-2" style="color: #2c5f2d; font-weight: 800;">¡IMPORTANTE!</p>
+                                <p class="small text-muted mb-3">Descargue su ficha oficial firmada digitalmente con QR para sus archivos.</p>
+                                <button type="button" class="btn btn-success w-100 py-3 rounded-pill shadow-lg" onclick="window.descargarPackInscripcion()" style="font-weight: 800;">
+                                    <i class="fas fa-file-pdf me-2"></i> DESCARGAR PACK DE INSCRIPCIÓN
+                                </button>
+                            </div>
+                        `
+                    });
                 } else {
                     lanzarConfetti();
                     Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
@@ -1946,6 +1960,44 @@ function submitPostulacion() {
             }
             Toast.fire({ icon: 'error', title: errorMsg });
             submitBtn.prop('disabled', false).html('ENVIAR POSTULACIÓN');
+        }
+    });
+}
+
+function descargarPackInscripcion() {
+    const formData = new FormData($('#formPostulacionPublica')[0]);
+    
+    // Feedback visual
+    Toast.fire({
+        icon: 'info',
+        title: 'Generando pack de inscripción...',
+        timer: 2000
+    });
+
+    $.ajax({
+        url: '/postulacion/download-pack',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (response, status, xhr) {
+            const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'Pack_Inscripcion_CEPRE.pdf';
+            const blob = new Blob([response], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            Toast.fire({ icon: 'success', title: 'Documento descargado con éxito' });
+        },
+        error: function (xhr) {
+            console.error('Error descargando PDF:', xhr);
+            Toast.fire({ icon: 'error', title: 'No se pudo generar el documento para descarga' });
         }
     });
 }
@@ -2042,6 +2094,7 @@ window.precargarDatosAcademicos = precargarDatosAcademicos;
 window.mostrarArchivosExistentes = mostrarArchivosExistentes;
 window.verArchivoModal = verArchivoModal;
 window.cerrarModalArchivo = cerrarModalArchivo;
+window.descargarPackInscripcion = descargarPackInscripcion;
 
 // ======================================================================
 // FUNCIONES PARA INGRESO MANUAL DE VOUCHER

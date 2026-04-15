@@ -17,7 +17,7 @@ use App\Models\PagoReforzamiento;
 use App\Models\ProgramaAcademico;
 use App\Events\NuevaPostulacionCreada;
 use App\Services\PaymentValidationService;
-use App\Services\ReforzamientoPdfService;
+use App\Services\InstitucionalPdfService;
 use Carbon\Carbon;
 
 class ReforzamientoApiController extends BaseController
@@ -25,7 +25,7 @@ class ReforzamientoApiController extends BaseController
     protected $paymentService;
     protected $pdfService;
 
-    public function __construct(PaymentValidationService $paymentService, ReforzamientoPdfService $pdfService)
+    public function __construct(PaymentValidationService $paymentService, InstitucionalPdfService $pdfService)
     {
         $this->paymentService = $paymentService;
         $this->pdfService = $pdfService;
@@ -48,7 +48,10 @@ class ReforzamientoApiController extends BaseController
                 return response()->json(['error' => 'Datos incompletos para generar el PDF'], 422);
             }
 
-            $pdf = $this->pdfService->fillRegistrationPack($data);
+            // Indicar que es para Reforzamiento (ID: 2)
+            $data['programa_id'] = 2;
+
+            $pdf = $this->pdfService->generateRegistrationPack($data);
 
             return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')

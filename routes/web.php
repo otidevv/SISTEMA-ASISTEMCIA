@@ -158,6 +158,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/postulacion/check-postulante', [App\Http\Controllers\PublicPostulacionController::class, 'checkPostulante'])->name('public.postulacion.check');
 Route::post('/postulacion/validate-payment', [App\Http\Controllers\PublicPostulacionController::class, 'validatePayment'])->name('public.postulacion.validate-payment');
 Route::post('/postulacion/store', [App\Http\Controllers\PublicPostulacionController::class, 'store'])->name('public.postulacion.store');
+Route::post('/postulacion/download-pack', [App\Http\Controllers\PublicPostulacionController::class, 'downloadRegistrationPack'])->name('public.postulacion.download-pack');
 
 // API Ubigeo y Colegios (Público)
 Route::get('/api/public/departamentos', [App\Http\Controllers\PublicPostulacionController::class, 'getDepartamentos']);

@@ -264,48 +264,70 @@ class ConstanciaEstudiosController extends Controller
                 ->first();
 
             if (!$constancia) {
-                // ✅ NUEVO: Soporte para validación dinámica de Reforzamiento vía DNI
-                if (str_starts_with($codigoVerificacion, 'REF-')) {
-                    $dni = str_replace('REF-', '', $codigoVerificacion);
+                // ✅ NUEVO: Soporte para validación dinámica vía DNI (Reforzamiento y CEPRE)
+                if (str_starts_with($codigoVerificacion, 'REF-') || str_starts_with($codigoVerificacion, 'CEP-')) {
+                    $isRef = str_starts_with($codigoVerificacion, 'REF-');
+                    $dni = str_replace(['REF-', 'CEP-'], '', $codigoVerificacion);
                     
-                    $inscripcion = \App\Models\InscripcionReforzamiento::with(['estudiante', 'ciclo', 'aula'])
-                        ->whereHas('estudiante', function($q) use ($dni) {
-                            $q->where('numero_documento', $dni);
-                        })
-                        ->orderBy('created_at', 'desc')
-                        ->first();
+                    if ($isRef) {
+                        $inscripcion = \App\Models\InscripcionReforzamiento::with(['estudiante', 'ciclo', 'aula'])
+                            ->whereHas('estudiante', function($q) use ($dni) {
+                                $q->where('numero_documento', $dni);
+                            })
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                            
+                        if ($inscripcion) {
+                            $estudiante = $inscripcion->estudiante;
+                            $datosFake = [
+                                'estudiante' => [
+                                    'nombre' => $estudiante->nombre,
+                                    'apellido_paterno' => $estudiante->apellido_paterno,
+                                    'apellido_materno' => $estudiante->apellido_materno,
+                                    'numero_documento' => $estudiante->numero_documento,
+                                ],
+                                'carrera' => ['nombre' => 'PROGRAMA DE REFORZAMIENTO ESCOLAR'],
+                                'ciclo' => ['nombre' => $inscripcion->ciclo->nombre ?? 'Reforzamiento ' . date('Y')],
+                                'numero_constancia' => $inscripcion->nro_constancia ?: ('REF-' . $estudiante->numero_documento),
+                                'turno' => ['nombre' => strtoupper($inscripcion->turno)],
+                                'constancia_firmada_path' => $inscripcion->carta_compromiso_path
+                            ];
+                            return view('constancias.validacion', [
+                                'valida' => true,
+                                'tipo' => 'reforzamiento',
+                                'datos' => $datosFake,
+                                'fecha_generacion' => $inscripcion->created_at,
+                                'constancia_firmada' => $inscripcion->carta_compromiso_path
+                            ]);
+                        }
+                    } else {
+                        // Lógica para CEPRE
+                        $user = \App\Models\User::with(['carrera', 'turno'])
+                            ->where('numero_documento', $dni)
+                            ->first();
 
-                    if ($inscripcion) {
-                        $estudiante = $inscripcion->estudiante;
-                        
-                        // Mapear datos al formato que espera la vista de validación
-                        $datosFake = [
-                            'estudiante' => [
-                                'nombre' => $estudiante->nombre,
-                                'apellido_paterno' => $estudiante->apellido_paterno,
-                                'apellido_materno' => $estudiante->apellido_materno,
-                                'numero_documento' => $estudiante->numero_documento,
-                            ],
-                            'carrera' => [
-                                'nombre' => 'PROGRAMA DE REFORZAMIENTO ESCOLAR'
-                            ],
-                            'ciclo' => [
-                                'nombre' => $inscripcion->ciclo->nombre ?? 'Reforzamiento ' . date('Y')
-                            ],
-                            'numero_constancia' => $inscripcion->nro_constancia ?: ('REF-' . $estudiante->numero_documento),
-                            'turno' => [
-                                'nombre' => strtoupper($inscripcion->turno)
-                            ],
-                            'constancia_firmada_path' => $inscripcion->carta_compromiso_path // Mostramos el compromiso si existe
-                        ];
-
-                        return view('constancias.validacion', [
-                            'valida' => true,
-                            'tipo' => 'reforzamiento',
-                            'datos' => $datosFake,
-                            'fecha_generacion' => $inscripcion->created_at,
-                            'constancia_firmada' => $inscripcion->carta_compromiso_path
-                        ]);
+                        if ($user) {
+                            $datosFake = [
+                                'estudiante' => [
+                                    'nombre' => $user->nombre,
+                                    'apellido_paterno' => $user->apellido_paterno,
+                                    'apellido_materno' => $user->apellido_materno,
+                                    'numero_documento' => $user->numero_documento,
+                                ],
+                                'carrera' => ['nombre' => $user->carrera->nombre ?? 'CEPRE UNAMAD'],
+                                'ciclo' => ['nombre' => 'CICLO ACADÉMICO ' . date('Y')],
+                                'numero_constancia' => 'CEP-' . $user->numero_documento,
+                                'turno' => ['nombre' => $user->turno->nombre ?? 'MAÑANA'],
+                                'constancia_firmada_path' => null
+                            ];
+                            return view('constancias.validacion', [
+                                'valida' => true,
+                                'tipo' => 'cepre',
+                                'datos' => $datosFake,
+                                'fecha_generacion' => $user->created_at,
+                                'constancia_firmada' => null
+                            ]);
+                        }
                     }
                 }
 

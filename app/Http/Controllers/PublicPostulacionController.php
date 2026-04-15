@@ -18,14 +18,17 @@ use Illuminate\Support\Str;
 use App\Models\CentroEducativo;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use App\Services\InstitucionalPdfService;
 
 class PublicPostulacionController extends Controller
 {
     protected $paymentService;
+    protected $pdfService;
 
-    public function __construct(PaymentValidationService $paymentService)
+    public function __construct(PaymentValidationService $paymentService, InstitucionalPdfService $pdfService)
     {
         $this->paymentService = $paymentService;
+        $this->pdfService = $pdfService;
     }
 
     public function checkPostulante(Request $request)
@@ -730,6 +733,58 @@ class PublicPostulacionController extends Controller
                 'success' => false,
                 'message' => 'Error al buscar colegios: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Generar Pack de Inscripción Institucional para CEPRE (POSTULACIÓN)
+     */
+    public function downloadRegistrationPack(Request $request)
+    {
+        try {
+            $data = $request->all();
+
+            // Mapear campos si vienen con nombres diferentes desde el frontend (estudiante_dni -> dni, etc)
+            $pdfData = [
+                'estudiante_nombre' => $data['estudiante_nombre'] ?? (($data['nombre'] ?? '') . ' ' . ($data['apellido_paterno'] ?? '') . ' ' . ($data['apellido_materno'] ?? '')),
+                'estudiante_dni' => $data['estudiante_dni'] ?? ($data['dni'] ?? ''),
+                'apoderado_nombre' => $data['apoderado_nombre'] ?? ($data['padre_nombre'] ?? ($data['madre_nombre'] ?? '_________________________________')),
+                'apoderado_dni' => $data['apoderado_dni'] ?? ($data['padre_dni'] ?? ($data['madre_dni'] ?? '________________')),
+                'apoderado_celular' => $data['apoderado_celular'] ?? ($data['padre_telefono'] ?? ($data['madre_telefono'] ?? '________________')),
+                'apoderado_direccion' => $data['apoderado_direccion'] ?? ($data['padre_direccion'] ?? ($data['direccion'] ?? '_________________________________')),
+                'programa_id' => 1 // CEPRE
+            ];
+
+            if (empty($pdfData['estudiante_nombre']) || empty($pdfData['estudiante_dni'])) {
+                $dniConsultar = $pdfData['estudiante_dni'] ?: ($data['dni'] ?? ($data['estudiante_dni'] ?? null));
+                if ($dniConsultar) {
+                    $user = \App\Models\User::where('numero_documento', $dniConsultar)->first();
+                    if ($user) {
+                        $pdfData['estudiante_nombre'] = $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno;
+                        $pdfData['estudiante_dni'] = $user->numero_documento;
+                        
+                        // Buscar apoderado
+                        $parentesco = \App\Models\Parentesco::where('estudiante_id', $user->id)->with('padre')->first();
+                        if ($parentesco && $parentesco->padre) {
+                            $p = $parentesco->padre;
+                            $pdfData['apoderado_nombre'] = $p->nombre . ' ' . $p->apellido_paterno . ' ' . $p->apellido_materno;
+                            $pdfData['apoderado_dni'] = $p->numero_documento;
+                            $pdfData['apoderado_celular'] = $p->telefono;
+                            $pdfData['apoderado_direccion'] = $p->direccion;
+                        }
+                    }
+                }
+            }
+
+            $pdf = $this->pdfService->generateRegistrationPack($pdfData);
+
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_CEPRE_' . ($pdfData['estudiante_dni']) . '.pdf"');
+
+        } catch (\Exception $e) {
+            Log::error("Error generando PDF de postulación: " . $e->getMessage());
+            return response()->json(['error' => 'Error al generar el documento'], 500);
         }
     }
 }
