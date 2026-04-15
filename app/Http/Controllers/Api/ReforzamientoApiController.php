@@ -50,7 +50,7 @@ class ReforzamientoApiController extends BaseController
 
             $pdf = $this->pdfService->fillRegistrationPack($data);
 
-            return response($pdf->Output('S', 'Pack_Inscripcion_Reforzamiento.pdf'))
+            return response($pdf->output())
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', 'attachment; filename="Pack_Inscripcion_Reforzamiento_' . $data['estudiante_dni'] . '.pdf"');
 
