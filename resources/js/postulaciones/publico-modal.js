@@ -1,6 +1,7 @@
 let currentStep = 1;
 const totalSteps = 5;
 let pagosSeleccionadosDetalles = []; // Global para el resumen
+window.isSubmittingPostulacion = window.isSubmittingPostulacion || false;
 
 // Función para lanzar confetti cuando la postulación es aprobada
 function lanzarConfetti() {
@@ -164,7 +165,8 @@ $(document).ready(function () {
     });
 
     // Manejo del formulario
-    $('#formPostulacionPublica').on('submit', function (e) {
+    // Manejo del formulario (Uso de .off().on() para evitar duplicados en recargas parciales)
+    $(document).off('submit', '#formPostulacionPublica').on('submit', '#formPostulacionPublica', function (e) {
         e.preventDefault();
         submitPostulacion();
     });
@@ -1897,6 +1899,8 @@ function highlightFields(selector) {
 
 function submitPostulacion() {
     // Validar checkboxes de confirmación
+    if (window.isSubmittingPostulacion) return;
+
     if (!$('#confirmarDatos').is(':checked') || !$('#aceptoTerminos').is(':checked')) {
         Swal.fire({
             icon: 'warning',
@@ -1907,9 +1911,11 @@ function submitPostulacion() {
         return;
     }
 
-    const formData = new FormData($('#formPostulacionPublica')[0]);
+    const formElement = $('#formPostulacionPublica')[0];
+    const formData = new FormData(formElement);
     const submitBtn = $('#formPostulacionPublica button[type="submit"]');
 
+    window.isSubmittingPostulacion = true;
     submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
 
     $.ajax({
@@ -1919,8 +1925,8 @@ function submitPostulacion() {
         processData: false,
         contentType: false,
         success: function (data) {
+            window.isSubmittingPostulacion = false;
             if (data.success) {
-                // Usar SweetAlert para éxito final
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
@@ -1932,14 +1938,12 @@ function submitPostulacion() {
                             lanzarConfetti();
                         }
                     }).then((result) => {
-                        // Recargar solo después de que el usuario cierre el Swal
                         if (typeof closeModal === 'function') {
                             closeModal('postulacionModal');
                         }
                         location.reload();
                     });
 
-                    // Añadir un botón extra de descarga al Swal (opcional, pero mejor inyectar HTML)
                     Swal.update({
                         html: `
                             <p>Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.</p>
@@ -1965,9 +1969,12 @@ function submitPostulacion() {
             }
         },
         error: function (xhr) {
+            window.isSubmittingPostulacion = false;
             console.error('Error:', xhr);
             let errorMsg = 'Ocurrió un error al enviar la postulación.';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
+            if (xhr.status === 0) {
+                errorMsg = 'Error de conexión o el archivo cambió durante la subida. Por favor, intente de nuevo.';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
             }
             Toast.fire({ icon: 'error', title: errorMsg });
@@ -1981,7 +1988,15 @@ window.descargarPackInscripcion = async function(event) {
     if (btn && btn.disabled) return; // Prevenir doble clic
 
     const form = $('#formPostulacionPublica')[0];
-    const formData = new FormData(form);
+    const formData = new FormData();
+    
+    // IMPORTANTE: NO enviar archivos en la generación del pack PDF para evitar ERR_UPLOAD_FILE_CHANGED
+    // y ahorrar ancho de banda. El PDF solo necesita los datos de texto.
+    Array.from(form.elements).forEach(element => {
+        if (element.name && element.type !== 'file' && element.type !== 'submit') {
+            formData.append(element.name, element.value);
+        }
+    });
     
     const oldHtml = btn ? btn.innerHTML : '';
     if (btn) {
