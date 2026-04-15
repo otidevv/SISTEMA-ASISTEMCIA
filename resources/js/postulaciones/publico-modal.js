@@ -1931,7 +1931,7 @@ function submitPostulacion() {
                     Swal.fire({
                         icon: 'success',
                         title: '¡Postulación Enviada!',
-                        text: 'Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.',
+                        text: data.message || 'Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.',
                         confirmButtonText: 'Aceptar y Cerrar',
                         confirmButtonColor: 'var(--color-principal)',
                         didOpen: () => {
@@ -1943,22 +1943,9 @@ function submitPostulacion() {
                         }
                         location.reload();
                     });
-
-                    Swal.update({
-                        html: `
-                            <p>Su postulación ha sido enviada con éxito. Esta pasará por un proceso de revisión y validación administrativa.</p>
-                            <div class="mt-4 p-3 rounded-4 border-dashed" style="background: rgba(140, 198, 63, 0.1); border: 2px dashed #8cc63f;">
-                                <p class="mb-2" style="color: #2c5f2d; font-weight: 800;">¡IMPORTANTE!</p>
-                                <p class="small text-muted mb-3">Descargue su ficha oficial firmada digitalmente con QR para sus archivos.</p>
-                                <button type="button" class="btn btn-success w-100 py-3 rounded-pill shadow-lg" onclick="window.descargarPackInscripcion(event)" style="font-weight: 800;">
-                                    <i class="fas fa-file-pdf me-2"></i> DESCARGAR PACK DE INSCRIPCIÓN
-                                </button>
-                            </div>
-                        `
-                    });
                 } else {
                     lanzarConfetti();
-                    Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
+                    Toast.fire({ icon: 'success', title: data.message || '¡Postulación enviada con éxito!' });
                     setTimeout(function () {
                         location.reload();
                     }, 4000);
