@@ -14,137 +14,145 @@
 
 @section('content')
     <style>
-        /* ===== PRELOADER GLASSMORPHISM CEPRE UNAMAD ===== */
+        /* ===== PRELOADER EVOLUTION 2.0 CEPRE UNAMAD ===== */
         .preloader {
-            background: rgba(12, 30, 47, 0.72) !important;
-            backdrop-filter: blur(18px) saturate(1.2);
-            -webkit-backdrop-filter: blur(18px) saturate(1.2);
+            background: #0c1e2f !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
-        .preloader .loader .loader-section .bg {
-            background-color: rgba(12, 30, 47, 0.72) !important;
+
+        /* Fondo Animado Mesh Gradient (Efecto Aurora) */
+        .preloader::before {
+            content: '';
+            position: absolute;
+            width: 150%; height: 150%;
+            background: radial-gradient(circle at 20% 30%, rgba(236, 0, 140, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(0, 174, 239, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 50% 50%, rgba(140, 198, 63, 0.1) 0%, transparent 50%);
+            animation: meshGradient 12s ease-in-out infinite alternate;
+            z-index: 1;
         }
+
+        @keyframes meshGradient {
+            0% { transform: translate(-10%, -10%) rotate(0deg); }
+            100% { transform: translate(10%, 10%) rotate(5deg); }
+        }
+
         .preloader .animation-preloader {
-            z-index: 1000;
+            z-index: 10;
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: all 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
         }
 
-        /* Logo con spinner orbital */
+        /* Logo con respiración */
         .preloader .edu-preloader-icon {
-            display: flex !important;
+            position: relative;
+            width: 220px; height: 180px;
+            margin-bottom: 30px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 35px auto;
-            position: relative;
-            width: 150px;
-            height: 150px;
         }
+
         .preloader .edu-preloader-icon img {
-            width: 80px;
-            height: auto;
-            position: relative;
+            width: 180px;
             z-index: 2;
-            display: block;
-            margin: 0 auto;
-            filter: drop-shadow(0 4px 15px rgba(236, 0, 140, 0.15));
+            animation: logoBreath 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(0, 174, 239, 0.4));
         }
-        /* Anillo giratorio */
+
+        @keyframes logoBreath {
+            0%, 100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 20px rgba(0, 174, 239, 0.3)); }
+            50% { transform: scale(1.08); filter: brightness(1.2) drop-shadow(0 0 35px rgba(236, 0, 140, 0.4)); }
+        }
+
+        /* Anillo orbital avanzado */
         .preloader .edu-preloader-icon::before {
             content: '';
             position: absolute;
             inset: 0;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.08);
-            border-top: 2px solid #ec008c;
-            border-right: 2px solid #00aeef;
-            animation: cepreSpin 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-        }
-
-        @keyframes cepreSpin {
-            to { transform: rotate(360deg); }
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-top: 3px solid #00aeef;
+            border-right: 3px solid #ec008c;
+            animation: cepreSpin 2s linear infinite;
         }
 
         /* Tipografía */
-        .preloader .animation-preloader .txt-loading {
-            font: 700 2.8em "Sora", system-ui, sans-serif !important;
-            letter-spacing: 6px !important;
-        }
-        .preloader .animation-preloader .txt-loading .letters-loading {
-            color: rgba(255, 255, 255, 0.1) !important;
-        }
-        .preloader .animation-preloader .txt-loading .letters-loading::before {
-            animation: letters-loading 2.4s infinite !important;
-            color: #ec008c !important;
-            top: 0 !important;
-            text-shadow: 0 0 12px rgba(236, 0, 140, 0.25);
-        }
-
-        /* Delays para las 11 letras */
-        .preloader .txt-loading .letters-loading:nth-child(1)::before { animation-delay: 0s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(2)::before { animation-delay: 0.1s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(3)::before { animation-delay: 0.2s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(4)::before { animation-delay: 0.3s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(5)::before { animation-delay: 0.4s !important; }
-        .preloader .txt-loading .letters-loading.letter-gap { margin-left: 16px; }
-        .preloader .txt-loading .letters-loading:nth-child(6)::before { animation-delay: 0.6s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(7)::before { animation-delay: 0.7s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(8)::before { animation-delay: 0.8s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(9)::before { animation-delay: 0.9s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(10)::before { animation-delay: 1.0s !important; }
-        .preloader .txt-loading .letters-loading:nth-child(11)::before { animation-delay: 1.1s !important; }
-
-        /* Subtítulo */
-        .cepre-subtitle {
-            font-family: "Sora", sans-serif;
-            font-size: 11px;
-            font-weight: 400;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.35);
-            margin-top: 8px;
-        }
-
-        /* Línea de carga tricolor CEPRE */
-        .cepre-loader-line {
-            margin-top: 40px;
-            width: 180px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 2px;
-            overflow: hidden;
+        .preloader .txt-loading {
+            font: 800 3.2em "Sora", sans-serif !important;
+            letter-spacing: 8px !important;
+            margin-bottom: 5px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
             position: relative;
         }
-        .cepre-loader-line::after {
-            content: '';
-            position: absolute;
-            left: 0; top: 0;
-            height: 100%;
-            width: 45%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #ec008c, #00aeef, #8cc63f);
-            box-shadow: 0 0 6px rgba(236, 0, 140, 0.2);
-            animation: cepreLineSlide 1.8s ease-in-out infinite;
-        }
-        @keyframes cepreLineSlide {
-            0%   { left: -45%; }
-            100% { left: 100%; }
+
+        .preloader .txt-loading .letters-loading {
+            color: rgba(255, 255, 255, 0.1);
+            position: relative;
         }
 
-        /* Ocultar p genérico */
-        .preloader > .animation-preloader > p { display: none !important; }
+        .preloader .txt-loading .letters-loading::before {
+            content: attr(data-text-preloader);
+            position: absolute;
+            top: 0; left: 0;
+            color: #00aeef;
+            opacity: 0;
+            animation: letters-loading 2.8s infinite;
+        }
+
+        @keyframes letters-loading {
+            0%, 75%, 100% { opacity: 0; transform: rotateY(-90deg); }
+            25%, 50% { opacity: 1; transform: rotateY(0deg); }
+        }
+
+        /* Delays para las letras */
+        .preloader .txt-loading .letters-loading:nth-child(1)::before { animation-delay: 0s; }
+        .preloader .txt-loading .letters-loading:nth-child(2)::before { animation-delay: 0.1s; }
+        .preloader .txt-loading .letters-loading:nth-child(3)::before { animation-delay: 0.2s; }
+        .preloader .txt-loading .letters-loading:nth-child(4)::before { animation-delay: 0.3s; }
+        .preloader .txt-loading .letters-loading:nth-child(5)::before { animation-delay: 0.4s; }
+        .preloader .txt-loading .letters-loading:nth-child(6)::before { animation-delay: 0.6s; }
+        .preloader .txt-loading .letters-loading:nth-child(7)::before { animation-delay: 0.7s; }
+        .preloader .txt-loading .letters-loading:nth-child(8)::before { animation-delay: 0.8s; }
+        .preloader .txt-loading .letters-loading:nth-child(9)::before { animation-delay: 0.9s; }
+        .preloader .txt-loading .letters-loading:nth-child(10)::before { animation-delay: 1.0s; }
+        .preloader .txt-loading .letters-loading:nth-child(11)::before { animation-delay: 1.1s; }
+
+        /* Frases de carga dinámicas */
+        #preloader-phrase {
+            font-family: "Sora", sans-serif;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 15px;
+            height: 20px;
+            transition: opacity 0.5s;
+        }
+
+        /* Salida Cinemática (Zoom Out) */
+        .preloader.loaded {
+            background: transparent !important;
+        }
+
+        .preloader.loaded .animation-preloader {
+            opacity: 0;
+            transform: scale(1.5);
+            filter: blur(10px);
+        }
+
+        /* Ocultamos las barras blancas viejas en el HTML para usar solo el nuevo efecto */
+        .preloader .loader { display: none !important; }
 
         @media (max-width: 767px) {
-            .preloader .animation-preloader .txt-loading {
-                font-size: 1.8em !important;
-                letter-spacing: 4px !important;
-            }
-            .preloader .edu-preloader-icon {
-                width: 120px; height: 120px;
-            }
-            .preloader .edu-preloader-icon img { width: 60px; }
-            .cepre-subtitle { font-size: 9px; letter-spacing: 3px; }
-            .cepre-loader-line { width: 140px; }
+            .preloader .txt-loading { font-size: 2em !important; }
+            .preloader .edu-preloader-icon { width: 130px; height: 130px; }
+            .preloader .edu-preloader-icon img { width: 70px; }
         }
 
         /* ===== POSTULACIÓN HIGHLIGHTS & FAB ===== */
@@ -391,7 +399,7 @@
     <div id="preloader" class="preloader">
         <div class="animation-preloader">
             <div class="edu-preloader-icon">
-                <img src="{{ asset('assets/images/logo cepre black.svg') }}" alt="CEPRE UNAMAD">
+                <img src="{{ asset('assets_cepre/img/logo/logo2_0.png') }}" alt="CEPRE UNAMAD Logo 2.0">
             </div>
             <div class="txt-loading">
                 @foreach (['C', 'E', 'P', 'R', 'E'] as $letter)
@@ -401,18 +409,36 @@
                     <span class="letters-loading {{ $i === 0 ? 'letter-gap' : '' }}" data-text-preloader="{{ $letter }}">{{ $letter }}</span>
                 @endforeach
             </div>
-            <div class="cepre-subtitle">Centro Preuniversitario</div>
-            <div class="cepre-loader-line"></div>
-        </div>
-        <div class="loader">
-            <div class="row">
-                <div class="col-3 loader-section section-left"><div class="bg"></div></div>
-                <div class="col-3 loader-section section-left"><div class="bg"></div></div>
-                <div class="col-3 loader-section section-right"><div class="bg"></div></div>
-                <div class="col-3 loader-section section-right"><div class="bg"></div></div>
-            </div>
+            <p id="preloader-phrase">Preparando excelencia...</p>
         </div>
     </div>
+
+    <script>
+        // Logica de frases dinamicas para el preloader
+        (function() {
+            const phrases = [
+                "Preparando excelencia...",
+                "Calculando tu futuro...",
+                "Conectando vacantes...",
+                "Iniciando plataforma...",
+                "Cargando Centro Preuniversitario..."
+            ];
+            let current = 0;
+            const p = document.getElementById('preloader-phrase');
+            if (p) {
+                const interval = setInterval(() => {
+                    p.style.opacity = 0;
+                    setTimeout(() => {
+                        current = (current + 1) % phrases.length;
+                        p.innerText = phrases[current];
+                        p.style.opacity = 1;
+                    }, 500);
+                }, 1500);
+                
+                window.addEventListener('cepre_ready', () => clearInterval(interval));
+            }
+        })();
+    </script>
 
     @include('partials.cepreunamad')
 

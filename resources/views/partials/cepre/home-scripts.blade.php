@@ -266,9 +266,16 @@
         localStorage.setItem('cepre_tour_completed', 'true');
     };
 
-    window.addEventListener('load', function() {
+    // Sincronización profesional con el preloader
+    const initializeHome = () => {
+        if (window.cepre_home_initialized) return;
+        window.cepre_home_initialized = true;
+        
         initThreeJS();
         initCarousel();
         initOnboarding();
-    });
+    };
+
+    window.addEventListener('cepre_ready', initializeHome);
+    window.addEventListener('load', initializeHome);
 </script>

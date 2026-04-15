@@ -6,18 +6,48 @@
     const header = document.querySelector('.main-header');
 
     // ====================================
-    // 0. Ocultar Preloader
+    // 0. Ocultar Preloader (Carga Crítica Real)
     // ====================================
-    window.addEventListener('load', () => {
+    (function() {
         const preloader = document.getElementById('preloader');
-        if (preloader) {
-            preloader.style.opacity = '0';
-            preloader.style.transition = 'opacity 0.5s ease';
+        if (!preloader) return;
+
+        const hidePreloader = () => {
+            if (preloader.classList.contains('loaded')) return;
+            
+            preloader.classList.add('loaded');
+            window.dispatchEvent(new CustomEvent('cepre_ready'));
+            
             setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 500);
+                preloader.style.opacity = '0';
+                preloader.style.transition = 'opacity 0.6s ease';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 600);
+            }, 500); // Pequeño margen para la transición de barras blancas
+        };
+
+        // Detectar la imagen de portada (El recurso más pesado y crítico)
+        const heroImg = document.querySelector('.carousel-slide img');
+
+        if (heroImg) {
+            if (heroImg.complete) {
+                // Si ya está en caché, cerramos lo antes posible (DOMContentLoaded)
+                document.addEventListener('DOMContentLoaded', hidePreloader);
+            } else {
+                // Si se está descargando, cerramos EXACTAMENTE cuando termine de bajar
+                heroImg.addEventListener('load', hidePreloader);
+                heroImg.addEventListener('error', hidePreloader); // Si falla, no bloqueamos la web
+            }
+        } else {
+            // Si no hay imagen, usamos el evento estándar
+            document.addEventListener('DOMContentLoaded', hidePreloader);
         }
-    });
+
+        // Failsafe: Si por alguna razón técnica nada dispara (ej. script de 3ros bloqueado),
+        // no dejamos al usuario atrapado más de 3 segundos.
+        setTimeout(hidePreloader, 3500);
+    })();
 
     // ====================================
     // 1. Funcionalidad del Menú Móvil

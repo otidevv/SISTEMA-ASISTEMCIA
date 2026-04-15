@@ -168,8 +168,8 @@
 
                 <!-- Fondo Dinámico -->
                 <picture style="width: 100%; height: auto; display: flex;">
-                    <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.jpg') }}">
-                    <img src="{{ asset('assets_cepre/img/portada/portada_principal.jpg') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;">
+                    <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.webp') }}">
+                    <img src="{{ asset('assets_cepre/img/portada/portada_principal.webp') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;" fetchpriority="high">
                 </picture>
 
                 <!-- Capa oscurecedora inferior para resaltar los botones HTML -->
@@ -355,9 +355,9 @@
                                 @php
                                     $foto = $docente->foto_perfil ? asset('storage/' . $docente->foto_perfil) : null;
                                 @endphp
-                                <img src="{{ $foto ?? asset('assets_cepre/img/portada/docente_avatar.png') }}"
+                                <img src="{{ $foto ?? asset('assets_cepre/img/portada/docente_avatar.webp') }}"
                                     onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text={{ urlencode($docente->nombre) }}';"
-                                    alt="{{ $docente->nombreCompleto }}">
+                                    alt="{{ $docente->nombreCompleto }}" loading="lazy">
                             </div>
                             <div class="teacher-info">
                                 <h4>{{ $docente->nombreCompleto }}</h4>
