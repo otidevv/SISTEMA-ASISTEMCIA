@@ -64,7 +64,11 @@ class CentroEducativo extends Model
     public static function getDepartamentos()
     {
         return \Illuminate\Support\Facades\Cache::remember('ubigeo_departamentos', 86400, function () {
-            return self::select('d_dpto')
+            return self::where(function($q) {
+                    $q->where('d_niv_mod', 'LIKE', 'Secundaria%')
+                      ->orWhere('d_niv_mod', 'LIKE', 'Básica Alternativa%');
+                })
+                ->select('d_dpto')
                 ->distinct()
                 ->orderBy('d_dpto')
                 ->pluck('d_dpto');
@@ -75,6 +79,10 @@ class CentroEducativo extends Model
     {
         return \Illuminate\Support\Facades\Cache::remember('ubigeo_provincias_' . $departamento, 86400, function () use ($departamento) {
             return self::where('d_dpto', $departamento)
+                ->where(function($q) {
+                    $q->where('d_niv_mod', 'LIKE', 'Secundaria%')
+                      ->orWhere('d_niv_mod', 'LIKE', 'Básica Alternativa%');
+                })
                 ->select('d_prov')
                 ->distinct()
                 ->orderBy('d_prov')
@@ -87,6 +95,10 @@ class CentroEducativo extends Model
         return \Illuminate\Support\Facades\Cache::remember('ubigeo_distritos_' . $departamento . '_' . $provincia, 86400, function () use ($departamento, $provincia) {
             return self::where('d_dpto', $departamento)
                 ->where('d_prov', $provincia)
+                ->where(function($q) {
+                    $q->where('d_niv_mod', 'LIKE', 'Secundaria%')
+                      ->orWhere('d_niv_mod', 'LIKE', 'Básica Alternativa%');
+                })
                 ->select('d_dist')
                 ->distinct()
                 ->orderBy('d_dist')
@@ -98,7 +110,11 @@ class CentroEducativo extends Model
     {
         $query = self::where('d_dpto', $departamento)
             ->where('d_prov', $provincia)
-            ->where('d_dist', $distrito);
+            ->where('d_dist', $distrito)
+            ->where(function($q) {
+                $q->where('d_niv_mod', 'LIKE', 'Secundaria%')
+                  ->orWhere('d_niv_mod', 'LIKE', 'Básica Alternativa%');
+            });
         
         if ($termino) {
             $query->where('cen_edu', 'LIKE', '%' . $termino . '%');
