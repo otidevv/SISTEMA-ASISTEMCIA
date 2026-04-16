@@ -1323,6 +1323,7 @@ function verificarPostulante(btnElement, callback = null) {
                 } else {
                     Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
                 }
+                return; // Evitar que continúe al resto de la lógica de éxito
             } else {
                 // Nuevo o Recurrente
                 $('#estudiante_dni').val(dni);
@@ -1396,14 +1397,37 @@ function verificarPostulante(btnElement, callback = null) {
                 // Ocultar sección de verificación al tener éxito
                 $('#section-verificacion').slideUp(400);
 
-                // Mostrar SweetAlert para casos que NO son 'registered'
+                // Mostrar SweetAlert según el contexto
                 if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: swalIcon,
-                        title: swalTitle,
-                        text: swalText,
-                        confirmButtonText: 'Continuar'
-                    });
+                    const isModalVisible = $('#postulacionModal').is(':visible');
+                    
+                    if (!isModalVisible) {
+                        // Si consultó desde afuera y no está registrado, preguntamos si quiere registrarse
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Sin postulación activa',
+                            text: 'No hemos encontrado una postulación activa con sus datos. ¿Desea iniciar su inscripción ahora?',
+                            showCancelButton: true,
+                            confirmButtonText: '¡Sí, inscribirme!',
+                            cancelButtonText: 'Ahora no',
+                            confirmButtonColor: '#8bc34a',
+                            cancelButtonColor: '#6c757d'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                if (typeof openPostulacionModal === 'function') {
+                                    openPostulacionModal();
+                                }
+                            }
+                        });
+                    } else {
+                        // Si ya está en el modal, flujo normal
+                        Swal.fire({
+                            icon: swalIcon,
+                            title: swalTitle,
+                            text: swalText,
+                            confirmButtonText: 'Continuar'
+                        });
+                    }
                 }
             }
         } catch (err) {
@@ -1450,7 +1474,7 @@ function consultarEstadoPostulacion() {
         Swal.fire({
             icon: 'info',
             title: 'Datos Incompletos',
-            text: 'Por favor, ingrese su DNI y dígito verificador para consultar su estado.',
+            text: 'Por favor, ingrese su DNI y dígito verificador en el formulario para consultar su estado.',
             confirmButtonColor: '#0d6efd'
         });
         return;
@@ -1458,6 +1482,73 @@ function consultarEstadoPostulacion() {
 
     // Usamos el botón de verificación como referencia para el spinner
     verificarPostulante($('#btn-verificar-dni'));
+}
+
+/**
+ * NUEVA: Permite consultar el estado directamente desde cualquier parte de la página
+ * sin necesidad de abrir el modal primero. Solicita los datos vía SweetAlert2.
+ */
+function consultarEstadoDirecto() {
+    Swal.fire({
+        title: 'Consulta tu Estado',
+        text: 'Ingresa tu DNI y dígito verificador',
+        html: `
+            <div class="d-flex flex-column gap-3 mt-3">
+                <div class="form-group text-start">
+                    <label class="mb-1 fw-bold">Número de DNI</label>
+                    <input id="swal-dni" class="form-control" placeholder="8 dígitos" maxlength="8">
+                </div>
+                <div class="form-group text-start">
+                    <label class="mb-1 fw-bold">Dígito Verificador (DV)</label>
+                    <input id="swal-dv" class="form-control text-center" placeholder="Dígito después del guion" maxlength="1">
+                </div>
+                <div class="text-center mt-2">
+                    <img src="${getBaseUrl()}/assets_cepre/img/ejemplo_verificador.jpg" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
+                    <small class="text-muted d-block mt-1">Ubicación del dígito verificador</small>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Consultar Estado',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#8bc34a',
+        cancelButtonColor: '#e91e63',
+        preConfirm: () => {
+            const dni = document.getElementById('swal-dni').value;
+            const dv = document.getElementById('swal-dv').value;
+            if (!dni || dni.length !== 8) {
+                Swal.showValidationMessage('Por favor ingrese un DNI de 8 dígitos');
+                return false;
+            }
+            if (!dv || dv.length !== 1) {
+                Swal.showValidationMessage('Por favor ingrese el dígito verificador');
+                return false;
+            }
+            return { dni, dv };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Seteamos los valores en el modal por si acaso el usuario luego decide abrirlo
+            $('#check_dni').val(result.value.dni);
+            $('#check_dv').val(result.value.dv);
+            
+            // Mostrar cargando
+            Swal.fire({
+                title: 'Consultando...',
+                text: 'Buscando tu información de postulación',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Llamamos a la verificación principal
+            // Pass null as btnElement so it doesn't try to use a button's spinner
+            verificarPostulante(null, (success, response) => {
+                // El modal de verificarPostulante se encargará de mostrar el resultado
+            });
+        }
+    });
 }
 
 function consultarDNIPadre(tipo, btnElement) {
@@ -2460,6 +2551,8 @@ function validarPadres() {
 window.togglePadreFields = togglePadreFields;
 window.toggleMadreFields = toggleMadreFields;
 window.validarPadres = validarPadres;
+window.consultarEstadoPostulacion = consultarEstadoPostulacion;
+window.consultarEstadoDirecto = consultarEstadoDirecto;
 
 // ======================================================================
 // VALIDACIÓN DE ARCHIVOS (TAMAÑO Y TIPO)

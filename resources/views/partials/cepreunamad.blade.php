@@ -188,6 +188,14 @@
                     </a>
                 </div>
 
+                <!-- Enlace de consulta rápida (Estratégico) -->
+                <div style="position: absolute; bottom: 2%; left: 0; right: 0; text-align: center; z-index: 10;">
+                    <a href="javascript:void(0)" onclick="consultarEstadoDirecto()" style="color: white; text-decoration: none; font-size: 0.9rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px);">
+                        <i class="fas fa-search-plus" style="color: #00aeef;"></i>
+                        ¿Ya te postulaste? <span style="color: #8bc34a;">Consulta tu estado aquí</span>
+                    </a>
+                </div>
+
             </div>
         </div>
     </div>

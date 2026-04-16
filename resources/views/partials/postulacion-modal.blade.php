@@ -629,12 +629,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- NUEVO: Botón de consulta rápida de estado -->
-                            <div class="text-center mb-3">
-                                <button type="button" onclick="consultarEstadoPostulacion()" class="btn btn-link btn-sm text-primary fw-bold" style="text-decoration: none; font-size: 0.85rem;">
-                                    <i class="fas fa-question-circle"></i> ¿Ya te postulaste? Consulta tu estado aquí
-                                </button>
-                            </div>
                             <div id="dni_feedback" class="mt-2 p-3 rounded border" style="background-color: #f8fafc;">
                                 <div class="d-flex align-items-start mb-2">
                                     <i class="fas fa-info-circle me-2 text-primary mt-1"></i>
