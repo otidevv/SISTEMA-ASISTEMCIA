@@ -316,7 +316,7 @@
                     { id: '#reforzamientoTable', globalVar: 'window.reforzamientoDataTable' }
                 ];
 
-                function applyPersistentHighlights() {
+                window.applyPersistentHighlights = function() {
                     const unseen = JSON.parse(localStorage.getItem('newRecordsUnseen') || '[]');
                     if (unseen.length === 0) return;
 

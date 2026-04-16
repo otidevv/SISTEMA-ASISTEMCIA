@@ -46,6 +46,7 @@ function initFilterSelects() {
 function initDataTable() {
     table = $('#postulaciones-datatable').DataTable({
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        pageLength: 50,
         processing: true,
         serverSide: true, // Habilitar server-side processing
         destroy: true, // Permite reinicializar la tabla y cancelar solicitudes Ajax pendientes
@@ -169,6 +170,11 @@ function initDataTable() {
         drawCallback: function () {
             $('.dataTables_paginate > .pagination').addClass('pagination-rounded');
             loadStatistics();
+            
+            // Re-aplicar resaltado de nuevos registros si la función existe
+            if (typeof window.applyPersistentHighlights === 'function') {
+                window.applyPersistentHighlights();
+            }
         }
     });
 }

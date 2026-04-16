@@ -130,6 +130,50 @@
         [data-bs-theme="dark"] .estado-rechazado { background-color: rgba(226, 0, 122, 0.05) !important; }
         [data-bs-theme="dark"] .estado-observado { background-color: rgba(0, 174, 239, 0.05) !important; }
 
+        /* 🏷️ ESTILOS DE BADGES DE ESTADO (PREMIUM) */
+        .badge {
+            padding: 0.45em 0.85em;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .badge-estado-pendiente { 
+            background-color: var(--cepre-gold) !important; 
+            color: #4a3a00 !important; 
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .badge-estado-aprobado { 
+            background-color: var(--cepre-green) !important; 
+            color: #fff !important; 
+            border: 1px solid rgba(147, 192, 31, 0.3);
+        }
+        
+        .badge-estado-rechazado { 
+            background-color: var(--cepre-magenta) !important; 
+            color: #fff !important; 
+            border: 1px solid rgba(226, 0, 122, 0.3);
+        }
+        
+        .badge-estado-observado { 
+            background-color: var(--cepre-cyan) !important; 
+            color: #fff !important; 
+            border: 1px solid rgba(0, 174, 239, 0.3);
+        }
+
+        /* Asegurar que el nombre del estudiante sea legible */
+        #postulaciones-datatable tbody td:nth-child(2) {
+            font-weight: 700;
+            color: var(--cepre-text-main);
+        }
+
+        /* Corregir opacidad en columna de estado si existiera */
+        #postulaciones-datatable td .badge {
+            opacity: 1 !important;
+        }
+
         /* 🔍 FILTROS REFINADOS */
         .header-title {
             color: var(--cepre-magenta) !important;
