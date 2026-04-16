@@ -43,7 +43,7 @@ class PublicPostulacionController extends Controller
         $dni = $request->dni;
         $digitoProporcionado = $request->digito ?? $request->check_dv; // Soporte para ambos nombres
 
-        if (!$digitoProporcionado) {
+        if (is_null($digitoProporcionado) || $digitoProporcionado === '') {
             return response()->json([
                 'error' => 'Dígito de verificación requerido.',
                 'message' => 'El campo del dígito verificador es obligatorio para continuar.'
