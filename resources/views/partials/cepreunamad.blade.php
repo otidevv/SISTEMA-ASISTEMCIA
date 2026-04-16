@@ -233,16 +233,126 @@
 <!-- Courses Section -->
 <section class="courses-section academic-notebook-pattern" id="cursos">
     <div class="section-title">
-        <!-- Enlace de consulta rápida (Estratégico) -->
-        <div class="mb-3">
-            <a href="javascript:void(0)" onclick="consultarEstadoDirecto()" 
-               style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 20px; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <i class="fas fa-question-circle" style="color: #22c55e; font-size: 1.1rem;"></i>
-                <span style="color: #166534; font-weight: 700; font-size: 0.9rem;">
-                    ¿Ya te postulaste? <span style="color: #22c55e;">Consulta tu estado aquí</span>
-                </span>
-            </a>
+        <!-- Contenedor de Acciones Rápidas (Dual Button CTA) -->
+        <div class="dual-cta-container mb-4">
+            <div class="cta-wrapper">
+                <!-- Botón Principal: Inscribirse -->
+                <a href="javascript:void(0)" onclick="openPostulacionModal()" class="cta-btn cta-primary">
+                    <div class="cta-icon"><i class="fas fa-user-plus"></i></div>
+                    <div class="cta-content">
+                        <span class="cta-tag">PASO 1</span>
+                        <span class="cta-text">Iniciar Inscripción</span>
+                    </div>
+                </a>
+
+                <div class="cta-divider"></div>
+
+                <!-- Botón Secundario: Consultar -->
+                <a href="javascript:void(0)" onclick="consultarEstadoDirecto()" class="cta-btn cta-secondary">
+                    <div class="cta-icon"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="cta-content">
+                        <span class="cta-tag">PASO 2</span>
+                        <span class="cta-text">Verificar mi Estado</span>
+                    </div>
+                </a>
+            </div>
         </div>
+        
+        <style>
+            .dual-cta-container {
+                display: flex;
+                justify-content: center;
+                margin-top: -35px; /* Sube los botones más arriba para eliminar el espacio en blanco */
+                position: relative;
+                z-index: 20;
+            }
+            .cta-wrapper {
+                display: flex;
+                align-items: center;
+                background: white;
+                padding: 8px;
+                border-radius: 100px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.1), 0 5px 15px rgba(0, 174, 239, 0.05);
+                border: 1px solid rgba(0, 174, 239, 0.1);
+                gap: 5px;
+            }
+            .cta-btn {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 25px;
+                border-radius: 80px;
+                text-decoration: none !important;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .cta-primary {
+                background: linear-gradient(135deg, #00aeef, #0087c2);
+                color: white;
+                box-shadow: 0 5px 15px rgba(0, 174, 239, 0.3);
+            }
+            .cta-primary:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 20px rgba(0, 174, 239, 0.5);
+                filter: brightness(1.1);
+            }
+            .cta-secondary {
+                background: #f8fafc;
+                color: #0c1e2f;
+                border: 1px solid #e2e8f0;
+            }
+            .cta-secondary:hover {
+                background: #f1f5f9;
+                border-color: #00aeef;
+                color: #00aeef;
+                transform: translateX(3px);
+            }
+            .cta-icon {
+                font-size: 1.2rem;
+            }
+            .cta-content {
+                display: flex;
+                flex-direction: column;
+                text-align: left;
+            }
+            .cta-tag {
+                font-size: 0.6rem;
+                font-weight: 800;
+                opacity: 0.8;
+                letter-spacing: 0.5px;
+            }
+            .cta-text {
+                font-size: 0.95rem;
+                font-weight: 700;
+            }
+            .cta-divider {
+                width: 1px;
+                height: 30px;
+                background: #e2e8f0;
+                margin: 0 5px;
+            }
+
+            @media (max-width: 768px) {
+                .cta-wrapper {
+                    flex-direction: column;
+                    border-radius: 20px;
+                    padding: 15px;
+                    width: 90%;
+                }
+                .cta-btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+                .cta-divider {
+                    width: 80%;
+                    height: 1px;
+                    margin: 10px 0;
+                }
+                .dual-cta-container {
+                    margin-top: -20px;
+                }
+            }
+        </style>
+
         <h6>NUESTROS CURSOS</h6>
         <h2>Preparación Exclusiva en:</h2>
     </div>
