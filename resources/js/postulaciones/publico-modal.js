@@ -1490,29 +1490,51 @@ function consultarEstadoPostulacion() {
  */
 function consultarEstadoDirecto() {
     Swal.fire({
-        title: 'Consulta tu Estado',
-        text: 'Ingresa tu DNI y dígito verificador',
+        title: '<div style="color: #0c1e2f; font-weight: 800; font-family: Sora, sans-serif; font-size: 1.5rem; margin-top: 10px;">Consulta de Estado</div>',
         html: `
-            <div class="d-flex flex-column gap-3 mt-3">
-                <div class="form-group text-start">
-                    <label class="mb-1 fw-bold">Número de DNI</label>
-                    <input id="swal-dni" class="form-control" placeholder="8 dígitos" maxlength="8">
-                </div>
-                <div class="form-group text-start">
-                    <label class="mb-1 fw-bold">Dígito Verificador (DV)</label>
-                    <input id="swal-dv" class="form-control text-center" placeholder="Dígito después del guion" maxlength="1">
-                </div>
-                <div class="text-center mt-2">
-                    <img src="${$('#img_guia_dv').attr('src') || (getBaseUrl() + '/assets_cepre/img/ejemplo_verificador.jpg')}" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
-                    <small class="text-muted d-block mt-1">Ubicación del dígito verificador</small>
+            <div style="padding: 0 5px; font-family: Inter, sans-serif;">
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 15px;">Verifica tu postulación ingresando tus datos.</p>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                    <div style="text-align: left; margin-bottom: 12px;">
+                        <label style="display: block; font-weight: 700; color: #1e293b; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase;">Número de DNI</label>
+                        <div style="position: relative;">
+                            <i class="fas fa-id-card" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #00aeef;"></i>
+                            <input id="swal-dni" class="form-control" placeholder="8 dígitos" maxlength="8" style="padding-left: 35px; border-radius: 8px; border: 2px solid #cbd5e1; height: 40px; font-weight: 600; font-size: 0.95rem;">
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: left; margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 700; color: #1e293b; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase;">Dígito Verificador (DV)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="position: relative; width: 60px;">
+                                <input id="swal-dv" class="form-control text-center" placeholder="0" maxlength="1" style="border-radius: 8px; border: 2px solid #cbd5e1; height: 40px; font-weight: 800; font-size: 1.1rem; color: #ec008c; padding: 0;">
+                            </div>
+                            <span style="color: #64748b; font-size: 0.8rem; font-style: italic;">Número tras el guion</span>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <img src="${$('#img_guia_dv').attr('src') || (getBaseUrl() + '/assets_cepre/img/ejmplo_verificador.jpg')}" style="width: 100%; display: block; filter: saturate(1.1);">
+                        <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(12, 30, 47, 0.85); color: white; padding: 3px; font-size: 0.7rem; font-weight: 500; text-align: center;">
+                            Ubica tu DV aquí
+                        </div>
+                    </div>
                 </div>
             </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Consultar Estado',
+        confirmButtonText: '<i class="fas fa-search me-2"></i> Consultar',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#8bc34a',
-        cancelButtonColor: '#e91e63',
+        confirmButtonColor: '#00aeef',
+        cancelButtonColor: '#94a3b8',
+        background: '#ffffff',
+        width: '400px',
+        padding: '1.25rem',
+        customClass: {
+            confirmButton: 'rounded-pill px-4',
+            cancelButton: 'rounded-pill px-4'
+        },
         preConfirm: () => {
             const dni = document.getElementById('swal-dni').value;
             const dv = document.getElementById('swal-dv').value;
