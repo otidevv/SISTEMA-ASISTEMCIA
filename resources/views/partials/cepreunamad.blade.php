@@ -188,13 +188,6 @@
                     </a>
                 </div>
 
-                <!-- Enlace de consulta rápida (Estratégico) -->
-                <div style="position: absolute; bottom: 2%; left: 0; right: 0; text-align: center; z-index: 10;">
-                    <a href="javascript:void(0)" onclick="consultarEstadoDirecto()" style="color: white; text-decoration: none; font-size: 0.9rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; backdrop-filter: blur(5px);">
-                        <i class="fas fa-search-plus" style="color: #00aeef;"></i>
-                        ¿Ya te postulaste? <span style="color: #8bc34a;">Consulta tu estado aquí</span>
-                    </a>
-                </div>
 
             </div>
         </div>
@@ -240,6 +233,16 @@
 <!-- Courses Section -->
 <section class="courses-section academic-notebook-pattern" id="cursos">
     <div class="section-title">
+        <!-- Enlace de consulta rápida (Estratégico) -->
+        <div class="mb-3">
+            <a href="javascript:void(0)" onclick="consultarEstadoDirecto()" 
+               style="display: inline-flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 20px; border-radius: 50px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <i class="fas fa-question-circle" style="color: #22c55e; font-size: 1.1rem;"></i>
+                <span style="color: #166534; font-weight: 700; font-size: 0.9rem;">
+                    ¿Ya te postulaste? <span style="color: #22c55e;">Consulta tu estado aquí</span>
+                </span>
+            </a>
+        </div>
         <h6>NUESTROS CURSOS</h6>
         <h2>Preparación Exclusiva en:</h2>
     </div>

@@ -1503,7 +1503,7 @@ function consultarEstadoDirecto() {
                     <input id="swal-dv" class="form-control text-center" placeholder="Dígito después del guion" maxlength="1">
                 </div>
                 <div class="text-center mt-2">
-                    <img src="${getBaseUrl()}/assets_cepre/img/ejemplo_verificador.jpg" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
+                    <img src="${$('#img_guia_dv').attr('src') || (getBaseUrl() + '/assets_cepre/img/ejemplo_verificador.jpg')}" style="max-width: 100%; border-radius: 8px; border: 1px solid #ddd;">
                     <small class="text-muted d-block mt-1">Ubicación del dígito verificador</small>
                 </div>
             </div>

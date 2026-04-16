@@ -642,7 +642,8 @@
                                     </div>
                                 </div>
                                 <div class="text-center rounded overflow-hidden shadow-sm border bg-white mt-1">
-                                    <img src="{{ asset('assets_cepre/img/ejmplo_verificador.jpg') }}"
+                                    <img src="{{ asset('assets_cepre/img/ejemplo_verificador.jpg') }}"
+                                        id="img_guia_dv"
                                         alt="Guía Dígito Verificador" class="img-fluid"
                                         style="max-height: 250px; width: auto; object-fit: contain;">
                                 </div>
