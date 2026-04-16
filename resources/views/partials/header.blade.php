@@ -367,9 +367,18 @@
                     const style = document.createElement('style');
                     style.id = 'style-fila-nueva';
                     style.innerHTML = `
-                        tr.fila-reciente-neon { --bs-table-accent-bg: #fff8c6 !important; --bs-table-bg: #fff8c6 !important; }
-                        tr.fila-reciente-neon > td { background-color: #fff8c6 !important; transition: background-color 0.8s ease; }
-                        tr.fila-reciente-neon-removida > td { background-color: transparent !important; transition: background-color 0.8s ease; }
+                        tr.fila-reciente-neon, tr.fila-reciente-neon:nth-of-type(odd), tr.fila-reciente-neon:nth-of-type(even) { 
+                            --bs-table-accent-bg: #fff8c6 !important; 
+                            --bs-table-bg: #fff8c6 !important; 
+                        }
+                        tr.fila-reciente-neon > td { 
+                            background-color: #fff8c6 !important; 
+                            transition: background-color 0.8s ease; 
+                        }
+                        tr.fila-reciente-neon-removida > td { 
+                            background-color: transparent !important; 
+                            transition: background-color 0.8s ease; 
+                        }
                     `;
                     document.head.appendChild(style);
                 }

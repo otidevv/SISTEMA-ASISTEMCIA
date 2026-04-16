@@ -86,6 +86,11 @@ class PostulacionController extends Controller
                 $query->where('carrera_id', $request->carrera_id);
             }
 
+            // Filtro exclusivo: Solo los registrados hoy
+            if ($request->input('solo_hoy') == '1' || $request->input('solo_hoy') == 'true') {
+                $query->whereDate('fecha_postulacion', \Carbon\Carbon::today());
+            }
+
             return DataTables::of($query)
                 ->filter(function ($query) use ($request) {
                     if ($search = $request->input('search.value')) {
@@ -1336,12 +1341,13 @@ class PostulacionController extends Controller
         try {
             $cicloId = $request->input('ciclo_id');
             $carreraId = $request->input('carrera_id');
+            $soloHoy = $request->input('solo_hoy') == '1' || $request->input('solo_hoy') == 'true';
             
             // Generar una llave de caché única para esta combinación de filtros
-            $cacheKey = 'stats_postulaciones_' . ($cicloId ?: 'activo') . '_' . ($carreraId ?: 'todas');
+            $cacheKey = 'stats_postulaciones_' . ($cicloId ?: 'activo') . '_' . ($carreraId ?: 'todas') . '_' . ($soloHoy ? 'hoy' : 'all');
 
             // Cachear la matemática de la estadística por 15 segundos
-            $stats = \Illuminate\Support\Facades\Cache::remember($cacheKey, 15, function() use ($cicloId, $carreraId) {
+            $stats = \Illuminate\Support\Facades\Cache::remember($cacheKey, 15, function() use ($cicloId, $carreraId, $soloHoy) {
                 
                 if (empty($cicloId)) {
                     $cicloActivo = Ciclo::where('es_activo', true)->first();
@@ -1356,6 +1362,10 @@ class PostulacionController extends Controller
                     $query->where('carrera_id', $carreraId);
                 }
 
+                if ($soloHoy) {
+                    $query->whereDate('fecha_postulacion', \Carbon\Carbon::today());
+                }
+
                 $result = $query->select('estado', DB::raw('count(*) as total'))
                             ->groupBy('estado')
                             ->pluck('total', 'estado')
@@ -1365,6 +1375,11 @@ class PostulacionController extends Controller
                 $result['aprobado'] = $result['aprobado'] ?? 0;
                 $result['rechazado'] = $result['rechazado'] ?? 0;
                 $result['observado'] = $result['observado'] ?? 0;
+                
+                // NUEVO: Conteo de registros para el día de hoy
+                $result['hoy'] = Postulacion::where('ciclo_id', $cicloId)
+                                    ->whereDate('fecha_postulacion', \Carbon\Carbon::today())
+                                    ->count();
                 
                 return $result;
             });

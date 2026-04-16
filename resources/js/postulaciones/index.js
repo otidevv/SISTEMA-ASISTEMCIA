@@ -47,6 +47,7 @@ function initDataTable() {
     table = $('#postulaciones-datatable').DataTable({
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         pageLength: 50,
+        order: [[6, 'desc']],
         processing: true,
         serverSide: true, // Habilitar server-side processing
         destroy: true, // Permite reinicializar la tabla y cancelar solicitudes Ajax pendientes
@@ -57,6 +58,7 @@ function initDataTable() {
                 d.ciclo_id = $('#filter-ciclo').val();
                 d.estado = $('#filter-estado').val();
                 d.carrera_id = $('#filter-carrera').val();
+                d.solo_hoy = $('#filter-hoy').is(':checked') ? 1 : 0;
             },
             error: function (xhr, error, code) {
                 // Ignorar errores de solicitudes abortadas (ocurre cuando se actualiza rápidamente)
@@ -182,7 +184,27 @@ function initDataTable() {
 function setupEventHandlers() {
     // Filtrar
     $('#btn-filtrar').on('click', function () {
+        // Al filtrar manualmente, quitamos el filtro de "Hoy" si estuviera activo
+        $('#filter-hoy').prop('checked', false);
+        $('#card-filter-hoy').removeClass('active');
         table.ajax.reload();
+        loadStatistics();
+    });
+
+    // Filtro especial para Registrados Hoy
+    $('#card-filter-hoy').on('click', function() {
+        const checkbox = $('#filter-hoy');
+        const isActive = !checkbox.is(':checked');
+        checkbox.prop('checked', isActive);
+        
+        if (isActive) {
+            $(this).addClass('active');
+        } else {
+            $(this).removeClass('active');
+        }
+        
+        table.ajax.reload();
+        loadStatistics();
     });
 
     // Ver detalle
@@ -687,6 +709,7 @@ function loadStatistics() {
         ciclo_id: $('#filter-ciclo').val(),
         carrera_id: $('#filter-carrera').val(),
         estado: $('#filter-estado').val(),
+        solo_hoy: $('#filter-hoy').is(':checked') ? 1 : 0,
     };
 
     $.ajax({
@@ -708,6 +731,7 @@ function updateStatistics(stats) {
     $('#stat-aprobadas').text(stats.aprobado || 0);
     $('#stat-rechazadas').text(stats.rechazado || 0);
     $('#stat-observadas').text(stats.observado || 0);
+    $('#stat-hoy').text(stats.hoy || 0);
 }
 
 function loadDocumentsForEdit(id) {

@@ -79,6 +79,15 @@
         .stat-observadas { border-top: 4px solid var(--cepre-cyan); }
         .stat-observadas .stat-icon-container { background: var(--cepre-cyan); box-shadow: 0 4px 10px rgba(0, 174, 239, 0.3); }
 
+        .stat-hoy { border-top: 4px solid #a855f7; cursor: pointer; transition: all 0.3s ease; }
+        .stat-hoy .stat-icon-container { background: #a855f7; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3); }
+        .stat-hoy:hover { transform: translateY(-5px) scale(1.02); }
+        .stat-hoy.active { background-color: #f3e8ff !important; border-bottom: 2px solid #a855f7; }
+
+        @media (min-width: 992px) {
+            .col-lg-5th { width: 20%; flex: 0 0 auto; }
+        }
+
         .cepre-stat-card h3 {
             font-size: 1.75rem;
             font-weight: 800;
@@ -1978,10 +1987,10 @@
             <!-- Estadísticas rápidas -->
             <div class="row pt-4 g-3">
                 <!-- Pendientes -->
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg-5th">
                     <div class="cepre-stat-card stat-pendientes">
                         <div class="stat-icon-container">
-                            <i class="bi bi-timer"></i>
+                            <i class="bi bi-clock-history"></i>
                         </div>
                         <div>
                             <p>Pendientes</p>
@@ -1990,7 +1999,7 @@
                     </div>
                 </div>
                 <!-- Aprobadas -->
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg-5th">
                     <div class="cepre-stat-card stat-aprobadas">
                         <div class="stat-icon-container">
                             <i class="bi bi-check2-circle"></i>
@@ -2002,7 +2011,7 @@
                     </div>
                 </div>
                 <!-- Rechazadas -->
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg-5th">
                     <div class="cepre-stat-card stat-rechazadas">
                         <div class="stat-icon-container">
                             <i class="bi bi-x-circle"></i>
@@ -2014,7 +2023,7 @@
                     </div>
                 </div>
                 <!-- Observadas -->
-                <div class="col-md-3">
+                <div class="col-md-4 col-lg-5th">
                     <div class="cepre-stat-card stat-observadas">
                         <div class="stat-icon-container">
                             <i class="bi bi-eye-fill"></i>
@@ -2025,10 +2034,24 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- REGISTRADOS HOY (Boton Filtro) -->
+                <div class="col-md-4 col-lg-5th">
+                    <div class="cepre-stat-card stat-hoy" id="card-filter-hoy" title="Click para ver solo los de hoy">
+                        <div class="stat-icon-container">
+                            <i class="bi bi-lightning-fill"></i>
+                        </div>
+                        <div>
+                            <p style="color: #a855f7; font-weight: 800;">Registrados Hoy</p>
+                            <h3 id="stat-hoy">0</h3>
+                        </div>
+                        <input type="checkbox" id="filter-hoy" class="d-none">
+                    </div>
+                </div>
             </div>
 
             <!-- Contenedor de la Tabla -->
-            <div class="pt-5 border-t border-gray-200 mt-5">
+            <div class="pt-3 border-t border-gray-200 mt-4">
                 <!-- Título y Botón -->
                 @if (Auth::user()->hasPermission('postulaciones.create-unified'))
                 <div class="d-flex justify-content-between align-items-center pb-3">
