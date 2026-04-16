@@ -270,9 +270,12 @@ $(document).ready(function () {
         // Mostrar spinner
         $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Verificando...');
 
-        verificarPostulante(this, function (success) {
+        verificarPostulante(this, function (success, response) {
             $btn.prop('disabled', false).html(originalHtml);
-            if (success) {
+            
+            // Si tiene éxito pero ya está registrado, el modal detallado ya se mostró en verificarPostulante
+            // No mostramos el toast simple para no "ensuciar" la pantalla y confundir al usuario
+            if (success && response && response.status !== 'registered') {
                 $('#check_dni, #check_dv').addClass('is-valid').css('border-color', '#198754');
                 Toast.fire({ icon: 'success', title: 'DNI Verificado correctamente' });
             }
@@ -1139,6 +1142,7 @@ function verificarPostulante(btnElement, callback = null) {
     const originalHtml = btn.html();
     // Registramos isSuccess para el callback final en el block always()
     let isSuccess = false;
+    let apiResponse = null;
     $.post('/postulacion/check-postulante', {
         dni: dni,
         digito: digito,
@@ -1146,8 +1150,8 @@ function verificarPostulante(btnElement, callback = null) {
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
         try {
-
             isSuccess = true;
+            apiResponse = response;
             let swalIcon = 'success';
             let swalTitle = 'Verificación Exitosa';
             let swalText = response.message || 'Datos listos para continuar.';
@@ -1300,21 +1304,19 @@ function verificarPostulante(btnElement, callback = null) {
                         icon: iconoModal,
                         title: tituloModal,
                         html: htmlContent,
-                        confirmButtonText: 'Ir al Portal',
+                        confirmButtonText: '<i class="fas fa-sign-in-alt"></i> Ir al Portal',
                         showCancelButton: true,
                         cancelButtonText: 'Cerrar',
                         confirmButtonColor: '#0d6efd',
                         cancelButtonColor: '#6c757d',
                         width: '650px',
                         didOpen: () => {
-                            // Si la postulación está aprobada, lanzar confetti
                             if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
                                 lanzarConfetti();
                             }
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Redirigir al login del portal del estudiante
                             window.location.href = '/login';
                         }
                     });
@@ -1434,9 +1436,28 @@ function verificarPostulante(btnElement, callback = null) {
     }).always(function () {
         btn.prop('disabled', false).html(originalHtml);
         if (typeof callback === 'function') {
-            callback(isSuccess);
+            callback(isSuccess, apiResponse);
         }
     });
+}
+
+// Nueva función para el botón de consulta rápida
+function consultarEstadoPostulacion() {
+    const dni = $('#check_dni').val();
+    const dv = $('#check_dv').val();
+
+    if (!dni || dni.length !== 8 || dv === null || dv === '') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Datos Incompletos',
+            text: 'Por favor, ingrese su DNI y dígito verificador para consultar su estado.',
+            confirmButtonColor: '#0d6efd'
+        });
+        return;
+    }
+
+    // Usamos el botón de verificación como referencia para el spinner
+    verificarPostulante($('#btn-verificar-dni'));
 }
 
 function consultarDNIPadre(tipo, btnElement) {
