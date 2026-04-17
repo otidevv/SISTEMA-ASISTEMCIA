@@ -117,21 +117,27 @@ class CarnetController extends Controller
         if ($carnet->aula) {
             $aulaDisplay = $carnet->aula->nombre;
         } else {
-            // Intentar buscar inscripción activa si no tiene aula asignada
-            $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
-                ->where('ciclo_id', $carnet->ciclo_id)
-                ->where('estado_inscripcion', 'activo')
-                ->whereNotNull('aula_id')
-                ->with('aula')
-                ->first();
+            // Lógica profesional: Buscar según la modalidad del carnet
+            if ($carnet->modalidad === 'reforzamiento_colegio' || $carnet->modalidad === 'reforzamiento') {
+                $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->whereNotNull('aula_id')
+                    ->with('aula')
+                    ->first();
+            } else {
+                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->where('estado_inscripcion', 'activo')
+                    ->whereNotNull('aula_id')
+                    ->with('aula')
+                    ->first();
+            }
                 
             if ($inscripcion && $inscripcion->aula) {
                 $aulaDisplay = $inscripcion->aula->nombre;
-            } elseif ($carnet->grupo) {
-                $aulaDisplay = $carnet->grupo;
             } else {
-                // Último recurso: determinar grupo por carrera
-                $aulaDisplay = $this->determinarGrupo($carnet->carrera->nombre ?? '') ?: 'S/A';
+                // Modo estricto: Si no hay aula ni grupo asignado manualmente, se marca como pendiente
+                $aulaDisplay = $carnet->grupo ?: 'POR ASIGNAR';
             }
         }
 
@@ -456,6 +462,44 @@ class CarnetController extends Controller
             ->whereIn('id', $carnetIds)
             ->get();
 
+        // VALIDACIÓN PROFESIONAL: Bloquear exportación si falta el aula/grupo
+        $faltantes = [];
+        foreach ($carnets as $carnet) {
+            $hasAula = false;
+            
+            // 1. Verificar si el carnet ya tiene el aula o grupo asignado directamente
+            if ($carnet->aula_id || !empty($carnet->grupo)) {
+                $hasAula = true;
+            } else {
+                // 2. Si no, verificar en las tablas de inscripción según modalidad
+                if ($carnet->modalidad === 'reforzamiento_colegio' || $carnet->modalidad === 'reforzamiento') {
+                    $hasAula = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)
+                        ->where('ciclo_id', $carnet->ciclo_id)
+                        ->whereNotNull('aula_id')
+                        ->exists();
+                } else {
+                    $hasAula = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                        ->where('ciclo_id', $carnet->ciclo_id)
+                        ->where('estado_inscripcion', 'activo')
+                        ->whereNotNull('aula_id')
+                        ->exists();
+                }
+            }
+
+            if (!$hasAula) {
+                $faltantes[] = $carnet->nombre_completo;
+            }
+        }
+
+        if (!empty($faltantes)) {
+            $listaNombres = implode(', ', array_slice($faltantes, 0, 3));
+            $conteo = count($faltantes);
+            $msg = "No se pueden exportar los carnets. Los siguientes estudiantes no tienen Aula/Grupo asignado: " . $listaNombres;
+            if ($conteo > 3) $msg .= " y " . ($conteo - 3) . " más.";
+            
+            return back()->with('error', $msg);
+        }
+
         // Preparar datos para la vista (Dinámico por carnet)
         $carnetsData = $carnets->map(function($carnet) {
             // Diferenciar entre Reforzamiento Colegio y otros para la plantilla
@@ -523,21 +567,27 @@ class CarnetController extends Controller
             if ($carnet->aula) {
                 $aulaNombre = $carnet->aula->nombre;
             } else {
-                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
-                    ->where('ciclo_id', $carnet->ciclo_id)
-                    ->where('estado_inscripcion', 'activo')
-                    ->whereNotNull('aula_id')
-                    ->with('aula')
-                    ->first();
+                // Lógica diferencial según modalidad
+                if ($carnet->modalidad === 'reforzamiento_colegio' || $carnet->modalidad === 'reforzamiento') {
+                    $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)
+                        ->where('ciclo_id', $carnet->ciclo_id)
+                        ->whereNotNull('aula_id')
+                        ->with('aula')
+                        ->first();
+                } else {
+                    $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                        ->where('ciclo_id', $carnet->ciclo_id)
+                        ->where('estado_inscripcion', 'activo')
+                        ->whereNotNull('aula_id')
+                        ->with('aula')
+                        ->first();
+                }
                     
                 if ($inscripcion && $inscripcion->aula) {
                     $aulaNombre = $inscripcion->aula->nombre;
                 } else {
-                    $aulaNombre = $carnet->grupo;
-                    if (empty($aulaNombre) || $aulaNombre === '---') {
-                        // Rescate: Determinar grupo por carrera si no hay nada asignado
-                        $aulaNombre = $this->determinarGrupo($carnet->carrera->nombre ?? '') ?: '---';
-                    }
+                    // Modo estricto: No se autogenera el grupo por carrera si no existe el dato
+                    $aulaNombre = $carnet->grupo ?: 'POR ASIGNAR';
                 }
             }
             $turnoNombre = $carnet->turno ? $carnet->turno->nombre : '';
