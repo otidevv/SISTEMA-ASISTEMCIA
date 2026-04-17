@@ -130,7 +130,8 @@ class CarnetController extends Controller
             } elseif ($carnet->grupo) {
                 $aulaDisplay = $carnet->grupo;
             } else {
-                $aulaDisplay = 'Sin asignar';
+                // Último recurso: determinar grupo por carrera
+                $aulaDisplay = $this->determinarGrupo($carnet->carrera->nombre ?? '') ?: 'S/A';
             }
         }
 
@@ -517,7 +518,28 @@ class CarnetController extends Controller
                 if (file_exists($path)) $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
             }
 
-            $aulaNombre = $carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---');
+            // Determinación del aula (replicando la lógica de formatCarnetData)
+            $aulaNombre = '';
+            if ($carnet->aula) {
+                $aulaNombre = $carnet->aula->nombre;
+            } else {
+                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->where('estado_inscripcion', 'activo')
+                    ->whereNotNull('aula_id')
+                    ->with('aula')
+                    ->first();
+                    
+                if ($inscripcion && $inscripcion->aula) {
+                    $aulaNombre = $inscripcion->aula->nombre;
+                } else {
+                    $aulaNombre = $carnet->grupo;
+                    if (empty($aulaNombre) || $aulaNombre === '---') {
+                        // Rescate: Determinar grupo por carrera si no hay nada asignado
+                        $aulaNombre = $this->determinarGrupo($carnet->carrera->nombre ?? '') ?: '---';
+                    }
+                }
+            }
             $turnoNombre = $carnet->turno ? $carnet->turno->nombre : '';
             
             // Limpiar textos para evitar problemas con emojis en DomPDF
