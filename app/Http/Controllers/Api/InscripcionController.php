@@ -233,6 +233,17 @@ class InscripcionController extends Controller
 
             $inscripcion = Inscripcion::create($data);
 
+            // Asegurar que el usuario tenga el rol de estudiante al ser inscrito
+            $estudiante = User::find($request->estudiante_id);
+            if ($estudiante) {
+                if ($estudiante->hasRole('postulante')) {
+                    $estudiante->removeRole('postulante');
+                }
+                if (!$estudiante->hasRole('estudiante')) {
+                    $estudiante->assignRole('estudiante');
+                }
+            }
+
             // Notificar a administradores
             $admins = User::whereHas('roles', function($q) {
                 $q->where('nombre', 'admin');
@@ -649,7 +660,7 @@ class InscripcionController extends Controller
 
         // Obtener estudiantes sin inscripción activa
         $estudiantes = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'estudiante'); // Cambiado de 'name' a 'nombre' y 'Estudiante' a 'estudiante'
+            $query->whereIn('nombre', ['estudiante', 'postulante']);
         })
             ->whereNotIn('id', $estudiantesConInscripcion)
             ->where('estado', 1) // Cambiado a 1 porque estado es boolean
