@@ -102,6 +102,19 @@ class Aula extends Model
         return $this->capacidad > 0 ? round(($inscripcionesActivas / $this->capacidad) * 100, 2) : 0;
     }
 
+    /**
+     * Obtiene el conteo de inscripciones activas para un grupo específico
+     */
+    public function getInscripcionesActivasPorGrupo($cicloId, $carreraId, $turnoId)
+    {
+        return $this->inscripciones()
+            ->where('estado_inscripcion', 'activo')
+            ->where('ciclo_id', $cicloId)
+            ->where('carrera_id', $carreraId)
+            ->where('turno_id', $turnoId)
+            ->count();
+    }
+
     // Accessor para características
     public function getCaracteristicasAttribute()
     {
