@@ -479,7 +479,7 @@ class PostulacionController extends Controller
         
         // 1. Obtener el grupo de la carrera desde la base de datos
         $grupoCarrera = $carrera->grupo;
-        $nombreCompletoTurno = strtoupper($turno->nombre);
+        $nombreCompletoTurno = mb_strtoupper($turno->nombre, 'UTF-8');
         
         // Limpiar el nombre del turno para la búsqueda (ignorar emojis/iconos)
         if (str_contains($nombreCompletoTurno, 'MAÑANA')) {
