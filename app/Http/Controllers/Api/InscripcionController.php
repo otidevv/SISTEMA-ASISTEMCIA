@@ -205,9 +205,10 @@ class InscripcionController extends Controller
             ], 422);
         }
 
-        // Verificar que el estudiante no tenga una inscripción activa
+        // Verificar que el estudiante no tenga una inscripción activa EN EL MISMO CICLO
         $inscripcionActiva = Inscripcion::where('estudiante_id', $request->estudiante_id)
             ->where('estado_inscripcion', 'activo')
+            ->where('ciclo_id', $request->ciclo_id)
             ->first();
 
         if ($inscripcionActiva) {
