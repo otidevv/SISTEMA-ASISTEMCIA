@@ -21,7 +21,7 @@ class TarjetasController extends Controller
                 return response()->json(['error' => 'No hay un ciclo activo configurado.'], 404);
             }
 
-            $inscripciones = Inscripcion::with(['estudiante', 'carrera', 'aula'])
+            $inscripciones = Inscripcion::with(['estudiante', 'carrera', 'aula', 'turno'])
                 ->where('ciclo_id', $cicloActivo->id)
                 ->where('estado_inscripcion', 'activo')
                 ->whereHas('estudiante.postulaciones', function ($query) use ($cicloActivo) {
@@ -85,7 +85,7 @@ class TarjetasController extends Controller
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'aula_id' => $inscripcion->aula ? $inscripcion->aula->id : null, // Útil para agrupar
                     'codigo' => $postulacion ? $postulacion->codigo_postulante : $inscripcion->codigo_inscripcion,
-                    'grupo' => $grupo,
+                    'grupo' => ($inscripcion->aula ? $inscripcion->aula->nombre : $grupo) . ($inscripcion->turno ? ' ' . $inscripcion->turno->nombre : ''),
                     'tema' => $tema,
                     'foto' => $postulacion && $postulacion->foto_path ? asset('storage/' . $postulacion->foto_path) : null,
                     'foto_path' => $postulacion ? $postulacion->foto_path : null,

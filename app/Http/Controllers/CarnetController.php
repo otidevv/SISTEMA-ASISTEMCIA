@@ -128,9 +128,16 @@ class CarnetController extends Controller
             if ($inscripcion && $inscripcion->aula) {
                 $aulaDisplay = $inscripcion->aula->nombre;
             } elseif ($carnet->grupo) {
-                $aulaDisplay = 'Grupo ' . $carnet->grupo;
+                $aulaDisplay = $carnet->grupo;
             }
         }
+
+        // Añadir el turno al aulaDisplay para mayor claridad
+        if ($carnet->turno) {
+            $aulaDisplay .= ' ' . $carnet->turno->nombre;
+        }
+
+        $aulaDisplay = mb_strtoupper($aulaDisplay, 'UTF-8');
 
         return [
             'id' => $carnet->id,
@@ -482,7 +489,7 @@ class CarnetController extends Controller
                 'colegio' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? strtoupper($ref->colegio_procedencia) : '---',
                 'ciclo' => $carnet->ciclo->nombre ?? '---',
                 'turno' => $carnet->turno->nombre ?? 'N/A',
-                'grupo' => $carnet->grupo ?? '---',
+                'grupo' => mb_strtoupper(($carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---')) . ($carnet->turno ? ' ' . $carnet->turno->nombre : ''), 'UTF-8'),
                 'modalidad' => strtoupper(str_replace('_', ' ', $carnet->modalidad ?? 'PRESENCIAL')),
                 'fecha_vencimiento' => $carnet->fecha_vencimiento ? $carnet->fecha_vencimiento->format('d/m/Y') : '---',
                 'foto' => $foto,
