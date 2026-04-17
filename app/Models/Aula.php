@@ -60,33 +60,44 @@ class Aula extends Model
         return $query->where('capacidad', '>=', $capacidad);
     }
 
-    // Métodos
-    public function getCapacidadDisponible()
+    // Métodos con soporte para filtros dinámicos
+    public function getCapacidadDisponible($cicloId = null, $carreraId = null, $turnoId = null)
     {
-        // Contar inscripciones activas en el ciclo actual
-        $inscripcionesActivas = $this->inscripciones()
-            ->where('estado_inscripcion', 'activo')
-            ->whereHas('ciclo', function ($query) {
-                $query->where('es_activo', true);
-            })
-            ->count();
+        $query = $this->inscripciones()->where('estado_inscripcion', 'activo');
+
+        // Filtrar por ciclo específico o por ciclos activos por defecto
+        if ($cicloId) {
+            $query->where('ciclo_id', $cicloId);
+        } else {
+            $query->whereHas('ciclo', function ($q) {
+                $q->where('es_activo', true);
+            });
+        }
+
+        // Filtrar por carrera si se proporciona
+        if ($carreraId) {
+            $query->where('carrera_id', $carreraId);
+        }
+
+        // Filtrar por turno si se proporciona
+        if ($turnoId) {
+            $query->where('turno_id', $turnoId);
+        }
+
+        $inscripcionesActivas = $query->count();
 
         return $this->capacidad - $inscripcionesActivas;
     }
 
-    public function estaLlena()
+    public function estaLlena($cicloId = null, $carreraId = null, $turnoId = null)
     {
-        return $this->getCapacidadDisponible() <= 0;
+        return $this->getCapacidadDisponible($cicloId, $carreraId, $turnoId) <= 0;
     }
 
-    public function getPorcentajeOcupacion()
+    public function getPorcentajeOcupacion($cicloId = null, $carreraId = null, $turnoId = null)
     {
-        $inscripcionesActivas = $this->inscripciones()
-            ->where('estado_inscripcion', 'activo')
-            ->whereHas('ciclo', function ($query) {
-                $query->where('es_activo', true);
-            })
-            ->count();
+        $capacidadDisponible = $this->getCapacidadDisponible($cicloId, $carreraId, $turnoId);
+        $inscripcionesActivas = $this->capacidad - $capacidadDisponible;
 
         return $this->capacidad > 0 ? round(($inscripcionesActivas / $this->capacidad) * 100, 2) : 0;
     }
