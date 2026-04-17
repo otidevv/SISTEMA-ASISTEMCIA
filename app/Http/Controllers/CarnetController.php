@@ -518,9 +518,11 @@ class CarnetController extends Controller
             }
 
             $aulaNombre = $carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---');
+            $turnoNombre = $carnet->turno ? $carnet->turno->nombre : '';
             
             // Limpiar textos para evitar problemas con emojis en DomPDF
             $aulaNombreLimpia = $this->limpiarTexto($aulaNombre);
+            $turnoNombreLimpia = $this->limpiarTexto($turnoNombre);
             
             // El usuario solicitó eliminar el turno de la visualización del grupo
             $grupoFinal = $aulaNombreLimpia;
