@@ -11,8 +11,6 @@ let table;
 let selectedCarnets = [];
 
 $(document).ready(function () {
-    console.log('Carnets JS cargado');
-
     // Inicializar DataTables
     initDataTable();
 
@@ -318,7 +316,8 @@ function viewCarnetDetail(id) {
                 content += carnet.tiene_foto ? '<img src="' + default_server + '/storage/' + carnet.foto_path + '" class="img-fluid rounded" alt="Foto">' : '<div class="alert alert-warning">Sin foto</div>';
                 content += '</div>';
                 content += '<div class="col-md-8">';
-                content += '<p><strong>Código:</strong> ' + carnet.codigo + '</p>';
+                content += '<p><strong>Código Postulante:</strong> ' + carnet.codigo + '</p>';
+                content += '<p><strong>ID Carnet:</strong> ' + carnet.codigo_carnet + '</p>';
                 content += '<p><strong>Estudiante:</strong> ' + carnet.estudiante + '</p>';
                 content += '<p><strong>DNI:</strong> ' + carnet.dni + '</p>';
                 content += '<p><strong>Ciclo:</strong> ' + carnet.ciclo + '</p>';

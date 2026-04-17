@@ -113,7 +113,7 @@ class CarnetController extends Controller
     private function formatCarnetData($carnet)
     {
         // Determinación robusta del aula/grupo
-        $aulaDisplay = 'Sin asignar';
+        $aulaDisplay = '';
         if ($carnet->aula) {
             $aulaDisplay = $carnet->aula->nombre;
         } else {
@@ -129,19 +129,48 @@ class CarnetController extends Controller
                 $aulaDisplay = $inscripcion->aula->nombre;
             } elseif ($carnet->grupo) {
                 $aulaDisplay = $carnet->grupo;
+            } else {
+                $aulaDisplay = 'Sin asignar';
             }
         }
 
-        // Añadir el turno al aulaDisplay para mayor claridad
-        if ($carnet->turno) {
-            $aulaDisplay .= ' ' . $carnet->turno->nombre;
+        // Limpiar emojis y normalizar
+        $aulaDisplay = $this->limpiarTexto($aulaDisplay);
+        $turnoNombre = $carnet->turno ? $this->limpiarTexto($carnet->turno->nombre) : '';
+
+        // Añadir el turno solo si no está ya en el nombre del aula
+        if ($turnoNombre && !str_contains(strtoupper($aulaDisplay), strtoupper($turnoNombre))) {
+            $aulaDisplay .= ' ' . $turnoNombre;
         }
 
         $aulaDisplay = mb_strtoupper($aulaDisplay, 'UTF-8');
 
+        // Obtener el código de postulante o inscripción asociado para este ciclo
+        $codigoPostulante = $carnet->codigo_carnet; // Fallback
+        
+        if ($carnet->modalidad === 'reforzamiento_colegio') {
+            $ref = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)
+                ->where('ciclo_id', $carnet->ciclo_id)
+                ->first();
+            if ($ref) $codigoPostulante = $ref->codigo_reforzamiento;
+        } else {
+            $post = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)
+                ->where('ciclo_id', $carnet->ciclo_id)
+                ->first();
+            if ($post) {
+                $codigoPostulante = $post->codigo_postulante;
+            } else {
+                $ins = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->first();
+                if ($ins) $codigoPostulante = $ins->codigo_inscripcion;
+            }
+        }
+
         return [
             'id' => $carnet->id,
-            'codigo' => $carnet->codigo_carnet,
+            'codigo' => $codigoPostulante,
+            'codigo_carnet' => $carnet->codigo_carnet,
             'estudiante' => $carnet->nombre_completo,
             'dni' => $carnet->estudiante->numero_documento ?? 'N/A',
             'ciclo' => $carnet->ciclo->nombre,
@@ -453,12 +482,25 @@ class CarnetController extends Controller
             $infoAcademica = '';
 
             if ($carnet->modalidad === 'reforzamiento_colegio') {
-                $ref = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)->first();
+                $ref = \App\Models\InscripcionReforzamiento::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->first();
                 $infoAcademica = $ref ? strtoupper("{$ref->grado}° - {$ref->colegio_procedencia}") : 'REF. COLEGIO';
-                $codigoPostulante = $carnet->dni;
+                $codigoPostulante = $ref ? $ref->codigo_reforzamiento : $carnet->dni;
             } else {
-                $post = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)->first();
-                $codigoPostulante = $post ? $post->codigo_postulante : $carnet->dni;
+                $post = \App\Models\Postulacion::where('estudiante_id', $carnet->estudiante_id)
+                    ->where('ciclo_id', $carnet->ciclo_id)
+                    ->first();
+                
+                if ($post) {
+                    $codigoPostulante = $post->codigo_postulante;
+                } else {
+                    $ins = \App\Models\Inscripcion::where('estudiante_id', $carnet->estudiante_id)
+                        ->where('ciclo_id', $carnet->ciclo_id)
+                        ->first();
+                    $codigoPostulante = $ins ? $ins->codigo_inscripcion : $carnet->codigo_carnet;
+                }
+                
                 $infoAcademica = strtoupper($carnet->carrera->nombre ?? 'ADMISIÓN');
             }
 
@@ -479,17 +521,29 @@ class CarnetController extends Controller
                 if (file_exists($path)) $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
             }
 
+            $aulaNombre = $carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---');
+            $turnoNombre = $carnet->turno ? $carnet->turno->nombre : '';
+            
+            // Limpiar textos para evitar problemas con emojis en DomPDF
+            $aulaNombreLimpia = $this->limpiarTexto($aulaNombre);
+            $turnoNombreLimpia = $this->limpiarTexto($turnoNombre);
+            
+            $grupoFinal = $aulaNombreLimpia;
+            if ($turnoNombreLimpia && !str_contains(strtoupper($aulaNombreLimpia), strtoupper($turnoNombreLimpia))) {
+                $grupoFinal .= ' ' . $turnoNombreLimpia;
+            }
+
             return [
                 'id' => $carnet->id,
                 'codigo_postulante' => $codigoPostulante,
-                'nombre_completo' => strtoupper($carnet->nombre_completo),
+                'nombre_completo' => $this->limpiarTexto(strtoupper($carnet->nombre_completo)),
                 'dni' => $carnet->estudiante->numero_documento ?? 'N/A',
-                'carrera' => $infoAcademica, 
+                'carrera' => $this->limpiarTexto($infoAcademica), 
                 'grado' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? "{$ref->grado}°" : '---',
-                'colegio' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? strtoupper($ref->colegio_procedencia) : '---',
-                'ciclo' => $carnet->ciclo->nombre ?? '---',
-                'turno' => $carnet->turno->nombre ?? 'N/A',
-                'grupo' => mb_strtoupper(($carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---')) . ($carnet->turno ? ' ' . $carnet->turno->nombre : ''), 'UTF-8'),
+                'colegio' => $carnet->modalidad === 'reforzamiento_colegio' && isset($ref) ? $this->limpiarTexto(strtoupper($ref->colegio_procedencia)) : '---',
+                'ciclo' => $this->limpiarTexto($carnet->ciclo->nombre ?? '---'),
+                'turno' => $turnoNombreLimpia ?: 'N/A',
+                'grupo' => mb_strtoupper($grupoFinal, 'UTF-8'),
                 'modalidad' => strtoupper(str_replace('_', ' ', $carnet->modalidad ?? 'PRESENCIAL')),
                 'fecha_vencimiento' => $carnet->fecha_vencimiento ? $carnet->fecha_vencimiento->format('d/m/Y') : '---',
                 'foto' => $foto,
@@ -965,5 +1019,20 @@ class CarnetController extends Controller
         }
         
         return null; // Si no coincide con ningún grupo
+    }
+
+    /**
+     * Limpiar texto de emojis y caracteres especiales para DomPDF
+     */
+    private function limpiarTexto($texto)
+    {
+        if (empty($texto)) return '';
+        
+        // Expresión regular para eliminar emojis y símbolos Unicode extendidos
+        $regex = '/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{1F1E0}-\x{1F1FF}\x{1F900}-\x{1F9FF}\x{1F018}-\x{1F093}\x{1F100}-\x{1F1FF}\x{1F200}-\x{1F2FF}\x{1F300}-\x{1F5FF}\x{1F600}-\x{1F64F}\x{1F680}-\x{1F6FF}\x{1F700}-\x{1F77F}\x{1F780}-\x{1F7FF}\x{1F800}-\x{1F8FF}\x{1F900}-\x{1F9FF}\x{1FA00}-\x{1FA6F}\x{1FA70}-\x{1FAFF}]/u';
+        $texto = preg_replace($regex, '', $texto);
+        
+        // Trim de espacios adicionales que puedan quedar
+        return trim($texto);
     }
 }

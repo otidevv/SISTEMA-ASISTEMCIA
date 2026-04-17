@@ -59,7 +59,6 @@ class TarjetasController extends Controller
             $temas = ['P', 'Q', 'R'];
             $postulantes = $inscripciones->map(function ($inscripcion) use ($temas) {
                 // Lógica determinista para asignar tema basado en el ID del aula
-                // Si no hay aula, usa un hash del id de inscripción para mantener consistencia
                 $seed = $inscripcion->aula ? $inscripcion->aula->id : $inscripcion->id;
                 $temaIndex = $seed % 3;
                 $tema = $temas[$temaIndex];
@@ -79,13 +78,22 @@ class TarjetasController extends Controller
                                           ->where('ciclo_id', $inscripcion->ciclo_id)
                                           ->first();
 
+                // Limpiar textos de emojis
+                $aulaNombre = $inscripcion->aula ? $this->limpiarTexto($inscripcion->aula->nombre) : $this->limpiarTexto($grupo);
+                $turnoNombre = $inscripcion->turno ? $this->limpiarTexto($inscripcion->turno->nombre) : '';
+                
+                $grupoFinal = $aulaNombre;
+                if ($turnoNombre && !str_contains(strtoupper($aulaNombre), strtoupper($turnoNombre))) {
+                    $grupoFinal .= ' ' . $turnoNombre;
+                }
+
                 return [
-                    'nombres' => $inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido_paterno,
-                    'carrera' => $inscripcion->carrera->nombre,
-                    'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
-                    'aula_id' => $inscripcion->aula ? $inscripcion->aula->id : null, // Útil para agrupar
+                    'nombres' => $this->limpiarTexto($inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido_paterno),
+                    'carrera' => $this->limpiarTexto($inscripcion->carrera->nombre),
+                    'aula' => $aulaNombre,
+                    'aula_id' => $inscripcion->aula ? $inscripcion->aula->id : null,
                     'codigo' => $postulacion ? $postulacion->codigo_postulante : $inscripcion->codigo_inscripcion,
-                    'grupo' => ($inscripcion->aula ? $inscripcion->aula->nombre : $grupo) . ($inscripcion->turno ? ' ' . $inscripcion->turno->nombre : ''),
+                    'grupo' => strtoupper($grupoFinal),
                     'tema' => $tema,
                     'foto' => $postulacion && $postulacion->foto_path ? asset('storage/' . $postulacion->foto_path) : null,
                     'foto_path' => $postulacion ? $postulacion->foto_path : null,
