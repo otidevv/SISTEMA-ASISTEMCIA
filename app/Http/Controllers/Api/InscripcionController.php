@@ -652,30 +652,65 @@ class InscripcionController extends Controller
         return Excel::download(new InscripcionesExport($inscripciones), 'inscripciones_' . date('Y-m-d') . '.xlsx');
     }
 
-    public function estudiantesSinInscripcion()
+    public function estudiantesSinInscripcion(Request $request)
     {
-        // Obtener IDs de estudiantes con inscripciones activas
-        $estudiantesConInscripcion = Inscripcion::where('estado_inscripcion', 'activo')
-            ->pluck('estudiante_id');
+        // Obtener IDs de estudiantes con inscripciones en ciclos que actualmente están activos
+        $queryInscritos = Inscripcion::where('estado_inscripcion', 'activo');
+        
+        // Si se proporciona un ciclo, filtrar solo alumnos inscritos en ese ciclo
+        if ($request->filled('ciclo_id')) {
+            $queryInscritos->where('ciclo_id', $request->ciclo_id);
+        } else {
+            // Si no hay ciclo, usar los ciclos activos por defecto (para no bloquear todo)
+            $queryInscritos->whereHas('ciclo', function($query) {
+                $query->where('es_activo', true);
+            });
+        }
+        
+        $estudiantesConInscripcion = $queryInscritos->pluck('estudiante_id');
 
         // Obtener estudiantes sin inscripción activa
-        $estudiantes = User::whereHas('roles', function ($query) {
+        $queryEstudiantes = User::whereHas('roles', function ($query) {
             $query->whereIn('nombre', ['estudiante', 'postulante']);
-        })
-            ->whereNotIn('id', $estudiantesConInscripcion)
-            ->where('estado', 1) // Cambiado a 1 porque estado es boolean
+        });
+
+        // Si se nos pide por ciclo, solo mostrar los que postularon a ese ciclo y están aprobados
+        if ($request->filled('ciclo_id')) {
+            $queryEstudiantes->whereHas('postulaciones', function($q) use ($request) {
+                $q->where('ciclo_id', $request->ciclo_id)
+                  ->where('estado', 'aprobado');
+            });
+        }
+
+        $estudiantes = $queryEstudiantes->whereNotIn('id', $estudiantesConInscripcion)
+            ->where('estado', 1) 
             ->orderBy('apellido_paterno')
             ->orderBy('apellido_materno')
             ->orderBy('nombre')
             ->get()
             ->map(function ($estudiante) {
+                // Buscar la última postulación aprobada para sugerir datos
+                $postulacion = $estudiante->postulaciones()
+                    ->where('estado', 'aprobado')
+                    ->with(['carrera', 'ciclo', 'turno'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+
                 return [
                     'id' => $estudiante->id,
                     'nombre_completo' => $estudiante->nombre . ' ' .
                         $estudiante->apellido_paterno . ' ' .
                         $estudiante->apellido_materno,
-                    'codigo' => $estudiante->numero_documento, // Usando numero_documento como código
-                    'email' => $estudiante->email
+                    'codigo' => $estudiante->numero_documento,
+                    'email' => $estudiante->email,
+                    'sugerencia' => $postulacion ? [
+                        'carrera_id' => $postulacion->carrera_id,
+                        'ciclo_id' => $postulacion->ciclo_id,
+                        'turno_id' => $postulacion->turno_id,
+                        'carrera_nombre' => $postulacion->carrera->nombre,
+                        'ciclo_nombre' => $postulacion->ciclo->nombre,
+                        'turno_nombre' => $postulacion->turno->nombre,
+                    ] : null
                 ];
             });
 

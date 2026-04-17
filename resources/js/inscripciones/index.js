@@ -149,13 +149,19 @@ $(document).ready(function() {
     cargarFiltros();
 
     // Función para cargar estudiantes sin inscripción
-    function cargarEstudiantes() {
+    function cargarEstudiantes(cicloId = null) {
+        let url = default_server + "/json/estudiantes-sin-inscripcion";
+        if (cicloId) url += "?ciclo_id=" + cicloId;
+
         $.ajax({
-            url: default_server + "/json/estudiantes-sin-inscripcion",
+            url: url,
             type: 'GET',
             success: function(response) {
                 if (response.success) {
                     $('#estudiante_id').empty().append('<option value="">Seleccione un estudiante...</option>');
+                    // Guardar los datos de los estudiantes para acceder a las sugerencias
+                    window.estudiantesData = response.data;
+                    
                     response.data.forEach(function(estudiante) {
                         $('#estudiante_id').append(
                             `<option value="${estudiante.id}">${estudiante.nombre_completo} - ${estudiante.codigo || 'Sin documento'}</option>`
@@ -168,6 +174,41 @@ $(document).ready(function() {
             }
         });
     }
+
+    // Evento al cambiar el ciclo para filtrar estudiantes
+    $('#ciclo_id').on('change', function() {
+        const cicloId = $(this).val();
+        cargarEstudiantes(cicloId);
+    });
+
+    // Evento al seleccionar un estudiante para auto-completar
+    $('#estudiante_id').on('change', function() {
+        const studentId = $(this).val();
+        if (!studentId || !window.estudiantesData) return;
+
+        const student = window.estudiantesData.find(s => s.id == studentId);
+        if (student && student.sugerencia) {
+            const sug = student.sugerencia;
+            
+            // Auto-completar campos
+            $('#ciclo_id').val(sug.ciclo_id);
+            $('#carrera_id').val(sug.carrera_id);
+            $('#turno_id').val(sug.turno_id);
+
+            // Bloquear los campos para evitar discrepancias (opcional, pero recomendado)
+            $('#ciclo_id, #carrera_id, #turno_id').addClass('is-valid');
+
+            Toast.fire({
+                icon: 'info',
+                title: 'Datos pre-cargados',
+                text: `Se cargó Carrera: ${sug.carrera_nombre} y Turno: ${sug.turno_nombre} desde la postulación aprobada.`,
+                timer: 4000
+            });
+
+            // Disparar carga de aulas disponibles con los nuevos datos
+            cargarAulas();
+        }
+    });
 
     // Función para cargar carreras
     function cargarCarreras() {
@@ -245,11 +286,18 @@ $(document).ready(function() {
         });
     }
 
-    // Función para cargar aulas
+    // Función para cargar aulas con disponibilidad real basada en Ciclo, Carrera y Turno
     function cargarAulas() {
+        const params = {
+            ciclo_id: $('#ciclo_id').val(),
+            carrera_id: $('#carrera_id').val(),
+            turno_id: $('#turno_id').val()
+        };
+
         $.ajax({
             url: default_server + "/json/inscripciones/aulas-disponibles",
             type: 'GET',
+            data: params,
             success: function(response) {
                 if (response.success) {
                     const aulasOptions = '<option value="">Seleccione un aula...</option>' +
@@ -261,11 +309,13 @@ $(document).ready(function() {
 
                     $('#aula_id, #edit_aula_id').html(aulasOptions);
 
-                    // Para filtros (todas las aulas)
-                    $('#filtro-aula').html('<option value="">Todas las aulas</option>' +
-                        response.data.map(aula =>
-                            `<option value="${aula.id}">${aula.codigo} - ${aula.nombre}</option>`
-                        ).join(''));
+                    // Para filtros (todas las aulas sin parámetros)
+                    if (!params.ciclo_id) {
+                        $('#filtro-aula').html('<option value="">Todas las aulas</option>' +
+                            response.data.map(aula =>
+                                `<option value="${aula.id}">${aula.codigo} - ${aula.nombre}</option>`
+                            ).join(''));
+                    }
                 }
             },
             error: function() {
