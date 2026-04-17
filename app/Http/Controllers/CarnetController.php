@@ -138,11 +138,7 @@ class CarnetController extends Controller
         $aulaDisplay = $this->limpiarTexto($aulaDisplay);
         $turnoNombre = $carnet->turno ? $this->limpiarTexto($carnet->turno->nombre) : '';
 
-        // Añadir el turno solo si no está ya en el nombre del aula
-        if ($turnoNombre && !str_contains(strtoupper($aulaDisplay), strtoupper($turnoNombre))) {
-            $aulaDisplay .= ' ' . $turnoNombre;
-        }
-
+        // El usuario solicitó eliminar el turno de la visualización
         $aulaDisplay = mb_strtoupper($aulaDisplay, 'UTF-8');
 
         // Obtener el código de postulante o inscripción asociado para este ciclo
@@ -522,16 +518,12 @@ class CarnetController extends Controller
             }
 
             $aulaNombre = $carnet->aula ? $carnet->aula->nombre : ($carnet->grupo ?? '---');
-            $turnoNombre = $carnet->turno ? $carnet->turno->nombre : '';
             
             // Limpiar textos para evitar problemas con emojis en DomPDF
             $aulaNombreLimpia = $this->limpiarTexto($aulaNombre);
-            $turnoNombreLimpia = $this->limpiarTexto($turnoNombre);
             
+            // El usuario solicitó eliminar el turno de la visualización del grupo
             $grupoFinal = $aulaNombreLimpia;
-            if ($turnoNombreLimpia && !str_contains(strtoupper($aulaNombreLimpia), strtoupper($turnoNombreLimpia))) {
-                $grupoFinal .= ' ' . $turnoNombreLimpia;
-            }
 
             return [
                 'id' => $carnet->id,

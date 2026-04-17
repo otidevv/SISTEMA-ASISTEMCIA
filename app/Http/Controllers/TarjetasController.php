@@ -78,14 +78,9 @@ class TarjetasController extends Controller
                                           ->where('ciclo_id', $inscripcion->ciclo_id)
                                           ->first();
 
-                // Limpiar textos de emojis
+                // Limpiar textos de emojis y asignar grupo final sin turno
                 $aulaNombre = $inscripcion->aula ? $this->limpiarTexto($inscripcion->aula->nombre) : $this->limpiarTexto($grupo);
-                $turnoNombre = $inscripcion->turno ? $this->limpiarTexto($inscripcion->turno->nombre) : '';
-                
                 $grupoFinal = $aulaNombre;
-                if ($turnoNombre && !str_contains(strtoupper($aulaNombre), strtoupper($turnoNombre))) {
-                    $grupoFinal .= ' ' . $turnoNombre;
-                }
 
                 return [
                     'nombres' => $this->limpiarTexto($inscripcion->estudiante->nombre . ' ' . $inscripcion->estudiante->apellido_paterno),
