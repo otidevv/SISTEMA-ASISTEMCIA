@@ -203,12 +203,13 @@
             text-align: center;
         }
         .firma-espacio {
-            border: 1px solid #ddd;
+            border: 1px solid #777;
             height: 90px;
             width: 200px;
             margin: 0 auto 5px auto;
-            background-color: #fafafa;
+            background-color: transparent;
         }
+
 
 
         .footer-qr-container {
