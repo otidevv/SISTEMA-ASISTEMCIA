@@ -18,12 +18,6 @@
         --danger-gradient: linear-gradient(135deg, #ea5455 0%, #ff5252 100%);
     }
 
-    .badge-a { background: rgba(236, 0, 140, 0.1) !important; color: var(--cepre-pink) !important; } /* Rosa */
-    .badge-b { background: rgba(140, 198, 63, 0.1) !important; color: var(--cepre-green) !important; } /* Verde */
-    .badge-c { background: rgba(0, 174, 239, 0.1) !important; color: var(--cepre-blue) !important; } /* Azul */
-    .badge-d { background: rgba(255, 242, 0, 0.2) !important; color: #9c9400 !important; } /* Amarillo */
-
-
     .report-card {
         border: none;
         border-radius: 15px;
@@ -70,7 +64,10 @@
 
     .preview-container {
         display: none;
-        margin-top: 2rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
         animation: fadeIn 0.5s ease;
     }
 
@@ -80,52 +77,40 @@
     }
 
     .table-premium {
-        border-collapse: separate;
-        border-spacing: 0 8px;
+        width: 100%;
+        border-collapse: collapse !important;
+        background-color: white;
     }
 
     .table-premium thead th {
-        background: transparent;
-        border: none;
-        color: #6c757d;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        padding: 12px 20px;
-    }
-
-    .table-premium tbody tr {
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        background: white;
-        transition: all 0.2s ease;
-    }
-
-    .table-premium tbody tr:hover {
-        transform: scale(1.01);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        background-color: #f8f9fa !important;
+        border: 1px solid #999 !important;
+        color: var(--cepre-dark-blue);
+        padding: 10px;
+        font-weight: bold;
+        text-align: center;
     }
 
     .table-premium tbody td {
-        background: white;
-        border: none;
-        padding: 15px 20px;
+        border: 1px solid #999 !important;
+        padding: 8px 12px;
         vertical-align: middle;
+        background-color: #fff;
+        color: #333;
     }
 
-    .table-premium tbody td:first-child { border-radius: 10px 0 0 10px; }
-    .table-premium tbody td:last-child { border-radius: 0 10px 10px 0; }
+    /* Colores Institucionales para la Vista Previa */
+    .tr-grupo-a { background-color: #FCE6F4 !important; }
+    .tr-grupo-b { background-color: #F1F9E8 !important; }
+    .tr-grupo-c { background-color: #E6F7FE !important; }
+    .tr-grupo-d { background-color: #FFFEE6 !important; }
 
     .group-badge {
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
         font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
     }
-
-    .badge-a { background: rgba(79, 50, 194, 0.1); color: #4f32c2; }
-    .badge-b { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-    .badge-c { background: rgba(255, 159, 67, 0.1); color: #ff9f43; }
-    .badge-d { background: rgba(234, 84, 85, 0.1); color: #ea5455; }
 </style>
 @endpush
 
@@ -216,11 +201,11 @@
                                     <table class="table table-premium" id="previewTable">
                                         <thead>
                                             <tr>
-                                                <th>#</th>
-                                                <th>Grupo</th>
-                                                <th>Carrera</th>
-                                                <th>Aula</th>
-                                                <th class="text-center">Total</th>
+                                                <th style="width: 30px;">#</th>
+                                                <th style="width: 80px;">Grupo</th>
+                                                <th>Carrera / Grado</th>
+                                                <th style="width: 100px;">Aula</th>
+                                                <th style="width: 80px;" class="text-center">Total</th>
                                             </tr>
                                         </thead>
                                         <tbody id="previewBody">
@@ -239,7 +224,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Aula</th>
-                                                <th class="text-center">Cant.</th>
+                                                <th class="text-center">Cant. Postulantes</th>
                                             </tr>
                                         </thead>
                                         <tbody id="summaryBody">
@@ -263,7 +248,6 @@
         $('#btnPreview').on('click', function() {
             const formData = $('#filterForm').serialize();
             
-            // Show loading or similar
             $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Cargando...');
 
             $.ajax({
@@ -291,28 +275,57 @@
             let bodyHtml = '';
             let totalGeneral = 0;
 
-            // Render Main Table
-            data.tabla1.forEach((row, index) => {
-                if (index < 2) return; // Skip headers
-                if (row.length < 5) return;
+            // Identificar rowspans
+            let rowspansGrupo = {};
+            let rowspansCarrera = {};
+            let lastGrupoIdx = -1;
+            let lastCarreraIdx = -1;
+
+            data.tabla1.forEach((row, i) => {
+                if (row[1] != '') {
+                    lastGrupoIdx = i;
+                    rowspansGrupo[i] = 1;
+                } else if (lastGrupoIdx != -1) {
+                    rowspansGrupo[lastGrupoIdx]++;
+                }
                 
+                if (row[2] != '' && row[2] != 'Total') {
+                    lastCarreraIdx = i;
+                    rowspansCarrera[i] = 1;
+                } else if (lastCarreraIdx != -1 && row[2] == '') {
+                    rowspansCarrera[lastCarreraIdx]++;
+                }
+            });
+
+            // Render Main Table
+            let currentGrupoClass = '';
+            data.tabla1.forEach((row, index) => {
                 const isTotalRow = row[2] === 'Total';
                 if (isTotalRow) {
                     totalGeneral = row[4];
                     return;
                 }
 
-                const groupClass = 'badge-' + (row[1]?.split(' ')[1] || 'default').toLowerCase();
+                if (row[1] != '') {
+                    const letra = (row[1].trim().slice(-1)).toLowerCase();
+                    currentGrupoClass = 'tr-grupo-' + letra;
+                }
+
+                bodyHtml += `<tr class="${currentGrupoClass}">`;
                 
+                if (rowspansGrupo[index]) {
+                    bodyHtml += `<td class="text-center fw-bold align-middle" rowspan="${rowspansGrupo[index]}">${row[0]}</td>`;
+                    bodyHtml += `<td class="text-center fw-bold align-middle" rowspan="${rowspansGrupo[index]}">${row[1]}</td>`;
+                }
+
+                if (rowspansCarrera[index]) {
+                    bodyHtml += `<td class="align-middle fw-bold" rowspan="${rowspansCarrera[index]}">${row[2]}</td>`;
+                }
+
                 bodyHtml += `
-                    <tr>
-                        <td class="fw-bold text-muted">${row[0] || ''}</td>
-                        <td>${row[1] ? `<span class="group-badge ${groupClass}">${row[1]}</span>` : ''}</td>
-                        <td class="fw-bold text-dark">${row[2]}</td>
-                        <td><span class="badge bg-light text-dark shadow-sm border">${row[3]}</span></td>
-                        <td class="text-center"><span class="fw-bold text-primary">${row[4]}</span></td>
-                    </tr>
-                `;
+                    <td class="align-middle">${row[3]}</td>
+                    <td class="text-center align-middle fw-bold font-size-15">${row[4]}</td>
+                </tr>`;
             });
 
             $('#previewBody').html(bodyHtml);
@@ -326,13 +339,20 @@
             // Render Summary Table
             let summaryHtml = '';
             data.tabla2.forEach((row, index) => {
-                if (index < 2) return;
-                if (row[0] === 'Total') return;
+                if (row[0] === 'Total') {
+                    summaryHtml += `
+                        <tr class="table-light">
+                            <td class="fw-bold text-uppercase text-primary">Total</td>
+                            <td class="text-center fw-bold text-primary">${row[1]}</td>
+                        </tr>
+                    `;
+                    return;
+                }
 
                 summaryHtml += `
                     <tr>
                         <td class="fw-bold">${row[0]}</td>
-                        <td class="text-center font-size-15 fw-bold text-info">${row[1]}</td>
+                        <td class="text-center fw-bold text-info font-size-15">${row[1]}</td>
                     </tr>
                 `;
             });
