@@ -373,7 +373,8 @@
             <td class="firma-celda">
                 <div class="firma-espacio"></div>
                 <div style="font-size: 7.5pt; color: #777; margin-bottom: 3px;">Firma del Postulante</div>
-                <div style="font-size: 7.5pt;"><strong>{{ strtoupper($estudiante->nombre) }} {{ strtoupper($estudiante->apellido_paterno) }}</strong><br>DNI: {{ $estudiante->numero_documento }}</div>
+                <div style="font-size: 7.5pt;"><strong>{{ strtoupper($estudiante->nombre) }} {{ strtoupper($estudiante->apellido_paterno) }} {{ strtoupper($estudiante->apellido_materno) }}</strong><br>DNI: {{ $estudiante->numero_documento }}</div>
+
             </td>
             <td class="firma-celda">
                 <div class="firma-espacio" style="width: 80px;"></div>
@@ -387,8 +388,8 @@
     <div class="importante-box">
         <h4>INDICACIONES IMPORTANTES:</h4>
         <ul>
-            <li>Este documento es indispensable para su identificación en el examen y procesos académicos.</li>
             <li>Debe imprimirlo, firmarlo, colocar su huella digital y subirlo escaneado al sistema institucional.</li>
+
             <li>Cualquier alteración o falsedad en los datos anulará automáticamente su inscripción.</li>
         </ul>
     </div>
