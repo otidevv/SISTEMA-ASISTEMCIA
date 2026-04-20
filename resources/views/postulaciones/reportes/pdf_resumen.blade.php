@@ -118,6 +118,11 @@
         .badge-c { background-color: #E6F7FE; color: #00aeef; }
         .badge-d { background-color: #FFFEE6; color: #9c9400; }
 
+        .tr-grupo-a { background-color: #FCE6F4 !important; }
+        .tr-grupo-b { background-color: #F1F9E8 !important; }
+        .tr-grupo-c { background-color: #E6F7FE !important; }
+        .tr-grupo-d { background-color: #FFFEE6 !important; }
+
         .footer {
             position: fixed;
             bottom: 0;
@@ -128,6 +133,7 @@
             border-top: 1px solid #eee;
             padding-top: 5px;
         }
+
     </style>
 </head>
 <body>
@@ -161,38 +167,89 @@
     <div class="clearfix">
         <div class="main-box table-container">
             <div class="table-title">Distribución por Carrera y Aula</div>
+            @php
+
+                $rowspansGrupo = [];
+                $rowspansCarrera = [];
+                
+                // Pre-calcular rowspans para Grupo (col 1) y Carrera (col 2)
+                $lastGrupoIdx = -1;
+                $lastCarreraIdx = -1;
+                
+                foreach($tabla1 as $i => $row) {
+                    if($row[1] != '') {
+                        $lastGrupoIdx = $i;
+                        $rowspansGrupo[$i] = 1;
+                    } else if($lastGrupoIdx != -1) {
+                        $rowspansGrupo[$lastGrupoIdx]++;
+                    }
+                    
+                    if($row[2] != '' && $row[2] != 'Total') {
+                        $lastCarreraIdx = $i;
+                        $rowspansCarrera[$i] = 1;
+                    } else if($lastCarreraIdx != -1 && $row[2] == '') {
+                        $rowspansCarrera[$lastCarreraIdx]++;
+                    }
+                }
+            @endphp
+
             <table>
                 <thead>
                     <tr>
                         <th style="width: 30px;">#</th>
-                        <th style="width: 60px;">Grupo</th>
+                        <th style="width: 70px;">Grupo</th>
                         <th>Carrera / Grado</th>
-                        <th style="width: 60px;">Aula</th>
-                        <th style="width: 50px;">Total</th>
+                        <th style="width: 70px;">Aula</th>
+                        <th style="width: 60px;">Total</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @php $currentGrupoClass = ''; @endphp
                     @foreach($tabla1 as $index => $row)
-                        @php $isTotal = $row[2] === 'Total'; @endphp
+                        @php 
+                            $isTotal = $row[2] === 'Total'; 
+                            if ($row[1] != '') {
+                                $letra = strtolower(trim(substr($row[1], -1)));
+                                $currentGrupoClass = 'tr-grupo-' . $letra;
+                            }
+                        @endphp
 
-                        <tr class="{{ $isTotal ? 'total-row' : '' }}">
-                            <td class="text-center">{{ $row[0] }}</td>
-                            <td class="text-center">
-                                @if($row[1])
-                                    @php 
-                                        $letra = strtolower(trim(substr($row[1], -1))); 
-                                    @endphp
-                                    <span class="badge-grupo badge-{{ $letra }}">{{ $row[1] }}</span>
-                                @endif
-                            </td>
+                        <tr class="{{ $isTotal ? 'total-row' : $currentGrupoClass }}">
+                            {{-- Columna # --}}
+                            @if(isset($rowspansGrupo[$index]))
+                                <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
+                                    {{ $row[0] }}
+                                </td>
+                            @endif
 
-                            <td>{{ $row[2] }}</td>
-                            <td class="text-center">{{ $row[3] }}</td>
-                            <td class="text-center fw-bold">{{ $row[4] }}</td>
+                            {{-- Columna Grupo --}}
+                            @if(isset($rowspansGrupo[$index]))
+                                <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
+                                    {{ $row[1] }}
+                                </td>
+                            @endif
+
+                            {{-- Columna Carrera --}}
+                            @if(isset($rowspansCarrera[$index]))
+                                <td rowspan="{{ $rowspansCarrera[$index] }}">
+                                    <strong>{{ $row[2] }}</strong>
+                                </td>
+                            @elseif($isTotal)
+                                <td colspan="2" class="text-right"><strong>TOTAL GENERAL</strong></td>
+                            @endif
+
+                            {{-- Columna Aula y Total --}}
+                            @if(!$isTotal)
+                                <td class="text-center">{{ $row[3] }}</td>
+                                <td class="text-center fw-bold">{{ $row[4] }}</td>
+                            @else
+                                <td class="text-center fw-bold" style="background-color: #FCE6F4;">{{ $row[4] }}</td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+
         </div>
 
         <div class="summary-box table-container">

@@ -1377,7 +1377,20 @@ class PostulacionController extends Controller
             }
         }
 
+        // Función para limpiar emojis y caracteres no renderizables
+        $cleanText = function($text) {
+            if (empty($text)) return '';
+            $cleaned = preg_replace('/[^\x20-\x7E\xA0-\xFF\p{L}\p{N}\p{P}\s]/u', '', $text);
+            return trim($cleaned);
+        };
+
+        $tabla1 = array_map(function($row) use ($cleanText) {
+            if (isset($row[2])) $row[2] = $cleanText($row[2]);
+            return $row;
+        }, $tabla1);
+
         $pdf = Pdf::loadView('postulaciones.reportes.pdf_resumen', compact('tabla1', 'tabla2', 'ciclo'));
+
 
         $pdf->setPaper('a4', 'portrait');
         
@@ -1415,13 +1428,26 @@ class PostulacionController extends Controller
                 }
             }
 
+            // Función para limpiar emojis y caracteres no renderizables
+            $cleanText = function($text) {
+                if (empty($text)) return '';
+                // Eliminar caracteres especiales/emojis (fuera del rango básico de texto)
+                $cleaned = preg_replace('/[^\x20-\x7E\xA0-\xFF\p{L}\p{N}\p{P}\s]/u', '', $text);
+                // Limpiar espacios extra
+                return trim($cleaned);
+            };
+
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'tabla1' => $tabla1,
+                    'tabla1' => array_map(function($row) use ($cleanText) {
+                        if (isset($row[2])) $row[2] = $cleanText($row[2]);
+                        return $row;
+                    }, $tabla1),
                     'tabla2' => $tabla2
                 ]
             ]);
+
 
         } catch (\Exception $e) {
             return response()->json([
