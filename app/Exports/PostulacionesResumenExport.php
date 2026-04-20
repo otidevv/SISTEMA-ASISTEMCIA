@@ -22,44 +22,22 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
     protected $carrerasPorGrupo = [];
     protected $table1RowCount = 0;
 
-    // Definir grupos de carreras con sus colores
+    // Definir grupos de carreras con sus colores institucionales (Versiones pasteles para fondo)
     protected $gruposCarreras = [
         'Grupo A' => [
-            'carreras' => [
-                'INGENIERÍA AGROINDUSTRIAL',
-                'INGENIERÍA DE SISTEMAS E INFORMÁTICA',
-                'INGENIERÍA FORESTAL Y MEDIO AMBIENTE'
-            ],
-            'color' => 'E8F4F8' // Azul claro
+            'color' => 'FCE6F4' // Rosa Cepre muy claro
         ],
         'Grupo B' => [
-            'carreras' => [
-                'ENFERMERÍA',
-                'MEDICINA VETERINARIA - ZOOTECNIA',
-                'BIOLOGÍA'
-            ],
-            'color' => 'F8E8E8' // Rosa claro
+            'color' => 'F1F9E8' // Verde Cepre muy claro
         ],
         'Grupo C' => [
-            'carreras' => [
-                'ADMINISTRACIÓN Y NEGOCIOS INTERNACIONALES',
-                'CONTABILIDAD Y FINANZAS',
-                'DERECHO Y CIENCIAS POLÍTICAS',
-                'ECOTURISMO',
-                'EDUCACIÓN: ESPECIALIDAD INICIAL Y ESPECIAL',
-                'EDUCACIÓN: ESPECIALIDAD MATEMÁTICA Y COMPUTACIÓN',
-                'EDUCACIÓN: ESPECIALIDAD PRIMARIA E INFORMÁTICA',
-                'ECONOMÍA'
-            ],
-            'color' => 'F8F4E8' // Amarillo claro
+            'color' => 'E6F7FE' // Azul Cepre muy claro
         ],
         'Grupo D' => [
-            'carreras' => [
-                'MEDICINA HUMANA'
-            ],
-            'color' => 'E8F8E8' // Verde claro
+            'color' => 'FFFEE6' // Amarillo Cepre muy claro
         ]
     ];
+
 
     public function __construct($ciclo_id, $carrera_id, $turno_id, $aula_id)
     {
@@ -73,15 +51,43 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
     private function encontrarGrupo($carrera)
     {
         $carreraNormalizada = strtoupper(trim($carrera));
-        foreach ($this->gruposCarreras as $nombreGrupo => $grupoData) {
-            foreach ($grupoData['carreras'] as $carreraGrupo) {
-                if (strtoupper(trim($carreraGrupo)) === $carreraNormalizada) {
-                    return $nombreGrupo;
-                }
-            }
+        
+        // GRUPO A: Ingenierías
+        if (strpos($carreraNormalizada, 'INGENIER') !== false) {
+            return 'Grupo A';
         }
-        return 'Sin Grupo';
+        
+        // GRUPO B: Ciencias de la Salud y Biológicas (Excepto Medicina Humana)
+        if (strpos($carreraNormalizada, 'ENFERMER') !== false || 
+            strpos($carreraNormalizada, 'VETERINARIA') !== false || 
+            strpos($carreraNormalizada, 'BIOLOG') !== false) {
+            return 'Grupo B';
+        }
+
+        // GRUPO D: Medicina Humana (Grupo más exclusivo)
+        if (strpos($carreraNormalizada, 'MEDICINA HUMANA') !== false) {
+            return 'Grupo D';
+        }
+        
+        // GRUPO C: Ciencias Sociales, Administrativas, Contables, Educación y Humanidades
+        // Aquí entraría Administración, Derecho, Contabilidad, Educación, Economía, Ecoturismo
+        return 'Grupo C';
     }
+
+    private function formatCarrera($carrera)
+    {
+        if (empty($carrera)) return "";
+        
+        // Convertimos todo a minúsculas respetando UTF-8
+        $carreraLower = mb_strtolower(trim($carrera), "UTF-8");
+        
+        // Usamos una expresión regular para encontrar solo las palabras (letras)
+        // y aplicarles Title Case, dejando intactos emojis y símbolos.
+        return preg_replace_callback('/\b\p{L}+/u', function($matches) {
+            return mb_convert_case($matches[0], MB_CASE_TITLE, "UTF-8");
+        }, $carreraLower);
+    }
+
 
     public function array(): array
     {
@@ -189,10 +195,11 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
                     $report[] = [
                         $primeraFilaDelGrupo ? $numeroGrupo : '',
                         $primeraFilaDelGrupo ? $nombreGrupo : '',
-                        $primeraFilaDeCarrera ? ucwords(strtolower($carrera)) : '',
+                        $primeraFilaDeCarrera ? $this->formatCarrera($carrera) : '',
                         $aulaNombre,
                         $total
                     ];
+
                     $totalesGeneral += $total;
                     $primeraFilaDelGrupo = false;
                     $primeraFilaDeCarrera = false;
@@ -200,6 +207,7 @@ class PostulacionesResumenExport implements FromArray, WithStyles, WithColumnWid
             }
             $numeroGrupo++;
         }
+
         $report[] = ['', '', 'Total', '', $totalesGeneral];
         return $report;
     }

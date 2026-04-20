@@ -350,6 +350,10 @@ Route::middleware('auth')->group(function () {
         // Exportar reportes
         Route::post('/postulaciones/reportes/completos/exportar', [PostulacionController::class, 'exportarReporteCompleto'])->name('postulaciones.reportes.completos.exportar')->middleware('can:postulaciones.export');
         Route::post('/postulaciones/reportes/resumen/exportar', [PostulacionController::class, 'exportarReporteResumen'])->name('postulaciones.reportes.resumen.exportar')->middleware('can:postulaciones.export');
+        Route::post('/postulaciones/reportes/resumen/pdf', [PostulacionController::class, 'exportarReporteResumenPdf'])->name('postulaciones.reportes.resumen.exportar_pdf')->middleware('can:postulaciones.export');
+        Route::post('/postulaciones/reportes/resumen/data', [PostulacionController::class, 'getReporteResumenData'])->name('postulaciones.reportes.get-resumen-data')->middleware('can:postulaciones.reports');
+
+
         Route::post('/postulaciones/reportes/inhabilitados/pdf', [PostulacionController::class, 'reporteInhabilitadosPdf'])->name('postulaciones.reportes.inhabilitados.pdf')->middleware('can:postulaciones.reportes.inhabilitados');
         Route::post('/postulaciones/reportes/inhabilitados/excel', [PostulacionController::class, 'reporteInhabilitadosExcel'])->name('postulaciones.reportes.inhabilitados.excel')->middleware('can:postulaciones.reportes.inhabilitados');
     });

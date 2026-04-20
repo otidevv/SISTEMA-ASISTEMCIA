@@ -1333,6 +1333,85 @@ class PostulacionController extends Controller
         return Excel::download(new PostulacionesResumenExport($ciclo_id, $carrera_id, $turno_id, $aula_id), 'postulaciones_resumen.xlsx');
     }
 
+    /**
+     * Exportar reporte resumen a PDF
+     */
+    public function exportarReporteResumenPdf(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.export')) {
+            abort(403);
+        }
+
+        $ciclo_id = $request->input('ciclo_id');
+        $carrera_id = $request->input('carrera_id');
+        $turno_id = $request->input('turno_id');
+        $aula_id = $request->input('aula_id');
+
+        $ciclo = Ciclo::find($ciclo_id);
+        
+        $export = new PostulacionesResumenExport($ciclo_id, $carrera_id, $turno_id, $aula_id);
+        $dataArray = $export->array();
+
+        $tabla1 = [];
+        $tabla2 = [];
+        foreach ($dataArray as $row) {
+            $tabla1[] = array_slice($row, 0, 5);
+            if (isset($row[6]) && $row[6] !== '') {
+                $tabla2[] = array_slice($row, 6, 2);
+            }
+        }
+
+        $pdf = Pdf::loadView('postulaciones.reportes.pdf_resumen', compact('tabla1', 'tabla2', 'ciclo'));
+        $pdf->setPaper('a4', 'portrait');
+        
+        return $pdf->download('reporte_resumen_' . ($ciclo ? $ciclo->nombre : 'general') . '_' . date('Ymd_His') . '.pdf');
+    }
+
+    /**
+     * Obtener datos del reporte resumen para AJAX
+     */
+    public function getReporteResumenData(Request $request)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.reports')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $ciclo_id = $request->input('ciclo_id');
+            $carrera_id = $request->input('carrera_id');
+            $turno_id = $request->input('turno_id');
+            $aula_id = $request->input('aula_id');
+
+            $export = new PostulacionesResumenExport($ciclo_id, $carrera_id, $turno_id, $aula_id);
+            $dataArray = $export->array();
+
+            $tabla1 = [];
+            $tabla2 = [];
+            foreach ($dataArray as $row) {
+                // Main Table
+                $tabla1[] = array_slice($row, 0, 5);
+                // Summary Table
+                if (isset($row[6]) && $row[6] !== '') {
+                    $tabla2[] = array_slice($row, 6, 2);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'tabla1' => $tabla1,
+                    'tabla2' => $tabla2
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function getStats(Request $request)
     {
         if (!Auth::user()->hasPermission('postulaciones.view')) {
