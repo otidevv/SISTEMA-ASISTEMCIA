@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
 
 class ConstanciaPostulacionController extends Controller
@@ -38,18 +39,41 @@ class ConstanciaPostulacionController extends Controller
             
             // Usar el código de postulante o el ID si no existe
             $codigoPostulante = $postulacion->codigo_postulante ?: ('TEMP-' . $postulacion->id);
+            $codigoVerificacion = md5($postulacion->id . $codigoPostulante);
+
+            // Generar QR para validación (Formato SVG para no requerir imagick)
+            $urlValidacion = url("/validar-constancia/{$codigoVerificacion}");
+            $qrCode = QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion);
+
             
+            // Función helper local para formatear nombres preservando emojis y limpiando basura (?)
+            $formatText = function($text) {
+                if (empty($text)) return "";
+                // Limpiar explícitamente signos de interrogación que puedan venir por mala codificación en DB
+                $text = preg_replace('/^\?\s*/', '', trim($text));
+                
+                $lower = mb_strtolower($text, "UTF-8");
+                return preg_replace_callback('/\b\p{L}+/u', function($m) {
+                    return mb_convert_case($m[0], MB_CASE_TITLE, "UTF-8");
+                }, $lower);
+            };
+
             // Preparar datos para la vista
             $data = [
                 'postulacion' => $postulacion,
                 'estudiante' => $postulacion->estudiante,
                 'ciclo' => $postulacion->ciclo,
-                'carrera' => $postulacion->carrera,
-                'turno' => $postulacion->turno,
+                'carrera_nombre' => $formatText($postulacion->carrera->nombre),
+                'turno_nombre' => $formatText($postulacion->turno->nombre),
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'codigo_postulante' => $codigoPostulante,
-                'codigo_verificacion' => md5($postulacion->id . $codigoPostulante)
+                'codigo_verificacion' => $codigoVerificacion,
+                'qr_code' => $qrCode
             ];
+
+
+
+
             
             // Generar PDF
             $pdf = PDF::loadView('pdf.constancia-postulacion', $data);
@@ -187,16 +211,39 @@ class ConstanciaPostulacionController extends Controller
             } else {
                 // Si no existe, regenera la constancia original para su visualización.
                 $codigoPostulante = $postulacion->codigo_postulante ?: ('TEMP-' . $postulacion->id);
+                $codigoVerificacion = md5($postulacion->id . $codigoPostulante);
+                
+                // Generar QR para validación (Formato SVG para no requerir imagick)
+                $urlValidacion = url("/validar-constancia/{$codigoVerificacion}");
+                $qrCode = QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion);
+
+                // Función helper local para formatear nombres preservando emojis y limpiando basura (?)
+                $formatText = function($text) {
+                    if (empty($text)) return "";
+                    // Limpiar explícitamente signos de interrogación que puedan venir por mala codificación en DB
+                    $text = preg_replace('/^\?\s*/', '', trim($text));
+                    
+                    $lower = mb_strtolower($text, "UTF-8");
+                    return preg_replace_callback('/\b\p{L}+/u', function($m) {
+                        return mb_convert_case($m[0], MB_CASE_TITLE, "UTF-8");
+                    }, $lower);
+                };
+
                 $data = [
                     'postulacion' => $postulacion,
                     'estudiante' => $postulacion->estudiante,
                     'ciclo' => $postulacion->ciclo,
-                    'carrera' => $postulacion->carrera,
-                    'turno' => $postulacion->turno,
+                    'carrera_nombre' => $formatText($postulacion->carrera->nombre),
+                    'turno_nombre' => $formatText($postulacion->turno->nombre),
                     'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                     'codigo_postulante' => $codigoPostulante,
-                    'codigo_verificacion' => md5($postulacion->id . $codigoPostulante)
+                    'codigo_verificacion' => $codigoVerificacion,
+                    'qr_code' => $qrCode
                 ];
+
+
+
+
                 
                 $pdf = PDF::loadView('pdf.constancia-postulacion', $data);
                 $pdf->setPaper('A4', 'portrait');
@@ -343,5 +390,39 @@ class ConstanciaPostulacionController extends Controller
             'cicloActivo', 
             'tienePostulacionActiva'
         ));
+    }
+
+    /**
+     * Validar constancia mediante código de verificación
+     */
+    public function validarConstancia($codigo)
+    {
+        // Esta es una vista pública para verificar la autenticidad
+        $postulacion = null;
+        
+        // Buscamos todas las postulaciones y comparamos el hash (en un sistema real usaríamos una columna indexada)
+        $postulaciones = Postulacion::with(['estudiante', 'ciclo', 'carrera'])->get();
+        
+        foreach($postulaciones as $p) {
+            $check = md5($p->id . ($p->codigo_postulante ?: ('TEMP-' . $p->id)));
+            if ($check === $codigo) {
+                $postulacion = $p;
+                break;
+            }
+        }
+
+        if ($postulacion) {
+            return "
+            <div style='font-family: sans-serif; text-align: center; padding: 50px;'>
+                <h1 style='color: #27ae60;'>✓ Documento Válido</h1>
+                <p>Esta constancia pertenece a: <strong>{$postulacion->estudiante->nombre} {$postulacion->estudiante->apellido_paterno}</strong></p>
+                <p>Carrera: {$postulacion->carrera->nombre}</p>
+                <p>Ciclo: {$postulacion->ciclo->nombre}</p>
+                <hr style='width: 200px; border: 1px solid #eee;'>
+                <p style='color: #888; font-size: 0.8rem;'>Centro Preuniversitario UNAMAD</p>
+            </div>";
+        }
+
+        abort(404, 'Código de verificación inválido');
     }
 }

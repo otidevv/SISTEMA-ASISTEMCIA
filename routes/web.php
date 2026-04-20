@@ -942,3 +942,8 @@ Route::prefix('admin/resultados-examenes')->middleware(['auth'])->name('resultad
 
 // Ruta pública de cursos (se define al final para evitar colisión con el prefijo administrativo)
 Route::get('/cursos-cepre', [App\Http\Controllers\HomeController::class, 'cursos'])->name('public.cursos');
+
+// Ruta pública de validación de constancias de postulación mediante QR
+Route::get('/validar-constancia/{codigo}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'validarConstancia'])
+    ->name('postulaciones.validar-constancia');
+

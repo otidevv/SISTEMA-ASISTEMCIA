@@ -2,531 +2,425 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Constancia de Postulación</title>
+    <title>Constancia de Postulación - CEPRE UNAMAD</title>
     <style>
         @page {
-            margin: 1cm;
+            margin: 0.8cm 1.2cm 3cm 1.2cm;
             size: A4;
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 9pt;
-            line-height: 1.3;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.1;
+            color: #333;
             margin: 0;
             padding: 0;
-            position: relative;
         }
         
-        /* Header con logos a ambos lados y texto centrado */
+        /* Colores Institucionales */
+        .text-pink { color: #ec008c; }
+        .bg-pink { background-color: #ec008c; color: white; }
+        .border-pink { border: 1px solid #ec008c; }
+        
         .header {
-            position: relative;
             width: 100%;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 8px;
-            text-align: center;
+            height: 90px;
+            border-bottom: 2px solid #ec008c;
+            margin-bottom: 10px;
+            position: relative;
         }
-        
-        .header-logo {
+
+        .header-logo-left {
             position: absolute;
             left: 0;
-            top: 0;
-            width: 100px;
-            text-align: left;
-            padding-right: 10px;
+            top: 5px;
+            width: 65px;
         }
-        
-        .header-logo img {
-            width: 80px;
-            height: auto;
-            max-width: 80px;
-        }
-        
-        .header-logo-derecho {
+        .header-logo-right {
             position: absolute;
             right: 0;
-            top: 0;
-            width: 100px;
-            text-align: right;
-            padding-left: 10px;
+            top: 5px;
+            width: 105px;
         }
-        
-        .header-logo-derecho img {
-            width: 80px;
+
+        .header-logo-left img {
+            width: 65px;
             height: auto;
-            max-width: 80px;
         }
-        
+        .header-logo-right img {
+            width: 105px;
+            height: auto;
+        }
         .header-texto {
-            display: inline-block;
-            text-align: center;
             width: 100%;
+            text-align: center;
+            padding-top: 5px;
         }
-        
-        h1 {
-            color: #333;
-            margin: 3px 0;
-            font-size: 14pt;
-            text-transform: uppercase;
-        }
-        h2 {
-            color: #555;
-            margin: 3px 0;
+        .header-texto h1 {
+            color: #2b5a6f;
+            margin: 0;
             font-size: 11pt;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+        .header-texto h2 {
+            color: #ec008c;
+            margin: 1px 0;
+            font-size: 14pt;
+            font-weight: 900;
+        }
+        .header-texto .ciclo-nombre {
+            font-size: 9pt;
+            color: #444;
+            margin: 0;
+            font-weight: bold;
+        }
+
+
+
+        .codigo-container {
+            margin: 10px 0;
+            text-align: center;
         }
         .codigo-postulante {
-            background: #f0f0f0;
-            padding: 5px;
-            border-radius: 3px;
-            text-align: center;
-            font-size: 11pt;
-            font-weight: bold;
-            margin: 8px 0;
-        }
-        .info-section {
-            margin: 8px 0;
-        }
-        .info-section h3 {
-            background: #333;
-            color: white;
-            padding: 4px 8px;
-            margin: 0 0 5px 0;
-            font-size: 10pt;
-        }
-        
-        /* Sección de datos del postulante con foto */
-        .postulante-container {
-            display: table;
-            width: 100%;
-            margin: 8px 0;
-        }
-        
-        .postulante-datos {
-            display: table-cell;
-            width: 70%;
-            vertical-align: top;
-            padding-right: 15px;
-        }
-        
-        .postulante-foto {
-            display: table-cell;
-            width: 30%;
-            vertical-align: top;
-            text-align: center;
-            padding-left: 10px;
-        }
-        
-        .foto-container {
-            border: 2px solid #333;
-            padding: 4px;
-            background: white;
             display: inline-block;
-            border-radius: 3px;
+            background-color: #ec008c;
+            padding: 8px 25px;
+            border-radius: 8px;
+            font-size: 15pt;
+            font-weight: 800;
+            color: white;
         }
-        
-        .foto-estudiante {
-            width: 90px;
-            height: 110px;
-            object-fit: cover;
+        .codigo-label {
             display: block;
+            font-size: 8pt;
+            color: #2b5a6f;
+            margin-bottom: 3px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
         
-        .foto-placeholder {
-            width: 90px;
-            height: 110px;
-            background: #f8f9fa;
-            border: 1px dashed #ccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 7pt;
-            color: #666;
-            text-align: center;
-            line-height: 1.1;
+        .section-title {
+            background-color: #2b5a6f;
+            color: white;
+            padding: 4px 10px;
+            font-size: 9pt;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 8px;
+            border-left: 4px solid #ec008c;
+        }
+
+        
+        .grid-container {
+            width: 100%;
         }
         
         .info-table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 5px;
         }
         .info-table td {
-            padding: 4px 6px;
-            border-bottom: 1px solid #ddd;
+            padding: 6px 8px;
+            border-bottom: 1px solid #f1f1f1;
+            vertical-align: middle;
+        }
+        .info-table td.label {
+            font-weight: bold;
+            width: 25%;
+            color: #2b5a6f;
+            background: #f8fbfd;
             font-size: 8pt;
+        }
+
+        /* Foto del postulante */
+        .photo-box {
+            border: 2px solid #ec008c;
+            padding: 4px;
+            width: 100px;
+            height: 125px;
+            text-align: center;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .flex-row {
+            display: table;
+            width: 100%;
+        }
+        .flex-col {
+            display: table-cell;
             vertical-align: top;
         }
-        .info-table td:first-child {
-            font-weight: bold;
-            width: 35%;
-            background: #f9f9f9;
+
+        .importante-box {
+            background: #fff8fb;
+            border: 1px solid #ffcce6;
+            padding: 10px 15px;
+            margin-top: 20px;
+            border-radius: 8px;
         }
-        .firma-section {
-            margin-top: 10px;
-            page-break-inside: avoid;
-        }
-        .firma-section h3 {
-            text-align: center;
-            margin-bottom: 6px;
-            font-size: 10pt;
-        }
-        .firma-section p {
-            font-size: 8pt;
-            margin: 5px 0;
-        }
-        .firma-box {
-            border: 1px solid #333;
-            padding: 10px;
-            margin: 6px 0;
-            min-height: 72px;
-        }
-        .firma-box p {
-            margin: 0;
-            font-size: 8pt;
-            color: #666;
-        }
-        .firma-texto {
-            text-align: center;
-            font-size: 8pt;
-        }
-        .footer {
-            margin-top: 10px;
-            padding-top: 6px;
-            border-top: 1px solid #333;
-            font-size: 8pt;
-            color: #666;
-        }
-        .importante {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 6px;
-            margin: 6px 0;
-            border-radius: 3px;
-        }
-        .importante h4 {
-            margin: 0 0 4px 0;
-            color: #856404;
+        .importante-box h4 {
+            margin: 0 0 5px 0;
+            color: #ec008c;
             font-size: 9pt;
         }
-        .importante ul {
-            margin: 3px 0;
-            padding-left: 18px;
+        .importante-box ul {
+            margin: 0;
+            padding-left: 20px;
         }
-        .importante li {
+        .importante-box li {
             font-size: 8pt;
-            margin: 2px 0;
+            color: #444;
+            margin-bottom: 3px;
         }
-        .codigo-verificacion {
-            text-align: right;
-            font-size: 7pt;
-            color: #999;
-            margin-top: 6px;
+
+        .compromiso-text {
+            font-size: 8.5pt;
+            text-align: justify;
+            margin: 15px 0;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #ec008c;
+            line-height: 1.4;
         }
-        
-        /* Pie de página */
-        .pie-pagina {
-            margin-top: 15px;
-            padding-top: 8px;
-            border-top: 1px solid #ddd;
-            font-size: 7pt;
-            color: #666;
+
+        .firma-table {
+            width: 100%;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        .firma-celda {
+            width: 50%;
             text-align: center;
         }
+        .firma-espacio {
+            border: 1px solid #ddd;
+            height: 90px;
+            width: 200px;
+            margin: 0 auto 5px auto;
+            background-color: #fafafa;
+        }
+
+
+        .footer-qr-container {
+            position: fixed;
+            bottom: -2.4cm;
+            left: 0;
+            right: 0;
+            height: 2.2cm;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+            width: 100%;
+        }
+
+        .qr-code-img {
+            width: 70px;
+            height: 70px;
+        }
+        .qr-code-img svg {
+            width: 70px;
+            height: 70px;
+        }
+
         
-        .pie-pagina .validez {
-            margin-bottom: 3px;
+        .footer-text {
+            font-size: 7.5pt;
+            color: #666;
+            text-align: left;
+        }
+        .valid-info {
             font-style: italic;
-        }
-        
-        .pie-pagina .codigo {
+            color: #ec008c;
             font-weight: bold;
-            color: #999;
-        }
-        
-        /* Para impresión, asegurar que el layout funcione */
-        @media print {
-            .header {
-                position: relative;
-                width: 100%;
-                text-align: center;
-            }
-            .header-logo {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100px;
-            }
-            .header-logo-derecho {
-                position: absolute;
-                right: 0;
-                top: 0;
-                width: 100px;
-            }
-            .header-texto {
-                display: inline-block;
-                text-align: center;
-                width: 100%;
-            }
-            .postulante-container {
-                display: table;
-                width: 100%;
-            }
-            .postulante-datos {
-                display: table-cell;
-                width: 75%;
-                vertical-align: top;
-            }
-            .postulante-foto {
-                display: table-cell;
-                width: 25%;
-                vertical-align: top;
-                text-align: center;
-            }
+            font-size: 8pt;
         }
     </style>
 </head>
 <body>
-    <!-- Header con logos a ambos lados -->
+    <!-- Header -->
     <div class="header">
-        <div class="header-logo">
-            
+        <div class="header-logo-left">
             <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="Logo UNAMAD">
         </div>
-        <div class="header-logo-derecho">
-            <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="Logo CEPRE">
+        <div class="header-logo-right">
+            <img src="{{ public_path('assets_cepre/img/logo/logo2_0.png') }}" alt="Logo CEPRE">
         </div>
         <div class="header-texto">
-            <h1 style="font-size: 13pt; margin: 2px 0;">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-            <h1>CENTRO PREUNIVERSITARIO</h1>
-            <h2>CONSTANCIA DE POSTULACIÓN</h2>
-            <p style="margin: 1px 0 0 0;">{{ $ciclo->nombre }}</p>
+            <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+            <h2>CENTRO PREUNIVERSITARIO - CEPRE</h2>
+            <div class="ciclo-nombre">CONSTANCIA DE INSCRIPCIÓN: {{ $ciclo->nombre }}</div>
         </div>
     </div>
 
-    <div class="codigo-postulante">
-        CÓDIGO DE POSTULANTE: {{ $codigo_postulante }}
+
+
+    <div class="codigo-container">
+        <span class="codigo-label">Identificador Único del Postulante</span>
+        <div class="codigo-postulante">
+            CÓDIGO DE POSTULANTE: {{ $codigo_postulante }}
+        </div>
     </div>
 
-    <div class="info-section">
-        <h3>DATOS DEL POSTULANTE</h3>
-        <div class="postulante-container">
-            <div class="postulante-datos">
-                <table class="info-table">
-                    <tr>
-                        <td>Nombres y Apellidos:</td>
-                        <td>{{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }} {{ $estudiante->apellido_materno }}</td>
-                    </tr>
-                    <tr>
-                        <td>DNI:</td>
-                        <td>{{ $estudiante->numero_documento }}</td>
-                    </tr>
-                    <tr>
-                        <td>Correo Electrónico:</td>
-                        <td>{{ $estudiante->email }}</td>
-                    </tr>
-                    <tr>
-                        <td>Teléfono:</td>
-                        <td>{{ $estudiante->telefono ?? 'No registrado' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Dirección:</td>
-                        <td>{{ $estudiante->direccion ?? 'No registrado' }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div class="postulante-foto">
-                <div class="foto-container">
-                    @php
-                        // Usar foto_path (nuevo) o foto_carnet_path (antiguo) o foto_perfil del estudiante
-                        $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
-                    @endphp
-                    
-                    @if(!empty($fotoPath))
-                        @php
-                            // Intentar diferentes rutas de la imagen
-                            $rutaFoto = null;
-                            $posiblesRutas = [
-                                public_path('storage/' . $fotoPath),
-                                storage_path('app/public/' . $fotoPath),
-                                storage_path('app/' . $fotoPath)
-                            ];
-                            
-                            foreach ($posiblesRutas as $ruta) {
-                                if (file_exists($ruta)) {
-                                    $rutaFoto = $ruta;
-                                    break;
-                                }
-                            }
-                        @endphp
-                        
-                        @if($rutaFoto)
-                            <img src="{{ $rutaFoto }}" 
-                                 alt="Foto del estudiante" 
-                                 class="foto-estudiante">
-                        @else
-                            <div class="foto-placeholder">
-                                FOTO NO<br>ENCONTRADA<br><br>
-                                <small>Archivo:<br>{{ basename($fotoPath) }}</small>
-                            </div>
-                        @endif
-                    @else
-                        <div class="foto-placeholder">
-                            FOTO<br>DEL<br>ESTUDIANTE<br><br>
-                            <small>No subida</small>
-                        </div>
-                    @endif
-                </div>
-                <div style="font-size: 7pt; margin-top: 4px; color: #666;">
-                    Foto Postulante
-                </div>
+
+    <!-- Datos Postulante y Foto -->
+    <div class="section-title">Datos Personales del Postulante</div>
+    <div class="flex-row">
+        <div class="flex-col" style="width: 78%;">
+            <table class="info-table">
+                <tr>
+                    <td class="label">Apellidos y Nombres:</td>
+                    <td><strong>{{ strtoupper($estudiante->apellido_paterno) }} {{ strtoupper($estudiante->apellido_materno) }}, {{ strtoupper($estudiante->nombre) }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label">Documento de Identidad:</td>
+                    <td>{{ $estudiante->numero_documento }} (DNI)</td>
+                </tr>
+                <tr>
+                    <td class="label">Correo y Teléfono:</td>
+                    <td>{{ $estudiante->email }} / {{ $estudiante->telefono ?? '---' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Dirección:</td>
+                    <td>{{ $estudiante->direccion ?? '---' }}</td>
+                </tr>
+            </table>
+        </div>
+        <div class="flex-col" style="width: 22%; text-align: right;">
+            <div class="photo-box" style="float: right;">
+                @php
+                    $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
+                    $rutaFoto = null;
+                    if(!empty($fotoPath)){
+                        $posiblesRutas = [public_path('storage/'.$fotoPath), storage_path('app/public/'.$fotoPath), storage_path('app/'.$fotoPath)];
+                        foreach ($posiblesRutas as $ruta) { if (file_exists($ruta)) { $rutaFoto = $ruta; break; } }
+                    }
+                @endphp
+                @if($rutaFoto)
+                    <img src="{{ $rutaFoto }}" alt="Foto">
+                @else
+                    <div style="font-size: 6pt; padding-top: 30px;">FOTO DEL<br>POSTULANTE</div>
+                @endif
             </div>
         </div>
     </div>
 
-    <div class="info-section">
-        <h3>DATOS DE LA POSTULACIÓN</h3>
-        <table class="info-table">
-            <tr>
-                <td>Carrera:</td>
-                <td>{{ $carrera->nombre }}</td>
-            </tr>
-            <tr>
-                <td>Turno:</td>
-                <td>{{ $turno->nombre }}</td>
-            </tr>
-            <tr>
-                <td>Aula Asignada:</td>
-                <td>
-                    @if($postulacion->aula)
-                        {{ $postulacion->aula->codigo }} - {{ $postulacion->aula->nombre }}
-                    @elseif($postulacion->estado === 'aprobado')
-                        @php
-                            $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $postulacion->estudiante_id)
-                                ->where('ciclo_id', $postulacion->ciclo_id)
-                                ->where('carrera_id', $postulacion->carrera_id)
-                                ->with('aula')
-                                ->first();
-                        @endphp
-                        @if($inscripcion && $inscripcion->aula)
-                            {{ $inscripcion->aula->codigo }} - {{ $inscripcion->aula->nombre }}
-                        @else
-                            Procesando asignación
-                        @endif
-                    @else
-                        Pendiente de aprobación
-                    @endif
-                </td>
-            </tr>
-            <tr>
-                <td>Tipo de Inscripción:</td>
-                <td>{{ ucfirst($postulacion->tipo_inscripcion) }}</td>
-            </tr>
-            <tr>
-                <td>Fecha de Postulación:</td>
-                <td>{{ $postulacion->fecha_postulacion->format('d/m/Y H:i') }}</td>
-            </tr>
-            <tr>
-                <td>Estado:</td>
-                <td>{{ ucfirst($postulacion->estado) }}</td>
-            </tr>
-        </table>
-    </div>
+    <!-- Datos Postulación -->
+    <div class="section-title">Información de la Postulación Académica</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Carrera Profesional:</td>
+            <td><strong>{{ $carrera_nombre }}</strong></td>
+            <td class="label">Turno / Aula:</td>
+            <td>{{ $turno_nombre }} / 
+                @if($postulacion->aula) 
+                    {{ $postulacion->aula->nombre }} 
+                @else
+                    ASIGNACIÓN EN PROCESO
+                @endif
+            </td>
+        </tr>
 
-    <div class="info-section">
-        <h3>DATOS DEL PADRE/MADRE DE FAMILIA</h3>
-        @php
-            // Buscar datos del padre y madre a través de la relación parentesco
-            $padre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)
-                ->where('tipo_parentesco', 'Padre')
-                ->with('padre')
-                ->first();
-            
-            $madre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)
-                ->where('tipo_parentesco', 'Madre')
-                ->with('padre')
-                ->first();
-        @endphp
-        
-        <table class="info-table">
-            @if($padre && $padre->padre)
+        <tr>
+            <td class="label">Tipo de Inscripción:</td>
+            <td>{{ strtoupper($postulacion->tipo_inscripcion) }}</td>
+            <td class="label">Fecha / Hora:</td>
+            <td>{{ $postulacion->fecha_postulacion->format('d/m/Y H:i') }}</td>
+        </tr>
+    </table>
+
+    <!-- Datos Apoderados -->
+    <div class="section-title">Datos de Contacto (Padres / Apoderados)</div>
+    @php
+        $padre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)->where('tipo_parentesco', 'Padre')->with('padre')->first();
+        $madre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)->where('tipo_parentesco', 'Madre')->with('padre')->first();
+    @endphp
+    <table class="info-table">
+        @if($padre && $padre->padre)
             <tr>
-                <td>Nombre del Padre:</td>
-                <td>{{ $padre->padre->nombre }} {{ $padre->padre->apellido_paterno }} {{ $padre->padre->apellido_materno }}</td>
-            </tr>
-            <tr>
-                <td>Teléfono del Padre:</td>
+                <td class="label">Nombre Padre:</td>
+                <td>{{ $padre->padre->nombre }} {{ $padre->padre->apellido_paterno }}</td>
+                <td class="label">Teléfono Padre:</td>
                 <td>{{ $padre->padre->telefono }}</td>
             </tr>
-            @endif
-            
-            @if($madre && $madre->padre)
+        @endif
+        @if($madre && $madre->padre)
             <tr>
-                <td>Nombre de la Madre:</td>
-                <td>{{ $madre->padre->nombre }} {{ $madre->padre->apellido_paterno }} {{ $madre->padre->apellido_materno }}</td>
-            </tr>
-            <tr>
-                <td>Teléfono de la Madre:</td>
+                <td class="label">Nombre Madre:</td>
+                <td>{{ $madre->padre->nombre }} {{ $madre->padre->apellido_paterno }}</td>
+                <td class="label">Teléfono Madre:</td>
                 <td>{{ $madre->padre->telefono }}</td>
             </tr>
-            @endif
-            
-            @if(!$padre && !$madre)
-            <tr>
-                <td colspan="2" style="text-align: center; color: #666;">
-                    Información de padres no disponible
-                </td>
-            </tr>
-            @endif
-        </table>
+        @endif
+        @if(!$padre && !$madre)
+            <tr><td colspan="4" style="text-align: center; color: #888;">No se registraron datos de apoderados</td></tr>
+        @endif
+    </table>
+
+    <!-- Compromiso -->
+    <div class="compromiso-text">
+        <strong>DECLARACIÓN JURADA:</strong> Yo, <strong>{{ strtoupper($estudiante->nombre) }} {{ strtoupper($estudiante->apellido_paterno) }} {{ strtoupper($estudiante->apellido_materno) }}</strong>, identificado(a) con el documento arriba descrito, declaro bajo juramento que los datos proporcionados son verídicos. Me comprometo a cumplir con el reglamento del CEPRE durante mi permanencia académica.
     </div>
 
-    <div class="importante">
-        <h4>IMPORTANTE:</h4>
-        <ul style="margin: 5px 0;">
-            <li>Esta constancia debe ser impresa, firmada y debe colocar su huella digital en el espacio indicado.</li>
-            <li>Luego debe escanear o fotografiar el documento firmado y subirlo al sistema para completar su postulación.</li>
-            <li>Conserve una copia de este documento para futuras referencias.</li>
+
+
+    <!-- Firmas -->
+    <table class="firma-table">
+        <tr>
+            <td class="firma-celda">
+                <div class="firma-espacio"></div>
+                <div style="font-size: 7.5pt; color: #777; margin-bottom: 3px;">Firma del Postulante</div>
+                <div style="font-size: 7.5pt;"><strong>{{ strtoupper($estudiante->nombre) }} {{ strtoupper($estudiante->apellido_paterno) }}</strong><br>DNI: {{ $estudiante->numero_documento }}</div>
+            </td>
+            <td class="firma-celda">
+                <div class="firma-espacio" style="width: 80px;"></div>
+                <div style="font-size: 7.5pt; color: #777; margin-bottom: 3px;">Huella Digital</div>
+                <div style="font-size: 7pt; color: #666;">Índice Derecho</div>
+            </td>
+        </tr>
+    </table>
+
+
+    <div class="importante-box">
+        <h4>INDICACIONES IMPORTANTES:</h4>
+        <ul>
+            <li>Este documento es indispensable para su identificación en el examen y procesos académicos.</li>
+            <li>Debe imprimirlo, firmarlo, colocar su huella digital y subirlo escaneado al sistema institucional.</li>
+            <li>Cualquier alteración o falsedad en los datos anulará automáticamente su inscripción.</li>
         </ul>
     </div>
 
-    <div class="firma-section">
-        <h3>DECLARACIÓN Y COMPROMISO</h3>
-        <p style="text-align: justify;">
-            Yo, <strong>{{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }} {{ $estudiante->apellido_materno }}</strong>, 
-            identificado(a) con DNI N° <strong>{{ $estudiante->numero_documento }}</strong>, declaro que los datos 
-            consignados son verídicos y me comprometo a cumplir con las normas del Centro Preuniversitario.
-        </p>
-        
-        <table style="width: 100%; margin-top: 8px;">
+    <!-- Footer con QR -->
+    <div class="footer-qr-container">
+        <table style="width: 100%;">
             <tr>
-                <td style="width: 50%; text-align: center; vertical-align: top;">
-                    <div class="firma-box">
-                        <p>Firma del Postulante</p>
-                    </div>
-                    <div class="firma-texto" style="margin-top: 4px;">
-                        {{ $estudiante->nombre }} {{ $estudiante->apellido_paterno }} {{ $estudiante->apellido_materno }}<br>
-                        DNI: {{ $estudiante->numero_documento }}
+                <td style="width: 80px; vertical-align: top;">
+                    <div class="qr-code-img">
+                        {!! $qr_code !!}
                     </div>
                 </td>
-                <td style="width: 50%; text-align: center; vertical-align: top;">
-                    <div class="firma-box">
-                        <p>Huella Digital</p>
+
+                <td style="vertical-align: middle; padding-left: 10px;">
+                    <div class="footer-text">
+                        <strong>DOCUMENTO VALIDADO ELECTRÓNICAMENTE</strong><br>
+                        Código de Verificación: {{ $codigo_verificacion }}<br>
+                        Fecha de Generación: {{ $fecha_generacion }}<br>
+                        <span class="valid-info">Escanee el código QR para verificar la autenticidad de esta constancia.</span>
                     </div>
-                    <div class="firma-texto" style="margin-top: 4px;">
-                        Índice Derecho
-                    </div>
+                </td>
+                <td style="text-align: right; vertical-align: bottom;">
+                    <div style="font-size: 6.5pt; color: #aaa;">Generado por: SGA-CEPRE UNAMAD</div>
                 </td>
             </tr>
         </table>
-    </div>
-
-    <div class="footer">
-        <p><strong>Fecha de generación:</strong> {{ $fecha_generacion }}</p>
-    </div>
-
-    <!-- Pie de página -->
-    <div class="pie-pagina">
-        <div class="validez">Este documento es válido únicamente con firma y huella del postulante</div>
-        <div class="codigo">Código de verificación: {{ $codigo_verificacion }}</div>
     </div>
 </body>
 </html>
