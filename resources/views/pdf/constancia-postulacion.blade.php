@@ -320,13 +320,8 @@
             <td class="label">Carrera Profesional:</td>
             <td><strong>{{ $carrera_nombre }}</strong></td>
             <td class="label">Turno / Aula:</td>
-            <td>{{ $turno_nombre }} / 
-                @if($postulacion->aula) 
-                    {{ $postulacion->aula->nombre }} 
-                @else
-                    ASIGNACIÓN EN PROCESO
-                @endif
-            </td>
+            <td>{{ $turno_nombre }} / {{ $aula_nombre }}</td>
+
         </tr>
 
         <tr>
@@ -404,8 +399,11 @@
             <tr>
                 <td style="width: 80px; vertical-align: top;">
                     <div class="qr-code-img">
-                        {!! $qr_code !!}
+                        @if(!empty($qr_code))
+                            <img src="data:image/png;base64,{{ $qr_code }}" style="width: 70px; height: 70px;">
+                        @endif
                     </div>
+
                 </td>
 
                 <td style="vertical-align: middle; padding-left: 10px;">

@@ -19,8 +19,9 @@ class ConstanciaPostulacionController extends Controller
     public function generarConstancia($postulacionId)
     {
         try {
-            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno'])
+            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'inscripcion.aula'])
                 ->findOrFail($postulacionId);
+
             
             // Verificar que el usuario tenga permiso para generar la constancia
             $user = Auth::user();
@@ -41,9 +42,15 @@ class ConstanciaPostulacionController extends Controller
             $codigoPostulante = $postulacion->codigo_postulante ?: ('TEMP-' . $postulacion->id);
             $codigoVerificacion = md5($postulacion->id . $codigoPostulante);
 
-            // Generar QR para validación (Formato SVG para no requerir imagick)
+            // Generar QR para validación (Formato PNG Base64 igual que Constancia de Vacante)
             $urlValidacion = url("/validar-constancia/{$codigoVerificacion}");
-            $qrCode = QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion);
+            try {
+                $qrCode = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
+            } catch (\Exception $e) {
+                \Log::warning('Fallo generación QR PNG, intentando SVG: ' . $e->getMessage());
+                $qrCode = base64_encode(QrCode::format('svg')->size(150)->generate($urlValidacion));
+            }
+
 
             
             // Función helper local para formatear nombres preservando emojis y limpiando basura (?)
@@ -58,6 +65,12 @@ class ConstanciaPostulacionController extends Controller
                 }, $lower);
             };
 
+            // Obtener aula de la inscripción si existe
+            $aulaNombre = "ASIGNACIÓN EN PROCESO";
+            if ($postulacion->inscripcion && $postulacion->inscripcion->aula) {
+                $aulaNombre = $postulacion->inscripcion->aula->nombre;
+            }
+
             // Preparar datos para la vista
             $data = [
                 'postulacion' => $postulacion,
@@ -65,11 +78,13 @@ class ConstanciaPostulacionController extends Controller
                 'ciclo' => $postulacion->ciclo,
                 'carrera_nombre' => $formatText($postulacion->carrera->nombre),
                 'turno_nombre' => $formatText($postulacion->turno->nombre),
+                'aula_nombre' => $aulaNombre,
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'codigo_postulante' => $codigoPostulante,
                 'codigo_verificacion' => $codigoVerificacion,
                 'qr_code' => $qrCode
             ];
+
 
 
 
