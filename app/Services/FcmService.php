@@ -68,10 +68,15 @@ class FcmService
             ]);
 
         if ($response->successful()) {
+            Log::info('FCM Success: Notificación enviada correctamente.', ['response' => $response->json(), 'token' => $token]);
             return $response->json();
         }
 
-        Log::error('FCM Error: ' . $response->body());
+        Log::error('FCM Error: Fallo en la respuesta de Google.', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'token' => $token
+        ]);
         return false;
     }
 

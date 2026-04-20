@@ -108,7 +108,9 @@ class TestFcm extends Command
 
             $this->info('✅ ¡SOLICITUD ENVIADA EXITOSAMENTE!');
             $this->line('');
+            $this->info("Token usado: " . substr($user->fcm_token, 0, 20) . "...");
             $this->comment('Revisa tu celular en unos segundos.');
+            $this->comment('Si no llega, revisa los logs detallados en: storage/logs/laravel.log');
             $this->line('Payload enviado:');
             $this->line("- Título: {$titulo}");
             $this->line("- Archivo: " . ($archivo ?? 'Ninguno'));
