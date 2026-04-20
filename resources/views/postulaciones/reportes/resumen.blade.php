@@ -33,7 +33,7 @@
     }
 
     .filter-section {
-        background: #f8f9fa;
+        background: rgba(0,0,0,0.02);
         border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 2rem;
@@ -62,12 +62,13 @@
         color: white;
     }
 
+    /* Soporte para Modo Oscuro en la Vista Previa */
     .preview-container {
         display: none;
-        padding: 1rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        padding: 1.5rem;
+        background: var(--bs-card-bg, #fff);
+        border-radius: 12px;
+        border: 1px solid var(--bs-border-color, #eee);
         animation: fadeIn 0.5s ease;
     }
 
@@ -79,37 +80,41 @@
     .table-premium {
         width: 100%;
         border-collapse: collapse !important;
-        background-color: white;
     }
 
     .table-premium thead th {
-        background-color: #f8f9fa !important;
+        background-color: var(--bs-tertiary-bg, #f8f9fa) !important;
         border: 1px solid #999 !important;
-        color: var(--cepre-dark-blue);
-        padding: 10px;
-        font-weight: bold;
+        color: var(--bs-body-color);
+        padding: 12px;
+        font-weight: 800;
         text-align: center;
+        text-transform: uppercase;
+        font-size: 0.75rem;
     }
 
     .table-premium tbody td {
         border: 1px solid #999 !important;
-        padding: 8px 12px;
+        padding: 10px 15px;
         vertical-align: middle;
-        background-color: #fff;
-        color: #333;
+        background-color: transparent !important;
+        color: var(--bs-body-color);
     }
 
-    /* Colores Institucionales para la Vista Previa */
-    .tr-grupo-a { background-color: #FCE6F4 !important; }
-    .tr-grupo-b { background-color: #F1F9E8 !important; }
-    .tr-grupo-c { background-color: #E6F7FE !important; }
-    .tr-grupo-d { background-color: #FFFEE6 !important; }
+    /* Colores Institucionales - Forza el color para que sea legible en modo oscuro */
+    .tr-grupo-a { background-color: #FCE6F4 !important; color: #111 !important; }
+    .tr-grupo-b { background-color: #F1F9E8 !important; color: #111 !important; }
+    .tr-grupo-c { background-color: #E6F7FE !important; color: #111 !important; }
+    .tr-grupo-d { background-color: #FFFEE6 !important; color: #111 !important; }
 
-    .group-badge {
-        font-weight: 700;
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-size: 0.85rem;
+    /* Asegurar que las celdas hereden el color del TR */
+    .tr-grupo-a td, .tr-grupo-b td, .tr-grupo-c td, .tr-grupo-d td {
+        color: #111 !important;
+    }
+
+    .total-row-web {
+        background-color: var(--bs-tertiary-bg, #f2f2f2) !important;
+        font-weight: bold;
     }
 </style>
 @endpush
@@ -119,9 +124,9 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                <h4 class="mb-sm-0 shadow-sm p-2 rounded bg-white"><i class="mdi mdi-table-eye text-primary"></i> Reporte Resumen de Postulantes</h4>
+                <h4 class="mb-sm-0 p-2"><i class="mdi mdi-table-eye text-primary"></i> Reporte Resumen de Postulantes</h4>
                 <div class="page-title-right">
-                    <ol class="breadcrumb m-0 text-muted">
+                    <ol class="breadcrumb m-0">
                         <li class="breadcrumb-item"><a href="javascript: void(0);">Reportes</a></li>
                         <li class="breadcrumb-item active">Resumen</li>
                     </ol>
@@ -196,15 +201,15 @@
                     <div id="previewContainer" class="preview-container">
                         <div class="row">
                             <div class="col-lg-8">
-                                <h5 class="mb-3 text-dark fw-bold"><i class="mdi mdi-format-list-bulleted me-1 text-primary"></i> Tabla de Resultados</h5>
+                                <h5 class="mb-3 fw-bold"><i class="mdi mdi-format-list-bulleted me-1 text-primary"></i> Distribución de Postulantes</h5>
                                 <div class="table-responsive">
                                     <table class="table table-premium" id="previewTable">
                                         <thead>
                                             <tr>
-                                                <th style="width: 30px;">#</th>
-                                                <th style="width: 80px;">Grupo</th>
-                                                <th>Carrera / Grado</th>
-                                                <th style="width: 100px;">Aula</th>
+                                                <th style="width: 40px;">#</th>
+                                                <th style="width: 100px;">Grupo</th>
+                                                <th>Carrera Profesional / Grado</th>
+                                                <th style="width: 120px;">Aula</th>
                                                 <th style="width: 80px;" class="text-center">Total</th>
                                             </tr>
                                         </thead>
@@ -218,13 +223,13 @@
                                 </div>
                             </div>
                             <div class="col-lg-4">
-                                <h5 class="mb-3 text-dark fw-bold"><i class="mdi mdi-chart-pie me-1 text-primary"></i> Resumen por Aula</h5>
+                                <h5 class="mb-3 fw-bold"><i class="mdi mdi-chart-pie me-1 text-primary"></i> Resumen por Aula</h5>
                                 <div class="table-responsive">
                                     <table class="table table-premium" id="summaryTable">
                                         <thead>
                                             <tr>
                                                 <th>Aula</th>
-                                                <th class="text-center">Cant. Postulantes</th>
+                                                <th class="text-center" style="width: 100px;">Postulantes</th>
                                             </tr>
                                         </thead>
                                         <tbody id="summaryBody">
@@ -324,13 +329,13 @@
 
                 bodyHtml += `
                     <td class="align-middle">${row[3]}</td>
-                    <td class="text-center align-middle fw-bold font-size-15">${row[4]}</td>
+                    <td class="text-center align-middle fw-bold text-primary font-size-15">${row[4]}</td>
                 </tr>`;
             });
 
             $('#previewBody').html(bodyHtml);
             $('#previewFoot').html(`
-                <tr class="table-light">
+                <tr class="total-row-web">
                     <td colspan="4" class="text-end fw-bold py-3 text-uppercase">Total General:</td>
                     <td class="text-center py-3"><h4 class="m-0 fw-bold text-primary">${totalGeneral}</h4></td>
                 </tr>
@@ -341,7 +346,7 @@
             data.tabla2.forEach((row, index) => {
                 if (row[0] === 'Total') {
                     summaryHtml += `
-                        <tr class="table-light">
+                        <tr class="total-row-web">
                             <td class="fw-bold text-uppercase text-primary">Total</td>
                             <td class="text-center fw-bold text-primary">${row[1]}</td>
                         </tr>
@@ -350,9 +355,9 @@
                 }
 
                 summaryHtml += `
-                    <tr>
+                    <tr style="background-color: var(--bs-card-bg);">
                         <td class="fw-bold">${row[0]}</td>
-                        <td class="text-center fw-bold text-info font-size-15">${row[1]}</td>
+                        <td class="text-center fw-bold text-info font-size-14">${row[1]}</td>
                     </tr>
                 `;
             });
