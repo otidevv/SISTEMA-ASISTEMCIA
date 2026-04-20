@@ -50,12 +50,15 @@ class FcmService
             $message['notification']['image'] = $image;
         }
 
-        // Configuración específica para Android (opcional pero recomendada)
+        // Configuración específica para Android (Máxima prioridad y visibilidad)
         $message['android'] = [
             'priority' => 'high',
             'notification' => [
                 'channel_id' => 'high_importance_channel',
                 'sound' => 'default',
+                'priority' => 'max', // Importancia MAX para Heads-up
+                'visibility' => 'public',
+                'vibrate_timings' => ['0s', '0.1s', '0.1s', '0.1s'],
             ],
         ];
 
