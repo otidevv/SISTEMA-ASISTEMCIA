@@ -98,7 +98,7 @@ class TestFcm extends Command
         $this->info("Enviando payload a FCM...");
 
         try {
-            $user->notify(new GeneralAnnouncement(
+            $user->notifyNow(new GeneralAnnouncement(
                 $titulo,
                 $mensaje,
                 $imagen,
