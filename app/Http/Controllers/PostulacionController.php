@@ -12,6 +12,8 @@ use App\Models\Aula;
 use App\Models\CentroEducativo;
 use App\Models\Parentesco;
 use App\Models\RegistroAsistencia;
+use App\Notifications\PostulacionStatusNotification;
+use Illuminate\Support\Facades\Notification;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -322,16 +324,25 @@ class PostulacionController extends Controller
             'motivo' => 'required|string|min:10'
         ]);
 
+        DB::beginTransaction();
         try {
             $postulacion = Postulacion::findOrFail($id);
-            $postulacion->rechazar(Auth::id(), $request->motivo);
+            $postulacion->rechazar(Auth::id(), $request->input('motivo'));
 
+            // Notificar al estudiante
+            $estudiante = User::find($postulacion->estudiante_id);
+            if ($estudiante) {
+                $estudiante->notify(new PostulacionStatusNotification('rechazado', $postulacion));
+            }
+
+            DB::commit();
             return response()->json([
                 'success' => true,
                 'message' => 'Postulación rechazada exitosamente'
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -352,16 +363,25 @@ class PostulacionController extends Controller
             'observaciones' => 'required|string|min:10'
         ]);
 
+        DB::beginTransaction();
         try {
             $postulacion = Postulacion::findOrFail($id);
-            $postulacion->observar(Auth::id(), $request->observaciones);
+            $postulacion->observar(Auth::id(), $request->input('observaciones'));
 
+            // Notificar al estudiante
+            $estudiante = User::find($postulacion->estudiante_id);
+            if ($estudiante) {
+                $estudiante->notify(new PostulacionStatusNotification('observado', $postulacion));
+            }
+
+            DB::commit();
             return response()->json([
                 'success' => true,
                 'message' => 'Postulación marcada con observaciones'
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
@@ -430,6 +450,12 @@ class PostulacionController extends Controller
             
             // Actualizar el estado de la postulación
             $postulacion->aprobar(Auth::id());
+
+            // Notificar al estudiante
+            $estudiante = User::find($postulacion->estudiante_id);
+            if ($estudiante) {
+                $estudiante->notify(new PostulacionStatusNotification('aprobado', $postulacion));
+            }
             
             // Cambiar rol de postulante a estudiante
             $tipoInscripcionLower = strtolower($postulacion->tipo_inscripcion);

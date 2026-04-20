@@ -132,95 +132,66 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Gestión de Imagen -->
+                            <!-- Archivo Adjunto (Multimedia) -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header bg-info text-white">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-image me-2"></i>Imagen del Anuncio
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>Archivo Adjunto (Multiformato)
                         </h5>
                     </div>
                     <div class="card-body">
-                        @if($anuncio->imagen)
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">Imagen Actual</label>
-                                    <div class="position-relative">
-                                        <img src="{{ asset('storage/' . $anuncio->imagen) }}" 
-                                             alt="Imagen actual del anuncio" 
-                                             class="img-thumbnail d-block" 
-                                             style="max-height: 200px; width: 100%; object-fit: cover;">
-                                        <div class="position-absolute top-0 end-0 m-2">
-                                            <button type="button" class="btn btn-sm btn-danger" id="delete-current-image"
-                                                    title="Eliminar imagen actual">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+                        @if($anuncio->archivo_adjunto)
+                            <div class="alert alert-light border d-flex align-items-center mb-3">
+                                @php
+                                    $ext = strtolower($anuncio->tipo_archivo);
+                                    $icon = 'bi-file-earmark-fill';
+                                    if(in_array($ext, ['pdf'])) $icon = 'bi-file-earmark-pdf-fill';
+                                    if(in_array($ext, ['doc', 'docx'])) $icon = 'bi-file-earmark-word-fill';
+                                    if(in_array($ext, ['xls', 'xlsx'])) $icon = 'bi-file-earmark-excel-fill';
+                                    if(in_array($ext, ['mp4', 'mov', 'avi'])) $icon = 'bi-camera-video-fill';
+                                @endphp
+                                <i class="bi {{ $icon }} fs-2 me-3 text-info"></i>
+                                <div>
+                                    <span class="fw-bold">Archivo actual:</span><br>
+                                    <small>{{ basename($anuncio->archivo_adjunto) }}</small>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="imagen" class="form-label fw-bold">Cambiar por Nueva Imagen</label>
-                                    <input type="file" class="form-control @error('imagen') is-invalid @enderror" 
-                                           id="imagen" name="imagen" accept="image/*">
-                                    @error('imagen')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">
-                                        <i class="bi bi-info-circle me-1"></i>La nueva imagen reemplazará la actual
-                                    </div>
-                                    
-                                    <!-- Preview de nueva imagen -->
-                                    <div id="new-image-preview" style="display: none;">
-                                        <div class="mt-3">
-                                            <label class="form-label">Nueva imagen:</label>
-                                            <div>
-                                                <img id="preview-new-img" src="" class="img-thumbnail" style="max-height: 200px;">
-                                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="remove-new-image">
-                                                    <i class="bi bi-x-circle"></i> Cancelar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Campo oculto para eliminar imagen actual -->
-                            <input type="hidden" name="delete_image" id="delete_image" value="0">
-                        @else
-                            <div class="text-center py-4 border-2 border-dashed border-light rounded">
-                                <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
-                                <p class="text-muted mt-2">Este anuncio no tiene imagen</p>
-                                
-                                <div class="mt-3">
-                                    <label for="imagen" class="form-label fw-bold">Agregar Imagen</label>
-                                    <input type="file" class="form-control @error('imagen') is-invalid @enderror" 
-                                           id="imagen" name="imagen" accept="image/*">
-                                    @error('imagen')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <div class="form-text">
-                                        <i class="bi bi-info-circle me-1"></i>Formatos: JPG, PNG, GIF • Máximo: 2MB
-                                    </div>
-                                </div>
-
-                                <!-- Preview de imagen -->
-                                <div id="image-preview" style="display: none;">
-                                    <div class="mt-3">
-                                        <label class="form-label">Vista previa:</label>
-                                        <div>
-                                            <img id="preview-img" src="" class="img-thumbnail" style="max-height: 200px;">
-                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="remove-image">
-                                                <i class="bi bi-x-circle"></i> Quitar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <a href="{{ asset('storage/' . $anuncio->archivo_adjunto) }}" target="_blank" class="btn btn-sm btn-outline-primary ms-auto">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
                             </div>
                         @endif
+
+                        <div class="form-group mb-3">
+                            <label for="archivo_adjunto" class="form-label fw-bold">Subir Nuevo / Reemplazar Archivo</label>
+                            <input type="file" class="form-control @error('archivo_adjunto') is-invalid @enderror" 
+                                   id="archivo_adjunto" name="archivo_adjunto" 
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.mp4,.mov,.avi">
+                            @error('archivo_adjunto')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Formatos: PDF, Word, Excel, Video (MP4), Zip • Máx: 100MB
+                            </div>
+                        </div>
+
+                        <!-- Preview de nuevo archivo -->
+                        <div id="file-preview-new" style="display: none;">
+                            <div class="alert alert-success d-flex align-items-center">
+                                <i id="file-icon-new" class="bi bi-file-earmark-check-fill fs-2 me-3"></i>
+                                <div>
+                                    <span id="file-filename-new" class="fw-bold"></span>
+                                    <br>
+                                    <small>Nuevo archivo seleccionado para subir</small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link text-danger ms-auto" id="remove-file-new">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+          </div>
 
             <!-- Configuración -->
             <div class="col-lg-4">
@@ -300,31 +271,47 @@
                             @enderror
                         </div>
 
-                        <!-- Dirigido A -->
+                        <!-- Dirigido A (Roles Dinámicos) -->
                         <div class="form-group mb-4">
-                            <label for="dirigido_a" class="form-label fw-bold">
-                                <i class="bi bi-people me-1"></i>Dirigido A <span class="text-danger">*</span>
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-people me-1"></i>Dirigido A: <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select @error('dirigido_a') is-invalid @enderror" id="dirigido_a" name="dirigido_a" required>
-                                <option value="todos" {{ old('dirigido_a', $anuncio->dirigido_a) == 'todos' ? 'selected' : '' }}>
-                                    👥 Todos los usuarios
-                                </option>
-                                <option value="estudiantes" {{ old('dirigido_a', $anuncio->dirigido_a) == 'estudiantes' ? 'selected' : '' }}>
-                                    🎓 Solo Estudiantes
-                                </option>
-                                <option value="docentes" {{ old('dirigido_a', $anuncio->dirigido_a) == 'docentes' ? 'selected' : '' }}>
-                                    👨‍🏫 Solo Docentes
-                                </option>
-                                <option value="administrativos" {{ old('dirigido_a', $anuncio->dirigido_a) == 'administrativos' ? 'selected' : '' }}>
-                                    💼 Solo Administrativos
-                                </option>
-                                <option value="padres" {{ old('dirigido_a', $anuncio->dirigido_a) == 'padres' ? 'selected' : '' }}>
-                                    👨‍👩‍👧‍👦 Solo Padres de Familia
-                                </option>
-                            </select>
-                            @error('dirigido_a')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <div class="card bg-light border-0 shadow-none">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Selecciona uno o más grupos:</small>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none me-2" id="select-all-roles">Todos</button>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none text-danger" id="deselect-all-roles">Ninguno</button>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2">
+                                        @foreach($roles as $role)
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input role-checkbox @error('role_ids') is-invalid @enderror" 
+                                                       type="checkbox" 
+                                                       name="role_ids[]" 
+                                                       value="{{ $role->id }}" 
+                                                       id="role_{{ $role->id }}"
+                                                       {{ (is_array(old('role_ids', $selectedRoles)) && in_array($role->id, old('role_ids', $selectedRoles))) ? 'checked' : '' }}>
+                                                <label class="form-check-label small d-flex align-items-center" for="role_{{ $role->id }}">
+                                                    @if(Str::contains(strtolower($role->nombre), 'estudiante')) 🎓
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'profesor') || Str::contains(strtolower($role->nombre), 'docente')) 👨‍🏫
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'admin')) 💼
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'padre')) 👨‍👩‍👧‍👦
+                                                    @else 👤 @endif
+                                                    {{ ucfirst($role->nombre) }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                    @error('role_ids')
+                                        <div class="text-danger small mt-2 d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -605,28 +592,35 @@ document.addEventListener('DOMContentLoaded', function() {
         previewNewImg.src = '';
     });
     @else
-    // Preview de imagen (sin imagen actual)
-    const imagenInput = document.getElementById('imagen');
-    const imagePreview = document.getElementById('image-preview');
-    const previewImg = document.getElementById('preview-img');
-    const removeButton = document.getElementById('remove-image');
-    
-    imagenInput.addEventListener('change', function(e) {
+    // Preview de Archivos Adjuntos
+    const fileInput = document.getElementById('archivo_adjunto');
+    const filePreview = document.getElementById('file-preview-new');
+    const fileFilename = document.getElementById('file-filename-new');
+    const fileIcon = document.getElementById('file-icon-new');
+    const removeFileButton = document.getElementById('remove-file-new');
+
+    fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                imagePreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+            const ext = file.name.split('.').pop().toLowerCase();
+            fileFilename.textContent = file.name;
+            
+            // Icono dinámico
+            let iconClass = 'bi-file-earmark-check-fill';
+            if (['pdf'].includes(ext)) iconClass = 'bi-file-earmark-pdf-fill';
+            if (['doc', 'docx'].includes(ext)) iconClass = 'bi-file-earmark-word-fill';
+            if (['xls', 'xlsx'].includes(ext)) iconClass = 'bi-file-earmark-excel-fill';
+            if (['mp4', 'mov', 'avi'].includes(ext)) iconClass = 'bi-camera-video-fill';
+            if (['zip', 'rar'].includes(ext)) iconClass = 'bi-file-earmark-zip-fill';
+            
+            fileIcon.className = `bi ${iconClass} fs-2 me-3`;
+            filePreview.style.display = 'block';
         }
     });
-    
-    removeButton.addEventListener('click', function() {
-        imagenInput.value = '';
-        imagePreview.style.display = 'none';
-        previewImg.src = '';
+
+    removeFileButton.addEventListener('click', function() {
+        fileInput.value = '';
+        filePreview.style.display = 'none';
     });
     @endif
     
@@ -687,8 +681,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // No mostrar confirmación al enviar el formulario
-    document.querySelector('form').addEventListener('submit', () => hasChanges = false);
+    // Selección de Roles
+    const selectAllBtn = document.getElementById('select-all-roles');
+    const deselectAllBtn = document.getElementById('deselect-all-roles');
+    const roleCheckboxes = document.querySelectorAll('.role-checkbox');
+
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            roleCheckboxes.forEach(cb => cb.checked = true);
+        });
+    }
+
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+            roleCheckboxes.forEach(cb => cb.checked = false);
+        });
+    }
 });
 </script>
 @endpush

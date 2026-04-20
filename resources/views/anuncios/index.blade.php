@@ -159,6 +159,23 @@
                                                     @if($anuncio->descripcion)
                                                         <small class="text-muted">{{ Str::limit($anuncio->descripcion, 40) }}</small>
                                                     @endif
+                                                    @if($anuncio->archivo_adjunto)
+                                                        @php
+                                                            $ext = strtolower($anuncio->tipo_archivo);
+                                                            $icon = 'bi-file-earmark-arrow-down';
+                                                            $color = 'bg-secondary';
+                                                            if(in_array($ext, ['pdf'])) { $icon = 'bi-file-earmark-pdf'; $color = 'bg-danger'; }
+                                                            if(in_array($ext, ['doc', 'docx'])) { $icon = 'bi-file-earmark-word'; $color = 'bg-primary'; }
+                                                            if(in_array($ext, ['xls', 'xlsx'])) { $icon = 'bi-file-earmark-excel'; $color = 'bg-success'; }
+                                                            if(in_array($ext, ['mp4', 'mov', 'avi'])) { $icon = 'bi-camera-video'; $color = 'bg-dark'; }
+                                                            if(in_array($ext, ['zip', 'rar'])) { $icon = 'bi-file-earmark-zip'; $color = 'bg-warning text-dark'; }
+                                                        @endphp
+                                                        <div class="mt-1">
+                                                            <span class="badge {{ $color }} p-1" style="font-size: 0.65rem;">
+                                                                <i class="bi {{ $icon }}"></i> {{ strtoupper($ext) }} adjunto
+                                                            </span>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>
@@ -327,13 +344,26 @@
                                                                     {!! nl2br(e($anuncio->contenido)) !!}
                                                                 </div>
                                                             </div>
-                                                            @if($anuncio->imagen)
+                                                            @if($anuncio->archivo_adjunto)
                                                                 <div class="mt-3">
-                                                                    <strong>Imagen:</strong><br>
-                                                                    <img src="{{ asset('storage/' . $anuncio->imagen) }}" 
-                                                                         alt="Imagen del anuncio" 
-                                                                         class="img-fluid mt-2" 
-                                                                         style="max-height: 200px;">
+                                                                    <strong>Archivo Adjunto:</strong><br>
+                                                                    @php
+                                                                        $ext = strtolower($anuncio->tipo_archivo);
+                                                                        $esVideo = in_array($ext, ['mp4', 'mov', 'avi']);
+                                                                    @endphp
+
+                                                                    @if($esVideo)
+                                                                        <video width="100%" height="auto" controls class="mt-2 rounded">
+                                                                            <source src="{{ asset('storage/' . $anuncio->archivo_adjunto) }}" type="video/{{ $ext === 'mov' ? 'quicktime' : $ext }}">
+                                                                            Su navegador no soporta el reproductor de video.
+                                                                        </video>
+                                                                    @endif
+
+                                                                    <a href="{{ asset('storage/' . $anuncio->archivo_adjunto) }}" 
+                                                                       target="_blank" 
+                                                                       class="btn btn-outline-primary btn-sm mt-2">
+                                                                        <i class="bi bi-cloud-arrow-down"></i> Descargar {{ strtoupper($ext) }}
+                                                                    </a>
                                                                 </div>
                                                             @endif
                                                         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Anuncio;
 use App\Models\User;
+use App\Models\Role;
 use App\Notifications\GeneralAnnouncement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,6 @@ class AnnouncementController extends Controller
 {
     public function index()
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_view')) {
             abort(403, 'No tienes permisos para ver anuncios.');
         }
@@ -31,17 +31,16 @@ class AnnouncementController extends Controller
 
     public function create()
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_create')) {
             abort(403, 'No tienes permisos para crear anuncios.');
         }
 
-        return view('anuncios.create');
+        $roles = Role::orderBy('nombre')->get();
+        return view('anuncios.create', compact('roles'));
     }
 
     public function show(Anuncio $anuncio)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_view')) {
             abort(403, 'No tienes permisos para ver este anuncio.');
         }
@@ -51,17 +50,17 @@ class AnnouncementController extends Controller
 
     public function edit(Anuncio $anuncio)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_edit')) {
             abort(403, 'No tienes permisos para editar anuncios.');
         }
 
-        return view('anuncios.edit', compact('anuncio'));
+        $roles = Role::orderBy('nombre')->get();
+        $selectedRoles = $anuncio->roles->pluck('id')->toArray();
+        return view('anuncios.edit', compact('anuncio', 'roles', 'selectedRoles'));
     }
 
     public function store(Request $request)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_create')) {
             abort(403, 'No tienes permisos para crear anuncios.');
         }
@@ -75,15 +74,17 @@ class AnnouncementController extends Controller
             'fecha_expiracion' => 'nullable|date|after_or_equal:fecha_publicacion',
             'prioridad' => 'required|integer|between:1,4',
             'tipo' => 'required|in:informativo,importante,urgente,mantenimiento,evento',
-            'dirigido_a' => 'required|in:todos,estudiantes,docentes,administrativos,padres',
-            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'archivo_adjunto' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi|max:102400',
             'enviar_notificacion' => 'boolean'
         ]);
 
         try {
             $data = $request->only([
                 'titulo', 'contenido', 'descripcion', 'es_activo',
-                'fecha_publicacion', 'fecha_expiracion', 'prioridad', 'tipo', 'dirigido_a'
+                'fecha_publicacion', 'fecha_expiracion', 'prioridad', 'tipo'
             ]);
 
             $data['creado_por'] = Auth::id();
@@ -96,11 +97,23 @@ class AnnouncementController extends Controller
             if ($request->hasFile('imagen')) {
                 $imagen = $request->file('imagen');
                 $nombreImagen = time() . '_' . $imagen->getClientOriginalName();
-                $rutaImagen = $imagen->storeAs('anuncios', $nombreImagen, 'public');
+                $rutaImagen = $imagen->storeAs('anuncios/imagenes', $nombreImagen, 'public');
                 $data['imagen'] = $rutaImagen;
             }
 
+            if ($request->hasFile('archivo_adjunto')) {
+                $archivo = $request->file('archivo_adjunto');
+                $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+                $rutaArchivo = $archivo->storeAs('anuncios/documentos', $nombreArchivo, 'public');
+                $data['archivo_adjunto'] = $rutaArchivo;
+                $data['tipo_archivo'] = $archivo->getClientOriginalExtension();
+            }
+
             $anuncio = Anuncio::create($data);
+            
+            if ($request->has('role_ids')) {
+                $anuncio->roles()->sync($request->role_ids);
+            }
 
             if ($request->boolean('enviar_notificacion', false)) {
                 $this->enviarNotificaciones($anuncio);
@@ -118,7 +131,6 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Anuncio $anuncio)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_edit')) {
             abort(403, 'No tienes permisos para actualizar anuncios.');
         }
@@ -132,14 +144,15 @@ class AnnouncementController extends Controller
             'fecha_expiracion' => 'nullable|date|after_or_equal:fecha_publicacion',
             'prioridad' => 'required|integer|between:1,4',
             'tipo' => 'required|in:informativo,importante,urgente,mantenimiento,evento',
-            'dirigido_a' => 'required|in:todos,estudiantes,docentes,administrativos,padres',
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         try {
             $data = $request->only([
                 'titulo', 'contenido', 'descripcion', 'es_activo',
-                'fecha_publicacion', 'fecha_expiracion', 'prioridad', 'tipo', 'dirigido_a'
+                'fecha_publicacion', 'fecha_expiracion', 'prioridad', 'tipo'
             ]);
 
             $data['es_activo'] = $request->boolean('es_activo');
@@ -151,11 +164,27 @@ class AnnouncementController extends Controller
 
                 $imagen = $request->file('imagen');
                 $nombreImagen = time() . '_' . $imagen->getClientOriginalName();
-                $rutaImagen = $imagen->storeAs('anuncios', $nombreImagen, 'public');
+                $rutaImagen = $imagen->storeAs('anuncios/imagenes', $nombreImagen, 'public');
                 $data['imagen'] = $rutaImagen;
             }
 
+            if ($request->hasFile('archivo_adjunto')) {
+                if ($anuncio->archivo_adjunto && Storage::disk('public')->exists($anuncio->archivo_adjunto)) {
+                    Storage::disk('public')->delete($anuncio->archivo_adjunto);
+                }
+
+                $archivo = $request->file('archivo_adjunto');
+                $nombreArchivo = time() . '_' . $archivo->getClientOriginalName();
+                $rutaArchivo = $archivo->storeAs('anuncios/documentos', $nombreArchivo, 'public');
+                $data['archivo_adjunto'] = $rutaArchivo;
+                $data['tipo_archivo'] = $archivo->getClientOriginalExtension();
+            }
+
             $anuncio->update($data);
+            
+            if ($request->has('role_ids')) {
+                $anuncio->roles()->sync($request->role_ids);
+            }
 
             return redirect()->route('anuncios.index')
                 ->with('success', 'Anuncio actualizado exitosamente.');
@@ -169,7 +198,6 @@ class AnnouncementController extends Controller
 
     public function destroy(Anuncio $anuncio)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_delete')) {
             abort(403, 'No tienes permisos para eliminar anuncios.');
         }
@@ -190,42 +218,26 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Enviar notificaciones
-     */
     private function enviarNotificaciones(Anuncio $anuncio)
     {
         try {
+            $roleIds = $anuncio->roles->pluck('id')->toArray();
             $usuarios = collect();
 
-            switch($anuncio->dirigido_a) {
-                case 'todos':
-                    $usuarios = User::where('estado', true)->get();
-                    break;
-                case 'estudiantes':
-                    $usuarios = User::whereHas('roles', function($q) {
-                        $q->where('nombre', 'estudiante');
-                    })->where('estado', true)->get();
-                    break;
-                case 'docentes':
-                    $usuarios = User::whereHas('roles', function($q) {
-                        $q->where('nombre', 'profesor');
-                    })->where('estado', true)->get();
-                    break;
-                case 'administrativos':
-                    $usuarios = User::whereHas('roles', function($q) {
-                        $q->where('nombre', 'admin');
-                    })->where('estado', true)->get();
-                    break;
-                case 'padres':
-                    $usuarios = User::whereHas('roles', function($q) {
-                        $q->where('nombre', 'padre');
-                    })->where('estado', true)->get();
-                    break;
+            if (!empty($roleIds)) {
+                $usuarios = User::whereHas('roles', function($q) use ($roleIds) {
+                    $q->whereIn('roles.id', $roleIds);
+                })->where('estado', true)->get();
             }
 
-            if (class_exists(GeneralAnnouncement::class) && $usuarios->count() > 0) {
-                Notification::send($usuarios, new GeneralAnnouncement($anuncio->titulo, $anuncio->contenido));
+            if ($usuarios->count() > 0) {
+                Notification::send($usuarios, new GeneralAnnouncement(
+                    $anuncio->titulo, 
+                    $anuncio->contenido, 
+                    $anuncio->imagen,
+                    $anuncio->archivo_adjunto,
+                    $anuncio->tipo_archivo
+                ));
             }
 
         } catch (\Exception $e) {
@@ -233,12 +245,8 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
-     * Cambiar estado del anuncio
-     */
     public function toggleStatus(Anuncio $anuncio)
     {
-        // ✅ USAR CÓDIGOS CORRECTOS CON GUIONES BAJOS
         if (!Auth::user()->hasPermission('announcements_edit')) {
             abort(403, 'No tienes permisos para cambiar el estado de anuncios.');
         }
@@ -253,16 +261,23 @@ class AnnouncementController extends Controller
                         ->with('success', "Anuncio {$status} exitosamente.");
     }
 
-    /**
-     * Obtener anuncios activos para el modal público
-     */
     public function getActivos()
     {
         try {
-            $anuncios = Anuncio::publicados()
+            $query = Anuncio::publicados()
                 ->ordenadosPorPrioridad()
-                ->whereIn('tipo', ['importante', 'urgente', 'evento', 'informativo', 'mantenimiento']) // Se agregaron informativo y mantenimiento
-                ->get(['id', 'titulo', 'descripcion', 'imagen', 'tipo', 'prioridad']);
+                ->whereIn('tipo', ['importante', 'urgente', 'evento', 'informativo', 'mantenimiento']);
+
+            if (Auth::check()) {
+                $userRoleIds = Auth::user()->roles->pluck('id')->toArray();
+                $query->whereHas('roles', function($q) use ($userRoleIds) {
+                    $q->whereIn('roles.id', $userRoleIds);
+                });
+            } else {
+                $query->whereDoesntHave('roles');
+            }
+
+            $anuncios = $query->get(['id', 'titulo', 'descripcion', 'imagen', 'archivo_adjunto', 'tipo_archivo', 'tipo', 'prioridad']);
             
             return response()->json($anuncios);
         } catch (\Exception $e) {

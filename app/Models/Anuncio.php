@@ -21,19 +21,23 @@ class Anuncio extends Model
         'contenido',
         'descripcion',
         'es_activo',
+        'enviar_push',
         'fecha_inicio',
         'fecha_fin',
         'fecha_publicacion',    // Agregado para compatibilidad
         'fecha_expiracion',     // Agregado para compatibilidad
         'prioridad',
         'tipo',
-        'dirigido_a',
         'creado_por',
-        'imagen'
+        'imagen',
+        'archivo_adjunto',
+        'tipo_archivo',
+        'firebase_message_id',
     ];
 
     protected $casts = [
         'es_activo' => 'boolean',
+        'enviar_push' => 'boolean',
         'fecha_inicio' => 'datetime',
         'fecha_fin' => 'datetime',
         'fecha_publicacion' => 'datetime',    // Agregado para compatibilidad
@@ -46,6 +50,12 @@ class Anuncio extends Model
     public function creador()
     {
         return $this->belongsTo(User::class, 'creado_por');
+    }
+
+    // Relación con los roles a los que va dirigido
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'anuncio_roles', 'anuncio_id', 'role_id')->withTimestamps();
     }
 
     // Scope para anuncios activos

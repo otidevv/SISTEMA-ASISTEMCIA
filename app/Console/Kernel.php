@@ -25,6 +25,18 @@ class Kernel extends ConsoleKernel
         $schedule->command('asistencia:procesar-docentes')
             ->withoutOverlapping()
             ->everyMinute();
+
+        // Recordatorio dinámico de temas y próximos cursos (cada hora)
+        $schedule->command('notification:remind-teachers')
+            ->hourly();
+
+        // Agenda Diaria (Hoy) - 07:00 AM
+        $schedule->command('asistencia:notificar-agenda')
+            ->dailyAt('07:00');
+
+        // Agenda para Mañana (Noche anterior) - 08:00 PM
+        $schedule->command('asistencia:notificar-agenda --tomorrow')
+            ->dailyAt('20:00');
     }
 
     /**

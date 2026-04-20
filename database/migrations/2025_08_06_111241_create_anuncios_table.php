@@ -23,24 +23,38 @@ return new class extends Migration
             
             $table->integer('prioridad')->default(1)->comment('1=Baja, 2=Media, 3=Alta, 4=Crítica');
             $table->enum('tipo', ['informativo', 'importante', 'urgente', 'mantenimiento', 'evento'])->default('informativo');
-            $table->enum('dirigido_a', ['todos', 'estudiantes', 'docentes', 'administrativos', 'padres'])->default('todos');
             $table->unsignedBigInteger('creado_por')->nullable();
+            
+            // Multimedia y Notificaciones (Campos Unificados)
             $table->string('imagen')->nullable();
+            $table->string('archivo_adjunto')->nullable();
+            $table->string('tipo_archivo', 50)->nullable();
+            $table->boolean('enviar_push')->default(false);
+            $table->string('firebase_message_id')->nullable();
+            
             $table->timestamps();
 
             // Índices para mejor rendimiento
             $table->index(['es_activo', 'fecha_inicio', 'fecha_fin']);
             $table->index(['es_activo', 'fecha_publicacion', 'fecha_expiracion']);
             $table->index(['prioridad', 'created_at']);
-            $table->index('dirigido_a');
 
             // Clave foránea si existe la tabla users
             $table->foreign('creado_por')->references('id')->on('users')->onDelete('set null');
+        });
+
+        // Tabla Pivote para Roles Dinámicos (Integrada)
+        Schema::create('anuncio_roles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('anuncio_id')->constrained('anuncios')->onDelete('cascade');
+            $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
+            $table->timestamps();
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('anuncio_roles');
         Schema::dropIfExists('anuncios');
     }
 };

@@ -148,7 +148,43 @@
                                     <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="remove-image">
                                         <i class="bi bi-x-circle"></i> Quitar
                                     </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documento PDF -->
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>Archivo Adjunto (Multiformato)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label for="archivo_adjunto" class="form-label">Seleccionar Documento</label>
+                            <input type="file" class="form-control @error('archivo_adjunto') is-invalid @enderror" 
+                                   id="archivo_adjunto" name="archivo_adjunto" 
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.mp4,.mov,.avi">
+                            @error('archivo_adjunto')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>Formatos: PDF, Office, Video (MP4), Comprimidos • Máx: 100MB
+                            </div>
+                        </div>
+
+                        <!-- Preview de Archivo -->
+                        <div id="pdf-preview" style="display: none;">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <i id="file-icon" class="bi bi-file-earmark-fill fs-2 me-3"></i>
+                                <div>
+                                    <span id="pdf-filename" class="fw-bold"></span>
+                                    <br>
+                                    <small id="file-type-label">Archivo seleccionado para adjuntar</small>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-link text-danger ms-auto" id="remove-pdf">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -227,31 +263,63 @@
                             @enderror
                         </div>
 
-                        <!-- Dirigido A -->
+                        <!-- Dirigido A (Roles Dinámicos) -->
                         <div class="form-group mb-4">
-                            <label for="dirigido_a" class="form-label fw-bold">
-                                <i class="bi bi-people me-1"></i>Dirigido A <span class="text-danger">*</span>
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-people me-1"></i>Dirigido A: <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select @error('dirigido_a') is-invalid @enderror" id="dirigido_a" name="dirigido_a" required>
-                                <option value="todos" {{ old('dirigido_a', 'todos') == 'todos' ? 'selected' : '' }}>
-                                    👥 Todos los usuarios
-                                </option>
-                                <option value="estudiantes" {{ old('dirigido_a') == 'estudiantes' ? 'selected' : '' }}>
-                                    🎓 Solo Estudiantes
-                                </option>
-                                <option value="docentes" {{ old('dirigido_a') == 'docentes' ? 'selected' : '' }}>
-                                    👨‍🏫 Solo Docentes
-                                </option>
-                                <option value="administrativos" {{ old('dirigido_a') == 'administrativos' ? 'selected' : '' }}>
-                                    💼 Solo Administrativos
-                                </option>
-                                <option value="padres" {{ old('dirigido_a') == 'padres' ? 'selected' : '' }}>
-                                    👨‍👩‍👧‍👦 Solo Padres de Familia
-                                </option>
-                            </select>
-                            @error('dirigido_a')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <div class="card bg-light border-0 shadow-none">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Selecciona uno o más grupos:</small>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none me-2" id="select-all-roles">Todos</button>
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none text-danger" id="deselect-all-roles">Ninguno</button>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2">
+                                        @foreach($roles as $role)
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input role-checkbox @error('role_ids') is-invalid @enderror" 
+                                                       type="checkbox" 
+                                                       name="role_ids[]" 
+                                                       value="{{ $role->id }}" 
+                                                       id="role_{{ $role->id }}"
+                                                       {{ (is_array(old('role_ids')) && in_array($role->id, old('role_ids'))) ? 'checked' : '' }}>
+                                                <label class="form-check-label small d-flex align-items-center" for="role_{{ $role->id }}">
+                                                    @if(Str::contains(strtolower($role->nombre), 'estudiante')) 🎓
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'profesor') || Str::contains(strtolower($role->nombre), 'docente')) 👨‍🏫
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'admin')) 💼
+                                                    @elseif(Str::contains(strtolower($role->nombre), 'padre')) 👨‍👩‍👧‍👦
+                                                    @else 👤 @endif
+                                                    {{ ucfirst($role->nombre) }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                    @error('role_ids')
+                                        <div class="text-danger small mt-2 d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enviar Notificación Push -->
+                        <div class="card border-primary mb-4">
+                            <div class="card-body">
+                                <div class="form-check form-switch card-title">
+                                    <input type="checkbox" class="form-check-input" id="enviar_notificacion" name="enviar_notificacion" 
+                                           value="1" {{ old('enviar_notificacion') ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-bold text-primary" for="enviar_notificacion">
+                                        <i class="bi bi-bell-fill me-1"></i>Enviar Notificación Push
+                                    </label>
+                                </div>
+                                <p class="card-text small text-muted">
+                                    Se enviará una alerta en tiempo real a los dispositivos móviles del público seleccionado.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -472,6 +540,37 @@ document.addEventListener('DOMContentLoaded', function() {
         imagePreview.style.display = 'none';
         previewImg.src = '';
     });
+
+    // Preview de Archivos
+    const pdfInput = document.getElementById('archivo_adjunto');
+    const pdfPreview = document.getElementById('pdf-preview');
+    const pdfFilename = document.getElementById('pdf-filename');
+    const fileIcon = document.getElementById('file-icon');
+    const removePdfButton = document.getElementById('remove-pdf');
+
+    pdfInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            pdfFilename.textContent = file.name;
+            
+            // Icono dinámico
+            let iconClass = 'bi-file-earmark-fill';
+            if (['pdf'].includes(ext)) iconClass = 'bi-file-earmark-pdf-fill';
+            if (['doc', 'docx'].includes(ext)) iconClass = 'bi-file-earmark-word-fill';
+            if (['xls', 'xlsx'].includes(ext)) iconClass = 'bi-file-earmark-excel-fill';
+            if (['mp4', 'mov', 'avi'].includes(ext)) iconClass = 'bi-camera-video-fill';
+            if (['zip', 'rar'].includes(ext)) iconClass = 'bi-file-earmark-zip-fill';
+            
+            fileIcon.className = `bi ${iconClass} fs-2 me-3`;
+            pdfPreview.style.display = 'block';
+        }
+    });
+
+    removePdfButton.addEventListener('click', function() {
+        pdfInput.value = '';
+        pdfPreview.style.display = 'none';
+    });
     
     // Validación de fechas
     const fechaPublicacion = document.getElementById('fecha_publicacion');
@@ -522,6 +621,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // No mostrar confirmación al enviar el formulario
     document.querySelector('form').addEventListener('submit', () => hasChanges = false);
+
+    // Selección de Roles
+    const selectAllBtn = document.getElementById('select-all-roles');
+    const deselectAllBtn = document.getElementById('deselect-all-roles');
+    const roleCheckboxes = document.querySelectorAll('.role-checkbox');
+
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            roleCheckboxes.forEach(cb => cb.checked = true);
+        });
+    }
+
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+            roleCheckboxes.forEach(cb => cb.checked = false);
+        });
+    }
 });
 </script>
 @endpush
