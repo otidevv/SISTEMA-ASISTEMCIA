@@ -65,14 +65,16 @@
         }
         th {
             background-color: #f2f2f2;
-            border: 1px solid #ccc;
+            border: 1px solid #999;
+
             padding: 6px;
             text-align: center;
             font-weight: bold;
             text-transform: uppercase;
         }
         td {
-            border: 1px solid #eee;
+            border: 1px solid #999;
+
             padding: 5px;
             vertical-align: middle;
         }
