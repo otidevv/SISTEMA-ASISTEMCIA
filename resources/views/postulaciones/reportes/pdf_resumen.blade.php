@@ -173,8 +173,8 @@
                 </thead>
                 <tbody>
                     @foreach($tabla1 as $index => $row)
-                        @if($index < 2) @continue @endif {{-- Skip titles --}}
                         @php $isTotal = $row[2] === 'Total'; @endphp
+
                         <tr class="{{ $isTotal ? 'total-row' : '' }}">
                             <td class="text-center">{{ $row[0] }}</td>
                             <td class="text-center">
@@ -206,8 +206,8 @@
                 </thead>
                 <tbody>
                     @foreach($tabla2 as $index => $row)
-                        @if($index < 2) @continue @endif
                         @php $isTotal = $row[0] === 'Total'; @endphp
+
                         <tr class="{{ $isTotal ? 'total-row' : '' }}">
                             <td>{{ $row[0] }}</td>
                             <td class="text-center fw-bold">{{ $row[1] }}</td>

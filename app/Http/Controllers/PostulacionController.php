@@ -1354,14 +1354,31 @@ class PostulacionController extends Controller
 
         $tabla1 = [];
         $tabla2 = [];
-        foreach ($dataArray as $row) {
-            $tabla1[] = array_slice($row, 0, 5);
-            if (isset($row[6]) && $row[6] !== '') {
+        
+        // Identificar dónde terminan las cabeceras buscando el primer número o dato real
+        // En Excel: Row 0 es Título, Row 1 es Encabezados.
+        foreach ($dataArray as $index => $row) {
+            // Tabla 1: Solo filas de datos (evitar Título y Encabezados)
+            if ($index >= 2) {
+                // Verificar si es la fila de total de la tabla 1 para no duplicar si hay desfase
+                if ($row[2] === 'Total' && !empty($row[4])) {
+                    $tabla1[] = array_slice($row, 0, 5);
+                } else if (!empty($row[2]) || !empty($row[3])) {
+                    $tabla1[] = array_slice($row, 0, 5);
+                }
+            }
+
+            // Tabla 2: Solo filas de datos (evitar Título y Encabezados)
+            // Columnas 6 y 7
+            if ($index >= 2 && isset($row[6]) && $row[6] !== '' && $row[6] !== 'Total') {
+                $tabla2[] = array_slice($row, 6, 2);
+            } else if ($index >= 2 && isset($row[6]) && $row[6] === 'Total') {
                 $tabla2[] = array_slice($row, 6, 2);
             }
         }
 
         $pdf = Pdf::loadView('postulaciones.reportes.pdf_resumen', compact('tabla1', 'tabla2', 'ciclo'));
+
         $pdf->setPaper('a4', 'portrait');
         
         return $pdf->download('reporte_resumen_' . ($ciclo ? $ciclo->nombre : 'general') . '_' . date('Ymd_His') . '.pdf');
@@ -1387,11 +1404,13 @@ class PostulacionController extends Controller
 
             $tabla1 = [];
             $tabla2 = [];
-            foreach ($dataArray as $row) {
-                // Main Table
-                $tabla1[] = array_slice($row, 0, 5);
-                // Summary Table
-                if (isset($row[6]) && $row[6] !== '') {
+            foreach ($dataArray as $index => $row) {
+                // Main Table (Skip headers)
+                if ($index >= 2) {
+                    $tabla1[] = array_slice($row, 0, 5);
+                }
+                // Summary Table (Skip headers and handle data)
+                if ($index >= 2 && isset($row[6]) && $row[6] !== '') {
                     $tabla2[] = array_slice($row, 6, 2);
                 }
             }
@@ -1403,6 +1422,7 @@ class PostulacionController extends Controller
                     'tabla2' => $tabla2
                 ]
             ]);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
