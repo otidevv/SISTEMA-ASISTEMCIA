@@ -632,12 +632,13 @@ function viewPostulacion(id) {
                 html += '<div class="col-md-6">';
                 html += '<div class="detail-section h-100 shadow-sm">';
                 html += '<h4 class="detail-section-title d-flex justify-content-between align-items-center mb-2"><i class="bi bi-cash me-2"></i> Pagos';
-                html += '<button class="btn btn-cepre-eye btn-sm sync-payment" data-id="' + postulacion.id + '"><i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR</button></h4>';
+                html += '<button class="btn btn-cepre-magenta btn-sm sync-payment shadow-sm text-white" data-id="' + postulacion.id + '"><i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR</button></h4>';
                 if (postulacion.numero_recibo) {
                     html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
                     html += '<div class="detail-item"><strong>Recibo / Fecha</strong><span>' + postulacion.numero_recibo + ' (' + (postulacion.fecha_emision_voucher ? new Date(postulacion.fecha_emision_voucher).toLocaleDateString() : 'N/A') + ')</span></div>';
-                    html += '<div class="detail-item"><strong>Matrícula</strong><span>S/. ' + postulacion.monto_matricula + '</span></div>';
-                    html += '<div class="detail-item col-md-12"><div class="alert alert-info py-1 mb-0 mt-1 extra-small text-center"><strong>Total:</strong> S/. ' + postulacion.monto_total_pagado + '</div></div>';
+                    html += '<div class="detail-item"><strong>Matrícula</strong><span>S/. ' + (postulacion.monto_matricula || '0.00') + '</span></div>';
+                    html += '<div class="detail-item"><strong>Enseñanza</strong><span>S/. ' + (postulacion.monto_ensenanza || '0.00') + '</span></div>';
+                    html += '<div class="detail-item col-span-2"><div class="alert alert-info py-1 mb-0 mt-1 extra-small text-center shadow-sm"><strong>Total Pagado:</strong> S/. ' + (postulacion.monto_total_pagado || '0.00') + '</div></div>';
                     html += '</div>';
                 } else {
                     html += '<p class="text-muted extra-small">Sin pagos registrados.</p>';
