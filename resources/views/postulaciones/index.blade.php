@@ -2584,7 +2584,12 @@
                             </div>
                         </div>
 
-                        <h6 class="text-lg font-semibold text-gray-600 mt-6 mb-3 border-bottom pb-2">Información de Pago</h6>
+                        <div class="d-flex justify-content-between align-items-center mt-6 mb-3 border-bottom pb-2">
+                            <h6 class="text-lg font-semibold text-gray-600 mb-0">Información de Pago</h6>
+                            <button type="button" class="btn btn-cepre-eye btn-sm sync-payment" id="btn-sync-edit" data-id="">
+                                <i class="bi bi-arrow-repeat me-1"></i> Sincronizar desde API
+                            </button>
+                        </div>
                         <div class="row g-4">
                             <div class="col-md-4">
                                 <div class="mb-3">

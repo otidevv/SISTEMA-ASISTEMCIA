@@ -28,6 +28,7 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Imports\PostulantesImport;
 use App\Exports\PostulantesTemplateExport;
 use App\Exports\InhabilitadosExport;
+use App\Services\PaymentValidationService;
 
 class PostulacionController extends Controller
 {
@@ -308,6 +309,58 @@ class PostulacionController extends Controller
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Sincronizar pago desde la API de UNAMAD
+     */
+    public function syncPayment($id)
+    {
+        if (!Auth::user()->hasPermission('postulaciones.verify_payment')) {
+            return response()->json(['success' => false, 'message' => 'Sin permisos para sincronizar pagos'], 403);
+        }
+
+        try {
+            $postulacion = Postulacion::with('estudiante')->findOrFail($id);
+            $estudiante = $postulacion->estudiante;
+
+            if (!$estudiante || !$estudiante->numero_documento) {
+                return response()->json(['success' => false, 'message' => 'No se encontró el DNI del estudiante.'], 422);
+            }
+
+            $paymentService = app(PaymentValidationService::class);
+            $pagosApi = $paymentService->validateVoucher($estudiante->numero_documento, null, true);
+
+            if (!$pagosApi || empty($pagosApi)) {
+                return response()->json(['success' => false, 'message' => 'No se encontraron pagos nuevos en la API de UNAMAD.'], 404);
+            }
+
+            // El arreglo es asociativo (la llave es el serial), tomamos el primero (el más reciente)
+            $voucher = reset($pagosApi);
+
+            $postulacion->numero_recibo = $voucher['serial'] ?? ($voucher['serial_voucher'] ?? '---');
+            $postulacion->monto_matricula = $voucher['monto_matricula'];
+            $postulacion->monto_ensenanza = $voucher['monto_ensenanza'];
+            $postulacion->monto_total_pagado = $voucher['monto_total'];
+            $postulacion->pago_verificado = true;
+            $postulacion->fecha_emision_voucher = $voucher['fecha'] ? \Carbon\Carbon::parse($voucher['fecha'])->toDateString() : now()->toDateString();
+            $postulacion->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pago sincronizado y verificado correctamente desde la API.',
+                'data' => [
+                    'numero_recibo' => $postulacion->numero_recibo,
+                    'monto_matricula' => $postulacion->monto_matricula,
+                    'monto_ensenanza' => $postulacion->monto_ensenanza,
+                    'monto_total_pagado' => $postulacion->monto_total_pagado,
+                    'fecha_emision' => $postulacion->fecha_emision_voucher
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error al sincronizar: ' . $e->getMessage()], 500);
         }
     }
 

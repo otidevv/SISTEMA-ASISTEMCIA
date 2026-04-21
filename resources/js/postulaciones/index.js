@@ -227,6 +227,66 @@ function setupEventHandlers() {
         verifyPayment(id, verified);
     });
 
+    // Sincronizar pago desde API
+    $(document).on('click', '.sync-payment', function () {
+        const id = $(this).data('id');
+        const btn = $(this);
+
+        if (!id) {
+            Toast.fire({ icon: 'error', title: 'No se pudo obtener el ID de la postulación' });
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Sincronizar con UNAMAD?',
+            text: "Se buscarán los pagos del alumno en la API oficial y se actualizarán los montos automáticamente.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--cepre-magenta)',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, sincronizar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                btn.prop('disabled', true);
+                btn.html('<i class="spinner-border spinner-border-sm me-1"></i> ESPERE...');
+
+                $.ajax({
+                    url: "/json/postulaciones/" + id + "/sync-payment",
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.success) {
+                            Toast.fire({ icon: 'success', title: response.message });
+                            
+                            // Si el modal de edición aprobada está abierto, recargar sus datos
+                            if ($('#editApprovedModal').hasClass('show')) {
+                                loadApprovedPostulationForEdit(id);
+                            }
+                            
+                            // Si el modal de detalle está abierto, recargar sus datos
+                            if ($('#viewModal').hasClass('show')) {
+                                viewPostulacion(id);
+                            }
+                            
+                            // Recargar la tabla
+                            table.ajax.reload();
+                        } else {
+                            Toast.fire({ icon: 'error', title: response.message || 'Error al sincronizar pago' });
+                            btn.prop('disabled', false);
+                            btn.html('<i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR');
+                        }
+                    },
+                    error: function (xhr) {
+                        const errorMsg = xhr.responseJSON?.message || 'Error al sincronizar pago';
+                        Toast.fire({ icon: 'error', title: errorMsg });
+                        btn.prop('disabled', false);
+                        btn.html('<i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR');
+                    }
+                });
+            }
+        });
+    });
+
     // Observar
     $(document).on('click', '.observe-postulacion', function () {
         const id = $(this).data('id');
@@ -392,6 +452,7 @@ function setupEventHandlers() {
         const id = $(this).data('id');
         currentPostulacionId = id;
         $('#edit-approved-id').val(id);
+        $('#btn-sync-edit').data('id', id); // Asignar el ID al botón de sincronizar del modal
         loadApprovedPostulationForEdit(id);
         $('#editApprovedModal').modal('show');
     });
@@ -570,7 +631,8 @@ function viewPostulacion(id) {
 
                 html += '<div class="col-md-6">';
                 html += '<div class="detail-section h-100 shadow-sm">';
-                html += '<h4 class="detail-section-title"><i class="bi bi-cash me-2"></i> Pagos</h4>';
+                html += '<h4 class="detail-section-title d-flex justify-content-between align-items-center mb-2"><i class="bi bi-cash me-2"></i> Pagos';
+                html += '<button class="btn btn-cepre-eye btn-sm sync-payment" data-id="' + postulacion.id + '"><i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR</button></h4>';
                 if (postulacion.numero_recibo) {
                     html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
                     html += '<div class="detail-item"><strong>Recibo / Fecha</strong><span>' + postulacion.numero_recibo + ' (' + (postulacion.fecha_emision_voucher ? new Date(postulacion.fecha_emision_voucher).toLocaleDateString() : 'N/A') + ')</span></div>';

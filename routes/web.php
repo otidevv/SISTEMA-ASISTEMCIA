@@ -729,6 +729,7 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::put('/{id}/actualizar-aprobada', [PostulacionController::class, 'actualizarAprobada']);
         Route::post('/{id}/verificar-documentos', [PostulacionController::class, 'verificarDocumentos']);
         Route::post('/{id}/verificar-pago', [PostulacionController::class, 'verificarPago']);
+        Route::post('/{id}/sync-payment', [PostulacionController::class, 'syncPayment']);
         Route::post('/{id}/aprobar', [PostulacionController::class, 'aprobar']);
         Route::post('/{id}/rechazar', [PostulacionController::class, 'rechazar']);
         Route::post('/{id}/observar', [PostulacionController::class, 'observar']);
