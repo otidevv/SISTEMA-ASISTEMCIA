@@ -436,6 +436,25 @@
     background: var(--cepre-dark-magenta);
     transform: translateY(-1px);
 }
+
+.btn-cepre-magenta {
+    background: var(--cepre-magenta) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 10px rgba(226, 0, 122, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-cepre-magenta:hover {
+    background: #c20068 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(226, 0, 122, 0.4) !important;
+    color: white !important;
+}
     </style>
 @endpush
 
