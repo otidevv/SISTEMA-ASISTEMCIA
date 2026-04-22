@@ -678,16 +678,35 @@ function viewPostulacion(id) {
                                 <th>N° RECIBO / OPERACIÓN</th>
                                 <th>CONCEPTO DE PAGO</th>
                                 <th>FECHA DE PAGO</th>
+                                <th>MONTO</th>
                                 <th>ESTADO</th>
                             </tr>
                         </thead>
                         <tbody>
+                            ${post.monto_matricula > 0 ? `
+                            <tr class="payment-row">
+                                <td class="text-navy fw-800">${post.numero_recibo || '---'}</td>
+                                <td><span class="payment-concept-badge bg-navy text-white border">MATRÍCULA DE PREPARACIÓN</span></td>
+                                <td>${post.fecha_emision_voucher ? new Date(post.fecha_emision_voucher).toLocaleDateString() : '---'}</td>
+                                <td class="fw-bold text-navy">S/. ${post.monto_matricula}</td>
+                                <td><span class="badge rounded-pill bg-success px-3">VERIFICADO</span></td>
+                            </tr>` : ''}
+                            ${post.monto_ensenanza > 0 ? `
+                            <tr class="payment-row">
+                                <td class="text-navy fw-800">${post.numero_recibo || '---'}</td>
+                                <td><span class="payment-concept-badge bg-cyan text-white border">ENSEÑANZA POR PREPARACIÓN</span></td>
+                                <td>${post.fecha_emision_voucher ? new Date(post.fecha_emision_voucher).toLocaleDateString() : '---'}</td>
+                                <td class="fw-bold text-navy">S/. ${post.monto_ensenanza}</td>
+                                <td><span class="badge rounded-pill bg-success px-3">VERIFICADO</span></td>
+                            </tr>` : ''}
+                            ${(!post.monto_matricula && !post.monto_ensenanza) ? `
                             <tr class="payment-row">
                                 <td class="text-navy fw-800">${post.numero_recibo || 'POR REGISTRAR'}</td>
-                                <td><span class="payment-concept-badge bg-navy text-white border">INSCRIPCIÓN ORDINARIA</span></td>
+                                <td><span class="payment-concept-badge bg-secondary text-white border">PENDIENTE DE PAGO</span></td>
                                 <td>${post.fecha_emision_voucher ? new Date(post.fecha_emision_voucher).toLocaleDateString() : 'PENDIENTE'}</td>
-                                <td><span class="badge rounded-pill bg-success px-3">VERIFICADO</span></td>
-                            </tr>
+                                <td class="fw-bold text-muted">S/. 0.00</td>
+                                <td><span class="badge rounded-pill bg-warning px-3">PENDIENTE</span></td>
+                            </tr>` : ''}
                         </tbody>
                     </table>
                 </div>`;

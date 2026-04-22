@@ -7,6 +7,9 @@
     --modal-radius: 24px;
     --card-radius: 16px;
     --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --cepre-magenta: #d81b60;
+    --cepre-navy: #1e3a8a;
+    --cepre-cyan: #0891b2;
 }
 
 .premium-modal {
@@ -269,11 +272,17 @@
 .payment-row td:last-child { border-radius: 0 10px 10px 0; }
 
 .payment-concept-badge {
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
+    text-transform: uppercase;
+    display: inline-block;
 }
+
+.bg-navy { background-color: var(--cepre-navy) !important; color: white !important; }
+.bg-cyan { background-color: var(--cepre-cyan) !important; color: white !important; }
+.bg-secondary { background-color: #64748b !important; color: white !important; }
 
 .kpi-icon {
     position: absolute;
