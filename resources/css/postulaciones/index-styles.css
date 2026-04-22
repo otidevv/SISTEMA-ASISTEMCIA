@@ -1,0 +1,281 @@
+/* 
+    MÓDULO DE POSTULACIONES - DISEÑO UNIFICADO CEPRE UNAMAD 
+    Estilos generales de la página (Estadísticas, Tablas, Filtros)
+*/
+
+body {
+    font-family: 'Inter', sans-serif !important; 
+    background-color: var(--cepre-bg-light);
+    color: var(--cepre-text-main);
+}
+
+/* Estética de Contenedor */
+.cepre-content-card {
+    background-color: var(--cepre-sidebar-bg) !important;
+    border: 1px solid var(--cepre-border-color) !important;
+    border-radius: 1.25rem !important; 
+    box-shadow: 0 10px 15px -3px var(--cepre-shadow, rgba(0, 0, 0, 0.05));
+    transition: all 0.3s ease;
+}
+
+[data-bs-theme="dark"] .cepre-content-card {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+/* 📊 TARJETAS DE ESTADÍSTICAS (PREMIUM ADAPTATIVAS) */
+.cepre-stat-card {
+    background-color: var(--cepre-sidebar-bg) !important;
+    border: 1px solid var(--cepre-border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.cepre-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px var(--cepre-card-shadow);
+}
+
+.stat-icon-container {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    margin-right: 1rem;
+    color: white !important;
+}
+
+/* Colores por estado (Usa variables globales) */
+.stat-pendientes { border-top: 4px solid var(--cepre-gold); }
+.stat-pendientes .stat-icon-container { background: var(--cepre-gold); box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3); }
+
+.stat-aprobadas { border-top: 4px solid var(--cepre-green); }
+.stat-aprobadas .stat-icon-container { background: var(--cepre-green); box-shadow: 0 4px 10px rgba(147, 192, 31, 0.3); }
+
+.stat-rechazadas { border-top: 4px solid var(--cepre-magenta); }
+.stat-rechazadas .stat-icon-container { background: var(--cepre-magenta); box-shadow: 0 4px 10px rgba(226, 0, 122, 0.3); }
+
+.stat-observadas { border-top: 4px solid var(--cepre-cyan); }
+.stat-observadas .stat-icon-container { background: var(--cepre-cyan); box-shadow: 0 4px 10px rgba(0, 174, 239, 0.3); }
+
+.stat-hoy { border-top: 4px solid #a855f7; cursor: pointer; transition: all 0.3s ease; }
+.stat-hoy .stat-icon-container { background: #a855f7; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.3); }
+.stat-hoy:hover { transform: translateY(-5px) scale(1.02); }
+.stat-hoy.active { background-color: #f3e8ff !important; border-bottom: 2px solid #a855f7; }
+
+@media (min-width: 992px) {
+    .col-lg-5th { width: 20%; flex: 0 0 auto; }
+}
+
+.cepre-stat-card h3 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--cepre-text-main);
+}
+
+.cepre-stat-card p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    opacity: 0.7;
+}
+
+/* 📋 TABLA GIGANTE (ESTILO LIGHT & CLEAN) */
+#postulaciones-datatable thead th {
+    background-color: var(--cepre-bg-light) !important;
+    color: var(--cepre-dark-magenta) !important;
+    border-bottom: 2px solid var(--cepre-cyan) !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    padding: 15px 10px !important;
+    letter-spacing: 0.5px;
+}
+
+#postulaciones-datatable tbody td {
+    vertical-align: middle !important;
+    font-size: 13px;
+    border-bottom: 1px solid var(--cepre-border-color);
+}
+
+#postulaciones-datatable tbody tr:hover {
+    background-color: rgba(0, 174, 239, 0.03) !important;
+    box-shadow: inset 3px 0 0 var(--cepre-magenta);
+}
+
+/* Colores de Filas por Estado (Sutiles) */
+.estado-pendiente { border-left: 4px solid var(--cepre-gold); }
+.estado-aprobado { border-left: 4px solid var(--cepre-green); }
+.estado-rechazado { border-left: 4px solid var(--cepre-magenta); }
+.estado-observado { border-left: 4px solid var(--cepre-cyan); }
+
+/* MODO OSCURO - AJUSTE DE COLORES DE FILA */
+[data-bs-theme="dark"] .estado-pendiente { background-color: rgba(255, 215, 0, 0.05) !important; }
+[data-bs-theme="dark"] .estado-aprobado { background-color: rgba(147, 192, 31, 0.05) !important; }
+[data-bs-theme="dark"] .estado-rechazado { background-color: rgba(226, 0, 122, 0.05) !important; }
+[data-bs-theme="dark"] .estado-observado { background-color: rgba(0, 174, 239, 0.05) !important; }
+
+/* 🏷️ ESTILOS DE BADGES DE ESTADO (PREMIUM) */
+.badge {
+    padding: 0.45em 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.badge-estado-pendiente { 
+    background-color: var(--cepre-gold) !important; 
+    color: #4a3a00 !important; 
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.badge-estado-aprobado { 
+    background-color: var(--cepre-green) !important; 
+    color: #fff !important; 
+    border: 1px solid rgba(147, 192, 31, 0.3);
+}
+
+.badge-estado-rechazado { 
+    background-color: var(--cepre-magenta) !important; 
+    color: #fff !important; 
+    border: 1px solid rgba(226, 0, 122, 0.3);
+}
+
+.badge-estado-observado { 
+    background-color: var(--cepre-cyan) !important; 
+    color: #fff !important; 
+    border: 1px solid rgba(0, 174, 239, 0.3);
+}
+
+/* Asegurar que el nombre del estudiante sea legible */
+#postulaciones-datatable tbody td:nth-child(2) {
+    font-weight: 700;
+    color: var(--cepre-text-main);
+}
+
+/* Corregir opacidad en columna de estado si existiera */
+#postulaciones-datatable td .badge {
+    opacity: 1 !important;
+}
+
+/* 🔍 FILTROS REFINADOS */
+.header-title {
+    color: var(--cepre-magenta) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
+}
+
+.form-label {
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--cepre-text-main);
+    opacity: 0.8;
+    margin-bottom: 6px;
+}
+
+.form-select, .form-control {
+    border-radius: 8px !important;
+    border: 1px solid var(--cepre-border-color) !important;
+    background-color: var(--cepre-bg-light) !important;
+    color: var(--cepre-text-main) !important;
+    font-weight: 600;
+}
+
+/* 🧙‍♂️ WIZARD MODERNO */
+.step-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background: var(--cepre-bg-light);
+    border: 2px solid var(--cepre-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    transition: all 0.3s ease;
+}
+
+.step-indicator.active .step-circle {
+    background: var(--cepre-cyan);
+    border-color: var(--cepre-cyan);
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 174, 239, 0.3);
+}
+
+.step-indicator.completed .step-circle {
+    background: var(--cepre-green);
+    border-color: var(--cepre-green);
+    color: white;
+}
+
+/* Spinner Institucional */
+.cepre-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(226, 0, 122, 0.1);
+    border-left-color: var(--cepre-magenta);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+     to { transform: rotate(360deg); }
+}
+
+/* Table Responsive Adjustments */
+@media (max-width: 1199px) and (min-width: 768px) {
+    #postulaciones-datatable tbody td,
+    #postulaciones-datatable thead th {
+        font-size: 0.7rem !important;
+        padding: 0.5rem 0.3rem !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .dataTables_wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #postulaciones-datatable { min-width: 800px; }
+    #postulaciones-datatable tbody td,
+    #postulaciones-datatable thead th {
+        font-size: 0.7rem !important;
+        padding: 0.5rem 0.25rem !important;
+    }
+}
+
+/* DRAG & DROP DOCUMENT UPLOAD STYLES */
+.document-upload-card { margin-bottom: 1rem; }
+.drop-zone {
+    position: relative;
+    border: 2px dashed var(--cepre-border-color);
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-color: var(--cepre-bg-light);
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.drop-zone:hover { border-color: var(--cepre-cyan); background-color: rgba(0, 174, 239, 0.05); }
+.drop-zone.drag-over { border-color: var(--cepre-magenta); background-color: rgba(226, 0, 122, 0.05); transform: scale(1.02); }
+.drop-zone .file-input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+.preview-container { position: relative; width: 100%; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.preview-image { max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.file-name { display: block; font-size: 0.875rem; font-weight: 600; color: var(--cepre-text-main); margin-bottom: 0.25rem; word-break: break-all; }
+.file-size { display: block; font-size: 0.75rem; color: var(--cepre-text-main); opacity: 0.6; }

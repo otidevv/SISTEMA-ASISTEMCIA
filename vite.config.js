@@ -35,7 +35,9 @@ export default defineConfig({
                 'resources/js/horarios-grid.js',
                 'resources/css/modal-fixes.css',
                 'resources/js/assistant/chatbot.js',
-                'resources/css/assistant/chatbot.css'
+                'resources/css/assistant/chatbot.css',
+                'resources/css/postulaciones/modal-premium.css',
+                'resources/css/postulaciones/index-styles.css'
             ],
             refresh: true,
         }),

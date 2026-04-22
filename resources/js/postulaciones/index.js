@@ -549,122 +549,287 @@ function setupEventHandlers() {
 }
 
 function viewPostulacion(id) {
+    // Mostrar spinner de carga inicial con estilo premium
+    $('#viewModalBody').html(`
+        <div class="p-5 text-center fade-in-premium">
+            <div class="spinner-grow text-magenta" role="status" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3 fw-bold text-navy" style="letter-spacing: 1px;">AUTENTICANDO EXPEDIENTE...</p>
+        </div>
+    `);
+    $('#viewModal').modal('show');
+
     $.ajax({
         url: "/json/postulaciones/" + id,
         type: 'GET',
         success: function (response) {
             if (response.success) {
                 const data = response.data;
-                const postulacion = data.postulacion;
-                const documentos = data.documentos;
-                const inscripcion = data.inscripcion;
+                const post = data.postulacion;
+                const docs = data.documentos;
+                const insc = data.inscripcion;
+                const est = post.estudiante;
 
-                let html = '<div class="postulacion-detail-container px-1">';
+                // Configuración Institucional de Estados
+                const statusConfig = {
+                    'pendiente': { class: 'bg-premium-pending', icon: 'bi-hourglass-split', label: 'En Verificación', color: 'var(--cepre-navy)' },
+                    'aprobado': { class: 'bg-premium-approved', icon: 'bi-patch-check-fill', label: 'Postulación Aprobada', color: 'var(--cepre-green)' },
+                    'rechazado': { class: 'bg-premium-rejected', icon: 'bi-x-octagon-fill', label: 'Postulación Rechazada', color: '#d32f2f' },
+                    'observado': { class: 'bg-premium-observed', icon: 'bi-exclamation-diamond-fill', label: 'Con Observaciones', color: 'var(--cepre-magenta)' }
+                };
 
-                // 1. INFORMACIÓN DEL ESTUDIANTE + FOTO (MÁS COMPACTO)
-                html += '<div class="detail-section shadow-sm">';
-                html += '<h4 class="detail-section-title"><i class="bi bi-person-badge me-2"></i> Estudiante</h4>';
-                html += '<div class="row g-2 align-items-center">';
-                html += '<div class="col-md-2 text-center">';
-                const fotoPerfilUrl = postulacion.foto_path ? '/storage/' + postulacion.foto_path : null;
-                if (fotoPerfilUrl) {
-                    html += '<img src="' + fotoPerfilUrl + '" class="rounded-lg shadow-sm border border-2 border-primary" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto">';
+                const config = statusConfig[post.estado] || { class: 'bg-premium-default', icon: 'bi-info-circle', label: post.estado.toUpperCase(), color: 'var(--cepre-navy)' };
+
+                let html = '<div class="fade-in-premium">';
+                
+                // 1. CABECERA INSTITUCIONAL
+                html += `<div class="premium-header ${config.class}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="premium-title-container">
+                            <div class="premium-logo-box">
+                                <img src="/assets_cepre/img/logo/logo2_0.svg" class="premium-logo" alt="CEPRE LOGO">
+                            </div>
+                            <div class="ms-1">
+                                <h2 class="premium-title">${est.nombre} ${est.apellido_paterno} ${est.apellido_materno}</h2>
+                                <div class="premium-subtitle-badges">
+                                    <span class="premium-badge-id"><i class="bi bi-fingerprint me-1"></i> EXPEDIENTE: ${post.codigo_postulante}</span>
+                                    <span class="premium-badge-status" style="color: ${config.color}"><i class="bi ${config.icon} me-1"></i> ${config.label}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close-premium" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>`;
+
+                html += '<div class="modal-body p-0">';
+                html += '<div class="row g-0">';
+                
+                // 2. SIDEBAR - CREDENCIAL DEL POSTULANTE
+                html += '<div class="col-lg-3 p-4 pr-lg-0">';
+                html += '<div class="premium-sidebar h-100">';
+                
+                const fotoUrl = post.foto_path ? '/storage/' + post.foto_path : (data.foto_perfil_url || null);
+                html += '<div class="premium-photo-container shadow-sm">';
+                if (fotoUrl) {
+                    html += `<img src="${fotoUrl}" class="premium-photo" alt="Foto de Perfil">`;
                 } else {
-                    html += '<div class="bg-light rounded-lg d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px; border: 1px dashed #ccc;"><i class="bi bi-person text-muted" style="font-size: 2rem;"></i> </div>';
+                    html += '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted"><i class="bi bi-person-bounding-box" style="font-size: 3rem;"></i><span class="small mt-2">SIN FOTO</span></div>';
                 }
                 html += '</div>';
-                html += '<div class="col-md-10">';
-                html += '<div class="detail-grid">';
-                html += '<div class="detail-item"><strong>Nombre Completo</strong><span>' + postulacion.estudiante.nombre + ' ' + postulacion.estudiante.apellido_paterno + ' ' + postulacion.estudiante.apellido_materno + '</span></div>';
-                html += '<div class="detail-item"><strong>DNI / Documento</strong><span>' + (postulacion.estudiante.numero_documento || 'N/A') + '</span></div>';
-                html += '<div class="detail-item"><strong>Email</strong><span class="small">' + (postulacion.estudiante.email || 'N/A') + '</span></div>';
-                html += '<div class="detail-item"><strong>Teléfono</strong><span>' + (postulacion.estudiante.telefono || 'N/A') + '</span></div>';
-                html += '<div class="detail-item"><strong>Nacimiento</strong><span>' + (postulacion.estudiante.fecha_nacimiento ? new Date(postulacion.estudiante.fecha_nacimiento).toLocaleDateString() : 'N/A') + '</span></div>';
-                html += '<div class="detail-item"><strong>Género</strong><span>' + (postulacion.estudiante.genero ? (postulacion.estudiante.genero === 'M' ? 'Masculino' : 'Femenino') : 'N/A') + '</span></div>';
+
+                html += '<div class="premium-barcode-section">';
+                html += '<div class="text-center mb-2"><span class="badge postulante-badge border px-3 py-2 w-100" style="font-size: 10px;">POSTULANTE OFICIAL</span></div>';
+                html += `<img src="https://barcode.tec-it.com/barcode.ashx?data=${post.codigo_postulante}&code=Code128&translate-esc=true" style="width: 100%; height: 55px; mix-blend-mode: multiply;" alt="Barcode">`;
+                html += `<div class="mt-2 fw-bold text-center text-navy" style="font-size: 13px; letter-spacing: 2px;">${post.codigo_postulante}</div>`;
+                html += '</div>';
+
+                html += `<div class="sidebar-info-item">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-calendar-event"></i> <span class="small fw-800">REGISTRO</span></div>
+                    <span class="text-navy small fw-bold d-block">${new Date(post.fecha_postulacion).toLocaleDateString()}</span>
+                </div>`;
+                html += `<div class="sidebar-info-item">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-person-vcard"></i> <span class="small fw-800">DNI</span></div>
+                    <span class="text-navy small fw-bold d-block">${est.numero_documento}</span>
+                </div>`;
+                
+                // Moviendo contacto al sidebar para llenar espacio
+                html += `<div class="sidebar-info-item mt-3">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-envelope-at"></i> <span class="small fw-800">EMAIL</span></div>
+                    <span class="text-navy small fw-bold d-block" style="word-break: break-all;">${est.email || 'N/A'}</span>
+                </div>`;
+                html += `<div class="sidebar-info-item">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-phone"></i> <span class="small fw-800">CELULAR</span></div>
+                    <span class="text-navy small fw-bold d-block">${est.telefono || 'N/A'}</span>
+                </div>`;
+                html += `<div class="sidebar-info-item">
+                    <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-geo-alt"></i> <span class="small fw-800">DIRECCIÓN</span></div>
+                    <span class="text-navy small fw-bold d-block" style="font-size: 11px;">${est.direccion || 'N/A'}</span>
+                </div>`;
+
+                html += '</div></div>';
+
+                // 3. CUERPO PRINCIPAL
+                html += '<div class="col-lg-9 p-4 pl-lg-0">';
+                
+                // 3.1 GESTIÓN DE PAGOS (KPIs + TRANSACCIONES)
+                html += '<div class="payments-container shadow-sm mb-4">';
+                html += `<div class="payments-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="spec-header-icon" style="color: var(--cepre-navy); background: #e8eaf6;"><i class="bi bi-cash-coin"></i></div>
+                        <span class="spec-header-title" style="color: var(--cepre-navy);">Control de Pagos y Aranceles</span>
+                    </div>
+                    <button class="btn btn-cepre-magenta btn-premium-action text-white rounded-pill px-4 fw-bold sync-payment shadow-sm" data-id="${post.id}" style="font-size: 12px;">
+                        <i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR PAGOS
+                    </button>
+                </div>`;
+                html += '<div class="kpi-row mb-3">';
+                html += renderKPICard('bi-wallet2', 'Matrícula', `S/. ${post.monto_matricula || '0.00'}`, 'kpi-card-navy', 'text-navy');
+                html += renderKPICard('bi-bank', 'Enseñanza', `S/. ${post.monto_ensenanza || '0.00'}`, 'kpi-card-cyan', 'text-cyan');
+                html += renderKPICard('bi-check2-circle', 'Recaudado', `S/. ${post.monto_total_pagado || '0.00'}`, 'kpi-card-green', 'text-green');
+                html += renderKPICard('bi-award', 'Modalidad', post.tipo_inscripcion.toUpperCase(), 'kpi-card-magenta', 'text-magenta');
+                html += '</div>';
+
+                // TABLA DE TRANSACCIONES DETALLADA
+                html += `<div class="payment-detail-container">
+                    <table class="payment-detail-table">
+                        <thead>
+                            <tr>
+                                <th>N° RECIBO / OPERACIÓN</th>
+                                <th>CONCEPTO DE PAGO</th>
+                                <th>FECHA DE PAGO</th>
+                                <th>ESTADO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="payment-row">
+                                <td class="text-navy fw-800">${post.numero_recibo || 'POR REGISTRAR'}</td>
+                                <td><span class="payment-concept-badge bg-navy text-white border">INSCRIPCIÓN ORDINARIA</span></td>
+                                <td>${post.fecha_emision_voucher ? new Date(post.fecha_emision_voucher).toLocaleDateString() : 'PENDIENTE'}</td>
+                                <td><span class="badge rounded-pill bg-success px-3">VERIFICADO</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
+                html += '</div>';
+
+
+                // 3.2 INFORMACIÓN ACADÉMICA (GRID ORGANIZADA)
+                html += '<div class="row g-3 mb-4 d-flex align-items-stretch">';
+                html += '<div class="col-lg-8">';
+                html += '<div class="spec-container h-100 shadow-sm">';
+                html += `<div class="spec-header">
+                    <div class="spec-header-icon"><i class="bi bi-mortarboard"></i></div>
+                    <span class="spec-header-title">Detalles de la Postulación</span>
+                </div>`;
+                html += '<div class="spec-grid">';
+                html += renderSpecItem('bi-briefcase', 'Carrera Elegida', post.carrera?.nombre || 'No asignada', 'text-navy fw-800');
+                html += renderSpecItem('bi-layers', 'Ciclo Académico', post.ciclo?.nombre || 'No asignado');
+                html += renderSpecItem('bi-clock-history', 'Turno / Horario', (typeof post.turno === 'object' ? post.turno?.nombre : post.turno) || 'No asignado');
+                
+                if (insc && insc.aula) {
+                    html += renderSpecItem('bi-door-closed-fill', 'Aula Asignada', insc.aula.nombre, 'text-success fw-800');
+                } else {
+                    html += renderSpecItem('bi-door-closed', 'Aula Asignada', 'Pendiente de asignación', 'text-muted italic');
+                }
+                
+                html += renderSpecItem('bi-building-check', 'Centro Educativo', post.centro_educativo?.nombre || 'No registrado');
+                html += renderSpecItem('bi-calendar-check', 'Año de Egreso', post.anio_egreso || '---');
+                html += '</div></div></div>';
+
+                // 3.3 PADRES / APODERADOS
+                html += '<div class="col-lg-4">';
+                html += '<div class="spec-container h-100 shadow-sm">';
+                html += `<div class="spec-header">
+                    <div class="spec-header-icon" style="color: var(--cepre-magenta); background: #fce4ec;"><i class="bi bi-people"></i></div>
+                    <span class="spec-header-title" style="color: var(--cepre-magenta);">Padres / Apoderados</span>
+                </div>`;
+                html += '<div class="d-flex flex-column gap-3">';
+                if (data.padre) {
+                    html += `<div><label class="spec-item-label">PADRE</label><div class="spec-item-value small text-navy">${data.padre.nombre} ${data.padre.apellido_paterno} <br><i class="bi bi-telephone text-muted"></i> ${data.padre.telefono || '---'}</div></div>`;
+                }
+                if (data.madre) {
+                    html += `<div><label class="spec-item-label">MADRE</label><div class="spec-item-value small text-navy">${data.madre.nombre} ${data.madre.apellido_paterno} <br><i class="bi bi-telephone text-muted"></i> ${data.madre.telefono || '---'}</div></div>`;
+                }
+                if (!data.padre && !data.madre) {
+                    html += '<div class="text-center py-2"><i class="bi bi-exclamation-circle text-muted fs-4"></i><p class="text-muted small mt-1">Sin datos de apoderados</p></div>';
+                }
                 html += '</div></div></div></div>';
 
-                // 2. FILA DE PADRES Y POSTULACION (DOS COLUMNAS)
-                html += '<div class="row g-2">';
-                html += '<div class="col-md-6">';
-                html += '<div class="detail-section h-100 shadow-sm">';
-                html += '<h4 class="detail-section-title"><i class="bi bi-people me-2"></i> Padres</h4>';
-                if (data.padre || data.madre) {
-                    html += '<div class="detail-item mb-1"><strong>Padre</strong><span>' + (data.padre ? data.padre.nombre + ' ' + data.padre.apellido_paterno + ' (' + (data.padre.telefono || 'Sin telf') + ')' : 'No registrado') + '</span></div>';
-                    html += '<div class="detail-item"><strong>Madre</strong><span>' + (data.madre ? data.madre.nombre + ' ' + data.madre.apellido_paterno + ' (' + (data.madre.telefono || 'Sin telf') + ')' : 'No registrado') + '</span></div>';
-                } else {
-                    html += '<p class="text-muted extra-small py-2">Sin info de padres registrados.</p>';
+                // 3.4 DOCUMENTOS CARGADOS
+                html += '<div class="spec-container mt-3">';
+                html += `<div class="spec-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="spec-header-icon" style="color: #64748b; background: #f1f5f9;"><i class="bi bi-file-earmark-zip"></i></div>
+                        <span class="spec-header-title" style="color: #64748b;">Expediente Digital</span>
+                    </div>
+                    <button class="btn btn-premium-action btn-navy edit-documents" data-id="${post.id}" style="font-size: 11px; padding: 0.5rem 1.2rem;">
+                        <i class="bi bi-pencil-square me-1"></i> GESTIONAR ARCHIVOS
+                    </button>
+                </div>`;
+                
+                html += '<div class="row g-3">';
+                for (let key in docs) {
+                    const doc = docs[key];
+                    if (doc.existe) {
+                        const docColor = key === 'dni' ? '#e1f5fe' : (key === 'voucher' ? '#e8f5e9' : '#fce4ec');
+                        const iconColor = key === 'dni' ? '#0288d1' : (key === 'voucher' ? '#2e7d32' : '#d81b60');
+                        
+                        html += `<div class="col-md-6">
+                            <div class="doc-tile shadow-sm">
+                                <div class="doc-info">
+                                    <div class="doc-icon-box" style="background: ${docColor}; color: ${iconColor};">
+                                        <i class="bi ${getFileIcon(key)}"></i>
+                                    </div>
+                                    <span class="doc-name text-navy">${doc.nombre}</span>
+                                </div>
+                                <a href="${doc.url}" target="_blank" class="btn btn-navy btn-sm rounded-pill px-3 fw-bold" style="font-size: 10px;"><i class="bi bi-eye-fill me-1"></i> VER</a>
+                            </div>
+                        </div>`;
+                    }
                 }
                 html += '</div></div>';
 
-                html += '<div class="col-md-6">';
-                html += '<div class="detail-section h-100 shadow-sm">';
-                html += '<h4 class="detail-section-title"><i class="bi bi-mortarboard me-2"></i> Postulación</h4>';
-                html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
-                html += '<div class="detail-item"><strong>Código</strong><span class="text-magenta font-weight-bold">' + postulacion.codigo_postulante + '</span></div>';
-                html += '<div class="detail-item"><strong>Estado</strong><span class="badge badge-estado-' + postulacion.estado + ' extra-small">' + postulacion.estado.toUpperCase() + '</span></div>';
-                html += '<div class="detail-item col-span-2"><strong>Carrera / Ciclo</strong><span>' + postulacion.carrera.nombre + ' (' + postulacion.ciclo.nombre + ')</span></div>';
-                html += '<div class="detail-item"><strong>Turno</strong><span>' + postulacion.turno.nombre + '</span></div>';
-                if (inscripcion && inscripcion.aula) {
-                    html += '<div class="detail-item"><strong>Aula</strong><span class="text-success font-weight-bold">' + inscripcion.aula.nombre + '</span></div>';
-                }
-                html += '</div></div></div></div>';
-
-                // 3. DOCUMENTOS Y PAGO (MÁS COMPACTO)
-                html += '<div class="row g-2 mt-2">';
-                html += '<div class="col-md-6">';
-                html += '<div class="detail-section h-100 shadow-sm">';
-                html += '<div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">';
-                html += '<h4 class="detail-section-title mb-0 border-0"><i class="bi bi-file-earmark-text me-2"></i> Documentos</h4>';
-                html += '<button class="btn btn-cepre-edit-modal edit-documents" data-id="' + postulacion.id + '"><i class="bi bi-pencil-square"></i> EDITAR</button>';
-                html += '</div>';
-                html += '<div class="list-group list-group-flush bg-transparent">';
-                for (let key in documentos) {
-                    const doc = documentos[key];
-                    if (doc.existe) {
-                        html += '<div class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-1 px-0 border-0">';
-                        html += '<div><i class="bi bi-check-circle-fill text-success me-1 small"></i><span class="extra-small">' + doc.nombre + '</span></div>';
-                        html += '<a href="' + doc.url + '" target="_blank" class="btn-cepre-eye shadow-sm text-center"><i class="bi bi-eye"></i> VER</a>';
-                        html += '</div>';
-                    }
-                }
-                html += '</div></div></div>';
-
-                html += '<div class="col-md-6">';
-                html += '<div class="detail-section h-100 shadow-sm">';
-                html += '<h4 class="detail-section-title d-flex justify-content-between align-items-center mb-2"><i class="bi bi-cash me-2"></i> Pagos';
-                html += '<button class="btn btn-cepre-magenta btn-sm sync-payment shadow-sm text-white" data-id="' + postulacion.id + '"><i class="bi bi-arrow-repeat me-1"></i> SINCRONIZAR</button></h4>';
-                if (postulacion.numero_recibo) {
-                    html += '<div class="detail-grid" style="grid-template-columns: repeat(2, 1fr);">';
-                    html += '<div class="detail-item"><strong>Recibo / Fecha</strong><span>' + postulacion.numero_recibo + ' (' + (postulacion.fecha_emision_voucher ? new Date(postulacion.fecha_emision_voucher).toLocaleDateString() : 'N/A') + ')</span></div>';
-                    html += '<div class="detail-item"><strong>Matrícula</strong><span>S/. ' + (postulacion.monto_matricula || '0.00') + '</span></div>';
-                    html += '<div class="detail-item"><strong>Enseñanza</strong><span>S/. ' + (postulacion.monto_ensenanza || '0.00') + '</span></div>';
-                    html += '<div class="detail-item col-span-2"><div class="alert alert-info py-1 mb-0 mt-1 extra-small text-center shadow-sm"><strong>Total Pagado:</strong> S/. ' + (postulacion.monto_total_pagado || '0.00') + '</div></div>';
-                    html += '</div>';
-                } else {
-                    html += '<p class="text-muted extra-small">Sin pagos registrados.</p>';
-                }
-                html += '</div></div></div>';
-
-                // 4. OBSERVACIONES (SI HAY)
-                if (postulacion.observaciones || postulacion.motivo_rechazo) {
-                    const tint = postulacion.observaciones ? 'warning' : 'danger';
-                    const text = postulacion.observaciones || postulacion.motivo_rechazo;
-                    html += '<div class="alert alert-' + tint + ' p-2 mt-2 extra-small border-0 shadow-sm">';
-                    html += '<strong><i class="bi bi-exclamation-triangle"></i> NOTA:</strong> ' + text;
-                    html += '</div>';
+                // 3.5 ALERTAS DE ESTADO
+                if (post.observaciones || post.motivo_rechazo) {
+                    const tint = post.motivo_rechazo ? 'danger' : 'warning';
+                    const icon = post.motivo_rechazo ? 'bi-shield-x' : 'bi-shield-exclamation';
+                    html += `<div class="alert alert-${tint} d-flex align-items-center gap-3 mt-3 border-0 shadow-sm p-3" style="border-radius: 15px;">
+                        <i class="bi ${icon} fs-2"></i>
+                        <div>
+                            <div class="fw-800 text-uppercase small" style="letter-spacing: 1px;">Nota Administrativa:</div>
+                            <div class="fw-bold">${post.observaciones || post.motivo_rechazo}</div>
+                        </div>
+                    </div>`;
                 }
 
-                html += '</div>';
+                html += '</div></div></div>'; // Cierre de row, col-md-9, fade-in
+                html += '</div>'; // Cierre de modal-body
+
+                // FOOTER DE ACCIONES RÁPIDAS
+                html += `<div class="modal-footer">
+                    <div class="footer-actions-left">
+                        ${post.estado === 'pendiente' ? `
+                            ${!post.documentos_verificados ? `<button class="btn btn-premium-action btn-outline-info verify-documents" data-id="${post.id}"><i class="bi bi-file-earmark-check me-1"></i> VERIFICAR DOCS</button>` : ''}
+                            ${!post.pago_verificado ? `<button class="btn btn-premium-action btn-outline-success verify-payment" data-id="${post.id}"><i class="bi bi-cash-stack me-1"></i> VERIFICAR PAGO</button>` : ''}
+                            
+                            <button class="btn btn-premium-action btn-outline-warning observe-postulacion" data-id="${post.id}"><i class="bi bi-chat-quote me-1"></i> OBSERVAR</button>
+                            <button class="btn btn-premium-action btn-outline-danger reject-postulacion" data-id="${post.id}"><i class="bi bi-slash-circle me-1"></i> RECHAZAR</button>
+                            
+                            ${post.documentos_verificados && post.pago_verificado ? 
+                                `<button class="btn btn-premium-action btn-success approve-postulacion shadow-sm" data-id="${post.id}"><i class="bi bi-check-lg me-1"></i> APROBAR AHORA</button>` : ''
+                            }
+                        ` : ''}
+                    </div>
+                    <div class="footer-actions-right">
+                        <button type="button" class="btn btn-premium-action btn-light shadow-sm" data-bs-dismiss="modal">SALIR DEL EXPEDIENTE</button>
+                    </div>
+                </div>`;
 
                 $('#viewModalBody').html(html);
-                $('#viewModal').modal('show');
             }
         },
         error: function (xhr) {
-            Toast.fire({ icon: 'error', title: 'Error al cargar el detalle de la postulación' });
+            Toast.fire({ icon: 'error', title: 'Error crítico al recuperar expediente' });
         }
     });
 }
+
+
+
+function getFileIcon(type) {
+    const icons = {
+        'dni': 'bi-card-heading',
+        'certificado_estudios': 'bi-journal-check',
+        'foto': 'bi-image',
+        'voucher': 'bi-receipt',
+        'carta_compromiso': 'bi-file-earmark-ruled',
+        'constancia_estudios': 'bi-mortarboard',
+        'constancia_firmada': 'bi-pen-fill'
+    };
+    return icons[type] || 'bi-file-earmark-text';
+}
+
 
 function verifyDocuments(id, verified) {
     $.ajax({
@@ -1227,4 +1392,26 @@ function saveApprovedPostulationChanges() {
             btn.html('<i class="uil uil-save me-1"></i> Guardar Cambios');
         }
     });
+}
+
+// --- FUNCIONES HELPER PARA RENDERIZADO PREMIUM ---
+
+function renderKPICard(icon, label, value, cardClass, textClass) {
+    return `<div class="kpi-card ${cardClass}">
+        <div class="kpi-icon"><i class="bi ${icon}"></i></div>
+        <div class="kpi-content">
+            <div class="kpi-label">${label}</div>
+            <div class="kpi-value ${textClass}">${value}</div>
+        </div>
+    </div>`;
+}
+
+function renderSpecItem(icon, label, value, extraClass = '') {
+    return `<div class="spec-item">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi ${icon} text-cyan" style="font-size: 14px;"></i>
+            <span class="spec-item-label mb-0">${label}</span>
+        </div>
+        <span class="spec-item-value ${extraClass}">${value}</span>
+    </div>`;
 }
