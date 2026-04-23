@@ -466,7 +466,7 @@
                 // Ejecutar resaltado inicial al cargar la página
                 setTimeout(applyPersistentHighlights, 1000); 
 
-                if (typeof window.Echo !== 'undefined') {
+                if (typeof window.Echo !== 'undefined' && typeof window.Echo.private === 'function') {
                     const userId = {{ Auth::id() ?? 'null' }};
                     if (userId) {
                         window.Echo.private(`App.Models.User.${userId}`).notification(() => {
@@ -497,7 +497,7 @@
                         });
                     });
                 } else {
-                    console.warn('⚠️ Laravel Echo no está inicializado.');
+                    console.warn('⚠️ Laravel Echo no está inicializado o no tiene el método private.');
                 }
             });
         </script>

@@ -443,8 +443,6 @@
 @endsection
 
 @push('js')
-    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.0/dist/echo.iife.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script>
@@ -668,49 +666,46 @@
                 return fecha.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             }
 
-            try {
-                window.pusher = new Pusher('iv9wx1kfwnwactpwfzwn', {
-                    wsHost: window.location.hostname,
-                    wsPort: 443,
-                    wssPort: 443,
-                    enabledTransports: ['ws', 'wss'],
-                    forceTLS: true,
-                    disableStats: true,
-                    cluster: 'mt1'
-                });
-                
-                const channel = window.pusher.subscribe('asistencia-channel');
-                channel.bind('App\\Events\\NuevoRegistroAsistencia', function(data) {
-                    console.log('✅ EVENTO:', data);
-                    if (!data || !data.registro) return;
+            // --- CONFIGURACIÓN DE TIEMPO REAL USANDO LA INSTANCIA GLOBAL DE ECHO ---
+            if (typeof window.Echo !== 'undefined') {
+                window.Echo.channel('asistencia-channel')
+                    .listen('.App\\Events\\NuevoRegistroAsistencia', (data) => {
+                        console.log('✅ EVENTO RECIBIDO (Echo):', data);
+                        if (!data || !data.registro) return;
+                        
+                        const registro = data.registro;
+                        const eventData = {
+                            id: registro.id,
+                            name: registro.nombre_completo || `Doc: ${registro.nro_documento}`,
+                            time: registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro),
+                            timeOnly: (registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro)).split(' ')[1] || registro.fecha_registro_formateada,
+                            photoHtml: createPhotoHtml(registro),
+                            mainPhotoHtml: createMainPhotoHtml(registro),
+                            type: registro.tipo_verificacion_texto,
+                            tipo_verificacion: registro.tipo_verificacion,
+                            estado_situacional: registro.estado_situacional
+                        };
+                        addNewAttendanceRecord(eventData);
+                    });
+
+                // Estado de conexión (opcional, Echo no expone 'connected' directamente como Pusher, 
+                // pero podemos usar el conector subyacente si es necesario)
+                const connector = window.Echo.connector.pusher;
+                if (connector) {
+                    connector.connection.bind('connected', () => {
+                        connectionStatus.innerHTML = '<i class="uil uil-signal me-1"></i> Conectado';
+                        connectionStatus.className = 'badge bg-success-lighten text-success px-3 py-2 rounded-pill';
+                    });
                     
-                    const registro = data.registro;
-                    const eventData = {
-                        id: registro.id,
-                        name: registro.nombre_completo || `Doc: ${registro.nro_documento}`,
-                        time: registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro),
-                        timeOnly: (registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro)).split(' ')[1] || registro.fecha_registro_formateada,
-                        photoHtml: createPhotoHtml(registro),
-                        mainPhotoHtml: createMainPhotoHtml(registro),
-                        type: registro.tipo_verificacion_texto,
-                        tipo_verificacion: registro.tipo_verificacion,
-                        estado_situacional: registro.estado_situacional
-                    };
-                    addNewAttendanceRecord(eventData);
-                });
-                
-                window.pusher.connection.bind('connected', () => {
-                    connectionStatus.innerHTML = '<i class="uil uil-signal me-1"></i> Conectado';
-                    connectionStatus.className = 'badge bg-success-lighten text-success px-3 py-2 rounded-pill';
-                });
-                
-                window.pusher.connection.bind('disconnected', () => {
-                    connectionStatus.innerHTML = '<i class="uil uil-signal-alt-3 me-1"></i> Desconectado';
-                    connectionStatus.className = 'badge bg-danger-lighten text-danger px-3 py-2 rounded-pill';
-                });
-                
-            } catch (error) {
-                console.error('❌ WebSocket Error:', error);
+                    connector.connection.bind('disconnected', () => {
+                        connectionStatus.innerHTML = '<i class="uil uil-signal-alt-3 me-1"></i> Desconectado';
+                        connectionStatus.className = 'badge bg-danger-lighten text-danger px-3 py-2 rounded-pill';
+                    });
+                }
+            } else {
+                console.error('❌ Laravel Echo no está disponible. Verifique la carga de app.js');
+                connectionStatus.innerHTML = '<i class="uil uil-exclamation-triangle me-1"></i> Error de JS';
+                connectionStatus.className = 'badge bg-warning-lighten text-warning px-3 py-2 rounded-pill';
             }
         });
     </script>
