@@ -30,7 +30,7 @@ function togglePassword(fieldId) {
     }
 }
 
-// Función para consultar DNI en RENIEC
+// Función para consultar DNI en Base de Datos
 async function consultarDNI(tipo) {
     let dniInput, btnBuscar;
 
@@ -87,9 +87,9 @@ async function consultarDNI(tipo) {
             }
 
             if (typeof toastr !== 'undefined') {
-                toastr.success('Datos cargados desde RENIEC correctamente');
+                toastr.success('Datos cargados desde Base de Datos correctamente');
             } else {
-                alert('Datos cargados desde RENIEC correctamente');
+                alert('Datos cargados desde Base de Datos correctamente');
             }
             
             btnBuscar.classList.add('success-animation');
@@ -102,11 +102,11 @@ async function consultarDNI(tipo) {
             }
         }
     } catch (error) {
-        console.error('Error al consultar RENIEC:', error);
+        console.error('Error al consultar Base de Datos:', error);
         if (typeof toastr !== 'undefined') {
-            toastr.error('No se pudo consultar el servicio RENIEC. Intente nuevamente.');
+            toastr.error('No se pudo consultar el servicio Base de Datos. Intente nuevamente.');
         } else {
-            alert('No se pudo consultar el servicio RENIEC. Intente nuevamente.');
+            alert('No se pudo consultar el servicio Base de Datos. Intente nuevamente.');
         }
     } finally {
         btnBuscar.disabled = false;
@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Eventos para buscar RENIEC con Enter
+    // Eventos para buscar Base de Datos con Enter
     ['numero_documento', 'padre_numero_documento', 'madre_numero_documento'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {

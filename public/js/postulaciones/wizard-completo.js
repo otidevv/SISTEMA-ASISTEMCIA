@@ -308,7 +308,7 @@
         });
     }
     
-    // Función para consultar DNI (RENIEC)
+    // Función para consultar DNI (Base de Datos)
     window.consultarDNI = function(tipo) {
         const dniField = document.getElementById(`${tipo}_dni`);
         const dni = dniField.value;
@@ -324,7 +324,7 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
         
-        // Simular consulta RENIEC (aquí iría la llamada real al API)
+        // Simular consulta Base de Datos (aquí iría la llamada real al API)
         fetch(`/api/reniec/consultar/${dni}`)
             .then(response => response.json())
             .then(data => {
@@ -334,14 +334,14 @@
                     document.getElementById(`${tipo}_apellido_paterno`).value = data.apellidoPaterno || '';
                     document.getElementById(`${tipo}_apellido_materno`).value = data.apellidoMaterno || '';
                     
-                    toastr.success('Datos obtenidos de RENIEC', 'Éxito');
+                    toastr.success('Datos obtenidos de Base de Datos', 'Éxito');
                 } else {
-                    toastr.info('No se encontraron datos en RENIEC', 'Información');
+                    toastr.info('No se encontraron datos en Base de Datos', 'Información');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                toastr.info('Servicio RENIEC no disponible', 'Información');
+                toastr.info('Servicio Base de Datos no disponible', 'Información');
             })
             .finally(() => {
                 // Restaurar botón

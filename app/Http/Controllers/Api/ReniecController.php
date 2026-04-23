@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 class ReniecController extends Controller
 {
     /**
-     * Consultar datos de RENIEC por DNI
+     * Consultar datos de Base de Datos por DNI
      */
     public function consultarDni(Request $request)
     {
@@ -61,7 +61,7 @@ class ReniecController extends Controller
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al consultar el servicio de RENIEC'
+                    'message' => 'Error al consultar el servicio de Base de Datos'
                 ], 500);
             }
 
@@ -74,7 +74,7 @@ class ReniecController extends Controller
     }
 
     /**
-     * Formatear datos de RENIEC para el formulario
+     * Formatear datos de Base de Datos para el formulario
      */
     private function formatearDatos($datos)
     {

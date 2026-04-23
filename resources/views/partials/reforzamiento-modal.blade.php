@@ -934,7 +934,7 @@
                     <div class="rf-panel active" data-step="1">
                         <div class="rf-step-header">
                             <h3><span class="material-icons-round" style="vertical-align: middle; color: var(--rf-cyan); margin-right: 0.3rem;">badge</span> Datos del Estudiante</h3>
-                            <p>Ingresa el DNI para autocompletar los datos vía RENIEC o completa manualmente.</p>
+                            <p>Ingresa el DNI para autocompletar los datos vía Base de Datos o completa manualmente.</p>
                         </div>
 
                         {{-- DNI Search Box --}}
@@ -1063,7 +1063,7 @@
                     <div class="rf-panel" data-step="2">
                         <div class="rf-step-header">
                             <h3><span class="material-icons-round" style="vertical-align: middle; color: var(--rf-magenta); margin-right: 0.3rem;">family_restroom</span> Datos de Padres o Tutores</h3>
-                            <p>Registra al menos un apoderado. Ingresa su DNI para autocompletar con RENIEC.</p>
+                            <p>Registra al menos un apoderado. Ingresa su DNI para autocompletar con Base de Datos.</p>
                         </div>
                         <div style="display:flex; justify-content:flex-end; margin-bottom:1.25rem;">
                             <button type="button" id="btnAddApoderado" class="rf-btn rf-btn-magenta" style="height:2.75rem; padding:0 1.25rem; font-size:0.8rem;">

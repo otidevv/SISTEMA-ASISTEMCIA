@@ -56,7 +56,7 @@ class PublicPostulacionController extends Controller
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
         }
 
-        // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de RENIEC
+        // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de Base de Datos
         try {
             $cacheKey = 'reniec_dni_' . $dni;
             $datosReniec = Cache::get($cacheKey);
@@ -68,7 +68,7 @@ class PublicPostulacionController extends Controller
                     // El dígito viene como DIG_RUC en esta API
                     $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
                 } else {
-                    Log::warning("No se pudo conectar con RENIEC para validar dígito del DNI: " . $dni);
+                    Log::warning("No se pudo conectar con Base de Datos para validar dígito del DNI: " . $dni);
                     $digitoCorrecto = null; // Permitir continuar manualmente si la API falla
                 }
             } else {
@@ -142,7 +142,7 @@ class PublicPostulacionController extends Controller
 
             if ($faltaNombre || $faltaGenero || $faltaFecha) {
                 try {
-                    // Consultar RENIEC si hay huecos en la información
+                    // Consultar Base de Datos si hay huecos en la información
                     $responseReniec = \Illuminate\Support\Facades\Http::timeout(5)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
                     
                     if ($responseReniec->successful()) {
@@ -169,7 +169,7 @@ class PublicPostulacionController extends Controller
                                     try {
                                         $estudiante->fecha_nacimiento = \Carbon\Carbon::parse($fechaRaw)->format('Y-m-d');
                                     } catch (\Exception $e) {
-                                        \Log::error("Error parseando fecha RENIEC ($fechaRaw) para DNI $dni: " . $e->getMessage());
+                                        \Log::error("Error parseando fecha Base de Datos ($fechaRaw) para DNI $dni: " . $e->getMessage());
                                     }
                                 }
                             }
@@ -181,7 +181,7 @@ class PublicPostulacionController extends Controller
                         }
                     }
                 } catch (\Exception $e) {
-                    \Log::warning("No se pudo completar datos de estudiante recurrente $dni desde RENIEC: " . $e->getMessage());
+                    \Log::warning("No se pudo completar datos de estudiante recurrente $dni desde Base de Datos: " . $e->getMessage());
                 }
             }
 

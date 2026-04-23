@@ -163,7 +163,7 @@ $(document).ready(function () {
             labelDNI.text(typeText);
             inputDNI.prop('readonly', false).val('').focus();
 
-            // Limpiar campos para evitar mezclas con RENIEC previo
+            // Limpiar campos para evitar mezclas con Base de Datos previo
             $('#estudiante_nombre').val('');
             $('#estudiante_apellido_paterno').val('');
             $('#estudiante_apellido_materno').val('');
@@ -1253,9 +1253,9 @@ function verificarPostulante(btnElement) {
 
                     swalIcon = 'info';
                     swalTitle = 'Postulante Nuevo';
-                    swalText = 'Consultando RENIEC para autocompletar sus datos...';
+                    swalText = 'Consultando Base de Datos para autocompletar sus datos...';
 
-                    // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
+                    // NUEVO: Consultar Base de Datos automáticamente para estudiantes nuevos
                     consultarReniecEstudiante(dni);
                 }
 
@@ -1349,12 +1349,12 @@ function consultarDNIPadre(tipo, btnElement) {
     });
 } // <--- Cierre CORRECTO de consultarDNIPadre
 
-// Nueva función para consultar RENIEC y autocompletar datos del estudiante
+// Nueva función para consultar Base de Datos y autocompletar datos del estudiante
 function consultarReniecEstudiante(dni) {
-    console.log('Consultando RENIEC para DNI:', dni);
+    console.log('Consultando Base de Datos para DNI:', dni);
 
     // Mostrar indicador de carga
-    Toast.fire({ icon: 'info', title: 'Consultando RENIEC...', text: 'Por favor espere' });
+    Toast.fire({ icon: 'info', title: 'Consultando Base de Datos...', text: 'Por favor espere' });
 
     $.ajax({
         url: '/api/reniec/consultar',
@@ -1364,10 +1364,10 @@ function consultarReniecEstudiante(dni) {
             _token: $('meta[name="csrf-token"]').attr('content')
         },
         success: function (response) {
-            console.log('Respuesta RENIEC:', response);
+            console.log('Respuesta Base de Datos:', response);
 
             if (response.success && response.data) {
-                // Autocompletar campos con datos de RENIEC
+                // Autocompletar campos con datos de Base de Datos
                 $('#estudiante_nombre').val(response.data.nombres || '');
                 $('#estudiante_apellido_paterno').val(response.data.apellido_paterno || '');
                 $('#estudiante_apellido_materno').val(response.data.apellido_materno || '');
@@ -1385,14 +1385,14 @@ function consultarReniecEstudiante(dni) {
                 }
 
                 // Mostrar mensaje de éxito
-                Toast.fire({ icon: 'success', title: 'Datos cargados desde RENIEC' });
+                Toast.fire({ icon: 'success', title: 'Datos cargados desde Base de Datos' });
 
                 // Mostrar alerta informativa
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'success',
                         title: 'Datos Autocompletos',
-                        html: 'Se han cargado automáticamente sus datos desde RENIEC:<br><br>' +
+                        html: 'Se han cargado automáticamente sus datos desde Base de Datos:<br><br>' +
                             '<strong>' + response.data.nombres + ' ' +
                             response.data.apellido_paterno + ' ' +
                             response.data.apellido_materno + '</strong><br><br>' +
@@ -1401,13 +1401,13 @@ function consultarReniecEstudiante(dni) {
                     });
                 }
             } else {
-                console.warn('No se encontraron datos en RENIEC');
-                Toast.fire({ icon: 'warning', title: 'No se encontraron datos en RENIEC', text: 'Por favor complete manualmente.' });
+                console.warn('No se encontraron datos en Base de Datos');
+                Toast.fire({ icon: 'warning', title: 'No se encontraron datos en Base de Datos', text: 'Por favor complete manualmente.' });
             }
         },
         error: function (xhr) {
-            console.error('Error consultando RENIEC:', xhr);
-            let errorMsg = 'No se pudo consultar RENIEC. Por favor complete los datos manualmente.';
+            console.error('Error consultando Base de Datos:', xhr);
+            let errorMsg = 'No se pudo consultar Base de Datos. Por favor complete los datos manualmente.';
 
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
