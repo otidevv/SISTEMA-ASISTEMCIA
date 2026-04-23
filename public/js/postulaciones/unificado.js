@@ -822,7 +822,7 @@ window.consultarDNI = function(tipo) {
         return;
     }
     
-    const url = window.default_server + '/api/Base de Datos/consultar';
+    const url = window.default_server + '/api/reniec/consultar';
     console.log('URL de consulta:', url);
     
     // Consultar la API real de Base de Datos

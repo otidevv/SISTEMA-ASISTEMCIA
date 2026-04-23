@@ -325,7 +325,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
         
         // Simular consulta Base de Datos (aquí iría la llamada real al API)
-        fetch(`/api/Base de Datos/consultar/${dni}`)
+        fetch(`/api/reniec/consultar/${dni}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {

@@ -292,7 +292,7 @@
                                                             <input type="text" class="form-control form-control-wizard" id="reg_numero_documento"
                                                                    name="numero_documento" value="{{ old('numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-Base de Datos" type="button"
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('postulante')" id="btn_buscar_postulante">
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -469,7 +469,7 @@
                                                             <input type="text" class="form-control form-control-wizard" id="padre_numero_doc"
                                                                    name="padre_numero_documento" value="{{ old('padre_numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-Base de Datos" type="button"
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('padre')" id="btn_buscar_padre">
                                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -545,7 +545,7 @@
                                                             <input type="text" class="form-control form-control-wizard" id="madre_numero_doc"
                                                                    name="madre_numero_documento" value="{{ old('madre_numero_documento') }}"
                                                                    maxlength="8" pattern="[0-9]{8}" required>
-                                                            <button class="btn btn-outline-primary btn-Base de Datos" type="button"
+                                                            <button class="btn btn-outline-primary btn-reniec" type="button"
                                                                     onclick="consultarDNI('madre')" id="btn_buscar_madre">
                                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                     <circle cx="11" cy="11" r="8"></circle>
@@ -785,7 +785,7 @@
             btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
             try {
-                const response = await fetch('/api/Base de Datos/consultar', {
+                const response = await fetch('/api/reniec/consultar', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1951,16 +1951,16 @@
         @keyframes autoFillPulse { 0%,100% { background:rgba(0,174,239,0.1) !important; } 50% { background:rgba(0,174,239,0.2) !important; } }
 
         /* BotÃ³n Base de Datos */
-        .btn-Base de Datos {
+        .btn-reniec {
             border-radius: 0 10px 10px 0 !important;
             border: 1.5px solid rgba(0,174,239,0.4) !important;
             border-left: none !important;
             background: rgba(0,174,239,0.1) !important;
             color: var(--cyan-acento) !important;
         }
-        .btn-Base de Datos:hover { background: var(--cyan-acento) !important; color: white !important; }
-        .btn-Base de Datos.loading { background: rgba(255,255,255,0.1) !important; color: white !important; }
-        .btn-Base de Datos.success-animation { background: var(--verde-cepre) !important; color: white !important; animation: successPulse 1s ease; }
+        .btn-reniec:hover { background: var(--cyan-acento) !important; color: white !important; }
+        .btn-reniec.loading { background: rgba(255,255,255,0.1) !important; color: white !important; }
+        .btn-reniec.success-animation { background: var(--verde-cepre) !important; color: white !important; animation: successPulse 1s ease; }
         @keyframes successPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
         /* Password strength */
