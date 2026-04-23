@@ -550,41 +550,45 @@
     <!-- MODAL PREMIUM -->
     <div class="modal fade attendance-modal" id="attendanceModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content">
+            <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
                 
                 <div class="modal-queue" id="queue-indicator" style="display: none;">
                     <i class="uil uil-layer-group text-primary"></i> <span id="queue-text">1/1 EN COLA</span>
                 </div>
                 
-                <div class="modal-content-wrapper">
+                <div class="modal-content-wrapper d-flex flex-column align-items-center justify-content-center min-vh-100 text-center" style="padding-bottom: 5rem;">
                     
-                    <div class="modal-avatar-wrapper animate__animated animate__zoomIn">
-                        <div class="modal-avatar-inner" id="modal-photo">
+                    <!-- Avatar muy grande -->
+                    <div class="modal-avatar-wrapper shadow-lg mb-4 animate__animated animate__zoomIn" style="width: 250px; height: 250px; border-radius: 40px; border: 4px solid var(--bg-card); background: var(--bg-avatar); position: relative;">
+                        <div class="modal-avatar-inner" id="modal-photo" style="width: 100%; height: 100%; overflow: hidden; border-radius: 36px; display: flex; align-items: center; justify-content: center; font-size: 6rem; font-weight: 900; color: var(--cepre-cyan);">
                             <!-- Foto o iniciales -->
                         </div>
-                        <div class="modal-verif-badge shadow-sm animate__animated animate__bounceIn animate__delay-1s">
+                        <div class="modal-verif-badge shadow animate__animated animate__bounceIn animate__delay-1s" style="position: absolute; bottom: -20px; right: -20px; width: 80px; height: 80px; border-radius: 24px; background: var(--cepre-cyan); color: white; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 6px solid var(--bg-app);">
                             <i id="modal-verif-icon" class="uil uil-fingerprint"></i>
                         </div>
                     </div>
 
-                    <h1 class="modal-name animate__animated animate__fadeInUp" id="student-name-modal">CARGANDO...</h1>
-                    <div class="modal-doc animate__animated animate__fadeInUp">DNI: <span id="student-doc-modal">00000000</span></div>
+                    <h1 class="modal-name fw-bolder mb-2 animate__animated animate__fadeInUp" id="student-name-modal" style="font-size: 4rem; color: var(--text-heading); letter-spacing: -1.5px;">CARGANDO...</h1>
+                    <h3 class="modal-doc text-muted mb-5 fw-bold animate__animated animate__fadeInUp" style="font-size: 1.5rem; letter-spacing: 1px;">DNI: <span id="student-doc-modal">00000000</span></h3>
                     
-                    <div class="modal-alert-box animate__animated animate__fadeInUp animate__delay-1s" id="modal-alert-box">
-                        <div class="modal-alert-status text-success" id="modal-badge-title">ESTADO</div>
-                        <div class="modal-time-display">
-                            <i class="uil uil-clock"></i> <span id="modal-time">00:00:00</span>
+                    <!-- Alert Box Premium -->
+                    <div class="modal-alert-box shadow-sm mb-5 d-flex align-items-center gap-5 animate__animated animate__fadeInUp animate__delay-1s" id="modal-alert-box" style="background: var(--bg-card); padding: 1.5rem 3.5rem; border-radius: 24px; border: 1px solid var(--border-card);">
+                        <div class="modal-alert-status text-success" id="modal-badge-title" style="font-size: 2.2rem; font-weight: 900; text-transform: uppercase;">ESTADO</div>
+                        <div style="width: 2px; height: 60px; background: var(--border-card);"></div>
+                        <div class="modal-time-display d-flex align-items-center gap-3" style="font-size: 3.5rem; font-weight: 900; color: var(--text-heading); line-height: 1;">
+                            <i class="uil uil-clock text-primary" style="font-size: 3rem;"></i> <span id="modal-time">00:00:00</span>
                         </div>
                     </div>
 
-                    <div id="modal-details" class="modal-stats animate__animated animate__fadeInUp animate__delay-2s">
+                    <!-- Detalles / Stats -->
+                    <div id="modal-details" class="modal-stats d-flex gap-4 animate__animated animate__fadeInUp animate__delay-2s">
                         <!-- Detalles estadísticos -->
                     </div>
 
                 </div>
 
-                <div class="progress-line">
-                    <div id="modal-progress-bar" class="progress-line-fill"></div>
+                <div class="progress-line" style="position: absolute; bottom: 0; width: 100%; height: 12px; background: var(--border-card);">
+                    <div id="modal-progress-bar" class="progress-line-fill" style="height: 100%; width: 0%; background: var(--cepre-cyan); transition: width linear 0.05s;"></div>
                 </div>
             </div>
         </div>
@@ -651,43 +655,58 @@
                 
                 badgeTitle.innerHTML = situ.detalle;
                 
+                let estadoStr = situ.estado ? situ.estado.toLowerCase() : 'regular';
+
                 let themeColor = 'var(--cepre-green)';
                 let themeIcon = 'uil-check-circle';
-                if(situ.estado === 'amonestado') { themeColor = '#f59e0b'; themeIcon = 'uil-exclamation-triangle'; }
-                else if(situ.estado === 'inhabilitado') { themeColor = 'var(--cepre-magenta)'; themeIcon = 'uil-times-circle'; }
+                if(estadoStr === 'amonestado') { themeColor = '#f59e0b'; themeIcon = 'uil-exclamation-triangle'; }
+                else if(estadoStr === 'inhabilitado') { themeColor = '#ef4444'; themeIcon = 'uil-times-circle'; }
 
                 badgeTitle.style.color = themeColor;
-                badgeTitle.innerHTML = `<i class="uil ${themeIcon}"></i> ${situ.detalle}`;
+                
+                // Limpiar mensaje largo en el modal
+                let mensajePantalla = situ.detalle || 'REGULAR';
+                if(mensajePantalla === 'SIN REGISTROS BIOMÉTRICOS') mensajePantalla = 'NUEVO REGISTRO';
+                
+                badgeTitle.innerHTML = `<i class="uil ${themeIcon}"></i> ${mensajePantalla}`;
                 
                 // Verif Icon
                 const verifIcons = { 0:'uil-fingerprint', 1:'uil-credit-card', 2:'uil-user-square', 3:'uil-qrcode-scan', 4:'uil-edit-alt' };
                 document.getElementById('modal-verif-icon').className = `uil ${verifIcons[data.tipo_verificacion] || 'uil-check-circle'}`;
                 
-                // Stats
+                // Stats Robustos
                 const details = document.getElementById('modal-details');
-                if (situ.estado !== 'regular') {
+                
+                const faltasReg = situ.faltas || 0;
+                const limiteAmo = situ.limite_amonestacion || situ.faltas_para_amonestacion || 0;
+                const limiteInh = situ.limite_inhabilitacion || situ.faltas_para_inhabilitacion || 0;
+                const diasTotales = situ.dias_habiles_totales || 0;
+                const asistTotales = situ.asistencias || 0;
+                const examen = situ.examen || 'Próximo Examen';
+
+                if (estadoStr !== 'regular' && estadoStr !== 'nuevo') {
                     details.innerHTML = `
-                        <div class="stat-card">
-                            <div class="stat-val text-danger">${situ.faltas}</div>
-                            <div class="stat-lbl">Faltas Registradas</div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-card); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: var(--shadow-card);">
+                            <div class="stat-val text-danger" style="font-size: 3rem; font-weight: 900;">${faltasReg}</div>
+                            <div class="stat-lbl text-muted" style="font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">Faltas Registradas</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-val text-primary" style="font-size: 1.5rem; margin-top: 8px;">${situ.examen}</div>
-                            <div class="stat-lbl mt-2">Próximo Examen</div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-card); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: var(--shadow-card);">
+                            <div class="stat-val text-primary" style="font-size: 1.5rem; font-weight: 900; margin-top: 15px;">${examen}</div>
+                            <div class="stat-lbl text-muted mt-2" style="font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">Próximo Examen</div>
                         </div>
-                        <div class="stat-card" style="background: rgba(226, 0, 122, 0.05); border-color: rgba(226, 0, 122, 0.2);">
-                            <div class="stat-val text-danger">${situ.faltas_para_inhabilitacion}</div>
-                            <div class="stat-lbl text-danger">Faltas para Inhabilitar</div>
+                        <div class="stat-card" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1.5rem 2.5rem; border-radius: 20px;">
+                            <div class="stat-val text-danger" style="font-size: 3rem; font-weight: 900;">${limiteInh}</div>
+                            <div class="stat-lbl text-danger" style="font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">Faltas para Inhabilitar</div>
                         </div>`;
                 } else {
                     details.innerHTML = `
-                        <div class="stat-card">
-                            <div class="stat-val text-success">${situ.asistencias} <span class="text-muted fs-4">/ ${situ.dias_habiles_totales}</span></div>
-                            <div class="stat-lbl">Asistencias Totales</div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-card); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: var(--shadow-card);">
+                            <div class="stat-val text-success" style="font-size: 3rem; font-weight: 900;">${asistTotales} <span class="text-muted" style="font-size: 1.5rem;">/ ${diasTotales}</span></div>
+                            <div class="stat-lbl text-muted" style="font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">Asistencias Totales</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-val text-warning">${situ.faltas_para_amonestacion}</div>
-                            <div class="stat-lbl">Margen de Faltas</div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-card); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: var(--shadow-card);">
+                            <div class="stat-val text-warning" style="font-size: 3rem; font-weight: 900;">${limiteAmo}</div>
+                            <div class="stat-lbl text-muted" style="font-weight: 800; font-size: 0.85rem; letter-spacing: 1px;">Margen de Faltas</div>
                         </div>`;
                     if (typeof confetti === 'function') confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#93c01f', '#00aeef', '#e2007a'] });
                 }
