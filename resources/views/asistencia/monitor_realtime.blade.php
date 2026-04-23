@@ -617,8 +617,16 @@
 
             const notificationSound = new Audio('{{ asset("assets/sounds/notifipro.mp3") }}');
             
+            function playNotificationSound() {
+                if (!soundEnabled || !audioUnlocked) return;
+                // Clonar el nodo permite reproducir múltiples sonidos superpuestos
+                // si varias personas marcan exactamente al mismo tiempo
+                const soundClone = notificationSound.cloneNode(true);
+                soundClone.volume = 1;
+                soundClone.play().catch(e => console.warn('Audio play failed:', e));
+            }
+            
             // Truco para desbloquear el audio en Chrome (AutoPlay Policy)
-            // Al primer clic en cualquier parte de la pantalla, desbloqueamos el audio
             document.body.addEventListener('click', function() {
                 if (!audioUnlocked && soundEnabled) {
                     notificationSound.volume = 0;
@@ -736,7 +744,7 @@
                 progressBar.style.background = themeColor;
 
                 modal.show();
-                if (soundEnabled) notificationSound.play().catch(() => {});
+                playNotificationSound();
 
                 // Timer
                 let duration = 4000;
