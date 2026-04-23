@@ -149,7 +149,7 @@
                     <span style="color: var(--verde-cepre); font-weight: 800; text-transform: uppercase; letter-spacing: 4px; font-size: 13px; margin-bottom: 25px; display: block;">ADMISIÓN CEPRE UNAMAD</span>
                     <h2 style="font-size: 46px; font-weight: 900; margin-bottom: 30px; letter-spacing: -1px; color: #ffffff;">Asegura tu Ingreso con <span style="background: linear-gradient(90deg, var(--verde-cepre), var(--cyan-acento)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Expertos</span></h2>
                     <p style="font-size: 21px; opacity: 0.8; margin-bottom: 50px; max-width: 680px; margin-left: auto; margin-right: auto; line-height: 1.7;">Inicia tu preparación hoy mismo y únete a los miles de cachimbos que lograron su meta con nosotros.</p>
-                    <a href="{{ route('register') }}" class="btn btn-secondary" style="background: linear-gradient(90deg, #ec008c, #ff1a8c); padding: 20px 50px; font-size: 18px; font-weight: 850; border-radius: 24px; box-shadow: 0 15px 40px rgba(236, 0, 140, 0.5); transition: transform 0.3s ease;">
+                    <a href="{{ route('home', ['postula' => 1]) }}" class="btn btn-secondary" style="background: linear-gradient(90deg, #ec008c, #ff1a8c); padding: 20px 50px; font-size: 18px; font-weight: 850; border-radius: 24px; box-shadow: 0 15px 40px rgba(236, 0, 140, 0.5); transition: transform 0.3s ease;">
                         <span>RESERVAR MI VACANTE AQUÍ</span>
                     </a>
                 </div>

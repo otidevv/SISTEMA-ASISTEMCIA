@@ -278,4 +278,22 @@
 
     window.addEventListener('cepre_ready', initializeHome);
     window.addEventListener('load', initializeHome);
+
+    // Manejar apertura automática del modal si viene con el parámetro ?postula=1
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('postula')) {
+            // Esperar un momento a que todo cargue correctamente
+            setTimeout(() => {
+                if (typeof openPostulacionModal === 'function') {
+                    openPostulacionModal();
+                    
+                    // Limpiar la URL sin recargar la página (opcional, para estética)
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                }
+            }, 1200);
+        }
+    });
 </script>
+

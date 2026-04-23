@@ -137,7 +137,7 @@
                                     </div>
                                 </td>
                                 <td data-label="Acciones" style="padding: 25px 40px; text-align: right;">
-                                    <a href="{{ route('register') }}" class="btn-postular-table animate-pulse-btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; border-radius: 15px; background: var(--azul-oscuro); color: white; text-decoration: none; font-weight: 800; font-size: 13px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                    <a href="{{ route('home', ['postula' => 1]) }}" class="btn-postular-table animate-pulse-btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; border-radius: 15px; background: var(--azul-oscuro); color: white; text-decoration: none; font-weight: 800; font-size: 13px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
                                         <span>POSTULAR</span>
                                         <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
                                     </a>
