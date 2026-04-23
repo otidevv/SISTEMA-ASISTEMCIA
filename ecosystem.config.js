@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   apps : [{
     name: 'asistencia-realtime',
     script: 'artisan',
@@ -16,3 +16,4 @@ module.exports = {
     }
   }]
 };
+
