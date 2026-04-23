@@ -73,8 +73,8 @@
                     <div class="input-group">
                         <input type="text" class="form-control" id="estudiante_dni" name="estudiante_dni" 
                                maxlength="8" pattern="[0-9]{8}" required>
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('estudiante')" title="Consultar RENIEC">
-                            <i class="mdi mdi-magnify"></i> RENIEC
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('estudiante')" title="Consultar Base de Datos">
+                            <i class="mdi mdi-magnify"></i> Base de Datos
                         </button>
                     </div>
                     <div class="invalid-feedback">Ingrese un DNI válido de 8 dígitos</div>
@@ -180,8 +180,8 @@
                     <div class="input-group">
                         <input type="text" class="form-control" id="padre_dni" name="padre_dni" 
                                maxlength="8" pattern="[0-9]{8}">
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('padre')" title="Consultar RENIEC">
-                            <i class="mdi mdi-magnify"></i> RENIEC
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('padre')" title="Consultar Base de Datos">
+                            <i class="mdi mdi-magnify"></i> Base de Datos
                         </button>
                     </div>
                 </div>
@@ -236,8 +236,8 @@
                     <div class="input-group">
                         <input type="text" class="form-control" id="madre_dni" name="madre_dni" 
                                maxlength="8" pattern="[0-9]{8}">
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('madre')" title="Consultar RENIEC">
-                            <i class="mdi mdi-magnify"></i> RENIEC
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('madre')" title="Consultar Base de Datos">
+                            <i class="mdi mdi-magnify"></i> Base de Datos
                         </button>
                     </div>
                 </div>
