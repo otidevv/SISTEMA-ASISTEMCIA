@@ -613,16 +613,36 @@
             let progressTimer = null;
             let soundEnabled = true;
             let lastProcessedId = null;
+            let audioUnlocked = false;
 
             const notificationSound = new Audio('{{ asset("assets/sounds/notifipro.mp3") }}');
+            
+            // Truco para desbloquear el audio en Chrome (AutoPlay Policy)
+            // Al primer clic en cualquier parte de la pantalla, desbloqueamos el audio
+            document.body.addEventListener('click', function() {
+                if (!audioUnlocked && soundEnabled) {
+                    notificationSound.volume = 0;
+                    notificationSound.play().then(() => { 
+                        notificationSound.pause();
+                        notificationSound.currentTime = 0;
+                        notificationSound.volume = 1; 
+                        audioUnlocked = true;
+                    }).catch(() => {});
+                }
+            }, { once: true });
 
             toggleSoundBtn.addEventListener('click', function() {
                 soundEnabled = !soundEnabled;
                 this.classList.toggle('active', soundEnabled);
                 this.innerHTML = soundEnabled ? '<i class="uil uil-volume"></i> SONIDO: ON' : '<i class="uil uil-volume-mute"></i> SONIDO: OFF';
-                if (soundEnabled) {
+                if (soundEnabled && !audioUnlocked) {
                     notificationSound.volume = 0;
-                    notificationSound.play().then(() => { notificationSound.volume = 1; }).catch(() => {});
+                    notificationSound.play().then(() => { 
+                        notificationSound.pause();
+                        notificationSound.currentTime = 0;
+                        notificationSound.volume = 1;
+                        audioUnlocked = true;
+                    }).catch(() => {});
                 }
             });
 
