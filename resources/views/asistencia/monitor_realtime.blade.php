@@ -668,38 +668,58 @@
 
             // --- CONFIGURACIÓN DE TIEMPO REAL USANDO LA INSTANCIA GLOBAL DE ECHO ---
             if (typeof window.Echo !== 'undefined') {
-                window.Echo.channel('asistencia-channel')
-                    .listen('.App\\Events\\NuevoRegistroAsistencia', (data) => {
-                        console.log('✅ EVENTO RECIBIDO (Echo):', data);
-                        if (!data || !data.registro) return;
-                        
-                        const registro = data.registro;
-                        const eventData = {
-                            id: registro.id,
-                            name: registro.nombre_completo || `Doc: ${registro.nro_documento}`,
-                            time: registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro),
-                            timeOnly: (registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro)).split(' ')[1] || registro.fecha_registro_formateada,
-                            photoHtml: createPhotoHtml(registro),
-                            mainPhotoHtml: createMainPhotoHtml(registro),
-                            type: registro.tipo_verificacion_texto,
-                            tipo_verificacion: registro.tipo_verificacion,
-                            estado_situacional: registro.estado_situacional
-                        };
-                        addNewAttendanceRecord(eventData);
-                    });
+                const asistenciaChannel = window.Echo.channel('asistencia-channel');
+                
+                // Escuchar con el nombre completo de la clase (recomendado para Reverb)
+                asistenciaChannel.listen('.App\\Events\\NuevoRegistroAsistencia', (data) => {
+                    procesarEventoAsistencia(data);
+                });
 
-                // Estado de conexión (opcional, Echo no expone 'connected' directamente como Pusher, 
-                // pero podemos usar el conector subyacente si es necesario)
+                // Fallback: Escuchar sin el punto por si el namespace de Echo está activo
+                asistenciaChannel.listen('NuevoRegistroAsistencia', (data) => {
+                    procesarEventoAsistencia(data);
+                });
+
+                function procesarEventoAsistencia(data) {
+                    console.log('✅ EVENTO RECIBIDO:', data);
+                    if (!data || !data.registro) return;
+                    
+                    const registro = data.registro;
+                    
+                    // Formateo seguro de la hora
+                    let fullTime = registro.fecha_registro_formateada || formatearFecha(registro.fecha_registro);
+                    let timeOnly = fullTime;
+                    if (fullTime.includes(' ')) {
+                        timeOnly = fullTime.split(' ')[1];
+                    }
+
+                    const eventData = {
+                        id: registro.id,
+                        name: registro.nombre_completo || `Doc: ${registro.nro_documento}`,
+                        time: fullTime,
+                        timeOnly: timeOnly,
+                        photoHtml: createPhotoHtml(registro),
+                        mainPhotoHtml: createMainPhotoHtml(registro),
+                        type: registro.tipo_verificacion_texto,
+                        tipo_verificacion: registro.tipo_verificacion,
+                        estado_situacional: registro.estado_situacional
+                    };
+                    addNewAttendanceRecord(eventData);
+                }
+
+                // Estado de conexión
                 const connector = window.Echo.connector.pusher;
                 if (connector) {
                     connector.connection.bind('connected', () => {
-                        connectionStatus.innerHTML = '<i class="uil uil-signal me-1"></i> Conectado';
-                        connectionStatus.className = 'badge bg-success-lighten text-success px-3 py-2 rounded-pill';
+                        connectionStatus.innerHTML = '<div class="live-dot"></div> EN VIVO (CONECTADO)';
+                        connectionStatus.className = 'live-indicator me-3';
+                        connectionStatus.style.color = '#059669'; // Verde éxito
                     });
                     
                     connector.connection.bind('disconnected', () => {
-                        connectionStatus.innerHTML = '<i class="uil uil-signal-alt-3 me-1"></i> Desconectado';
-                        connectionStatus.className = 'badge bg-danger-lighten text-danger px-3 py-2 rounded-pill';
+                        connectionStatus.innerHTML = '<div class="live-dot" style="background-color: #64748b; box-shadow: none; animation: none;"></div> DESCONECTADO';
+                        connectionStatus.className = 'live-indicator me-3 text-muted';
+                        connectionStatus.style.color = '#64748b';
                     });
                 }
             } else {

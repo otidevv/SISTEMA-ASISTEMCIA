@@ -126,7 +126,7 @@ class AsistenciaController extends Controller
         ]);
 
         // Crear el nuevo registro
-        RegistroAsistencia::create([
+        $registro = RegistroAsistencia::create([
             'nro_documento' => $request->nro_documento,
             'fecha_hora' => $request->fecha_hora,
             'tipo_verificacion' => $request->tipo_verificacion,
@@ -136,6 +136,9 @@ class AsistenciaController extends Controller
             'sn_dispositivo' => $request->sn_dispositivo ?? 'MANUAL',
             'fecha_registro' => $request->fecha_hora,
         ]);
+
+        // DISPARAR EVENTO PARA TIEMPO REAL
+        event(new \App\Events\NuevoRegistroAsistencia($registro));
 
         return redirect()->route('asistencia.index')->with('success', 'Registro de asistencia creado exitosamente.');
     }
