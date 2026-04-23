@@ -88,17 +88,40 @@ class AsistenciaController extends Controller
      */
     public function tiempoReal()
     {
-        // Obtenemos los últimos 5 registros para mostrarlos inicialmente
+        // Obtenemos todos los registros del día de hoy
         $ultimosRegistros = RegistroAsistencia::with('usuario')
-            ->orderBy('fecha_registro', 'desc')  // Cambiado de fecha_hora a fecha_registro
-            ->take(10)
+            ->whereDate('fecha_registro', Carbon::today())
+            ->orderBy('fecha_registro', 'desc')
             ->get();
 
+        $stats = [
+            'total' => $ultimosRegistros->count(),
+            'regulares' => 0,
+            'amonestados' => 0,
+            'inhabilitados' => 0,
+        ];
+
         foreach ($ultimosRegistros as $registro) {
-            $registro->estado_situacional = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($registro->nro_documento);
+            $estadoSituacional = \App\Helpers\AsistenciaHelper::obtenerEstadoHabilitacion($registro->nro_documento);
+            
+            // Limpiar mensaje largo para UI Premium
+            if ($estadoSituacional['detalle'] === 'SIN REGISTROS BIOMÉTRICOS') {
+                $estadoSituacional['detalle'] = 'NUEVO REGISTRO';
+            }
+            
+            $registro->estado_situacional = $estadoSituacional;
+
+            // Conteo para estadísticas rápidas
+            if ($estadoSituacional['estado'] === 'amonestado') {
+                $stats['amonestados']++;
+            } elseif ($estadoSituacional['estado'] === 'inhabilitado') {
+                $stats['inhabilitados']++;
+            } else {
+                $stats['regulares']++;
+            }
         }
 
-        return view('asistencia.monitor_realtime', compact('ultimosRegistros'));
+        return view('asistencia.monitor_realtime', compact('ultimosRegistros', 'stats'));
     }
 
     /**

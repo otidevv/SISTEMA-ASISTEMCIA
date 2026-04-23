@@ -447,7 +447,7 @@
     <div class="container-fluid" style="padding-top: 1.5rem; max-width: 1600px;">
         
         <!-- HEADER -->
-        <div class="premium-header d-flex justify-content-between align-items-end">
+        <div class="premium-header d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
             <div>
                 <div class="d-flex align-items-center gap-3 mb-2">
                     <span class="header-badge">CEPRE UNAMAD</span>
@@ -457,6 +457,30 @@
                 </div>
                 <h1 class="header-title">Monitor de Asistencia</h1>
             </div>
+            
+            <!-- Quick Stats Bar -->
+            <div class="d-flex bg-card border rounded-pill px-4 py-2 shadow-sm gap-4">
+                <div class="text-center">
+                    <div class="text-muted" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">HOY</div>
+                    <div class="fw-bolder fs-5 lh-1 text-primary" id="stat-total">{{ $stats['total'] ?? 0 }}</div>
+                </div>
+                <div class="border-start"></div>
+                <div class="text-center">
+                    <div class="text-muted" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">REGULARES</div>
+                    <div class="fw-bolder fs-5 lh-1 text-success" id="stat-regulares">{{ $stats['regulares'] ?? 0 }}</div>
+                </div>
+                <div class="border-start"></div>
+                <div class="text-center">
+                    <div class="text-muted" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">AMONESTADOS</div>
+                    <div class="fw-bolder fs-5 lh-1 text-warning" id="stat-amonestados">{{ $stats['amonestados'] ?? 0 }}</div>
+                </div>
+                <div class="border-start"></div>
+                <div class="text-center">
+                    <div class="text-muted" style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;">INHABILITADOS</div>
+                    <div class="fw-bolder fs-5 lh-1 text-danger" id="stat-inhabilitados">{{ $stats['inhabilitados'] ?? 0 }}</div>
+                </div>
+            </div>
+
             <div class="header-controls">
                 <div class="status-pill online" id="connection-status">
                     <div class="live-dot"></div> CONECTADO
@@ -699,6 +723,23 @@
                 }
             });
 
+            function updateStatsUI(estado) {
+                const totalEl = document.getElementById('stat-total');
+                const regEl = document.getElementById('stat-regulares');
+                const amoEl = document.getElementById('stat-amonestados');
+                const inhEl = document.getElementById('stat-inhabilitados');
+                
+                if(totalEl) totalEl.innerText = parseInt(totalEl.innerText) + 1;
+                
+                if(estado === 'amonestado' && amoEl) {
+                    amoEl.innerText = parseInt(amoEl.innerText) + 1;
+                } else if(estado === 'inhabilitado' && inhEl) {
+                    inhEl.innerText = parseInt(inhEl.innerText) + 1;
+                } else if(regEl) {
+                    regEl.innerText = parseInt(regEl.innerText) + 1;
+                }
+            }
+
             function addNewRecord(data) {
                 const situ = data.estado_situacional;
                 const card = document.createElement('div');
@@ -737,8 +778,12 @@
                 container.prepend(card);
                 setTimeout(() => card.classList.remove('new-entry'), 600);
 
+                // Actualizar los contadores en tiempo real
+                updateStatsUI(situ.estado);
+
+                // Opcional: Limitar a mostrar solo los últimos 50 en pantalla para no saturar el DOM
                 const all = container.querySelectorAll('.premium-widget');
-                if (all.length > 24) container.removeChild(all[all.length - 1]);
+                if (all.length > 50) container.removeChild(all[all.length - 1]);
 
                 showModal(data);
             }
@@ -760,6 +805,12 @@
                     const reg = data.registro;
                     const fullTime = reg.fecha_registro_formateada || new Date(reg.fecha_registro).toLocaleTimeString('es-PE');
                     
+                    // Limpieza del detalle para nuevos ingresos en tiempo real
+                    let situacional = reg.estado_situacional || { estado: 'regular', detalle: 'REGULAR' };
+                    if(situacional.detalle === 'SIN REGISTROS BIOMÉTRICOS') {
+                        situacional.detalle = 'NUEVO REGISTRO';
+                    }
+                    
                     addNewRecord({
                         id: reg.id,
                         name: reg.nombre_completo || 'Desconocido',
@@ -768,7 +819,7 @@
                         cardPhotoHtml: generatePhotoHtml(reg),
                         modalPhotoHtml: generatePhotoHtml(reg),
                         tipo_verificacion: reg.tipo_verificacion,
-                        estado_situacional: reg.estado_situacional
+                        estado_situacional: situacional
                     });
                 });
 
