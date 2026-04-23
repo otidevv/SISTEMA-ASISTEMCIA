@@ -149,9 +149,9 @@
             // Funciones del WIZARD (Mantenidas)
             // ============================================
             
-            document.getElementById('btnConsultarReniecNuevo').addEventListener('click', consultarReniecRegistro);
-            document.getElementById('btnConsultarReniecPadre').addEventListener('click', consultarReniecPadre);
-            document.getElementById('btnConsultarReniecMadre').addEventListener('click', consultarReniecMadre);
+            document.getElementById('btnConsultarBase de DatosNuevo').addEventListener('click', consultarBase de DatosRegistro);
+            document.getElementById('btnConsultarBase de DatosPadre').addEventListener('click', consultarBase de DatosPadre);
+            document.getElementById('btnConsultarBase de DatosMadre').addEventListener('click', consultarBase de DatosMadre);
             
             const formRegistro = document.getElementById('formRegistroNuevo');
             formRegistro.addEventListener('input', function(e) { actualizarContadorCamposPaso(wizardCurrentStep); });
@@ -1226,23 +1226,23 @@
         }
         
         // Funciones de consulta Base de Datos
-        function consultarReniecRegistro() {
-            consultarReniecPersona('nuevo_numero_documento', 'postulante');
+        function consultarBase de DatosRegistro() {
+            consultarBase de DatosPersona('nuevo_numero_documento', 'postulante');
         }
         
-        function consultarReniecPadre() {
-            consultarReniecPersona('padre_numero_doc', 'padre');
+        function consultarBase de DatosPadre() {
+            consultarBase de DatosPersona('padre_numero_doc', 'padre');
         }
         
-        function consultarReniecMadre() {
-            consultarReniecPersona('madre_numero_doc', 'madre');
+        function consultarBase de DatosMadre() {
+            consultarBase de DatosPersona('madre_numero_doc', 'madre');
         }
         
-        function consultarReniecPersona(dniFieldId, tipo) {
+        function consultarBase de DatosPersona(dniFieldId, tipo) {
             const dni = document.getElementById(dniFieldId).value;
-            const btnConsultar = tipo === 'postulante' ? document.getElementById('btnConsultarReniecNuevo') :
-                                 tipo === 'padre' ? document.getElementById('btnConsultarReniecPadre') :
-                                 document.getElementById('btnConsultarReniecMadre');
+            const btnConsultar = tipo === 'postulante' ? document.getElementById('btnConsultarBase de DatosNuevo') :
+                                 tipo === 'padre' ? document.getElementById('btnConsultarBase de DatosPadre') :
+                                 document.getElementById('btnConsultarBase de DatosMadre');
             
             if (!dni || dni.length !== 8) {
                 toastr.warning('Ingrese un DNI válido de 8 dígitos');
@@ -1254,7 +1254,7 @@
             btnConsultar.disabled = true;
             
             // Realizar consulta Base de Datos con POST
-            fetch('{{ url('/api/reniec/consultar') }}', {
+            fetch('{{ url('/api/Base de Datos/consultar') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2493,7 +2493,7 @@
                                             <label for="nuevo_numero_documento" class="form-label">Número Documento <span class="text-danger">*</span></label>
                                             <div class="input-group">
                                                 <input type="text" class="form-control" id="nuevo_numero_documento" name="numero_documento" maxlength="8" pattern="[0-9]{8}" required>
-                                                <button class="btn btn-outline-primary" type="button" id="btnConsultarReniecNuevo"><i class="bi bi-search"></i></button>
+                                                <button class="btn btn-outline-primary" type="button" id="btnConsultarBase de DatosNuevo"><i class="bi bi-search"></i></button>
                                             </div>
                                             <small class="form-text text-muted">Consulte Base de Datos para autocompletar</small>
                                         </div>
@@ -2569,7 +2569,7 @@
                                             <div class="row g-3">
                                                 <!-- Fila Documento Padre -->
                                                 <div class="col-md-6"><label for="padre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="padre_tipo_doc" name="padre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
-                                                <div class="col-md-6"><label for="padre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="padre_numero_doc" name="padre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecPadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                                <div class="col-md-6"><label for="padre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="padre_numero_doc" name="padre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarBase de DatosPadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
                                                 <!-- Fila Nombres Padre -->
                                                 <div class="col-12"><label for="padre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="padre_nombre" name="padre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
                                                 <!-- Fila Apellidos Padre -->
@@ -2585,7 +2585,7 @@
                                             <div class="row g-3">
                                                 <!-- Fila Documento Madre -->
                                                 <div class="col-md-6"><label for="madre_tipo_doc" class="form-label">Tipo Documento <span class="text-danger">*</span></label><select class="form-select" id="madre_tipo_doc" name="madre_tipo_documento" required><option value="DNI" selected>DNI</option><option value="CE">CE</option></select><div class="invalid-feedback">Seleccione un tipo</div></div>
-                                                <div class="col-md-6"><label for="madre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="madre_numero_doc" name="madre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarReniecMadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
+                                                <div class="col-md-6"><label for="madre_numero_doc" class="form-label">Número Documento <span class="text-danger">*</span></label><div class="input-group"><input type="text" class="form-control" id="madre_numero_doc" name="madre_numero_documento" maxlength="8" pattern="[0-9]{8}" required><button class="btn btn-outline-primary" type="button" id="btnConsultarBase de DatosMadre"><i class="bi bi-search"></i></button></div><div class="invalid-feedback">Ingrese un número</div></div>
                                                 <!-- Fila Nombres Madre -->
                                                 <div class="col-12"><label for="madre_nombre" class="form-label">Nombres <span class="text-danger">*</span></label><input type="text" class="form-control" id="madre_nombre" name="madre_nombre" required><div class="invalid-feedback">Ingrese los nombres</div></div>
                                                 <!-- Fila Apellidos Madre -->

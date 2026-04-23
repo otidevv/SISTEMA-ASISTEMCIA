@@ -56,31 +56,31 @@ class PublicPostulacionController extends Controller
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
         }
 
-        // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de RENIEC
+        // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de Base de Datos
         try {
-            $cacheKey = 'reniec_dni_' . $dni;
-            $datosReniec = Cache::get($cacheKey);
+            $cacheKey = 'Base de Datos_dni_' . $dni;
+            $datosBase de Datos = Cache::get($cacheKey);
             
-            if (!$datosReniec) {
+            if (!$datosBase de Datos) {
                 $response = \Illuminate\Support\Facades\Http::timeout(10)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
                 if ($response->successful()) {
-                    $datosReniec = $response->json();
+                    $datosBase de Datos = $response->json();
                     // El dígito viene como DIG_RUC en esta API
-                    $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
+                    $digitoCorrecto = $datosBase de Datos['DIG_RUC'] ?? null;
                 } else {
-                    Log::warning("No se pudo conectar con RENIEC para validar dígito del DNI: " . $dni);
+                    Log::warning("No se pudo conectar con Base de Datos para validar dígito del DNI: " . $dni);
                     $digitoCorrecto = null; // Permitir continuar manualmente si la API falla
                 }
             } else {
-                // Si está en caché, los datos ya están formateados por el ReniecController
-                $digitoCorrecto = $datosReniec['digito_verificador'] ?? null;
+                // Si está en caché, los datos ya están formateados por el Base de DatosController
+                $digitoCorrecto = $datosBase de Datos['digito_verificador'] ?? null;
                 
                 // Si por alguna razón el caché no tiene el dígito (viejo caché), forzar actualización
                 if ($digitoCorrecto === null) {
                     $response = \Illuminate\Support\Facades\Http::timeout(10)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
                     if ($response->successful()) {
-                        $datosReniec = $response->json();
-                        $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
+                        $datosBase de Datos = $response->json();
+                        $digitoCorrecto = $datosBase de Datos['DIG_RUC'] ?? null;
                     }
                 }
             }
@@ -142,21 +142,21 @@ class PublicPostulacionController extends Controller
 
             if ($faltaNombre || $faltaGenero || $faltaFecha) {
                 try {
-                    // Consultar RENIEC si hay huecos en la información
-                    $responseReniec = \Illuminate\Support\Facades\Http::timeout(5)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
+                    // Consultar Base de Datos si hay huecos en la información
+                    $responseBase de Datos = \Illuminate\Support\Facades\Http::timeout(5)->get('https://apidatos.unamad.edu.pe/api/consulta/' . $dni);
                     
-                    if ($responseReniec->successful()) {
-                        $reniecData = $responseReniec->json();
+                    if ($responseBase de Datos->successful()) {
+                        $Base de DatosData = $responseBase de Datos->json();
                         
-                        if (!empty($reniecData) && isset($reniecData['DNI'])) {
+                        if (!empty($Base de DatosData) && isset($Base de DatosData['DNI'])) {
                             // 1. Nombres y Apellidos
-                            if (empty($estudiante->nombre)) $estudiante->nombre = $reniecData['NOMBRES'] ?? '';
-                            if (empty($estudiante->apellido_paterno)) $estudiante->apellido_paterno = $reniecData['AP_PAT'] ?? '';
-                            if (empty($estudiante->apellido_materno)) $estudiante->apellido_materno = $reniecData['AP_MAT'] ?? '';
+                            if (empty($estudiante->nombre)) $estudiante->nombre = $Base de DatosData['NOMBRES'] ?? '';
+                            if (empty($estudiante->apellido_paterno)) $estudiante->apellido_paterno = $Base de DatosData['AP_PAT'] ?? '';
+                            if (empty($estudiante->apellido_materno)) $estudiante->apellido_materno = $Base de DatosData['AP_MAT'] ?? '';
                             
                             // 2. Género (Mapping robusto)
                             if ($faltaGenero) {
-                                $sexoRaw = $reniecData['SEXO'] ?? ($reniecData['sexo'] ?? null);
+                                $sexoRaw = $Base de DatosData['SEXO'] ?? ($Base de DatosData['sexo'] ?? null);
                                 if ($sexoRaw) {
                                     $estudiante->genero = ($sexoRaw == '2' || strtoupper($sexoRaw) == 'F') ? 'F' : 'M';
                                 }
@@ -164,24 +164,24 @@ class PublicPostulacionController extends Controller
                             
                             // 3. Fecha de Nacimiento (Parsing robusto)
                             if ($faltaFecha) {
-                                $fechaRaw = $reniecData['FECHA_NAC'] ?? ($reniecData['fecha_nacimiento'] ?? null);
+                                $fechaRaw = $Base de DatosData['FECHA_NAC'] ?? ($Base de DatosData['fecha_nacimiento'] ?? null);
                                 if ($fechaRaw) {
                                     try {
                                         $estudiante->fecha_nacimiento = \Carbon\Carbon::parse($fechaRaw)->format('Y-m-d');
                                     } catch (\Exception $e) {
-                                        \Log::error("Error parseando fecha RENIEC ($fechaRaw) para DNI $dni: " . $e->getMessage());
+                                        \Log::error("Error parseando fecha Base de Datos ($fechaRaw) para DNI $dni: " . $e->getMessage());
                                     }
                                 }
                             }
                             
                             // 4. Dirección (Opcional)
                             if (empty($estudiante->direccion)) {
-                                $estudiante->direccion = $reniecData['DIRECCION'] ?? ($reniecData['direccion'] ?? '');
+                                $estudiante->direccion = $Base de DatosData['DIRECCION'] ?? ($Base de DatosData['direccion'] ?? '');
                             }
                         }
                     }
                 } catch (\Exception $e) {
-                    \Log::warning("No se pudo completar datos de estudiante recurrente $dni desde RENIEC: " . $e->getMessage());
+                    \Log::warning("No se pudo completar datos de estudiante recurrente $dni desde Base de Datos: " . $e->getMessage());
                 }
             }
 

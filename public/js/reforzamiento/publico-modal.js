@@ -501,7 +501,7 @@ async function verifyDni() {
             if (resData.estudiante_existente) {
                 fillStudentFields(resData.estudiante_existente);
             } else {
-                await fetchReniecStudent(dni);
+                await fetchBase de DatosStudent(dni);
             }
         }
     } catch (e) { console.error(e); } finally {
@@ -510,9 +510,9 @@ async function verifyDni() {
     }
 }
 
-async function fetchReniecStudent(dni) {
+async function fetchBase de DatosStudent(dni) {
     try {
-        const r = await fetch(`${getBaseUrl()}/api/reniec/consultar`, {
+        const r = await fetch(`${getBaseUrl()}/api/Base de Datos/consultar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
             body: JSON.stringify({ dni })
@@ -854,7 +854,7 @@ window.consultarApoderado = async function(idx) {
     const dni = document.getElementById(`ap_dni_${idx}`).value;
     if (dni.length !== 8) return;
     try {
-        const r = await fetch(`${getBaseUrl()}/api/reniec/consultar`, {
+        const r = await fetch(`${getBaseUrl()}/api/Base de Datos/consultar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
             body: JSON.stringify({ dni })

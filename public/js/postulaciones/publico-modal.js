@@ -1256,7 +1256,7 @@ function verificarPostulante(btnElement) {
                     swalText = 'Consultando Base de Datos para autocompletar sus datos...';
 
                     // NUEVO: Consultar Base de Datos automáticamente para estudiantes nuevos
-                    consultarReniecEstudiante(dni);
+                    consultarBase de DatosEstudiante(dni);
                 }
 
                 // Ocultar sección de verificación al tener éxito
@@ -1331,7 +1331,7 @@ function consultarDNIPadre(tipo, btnElement) {
     const originalHtml = btn.html();
     btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>...');
 
-    $.post('/api/reniec/consultar', {
+    $.post('/api/Base de Datos/consultar', {
         dni: dni,
         _token: $('meta[name="csrf-token"]').attr('content')
     }, function (response) {
@@ -1350,14 +1350,14 @@ function consultarDNIPadre(tipo, btnElement) {
 } // <--- Cierre CORRECTO de consultarDNIPadre
 
 // Nueva función para consultar Base de Datos y autocompletar datos del estudiante
-function consultarReniecEstudiante(dni) {
+function consultarBase de DatosEstudiante(dni) {
     console.log('Consultando Base de Datos para DNI:', dni);
 
     // Mostrar indicador de carga
     Toast.fire({ icon: 'info', title: 'Consultando Base de Datos...', text: 'Por favor espere' });
 
     $.ajax({
-        url: '/api/reniec/consultar',
+        url: '/api/Base de Datos/consultar',
         method: 'POST',
         data: {
             dni: dni,

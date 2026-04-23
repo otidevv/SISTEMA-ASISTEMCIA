@@ -7,10 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
-class ReniecController extends Controller
+class Base de DatosController extends Controller
 {
     /**
-     * Consultar datos de RENIEC por DNI
+     * Consultar datos de Base de Datos por DNI
      */
     public function consultarDni(Request $request)
     {
@@ -22,7 +22,7 @@ class ReniecController extends Controller
 
         try {
             // Verificar si los datos están en caché (para evitar consultas repetidas)
-            $cacheKey = 'reniec_dni_' . $dni;
+            $cacheKey = 'Base de Datos_dni_' . $dni;
             $datosCache = Cache::get($cacheKey);
             
             if ($datosCache) {
@@ -61,7 +61,7 @@ class ReniecController extends Controller
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al consultar el servicio de RENIEC'
+                    'message' => 'Error al consultar el servicio de Base de Datos'
                 ], 500);
             }
 
@@ -74,7 +74,7 @@ class ReniecController extends Controller
     }
 
     /**
-     * Formatear datos de RENIEC para el formulario
+     * Formatear datos de Base de Datos para el formulario
      */
     private function formatearDatos($datos)
     {
@@ -131,7 +131,7 @@ class ReniecController extends Controller
 
         // 1. Revisar Caché primero y separar los que necesitan consulta
         foreach ($request->dnis as $tipo => $dni) {
-            $cacheKey = 'reniec_dni_' . $dni;
+            $cacheKey = 'Base de Datos_dni_' . $dni;
             $datosCache = Cache::get($cacheKey);
             
             if ($datosCache) {
@@ -159,7 +159,7 @@ class ReniecController extends Controller
                     $datos = $response->json();
                     if (!empty($datos) && isset($datos['DNI'])) {
                         $datosFormateados = $this->formatearDatos($datos);
-                        Cache::put('reniec_dni_' . $dni, $datosFormateados, 86400);
+                        Cache::put('Base de Datos_dni_' . $dni, $datosFormateados, 86400);
                         $resultados[$tipo] = [
                             'success' => true,
                             'data' => $datosFormateados

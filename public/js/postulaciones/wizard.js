@@ -61,7 +61,7 @@ async function consultarDNI(tipo) {
     btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
     try {
-        const response = await fetch('/api/reniec/consultar', {
+        const response = await fetch('/api/Base de Datos/consultar', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
