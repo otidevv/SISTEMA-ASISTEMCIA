@@ -703,7 +703,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: url('/assets_cepre/img/pattern_kene.png');
+        background: url('/assets_cepre/img/tejido-kene-final.png');
         opacity: 0.03;
         pointer-events: none;
     }
@@ -824,7 +824,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: url('/assets_cepre/img/pattern_kene.png');
+        background: url('/assets_cepre/img/tejido-kene-final.png');
         background-size: 300px;
         opacity: 0.015;
         /* Casi invisible */
