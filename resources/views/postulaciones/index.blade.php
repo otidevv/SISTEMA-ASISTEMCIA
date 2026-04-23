@@ -1225,7 +1225,7 @@
             });
         }
         
-        // Funciones de consulta Base de Datos
+        // Funciones de consulta RENIEC
         function consultarReniecRegistro() {
             consultarReniecPersona('nuevo_numero_documento', 'postulante');
         }
@@ -1253,7 +1253,7 @@
             btnConsultar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
             btnConsultar.disabled = true;
             
-            // Realizar consulta Base de Datos con POST
+            // Realizar consulta RENIEC con POST
             fetch('{{ url('/api/reniec/consultar') }}', {
                 method: 'POST',
                 headers: {
@@ -1267,7 +1267,7 @@
             .then(data => {
                 if (data.success) {
                     autocompletarDatos(data.data || data, tipo);
-                    toastr.success('Datos obtenidos correctamente de Base de Datos', 'Consulta Exitosa');
+                    toastr.success('Datos obtenidos correctamente de RENIEC', 'Consulta Exitosa');
                     actualizarContadorCamposPaso(wizardCurrentStep);
                 } else {
                     toastr.error(data.message || 'No se pudo consultar los datos');
@@ -2495,7 +2495,7 @@
                                                 <input type="text" class="form-control" id="nuevo_numero_documento" name="numero_documento" maxlength="8" pattern="[0-9]{8}" required>
                                                 <button class="btn btn-outline-primary" type="button" id="btnConsultarReniecNuevo"><i class="bi bi-search"></i></button>
                                             </div>
-                                            <small class="form-text text-muted">Consulte Base de Datos para autocompletar</small>
+                                            <small class="form-text text-muted">Consulte RENIEC para autocompletar</small>
                                         </div>
                                     
                                         <!-- GRUPO 2: Nombres y Apellidos (3 Columnas) -->

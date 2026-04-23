@@ -751,7 +751,7 @@
             }
         }
 
-        // FunciÃ³n para consultar DNI en Base de Datos MEJORADA CON SWEETALERT2
+        // FunciÃ³n para consultar DNI en RENIEC MEJORADA CON SWEETALERT2
         async function consultarDNI(tipo) {
             let dniInput, btnBuscar;
 
@@ -800,7 +800,7 @@
                 }
 
                 const result = await response.json();
-                console.log('Respuesta Base de Datos:', result);
+                console.log('Respuesta RENIEC:', result);
 
                 if (result.success && result.data) {
                     if (tipo === 'postulante') {
@@ -814,7 +814,7 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Datos Encontrados',
-                        text: 'Información cargada desde Base de Datos correctamente',
+                        text: 'Información cargada desde RENIEC correctamente',
                         timer: 2000,
                         timerProgressBar: true,
                         showConfirmButton: false,
@@ -833,11 +833,11 @@
                     });
                 }
             } catch (error) {
-                console.error('Error al consultar Base de Datos:', error);
+                console.error('Error al consultar RENIEC:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de Conexión',
-                    text: 'No se pudo consultar el servicio Base de Datos. Intente nuevamente.',
+                    text: 'No se pudo consultar el servicio RENIEC. Intente nuevamente.',
                     confirmButtonColor: '#3F51B5'
                 });
             } finally {
@@ -1540,7 +1540,7 @@
                 });
             });
 
-            // Eventos para buscar Base de Datos con Enter
+            // Eventos para buscar RENIEC con Enter
             ['reg_numero_documento', 'padre_numero_doc', 'madre_numero_doc'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -1950,7 +1950,7 @@
         .auto-filled { animation: autoFillPulse 0.5s ease; }
         @keyframes autoFillPulse { 0%,100% { background:rgba(0,174,239,0.1) !important; } 50% { background:rgba(0,174,239,0.2) !important; } }
 
-        /* BotÃ³n Base de Datos */
+        /* BotÃ³n RENIEC */
         .btn-reniec {
             border-radius: 0 10px 10px 0 !important;
             border: 1.5px solid rgba(0,174,239,0.4) !important;

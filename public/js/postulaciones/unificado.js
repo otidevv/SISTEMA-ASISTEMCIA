@@ -801,8 +801,8 @@ window.consultarDNI = function(tipo) {
     // Deshabilitar el botón mientras consulta
     const button = dniField.parent('.input-group').find('button');
     if (button.length === 0) {
-        console.error('No se encontró el botón Base de Datos');
-        toastr.error('Error: No se encontró el botón Base de Datos');
+        console.error('No se encontró el botón RENIEC');
+        toastr.error('Error: No se encontró el botón RENIEC');
         return;
     }
     
@@ -810,8 +810,8 @@ window.consultarDNI = function(tipo) {
     button.prop('disabled', true);
     button.html('<i class="mdi mdi-loading mdi-spin"></i> Consultando...');
     
-    console.log('Iniciando consulta Base de Datos...');
-    toastr.info('Consultando Base de Datos...', 'Procesando');
+    console.log('Iniciando consulta RENIEC...');
+    toastr.info('Consultando RENIEC...', 'Procesando');
     
     // Verificar que tenemos el servidor configurado
     if (!window.default_server) {
@@ -825,7 +825,7 @@ window.consultarDNI = function(tipo) {
     const url = window.default_server + '/api/reniec/consultar';
     console.log('URL de consulta:', url);
     
-    // Consultar la API real de Base de Datos
+    // Consultar la API real de RENIEC
     $.ajax({
         url: url,
         method: 'POST',
@@ -836,7 +836,7 @@ window.consultarDNI = function(tipo) {
         },
         data: JSON.stringify({ dni: dni }),
         success: function(data) {
-            console.log('Datos recibidos de Base de Datos:', data);
+            console.log('Datos recibidos de RENIEC:', data);
             
             if (data.success && data.data) {
                 const datos = data.data;
@@ -877,16 +877,16 @@ window.consultarDNI = function(tipo) {
                 });
                 
                 const mensajeExito = 'Datos encontrados y completados automáticamente';
-                toastr.success(mensajeExito, 'Base de Datos');
+                toastr.success(mensajeExito, 'RENIEC');
             } else {
                 const mensajeError = data.message || 'No se encontraron datos para este DNI';
                 console.log('No se encontraron datos:', mensajeError);
-                toastr.warning(mensajeError, 'Base de Datos');
+                toastr.warning(mensajeError, 'RENIEC');
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error consultando Base de Datos:', error);
-            const mensajeError = 'Error al consultar Base de Datos: ' + error;
+            console.error('Error consultando RENIEC:', error);
+            const mensajeError = 'Error al consultar RENIEC: ' + error;
             toastr.error(mensajeError, 'Error');
         },
         complete: function() {

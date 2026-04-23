@@ -69,8 +69,8 @@
                     <div class="input-group">
                         <input type="text" class="form-control" id="estudiante_dni" name="estudiante_dni" 
                                value="{{ old('estudiante_dni') }}" maxlength="8" required>
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('estudiante')" title="Consultar Base de Datos">
-                            <i class="mdi mdi-magnify"></i> Base de Datos
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('estudiante')" title="Consultar RENIEC">
+                            <i class="mdi mdi-magnify"></i> RENIEC
                         </button>
                     </div>
                 </div>
@@ -191,8 +191,8 @@
                     <label for="padre_dni" class="form-label">DNI <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="padre_dni" name="padre_dni" maxlength="8" required>
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('padre')" title="Consultar Base de Datos">
-                            <i class="mdi mdi-magnify"></i> Base de Datos
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('padre')" title="Consultar RENIEC">
+                            <i class="mdi mdi-magnify"></i> RENIEC
                         </button>
                     </div>
                 </div>
@@ -252,8 +252,8 @@
                     <label for="madre_dni" class="form-label">DNI <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="madre_dni" name="madre_dni" maxlength="8" required>
-                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('madre')" title="Consultar Base de Datos">
-                            <i class="mdi mdi-magnify"></i> Base de Datos
+                        <button class="btn btn-outline-primary" type="button" onclick="consultarDNI('madre')" title="Consultar RENIEC">
+                            <i class="mdi mdi-magnify"></i> RENIEC
                         </button>
                     </div>
                 </div>
@@ -1084,8 +1084,8 @@ window.consultarDNI = function(tipo) {
     // Deshabilitar el botón mientras consulta
     const button = dniField.nextElementSibling;
     if (!button) {
-        console.error('No se encontró el botón Base de Datos');
-        alert('Error: No se encontró el botón Base de Datos');
+        console.error('No se encontró el botón RENIEC');
+        alert('Error: No se encontró el botón RENIEC');
         return;
     }
     
@@ -1093,13 +1093,13 @@ window.consultarDNI = function(tipo) {
     button.disabled = true;
     button.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Consultando...';
     
-    console.log('Iniciando consulta Base de Datos...');
+    console.log('Iniciando consulta RENIEC...');
     
     // Mostrar mensaje de inicio
     if (typeof toastr !== 'undefined') {
-        toastr.info('Consultando Base de Datos...', 'Procesando');
+        toastr.info('Consultando RENIEC...', 'Procesando');
     } else {
-        console.log('Consultando Base de Datos...');
+        console.log('Consultando RENIEC...');
     }
     
     // Verificar que tenemos el servidor configurado
@@ -1114,7 +1114,7 @@ window.consultarDNI = function(tipo) {
     const url = window.default_server + '/api/reniec/consultar';
     console.log('URL de consulta:', url);
     
-    // Consultar la API real de Base de Datos
+    // Consultar la API real de RENIEC
     fetch(url, {
         method: 'POST',
         headers: {
@@ -1132,10 +1132,10 @@ window.consultarDNI = function(tipo) {
         return response.json();
     })
     .then(data => {
-        console.log('Datos recibidos de Base de Datos:', data);
+        console.log('Datos recibidos de RENIEC:', data);
         
         if (data.success && data.data) {
-            // Llenar los campos con los datos de Base de Datos
+            // Llenar los campos con los datos de RENIEC
             const datos = data.data;
             console.log('Datos a llenar:', datos);
             
@@ -1191,7 +1191,7 @@ window.consultarDNI = function(tipo) {
             
             const mensajeExito = 'Datos encontrados y completados automáticamente';
             if (typeof toastr !== 'undefined') {
-                toastr.success(mensajeExito, 'Base de Datos');
+                toastr.success(mensajeExito, 'RENIEC');
             } else {
                 alert(mensajeExito);
             }
@@ -1199,15 +1199,15 @@ window.consultarDNI = function(tipo) {
             const mensajeError = data.message || 'No se encontraron datos para este DNI';
             console.log('No se encontraron datos:', mensajeError);
             if (typeof toastr !== 'undefined') {
-                toastr.warning(mensajeError, 'Base de Datos');
+                toastr.warning(mensajeError, 'RENIEC');
             } else {
                 alert(mensajeError);
             }
         }
     })
     .catch(error => {
-        console.error('Error consultando Base de Datos:', error);
-        const mensajeError = 'Error al consultar Base de Datos: ' + error.message;
+        console.error('Error consultando RENIEC:', error);
+        const mensajeError = 'Error al consultar RENIEC: ' + error.message;
         if (typeof toastr !== 'undefined') {
             toastr.error(mensajeError, 'Error');
         } else {
