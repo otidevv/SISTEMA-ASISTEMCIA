@@ -68,7 +68,8 @@ class PublicPostulacionController extends Controller
                     // El dígito viene como DIG_RUC en esta API
                     $digitoCorrecto = $datosReniec['DIG_RUC'] ?? null;
                 } else {
-                    return response()->json(['error' => 'No se pudo conectar con el servicio de verificación de identidad.'], 500);
+                    Log::warning("No se pudo conectar con RENIEC para validar dígito del DNI: " . $dni);
+                    $digitoCorrecto = null; // Permitir continuar manualmente si la API falla
                 }
             } else {
                 // Si está en caché, los datos ya están formateados por el ReniecController

@@ -162,7 +162,7 @@ $(document).ready(function () {
             const typeText = (val == '2') ? 'Carnet de Extranjería' : 'Pasaporte';
             labelDNI.text(typeText);
             inputDNI.prop('readonly', false).val('').focus();
-            
+
             // Limpiar campos para evitar mezclas con RENIEC previo
             $('#estudiante_nombre').val('');
             $('#estudiante_apellido_paterno').val('');
@@ -402,7 +402,7 @@ function loadDepartamentos() {
     // CARGA INICIAL (Profesional): Usar datos inyectados desde el servidor (Hydration)
     // Esto evita peticiones API redundantes y es instantáneo
     const departamentosSource = window.DEPARTAMENTOS_INICIALES || [];
-    
+
     if (departamentosSource.length > 0) {
         let html = '<option value="">Seleccione departamento</option>';
         departamentosSource.forEach(function (dep) {
@@ -417,7 +417,7 @@ function loadDepartamentos() {
         // Fallback: Si por alguna razón la hidratación falló, intentar la API
         console.warn('Hydration vacía, intentando API como fallback...');
         select.html('<option value="">Cargando...</option>').show();
-        
+
         $.get('/api/public/departamentos', function (data) {
             if (data.success) {
                 let html = '<option value="">Seleccione departamento</option>';
@@ -457,7 +457,7 @@ function loadProvincias(dep) {
             select.html(html).prop('disabled', false).show();
         }
     }).fail(function () {
-            Toast.fire({ icon: 'error', title: 'Error al cargar provincias' });
+        Toast.fire({ icon: 'error', title: 'Error al cargar provincias' });
     });
 }
 
@@ -896,7 +896,7 @@ function actualizarPagosSeleccionados() {
 
         total += monto;
         secuencias.push(secuencia);
-        
+
         // Guardar detalles para el resumen final
         pagosSeleccionadosDetalles.push({
             secuencia: secuencia,
@@ -950,14 +950,14 @@ function validateForm() {
         const confirm = $('#estudiante_password_confirmation').val();
 
         if ($('#estudiante_password').is(':visible') && pass && confirm && pass !== confirm) {
-                Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
+            Toast.fire({ icon: 'error', title: 'Las contraseñas no coinciden' });
             $('#estudiante_password_confirmation').addClass('is-invalid');
             valid = false;
         }
 
         // Validar DNI verificado
         if (!$('#estudiante_dni').val()) {
-                Toast.fire({ icon: 'error', title: 'Debe verificar su DNI primero' });
+            Toast.fire({ icon: 'error', title: 'Debe verificar su DNI primero' });
             valid = false;
         }
     }
@@ -975,7 +975,7 @@ function validateForm() {
     }
 
     if (!valid) {
-            Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
+        Toast.fire({ icon: 'error', title: 'Por favor complete todos los campos requeridos correctamente' });
     }
 
     return valid;
@@ -1022,41 +1022,41 @@ function verificarPostulante(btnElement) {
     }, function (response) {
         try {
             console.log('Respuesta servidor (check-postulante):', response);
-        let swalIcon = 'success';
-        let swalTitle = 'Verificación Exitosa';
-        let swalText = response.message || 'Datos listos para continuar.';
+            let swalIcon = 'success';
+            let swalTitle = 'Verificación Exitosa';
+            let swalText = response.message || 'Datos listos para continuar.';
 
-        if (response.status === 'registered') {
-            // Preparar el HTML con información detallada
-            const postulacion = response.postulacion || {};
+            if (response.status === 'registered') {
+                // Preparar el HTML con información detallada
+                const postulacion = response.postulacion || {};
 
-            // Determinar el color del badge y el ícono según el estado
-            let estadoBadgeClass = 'badge bg-warning';
-            let estadoIcon = 'fas fa-clock';
-            let tituloModal = 'Postulación ya Registrada';
-            let iconoModal = 'warning';
+                // Determinar el color del badge y el ícono según el estado
+                let estadoBadgeClass = 'badge bg-warning';
+                let estadoIcon = 'fas fa-clock';
+                let tituloModal = 'Postulación ya Registrada';
+                let iconoModal = 'warning';
 
-            if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                estadoBadgeClass = 'badge bg-success';
-                estadoIcon = 'fas fa-check-circle';
-                tituloModal = '¡Postulación Aprobada!';
-                iconoModal = 'success';
-            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
-                estadoBadgeClass = 'badge bg-danger';
-                estadoIcon = 'fas fa-times-circle';
-                tituloModal = 'Postulación Rechazada';
-                iconoModal = 'error';
-            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
-                estadoBadgeClass = 'badge bg-info';
-                estadoIcon = 'fas fa-exclamation-circle';
-                tituloModal = 'Postulación con Observaciones';
-                iconoModal = 'info';
-            }
+                if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                    estadoBadgeClass = 'badge bg-success';
+                    estadoIcon = 'fas fa-check-circle';
+                    tituloModal = '¡Postulación Aprobada!';
+                    iconoModal = 'success';
+                } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                    estadoBadgeClass = 'badge bg-danger';
+                    estadoIcon = 'fas fa-times-circle';
+                    tituloModal = 'Postulación Rechazada';
+                    iconoModal = 'error';
+                } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                    estadoBadgeClass = 'badge bg-info';
+                    estadoIcon = 'fas fa-exclamation-circle';
+                    tituloModal = 'Postulación con Observaciones';
+                    iconoModal = 'info';
+                }
 
-            // Mensajes específicos según el estado
-            let mensajeInstrucciones = '';
-            if (postulacion.estado === 'pendiente') {
-                mensajeInstrucciones = `
+                // Mensajes específicos según el estado
+                let mensajeInstrucciones = '';
+                if (postulacion.estado === 'pendiente') {
+                    mensajeInstrucciones = `
                     <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #856404;">
                             <i class="fas fa-hourglass-half" style="margin-right: 5px;"></i>
@@ -1068,8 +1068,8 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            } else if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                    mensajeInstrucciones = `
                     <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #155724;">
                             <i class="fas fa-check-circle" style="margin-right: 5px;"></i>
@@ -1083,8 +1083,8 @@ function verificarPostulante(btnElement) {
                         </ol>
                     </div>
                 `;
-            } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'rechazada' || postulacion.estado === 'rechazado') {
+                    mensajeInstrucciones = `
                     <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #721c24;">
                             <i class="fas fa-times-circle" style="margin-right: 5px;"></i>
@@ -1096,8 +1096,8 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
-                mensajeInstrucciones = `
+                } else if (postulacion.estado === 'observada' || postulacion.estado === 'observado') {
+                    mensajeInstrucciones = `
                     <div style="background: #d1ecf1; border-left: 4px solid #0dcaf0; padding: 12px; border-radius: 4px; margin-bottom: 10px;">
                         <p style="margin: 0; font-size: 14px; color: #055160;">
                             <i class="fas fa-exclamation-circle" style="margin-right: 5px;"></i>
@@ -1109,9 +1109,9 @@ function verificarPostulante(btnElement) {
                         </p>
                     </div>
                 `;
-            }
+                }
 
-            const htmlContent = `
+                const htmlContent = `
                 <div style="text-align: left; padding: 10px;">
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                         <h6 style="color: #495057; margin-bottom: 10px; font-weight: bold;">
@@ -1168,109 +1168,109 @@ function verificarPostulante(btnElement) {
                 </div>
             `;
 
-            // Mostrar SweetAlert con HTML personalizado
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: iconoModal,
-                    title: tituloModal,
-                    html: htmlContent,
-                    confirmButtonText: 'Ir al Portal',
-                    showCancelButton: true,
-                    cancelButtonText: 'Cerrar',
-                    confirmButtonColor: '#0d6efd',
-                    cancelButtonColor: '#6c757d',
-                    width: '650px',
-                    didOpen: () => {
-                        // Si la postulación está aprobada, lanzar confetti
-                        if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
-                            lanzarConfetti();
+                // Mostrar SweetAlert con HTML personalizado
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: iconoModal,
+                        title: tituloModal,
+                        html: htmlContent,
+                        confirmButtonText: 'Ir al Portal',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar',
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        width: '650px',
+                        didOpen: () => {
+                            // Si la postulación está aprobada, lanzar confetti
+                            if (postulacion.estado === 'aprobada' || postulacion.estado === 'aprobado') {
+                                lanzarConfetti();
+                            }
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirigir al login del portal del estudiante
+                            window.location.href = '/login';
+                        }
+                    });
+                } else {
+                    Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
+                }
+            } else {
+                // Nuevo o Recurrente
+                $('#estudiante_dni').val(dni);
+                $('#personal_fields').slideDown();
+
+                if (response.estudiante) {
+                    // Llenar campos si el estudiante ya existe
+                    $('#estudiante_nombre').val(response.estudiante.nombre);
+                    $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
+                    $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
+                    $('#estudiante_fecha_nacimiento').val(response.estudiante.fecha_nacimiento);
+                    $('#estudiante_genero').val(response.estudiante.genero);
+                    $('#estudiante_telefono').val(response.estudiante.telefono);
+                    $('#estudiante_direccion').val(response.estudiante.direccion);
+                    $('#estudiante_email').val(response.estudiante.email);
+
+                    // Ocultar y quitar required a contraseñas para recurrentes
+                    $('#estudiante_password').prop('required', false).closest('.col-md-3').hide();
+                    $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
+
+                    // NUEVO: Pre-cargar datos de padres si existen
+                    if (response.padres) {
+                        precargarDatosPadres(response.padres);
+                    }
+
+                    // NUEVO: Pre-cargar datos académicos y archivos si existen
+                    if (response.ultima_postulacion) {
+                        if (response.ultima_postulacion.datos_academicos) {
+                            precargarDatosAcademicos(response.ultima_postulacion.datos_academicos);
+                        }
+                        if (response.ultima_postulacion.archivos) {
+                            mostrarArchivosExistentes(response.ultima_postulacion.archivos);
                         }
                     }
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Redirigir al login del portal del estudiante
-                        window.location.href = '/login';
-                    }
-                });
-            } else {
-                Toast.fire({ icon: 'warning', title: 'Ya tienes una postulación registrada para este ciclo.' });
-            }
-        } else {
-            // Nuevo o Recurrente
-            $('#estudiante_dni').val(dni);
-            $('#personal_fields').slideDown();
 
-            if (response.estudiante) {
-                // Llenar campos si el estudiante ya existe
-                $('#estudiante_nombre').val(response.estudiante.nombre);
-                $('#estudiante_apellido_paterno').val(response.estudiante.apellido_paterno);
-                $('#estudiante_apellido_materno').val(response.estudiante.apellido_materno);
-                $('#estudiante_fecha_nacimiento').val(response.estudiante.fecha_nacimiento);
-                $('#estudiante_genero').val(response.estudiante.genero);
-                $('#estudiante_telefono').val(response.estudiante.telefono);
-                $('#estudiante_direccion').val(response.estudiante.direccion);
-                $('#estudiante_email').val(response.estudiante.email);
+                    swalIcon = 'success';
+                    swalTitle = 'Estudiante Encontrado';
+                    swalText = 'Sus datos personales, de padres y académicos se han cargado automáticamente.';
 
-                // Ocultar y quitar required a contraseñas para recurrentes
-                $('#estudiante_password').prop('required', false).closest('.col-md-3').hide();
-                $('#estudiante_password_confirmation').prop('required', false).closest('.col-md-3').hide();
+                } else {
+                    // Estudiante nuevo: asegurar que contraseñas sean requeridas y visibles
+                    $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
+                    $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
 
-                // NUEVO: Pre-cargar datos de padres si existen
-                if (response.padres) {
-                    precargarDatosPadres(response.padres);
+                    // Limpiar campos por si acaso
+                    $('#estudiante_nombre').val('');
+                    $('#estudiante_apellido_paterno').val('');
+                    $('#estudiante_apellido_materno').val('');
+                    $('#estudiante_fecha_nacimiento').val('');
+                    $('#estudiante_genero').val('');
+                    $('#estudiante_telefono').val('');
+                    $('#estudiante_direccion').val('');
+                    $('#estudiante_email').val('');
+                    $('#estudiante_password').val('');
+                    $('#estudiante_password_confirmation').val('');
+
+                    swalIcon = 'info';
+                    swalTitle = 'Postulante Nuevo';
+                    swalText = 'Consultando RENIEC para autocompletar sus datos...';
+
+                    // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
+                    consultarReniecEstudiante(dni);
                 }
 
-                // NUEVO: Pre-cargar datos académicos y archivos si existen
-                if (response.ultima_postulacion) {
-                    if (response.ultima_postulacion.datos_academicos) {
-                        precargarDatosAcademicos(response.ultima_postulacion.datos_academicos);
-                    }
-                    if (response.ultima_postulacion.archivos) {
-                        mostrarArchivosExistentes(response.ultima_postulacion.archivos);
-                    }
+                // Ocultar sección de verificación al tener éxito
+                $('#section-verificacion').slideUp(400);
+
+                // Mostrar SweetAlert para casos que NO son 'registered'
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: swalIcon,
+                        title: swalTitle,
+                        text: swalText,
+                        confirmButtonText: 'Continuar'
+                    });
                 }
-
-                swalIcon = 'success';
-                swalTitle = 'Estudiante Encontrado';
-                swalText = 'Sus datos personales, de padres y académicos se han cargado automáticamente.';
-
-            } else {
-                // Estudiante nuevo: asegurar que contraseñas sean requeridas y visibles
-                $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
-                $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
-
-                // Limpiar campos por si acaso
-                $('#estudiante_nombre').val('');
-                $('#estudiante_apellido_paterno').val('');
-                $('#estudiante_apellido_materno').val('');
-                $('#estudiante_fecha_nacimiento').val('');
-                $('#estudiante_genero').val('');
-                $('#estudiante_telefono').val('');
-                $('#estudiante_direccion').val('');
-                $('#estudiante_email').val('');
-                $('#estudiante_password').val('');
-                $('#estudiante_password_confirmation').val('');
-
-                swalIcon = 'info';
-                swalTitle = 'Postulante Nuevo';
-                swalText = 'Consultando RENIEC para autocompletar sus datos...';
-
-                // NUEVO: Consultar RENIEC automáticamente para estudiantes nuevos
-                consultarReniecEstudiante(dni);
-            }
-
-            // Ocultar sección de verificación al tener éxito
-            $('#section-verificacion').slideUp(400);
-
-            // Mostrar SweetAlert para casos que NO son 'registered'
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: swalIcon,
-                    title: swalTitle,
-                    text: swalText,
-                    confirmButtonText: 'Continuar'
-                });
-            }
             }
         } catch (err) {
             console.error('Error interno en success callback:', err);
@@ -1285,13 +1285,26 @@ function verificarPostulante(btnElement) {
             msg = 'Error de conexión: ' + xhr.statusText;
         }
 
-        // Usar SweetAlert para errores
+        // Usar SweetAlert para errores con opción de ingreso manual
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
                 title: 'Error de Verificación',
-                text: msg,
-                confirmButtonText: 'Reintentar'
+                text: msg + ' ¿Desea ingresar sus datos manualmente?',
+                showCancelButton: true,
+                confirmButtonText: 'Reintentar',
+                cancelButtonText: 'Ingreso Manual',
+                cancelButtonColor: '#ffc107',
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    // Acción para ingresar manualmente
+                    $('#estudiante_dni').val(dni);
+                    $('#personal_fields').slideDown();
+                    $('#section-verificacion').slideUp(400);
+                    // Aseguramos que contraseñas sean obligatorias
+                    $('#estudiante_password').prop('required', true).closest('.col-md-3').show();
+                    $('#estudiante_password_confirmation').prop('required', true).closest('.col-md-3').show();
+                }
             });
         } else {
             Toast.fire({
@@ -1307,7 +1320,7 @@ function verificarPostulante(btnElement) {
 function consultarDNIPadre(tipo, btnElement) {
     const dni = $('#' + tipo + '_dni').val();
     if (dni.length !== 8) {
-            Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
+        Toast.fire({ icon: 'error', title: 'DNI debe tener 8 dígitos' });
         return;
     }
 
@@ -1330,7 +1343,7 @@ function consultarDNIPadre(tipo, btnElement) {
             Toast.fire({ icon: 'warning', title: 'No se encontraron datos' });
         }
     }).fail(function () {
-        Toast.fire({ icon: 'error', title: 'Error al consultar RENIEC' });
+        Toast.fire({ icon: 'error', title: 'Error al consultar la Base de Datos' });
     }).always(function () {
         btn.prop('disabled', false).html(originalHtml);
     });
@@ -1400,7 +1413,16 @@ function consultarReniecEstudiante(dni) {
                 errorMsg = xhr.responseJSON.message;
             }
 
-            Toast.fire({ icon: 'warning', title: errorMsg });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aviso',
+                    text: errorMsg + ' Puede ingresar sus datos manualmente en el formulario.',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                Toast.fire({ icon: 'warning', title: errorMsg });
+            }
         }
     });
 }
@@ -1725,7 +1747,7 @@ function submitPostulacion() {
                 } else {
                     lanzarConfetti();
                     Toast.fire({ icon: 'success', title: '¡Postulación enviada con éxito!' });
-                    setTimeout(function() {
+                    setTimeout(function () {
                         location.reload();
                     }, 4000);
                 }
@@ -2127,13 +2149,13 @@ window.validarPadres = validarPadres;
 // VALIDACIÓN DE ARCHIVOS (TAMAÑO Y TIPO)
 // ======================================================================
 
-$(document).on('change', 'input[type="file"]', function() {
+$(document).on('change', 'input[type="file"]', function () {
     const file = this.files[0];
     if (!file) return;
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     const allowedExtensions = $(this).attr('accept') ? $(this).attr('accept').split(',').map(ext => ext.trim()) : [];
-    
+
     // Validar tamaño
     if (file.size > maxSize) {
         Swal.fire({
@@ -2150,7 +2172,7 @@ $(document).on('change', 'input[type="file"]', function() {
     if (allowedExtensions.length > 0) {
         const fileName = file.name.toLowerCase();
         let isValid = false;
-        
+
         for (const ext of allowedExtensions) {
             if (ext.startsWith('image/')) {
                 if (file.type.startsWith('image/')) isValid = true;
