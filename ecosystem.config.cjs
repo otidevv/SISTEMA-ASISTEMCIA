@@ -1,9 +1,8 @@
 module.exports = {
   apps : [{
     name: 'asistencia-realtime',
-    script: './artisan',
-    args: 'asistencia:daemon',
-    interpreter: 'php',
+    script: 'php',
+    args: 'artisan asistencia:daemon',
     instances: 1,
     autorestart: true,
     watch: false,
