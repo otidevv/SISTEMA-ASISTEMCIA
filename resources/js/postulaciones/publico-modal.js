@@ -601,9 +601,12 @@ function showStep(n) {
     $('.step-content[data-step="' + n + '"]').show();
 
     // Actualizar indicadores visuales (Wizard)
-    $('.step-item').removeClass('active');
+    $('.step-item').removeClass('active completed');
     $('.step-item').each(function (index) {
-        if (index + 1 <= n) {
+        const stepNum = index + 1;
+        if (stepNum < n) {
+            $(this).addClass('completed');
+        } else if (stepNum === n) {
             $(this).addClass('active');
         }
     });

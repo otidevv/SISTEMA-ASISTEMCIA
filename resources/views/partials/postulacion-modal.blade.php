@@ -2,15 +2,24 @@
 <style>
     /* VARIABLES GLOBALES (Colores Institucionales de CEPRE UNAMAD: Verde Lima, Magenta/Rosa, Azul) */
     :root {
-        --color-principal: #8bc34a;
-        /* Verde Lima (Dominante en Logo) */
-        --color-secundario: #e91e63;
-        /* Magenta/Rosa (Libros en Logo) */
-        --color-acento: #03a9f4;
-        /* Azul Cían (Acento) */
+        --cepre-magenta: #e2007a;
+        --cepre-green: #93c01f;
+        --cepre-cyan: #00aeef;
+        --cepre-navy: #1a237e;
+        --cepre-gold: #ffd700;
         --color-texto-oscuro: #1f2937;
-        /* Gris Oscuro para legibilidad */
         --color-fondo-claro: #f8f8f8;
+
+        --cepre-dark-magenta: #9b0058;
+
+        /* Colores de Estado */
+        --color-exito: var(--cepre-green);
+        /* Verde Institucional para pasos completados */
+
+        /* Alias para compatibilidad con código antiguo */
+        --color-principal: var(--cepre-green);
+        --color-secundario: var(--cepre-magenta);
+        --color-acento: var(--cepre-cyan);
     }
 
     .modal {
@@ -29,22 +38,30 @@
         /* Smooth scrolling en iOS */
     }
 
+    @keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
     .modal-content {
         background-color: #fefefe;
         margin: 3% auto;
         padding: 0;
-        /* Padding movido a la columna interna */
         border: none;
-        border-radius: 15px;
-        /* Bordes más suaves */
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        /* Mejoras para móviles */
+        border-radius: 20px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
         max-height: 95vh;
-        /* Limitar altura en móviles */
         overflow-y: auto;
-        /* Permitir scroll interno */
         -webkit-overflow-scrolling: touch;
-        /* Smooth scrolling en iOS */
+        animation: modalFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
     }
 
     /* WIZARD STYLES */
@@ -57,13 +74,13 @@
 
     .progress-line {
         position: absolute;
-        top: 18px;
+        top: 22px;
         left: 0;
         width: 100%;
         height: 4px;
-        background: #e5e7eb;
+        background: #e2e8f0;
         z-index: 1;
-        border-radius: 2px;
+        border-radius: 10px;
     }
 
     .progress-line-fill {
@@ -72,7 +89,7 @@
         left: 0;
         height: 100%;
         width: 0%;
-        background: var(--color-principal);
+        background: var(--color-exito);
         transition: width 0.4s ease;
         border-radius: 2px;
     }
@@ -86,28 +103,79 @@
     }
 
     .step-circle {
-        width: 38px;
-        height: 38px;
-        background: #e0f2f1;
-        /* Fondo suave para inactivo */
-        color: var(--color-principal);
-        font-weight: 700;
-        border: 2px solid var(--color-principal);
+        width: 45px;
+        height: 45px;
+        background: #f8fafc;
+        color: #94a3b8;
+        border: 2px solid #e2e8f0;
         border-radius: 50%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 8px;
+        margin: 0 auto 10px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        font-size: 1.1rem;
+        z-index: 2;
+    }
+
+    .step-circle i {
+        font-size: 1.1rem;
         transition: all 0.3s ease;
     }
 
+    .step-num {
+        display: none;
+        /* Ocultamos el número para priorizar el ícono */
+    }
+
     .step-item.active .step-circle {
-        background: var(--color-principal);
+        background-color: var(--cepre-cyan) !important;
+        color: white !important;
+        border-color: var(--cepre-cyan) !important;
+        transform: scale(1.1);
+        animation: stepActivePulse 2s infinite;
+    }
+
+    .step-item.completed .step-circle {
+        background-color: var(--color-exito);
+        border-color: var(--color-exito);
         color: white;
-        border-color: var(--color-principal);
-        box-shadow: 0 0 0 5px rgba(139, 195, 74, 0.3);
-        /* Efecto de brillo */
-        transform: scale(1.05);
+        transform: scale(1);
+    }
+
+    .step-item.completed .step-circle i {
+        display: flex;
+        /* Mantenemos el ícono original */
+    }
+
+    @keyframes checkBounce {
+        0% {
+            transform: scale(0);
+        }
+
+        50% {
+            transform: scale(1.2);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @keyframes stepActivePulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 174, 239, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(0, 174, 239, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 174, 239, 0);
+        }
     }
 
     .step-item.active span {
@@ -123,63 +191,151 @@
 
     /* Líneas separadoras y títulos */
     .form-section-title {
-        color: var(--color-secundario);
-        /* Magenta */
-        border-bottom: 2px solid var(--color-principal);
-        /* Verde Lima */
+        color: var(--cepre-navy);
+        border-bottom: 2px solid var(--cepre-cyan);
         padding-bottom: 10px;
         margin-bottom: 25px;
-        font-weight: 700;
+        font-weight: 800;
         font-size: 1.3rem;
+        letter-spacing: -0.5px;
     }
 
-    /* Estilo de Botones */
+    /* Clases de Botones Institucionales */
+    .btn-cepre-magenta {
+        background-color: var(--cepre-magenta) !important;
+        color: white !important;
+        border: none;
+    }
+
+    .btn-cepre-green {
+        background-color: var(--cepre-green) !important;
+        color: white !important;
+        border: none;
+    }
+
+    .btn-dark-grey {
+        background-color: #4b5563 !important;
+        color: white !important;
+        border: none;
+    }
+
+    .btn-cepre-magenta:hover {
+        background-color: var(--cepre-dark-magenta) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(226, 0, 122, 0.3);
+    }
+
+    .btn-cepre-green:hover {
+        background-color: #7da31b !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(147, 192, 31, 0.3);
+    }
+
+    .btn-dark-grey:hover {
+        background-color: #374151 !important;
+        transform: translateY(-1px);
+    }
+
     .btn-next-prev {
-        padding: 10px 25px;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: background-color 0.2s, transform 0.1s;
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s ease;
     }
 
     #nextBtn {
-        background-color: var(--color-principal);
-        color: white;
-        border-color: var(--color-principal);
+        background-color: var(--cepre-magenta) !important;
+        color: white !important;
+        border: none;
     }
 
     #prevBtn {
-        background-color: var(--color-secundario);
-        color: white;
-        border-color: var(--color-secundario);
+        background-color: var(--cepre-cyan);
+        color: white !important;
+        border: none;
     }
 
     #nextBtn:hover {
-        background-color: #689f38;
-        /* Verde más oscuro */
-        border-color: #689f38;
+        background-color: var(--cepre-dark-magenta) !important;
+        color: white !important;
         transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(226, 0, 122, 0.2);
     }
 
     #prevBtn:hover {
-        background-color: #ad1457;
-        /* Magenta más oscuro */
-        border-color: #ad1457;
+        background-color: #0087c2;
+        color: white !important;
         transform: translateY(-1px);
+    }
+
+    /* Timeline Académica */
+    .timeline-container {
+        padding-left: 15px;
+        border-left: 2px dashed rgba(255, 255, 255, 0.2);
+        margin-left: 10px;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 25px; /* Aumentado para llenar más espacio */
+        padding-left: 10px;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -22px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        background: var(--cepre-cyan);
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(0, 174, 239, 0.2);
+    }
+
+    .timeline-item.exam::before {
+        background: var(--cepre-magenta);
+        box-shadow: 0 0 0 4px rgba(226, 0, 122, 0.2);
+    }
+
+    .timeline-date {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #ffd700;
+        margin-bottom: 0px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .timeline-content {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+        line-height: 1.2;
+    }
+
+    .timeline-item:last-child {
+        padding-bottom: 0;
     }
 
     /* Estilos de inputs y selects limpios */
     .form-control,
     .form-select {
-        border-radius: 8px;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        border-radius: 12px;
+        padding: 12px 15px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #fcfcfc;
     }
 
     .form-control:focus,
     .form-select:focus {
-        border-color: var(--color-principal);
-        box-shadow: 0 0 0 0.25rem rgba(139, 195, 74, 0.25);
+        border-color: var(--color-acento);
+        box-shadow: 0 8px 20px rgba(0, 174, 239, 0.1);
+        background-color: #fff;
+        transform: translateY(-1px);
     }
 
     /* Estilos responsivos para móviles */
@@ -519,62 +675,352 @@
     #wizard-progress-fill {
         background-color: var(--color-principal);
     }
+
+    /* NUEVOS ESTILOS PARA PANEL INFORMATIVO PREMIUM */
+    .info-panel-premium {
+        background: linear-gradient(135deg, #0d1b3e 0%, var(--cepre-navy) 100%);
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset -20px 0 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-panel-premium::after {
+        content: '';
+        position: absolute;
+        bottom: -50px;
+        right: -50px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .info-panel-premium::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('/assets_cepre/img/pattern_kene.png');
+        opacity: 0.03;
+        pointer-events: none;
+    }
+
+    .info-card-glass {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+
+    .premium-list-item {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 25px;
+        color: white;
+        transition: all 0.3s ease;
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    .premium-list-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateX(10px);
+    }
+
+    .premium-icon-box {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--color-acento) 0%, #0087c2 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .premium-list-content h6 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 1.05rem;
+        letter-spacing: 0.3px;
+        color: #fff;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .premium-list-content p {
+        margin: 2px 0 0 0;
+        font-size: 0.85rem;
+        opacity: 0.7;
+        line-height: 1.3;
+    }
+
+    .pulse-badge {
+        display: inline-block;
+        padding: 6px 15px;
+        background: rgba(255, 215, 0, 0.1);
+        color: #ffd700;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        margin-bottom: 15px;
+        animation: pulse-gold 2s infinite;
+    }
+
+    @keyframes pulse-gold {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+        }
+    }
+
+    .form-side-premium {
+        background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media (min-width: 992px) {
+        .form-side-premium {
+            min-height: 800px;
+            /* Balance con el panel izquierdo en desktop */
+        }
+    }
+
+    #formPostulacionPublica {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .step-content {
+        flex-grow: 1;
+    }
+
+    .form-side-premium::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('/assets_cepre/img/pattern_kene.png');
+        background-size: 300px;
+        opacity: 0.015;
+        /* Casi invisible */
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .form-side-premium>* {
+        position: relative;
+        z-index: 1;
+    }
 </style>
 
 <!-- Modal de Postulación -->
 <div id="postulacionModal" class="modal">
     <div class="modal-content" style="max-width: 1200px; width: 95%;">
         <div class="row g-0">
-            <!-- Sección de Flyers (Carrusel oculto en pantallas pequeñas) -->
-            <div class="col-lg-5 d-none d-lg-block" style="background-color: #0d1e34; position: relative;">
-                <div id="flayerCarousel" class="carousel slide carousel-fade h-100" data-bs-ride="carousel"
-                    data-bs-interval="4000">
-                    <div class="carousel-inner h-100">
-                        <div class="carousel-item active h-100"
-                            style="background-image: url('{{ asset('assets_cepre/img/flayer_reforzamiento.jpg') }}'); background-size: contain; background-repeat: no-repeat; background-position: center;">
+            <!-- Sección Informativa Premium (En reemplazo de Flyers) -->
+            <div class="col-lg-4 d-none d-lg-block info-panel-premium">
+                <div class="h-100 d-flex flex-column px-5 py-4 text-white" style="position: relative; z-index: 2;">
+                    <!-- Logo Superior -->
+                    <div class="mb-1">
+                        <img src="{{ asset('assets_cepre/img/logo/logo2_0.svg') }}" alt="Logo CEPRE"
+                            style="height: 60px; filter: brightness(0) invert(1);">
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <div class="pulse-badge">
+                            <i class="fas fa-circle me-1" style="font-size: 6px; vertical-align: middle;"></i>
+                            Inscripciones Abiertas
                         </div>
-                        <div class="carousel-item h-100"
-                            style="background-image: url('{{ asset('assets_cepre/img/flyer_reforzamiento2.jpg') }}'); background-size: contain; background-repeat: no-repeat; background-position: center;">
+                        <h2 class="fw-bold mb-4" style="font-size: 2.2rem; line-height: 1.1; letter-spacing: -1px;">
+                            <span style="color: #ffd700;">Ciclo Académico</span>
+                        </h2>
+
+                        <!-- Card del Ciclo -->
+                        <div class="info-card-glass mb-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="premium-icon-box" style="background: #ffd700; color: #0d1b3e;">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div>
+                                    <div class="small opacity-75 text-uppercase fw-bold"
+                                        style="font-size: 0.65rem; letter-spacing: 1px;">Estado Institucional</div>
+                                    <h4 class="fw-bold mb-0 text-white">{{ $cicloActivo->nombre ?? 'Ciclo Ordinario' }}
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cronograma del Ciclo -->
+                        <div class="mb-4">
+                            <h6 class="text-white fw-800 mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">
+                                <i class="fas fa-calendar-alt me-2 text-warning"></i> CRONOGRAMA ACADÉMICO
+                            </h6>
+                            <div class="timeline-container">
+                                @if(isset($cicloActivo))
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">
+                                            {{ \Carbon\Carbon::parse($cicloActivo->fecha_inicio)->locale('es')->translatedFormat('d M') }}
+                                        </div>
+                                        <div class="timeline-content">Inicio de Clases</div>
+                                    </div>
+
+                                    @if($cicloActivo->fecha_primer_examen)
+                                        <div class="timeline-item exam">
+                                            <div class="timeline-date">
+                                                {{ \Carbon\Carbon::parse($cicloActivo->fecha_primer_examen)->locale('es')->translatedFormat('d M') }}
+                                            </div>
+                                            <div class="timeline-content">1er Examen Parcial</div>
+                                        </div>
+                                    @endif
+
+                                    @if($cicloActivo->fecha_segundo_examen)
+                                        <div class="timeline-item exam">
+                                            <div class="timeline-date">
+                                                {{ \Carbon\Carbon::parse($cicloActivo->fecha_segundo_examen)->locale('es')->translatedFormat('d M') }}
+                                            </div>
+                                            <div class="timeline-content">2do Examen Parcial</div>
+                                        </div>
+                                    @endif
+
+                                    @if($cicloActivo->fecha_tercer_examen)
+                                        <div class="timeline-item exam">
+                                            <div class="timeline-date">
+                                                {{ \Carbon\Carbon::parse($cicloActivo->fecha_tercer_examen)->locale('es')->translatedFormat('d M') }}
+                                            </div>
+                                            <div class="timeline-content">3er Examen Final</div>
+                                        </div>
+                                    @endif
+
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">
+                                            {{ \Carbon\Carbon::parse($cicloActivo->fecha_fin)->locale('es')->translatedFormat('d M') }}
+                                        </div>
+                                        <div class="timeline-content">Fin del Ciclo</div>
+                                    </div>
+                                @else
+                                    <div class="text-white-50 small">Cronograma no disponible</div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- 
+                        <!-- Lista de Beneficios -->
+                        <div class="premium-list-item">
+                            <div class="premium-icon-box"><i class="fas fa-laptop-house"></i></div>
+                            <div class="premium-list-content">
+                                <h6>Registro 100% Virtual</h6>
+                                <p>Inscríbete desde la comodidad de tu hogar.</p>
+                            </div>
+                        </div>
+
+                        <div class="premium-list-item">
+                            <div class="premium-icon-box"><i class="fas fa-check-circle"></i></div>
+                            <div class="premium-list-content">
+                                <h6>Admisión Directa</h6>
+                                <p>Garantiza tu ingreso a la universidad.</p>
+                            </div>
+                        </div>
+
+                        <div class="premium-list-item">
+                            <div class="premium-icon-box"><i class="fas fa-shield-alt"></i></div>
+                            <div class="premium-list-content">
+                                <h6>Trámite Seguro</h6>
+                                <p>Tus documentos y datos están protegidos.</p>
+                            </div>
+                        </div>
+                        --}}
+
+                        <!-- Sección de Ayuda / Soporte (Para llenar el espacio y dar valor) -->
+                        <div class="info-card-glass mt-auto mb-4" style="padding: 15px; background: rgba(0, 174, 239, 0.1);">
+                            <h6 class="text-white fw-800 mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">
+                                <i class="fas fa-headset me-2 text-info"></i> ASISTENCIA TÉCNICA
+                            </h6>
+                            <p class="small mb-0 opacity-75" style="line-height: 1.4; font-size: 0.75rem;">
+                                Si tienes dudas durante tu inscripción, nuestro equipo está listo para ayudarte:
+                            </p>
+                            <div class="d-flex flex-column gap-1 mt-2">
+                                <a href="https://wa.me/51993110927" target="_blank" class="text-white text-decoration-none small">
+                                    <i class="fab fa-whatsapp me-2 text-success"></i> +51 993 110 927
+                                </a>
+                                <div class="text-white small">
+                                    <i class="fas fa-envelope me-2 text-warning"></i> cepre@unamad.edu.pe
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pie del Panel -->
+                    <div class="mt-auto pt-2 border-top border-white border-opacity-10">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="opacity-50" style="font-size: 1.5rem;"><i class="fas fa-info-circle"></i></div>
+                            <p class="small mb-0 opacity-75">
+                                Ten listo tu <strong>DNI</strong> y <strong>Voucher de Pago</strong> para completar el
+                                registro rápidamente.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Sección del Formulario -->
-            <div class="col-lg-7 p-4 p-md-5 position-relative">
+            <div class="col-lg-8 p-4 p-md-5 position-relative form-side-premium">
                 <span class="close-button" onclick="closeModal('postulacionModal')"
                     style="position: absolute; top: 15px; right: 25px; font-size: 32px; color: #6b7280; cursor: pointer; z-index: 10;">&times;</span>
-                <h3 style="color: var(--color-secundario); margin-bottom: 30px; text-align: center; font-weight: 800;">
-                    <img src="{{ asset('assets_cepre/img/logo/logocepre1.svg') }}"
-                        onerror="this.onerror=null; this.src='https://placehold.co/150x60/8bc34a/ffffff?text=CEPRE+UNAMAD';"
-                        alt="CEPRE UNAMAD" style="height: 40px; margin-right: 10px; vertical-align: middle;">
-                    Postulación CEPRE UNAMAD
+                <h3
+                    style="color: var(--cepre-navy); margin-bottom: 30px; text-align: center; font-weight: 800; letter-spacing: -0.5px;">
+                    Postulación <span style="color: var(--cepre-cyan);">CEPRE UNAMAD</span>
                 </h3>
 
                 <!-- Wizard Steps -->
                 <div class="wizard-progress">
                     <div class="progress-line">
-                        <div class="progress-line-fill" id="wizard-progress-fill"></div>
+                        <div class="progress-line-fill" id="wizard-progress-fill"
+                            style="background-color: var(--cepre-cyan);"></div>
                     </div>
 
                     <div class="step-item active" data-step="1">
-                        <div class="step-circle">1</div>
+                        <div class="step-circle"><i class="fas fa-user"></i></div>
                         <span>Personal</span>
                     </div>
                     <div class="step-item" data-step="2">
-                        <div class="step-circle">2</div>
+                        <div class="step-circle"><i class="fas fa-users"></i></div>
                         <span>Padres</span>
                     </div>
                     <div class="step-item" data-step="3">
-                        <div class="step-circle">3</div>
+                        <div class="step-circle"><i class="fas fa-graduation-cap"></i></div>
                         <span>Académico</span>
                     </div>
                     <div class="step-item" data-step="4">
-                        <div class="step-circle">4</div>
+                        <div class="step-circle"><i class="fas fa-file-invoice-dollar"></i></div>
                         <span>Docs/Pago</span>
                     </div>
                     <div class="step-item" data-step="5">
-                        <div class="step-circle">5</div>
+                        <div class="step-circle"><i class="fas fa-check-double"></i></div>
                         <span>Confirmar</span>
                     </div>
                 </div>
@@ -642,8 +1088,7 @@
                                     </div>
                                 </div>
                                 <div class="text-center rounded overflow-hidden shadow-sm border bg-white mt-1">
-                                    <img src="{{ asset('assets_cepre/img/ejmplo_verificador.jpg') }}"
-                                        id="img_guia_dv"
+                                    <img src="{{ asset('assets_cepre/img/ejmplo_verificador.jpg') }}" id="img_guia_dv"
                                         alt="Guía Dígito Verificador" class="img-fluid"
                                         style="max-height: 250px; width: auto; object-fit: contain;">
                                 </div>
@@ -827,55 +1272,56 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Carrera a Postular</label>
                                 <!-- Usando form-select limpio -->
-                                    <select class="form-select" id="carrera_id" name="carrera_id" required>
-                                        <option value="">Seleccione carrera</option>
-                                        @php
-                                            $carrerasAgrupadas = \App\Models\Carrera::where('estado', 1)
-                                                ->orderBy('nombre', 'asc')
-                                                ->get()
-                                                ->groupBy('grupo');
-                                            
-                                            $nombresGrupos = [
-                                                'A' => 'GRUPO A - INGENIERÍAS',
-                                                'B' => 'GRUPO B - CIENCIAS DE LA SALUD',
-                                                'C' => 'GRUPO C - CIENCIAS SOCIALES Y EDUCACIÓN',
-                                                'D' => 'GRUPO D - ALTA ESPECIALIZACIÓN / SALUD'
-                                            ];
+                                <select class="form-select" id="carrera_id" name="carrera_id" required>
+                                    <option value="">Seleccione carrera</option>
+                                    @php
+                                        $carrerasAgrupadas = \App\Models\Carrera::where('estado', 1)
+                                            ->orderBy('nombre', 'asc')
+                                            ->get()
+                                            ->groupBy('grupo');
 
-                                            $nuevasCarreras = ['MEDICINA HUMANA', 'BIOLOGÍA', 'ECONOMÍA'];
-                                        @endphp
+                                        $nombresGrupos = [
+                                            'A' => 'GRUPO A - INGENIERÍAS',
+                                            'B' => 'GRUPO B - CIENCIAS DE LA SALUD',
+                                            'C' => 'GRUPO C - CIENCIAS SOCIALES Y EDUCACIÓN',
+                                            'D' => 'GRUPO D - ALTA ESPECIALIZACIÓN / SALUD'
+                                        ];
 
-                                        @foreach(['A', 'B', 'C', 'D'] as $grupoKey)
-                                            @if(isset($carrerasAgrupadas[$grupoKey]))
-                                                <optgroup label="{{ $nombresGrupos[$grupoKey] ?? "GRUPO $grupoKey" }}">
+                                        $nuevasCarreras = ['MEDICINA HUMANA', 'BIOLOGÍA', 'ECONOMÍA'];
+                                    @endphp
+
+                                    @foreach(['A', 'B', 'C', 'D'] as $grupoKey)
+                                        @if(isset($carrerasAgrupadas[$grupoKey]))
+                                            <optgroup label="{{ $nombresGrupos[$grupoKey] ?? "GRUPO $grupoKey" }}">
+                                                @php
+                                                    // Ordenamos para que las NUEVAS aparezcan primero dentro de su grupo
+                                                    $carrerasDelGrupo = $carrerasAgrupadas[$grupoKey]->sortByDesc(function ($c) use ($nuevasCarreras) {
+                                                        $nombreLimpio = strtoupper(trim($c->nombre));
+                                                        return (
+                                                            strpos($nombreLimpio, 'MEDICINA HUMANA') !== false ||
+                                                            strpos($nombreLimpio, 'BIOLOG') !== false ||
+                                                            strpos($nombreLimpio, 'ECONOM') !== false
+                                                        ) ? 1 : 0;
+                                                    });
+                                                @endphp
+                                                @foreach($carrerasDelGrupo as $carrera)
                                                     @php
-                                                        // Ordenamos para que las NUEVAS aparezcan primero dentro de su grupo
-                                                        $carrerasDelGrupo = $carrerasAgrupadas[$grupoKey]->sortByDesc(function($c) use ($nuevasCarreras) {
-                                                            $nombreLimpio = strtoupper(trim($c->nombre));
-                                                            return (
-                                                                strpos($nombreLimpio, 'MEDICINA HUMANA') !== false || 
-                                                                strpos($nombreLimpio, 'BIOLOG') !== false || 
-                                                                strpos($nombreLimpio, 'ECONOM') !== false
-                                                            ) ? 1 : 0;
-                                                        });
+                                                        $nombreLimpio = strtoupper(trim($carrera->nombre));
+                                                        $esNueva = (
+                                                            strpos($nombreLimpio, 'MEDICINA HUMANA') !== false ||
+                                                            strpos($nombreLimpio, 'BIOLOG') !== false ||
+                                                            strpos($nombreLimpio, 'ECONOM') !== false
+                                                        );
                                                     @endphp
-                                                    @foreach($carrerasDelGrupo as $carrera)
-                                                        @php
-                                                            $nombreLimpio = strtoupper(trim($carrera->nombre));
-                                                            $esNueva = (
-                                                                strpos($nombreLimpio, 'MEDICINA HUMANA') !== false || 
-                                                                strpos($nombreLimpio, 'BIOLOG') !== false || 
-                                                                strpos($nombreLimpio, 'ECONOM') !== false
-                                                            );
-                                                        @endphp
-                                                        <option value="{{ $carrera->id }}" @if($esNueva) style="background-color: #fff4e6; color: #000000;" @endif>
-                                                            @if($esNueva) 🔥 [¡NUEVA!] @endif {{ $carrera->nombre }}
-                                                        </option>
-                                                    @endforeach
-                                                </optgroup>
-                                            @endif
-                                        @endforeach
-                                    </select>
+                                                    <option value="{{ $carrera->id }}" @if($esNueva)
+                                                    style="background-color: #fff4e6; color: #000000;" @endif>
+                                                        @if($esNueva) 🔥 [¡NUEVA!] @endif {{ $carrera->nombre }}
+                                                    </option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Turno</label>
@@ -885,7 +1331,7 @@
                                     <!-- NOTE: Asegúrate de que tu backend (Laravel Blade) renderice correctamente el foreach -->
                                     @foreach(\App\Models\Turno::where('estado', 1)->orderBy('orden', 'asc')->get() as $turno)
                                         <option value="{{ $turno->id }}">
-                                            @if($turno->nombre == 'Mañana') 🌅 @elseif($turno->nombre == 'Tarde') 🌆 @endif 
+                                            @if($turno->nombre == 'Mañana') 🌅 @elseif($turno->nombre == 'Tarde') 🌆 @endif
                                             {{ $turno->nombre }} ({{ $turno->getHorarioCompleto() }})
                                         </option>
                                     @endforeach
@@ -1052,12 +1498,15 @@
                         </div>
 
                         <!-- Botón para generar Documento Autorellenado -->
-                        <div class="alert alert-info d-flex align-items-center mb-4" style="border: none; border-left: 4px solid var(--color-acento); background: #e3f2fd;">
+                        <div class="alert alert-info d-flex align-items-center mb-4"
+                            style="border: none; border-left: 4px solid var(--color-acento); background: #e3f2fd;">
                             <i class="fas fa-file-pdf fs-3 me-3 text-primary"></i>
                             <div class="flex-grow-1">
                                 <h6 class="mb-1" style="font-weight: 800;">¿Aún no tienes la Carta de Compromiso?</h6>
-                                <p class="mb-2 small">Descarga tu pack de inscripción <strong>autorellenado</strong> con tus datos, fírmalo y súbelo a continuación.</p>
-                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="descargarPackInscripcion(event)">
+                                <p class="mb-2 small">Descarga tu pack de inscripción <strong>autorellenado</strong> con
+                                    tus datos, fírmalo y súbelo a continuación.</p>
+                                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3"
+                                    onclick="descargarPackInscripcion(event)">
                                     <i class="fas fa-download me-1"></i> GENERAR Y DESCARGAR PACK
                                 </button>
                             </div>
@@ -1156,19 +1605,19 @@
                             </label>
                         </div>
 
-                        <button type="submit" class="btn btn-success btn-next-prev"
-                            style="background-color: var(--color-principal); border-color: var(--color-principal); padding: 12px 30px; font-size: 16px;">
+                        <button type="submit" class="btn btn-cepre-green btn-next-prev"
+                            style="padding: 12px 30px; font-size: 16px; font-weight: bold;">
                             ENVIAR POSTULACIÓN
                         </button>
                     </div>
 
                     <!-- Navegación -->
-                    <div class="wizard-buttons"
-                        style="margin-top: 30px; display: flex; justify-content: space-between;">
-                        <button type="button" class="btn btn-secondary btn-next-prev" id="prevBtn"
+                    <div class="wizard-buttons mt-auto pt-4"
+                        style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <button type="button" class="btn btn-dark-grey btn-next-prev" id="prevBtn"
                             onclick="nextPrev(-1)" style="display: none;">Anterior</button>
-                        <button type="button" class="btn btn-primary btn-next-prev" id="nextBtn"
-                            onclick="nextPrev(1)">Siguiente</button>
+                        <button type="button" class="btn btn-cepre-magenta btn-next-prev" id="nextBtn"
+                            onclick="nextPrev(1)" style="margin-left: auto;">Siguiente</button>
                     </div>
                 </form>
             </div>
