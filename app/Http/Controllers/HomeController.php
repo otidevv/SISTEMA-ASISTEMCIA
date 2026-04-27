@@ -84,7 +84,10 @@ class HomeController extends Controller
             ];
         }
 
-        return view('welcome', compact('cicloActivo', 'cursos', 'stats', 'docentes_destacados', 'proximoExamen', 'proximoCiclo', 'departamentos'));
+        // Obtener programas académicos para la sección de modalidades
+        $programas = \App\Models\ProgramaAcademico::where('estado', 'activo')->get();
+
+        return view('welcome', compact('cicloActivo', 'cursos', 'stats', 'docentes_destacados', 'proximoExamen', 'proximoCiclo', 'departamentos', 'programas'));
     }
 
     /**

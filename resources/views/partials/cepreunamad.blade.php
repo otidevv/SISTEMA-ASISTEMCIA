@@ -227,12 +227,19 @@
     </div>
 </div>
 
-<!-- Divisor de Papel Rasgado -->
-<div class="torn-paper-edge"></div>
+<!-- ENVOLTORIO MAESTRO: HOJA DE CUADERNO CONTINUA -->
+<div class="academic-notebook-pattern" style="position: relative; overflow: hidden;">
+    <!-- Patrón Kené de fondo para toda la hoja -->
+    <div class="kene-pattern-overlay"></div>
 
-<!-- Courses Section -->
-<section class="courses-section academic-notebook-pattern" id="cursos">
-    <div class="section-title">
+    <!-- Divisor superior para iniciar la hoja -->
+    <div class="torn-paper-edge" style="transform: rotate(180deg); margin-bottom: 0; position: relative; z-index: 15;"></div>
+
+    @include('partials.cepre.modalidades')
+
+    <!-- Courses Section -->
+    <section class="courses-section" id="cursos" style="background: transparent !important; position: relative; z-index: 10;">
+    <div class="section-header">
         <!-- Contenedor de Acciones Rápidas (Dual Button CTA) -->
         <div class="dual-cta-container mb-4">
             <div class="cta-wrapper">
@@ -262,7 +269,8 @@
             .dual-cta-container {
                 display: flex;
                 justify-content: center;
-                margin-top: -35px; /* Sube los botones más arriba para eliminar el espacio en blanco */
+                margin-top: -20px; /* Reducido de -35px para no solapar demasiado y aprovechar el espacio */
+                margin-bottom: 20px;
                 position: relative;
                 z-index: 20;
             }
@@ -353,188 +361,204 @@
             }
         </style>
 
-        <h6>NUESTROS CURSOS</h6>
-        <h2>Preparación Exclusiva en:</h2>
+        <h6 class="premium-tagline">NUESTROS CURSOS</h6>
+        <h2 class="premium-title">Preparación <span>Exclusiva en:</span></h2>
+        <p class="premium-subtitle">Desarrollamos tu potencial con los mejores boletines académicos</p>
     </div>
-    <div class="courses-grid">
-        @if(isset($cursos) && $cursos->count() > 0)
-            @foreach($cursos as $curso)
+    <div class="container">
+        <div class="courses-grid">
+            @if(isset($cursos) && $cursos->count() > 0)
+                @foreach($cursos as $curso)
+                    <div class="course-card animate-on-scroll" onclick="window.location.href='{{ route('public.cursos') }}'"
+                        data-info="{{ $curso->descripcion ?? 'Preparación integral para el ingreso a la universidad.' }}">
+                        <div class="course-icon">
+                            @php
+                                $icon = 'fa-book';
+                                if (stripos($curso->nombre, 'matem') !== false)
+                                    $icon = 'fa-calculator';
+                                if (stripos($curso->nombre, 'verb') !== false || stripos($curso->nombre, 'lengu') !== false)
+                                    $icon = 'fa-book-open';
+                                if (stripos($curso->nombre, 'fisic') !== false)
+                                    $icon = 'fa-atom';
+                                if (stripos($curso->nombre, 'quim') !== false)
+                                    $icon = 'fa-flask';
+                                if (stripos($curso->nombre, 'biol') !== false)
+                                    $icon = 'fa-dna';
+                                if (stripos($curso->nombre, 'hist') !== false || stripos($curso->nombre, 'geogr') !== false)
+                                    $icon = 'fa-globe-americas';
+                            @endphp
+                            <i class="fas {{ $icon }}"></i>
+                        </div>
+                        <div class="course-content">
+                            <h3>{{ $curso->nombre }}</h3>
+                            <p>{{ \Illuminate\Support\Str::limit($curso->descripcion, 60) }}</p>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <!-- Fallback solid cards if no courses found -->
                 <div class="course-card animate-on-scroll" onclick="window.location.href='{{ route('public.cursos') }}'"
-                    data-info="{{ $curso->descripcion ?? 'Preparación integral para el ingreso a la universidad.' }}">
+                    data-info="Matemática avanzada y resolución de problemas.">
                     <div class="course-icon">
-                        @php
-                            $icon = 'fa-book';
-                            if (stripos($curso->nombre, 'matem') !== false)
-                                $icon = 'fa-calculator';
-                            if (stripos($curso->nombre, 'verb') !== false || stripos($curso->nombre, 'lengu') !== false)
-                                $icon = 'fa-book-open';
-                            if (stripos($curso->nombre, 'fisic') !== false)
-                                $icon = 'fa-atom';
-                            if (stripos($curso->nombre, 'quim') !== false)
-                                $icon = 'fa-flask';
-                            if (stripos($curso->nombre, 'biol') !== false)
-                                $icon = 'fa-dna';
-                            if (stripos($curso->nombre, 'hist') !== false || stripos($curso->nombre, 'geogr') !== false)
-                                $icon = 'fa-globe-americas';
-                        @endphp
-                        <i class="fas {{ $icon }}"></i>
+                        <i class="fas fa-calculator"></i>
                     </div>
                     <div class="course-content">
-                        <h3>{{ $curso->nombre }}</h3>
-                        <p>{{ \Illuminate\Support\Str::limit($curso->descripcion, 60) }}</p>
+                        <h3>Razonamiento Matemático</h3>
+                        <p>03 Boletines | 12 Sesiones</p>
                     </div>
                 </div>
-            @endforeach
-        @else
-            <!-- Fallback solid cards if no courses found -->
-            <div class="course-card animate-on-scroll" onclick="window.location.href='{{ route('public.cursos') }}'"
-                data-info="Matemática avanzada y resolución de problemas.">
-                <div class="course-icon">
-                    <i class="fas fa-calculator"></i>
+                <div class="course-card animate-on-scroll" onclick="window.location.href='{{ route('public.cursos') }}'"
+                    data-info="Habilidades de comprensión lectora y análisis.">
+                    <div class="course-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <div class="course-content">
+                        <h3>Razonamiento Verbal</h3>
+                        <p>03 Boletines | 12 Sesiones</p>
+                    </div>
                 </div>
-                <div class="course-content">
-                    <h3>Razonamiento Matemático</h3>
-                    <p>03 Boletines | 12 Sesiones</p>
-                </div>
-            </div>
-            <div class="course-card animate-on-scroll" onclick="window.location.href='{{ route('public.cursos') }}'"
-                data-info="Habilidades de comprensión lectora y análisis.">
-                <div class="course-icon">
-                    <i class="fas fa-book-open"></i>
-                </div>
-                <div class="course-content">
-                    <h3>Razonamiento Verbal</h3>
-                    <p>03 Boletines | 12 Sesiones</p>
-                </div>
-            </div>
-        @endif
-    </div>
+            @endif
+        </div>
 
-    <div style="text-align: center; margin-top: 40px;">
-        <a href="{{ route('public.cursos') }}" class="btn-cyan-cta"
-            style="display: inline-flex; align-items: center; gap: 10px;">
-            <span>Ver Más Cursos</span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="{{ route('public.cursos') }}" class="btn-cyan-cta"
+                style="display: inline-flex; align-items: center; gap: 10px;">
+                <span>Ver Más Cursos</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
     </div>
 </section>
 
 <!-- Stats Section -->
-<section class="stats-section statistics-wave">
+<section class="stats-section" id="stats" style="position: relative; background: var(--magenta-unamad); color: white !important; padding: 80px 0; overflow: hidden;">
     <!-- Wave Top -->
     <div class="custom-shape-divider-top">
         <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" fill="#FFFFFF"></path>
         </svg>
     </div>
 
     <div class="stats-container">
         <div class="stat-box animate-on-scroll">
-            <i class="fas fa-users"></i>
-            <h3 class="counter" data-target="{{ $stats['estudiantes'] ?? 1250 }}">{{ $stats['estudiantes'] ?? 0 }}</h3>
-            <p>Estudiantes Matriculados</p>
+            <i class="fas fa-user-graduate"></i>
+            <h3 class="counter" data-target="{{ $stats['estudiantes'] ?? 5000 }}" style="color: white !important;">0</h3>
+            <p style="color: rgba(255,255,255,0.8) !important;">Estudiantes Matriculados</p>
         </div>
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-chalkboard-teacher"></i>
-            <h3 class="counter" data-target="{{ $stats['docentes'] ?? 36 }}">{{ $stats['docentes'] ?? 0 }}</h3>
-            <p>Docentes Expertos</p>
+            <h3 class="counter" data-target="{{ $stats['docentes'] ?? 50 }}" style="color: white !important;">0</h3>
+            <p style="color: rgba(255,255,255,0.8) !important;">Docentes Expertos</p>
         </div>
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-trophy"></i>
-            <h3 class="counter" data-target="{{ $stats['ingresantes'] ?? 1000 }}">{{ $stats['ingresantes'] ?? 0 }}</h3>
-            <p>Ingresantes a UNAMAD</p>
+            <h3 class="counter" data-target="{{ $stats['ingresantes'] ?? 1000 }}" style="color: white !important;">0</h3>
+            <p style="color: rgba(255,255,255,0.8) !important;">Ingresantes a UNAMAD</p>
         </div>
         <div class="stat-box animate-on-scroll">
             <i class="fas fa-university"></i>
-            <h3 class="counter" data-target="{{ \App\Models\Carrera::activas()->count() ?? 12 }}">0</h3>
-            <p>Escuelas Profesionales</p>
+            <h3 class="counter" data-target="{{ \App\Models\Carrera::activas()->count() ?? 12 }}" style="color: white !important;">0</h3>
+            <p style="color: rgba(255,255,255,0.8) !important;">Escuelas Profesionales</p>
         </div>
     </div>
 
     <!-- Wave Bottom -->
     <div class="custom-shape-divider-bottom">
         <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" transform="rotate(180 600 60)"></path>
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" fill="#FFFFFF" transform="rotate(180 600 60)"></path>
         </svg>
     </div>
 </section>
 
-<!-- Teachers Section -->
-<section class="teachers-section academic-notebook-pattern" id="nosotros">
-    <div class="section-title">
-        <h6>NUESTRO EQUIPO</h6>
-        <h2>Docentes con Trayectoria</h2>
+    <!-- Teachers Section -->
+    <section class="teachers-section" id="nosotros" style="background: transparent !important; position: relative; z-index: 10;">
+    <div class="section-header">
+        <h6 class="premium-tagline">NUESTRO EQUIPO</h6>
+        <h2 class="premium-title">Docentes <span>con Trayectoria</span></h2>
+        <p class="premium-subtitle">Contamos con la plana docente más calificada de la región</p>
     </div>
-    <!-- Swiper Container -->
-    <div class="swiper teachers-swiper" style="padding: 20px 0 50px 0;">
-        <div class="swiper-wrapper">
-            @if(isset($docentes_destacados) && $docentes_destacados->count() > 0)
-                @foreach($docentes_destacados as $docente)
+    <div class="container">
+        <!-- Swiper Container -->
+        <div class="swiper teachers-swiper" style="padding: 20px 0 50px 0;">
+            <div class="swiper-wrapper">
+                @if(isset($docentes_destacados) && $docentes_destacados->count() > 0)
+                    @foreach($docentes_destacados as $docente)
+                        <div class="swiper-slide">
+                            <div class="teacher-card animate-on-scroll animated">
+                                <div class="teacher-image">
+                                    @php
+                                        $foto = $docente->foto_perfil ? asset('storage/' . $docente->foto_perfil) : null;
+                                    @endphp
+                                    <img src="{{ $foto ?? asset('assets_cepre/img/portada/docente_avatar.webp') }}"
+                                        onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text={{ urlencode($docente->nombre) }}';"
+                                        alt="{{ $docente->nombreCompleto }}" loading="lazy">
+                                </div>
+                                <div class="teacher-info">
+                                    <h4>{{ $docente->nombreCompleto }}</h4>
+
+                                    @php
+                                        // Extract unique courses from active schedules
+                                        $cursos_docente = $docente->horarios->pluck('curso')->unique('id');
+                                    @endphp
+
+                                    @if($cursos_docente->count() > 0)
+                                        <div class="teacher-courses">
+                                            @foreach($cursos_docente as $curso)
+                                                <span class="course-tag"
+                                                    title="{{ $curso->nombre }}">{{ Str::limit($curso->nombre, 20) }}</span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p>Docente Especializado</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <!-- Fallback if no teachers found -->
                     <div class="swiper-slide">
                         <div class="teacher-card animate-on-scroll animated">
                             <div class="teacher-image">
-                                @php
-                                    $foto = $docente->foto_perfil ? asset('storage/' . $docente->foto_perfil) : null;
-                                @endphp
-                                <img src="{{ $foto ?? asset('assets_cepre/img/portada/docente_avatar.webp') }}"
-                                    onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text={{ urlencode($docente->nombre) }}';"
-                                    alt="{{ $docente->nombreCompleto }}" loading="lazy">
+                                <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}"
+                                    onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+1';"
+                                    alt="Ing. Juan Pérez">
                             </div>
                             <div class="teacher-info">
-                                <h4>{{ $docente->nombreCompleto }}</h4>
-
-                                @php
-                                    // Extract unique courses from active schedules
-                                    $cursos_docente = $docente->horarios->pluck('curso')->unique('id');
-                                @endphp
-
-                                @if($cursos_docente->count() > 0)
-                                    <div class="teacher-courses">
-                                        @foreach($cursos_docente as $curso)
-                                            <span class="course-tag"
-                                                title="{{ $curso->nombre }}">{{ Str::limit($curso->nombre, 20) }}</span>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <p>Docente Especializado</p>
-                                @endif
+                                <h4>Ing. Juan Pérez</h4>
+                                <div class="teacher-courses">
+                                    <span class="course-tag">Matemática</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                @endforeach
-            @else
-                <!-- Fallback if no teachers found -->
-                <div class="swiper-slide">
-                    <div class="teacher-card animate-on-scroll animated">
-                        <div class="teacher-image">
-                            <img src="{{ asset('assets_cepre/img/portada/docente_avatar.png') }}"
-                                onerror="this.onerror=null; this.src='https://placehold.co/400x300/f0f0f0/666?text=Docente+1';"
-                                alt="Ing. Juan Pérez">
-                        </div>
-                        <div class="teacher-info">
-                            <h4>Ing. Juan Pérez</h4>
-                            <div class="teacher-courses">
-                                <span class="course-tag">Matemática</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- ... additional fallbacks if needed -->
-            @endif
+                @endif
+            </div>
+
+            <!-- Add Pagination -->
+            <div class="swiper-pagination teachers-pagination"></div>
         </div>
-
-        <!-- Add Pagination -->
-        <div class="swiper-pagination teachers-pagination"></div>
     </div>
 </section>
+</div><!-- FIN ENVOLTORIO MAESTRO (HOJA ÚNICA) -->
 
 <!-- Swiper Initialization for Teachers Section -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof Swiper !== 'undefined') {
             new Swiper('.teachers-swiper', {
-                slidesPerView: 1,
-                spaceBetween: 20,
+                effect: 'coverflow',
+                grabCursor: true,
+                centeredSlides: true,
+                slidesPerView: 'auto',
+                coverflowEffect: {
+                    rotate: 15,
+                    stretch: 0,
+                    depth: 100,
+                    modifier: 2.5,
+                    slideShadows: false,
+                },
+                spaceBetween: 30,
                 loop: true,
                 autoplay: {
                     delay: 4000,
@@ -545,18 +569,20 @@
                     clickable: true,
                 },
                 breakpoints: {
-                    640: {
+                    320: {
+                        slidesPerView: 1,
+                        coverflowEffect: {
+                            rotate: 0,
+                            depth: 0,
+                            modifier: 1,
+                        }
+                    },
+                    768: {
                         slidesPerView: 2,
-                        spaceBetween: 20,
                     },
-                    992: {
+                    1024: {
                         slidesPerView: 3,
-                        spaceBetween: 30,
-                    },
-                    1200: {
-                        slidesPerView: 4,
-                        spaceBetween: 30,
-                    },
+                    }
                 }
             });
         }

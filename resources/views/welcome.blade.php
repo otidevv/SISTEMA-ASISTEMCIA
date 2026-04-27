@@ -441,6 +441,7 @@
     </script>
 
     @include('partials.cepreunamad')
+    @include('partials.cepre.modal-detalles-ciclo')
 
     <script>
         // Inyectar departamentos desde el servidor para carga instantánea (Profesional Hydration)
