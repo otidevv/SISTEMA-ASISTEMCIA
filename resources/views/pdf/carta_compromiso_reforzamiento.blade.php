@@ -168,11 +168,11 @@
     $urlValidacion = route('constancias.validar', 'REF-' . $estudiante_dni);
     
     // Generación del código QR con la URL de validación
-    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(400)->margin(0)->generate($urlValidacion));
+    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(200)->margin(0)->generate($urlValidacion));
 @endphp
 
 <div class="qr-seal">
-    <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Validation">
+    <img src="data:image/svg+xml;base64,{{ $qrCodeBase64 }}" alt="QR Validation">
     <div class="qr-label">VALIDACIÓN QR</div>
     <div class="qr-desc">Veracidad verificable mediante escaneo digital</div>
 </div>

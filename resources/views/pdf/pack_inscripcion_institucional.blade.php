@@ -17,7 +17,7 @@
         .header { position: relative; width: 100%; border-bottom: 3px solid #00aeef; padding-bottom: 5px; margin-bottom: 10px; text-align: center; }
         .header-logo { position: absolute; left: 0; top: 0; width: 85px; }
         .header-logo-right { position: absolute; right: 0; top: 0; width: 90px; }
-        .header-text h1 { font-size: 14pt; margin: 0; color: #003366; text-transform: uppercase; font-family: 'Arial Black', 'Arial Bold', sans-serif; }
+        .header-text h1 { font-size: 14pt; margin: 0; color: #003366; text-transform: uppercase; }
         .header-text h2 { font-size: 12pt; margin: 2px 0; color: #00aeef; font-weight: bold; }
         .header-text p { margin: 0; font-size: 10pt; }
         
@@ -169,11 +169,11 @@
     $urlValidacion = route('constancias.validar', $prefix . '-' . $estudiante_dni);
     
     // Generación del código QR con la URL de validación
-    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(400)->margin(0)->generate($urlValidacion));
+    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(200)->margin(0)->generate($urlValidacion));
 @endphp
 
 <div class="qr-seal">
-    <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Validation">
+    <img src="data:image/svg+xml;base64,{{ $qrCodeBase64 }}" alt="QR Validation">
     <div class="qr-label">VALIDACIÓN QR</div>
     <div class="qr-desc">Veracidad verificable mediante escaneo digital</div>
 </div>

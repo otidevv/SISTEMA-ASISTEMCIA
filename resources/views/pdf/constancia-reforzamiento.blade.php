@@ -46,7 +46,7 @@
     
     // URL de validación oficial para que el escaneo funcione
     $urlValidacion = route('constancias.validar', 'REF-' . $estudiante->numero_documento);
-    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(450)->margin(0)->color(0, 0, 0)->generate($urlValidacion));
+    $qrCodeBase64 = base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(200)->margin(0)->color(0, 0, 0)->generate($urlValidacion));
 @endphp
 
 <body>
@@ -117,7 +117,7 @@
             </div>
             
             <div style="margin-top: 15px; border: 1px solid #eee; padding: 5px; display: inline-block; background: #fff;">
-                <img src="data:image/png;base64, {{ $qrCodeBase64 }} " style="width: 85px; height: 85px;">
+                <img src="data:image/svg+xml;base64, {{ $qrCodeBase64 }} " style="width: 85px; height: 85px;">
                 <p style="font-size: 7pt; margin: 5px 0 0; font-weight: bold; color: #003366;">VALIDACIÓN QR</p>
                 <div style="font-size: 6pt; color: #999; margin-top: 3px; max-width: 100px; line-height: 1.1;">Veracidad verificable mediante escaneo digital</div>
             </div>

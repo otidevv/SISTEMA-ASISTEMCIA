@@ -553,7 +553,10 @@ class CarnetController extends Controller
             $qrCode = null;
             if ($carnet->qr_code) {
                 $path = storage_path('app/public/' . $carnet->qr_code);
-                if (file_exists($path)) $qrCode = 'data:image/png;base64,' . base64_encode(file_get_contents($path));
+                if (file_exists($path)) {
+                    $mime = strpos($carnet->qr_code, '.svg') !== false ? 'image/svg+xml' : 'image/png';
+                    $qrCode = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                }
             }
 
             $fondo = null;
@@ -747,12 +750,12 @@ class CarnetController extends Controller
     private function generarQR($carnetId, $content)
     {
         try {
-            $qrCode = QrCode::format('png')
+            $qrCode = QrCode::format('svg')
                 ->size(200)
                 ->margin(1)
                 ->generate($content);
             
-            $filename = 'qr_carnet_' . $carnetId . '.png';
+            $filename = 'qr_carnet_' . $carnetId . '.svg';
             $path = 'carnets/qr/' . $filename;
             
             Storage::disk('public')->put($path, $qrCode);

@@ -804,7 +804,7 @@ class InscripcionController extends Controller
         $urlValidacion = route('constancias.validar', $codigoVerificacion);
         
         try {
-            $data['qr_code'] = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
+            $data['qr_code'] = base64_encode(QrCode::format('svg')->size(150)->generate($urlValidacion));
             $data['codigo_verificacion'] = $codigoVerificacion;
         } catch (\Exception $e) {
             \Log::error('Error al generar QR para reporte de asistencia: ' . $e->getMessage());

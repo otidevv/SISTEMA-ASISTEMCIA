@@ -244,12 +244,23 @@ class ConstanciaPostulacionController extends Controller
                     }, $lower);
                 };
 
+                $limpiar = function($text) {
+                    if (empty($text)) return $text;
+                    // Limpiar caracteres de control y el "replacement character" ()
+                    $text = str_replace(["\xEF\xBF\xBD", "\r", "\n", "\t"], '', $text);
+                    // Mantener solo letras, números, espacios y puntuación básica
+                    $text = preg_replace('/[^\p{L}\p{N}\s\.,\(\)\[\]\-\/]/u', '', $text);
+                    // Limpiar basura no alfanumérica al inicio
+                    $text = preg_replace('/^[^\p{L}\p{N}]+/u', '', $text);
+                    return trim($text);
+                };
+
                 $data = [
                     'postulacion' => $postulacion,
                     'estudiante' => $postulacion->estudiante,
                     'ciclo' => $postulacion->ciclo,
-                    'carrera_nombre' => $formatText($postulacion->carrera->nombre),
-                    'turno_nombre' => $formatText($postulacion->turno->nombre),
+                    'carrera_nombre' => $limpiar($formatText($postulacion->carrera->nombre)),
+                    'turno_nombre' => $limpiar($formatText($postulacion->turno->nombre)),
                     'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                     'codigo_postulante' => $codigoPostulante,
                     'codigo_verificacion' => $codigoVerificacion,

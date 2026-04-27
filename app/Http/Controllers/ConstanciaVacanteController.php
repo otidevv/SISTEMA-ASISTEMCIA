@@ -60,7 +60,7 @@ class ConstanciaVacanteController extends Controller
             // Generar QR code
             $urlValidacion = route('constancias.validar', $codigoVerificacion);
             try {
-                $qrCode = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
+                $qrCode = base64_encode(QrCode::format('svg')->size(150)->generate($urlValidacion));
             } catch (\Exception $e) {
                 $qrCode = ''; // Fallback si QR falla
             }

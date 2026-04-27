@@ -9,10 +9,10 @@
             size: A4;
         }
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'Helvetica', 'Arial', sans-serif;
             font-size: 8.5pt;
-            line-height: 1.1;
             color: #333;
+            line-height: 1.1;
             margin: 0;
             padding: 0;
         }
@@ -402,7 +402,11 @@
                 <td style="width: 80px; vertical-align: top;">
                     <div class="qr-code-img">
                         @if(!empty($qr_code))
-                            <img src="data:image/png;base64,{{ $qr_code }}" style="width: 70px; height: 70px;">
+                            @if(strpos($qr_code, 'PHN2Zy') === 0 || strpos($qr_code, 'PD94bWw') === 0)
+                                <img src="data:image/svg+xml;base64,{{ $qr_code }}" style="width: 70px; height: 70px;">
+                            @else
+                                <img src="data:image/png;base64,{{ $qr_code }}" style="width: 70px; height: 70px;">
+                            @endif
                         @endif
                     </div>
 

@@ -29,10 +29,42 @@ class InstitucionalPdfService
             $data['programa_descripcion'] = 'CENTRO PREUNIVERSITARIO - INGRESO DIRECTO';
         }
         
+        // Limpiar emojis de nombres para evitar errores de encoding (??) en el PDF
+        if (isset($data['carrera_nombre'])) {
+            $data['carrera_nombre'] = $this->stripEmojis($data['carrera_nombre']);
+        }
+        if (isset($data['turno_nombre'])) {
+            $data['turno_nombre'] = $this->stripEmojis($data['turno_nombre']);
+        }
+        if (isset($data['estudiante_nombre'])) {
+            $data['estudiante_nombre'] = $this->stripEmojis($data['estudiante_nombre']);
+        }
+        
         // Cargar la vista general
         $pdf = Pdf::loadView('pdf.pack_inscripcion_institucional', $data);
 
         return $pdf;
+    }
+
+    /**
+     * Elimina emojis y caracteres especiales de 4 bytes que DomPDF no maneja bien.
+     * También limpia signos de interrogación basura que a veces quedan por errores de importación.
+     */
+    private function stripEmojis($text)
+    {
+        if (empty($text)) return $text;
+        
+        // 1. Limpiar caracteres de control y el "replacement character" () que a veces se ve como ?
+        $text = str_replace(["\xEF\xBF\xBD", "\r", "\n", "\t"], '', $text);
+        
+        // 2. Mantener SOLO letras, números, espacios y puntuación básica
+        // Esto elimina emojis, símbolos extraños y cualquier caracter de 4 bytes.
+        $text = preg_replace('/[^\p{L}\p{N}\s\.,\(\)\[\]\-\/]/u', '', $text);
+        
+        // 3. Limpiar cualquier basura no alfanumérica al inicio (como el ? persistente)
+        $text = preg_replace('/^[^\p{L}\p{N}]+/u', '', $text);
+        
+        return trim($text);
     }
 
     private function getCurrentMonthName()
