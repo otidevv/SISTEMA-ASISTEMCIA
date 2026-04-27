@@ -110,9 +110,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Botón CTA -->
                                 <div class="mt-5">
-                                    <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="openPostulacionModal()">
+                                    <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); openPostulacionModal()">
                                         <i class="fas fa-user-plus"></i>
                                         <span>INICIAR INSCRIPCIÓN AHORA</span>
                                         <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>

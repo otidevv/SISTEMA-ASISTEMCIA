@@ -1996,9 +1996,10 @@ footer::before {
 .premium-modal-v3 .modal-content {
     border: none !important;
     border-radius: 40px !important;
-    overflow: hidden !important;
-    background: #f8fafc !important; /* Un gris muy claro casi azulado */
+    overflow-y: auto !important; /* Permitir scroll vertical si el contenido es largo */
+    background: #f8fafc !important;
     box-shadow: 0 40px 100px rgba(0,0,0,0.5) !important;
+    max-height: 95vh; /* Asegurar que no se pase de la pantalla */
 }
 
 .notebook-detail-container {
@@ -2150,12 +2151,18 @@ footer::before {
 }
 
 @media (max-width: 991px) {
+    .premium-modal-v3 .modal-content {
+        border-radius: 20px !important;
+        max-height: 98vh;
+    }
     .notebook-detail-container {
-        padding: 30px 20px;
+        padding: 25px 15px;
+        margin: 5px;
+        width: calc(100% - 10px);
         background-position: 0 0, 40px 0 !important;
     }
-    .notebook-detail-container::before { left: 45px; }
-    .detail-image-box-v3 { height: 280px; }
+    .detail-image-box-v3 { height: 240px; margin-bottom: 10px; }
+    .btn-close-premium-v3 { top: 15px; right: 15px; width: 35px; height: 35px; font-size: 18px; }
 }
 
 /* Fix para el antiguo selector que causaba problemas */
