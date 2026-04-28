@@ -412,11 +412,44 @@ function deleteCarnet(id) {
 }
 
 function exportarCarnets(carnetIds) {
-    // Crear un formulario temporal para enviar los IDs
+    // Crear o recuperar el iframe de impresión
+    let iframe = document.getElementById('print-iframe');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'print-iframe';
+        iframe.name = 'print-iframe'; // Importante para el target del form
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+    }
+
+    // Preparar el evento de impresión cuando cargue el PDF
+    iframe.onload = function() {
+        try {
+            setTimeout(function() {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                
+                // Feedback opcional
+                toastr.info('Documento enviado a la cola de impresión');
+            }, 500);
+        } catch (e) {
+            console.error('Error al imprimir carnet:', e);
+            // Fallback: Si falla el iframe por seguridad, abrir en pestaña (comportamiento antiguo)
+            // No podemos re-enviar el form fácilmente aquí, así que avisamos al usuario
+            toastr.error('No se pudo disparar la impresión automática. Intente abrir en una nueva pestaña.');
+        }
+    };
+
+    // Crear un formulario temporal para enviar los IDs al IFRAME
     const form = $('<form>', {
         'method': 'POST',
         'action': default_server + '/carnets/exportar-pdf',
-        'target': '_blank'
+        'target': 'print-iframe' // Enviar al iframe oculto
     });
 
     // Agregar token CSRF
@@ -435,8 +468,10 @@ function exportarCarnets(carnetIds) {
         }));
     });
 
-    // Agregar al body y enviar
+    // Agregar al body, enviar y remover
     form.appendTo('body').submit().remove();
+    
+    toastr.info('Generando carnet(s)... espere un momento.');
 }
 
 function marcarComoImpresos(carnetIds) {

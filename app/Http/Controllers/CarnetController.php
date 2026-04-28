@@ -633,7 +633,7 @@ class CarnetController extends Controller
             'template' => $templateBase
         ])->setPaper([0, 0, $templateBase->ancho_mm * 2.83465, $templateBase->alto_mm * 2.83465], 'portrait');
 
-        return $pdf->download('carnets_' . date('YmdHis') . '.pdf');
+        return $pdf->stream('carnets_' . date('YmdHis') . '.pdf');
     }
 
     /**
