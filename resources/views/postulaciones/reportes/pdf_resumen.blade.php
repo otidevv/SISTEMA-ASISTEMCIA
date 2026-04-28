@@ -62,6 +62,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            page-break-inside: auto;
         }
         thead {
             display: table-header-group;
@@ -155,18 +156,18 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="header" style="margin-top: -10px;">
         <table>
             <tr>
-                <td style="border:none; width: 80px;">
+                <td style="border:none; width: 60px;">
                     <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo">
                 </td>
                 <td style="border:none;" class="header-text">
-                    <h1>UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-                    <h2>CENTRO PREUNIVERSITARIO - CEPRE UNAMAD</h2>
-                    <h3 style="margin:0; text-transform:uppercase;">Reporte Resumen de Postulantes</h3>
+                    <h1 style="font-size: 11pt;">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
+                    <h2 style="font-size: 10pt;">CENTRO PREUNIVERSITARIO - CEPRE UNAMAD</h2>
+                    <h3 style="margin:0; text-transform:uppercase; font-size: 9pt;">Reporte Resumen de Postulantes</h3>
                 </td>
-                <td style="border:none; width: 80px; text-align: right;">
+                <td style="border:none; width: 60px; text-align: right;">
                     <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo">
                 </td>
             </tr>
@@ -250,7 +251,11 @@
                                     {{-- Columna Carrera --}}
                                     @if(isset($rowspansCarrera[$index]))
                                         <td rowspan="{{ $rowspansCarrera[$index] }}">
-                                            <strong>{{ $row[2] }}</strong>
+                                            @php
+                                                // Limpiar cualquier carácter raro al inicio (como viñetas de Excel)
+                                                $carreraLimpia = preg_replace('/^[^\p{L}\p{N}\s]+/u', '', $row[2]);
+                                            @endphp
+                                            <strong>{{ $carreraLimpia }}</strong>
                                         </td>
                                     @elseif($isTotal)
                                         <td colspan="2" class="text-right"><strong>TOTAL GENERAL</strong></td>
