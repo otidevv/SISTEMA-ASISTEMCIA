@@ -53,11 +53,27 @@ class ConstanciaPostulacionController extends Controller
 
 
             
-            // Función helper local para formatear nombres preservando emojis y limpiando basura (?)
-            $formatText = function($text) {
+            // Función robusta para limpiar texto (emojis, caracteres de control, basura ?)
+            $limpiarTexto = function($text) {
                 if (empty($text)) return "";
-                // Limpiar explícitamente signos de interrogación que puedan venir por mala codificación en DB
-                $text = preg_replace('/^\?\s*/', '', trim($text));
+                
+                // 1. Eliminar caracteres de control y el "replacement character" () que se ve como ?
+                $text = str_replace(["\xEF\xBF\xBD", "\r", "\n", "\t"], '', $text);
+                
+                // 2. Mantener SOLO letras (incluyendo acentos), números, espacios y puntuación básica
+                // Esto elimina emojis y símbolos de 4 bytes que DomPDF no soporta.
+                $text = preg_replace('/[^\p{L}\p{N}\s\.,\(\)\[\]\-\/]/u', '', $text);
+                
+                // 3. Eliminar explícitamente signos de interrogación basura al inicio (común en errores de codificación)
+                $text = preg_replace('/^[^\p{L}\p{N}]+/u', '', $text);
+                
+                return trim($text);
+            };
+
+            // Función helper para formatear a Título (Capitalizar)
+            $formatTitle = function($text) use ($limpiarTexto) {
+                $text = $limpiarTexto($text);
+                if (empty($text)) return "";
                 
                 $lower = mb_strtolower($text, "UTF-8");
                 return preg_replace_callback('/\b\p{L}+/u', function($m) {
@@ -68,7 +84,7 @@ class ConstanciaPostulacionController extends Controller
             // Obtener aula de la inscripción si existe
             $aulaNombre = "ASIGNACIÓN EN PROCESO";
             if ($postulacion->inscripcion && $postulacion->inscripcion->aula) {
-                $aulaNombre = $postulacion->inscripcion->aula->nombre;
+                $aulaNombre = $limpiarTexto($postulacion->inscripcion->aula->nombre);
             }
 
             // Preparar datos para la vista
@@ -76,8 +92,8 @@ class ConstanciaPostulacionController extends Controller
                 'postulacion' => $postulacion,
                 'estudiante' => $postulacion->estudiante,
                 'ciclo' => $postulacion->ciclo,
-                'carrera_nombre' => $formatText($postulacion->carrera->nombre),
-                'turno_nombre' => $formatText($postulacion->turno->nombre),
+                'carrera_nombre' => $formatTitle($postulacion->carrera->nombre),
+                'turno_nombre' => $formatTitle($postulacion->turno->nombre),
                 'aula_nombre' => $aulaNombre,
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'codigo_postulante' => $codigoPostulante,
@@ -85,16 +101,22 @@ class ConstanciaPostulacionController extends Controller
                 'qr_code' => $qrCode
             ];
 
+            // Limpieza extra preventiva para datos del estudiante
+            $data['estudiante']->nombre = $limpiarTexto($data['estudiante']->nombre);
+            $data['estudiante']->apellido_paterno = $limpiarTexto($data['estudiante']->apellido_paterno);
+            $data['estudiante']->apellido_materno = $limpiarTexto($data['estudiante']->apellido_materno);
+            $data['ciclo']->nombre = $limpiarTexto($data['ciclo']->nombre);
 
-
-
-
-            
             // Generar PDF
             $pdf = PDF::loadView('pdf.constancia-postulacion', $data);
             
-            // Configurar el PDF
+            // Configurar el PDF (habilitar carga de imágenes remotas si fuera necesario)
             $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'defaultFont' => 'Helvetica'
+            ]);
             
             // Descargar el PDF
             return $pdf->download('constancia_postulacion_' . $codigoPostulante . '.pdf');

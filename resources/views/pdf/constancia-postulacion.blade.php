@@ -138,22 +138,23 @@
         .photo-box {
             border: 2px solid #ec008c;
             padding: 4px;
-            width: 100px;
-            height: 125px;
+            width: 95px;
+            height: 115px;
             text-align: center;
             background: white;
             border-radius: 4px;
+            display: inline-block;
         }
 
         .photo-box img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
         }
         
         .flex-row {
             display: table;
             width: 100%;
+            margin-bottom: 15px;
         }
         .flex-col {
             display: table-cell;
@@ -295,8 +296,8 @@
                 </tr>
             </table>
         </div>
-        <div class="flex-col" style="width: 22%; text-align: right;">
-            <div class="photo-box" style="float: right;">
+        <div class="flex-col" style="width: 22%; text-align: right; vertical-align: top; padding-top: 5px;">
+            <div class="photo-box">
                 @php
                     $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
                     $rutaFoto = null;
