@@ -249,15 +249,15 @@
         /* Marca de Agua con Tejido Institucional */
         .watermark-tejido {
             position: fixed;
-            top: -10%;
+            top: -30%;
             left: -10%;
             width: 120%;
-            height: 120%;
+            height: 140%;
             z-index: -2000;
-            opacity: 0.05;
+            opacity: 0.20;
             background-image: url('{{ public_path("assets_cepre/img/tejido-kene-final.png") }}');
             background-repeat: repeat;
-            background-size: 400px;
+            background-size: 450px;
         }
     </style>
 </head>
