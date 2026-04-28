@@ -110,13 +110,8 @@ class ConstanciaPostulacionController extends Controller
             // Generar PDF
             $pdf = PDF::loadView('pdf.constancia-postulacion', $data);
             
-            // Configurar el PDF (habilitar carga de imágenes remotas si fuera necesario)
+            // Configurar el PDF
             $pdf->setPaper('A4', 'portrait');
-            $pdf->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'defaultFont' => 'Helvetica'
-            ]);
             
             // Descargar el PDF
             return $pdf->download('constancia_postulacion_' . $codigoPostulante . '.pdf');
