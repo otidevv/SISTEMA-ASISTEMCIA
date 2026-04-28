@@ -1455,11 +1455,11 @@ class PostulacionController extends Controller
             }
         }
 
-        // Función para limpiar emojis y caracteres no renderizables
+        // Función rápida para limpiar solo caracteres de control/emojis
         $cleanText = function($text) {
             if (empty($text)) return '';
-            $cleaned = preg_replace('/[^\x20-\x7E\xA0-\xFF\p{L}\p{N}\p{P}\s]/u', '', $text);
-            return trim($cleaned);
+            // Eliminar caracteres de control y emojis de 4 bytes, mantener tildes y eñes
+            return trim(preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $text));
         };
 
         $tabla1 = array_map(function($row) use ($cleanText) {
@@ -1506,13 +1506,10 @@ class PostulacionController extends Controller
                 }
             }
 
-            // Función para limpiar emojis y caracteres no renderizables
+            // Función rápida para limpiar solo caracteres de control/emojis
             $cleanText = function($text) {
                 if (empty($text)) return '';
-                // Eliminar caracteres especiales/emojis (fuera del rango básico de texto)
-                $cleaned = preg_replace('/[^\x20-\x7E\xA0-\xFF\p{L}\p{N}\p{P}\s]/u', '', $text);
-                // Limpiar espacios extra
-                return trim($cleaned);
+                return trim(preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $text));
             };
 
             return response()->json([

@@ -5,26 +5,26 @@
     <title>Reporte Resumen de Postulantes</title>
     <style>
         @page {
-            margin: 1cm;
+            margin: 0.7cm 0.8cm;
             size: A4;
         }
         body {
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
-            font-size: 8pt;
-            line-height: 1.2;
+            font-size: 7.5pt;
+            line-height: 1.1;
             color: #333;
         }
         .header {
             width: 100%;
             border-bottom: 2px solid #ec008c;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
         .header table {
             width: 100%;
         }
         .logo {
-            width: 70px;
+            width: 50px;
         }
         .header-text {
             text-align: center;
@@ -63,19 +63,21 @@
             width: 100%;
             border-collapse: collapse;
         }
+        thead {
+            display: table-header-group;
+        }
         th {
             background-color: #f2f2f2;
             border: 1px solid #999;
-
-            padding: 6px;
+            padding: 3px 4px;
             text-align: center;
             font-weight: bold;
             text-transform: uppercase;
+            font-size: 7pt;
         }
         td {
             border: 1px solid #999;
-
-            padding: 5px;
+            padding: 2px 4px;
             vertical-align: middle;
         }
         .text-center { text-align: center; }
@@ -94,19 +96,33 @@
         }
 
 
-        .summary-box {
-            width: 40%;
-            float: right;
+        .layout-table {
+            width: 100%;
+            border: none;
+            border-collapse: collapse;
         }
-        .main-box {
-            width: 58%;
-            float: left;
+        /* Solo las celdas directas de la tabla de diseño son invisibles */
+        table.layout-table > tr > td,
+        table.layout-table > tbody > tr > td {
+            border: none !important;
+            vertical-align: top;
+            padding: 0;
+            background-color: transparent !important;
         }
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
+        
+        /* Asegurar bordes en las tablas de datos */
+        .table-container table td, 
+        .table-container table th {
+            border: 1px solid #999 !important;
         }
+        .main-col {
+            width: 62%;
+            padding-right: 15px !important;
+        }
+        .summary-col {
+            width: 38%;
+        }
+        
         .badge-grupo {
             display: inline-block;
             padding: 2px 6px;
@@ -166,116 +182,117 @@
         </table>
     </div>
 
-    <div class="clearfix">
-        <div class="main-box table-container">
-            <div class="table-title">Distribución por Carrera y Aula</div>
-            @php
-
-                $rowspansGrupo = [];
-                $rowspansCarrera = [];
-                
-                // Pre-calcular rowspans para Grupo (col 1) y Carrera (col 2)
-                $lastGrupoIdx = -1;
-                $lastCarreraIdx = -1;
-                
-                foreach($tabla1 as $i => $row) {
-                    if($row[1] != '') {
-                        $lastGrupoIdx = $i;
-                        $rowspansGrupo[$i] = 1;
-                    } else if($lastGrupoIdx != -1) {
-                        $rowspansGrupo[$lastGrupoIdx]++;
-                    }
-                    
-                    if($row[2] != '' && $row[2] != 'Total') {
-                        $lastCarreraIdx = $i;
-                        $rowspansCarrera[$i] = 1;
-                    } else if($lastCarreraIdx != -1 && $row[2] == '') {
-                        $rowspansCarrera[$lastCarreraIdx]++;
-                    }
-                }
-            @endphp
-
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 30px;">#</th>
-                        <th style="width: 70px;">Grupo</th>
-                        <th>Carrera / Grado</th>
-                        <th style="width: 70px;">Aula</th>
-                        <th style="width: 60px;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $currentGrupoClass = ''; @endphp
-                    @foreach($tabla1 as $index => $row)
-                        @php 
-                            $isTotal = $row[2] === 'Total'; 
-                            if ($row[1] != '') {
-                                $letra = strtolower(trim(substr($row[1], -1)));
-                                $currentGrupoClass = 'tr-grupo-' . $letra;
+    <table class="layout-table">
+        <tr>
+            <td class="main-col">
+                <div class="table-container">
+                    <div class="table-title">Distribución por Carrera y Aula</div>
+                    @php
+                        $rowspansGrupo = [];
+                        $rowspansCarrera = [];
+                        
+                        $lastGrupoIdx = -1;
+                        $lastCarreraIdx = -1;
+                        
+                        foreach($tabla1 as $i => $row) {
+                            if($row[1] != '') {
+                                $lastGrupoIdx = $i;
+                                $rowspansGrupo[$i] = 1;
+                            } else if($lastGrupoIdx != -1) {
+                                $rowspansGrupo[$lastGrupoIdx]++;
                             }
-                        @endphp
+                            
+                            if($row[2] != '' && $row[2] != 'Total') {
+                                $lastCarreraIdx = $i;
+                                $rowspansCarrera[$i] = 1;
+                            } else if($lastCarreraIdx != -1 && $row[2] == '') {
+                                $rowspansCarrera[$lastCarreraIdx]++;
+                            }
+                        }
+                    @endphp
 
-                        <tr class="{{ $isTotal ? 'total-row' : $currentGrupoClass }}">
-                            {{-- Columna # --}}
-                            @if(isset($rowspansGrupo[$index]))
-                                <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
-                                    {{ $row[0] }}
-                                </td>
-                            @endif
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 25px;">#</th>
+                                <th style="width: 55px;">Grupo</th>
+                                <th>Carrera / Grado</th>
+                                <th style="width: 60px;">Aula</th>
+                                <th style="width: 50px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $currentGrupoClass = ''; @endphp
+                            @foreach($tabla1 as $index => $row)
+                                @php 
+                                    $isTotal = $row[2] === 'Total'; 
+                                    if ($row[1] != '') {
+                                        $letra = strtolower(trim(substr($row[1], -1)));
+                                        $currentGrupoClass = 'tr-grupo-' . $letra;
+                                    }
+                                @endphp
 
-                            {{-- Columna Grupo --}}
-                            @if(isset($rowspansGrupo[$index]))
-                                <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
-                                    {{ $row[1] }}
-                                </td>
-                            @endif
+                                <tr class="{{ $isTotal ? 'total-row' : $currentGrupoClass }}" style="page-break-inside: avoid;">
+                                    {{-- Columna # --}}
+                                    @if(isset($rowspansGrupo[$index]))
+                                        <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
+                                            {{ $row[0] }}
+                                        </td>
+                                    @endif
 
-                            {{-- Columna Carrera --}}
-                            @if(isset($rowspansCarrera[$index]))
-                                <td rowspan="{{ $rowspansCarrera[$index] }}">
-                                    <strong>{{ $row[2] }}</strong>
-                                </td>
-                            @elseif($isTotal)
-                                <td colspan="2" class="text-right"><strong>TOTAL GENERAL</strong></td>
-                            @endif
+                                    {{-- Columna Grupo --}}
+                                    @if(isset($rowspansGrupo[$index]))
+                                        <td class="text-center fw-bold" rowspan="{{ $rowspansGrupo[$index] }}">
+                                            {{ $row[1] }}
+                                        </td>
+                                    @endif
 
-                            {{-- Columna Aula y Total --}}
-                            @if(!$isTotal)
-                                <td class="text-center">{{ $row[3] }}</td>
-                                <td class="text-center fw-bold">{{ $row[4] }}</td>
-                            @else
-                                <td class="text-center fw-bold" style="background-color: #FCE6F4;">{{ $row[4] }}</td>
-                            @endif
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                                    {{-- Columna Carrera --}}
+                                    @if(isset($rowspansCarrera[$index]))
+                                        <td rowspan="{{ $rowspansCarrera[$index] }}">
+                                            <strong>{{ $row[2] }}</strong>
+                                        </td>
+                                    @elseif($isTotal)
+                                        <td colspan="2" class="text-right"><strong>TOTAL GENERAL</strong></td>
+                                    @endif
 
-        </div>
-
-        <div class="summary-box table-container">
-            <div class="table-title">Resumen por Aula</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Aula</th>
-                        <th style="width: 80px;">N° Postulantes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($tabla2 as $index => $row)
-                        @php $isTotal = $row[0] === 'Total'; @endphp
-
-                        <tr class="{{ $isTotal ? 'total-row' : '' }}">
-                            <td>{{ $row[0] }}</td>
-                            <td class="text-center fw-bold">{{ $row[1] }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
+                                    {{-- Columna Aula y Total --}}
+                                    @if(!$isTotal)
+                                        <td class="text-center">{{ $row[3] }}</td>
+                                        <td class="text-center fw-bold">{{ $row[4] }}</td>
+                                    @else
+                                        <td class="text-center fw-bold" style="background-color: #FCE6F4;">{{ $row[4] }}</td>
+                                    @endif
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+            <td class="summary-col">
+                <div class="table-container">
+                    <div class="table-title">Resumen por Aula</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Aula</th>
+                                <th style="width: 65px;">Postulantes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($tabla2 as $index => $row)
+                                @php $isTotal = $row[0] === 'Total'; @endphp
+                                <tr class="{{ $isTotal ? 'total-row' : '' }}" style="page-break-inside: avoid;">
+                                    <td>{{ $row[0] }}</td>
+                                    <td class="text-center fw-bold">{{ $row[1] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <div class="footer">
         Sistema de Gestión Académica - CEPRE UNAMAD | Generado por {{ Auth::user()->nombre }} el {{ date('d/m/Y H:i:s') }}
