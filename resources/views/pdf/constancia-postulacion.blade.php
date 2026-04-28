@@ -255,7 +255,7 @@
             height: 140%;
             z-index: -2000;
             opacity: 0.20;
-            background-image: url('{{ public_path("assets_cepre/img/tejido-kene-final.png") }}');
+            background-image: url('{{ $tejido_kene_base64 }}');
             background-repeat: repeat;
             background-size: 450px;
         }
@@ -268,10 +268,10 @@
     <!-- Header -->
     <div class="header">
         <div class="header-logo-left">
-            <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="Logo UNAMAD">
+            <img src="{{ $logo_unamad_base64 }}" alt="Logo UNAMAD">
         </div>
         <div class="header-logo-right">
-            <img src="{{ public_path('assets_cepre/img/logo/logo2_0.png') }}" alt="Logo CEPRE">
+            <img src="{{ $logo_cepre_base64 }}" alt="Logo CEPRE">
         </div>
         <div class="header-texto">
             <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
@@ -315,16 +315,8 @@
         </div>
         <div class="flex-col" style="width: 22%; text-align: right; vertical-align: top; padding-top: 5px;">
             <div class="photo-box">
-                @php
-                    $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
-                    $rutaFoto = null;
-                    if(!empty($fotoPath)){
-                        $posiblesRutas = [public_path('storage/'.$fotoPath), storage_path('app/public/'.$fotoPath), storage_path('app/'.$fotoPath)];
-                        foreach ($posiblesRutas as $ruta) { if (file_exists($ruta)) { $rutaFoto = $ruta; break; } }
-                    }
-                @endphp
-                @if($rutaFoto)
-                    <img src="{{ $rutaFoto }}" alt="Foto">
+                @if($foto_base64)
+                    <img src="{{ $foto_base64 }}" alt="Foto">
                 @else
                     <div style="font-size: 6pt; padding-top: 30px;">FOTO DEL<br>POSTULANTE</div>
                 @endif
@@ -353,10 +345,6 @@
 
     <!-- Datos Apoderados -->
     <div class="section-title">Datos de Contacto (Padres / Apoderados)</div>
-    @php
-        $padre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)->where('tipo_parentesco', 'Padre')->with('padre')->first();
-        $madre = \App\Models\Parentesco::where('estudiante_id', $estudiante->id)->where('tipo_parentesco', 'Madre')->with('padre')->first();
-    @endphp
     <table class="info-table">
         @if($padre && $padre->padre)
             <tr>

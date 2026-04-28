@@ -378,34 +378,45 @@ function setupEventHandlers() {
         });
     });
 
-    // Generar constancia
+    // Generar constancia e imprimir directamente (Estilo POS)
     $(document).on('click', '.generate-constancia', function () {
         const id = $(this).data('id');
         const btn = $(this);
 
-        const newWindow = window.open('/postulacion/constancia/generar/' + id, '_blank');
-        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-            Toast.fire({ icon: 'warning', title: 'Aviso de Pop-up', text: 'El navegador bloqueó la ventana emergente. Por favor, permita las ventanas emergentes para este sitio.' });
-            return;
-        }
+        if (!id) return;
 
-        // Para evitar que el usuario pierda la fila, actualizamos la UI manualmente.
-        // La recarga completa se hará cuando suba el archivo firmado.
-        Toast.fire({ icon: 'success', title: 'Constancia generada. La fila se actualizará para permitir la subida del documento firmado.' });
+        // Mostrar feedback visual
+        const originalHtml = btn.html();
+        btn.prop('disabled', true);
+        btn.html('<i class="spinner-border spinner-border-sm"></i>');
 
-        // Actualizar la data de la fila en DataTables
-        const row = table.row(btn.closest('tr'));
-        const rowData = row.data();
-        rowData.constancia_generada = true;
+        // Función para imprimir sin salir de la página
+        printConstancia(id, function() {
+            // Restaurar botón después de enviar a imprimir
+            btn.prop('disabled', false);
+            btn.html(originalHtml);
+            
+            Toast.fire({ 
+                icon: 'success', 
+                title: 'Constancia enviada a impresión.',
+                text: 'La fila se actualizará ahora.'
+            });
 
-        // Invalidar la fila para que DataTables la redibuje con los nuevos datos
-        row.invalidate().draw(false);
+            // Actualizar la data de la fila en DataTables
+            const row = table.row(btn.closest('tr'));
+            const rowData = row.data();
+            rowData.constancia_generada = true;
+            row.invalidate().draw(false);
+        });
     });
 
-    // Ver constancia firmada
+    // Ver constancia firmada (También mejorado para no perder la página)
     $(document).on('click', '.view-constancia-firmada', function () {
         const id = $(this).data('id');
-        window.open('/postulacion/constancia/ver/' + id, '_blank');
+        if (!id) return;
+        
+        // Abrir en un visor controlado o imprimir
+        printConstancia(id);
     });
 
     // Confirmar rechazo
@@ -1433,4 +1444,45 @@ function renderSpecItem(icon, label, value, extraClass = '') {
         </div>
         <span class="spec-item-value ${extraClass}">${value}</span>
     </div>`;
+}
+/**
+ * Función para imprimir constancia de forma silenciosa (Estilo POS)
+ * @param {number} id ID de la postulación
+ * @param {function} callback Función a ejecutar tras cargar
+ */
+function printConstancia(id, callback) {
+    const url = '/postulacion/constancia/generar/' + id;
+    
+    // Crear iframe oculto si no existe
+    let iframe = document.getElementById('print-iframe');
+    if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'print-iframe';
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+    }
+
+    // Evento de carga
+    iframe.onload = function() {
+        try {
+            setTimeout(function() {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                if (callback) callback();
+            }, 500);
+        } catch (e) {
+            console.error('Error al intentar imprimir:', e);
+            // Si falla por seguridad del navegador, abrir en nueva pestaña como respaldo
+            window.open(url, '_blank');
+            if (callback) callback();
+        }
+    };
+
+    // Cargar la URL
+    iframe.src = url;
 }

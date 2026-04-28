@@ -19,8 +19,13 @@ class ConstanciaPostulacionController extends Controller
     public function generarConstancia($postulacionId)
     {
         try {
-            $postulacion = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'inscripcion.aula'])
-                ->findOrFail($postulacionId);
+            $postulacion = Postulacion::with([
+                'estudiante.parentescos.padre', 
+                'ciclo', 
+                'carrera', 
+                'turno', 
+                'inscripcion.aula'
+            ])->findOrFail($postulacionId);
 
             
             // Verificar que el usuario tenga permiso para generar la constancia
@@ -42,13 +47,13 @@ class ConstanciaPostulacionController extends Controller
             $codigoPostulante = $postulacion->codigo_postulante ?: ('TEMP-' . $postulacion->id);
             $codigoVerificacion = md5($postulacion->id . $codigoPostulante);
 
-            // Generar QR para validación (Formato PNG Base64 igual que Constancia de Vacante)
+            // Generar QR para validación (Formato SVG por defecto - mucho más rápido que PNG)
             $urlValidacion = url("/validar-constancia/{$codigoVerificacion}");
             try {
-                $qrCode = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
+                $qrCode = base64_encode(QrCode::format('svg')->size(150)->margin(0)->generate($urlValidacion));
             } catch (\Exception $e) {
-                \Log::warning('Fallo generación QR PNG, intentando SVG: ' . $e->getMessage());
-                $qrCode = base64_encode(QrCode::format('svg')->size(150)->generate($urlValidacion));
+                \Log::warning('Fallo generación QR SVG, intentando PNG: ' . $e->getMessage());
+                $qrCode = base64_encode(QrCode::format('png')->size(150)->generate($urlValidacion));
             }
 
 
@@ -87,6 +92,42 @@ class ConstanciaPostulacionController extends Controller
                 $aulaNombre = $limpiarTexto($postulacion->inscripcion->aula->nombre);
             }
 
+            // Función para convertir imagen a Base64 (Acelera DomPDF)
+            $convertImageToBase64 = function($path) {
+                if (file_exists($path)) {
+                    $type = pathinfo($path, PATHINFO_EXTENSION);
+                    $data = file_get_contents($path);
+                    return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+                return null;
+            };
+
+            // Pre-cargar imágenes institucionales en Base64
+            $logoUnamadBase64 = $convertImageToBase64(public_path('assets/images/logo unamad constancia.png'));
+            $logoCepreBase64 = $convertImageToBase64(public_path('assets_cepre/img/logo/logo2_0.png'));
+            $tejidoKeneBase64 = $convertImageToBase64(public_path('assets_cepre/img/tejido-kene-final.png'));
+
+            // Obtener foto del estudiante en Base64
+            $fotoPath = $postulacion->foto_path ?: $postulacion->foto_carnet_path ?: $postulacion->estudiante->foto_perfil ?? null;
+            $fotoBase64 = null;
+            if(!empty($fotoPath)){
+                $posiblesRutas = [public_path('storage/'.$fotoPath), storage_path('app/public/'.$fotoPath), storage_path('app/'.$fotoPath)];
+                foreach ($posiblesRutas as $ruta) { 
+                    if (file_exists($ruta)) { 
+                        $fotoBase64 = $convertImageToBase64($ruta);
+                        break; 
+                    } 
+                }
+            }
+
+            // Obtener datos de padres/apoderados desde las relaciones precargadas
+            $padre = $postulacion->estudiante->parentescos
+                ->where('tipo_parentesco', 'Padre')
+                ->first();
+            $madre = $postulacion->estudiante->parentescos
+                ->where('tipo_parentesco', 'Madre')
+                ->first();
+
             // Preparar datos para la vista
             $data = [
                 'postulacion' => $postulacion,
@@ -98,7 +139,13 @@ class ConstanciaPostulacionController extends Controller
                 'fecha_generacion' => Carbon::now()->format('d/m/Y H:i'),
                 'codigo_postulante' => $codigoPostulante,
                 'codigo_verificacion' => $codigoVerificacion,
-                'qr_code' => $qrCode
+                'qr_code' => $qrCode,
+                'padre' => $padre,
+                'madre' => $madre,
+                'logo_unamad_base64' => $logoUnamadBase64,
+                'logo_cepre_base64' => $logoCepreBase64,
+                'tejido_kene_base64' => $tejidoKeneBase64,
+                'foto_base64' => $fotoBase64
             ];
 
             // Limpieza extra preventiva para datos del estudiante
@@ -113,8 +160,8 @@ class ConstanciaPostulacionController extends Controller
             // Configurar el PDF
             $pdf->setPaper('A4', 'portrait');
             
-            // Descargar el PDF
-            return $pdf->download('constancia_postulacion_' . $codigoPostulante . '.pdf');
+            // Mostrar el PDF en el navegador (necesario para impresión directa o visor modal)
+            return $pdf->stream('constancia_postulacion_' . $codigoPostulante . '.pdf');
             
         } catch (\Exception $e) {
             \Log::error('Error al generar constancia: ' . $e->getMessage());
