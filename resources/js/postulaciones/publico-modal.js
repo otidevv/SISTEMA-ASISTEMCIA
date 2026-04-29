@@ -381,6 +381,7 @@ function buscarColegios() {
             }
         },
         error: function (xhr) {
+            if (xhr.status === 419) return; // Ignorar, manejado por csrf-handler.js
             console.error('Error buscando colegios:', xhr);
             $('#sugerencias-colegios').html(`
                 <div class="list-group-item text-center text-danger">
@@ -724,6 +725,7 @@ function validarVoucher() {
             }
         },
         error: function (xhr) {
+            if (xhr.status === 419) return; // Ignorar, manejado por csrf-handler.js
             console.error('Error validando pago:', xhr);
             let msg = 'Error al validar el pago';
             if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -1680,6 +1682,7 @@ function consultarReniecEstudiante(dni) {
             }
         },
         error: function (xhr) {
+            if (xhr.status === 419) return; // Ignorar, manejado por csrf-handler.js
             console.error('Error consultando el sistema:', xhr);
             let errorMsg = 'No se pudo consultar el sistema. Por favor complete los datos manualmente.';
 
@@ -2102,6 +2105,7 @@ function submitPostulacion() {
             }
         },
         error: function (xhr) {
+            if (xhr.status === 419) return; // Ignorar, manejado por csrf-handler.js
             window.isSubmittingPostulacion = false;
             console.error('Error:', xhr);
             let errorMsg = 'Ocurrió un error al enviar la postulación.';

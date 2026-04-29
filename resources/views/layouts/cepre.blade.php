@@ -71,7 +71,7 @@
     <link rel="shortcut icon" href="{{ asset('faviconcepre.ico') }}?v=2">
 
     <!-- Tailwind (con Vite) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/csrf-handler.js'])
 
     <!-- CSS -->
     <link rel="stylesheet" href="{{ asset('assets_cepre/css/bootstrap.min.css') }}">
