@@ -907,7 +907,21 @@ function mostrarDetallesPago(vouchers) {
         allPayments.forEach((pago, index) => {
             const monto = pago.monto.toFixed(2);
             const fecha = pago.fecha ? pago.fecha.split('T')[0] : '-';
-            const isChecked = ''; // SIN SELECCIONAR por defecto
+            
+            // Lógica de Selección Automática y Persistencia
+            const conceptosAuto = ['matricula', 'enseñanza', 'preparacion', 'maraton', 'inscripcion'];
+            const conceptoLower = (pago.concepto || '').toLowerCase();
+            const esConceptoBase = conceptosAuto.some(c => conceptoLower.includes(c));
+
+            
+            // Verificar si ya estaba seleccionado previamente (Persistencia)
+            const seleccionadosPrev = $('#voucher_secuencia').val() ? $('#voucher_secuencia').val().split(',').map(s => s.trim()) : [];
+
+            const yaSeleccionado = seleccionadosPrev.includes(pago.secuencia);
+
+            // Se marca si es un concepto base O si ya estaba marcado antes
+            const isChecked = (esConceptoBase || yaSeleccionado) ? 'checked' : '';
+
 
             // Determinar un icono basado en el concepto (simple heurística)
             let iconClass = 'fas fa-money-check-alt';
@@ -1039,9 +1053,13 @@ function actualizarPagosSeleccionados() {
             concepto: concepto
         });
 
-        if (!fechaReciente) {
-            fechaReciente = fecha;
+        // Obtener la fecha más reciente de entre los seleccionados
+        if (fecha && fecha !== '-') {
+            if (!fechaReciente || fecha > fechaReciente) {
+                fechaReciente = fecha;
+            }
         }
+
     });
 
     // Actualizar UI del total

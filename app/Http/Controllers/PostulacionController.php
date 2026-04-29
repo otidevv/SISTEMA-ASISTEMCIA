@@ -335,15 +335,47 @@ class PostulacionController extends Controller
                 return response()->json(['success' => false, 'message' => 'No se encontraron pagos nuevos en la API de UNAMAD.'], 404);
             }
 
-            // El arreglo es asociativo (la llave es el serial), tomamos el primero (el más reciente)
-            $voucher = reset($pagosApi);
+            // Agregamos todos los vouchers encontrados para asegurar que se capturen Matrícula y Enseñanza si están separados
+            $totalMatricula = 0;
+            $totalEnsenanza = 0;
+            $totalPagado = 0;
+            $recibos = [];
+            $fechaReciente = null;
 
-            $postulacion->numero_recibo = $voucher['serial'] ?? ($voucher['serial_voucher'] ?? '---');
-            $postulacion->monto_matricula = $voucher['monto_matricula'];
-            $postulacion->monto_ensenanza = $voucher['monto_ensenanza'];
-            $postulacion->monto_total_pagado = $voucher['monto_total'];
+            foreach ($pagosApi as $voucher) {
+                $totalMatricula += (float)($voucher['monto_matricula'] ?? 0);
+                $totalEnsenanza += (float)($voucher['monto_ensenanza'] ?? 0);
+                $totalPagado += (float)($voucher['monto_total'] ?? 0);
+                
+                $serial = $voucher['serial'] ?? ($voucher['serial_voucher'] ?? null);
+                if ($serial && !in_array($serial, $recibos)) {
+                    $recibos[] = $serial;
+                }
+
+                $fechaVoucher = $voucher['fecha'] ?? null;
+                if ($fechaVoucher) {
+                    if (!$fechaReciente || $fechaVoucher > $fechaReciente) {
+                        $fechaReciente = $fechaVoucher;
+                    }
+                }
+            }
+
+            // Actualizar montos en la postulación
+            $postulacion->numero_recibo = implode(',', $recibos);
+            $postulacion->monto_matricula = $totalMatricula;
+            $postulacion->monto_ensenanza = $totalEnsenanza;
+            $postulacion->monto_total_pagado = $totalPagado;
             $postulacion->pago_verificado = true;
-            $postulacion->fecha_emision_voucher = $voucher['fecha'] ? \Carbon\Carbon::parse($voucher['fecha'])->toDateString() : now()->toDateString();
+
+            if ($fechaReciente) {
+                try {
+                    $postulacion->fecha_emision_voucher = \Carbon\Carbon::parse($fechaReciente)->toDateString();
+                } catch (\Exception $e) {
+                    // Ignorar error de parseo si la fecha es inválida
+                }
+            }
+
+
             $postulacion->save();
 
             return response()->json([
