@@ -163,6 +163,7 @@
     </script>
     
     @include('partials.cepre.info-modal')
+    @include('partials.cepre.tester-banner')
     @include('partials.chatbot')
     @vite(['resources/js/assistant/chatbot.js', 'resources/css/assistant/chatbot.css'])
 </body>

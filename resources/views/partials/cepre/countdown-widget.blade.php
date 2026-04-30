@@ -1,143 +1,210 @@
 @if(isset($proximoExamen) && $proximoExamen || isset($proximoCiclo) && $proximoCiclo)
-<div id="countdown-bubble" style="position:fixed; left:20px; right:auto; bottom:30px; z-index:9998; display:flex; flex-direction:column; align-items:flex-start; gap:6px;">
-
-    <!-- Botón para re-abrir (solo visible cuando panel está cerrado) -->
-    <button id="bubble-reopen" onclick="toggleCountdownBubble()"
-        style="display:flex;border:none;background:none;cursor:pointer;padding:0;animation:bubble-pulse 2.5s infinite;border-radius:50%;width:65px;height:65px;">
-        <img src="{{ asset('assets_cepre/img/cronometro.png') }}" alt="Próximos Eventos"
-             style="width:100%;height:100%;object-fit:contain;display:block;"
-             onerror="this.parentElement.style.background='var(--magenta-unamad)';">
+<div id="countdown-bubble" class="countdown-premium-wrapper animate__animated animate__fadeInLeft">
+    
+    <!-- Botón Flotante para re-abrir (Burbuja) -->
+    <button id="bubble-reopen" class="bubble-reopen-btn" onclick="toggleCountdownBubble()" style="display:none;">
+        <div class="bubble-icon">
+            <i class="fa fa-calendar-alt"></i>
+        </div>
+        <div class="bubble-pulse"></div>
     </button>
 
-    <!-- Panel principal -->
-    <div id="bubble-panel"
-        style="background:linear-gradient(160deg,#0f172a 0%,#020617 100%);backdrop-filter:blur(10px);border-radius:16px;overflow:hidden;width:240px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:none;flex-direction:column;">
-
-        <!-- Header: crono2.png como fondo CSS para no distorsionar -->
-        <div class="bubble-header"
-             style="position:relative;width:100%;height:58px;background:url('{{ asset('assets_cepre/img/crono2.png') }}') center/cover no-repeat;overflow:visible;">
-            <!-- Texto sobre la zona izquierda -->
-            <div style="position:absolute;top:0;left:0;right:65px;height:100%;display:flex;align-items:center;padding-left:14px;">
-                <p style="margin:0;color:white;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;text-shadow:0 1px 4px rgba(0,0,0,0.5);line-height:1.3;">
-                    📅 Próximos<br>Eventos
-                </p>
+    <!-- Panel principal Ultra-Compacto -->
+    <div id="bubble-panel" class="premium-countdown-panel">
+        <!-- Header Slim (Mínimo espacio) -->
+        <div class="premium-header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="header-text">
+                    <span class="header-pre">CENTRO PRE</span>
+                    <h4 class="header-main">EVENTOS</h4>
+                </div>
             </div>
-            <!-- X para cerrar -->
-            <button onclick="toggleCountdownBubble()"
-                style="position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.25);border:none;color:white;font-size:13px;cursor:pointer;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;padding:0;z-index:10;">&times;</button>
+            <button class="close-panel-btn" onclick="toggleCountdownBubble()">&times;</button>
         </div>
 
-        <!-- Contenido -->
-        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:12px;">
-
+        <!-- Cuerpo Compacto -->
+        <div class="premium-body">
             @if(isset($proximoExamen) && $proximoExamen)
-            <div>
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                    <div style="width:20px;height:20px;border-radius:6px;background:rgba(0,174,239,0.15);display:flex;align-items:center;justify-content:center;">
-                        <i class="fas fa-edit" style="color:var(--cyan-acento);font-size:9px;"></i>
-                    </div>
-                    <span style="color:var(--cyan-acento);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;">{{ $proximoExamen['nombre'] }}</span>
+            <div class="event-section">
+                <div class="section-title cyan-text">
+                    <i class="fas fa-edit"></i>
+                    <span>{{ $proximoExamen['nombre'] }}</span>
                 </div>
-                <div id="timer-examen" data-date="{{ $proximoExamen['fecha'] }}" style="display:flex;gap:5px;"></div>
+                <div id="timer-examen" data-date="{{ $proximoExamen['fecha'] }}" class="timer-grid cyan-border"></div>
             </div>
             @endif
 
             @if(isset($proximoCiclo) && $proximoCiclo)
-            <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                    <div style="width:20px;height:20px;border-radius:6px;background:rgba(236,0,140,0.15);display:flex;align-items:center;justify-content:center;">
-                        <i class="fas fa-door-open" style="color:var(--magenta-unamad);font-size:9px;"></i>
-                    </div>
-                    <span style="color:var(--magenta-unamad);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;">{{ $proximoCiclo['nombre'] }}</span>
+            <div class="event-section">
+                <div class="section-title magenta-text">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>{{ $proximoCiclo['nombre'] }}</span>
                 </div>
-                <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" style="display:flex;gap:5px;"></div>
+                <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" class="timer-grid magenta-border"></div>
             </div>
-            <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" id="countdown-btn-postular"
-                class="btn-postulacion-main"
-                style="display:block;text-align:center;background:var(--magenta-unamad);color:white;border-radius:50px;padding:7px 12px;font-weight:800;font-size:11px;text-decoration:none;letter-spacing:1px;box-shadow:0 3px 10px rgba(236,0,140,0.35);transition:all 0.3s;margin-top:2px;">
-                ¡INSCRÍBETE AHORA!
+
+            <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" class="premium-btn-enroll">
+                <i class="fas fa-user-plus"></i> ¡INSCRÍBETE AHORA!
             </a>
             @endif
+        </div>
+
+        <div class="premium-color-stripe">
+            <div class="stripe-magenta"></div>
+            <div class="stripe-cyan"></div>
+            <div class="stripe-green"></div>
         </div>
     </div>
 </div>
 
 <style>
-    @keyframes bubble-pulse {
-        0%   { box-shadow: 0 0 0 0 rgba(236, 0, 140, 0.45); }
-        70%  { box-shadow: 0 0 0 10px rgba(236, 0, 140, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(236, 0, 140, 0); }
+    :root {
+        --unamad-magenta: #e2007a;
+        --unamad-cyan: #00aeef;
+        --unamad-green: #93c01f;
     }
-    #bubble-reopen:hover { transform: scale(1.05); }
-    .tbox {
-        flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
-        border-radius:8px; padding:5px 3px; display:flex; flex-direction:column; align-items:center; min-width:0;
+
+    .countdown-premium-wrapper {
+        position: fixed;
+        left: 15px;
+        bottom: 20px;
+        z-index: 9998;
+        font-family: 'Inter', sans-serif;
     }
-    .tbox .n { font-size:17px; font-weight:900; color:white; line-height:1; }
-    .tbox .l { font-size:8px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
-    @media (max-width: 768px) {
-        #countdown-bubble { right:auto; left:10px; bottom:30px; }
-        #bubble-panel { width:200px; }
-        .bubble-header { height:46px !important; }
-        .bubble-avatar { display:none !important; }
-        .tbox .n { font-size:15px; }
+
+    .bubble-reopen-btn {
+        width: 50px; height: 50px;
+        background: var(--unamad-cyan);
+        border: 2px solid white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 20px rgba(0, 174, 239, 0.3);
     }
+
+    .bubble-icon { color: white; font-size: 18px; }
+    .bubble-pulse {
+        position: absolute;
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        border: 2px solid var(--unamad-cyan);
+        animation: bubble-pulse 2s infinite;
+    }
+
+    .premium-countdown-panel {
+        width: 240px;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid var(--unamad-cyan);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* --- Cabezal Slim Extremo --- */
+    .premium-header {
+        background: var(--unamad-cyan);
+        padding: 4px 12px; /* Mínimo espacio arriba y abajo */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header-content { display: flex; align-items: center; gap: 8px; }
+    
+    .header-icon { 
+        width: 22px; height: 22px; /* Reducido para no forzar altura */
+        background: rgba(255,255,255,0.25); 
+        border-radius: 5px; 
+        display: flex; align-items: center; justify-content: center; 
+        color: white; font-size: 11px; 
+    }
+    
+    .header-text { display: flex; flex-direction: column; line-height: 0.85; }
+    .header-pre { font-size: 7.5px; font-weight: 800; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; margin-bottom: -1px; }
+    .header-main { margin: 0; color: white; font-size: 13px; font-weight: 900; letter-spacing: 0.3px; }
+
+    .close-panel-btn { 
+        background: none; 
+        border: none; color: white; font-size: 14px; 
+        cursor: pointer; opacity: 0.7;
+        width: 18px; height: 18px; 
+        display: flex; align-items: center; justify-content: center; 
+    }
+
+    .premium-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .section-title { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .section-title span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+
+    .timer-grid { display: flex; gap: 4px; }
+    .tbox { 
+        flex: 1; background: #f8f9fa; border-radius: 6px; 
+        padding: 4px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee;
+    }
+    .tbox .n { font-size: 15px; font-weight: 900; color: #333; line-height: 1; }
+    .tbox .l { font-size: 6.5px; color: #aaa; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+
+    .cyan-text, .cyan-border .tbox { color: var(--unamad-cyan); border-bottom: 2px solid var(--unamad-cyan); }
+    .magenta-text, .magenta-border .tbox { color: var(--unamad-magenta); border-bottom: 2px solid var(--unamad-magenta); }
+
+    .premium-btn-enroll {
+        background: var(--unamad-cyan); /* Volver al Celeste */
+        color: white !important;
+        text-decoration: none !important;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 10px;
+        border-radius: 10px; font-weight: 800; font-size: 11px;
+        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.2);
+        transition: 0.3s;
+        margin-top: 2px;
+    }
+    .premium-btn-enroll:hover { background: var(--unamad-magenta); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(226, 0, 122, 0.3); }
+
+    .premium-color-stripe { height: 4px; display: flex; width: 100%; }
+    .stripe-magenta { background: var(--unamad-magenta); flex: 1; }
+    .stripe-cyan { background: var(--unamad-cyan); flex: 1; }
+    .stripe-green { background: var(--unamad-green); flex: 1; }
+
+    @keyframes bubble-pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
 </style>
 
 <script>
     function toggleCountdownBubble() {
-        const panel  = document.getElementById('bubble-panel');
+        const panel = document.getElementById('bubble-panel');
         const reopen = document.getElementById('bubble-reopen');
-        const open   = panel.style.display !== 'none';
-        panel.style.display  = open ? 'none' : 'flex';
-        panel.style.flexDirection = 'column';
-        reopen.style.display = open ? 'flex' : 'none';
+        const isHidden = panel.style.display === 'none';
+        if (isHidden) {
+            panel.style.display = 'flex'; reopen.style.display = 'none';
+        } else {
+            panel.style.display = 'none'; reopen.style.display = 'flex';
+        }
     }
-
     document.addEventListener('DOMContentLoaded', function () {
         function initTimer(id, accentColor) {
-            const el = document.getElementById(id);
-            if (!el) return;
+            const el = document.getElementById(id); if (!el) return;
             const target = new Date(el.getAttribute('data-date')).getTime();
             function tick() {
                 const diff = target - Date.now();
-                if (diff < 0) {
-                    el.innerHTML = '<span style="color:var(--verde-cepre);font-size:11px;font-weight:800;"><i class="fas fa-check-circle"></i> ¡En curso!</span>';
-                    return;
-                }
-                const d = Math.floor(diff / 86400000);
-                const h = Math.floor((diff % 86400000) / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
+                if (diff < 0) { el.innerHTML = `<div style="width:100%; text-align:center; color:var(--unamad-green); font-weight:800; font-size:11px;">EN CURSO</div>`; return; }
+                const d = Math.floor(diff / 86400000); const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000);
                 el.innerHTML = `
                     <div class="tbox"><span class="n">${String(d).padStart(2,'0')}</span><span class="l">Días</span></div>
                     <div class="tbox"><span class="n">${String(h).padStart(2,'0')}</span><span class="l">Hrs</span></div>
                     <div class="tbox"><span class="n">${String(m).padStart(2,'0')}</span><span class="l">Min</span></div>
-                    <div class="tbox" style="border-color:rgba(236,0,140,0.2)"><span class="n" style="color:${accentColor}">${String(s).padStart(2,'0')}</span><span class="l">Seg</span></div>
+                    <div class="tbox"><span class="n" style="color:${accentColor}">${String(s).padStart(2,'0')}</span><span class="l">Seg</span></div>
                 `;
             }
-            tick();
-            setInterval(tick, 1000);
+            tick(); setInterval(tick, 1000);
         }
-        initTimer('timer-examen', 'var(--cyan-acento)');
-        initTimer('timer-ciclo', 'var(--magenta-unamad)');
-
-        // Lógica de estado inicial según dispositivo
-        const panel = document.getElementById('bubble-panel');
-        const reopen = document.getElementById('bubble-reopen');
-        
-        if (window.innerWidth <= 768) {
-            // En móviles: Iniciar con la burbuja (cerrado)
-            if (panel) panel.style.display = 'none';
-            if (reopen) reopen.style.display = 'flex';
-        } else {
-            // En computadoras: Iniciar con el panel (abierto)
-            if (panel) {
-                panel.style.display = 'flex';
-                panel.style.flexDirection = 'column';
-            }
-            if (reopen) reopen.style.display = 'none';
-        }
+        initTimer('timer-examen', '#00aeef'); initTimer('timer-ciclo', '#e2007a');
+        const panel = document.getElementById('bubble-panel'); const reopen = document.getElementById('bubble-reopen');
+        if (window.innerWidth <= 768) { panel.style.display = 'none'; reopen.style.display = 'flex'; } 
+        else { panel.style.display = 'flex'; reopen.style.display = 'none'; }
     });
 </script>
 @endif

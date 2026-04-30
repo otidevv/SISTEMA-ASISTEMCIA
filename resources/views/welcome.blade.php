@@ -323,7 +323,7 @@
         /* Botón de Ayuda Flotante (Pequeño y discreto) */
         .btn-ayuda-tour {
             position: fixed;
-            top: 40%;
+            top: 80px; /* Movido a la zona superior para despejar el centro */
             right: 30px;
             bottom: auto;
             background: rgba(12, 30, 47, 0.9);
@@ -378,11 +378,7 @@
                 padding: 10px !important;
             }
             .btn-ayuda-tour {
-                width: 40px;
-                height: 40px;
-                top: 50%;
-                right: 15px;
-                bottom: auto;
+                display: none; /* Ocultado en celulares */
             }
             .cepre-premium-popover .driver-popover-close-btn {
                 top: 8px !important;
