@@ -169,7 +169,7 @@
                 <!-- Fondo Dinámico -->
                 <picture style="width: 100%; height: auto; display: flex;">
                     <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.webp') }}">
-                    <img src="{{ asset('assets_cepre/img/portada/portada_principal.webp') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;" fetchpriority="high">
+                    <img src="{{ asset('assets_cepre/img/portada/portada2.jpg') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;" fetchpriority="high">
                 </picture>
 
                 <!-- Capa oscurecedora inferior para resaltar los botones HTML -->
