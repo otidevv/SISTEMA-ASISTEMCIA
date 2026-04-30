@@ -146,7 +146,7 @@
         padding: 4px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee;
     }
     .tbox .n { font-size: 15px; font-weight: 900; color: #333; line-height: 1; }
-    .tbox .l { font-size: 6.5px; color: #aaa; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+    .tbox .l { font-size: 7px; color: #555; text-transform: uppercase; font-weight: 800; margin-top: 2px; letter-spacing: 0.2px; }
 
     .cyan-text, .cyan-border .tbox { color: var(--unamad-cyan); border-bottom: 2px solid var(--unamad-cyan); }
     .magenta-text, .magenta-border .tbox { color: var(--unamad-magenta); border-bottom: 2px solid var(--unamad-magenta); }
