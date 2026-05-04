@@ -104,9 +104,10 @@
         display: flex;
         flex-direction: column;
         position: relative;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* --- Cabezera Compacta y Legible --- */
+    /* --- Cabezera --- */
     .premium-header {
         background: var(--unamad-cyan);
         position: relative;
@@ -116,7 +117,7 @@
         justify-content: space-between;
         border-bottom: 2px solid var(--unamad-magenta);
         overflow: hidden;
-        min-height: 40px; /* Altura optimizada para legibilidad */
+        min-height: 40px;
     }
 
     .premium-header::before {
@@ -126,11 +127,13 @@
         background-image: url('/assets_cepre/img/kene_bold_white.png');
         background-size: 150px;
         background-position: center;
-        opacity: 0.4; /* Aumentado para resaltar el diseño Kené */
+        opacity: 0.4;
         mix-blend-mode: screen;
         z-index: 1;
         pointer-events: none;
+        transition: transform 0.8s ease;
     }
+    .premium-header:hover::before { transform: scale(1.1); }
 
     .header-content { display: flex; align-items: center; gap: 10px; z-index: 2; position: relative; }
     
@@ -139,8 +142,10 @@
         background: rgba(0, 0, 0, 0.15); 
         border-radius: 6px; 
         display: flex; align-items: center; justify-content: center; 
-        color: white; font-size: 12px; 
+        color: white; font-size: 11px; 
+        transition: transform 0.3s ease;
     }
+    .premium-header:hover .header-icon { transform: rotate(15deg) scale(1.1); }
     
     .header-text { 
         display: flex; 
@@ -158,10 +163,11 @@
         width: 20px; height: 20px; 
         display: flex; align-items: center; justify-content: center; 
         border-radius: 50%;
-        transition: 0.3s;
+        transition: all 0.3s ease;
         z-index: 2;
         position: relative;
     }
+    .close-panel-btn:hover { background: var(--unamad-magenta); transform: rotate(90deg) scale(1.1); }
 
     .premium-body { 
         padding: 15px; 
@@ -177,12 +183,19 @@
         border-radius: 12px; 
         border-left: 3px solid transparent;
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+    }
+    .event-section:hover { 
+        transform: translateX(5px); 
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     }
     
     .event-section.cyan-border { border-left-color: var(--unamad-cyan); }
     .event-section.magenta-border { border-left-color: var(--unamad-magenta); }
 
-    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; transition: 0.3s; }
+    .event-section:hover .section-title { transform: scale(1.02); }
     .section-title i { font-size: 12px; }
     .section-title span { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
 
@@ -197,12 +210,11 @@
         align-items: center; 
         border: 1px solid #eef2f6;
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    .tbox:hover { transform: translateY(-3px); border-color: var(--unamad-cyan); box-shadow: 0 5px 10px rgba(0,0,0,0.05); }
     .tbox .n { font-size: 18px; font-weight: 900; line-height: 1; color: #1e293b; }
     .tbox .l { font-size: 7px; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-top: 3px; }
-
-    .cyan-text { color: var(--unamad-cyan); }
-    .magenta-text { color: var(--unamad-magenta); }
 
     .premium-btn-enroll {
         background: linear-gradient(135deg, var(--unamad-cyan) 0%, #0081b2 100%);
@@ -212,9 +224,14 @@
         gap: 10px; padding: 12px;
         border-radius: 12px; font-weight: 900; font-size: 12px;
         box-shadow: 0 8px 20px rgba(0, 174, 239, 0.2);
-        transition: 0.3s ease;
+        transition: all 0.4s ease;
         text-transform: uppercase;
         letter-spacing: 0.8px;
+    }
+    .premium-btn-enroll:hover { 
+        background: linear-gradient(135deg, var(--unamad-magenta) 0%, #a30058 100%); 
+        transform: scale(1.02) translateY(-2px);
+        box-shadow: 0 10px 25px rgba(226, 0, 122, 0.3);
     }
 
     .premium-color-stripe { height: 5px; display: flex; width: 100%; }
@@ -222,7 +239,7 @@
     .stripe-cyan { background: var(--unamad-cyan); flex: 1; }
     .stripe-green { background: var(--unamad-green); flex: 1; }
 
-    @keyframes bubble-pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.6); opacity: 0; } }
+    @keyframes bubble-pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
 </style>
 
 <script>
