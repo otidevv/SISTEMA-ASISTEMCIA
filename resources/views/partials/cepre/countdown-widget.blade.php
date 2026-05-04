@@ -28,22 +28,22 @@
         <!-- Cuerpo Compacto -->
         <div class="premium-body">
             @if(isset($proximoExamen) && $proximoExamen)
-            <div class="event-section">
+            <div class="event-section cyan-border">
                 <div class="section-title cyan-text">
                     <i class="fas fa-edit"></i>
                     <span>{{ $proximoExamen['nombre'] }}</span>
                 </div>
-                <div id="timer-examen" data-date="{{ $proximoExamen['fecha'] }}" class="timer-grid cyan-border"></div>
+                <div id="timer-examen" data-date="{{ $proximoExamen['fecha'] }}" class="timer-grid"></div>
             </div>
             @endif
 
             @if(isset($proximoCiclo) && $proximoCiclo)
-            <div class="event-section">
+            <div class="event-section magenta-border">
                 <div class="section-title magenta-text">
                     <i class="fas fa-graduation-cap"></i>
                     <span>{{ $proximoCiclo['nombre'] }}</span>
                 </div>
-                <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" class="timer-grid magenta-border"></div>
+                <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" class="timer-grid"></div>
             </div>
 
             <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" class="premium-btn-enroll">
@@ -95,76 +95,129 @@
     }
 
     .premium-countdown-panel {
-        width: 240px;
+        width: 260px;
         background: #ffffff;
-        border-radius: 12px;
+        border-radius: 18px;
         overflow: hidden;
-        border: 2px solid var(--unamad-cyan);
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(0, 174, 239, 0.15);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
+        position: relative;
     }
 
-    /* --- Cabezal Slim Extremo --- */
+    /* --- Cabezera Compacta y Legible --- */
     .premium-header {
         background: var(--unamad-cyan);
-        padding: 4px 12px; /* Mínimo espacio arriba y abajo */
+        position: relative;
+        padding: 6px 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        border-bottom: 2px solid var(--unamad-magenta);
+        overflow: hidden;
+        min-height: 40px; /* Altura optimizada para legibilidad */
     }
 
-    .header-content { display: flex; align-items: center; gap: 8px; }
+    .premium-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: url('/assets_cepre/img/kene_bold_white.png');
+        background-size: 150px;
+        background-position: center;
+        opacity: 0.4; /* Aumentado para resaltar el diseño Kené */
+        mix-blend-mode: screen;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .header-content { display: flex; align-items: center; gap: 10px; z-index: 2; position: relative; }
     
     .header-icon { 
-        width: 22px; height: 22px; /* Reducido para no forzar altura */
-        background: rgba(255,255,255,0.25); 
-        border-radius: 5px; 
+        width: 24px; height: 24px;
+        background: rgba(0, 0, 0, 0.15); 
+        border-radius: 6px; 
         display: flex; align-items: center; justify-content: center; 
-        color: white; font-size: 11px; 
+        color: white; font-size: 12px; 
     }
     
-    .header-text { display: flex; flex-direction: column; line-height: 0.85; }
-    .header-pre { font-size: 7.5px; font-weight: 800; color: rgba(255,255,255,0.85); letter-spacing: 0.5px; margin-bottom: -1px; }
-    .header-main { margin: 0; color: white; font-size: 13px; font-weight: 900; letter-spacing: 0.3px; }
+    .header-text { 
+        display: flex; 
+        flex-direction: column; 
+        line-height: 1;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .header-pre { font-size: 8px; font-weight: 800; color: #fff; letter-spacing: 1.5px; text-transform: uppercase; }
+    .header-main { margin: 0; color: white; font-size: 16px; font-weight: 900; letter-spacing: 0.5px; }
 
     .close-panel-btn { 
-        background: none; 
-        border: none; color: white; font-size: 14px; 
-        cursor: pointer; opacity: 0.7;
-        width: 18px; height: 18px; 
+        background: rgba(0,0,0,0.1); 
+        border: none; color: white; font-size: 12px; 
+        cursor: pointer;
+        width: 20px; height: 20px; 
         display: flex; align-items: center; justify-content: center; 
+        border-radius: 50%;
+        transition: 0.3s;
+        z-index: 2;
+        position: relative;
     }
 
-    .premium-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .section-title { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-    .section-title span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .premium-body { 
+        padding: 15px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+        background: #fff;
+    }
 
-    .timer-grid { display: flex; gap: 4px; }
+    .event-section { 
+        background: #f8fafc; 
+        padding: 10px; 
+        border-radius: 12px; 
+        border-left: 3px solid transparent;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    
+    .event-section.cyan-border { border-left-color: var(--unamad-cyan); }
+    .event-section.magenta-border { border-left-color: var(--unamad-magenta); }
+
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .section-title i { font-size: 12px; }
+    .section-title span { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .timer-grid { display: flex; gap: 6px; }
     .tbox { 
-        flex: 1; background: #f8f9fa; border-radius: 6px; 
-        padding: 4px 2px; display: flex; flex-direction: column; align-items: center; border: 1px solid #eee;
+        flex: 1; 
+        background: white; 
+        border-radius: 8px; 
+        padding: 6px 1px; 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        border: 1px solid #eef2f6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
-    .tbox .n { font-size: 15px; font-weight: 900; color: #333; line-height: 1; }
-    .tbox .l { font-size: 7px; color: #555; text-transform: uppercase; font-weight: 800; margin-top: 2px; letter-spacing: 0.2px; }
+    .tbox .n { font-size: 18px; font-weight: 900; line-height: 1; color: #1e293b; }
+    .tbox .l { font-size: 7px; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-top: 3px; }
 
-    .cyan-text, .cyan-border .tbox { color: var(--unamad-cyan); border-bottom: 2px solid var(--unamad-cyan); }
-    .magenta-text, .magenta-border .tbox { color: var(--unamad-magenta); border-bottom: 2px solid var(--unamad-magenta); }
+    .cyan-text { color: var(--unamad-cyan); }
+    .magenta-text { color: var(--unamad-magenta); }
 
     .premium-btn-enroll {
-        background: var(--unamad-cyan); /* Volver al Celeste */
+        background: linear-gradient(135deg, var(--unamad-cyan) 0%, #0081b2 100%);
         color: white !important;
         text-decoration: none !important;
         display: flex; align-items: center; justify-content: center;
-        gap: 8px; padding: 10px;
-        border-radius: 10px; font-weight: 800; font-size: 11px;
-        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.2);
-        transition: 0.3s;
-        margin-top: 2px;
+        gap: 10px; padding: 12px;
+        border-radius: 12px; font-weight: 900; font-size: 12px;
+        box-shadow: 0 8px 20px rgba(0, 174, 239, 0.2);
+        transition: 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
     }
-    .premium-btn-enroll:hover { background: var(--unamad-magenta); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(226, 0, 122, 0.3); }
 
-    .premium-color-stripe { height: 4px; display: flex; width: 100%; }
+    .premium-color-stripe { height: 5px; display: flex; width: 100%; }
     .stripe-magenta { background: var(--unamad-magenta); flex: 1; }
     .stripe-cyan { background: var(--unamad-cyan); flex: 1; }
     .stripe-green { background: var(--unamad-green); flex: 1; }
