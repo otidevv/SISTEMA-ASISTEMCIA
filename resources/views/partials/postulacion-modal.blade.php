@@ -1337,14 +1337,49 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tipo de Inscripción</label>
-                                <select class="form-select" id="tipo_inscripcion" name="tipo_inscripcion" required>
-                                    <option value="">Seleccione</option>
-                                    <option value="Postulante">Postulante</option>
-                                    <option value="Reforzamiento">Reforzamiento</option>
-                                </select>
-                            </div>
+                             <div class="col-md-12 mb-3">
+                                 <label class="form-label d-block fw-bold text-navy mb-3"><i class="fas fa-fingerprint me-2 text-cyan"></i>Seleccione su Tipo de Inscripción</label>
+                                 <div class="row g-3">
+                                      <div class="col-md-6">
+                                          <div class="modalidad-card h-100 border-2" data-value="Postulante" style="cursor: pointer; border: 2px solid #eef2f7; border-radius: 15px; transition: all 0.3s ease; background: white;">
+                                              <div class="card-body p-3 d-flex align-items-center">
+                                                  <div class="icon-circle me-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; background: rgba(0, 174, 239, 0.08); border-radius: 12px; transition: all 0.3s;">
+                                                      <i class="fas fa-graduation-cap text-primary fs-3"></i>
+                                                  </div>
+                                                  <div>
+                                                      <h6 class="mb-1 fw-bold text-navy" style="letter-spacing: 0.5px;">POSTULANTE</h6>
+                                                      <p class="mb-0 text-muted small" style="line-height: 1.2;">Para quienes <strong>ya terminaron</strong> la secundaria.</p>
+                                                  </div>
+                                                  <div class="ms-auto check-icon" style="opacity: 0; transition: opacity 0.3s;">
+                                                      <i class="fas fa-check-circle text-primary fs-4"></i>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div class="col-md-6">
+                                          <div class="modalidad-card h-100 border-2" data-value="Reforzamiento" style="cursor: pointer; border: 2px solid #eef2f7; border-radius: 15px; transition: all 0.3s ease; background: white;">
+                                              <div class="card-body p-3 d-flex align-items-center">
+                                                  <div class="icon-circle me-3 d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; background: rgba(231, 31, 105, 0.08); border-radius: 12px; transition: all 0.3s;">
+                                                      <i class="fas fa-book-reader text-magenta fs-3"></i>
+                                                  </div>
+                                                  <div>
+                                                      <h6 class="mb-1 fw-bold text-magenta" style="letter-spacing: 0.5px;">REFORZAMIENTO</h6>
+                                                      <p class="mb-0 text-muted small" style="line-height: 1.2;">Para quienes <strong>aún cursan</strong> el colegio.</p>
+                                                  </div>
+                                                  <div class="ms-auto check-icon" style="opacity: 0; transition: opacity 0.3s;">
+                                                      <i class="fas fa-check-circle text-magenta fs-4"></i>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <!-- Input real oculto para envío de datos - Forzamos el ocultamiento -->
+                                  <select class="form-select" id="tipo_inscripcion" name="tipo_inscripcion" required style="display: none !important;">
+                                      <option value="">Seleccione</option>
+                                      <option value="Postulante">Postulante</option>
+                                      <option value="Reforzamiento">Reforzamiento</option>
+                                  </select>
+                              </div>
                             <div class="col-md-12 my-3">
                                 <h6 class="form-section-title" style="border-bottom: 1px solid #d1d5db;">Ubicación del
                                     Colegio</h6>

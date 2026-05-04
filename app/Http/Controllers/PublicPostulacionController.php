@@ -318,9 +318,16 @@ class PublicPostulacionController extends Controller
             'voucher_secuencia' => 'required',
             'foto' => 'required|file|image|max:2048',
             'dni_pdf' => 'required|file|mimes:pdf|max:5120',
-            'certificado_estudios' => 'required|file|mimes:pdf|max:5120',
             'voucher_pago' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ];
+
+        // Validación condicional de documentos según modalidad
+        if ($request->tipo_inscripcion === 'Reforzamiento') {
+            $rules['constancia_estudios'] = 'required|file|mimes:pdf|max:5120';
+        } else {
+            // Por defecto (Regular/Postulante) se pide certificado
+            $rules['certificado_estudios'] = 'required|file|mimes:pdf|max:5120';
+        }
 
         // Validación específica según tipo de documento (DNI = 1)
         if ($request->estudiante_tipo_documento == '1') {
@@ -404,12 +411,18 @@ class PublicPostulacionController extends Controller
 
             // 2. Procesar Padre (si se proporcionó DNI)
             if ($request->filled('padre_dni')) {
+                Log::info("Procesando padre para estudiante DNI: " . $request->estudiante_dni);
                 $this->procesarPadre($request, 'padre', $estudiante, $rolPadre);
+            } else {
+                Log::info("No se proporcionó DNI del padre para estudiante DNI: " . $request->estudiante_dni);
             }
 
             // 3. Procesar Madre (si se proporcionó DNI)
             if ($request->filled('madre_dni')) {
+                Log::info("Procesando madre para estudiante DNI: " . $request->estudiante_dni);
                 $this->procesarPadre($request, 'madre', $estudiante, $rolPadre);
+            } else {
+                Log::info("No se proporcionó DNI de la madre para estudiante DNI: " . $request->estudiante_dni);
             }
 
             // 4. Crear Postulación (NO Inscripción)
@@ -581,20 +594,21 @@ class PublicPostulacionController extends Controller
             $padre->update($updateData);
         }
 
-        // Crear Parentesco
-        Parentesco::firstOrCreate(
+        // Crear o actualizar Parentesco
+        $parentesco = Parentesco::updateOrCreate(
             [
                 'estudiante_id' => $estudiante->id,
-                'padre_id' => $padre->id
+                'padre_id' => $padre->id,
+                'tipo_parentesco' => ucfirst($tipo)
             ],
             [
-                'tipo_parentesco' => ucfirst($tipo),
+                'estado' => true,
                 'acceso_portal' => true,
-                'recibe_notificaciones' => true,
-                'contacto_emergencia' => true,
-                'estado' => true
+                'recibe_notificaciones' => true
             ]
         );
+
+        Log::info("Parentesco " . ucfirst($tipo) . " procesado correctamente: Estudiante ID " . $estudiante->id . ", Padre ID " . $padre->id);
     }
 
     private function generateUsername($nombre, $apellido)

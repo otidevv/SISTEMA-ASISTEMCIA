@@ -338,7 +338,85 @@ $(document).ready(function () {
             buscarColegios();
         }
     });
+
+    // Nuevo: Manejo de clics en las tarjetas de modalidad
+    $(document).on('click', '.modalidad-card', function() {
+        const val = $(this).data('value');
+        $('#tipo_inscripcion').val(val).trigger('change');
+    });
+
+    // Nuevo: Lógica condicional para documentos según tipo de inscripción
+    $(document).on('change', '#tipo_inscripcion', function() {
+        toggleDocumentosPorTipo();
+    });
+
+    // Ejecutar al inicio por si hay valores recordados por el navegador
+    toggleDocumentosPorTipo();
 });
+
+/**
+ * Lógica condicional para documentos según tipo de inscripción
+ * Postulante: Deshabilita Constancia de Estudios
+ * Reforzamiento: Quita Certificado de Estudios
+ */
+function toggleDocumentosPorTipo() {
+    const tipo = $('#tipo_inscripcion').val();
+    const $certEstudios = $('#certificado_estudios');
+    const $constEstudios = $('#constancia_estudios');
+    const $cards = $('.modalidad-card');
+    
+    // Contenedores
+    const $certContainer = $certEstudios.closest('.col-6');
+    const $constContainer = $constEstudios.closest('.col-6');
+
+    // Resetear tarjetas visualmente
+    $cards.css({
+        'border-color': '#eef2f7',
+        'background': 'white',
+        'transform': 'scale(1)',
+        'box-shadow': 'none'
+    }).find('.check-icon').css('opacity', '0');
+    
+    $cards.find('.icon-circle').css('background', 'rgba(0,0,0,0.05)');
+
+
+    if (tipo === 'Postulante') {
+        $certContainer.show();
+        $certEstudios.prop('required', true);
+        $constContainer.hide();
+        $constEstudios.prop('required', false).val('');
+
+        // Resaltar Tarjeta Postulante
+        const $card = $('.modalidad-card[data-value="Postulante"]');
+        $card.css({
+            'border-color': 'var(--cepre-cyan)',
+            'background': 'rgba(0, 174, 239, 0.05)',
+            'transform': 'scale(1.02)',
+            'box-shadow': '0 10px 20px rgba(0, 174, 239, 0.1)'
+        }).find('.check-icon').css('opacity', '1');
+        $card.find('.icon-circle').css('background', 'rgba(0, 174, 239, 0.15)');
+        
+    } else if (tipo === 'Reforzamiento') {
+        $certContainer.hide();
+        $certEstudios.prop('required', false).val('');
+        $constContainer.show();
+        $constEstudios.prop('required', true);
+
+        // Resaltar Tarjeta Reforzamiento
+        const $card = $('.modalidad-card[data-value="Reforzamiento"]');
+        $card.css({
+            'border-color': 'var(--cepre-magenta)',
+            'background': 'rgba(231, 31, 105, 0.05)',
+            'transform': 'scale(1.02)',
+            'box-shadow': '0 10px 20px rgba(231, 31, 105, 0.1)'
+        }).find('.check-icon').css('opacity', '1');
+        $card.find('.icon-circle').css('background', 'rgba(231, 31, 105, 0.15)');
+    } else {
+        $certContainer.show();
+        $constContainer.show();
+        $certEstudios.prop('required', true);
+    }
+}
 
 function buscarColegios() {
     const termino = $('#buscar_colegio').val();
@@ -1115,11 +1193,12 @@ function validateForm() {
     }
 
     if (currentStep == 4) {
-        // Validar archivos
-        const requiredDocs = ['foto', 'dni_pdf', 'certificado_estudios', 'voucher_pago'];
-        requiredDocs.forEach(function (doc) {
+        // Validar archivos según visibilidad y propiedad required
+        const possibleDocs = ['foto', 'dni_pdf', 'certificado_estudios', 'constancia_estudios', 'voucher_pago'];
+        possibleDocs.forEach(function (doc) {
             const input = $('#' + doc);
-            if (input.length && !input.val()) {
+            // Solo validar si el input existe, es visible y es requerido
+            if (input.length && input.is(':visible') && input.prop('required') && !input.val()) {
                 input.closest('.file-upload-card').addClass('border-danger');
                 valid = false;
             }
@@ -1848,6 +1927,9 @@ function precargarDatosAcademicos(datosAcademicos) {
 
         // Resaltar campos académicos
         highlightFields('#anio_egreso, #buscar_colegio, #carrera_id, #turno_id, #tipo_inscripcion');
+
+        // Ejecutar lógica condicional de documentos
+        toggleDocumentosPorTipo();
 
         Toast.fire({ icon: 'success', title: 'Colegio cargado: ' + colegio.nombre });
     }

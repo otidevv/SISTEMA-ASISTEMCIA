@@ -184,9 +184,14 @@ class PostulacionController extends Controller
                     ->first();
             }
 
-            // Extraer datos del padre y la madre
-            $padre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Padre')->first();
-            $madre = $postulacion->estudiante->parentescos->where('tipo_parentesco', 'Madre')->first();
+            // Extraer datos del padre y la madre de forma robusta (insensible a mayúsculas/minúsculas)
+            $padre = $postulacion->estudiante->parentescos->filter(function($p) {
+                return strtolower($p->tipo_parentesco) === 'padre';
+            })->first();
+            
+            $madre = $postulacion->estudiante->parentescos->filter(function($p) {
+                return strtolower($p->tipo_parentesco) === 'madre';
+            })->first();
 
             $padreData = $padre && $padre->padre ? $padre->padre->toArray() : null;
             $madreData = $madre && $madre->padre ? $madre->padre->toArray() : null;
