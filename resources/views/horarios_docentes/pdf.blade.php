@@ -4,40 +4,52 @@
     <meta charset="UTF-8">
     <title>Horario Oficial - {{ $aula->nombre }}</title>
     <style>
-        /* CONFIGURACIÓN CRÍTICA PARA UNA SOLA HOJA - FIX MULTIPAGE */
+        /* CONFIGURACIÓN FINAL ULTRA-COMPLETA UNA SOLA HOJA */
         @page { margin: 0; size: A4 landscape; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Helvetica', Arial, sans-serif;
-            font-size: 10px;
+            font-size: 9px;
             color: #1a1a1a;
             background-color: white;
             line-height: 1.1;
-            padding: 1.5cm;
+            padding: 1cm 1.5cm;
         }
 
-        .container { width: 100%; margin: 0 auto; }
+        .container { width: 100%; }
 
         /* HEADER */
-        .header-table { width: 100%; margin-bottom: 12px; }
-        .logo-img { width: 60px; height: auto; }
+        .header-table { width: 100%; margin-bottom: 8px; }
+        .logo-img { width: 55px; height: auto; }
         .title-box { text-align: center; }
-        .title-box h1 { font-size: 20px; color: #003366; font-weight: 900; text-transform: uppercase; }
-        .title-box p { font-size: 13px; color: #cc0066; font-weight: bold; }
+        .title-box h1 { font-size: 20px; color: #003366; font-weight: 900; text-transform: uppercase; margin-bottom: 1px; }
+        .title-box p { font-size: 12px; color: #cc0066; font-weight: bold; }
 
-        .info-header {
+        .vigencia-tag {
+            background-color: #cc0066;
+            color: white;
+            padding: 3px 12px;
+            border-radius: 15px;
+            font-size: 8px;
+            font-weight: 900;
+            display: inline-block;
+            margin-top: 3px;
+            text-transform: uppercase;
+        }
+
+        .info-bar {
             background-color: #003366;
             color: white;
-            padding: 8px;
+            padding: 7px;
             text-align: center;
             font-size: 12px;
             font-weight: bold;
             border-radius: 4px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
-        /* TABLA ESTABLE */
+        /* TABLA MÁXIMO APROVECHAMIENTO */
         table.schedule-table {
             width: 100%;
             border-collapse: collapse;
@@ -57,72 +69,84 @@
             background-color: #003366;
             color: white;
             padding: 10px 2px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .time-col {
             background-color: #f8f9fa;
-            width: 75px; /* Reducido para ganar espacio horizontal */
+            width: 75px;
             font-weight: 900;
-            font-size: 11px; /* Letra más grande para las horas */
+            font-size: 10px;
             color: #003366;
         }
 
         table.schedule-table td {
-            height: 52px; /* Altura segura */
-            padding: 4px;
+            height: 60px; /* Aumentado para aprovechar al máximo el espacio vertical */
+            padding: 2px;
         }
 
-        /* BLOQUES DE CURSO - SIN HEIGHT 100% PARA EVITAR BUGS */
-        .course-item { 
-            width: 100%; 
-            display: block;
-        }
-
-        .course-name { 
-            font-weight: 900; 
-            font-size: 10px; 
-            display: block; 
-            margin-bottom: 2px; 
-            text-transform: uppercase;
-        }
-
-        .teacher-name { 
-            font-size: 8px; 
-            font-weight: bold;
-        }
-
-        .group-tag {
-            font-size: 7.5px;
-            font-weight: 900;
-            margin-top: 2px;
-            display: inline-block;
-        }
+        /* BLOQUES DE CURSO */
+        .course-block { width: 100%; }
+        .course-name { font-weight: 900; font-size: 10px; display: block; margin-bottom: 2px; text-transform: uppercase; }
+        .teacher-name { font-size: 8px; font-weight: bold; opacity: 0.9; }
 
         /* RECESO */
         .break-cell {
-            background-color: #f1f5f9 !important;
-            color: #003366;
+            background-color: #eee !important;
+            color: #000;
             font-weight: 900;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 10px;
+            letter-spacing: 12px;
             height: 30px !important;
         }
 
-        .footer {
+        /* RESUMEN COMPACTO */
+        .summary-section {
             margin-top: 10px;
-            text-align: right;
-            font-size: 9px;
+            border-top: 1.5px solid #003366;
+            padding-top: 5px;
+        }
+        .summary-label {
+            font-size: 8.5px;
+            font-weight: 900;
+            color: #003366;
+            margin-bottom: 5px;
+            display: block;
+            text-transform: uppercase;
+        }
+        .summary-item {
+            display: inline-block;
+            width: 19%;
+            margin-bottom: 3px;
+        }
+        .color-box {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 4px;
+            border: 0.5px solid #333;
+        }
+        .summary-text {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 8px;
             font-weight: bold;
-            color: #444;
+        }
+
+        .footer {
+            margin-top: 8px;
+            text-align: right;
+            font-size: 8px;
+            font-weight: bold;
+            color: #555;
         }
 
         <?php
         function getContrastYIQ($hexcolor){
-            // FORZAR BLANCO EN TODO LO QUE TENGA COLOR PARA ESTILO PREMIUM
             if (!$hexcolor || $hexcolor == '#ffffff' || $hexcolor == 'transparent') return '#000000';
             return '#ffffff'; 
         }
@@ -130,19 +154,40 @@
     </style>
 </head>
 <body>
+    @php
+        $resumen = [];
+        foreach($grilla as $fila) {
+            foreach($dias as $dia) {
+                $h = $fila[$dia] ?? null;
+                if($h && stripos($h->curso->nombre, 'receso') === false) {
+                    $nombre = strtoupper($h->curso->nombre);
+                    if(!isset($resumen[$nombre])) {
+                        $resumen[$nombre] = [
+                            'horas' => 0,
+                            'color' => $h->curso->color ?? '#ffffff'
+                        ];
+                    }
+                    $resumen[$nombre]['horas']++;
+                }
+            }
+        }
+        ksort($resumen);
+    @endphp
+
     <div class="container">
         <table class="header-table">
             <tr>
                 <td width="10%"><img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-img"></td>
                 <td class="title-box">
                     <h1>HORARIO ACADÉMICO OFICIAL</h1>
-                    <p>CEPRE-UNAMAD | CICLO {{ $ciclo->nombre }}</p>
+                    <p>CEPRE-UNAMAD | SEDE CENTRAL</p>
+                    <div class="vigencia-tag">VÁLIDO PARA EL CICLO {{ strtoupper($ciclo->nombre) }}</div>
                 </td>
                 <td width="10%" align="right"><img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo-img"></td>
             </tr>
         </table>
 
-        <div class="info-header">
+        <div class="info-bar">
             AULA: {{ $aula->nombre }} &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; TURNO: {{ $turno }}
         </div>
 
@@ -185,19 +230,14 @@
                                     }
                                 @endphp
                                 
-                                @if ($horario && !$esCursoReceso)
-                                    <td style="background-color: {{ $bgColor }}; color: {{ $textColor }};">
-                                        <div class="course-item">
+                                <td style="background-color: {{ $bgColor }}; color: {{ $textColor }};">
+                                    @if ($horario && !$esCursoReceso)
+                                        <div class="course-block">
                                             <span class="course-name">{{ strtoupper($horario->curso->nombre) }}</span>
                                             <span class="teacher-name">{{ $horario->docente->nombre_completo ?? 'Sin docente' }}</span>
-                                            @if($horario->grupo)
-                                                <div class="group-tag">G: {{ $horario->grupo }}</div>
-                                            @endif
                                         </div>
-                                    </td>
-                                @else
-                                    <td></td>
-                                @endif
+                                    @endif
+                                </td>
                             @endforeach
                         </tr>
                     @endif
@@ -205,8 +245,22 @@
             </tbody>
         </table>
 
+        <div class="summary-section">
+            <span class="summary-label">Resumen de Carga Horaria Semanal:</span>
+            <div class="summary-container">
+                @foreach($resumen as $curso => $data)
+                    <div class="summary-item">
+                        <div class="color-box" style="background-color: {{ $data['color'] }};"></div>
+                        <span class="summary-text">
+                            <strong>{{ $curso }}:</strong> {{ $data['horas'] }} hrs
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
         <div class="footer">
-            Generado por Sistema CEPRE-UNAMAD | {{ now()->format('d/m/Y H:i') }}
+            Sistema CEPRE-UNAMAD | {{ now()->format('d/m/Y H:i') }}
         </div>
     </div>
 </body>
