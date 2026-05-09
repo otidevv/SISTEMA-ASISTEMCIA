@@ -1507,7 +1507,7 @@ class PostulacionController extends Controller
         $pdf = Pdf::loadView('postulaciones.reportes.pdf_resumen', compact('tabla1', 'tabla2', 'ciclo'));
 
 
-        $pdf->setPaper('a4', 'portrait');
+        $pdf->setPaper('a4', 'landscape');
         
         return $pdf->download('reporte_resumen_' . ($ciclo ? $ciclo->nombre : 'general') . '_' . date('Ymd_His') . '.pdf');
     }

@@ -5,64 +5,71 @@
     <title>Reporte Resumen de Postulantes</title>
     <style>
         @page {
-            margin: 0.7cm 0.8cm;
-            size: A4;
+            margin: 0.5cm 0.6cm;
+            size: A4 landscape;
         }
         body {
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
-            font-size: 7.5pt;
-            line-height: 1.1;
+            font-size: 6.5pt;
+            line-height: 1.05;
             color: #333;
+            margin: 0;
+            padding: 0;
         }
         .header {
             width: 100%;
             border-bottom: 2px solid #ec008c;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
         }
         .header table {
             width: 100%;
         }
         .logo {
-            width: 50px;
+            width: 38px;
         }
         .header-text {
             text-align: center;
         }
         .header-text h1 {
             margin: 0;
-            font-size: 14pt;
+            font-size: 9pt;
             color: #ec008c;
         }
         .header-text h2 {
-            margin: 5px 0;
-            font-size: 12pt;
+            margin: 1px 0;
+            font-size: 8pt;
             color: #2b5a6f;
         }
+        .header-text h3 {
+            margin: 0;
+            font-size: 7.5pt;
+            text-transform: uppercase;
+        }
         .report-info {
-            margin-bottom: 20px;
-            font-size: 9pt;
+            margin-bottom: 4px;
+            font-size: 7pt;
         }
         .report-info table {
             width: 100%;
         }
         .table-container {
-            margin-bottom: 30px;
+            margin-bottom: 0;
         }
         .table-title {
             background-color: #ec008c;
             color: white;
-            padding: 5px 10px;
+            padding: 2px 6px;
             font-weight: bold;
-            font-size: 10pt;
-            margin-bottom: 10px;
-            border-radius: 3px;
+            font-size: 7pt;
+            margin-bottom: 3px;
+            border-radius: 2px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            page-break-inside: auto;
+            page-break-inside: avoid;
         }
         thead {
             display: table-header-group;
@@ -70,16 +77,17 @@
         th {
             background-color: #f2f2f2;
             border: 1px solid #999;
-            padding: 3px 4px;
+            padding: 1.5px 3px;
             text-align: center;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 7pt;
+            font-size: 5.5pt;
         }
         td {
             border: 1px solid #999;
-            padding: 2px 4px;
+            padding: 1px 3px;
             vertical-align: middle;
+            font-size: 6pt;
         }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
@@ -96,11 +104,11 @@
             color: #ec008c;
         }
 
-
         .layout-table {
             width: 100%;
             border: none;
             border-collapse: collapse;
+            page-break-inside: avoid;
         }
         /* Solo las celdas directas de la tabla de diseño son invisibles */
         table.layout-table > tr > td,
@@ -117,18 +125,18 @@
             border: 1px solid #999 !important;
         }
         .main-col {
-            width: 62%;
-            padding-right: 15px !important;
+            width: 65%;
+            padding-right: 8px !important;
         }
         .summary-col {
-            width: 38%;
+            width: 35%;
         }
         
         .badge-grupo {
             display: inline-block;
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 6.5pt;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 5.5pt;
             font-weight: bold;
             text-transform: uppercase;
         }
@@ -147,27 +155,27 @@
             bottom: 0;
             width: 100%;
             text-align: center;
-            font-size: 7pt;
+            font-size: 5.5pt;
             color: #999;
             border-top: 1px solid #eee;
-            padding-top: 5px;
+            padding-top: 2px;
         }
 
     </style>
 </head>
 <body>
-    <div class="header" style="margin-top: -10px;">
+    <div class="header" style="margin-top: -5px;">
         <table>
             <tr>
-                <td style="border:none; width: 60px;">
+                <td style="border:none; width: 45px;">
                     <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo">
                 </td>
                 <td style="border:none;" class="header-text">
-                    <h1 style="font-size: 11pt;">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
-                    <h2 style="font-size: 10pt;">CENTRO PREUNIVERSITARIO - CEPRE UNAMAD</h2>
-                    <h3 style="margin:0; text-transform:uppercase; font-size: 9pt;">Reporte Resumen de Postulantes</h3>
+                    <h1>UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</h1>
+                    <h2>CENTRO PREUNIVERSITARIO - CEPRE UNAMAD</h2>
+                    <h3>Reporte Resumen de Postulantes</h3>
                 </td>
-                <td style="border:none; width: 60px; text-align: right;">
+                <td style="border:none; width: 45px; text-align: right;">
                     <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo">
                 </td>
             </tr>
@@ -215,11 +223,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 25px;">#</th>
-                                <th style="width: 55px;">Grupo</th>
+                                <th style="width: 20px;">#</th>
+                                <th style="width: 45px;">Grupo</th>
                                 <th>Carrera / Grado</th>
-                                <th style="width: 60px;">Aula</th>
-                                <th style="width: 50px;">Total</th>
+                                <th style="width: 55px;">Aula</th>
+                                <th style="width: 40px;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -281,7 +289,7 @@
                         <thead>
                             <tr>
                                 <th>Aula</th>
-                                <th style="width: 65px;">Postulantes</th>
+                                <th style="width: 55px;">Postulantes</th>
                             </tr>
                         </thead>
                         <tbody>
