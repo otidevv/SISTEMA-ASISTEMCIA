@@ -549,6 +549,9 @@ class HorarioDocenteController extends Controller
                     'curso_id' => $horario->curso_id,
                     'curso_nombre' => $horario->curso?->nombre ?? 'Sin curso',
                     'curso_color' => $horario->curso?->color ?? '#7367f0',
+                    'aula_id' => $horario->aula_id,
+                    'ciclo_id' => $horario->ciclo_id,
+                    'turno' => $horario->turno,
                     'dia_semana' => $horario->dia_semana,
                     'hora_inicio' => substr($horario->hora_inicio, 0, 5),
                     'hora_fin' => substr($horario->hora_fin, 0, 5),
@@ -657,7 +660,12 @@ class HorarioDocenteController extends Controller
             ->get();
 
         // Organizar horarios por día y hora
-        $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        $diasBase = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        
+        // Verificar si hay clases el sábado
+        $hayClasesSabado = $horarios->contains('dia_semana', 'Sábado');
+        $dias = $hayClasesSabado ? $diasBase : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+        
         $horasRango = $this->obtenerRangoHoras($horarios, $ciclo, $turno);
         
         $grilla = [];
@@ -674,7 +682,8 @@ class HorarioDocenteController extends Controller
             'aula' => $aula,
             'turno' => $turno,
             'grilla' => $grilla,
-            'dias' => $dias
+            'dias' => $dias,
+            'hayClasesSabado' => $hayClasesSabado
         ]);
 
         $pdf->setPaper('A4', 'landscape');
@@ -696,19 +705,19 @@ class HorarioDocenteController extends Controller
             if ($fin->hour > $maxHora) $maxHora = $fin->hour;
         }
         
-        // CUBRIR TODO EL PDF DE FORMA PROFESIONAL Y COMPLETA SEGÚN TURNO
+        // AJUSTE DE RANGO SEGÚN TURNO OFICIAL
         if ($turno === 'MAÑANA') {
             if ($minHora > 7) $minHora = 7;
-            if ($maxHora < 14) $maxHora = 14; // Cubrir hasta 2pm
+            if ($maxHora < 13) $maxHora = 13; // Turno mañana termina a la 1pm
         } elseif ($turno === 'TARDE') {
             if ($minHora > 14) $minHora = 14;
-            if ($maxHora < 21) $maxHora = 21; // Cubrir hasta 9pm
+            if ($maxHora < 20) $maxHora = 20; // Turno tarde termina a las 8pm
         } elseif ($turno === 'NOCHE') {
             if ($minHora > 18) $minHora = 18;
-            if ($maxHora < 23) $maxHora = 23; 
+            if ($maxHora < 22) $maxHora = 22; 
         } else {
             if ($minHora == 24) $minHora = 7;
-            if ($maxHora == 0) $maxHora = 21;
+            if ($maxHora == 0) $maxHora = 22;
         }
         
         $slots = [];

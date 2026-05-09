@@ -73,58 +73,59 @@
     .schedule-block {
         background: var(--primary-gradient);
         color: white;
-        border-radius: 8px;
-        padding: 8px;
-        margin: 2px;
+        border-radius: 6px;
+        padding: 4px 6px;
+        margin: 0;
         cursor: move;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         position: relative;
         overflow: hidden;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .schedule-block:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     .schedule-block.editing {
-        outline: 3px solid #ff9f43;
-        box-shadow: 0 0 0 3px rgba(255,159,67,0.25);
-    }
-
-    .schedule-block::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: rgba(255,255,255,0.3);
+        outline: 2px solid #ff9f43;
+        box-shadow: 0 0 0 2px rgba(255,159,67,0.25);
     }
 
     .schedule-block .course-name {
         font-weight: 700;
-        font-size: 0.9rem;
-        margin-bottom: 4px;
-        line-height: 1.2;
+        font-size: 0.75rem;
+        margin-bottom: 2px;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .schedule-block .teacher-name {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         opacity: 0.9;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .schedule-block .time-range {
-        font-size: 0.7rem;
+        font-size: 0.6rem;
         opacity: 0.8;
-        margin-top: 4px;
+        margin-top: 2px;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 3px;
     }
 
     /* Botón de eliminar en el bloque */
@@ -229,9 +230,14 @@
 
     .quick-create-modal .modal-header {
         background: var(--primary-gradient);
-        color: white;
+        color: white !important;
         border-radius: 16px 16px 0 0;
         padding: 20px 24px;
+    }
+
+    .quick-create-modal .modal-title {
+        color: white !important;
+        font-weight: 600;
     }
 
     /* Indicador de carga */
@@ -662,12 +668,16 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Hora Inicio</label>
+                            <input type="time" id="modal-hora-inicio-display" class="form-control bg-light" readonly>
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Hora Fin</label>
                             <input type="time" id="modal-hora-fin" class="form-control" required>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label">Grupo (Opcional)</label>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Grupo</label>
                             <input type="text" id="modal-grupo" class="form-control" placeholder="Ej: A-1">
                         </div>
                     </div>

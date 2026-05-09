@@ -23,6 +23,15 @@ document.addEventListener('DOMContentLoaded', function () {
     inicializarEventos();
 });
 
+// Exponer funciones al scope global para los event handlers inline del HTML
+window.drag = drag;
+window.drop = drop;
+window.allowDrop = allowDrop;
+window.eliminarHorario = eliminarHorario;
+window.cargarHorarios = cargarHorarios;
+window.guardarCambios = guardarCambios;
+window.abrirModalCreacion = abrirModalCreacion;
+
 /**
  * Inicializar colores de cursos
  */
@@ -208,51 +217,72 @@ function renderizarHorarios() {
     });
 }
 
+
 /**
  * Renderizar un bloque simple (sin dividir)
  */
 function renderizarBloqueSimple(horario, mostrarInfo) {
     const cellInicio = encontrarCelda(horario.dia_semana, horario.hora_inicio);
-    if (cellInicio) {
-        // Calcular cuántas celdas debe abarcar
-        const duracionHoras = calcularDuracionHoras(horario.hora_inicio, horario.hora_fin);
-        const celdasACubrir = Math.ceil(duracionHoras);
+    if (!cellInicio) return;
 
-        // Obtener la altura real de la celda ANTES de agregar el bloque
-        const alturaCelda = cellInicio.offsetHeight;
-        const gap = 1; // Gap entre celdas
+    const minInicio = parseMinutos(horario.hora_inicio);
+    const minFin = parseMinutos(horario.hora_fin);
 
-        // Calcular altura total en píxeles
-        const alturaTotal = (alturaCelda * celdasACubrir) + (gap * (celdasACubrir - 1));
-
-        const block = crearBloqueHorario(horario, mostrarInfo);
-        cellInicio.appendChild(block);
-
-        if (celdasACubrir >= 1) {
-            // Hacer que el bloque abarque múltiples filas
-            block.style.position = 'absolute';
-            block.style.top = '0';
-            block.style.left = '0';
-            block.style.right = '0';
-            block.style.bottom = 'auto';
-            block.style.height = `${alturaTotal}px`;
-            block.style.maxHeight = `${alturaTotal}px`;
-            block.style.overflow = 'hidden';
-            block.style.zIndex = '10';
+    // Contar cuántas celdas reales de la grilla abarca este bloque
+    const diaKey = normalizarDiaKey(horario.dia_semana);
+    let celdasCubiertas = [];
+    
+    gridCellIndex.forEach((cell, key) => {
+        const [cellDia, cellHora] = key.split('|');
+        if (cellDia !== diaKey) return;
+        
+        const cellMin = parseMinutos(cellHora);
+        // La celda está dentro del bloque si su hora de inicio >= inicio del horario
+        // y < fin del horario (usamos -1 para evitar capturar la celda donde empieza el siguiente bloque)
+        if (cellMin >= minInicio && cellMin <= (minFin - 1)) {
+            celdasCubiertas.push(cell);
         }
+    });
+
+    // Ordenar por posición vertical real en el DOM
+    celdasCubiertas.sort((a, b) => {
+        return (a.offsetTop || 0) - (b.offsetTop || 0);
+    });
+
+    const block = crearBloqueHorario(horario, mostrarInfo);
+
+    if (celdasCubiertas.length >= 1) {
+        // Calcular la altura total sumando las alturas de las celdas
+        const gap = 1;
+        let alturaTotal = 0;
+        
+        celdasCubiertas.forEach((cell, idx) => {
+            alturaTotal += cell.getBoundingClientRect().height;
+            if (idx > 0) alturaTotal += gap;
+        });
+
+        // Ajustar el bloque
+        block.style.position = 'absolute';
+        block.style.top = '0';
+        block.style.left = '0';
+        block.style.right = '0';
+        block.style.margin = '0';
+        block.style.width = '100%';
+        block.style.height = `${alturaTotal}px`;
+        block.style.maxHeight = `${alturaTotal}px`;
+        block.style.zIndex = '10';
+        block.style.borderRadius = '4px';
     }
+
+    cellInicio.appendChild(block);
 }
 
 /**
  * Calcular duración en horas
  */
 function calcularDuracionHoras(horaInicio, horaFin) {
-    const [hInicio, mInicio] = horaInicio.split(':').map(Number);
-    const [hFin, mFin] = horaFin.split(':').map(Number);
-
-    const minutosInicio = hInicio * 60 + mInicio;
-    const minutosFin = hFin * 60 + mFin;
-
+    const minutosInicio = parseMinutos(horaInicio);
+    const minutosFin = parseMinutos(horaFin);
     return (minutosFin - minutosInicio) / 60;
 }
 
@@ -323,9 +353,12 @@ function crearBloqueHorario(horario, mostrarInfo = true) {
 
     // Eventos drag
     block.addEventListener('dragstart', function (e) {
-        e.dataTransfer.setData('horarioId', this.dataset.horarioId);
+        const id = this.dataset.horarioId;
+        e.dataTransfer.setData('horarioid', id);
+        e.dataTransfer.setData('horarioId', id); // Mantener ambos por seguridad
         this.style.opacity = '0.5';
-        horarioEnDragId = this.dataset.horarioId;
+        horarioEnDragId = id;
+        e.dataTransfer.effectAllowed = 'move';
     });
 
     block.addEventListener('dragend', function (e) {
@@ -488,6 +521,11 @@ async function actualizarHorarioServidor(horario) {
  */
 function allowDrop(ev) {
     ev.preventDefault();
+    
+    // Si viene del sidebar, usar efecto de copia
+    const fromSidebar = ev.dataTransfer.types.includes('fromsidebar') || ev.dataTransfer.types.includes('text/plain');
+    ev.dataTransfer.dropEffect = 'copy';
+    
     const cell = ev.currentTarget;
     let isInvalid = false;
 
@@ -509,7 +547,10 @@ function allowDrop(ev) {
         cell.dataset.invalidDrop = '1';
     } else {
         cell.classList.remove('invalid-drop');
-        cell.style.background = '#f0f7ff';
+        // Solo cambiar el fondo si no es una celda de receso (para no tapar el verde)
+        if (!cell.classList.contains('receso-cell-grid')) {
+            cell.style.background = 'rgba(115, 103, 240, 0.1)';
+        }
         cell.dataset.invalidDrop = '0';
     }
 }
@@ -518,16 +559,32 @@ function allowDrop(ev) {
  * Drag & Drop - Iniciar arrastre desde sidebar
  */
 function drag(ev) {
+    console.log('Drag start event triggered');
+    horarioEnDragId = null; // Asegurar que no hay conflicto con bloques existentes
+
     const item = (ev.currentTarget && ev.currentTarget.classList.contains('course-item'))
         ? ev.currentTarget
         : ev.target.closest('.course-item');
-    if (!item) return;
+    
+    if (!item) {
+        console.error('Drag target not found');
+        return;
+    }
 
     const cursoId = item.dataset.cursoId;
     const cursoNombre = item.dataset.cursoNombre;
-    ev.dataTransfer.setData('cursoId', cursoId);
-    ev.dataTransfer.setData('cursoNombre', cursoNombre);
-    ev.dataTransfer.setData('fromSidebar', 'true');
+    
+    console.log(`Dragging course: ${cursoNombre} (ID: ${cursoId})`);
+    
+    // Usar minúsculas para los tipos (algunos navegadores lo hacen automáticamente)
+    ev.dataTransfer.setData('fromsidebar', 'true');
+    ev.dataTransfer.setData('cursoid', cursoId);
+    ev.dataTransfer.setData('cursonombre', cursoNombre);
+    
+    // Fallback estándar
+    ev.dataTransfer.setData('text/plain', cursoId);
+    
+    ev.dataTransfer.effectAllowed = 'copy';
 }
 
 /**
@@ -535,27 +592,34 @@ function drag(ev) {
  */
 function drop(ev) {
     ev.preventDefault();
-    ev.currentTarget.style.background = '';
-    ev.currentTarget.classList.remove('invalid-drop');
+    console.log('Drop event triggered');
+    
+    if (ev.currentTarget) {
+        ev.currentTarget.style.background = '';
+        ev.currentTarget.classList.remove('invalid-drop');
+    }
 
-    const fromSidebar = ev.dataTransfer.getData('fromSidebar');
+    // Intentar leer con ambos casos (compatibilidad)
+    const fromSidebar = ev.dataTransfer.getData('fromsidebar') || ev.dataTransfer.getData('fromSidebar');
+    const cursoId = ev.dataTransfer.getData('cursoid') || ev.dataTransfer.getData('cursoId') || ev.dataTransfer.getData('text/plain');
+    const cursoNombre = ev.dataTransfer.getData('cursonombre') || ev.dataTransfer.getData('cursoNombre');
+    
+    console.log(`Drop data: fromSidebar=${fromSidebar}, cursoId=${cursoId}`);
 
     if (fromSidebar === 'true') {
-        // Arrastrado desde sidebar - abrir modal
         const dia = ev.currentTarget.dataset.dia;
         const hora = ev.currentTarget.dataset.hora;
-        const cursoId = ev.dataTransfer.getData('cursoId');
-        const cursoNombre = ev.dataTransfer.getData('cursoNombre');
-
+        console.log(`Opening modal for ${dia} ${hora} with curso ${cursoId}`);
         abrirModalCreacion(dia, hora, cursoId);
     } else {
-        // Mover horario existente
+        const horarioId = ev.dataTransfer.getData('horarioid') || ev.dataTransfer.getData('horarioId');
+        console.log(`Moving existing block: ${horarioId}`);
+        
         if (ev.currentTarget.dataset.invalidDrop === '1') {
             Swal.fire('Error', 'Conflicto detectado: el horario no se puede mover a esa celda.', 'error');
             ev.currentTarget.dataset.invalidDrop = '0';
             return;
         }
-        const horarioId = ev.dataTransfer.getData('horarioId');
         moverHorario(horarioId, ev.currentTarget);
     }
 }
@@ -567,6 +631,7 @@ function abrirModalCreacion(dia, hora, cursoId = null) {
     horarioEnEdicionId = null;
     document.getElementById('modal-dia').value = dia;
     document.getElementById('modal-hora-inicio').value = hora;
+    document.getElementById('modal-hora-inicio-display').value = hora;
 
     if (cursoId) {
         document.getElementById('modal-curso').value = cursoId;
@@ -589,6 +654,7 @@ function abrirModalEdicion(horario) {
     // Pre-llenar el modal con los datos del horario
     document.getElementById('modal-dia').value = horario.dia_semana;
     document.getElementById('modal-hora-inicio').value = horario.hora_inicio;
+    document.getElementById('modal-hora-inicio-display').value = horario.hora_inicio;
     document.getElementById('modal-hora-fin').value = horario.hora_fin;
     document.getElementById('modal-grupo').value = horario.grupo || '';
 
@@ -1080,7 +1146,7 @@ async function guardarDesdeModal() {
         };
 
         try {
-            const response = await fetch(`${window.location.origin}/json/horarios-docentes/${horarioEnEdicionId}`, {
+            const response = await fetch(`${window.scheduleData.routes.deleteBase}/${horarioEnEdicionId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
