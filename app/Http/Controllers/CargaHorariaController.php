@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CargaHorariaResumenExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CargaHorariaController extends Controller
 {
@@ -279,14 +280,19 @@ class CargaHorariaController extends Controller
     {
         $data = $this->obtenerDatosCargaHoraria($docenteId, $cicloId);
         
+        $urlValidacion = route('publico.validar_horario', ['id' => $docenteId, 'ciclo' => $cicloId, 'tipo' => 'docente']);
+        $qrCode = base64_encode(QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion));
+
         $pdf = Pdf::loadView('reportes.carga-horaria-visual', [
             'docente' => $data['docente'],
             'ciclo' => $data['ciclo'],
             'data' => $data,
+            'qrCode' => $qrCode,
             'fecha_generacion' => Carbon::now()->format('d/m/Y H:i:s')
         ]);
         
         $pdf->setPaper('a4', 'landscape'); // Horizontal para el horario visual
+        $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
         
         $filename = 'horario_' . $data['docente']->numero_documento . '_' . $data['ciclo']->codigo . '.pdf';
         return $pdf->download($filename);
@@ -307,5 +313,34 @@ class CargaHorariaController extends Controller
         
         $filename = 'carga_horaria_' . $data['docente']->numero_documento . '_' . $data['ciclo']->codigo . '.pdf';
         return $pdf->download($filename);
+    }
+
+    /**
+     * Validar Horario vía QR (Público)
+     */
+    public function validarHorario(Request $request)
+    {
+        $id = $request->id;
+        $cicloId = $request->ciclo;
+        $tipo = $request->tipo; // 'docente' o 'aula'
+
+        $ciclo = Ciclo::findOrFail($cicloId);
+        $entidad = null;
+
+        if ($tipo === 'docente') {
+            $entidad = User::findOrFail($id);
+            $nombre = $entidad->nombre_completo;
+        } else {
+            $entidad = \App\Models\Aula::findOrFail($id);
+            $nombre = "Aula: " . $entidad->nombre;
+        }
+
+        return view('reportes.validar-qr', [
+            'entidad' => $entidad,
+            'ciclo' => $ciclo,
+            'tipo' => $tipo,
+            'nombre' => $nombre,
+            'fecha_validacion' => now()->format('d/m/Y H:i:s')
+        ]);
     }
 }

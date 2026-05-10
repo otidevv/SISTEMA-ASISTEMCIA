@@ -950,3 +950,7 @@ Route::get('/cursos-cepre', [App\Http\Controllers\HomeController::class, 'cursos
 Route::get('/validar-constancia/{codigo}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'validarConstancia'])
     ->name('postulaciones.validar-constancia');
 
+// Ruta pública de validación de horarios (Docente/Aula)
+Route::get('/validar-horario', [CargaHorariaController::class, 'validarHorario'])
+    ->name('publico.validar_horario');
+

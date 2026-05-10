@@ -9,6 +9,9 @@ use App\Models\Ciclo;
 use App\Models\Aula;
 use App\Models\Curso;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -677,12 +680,16 @@ class HorarioDocenteController extends Controller
             $grilla[] = $fila;
         }
 
+        $urlValidacion = route('publico.validar_horario', ['id' => $aula->id, 'ciclo' => $ciclo->id, 'tipo' => 'aula']);
+        $qrCode = base64_encode(QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion));
+
         $pdf = Pdf::loadView('horarios_docentes.pdf', [
             'ciclo' => $ciclo,
             'aula' => $aula,
             'turno' => $turno,
             'grilla' => $grilla,
             'dias' => $dias,
+            'qrCode' => $qrCode,
             'hayClasesSabado' => $hayClasesSabado
         ]);
 

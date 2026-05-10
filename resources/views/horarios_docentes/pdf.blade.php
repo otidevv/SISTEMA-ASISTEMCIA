@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Horario Oficial - {{ $aula->nombre }}</title>
     <style>
-        /* CONFIGURACIÓN FINAL ULTRA-COMPLETA UNA SOLA HOJA */
+        /* CONFIGURACIÓN FINAL CERTIFICADA - ESTRICTAMENTE UNA SOLA HOJA */
         @page { margin: 0; size: A4 landscape; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,25 +14,35 @@
             color: #1a1a1a;
             background-color: white;
             line-height: 1.1;
-            padding: 1cm 1.5cm;
+            padding: 0.7cm 1.5cm;
         }
 
-        .container { width: 100%; }
+        /* MARCA DE AGUA SUTIL */
+        .watermark {
+            position: fixed;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.04;
+            z-index: -1000;
+            width: 420px;
+        }
+
+        .container { width: 100%; position: relative; }
 
         /* HEADER */
-        .header-table { width: 100%; margin-bottom: 8px; }
-        .logo-unamad { width: 65px; height: auto; }
-        .logo-cepre { width: 140px; height: auto; }
+        .header-table { width: 100%; margin-bottom: 6px; }
+        .logo-img { width: 55px; height: auto; }
         .title-box { text-align: center; }
-        .title-box h1 { font-size: 20px; color: #003366; font-weight: 900; text-transform: uppercase; margin-bottom: 1px; }
-        .title-box p { font-size: 12px; color: #cc0066; font-weight: bold; }
+        .title-box h1 { font-size: 21px; color: #003366; font-weight: 900; text-transform: uppercase; margin-bottom: 1px; }
+        .title-box p { font-size: 13px; color: #cc0066; font-weight: bold; }
 
         .vigencia-tag {
             background-color: #cc0066;
             color: white;
-            padding: 3px 12px;
+            padding: 3px 15px;
             border-radius: 15px;
-            font-size: 8px;
+            font-size: 8.5px;
             font-weight: 900;
             display: inline-block;
             margin-top: 3px;
@@ -44,13 +54,13 @@
             color: white;
             padding: 7px;
             text-align: center;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             border-radius: 4px;
             margin-bottom: 10px;
         }
 
-        /* TABLA MÁXIMO APROVECHAMIENTO */
+        /* TABLA MAXIMIZADA */
         table.schedule-table {
             width: 100%;
             border-collapse: collapse;
@@ -63,87 +73,71 @@
             border: 1px solid #000;
             text-align: center;
             vertical-align: middle;
-            word-wrap: break-word;
         }
 
         table.schedule-table th {
             background-color: #003366;
             color: white;
             padding: 10px 2px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .time-col {
             background-color: #f8f9fa;
-            width: 75px;
+            width: 80px;
             font-weight: 900;
-            font-size: 10px;
+            font-size: 11px;
             color: #003366;
         }
 
         table.schedule-table td {
-            height: 60px; /* Aumentado para aprovechar al máximo el espacio vertical */
-            padding: 2px;
+            height: 65px;
+            padding: 3px;
         }
 
-        /* BLOQUES DE CURSO */
         .course-block { width: 100%; }
-        .course-name { font-weight: 900; font-size: 10px; display: block; margin-bottom: 2px; text-transform: uppercase; }
-        .teacher-name { font-size: 8px; font-weight: bold; opacity: 0.9; }
+        .course-name { font-weight: 900; font-size: 10.5px; display: block; margin-bottom: 2px; text-transform: uppercase; }
+        .teacher-name { font-size: 8.5px; font-weight: bold; opacity: 0.9; }
 
         /* RECESO */
         .break-cell {
             background-color: #eee !important;
             color: #000;
             font-weight: 900;
-            font-size: 11px;
+            font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 12px;
-            height: 30px !important;
+            height: 35px !important;
         }
 
         /* RESUMEN COMPACTO */
         .summary-section {
             margin-top: 10px;
-            border-top: 1.5px solid #003366;
-            padding-top: 5px;
+            border-top: 2px solid #003366;
+            padding-top: 8px;
         }
-        .summary-label {
-            font-size: 8.5px;
-            font-weight: 900;
-            color: #003366;
-            margin-bottom: 5px;
-            display: block;
-            text-transform: uppercase;
-        }
-        .summary-item {
-            display: inline-block;
-            width: 19%;
-            margin-bottom: 3px;
-        }
-        .color-box {
-            width: 8px;
-            height: 8px;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 4px;
-            border: 0.5px solid #333;
-        }
-        .summary-text {
-            display: inline-block;
-            vertical-align: middle;
-            font-size: 8px;
-            font-weight: bold;
-        }
+        .summary-label { font-size: 10px; font-weight: 900; color: #003366; margin-bottom: 6px; display: block; text-transform: uppercase; }
+        .summary-item { display: inline-block; width: 19.5%; margin-bottom: 4px; }
+        .color-box { width: 10px; height: 10px; display: inline-block; vertical-align: middle; margin-right: 5px; border: 0.5px solid #333; }
+        .summary-text { display: inline-block; vertical-align: middle; font-size: 9px; font-weight: bold; }
 
-        .footer {
-            margin-top: 8px;
+        /* FOOTER OPTIMIZADO */
+        .footer-table {
+            width: 100%;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+        }
+        .qr-img { width: 50px; height: 50px; vertical-align: middle; }
+        
+        .footer-text {
             text-align: right;
-            font-size: 8px;
+            font-size: 9px;
             font-weight: bold;
-            color: #555;
+            color: #444;
+            vertical-align: bottom;
         }
 
         <?php
@@ -155,6 +149,8 @@
     </style>
 </head>
 <body>
+    <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="watermark">
+
     @php
         $resumen = [];
         foreach($grilla as $fila) {
@@ -178,13 +174,13 @@
     <div class="container">
         <table class="header-table">
             <tr>
-                <td width="10%"><img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-unamad"></td>
+                <td width="10%"><img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-img"></td>
                 <td class="title-box">
                     <h1>HORARIO ACADÉMICO OFICIAL</h1>
                     <p>CEPRE-UNAMAD | SEDE CENTRAL</p>
                     <div class="vigencia-tag">VÁLIDO PARA EL CICLO {{ strtoupper($ciclo->nombre) }}</div>
                 </td>
-                <td width="15%" align="right"><img src="{{ public_path('assets_cepre/img/logo/logo2_0.png') }}" class="logo-cepre"></td>
+                <td width="10%" align="right"><img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo-img"></td>
             </tr>
         </table>
 
@@ -260,9 +256,17 @@
             </div>
         </div>
 
-        <div class="footer">
-            Sistema CEPRE-UNAMAD | {{ now()->format('d/m/Y H:i') }}
-        </div>
+        <table class="footer-table">
+            <tr>
+                <td width="10%" align="left">
+                    <img src="data:image/svg+xml;base64,{{ $qrCode }}" class="qr-img">
+                </td>
+                <td class="footer-text">
+                    Generado por el sistema Portal cepre unamad oficial<br>
+                    Fecha de Emisión: {{ now()->format('d/m/Y H:i') }} | ID: {{ strtoupper(uniqid()) }}
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 </html>
