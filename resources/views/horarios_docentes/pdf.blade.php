@@ -21,7 +21,8 @@
 
         /* HEADER */
         .header-table { width: 100%; margin-bottom: 8px; }
-        .logo-img { width: 55px; height: auto; }
+        .logo-unamad { width: 65px; height: auto; }
+        .logo-cepre { width: 140px; height: auto; }
         .title-box { text-align: center; }
         .title-box h1 { font-size: 20px; color: #003366; font-weight: 900; text-transform: uppercase; margin-bottom: 1px; }
         .title-box p { font-size: 12px; color: #cc0066; font-weight: bold; }
@@ -177,13 +178,13 @@
     <div class="container">
         <table class="header-table">
             <tr>
-                <td width="10%"><img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-img"></td>
+                <td width="10%"><img src="{{ public_path('assets/images/logo unamad constancia.png') }}" class="logo-unamad"></td>
                 <td class="title-box">
                     <h1>HORARIO ACADÉMICO OFICIAL</h1>
                     <p>CEPRE-UNAMAD | SEDE CENTRAL</p>
                     <div class="vigencia-tag">VÁLIDO PARA EL CICLO {{ strtoupper($ciclo->nombre) }}</div>
                 </td>
-                <td width="10%" align="right"><img src="{{ public_path('assets/images/logo cepre costancia.png') }}" class="logo-img"></td>
+                <td width="15%" align="right"><img src="{{ public_path('assets_cepre/img/logo/logo2_0.png') }}" class="logo-cepre"></td>
             </tr>
         </table>
 
