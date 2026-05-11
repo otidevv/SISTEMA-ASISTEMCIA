@@ -108,28 +108,35 @@ let gatewaysBusy = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de
 let gatewaysOnline = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de si el celular responde a ping en la red local
 let nextGatewayToStart = 0; // Para rotar el inicio y balancear la carga entre celulares
 
-// Loop para hacer ping a los gateways y saber si estn en lnea
+// Loop para hacer ping a los gateways y saber si están en línea
 setInterval(async () => {
     for (let i = 0; i < SMS_GATEWAYS.length; i++) {
         const gw = SMS_GATEWAYS[i];
         if (!gw.url) continue;
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos timeout
+            const timeoutId = setTimeout(() => controller.abort(), 3000); 
             
-            await fetch(gw.url, { method: 'HEAD', signal: controller.signal });
+            // Usamos GET porque algunos dispositivos bloquean HEAD
+            const response = await fetch(gw.url, { method: 'GET', signal: controller.signal });
             clearTimeout(timeoutId);
+            
+            // Si responde (cualquier status), el dispositivo está vivo en la red
             gatewaysOnline[i] = true;
+            logger.info(`[PING] Gateway ${i + 1} (${gw.user}) está ONLINE`);
         } catch (e) {
-            // Incluso si da 404 o 405, si el error no es de conexin, es que est en lnea
-            if (e.name !== 'AbortError' && !e.message.includes('fetch failed')) {
+            // Incluso si da error 404/405, si llegó al servidor, está online.
+            // Solo marcamos offline si es error de conexión (timeout o fetch failed)
+            if (e.name !== 'AbortError' && !e.message.includes('fetch failed') && !e.message.includes('ECONNREFUSED')) {
                 gatewaysOnline[i] = true;
+                logger.info(`[PING] Gateway ${i + 1} (${gw.user}) respondió con error pero está ONLINE`);
             } else {
                 gatewaysOnline[i] = false;
+                logger.warn(`[PING] Gateway ${i + 1} (${gw.user}) está OFFLINE: ${e.message}`);
             }
         }
     }
-}, 10000);
+}, 15000);
 
 // 📁 Ruta del archivo de configuración para mapear teléfonos a Chat IDs de Telegram
 const TELEGRAM_CONFIG_FILE = path.join(__dirname, 'telegram_users.json');
@@ -874,8 +881,10 @@ async function procesarColaMensajesSMS() {
     for (let count = 0; count < SMS_GATEWAYS.length; count++) {
         let i = (nextGatewayToStart + count) % SMS_GATEWAYS.length;
 
-        logger.info(`[DEBUG] Revisando Celular ${i + 1}: gatewaysBusy=${gatewaysBusy[i]}`);
-        if (!gatewaysBusy[i] && mensajesSMS.length > 0) {
+        logger.info(`[DEBUG] Revisando Celular ${i + 1}: gatewaysBusy=${gatewaysBusy[i]}, gatewaysOnline=${gatewaysOnline[i]}`);
+        
+        // SOLO usamos el celular si NO está ocupado Y si está EN LÍNEA (según el ping)
+        if (!gatewaysBusy[i] && gatewaysOnline[i] && mensajesSMS.length > 0) {
             gatewaysBusy[i] = true;
             nextGatewayToStart = (i + 1) % SMS_GATEWAYS.length; // La próxima vez empezamos por el que sigue
             lanzarTrabajadorSMS(i);
