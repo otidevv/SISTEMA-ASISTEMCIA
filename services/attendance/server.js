@@ -1432,7 +1432,15 @@ async function procesarAsistencia(sn_dispositivo, datos_asistencia) {
 app.use(express.static(path.join(__dirname, 'public'))); // Servir archivos estáticos con ruta absoluta
 
 // Endpoint para obtener el estado completo del sistema
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+    let biometrics = [];
+    try {
+        const [rows] = await pool.execute(`SELECT sn, nombre, ip, last_seen FROM biometric_devices WHERE last_seen > DATE_SUB(NOW(), INTERVAL 5 MINUTE)`);
+        biometrics = rows;
+    } catch (e) {
+        logger.error('Error obteniendo biometricos', e);
+    }
+
     res.json({
         servicios: {
             whatsapp: WHATSAPP_HABILITADO,
@@ -1450,6 +1458,7 @@ app.get('/api/status', (req, res) => {
             deviceId: g.deviceId,
             busy: gatewaysBusy[i]
         })),
+        biometrics: biometrics,
         stats: statsSMS,
         logs: logsRecientes.slice(-20) // Últimos 20 logs
     });

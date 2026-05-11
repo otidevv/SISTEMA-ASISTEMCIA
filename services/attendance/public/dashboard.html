@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard API Gateway - CEPRE UNAMAD</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
+            /* Dark Mode Variables (Default) */
             --bg-color: #0f172a;
             --glass-bg: rgba(30, 41, 59, 0.7);
             --glass-border: rgba(255, 255, 255, 0.1);
@@ -18,7 +19,20 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --input-bg: rgba(0,0,0,0.3);
+            --modal-bg: #1e293b;
         }
+
+        body.light-mode {
+            --bg-color: #f1f5f9;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --input-bg: #ffffff;
+            --modal-bg: #ffffff;
+        }
+
         body {
             margin: 0;
             font-family: 'Inter', sans-serif;
@@ -28,7 +42,9 @@
                 radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.1) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
+            transition: all 0.3s ease;
         }
+
         .navbar {
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(12px);
@@ -41,6 +57,9 @@
             top: 0;
             z-index: 100;
         }
+        body.light-mode .navbar {
+            background: rgba(255, 255, 255, 0.8);
+        }
         .navbar h1 {
             margin: 0;
             font-size: 20px;
@@ -49,6 +68,16 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .theme-toggle {
+            cursor: pointer;
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
         .container {
             max-width: 1200px;
             margin: 30px auto;
@@ -57,13 +86,15 @@
             grid-template-columns: 1fr 350px;
             gap: 24px;
         }
+        
         .card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
         }
         .card-header {
             display: flex;
@@ -84,18 +115,13 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            margin-bottom: 24px;
         }
         .service-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(128, 128, 128, 0.05);
+            border: 1px solid var(--glass-border);
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            transition: all 0.3s;
-        }
-        .service-box:hover {
-            background: rgba(255, 255, 255, 0.08);
         }
         .service-icon {
             font-size: 30px;
@@ -119,9 +145,12 @@
             position: absolute;
             cursor: pointer;
             top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: #cbd5e1;
             transition: .4s;
             border-radius: 34px;
+        }
+        body:not(.light-mode) .slider {
+            background-color: rgba(255, 255, 255, 0.1);
         }
         .slider:before {
             position: absolute;
@@ -149,16 +178,19 @@
             color: #fff;
             border: 1px solid #333;
         }
+        body.light-mode .console {
+            background: #1e293b;
+        }
         .log-line { margin: 4px 0; border-bottom: 1px dashed #222; padding-bottom: 2px;}
         
-        /* Estadísticas */
+        /* Estadísticas e Infraestructura */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
         .stat-item {
-            background: rgba(0,0,0,0.2);
+            background: rgba(128,128,128,0.1);
             padding: 12px;
             border-radius: 8px;
             text-align: center;
@@ -174,7 +206,34 @@
             text-transform: uppercase;
         }
 
-        /* Envio Masivo */
+        .infra-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .infra-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 13px;
+        }
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: var(--success);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 5px var(--success);
+        }
+        .status-dot.offline {
+            background-color: var(--danger);
+            box-shadow: 0 0 5px var(--danger);
+        }
+
+        /* Envio Masivo Form */
         .form-group {
             margin-bottom: 15px;
         }
@@ -184,11 +243,11 @@
             font-size: 13px;
             color: var(--text-muted);
         }
-        textarea, input {
+        textarea, input[type="text"] {
             width: 100%;
-            background: rgba(0,0,0,0.3);
+            background: var(--input-bg);
             border: 1px solid var(--glass-border);
-            color: white;
+            color: var(--text-main);
             padding: 10px;
             border-radius: 8px;
             font-family: inherit;
@@ -208,6 +267,90 @@
             transition: opacity 0.3s;
         }
         .btn:hover { opacity: 0.9; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--text-main);
+        }
+        .btn-outline:hover {
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        /* Modal Contactos */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-main);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .modal-header h3 { margin: 0; }
+        .close-modal { cursor: pointer; color: var(--text-muted); font-size: 20px;}
+        
+        .contact-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .contact-filters label {
+            background: rgba(128,128,128,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .contact-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.1);
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(128,128,128,0.1);
+            font-size: 13px;
+        }
+        .contact-item:hover { background: rgba(128,128,128,0.1); }
+        .contact-item input { width: auto; margin-right: 10px; }
+        .contact-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+        }
 
         @media (max-width: 900px) {
             .container { grid-template-columns: 1fr; }
@@ -219,14 +362,17 @@
 
     <div class="navbar">
         <h1>CEPRE API GATEWAY</h1>
-        <div><span id="conn-status" style="color: var(--success);"><i class="fas fa-circle"></i> Conectado</span></div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <span id="conn-status" style="color: var(--success); font-weight: 500; font-size: 14px;"><i class="fas fa-circle"></i> Conectado</span>
+        </div>
     </div>
 
     <div class="container">
         <!-- Columna Izquierda -->
         <div class="main-content">
             <!-- Control de Servicios -->
-            <div class="card" style="margin-bottom: 24px;">
+            <div class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-toggle-on"></i> Control de Motores (Activar/Desactivar)</h2>
                 </div>
@@ -274,8 +420,27 @@
 
         <!-- Columna Derecha -->
         <div class="sidebar">
+            
+            <!-- Infraestructura -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-server"></i> Estado de Infraestructura</h2>
+                </div>
+                <div>
+                    <h3 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px;">Biométricos ZKTeco</h3>
+                    <ul class="infra-list" id="zk-list">
+                        <!-- Lista de biometricos -->
+                    </ul>
+                    
+                    <h3 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 15px; margin-bottom: 5px;">Móviles SMS Gateway</h3>
+                    <ul class="infra-list" id="gw-list">
+                        <!-- Lista de gateways -->
+                    </ul>
+                </div>
+            </div>
+
             <!-- Estadísticas -->
-            <div class="card" style="margin-bottom: 24px;">
+            <div class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-chart-pie"></i> Estadísticas SMS</h2>
                 </div>
@@ -298,24 +463,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Cargar Contactos Automáticamente</label>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
-                            <input type="checkbox" id="chk-padres" checked> Padres
-                        </label>
-                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
-                            <input type="checkbox" id="chk-estudiantes"> Estudiantes
-                        </label>
-                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
-                            <input type="checkbox" id="chk-docentes"> Docentes
-                        </label>
-                    </div>
-                    <button class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--primary); padding: 8px;" onclick="loadContacts()"><i class="fas fa-users"></i> Importar Números a la Lista</button>
+                    <button class="btn btn-outline" onclick="openContactsModal()"><i class="fas fa-users"></i> Seleccionar Destinatarios</button>
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
                     <label>Números a Enviar (<span id="numbers-count">0</span> seleccionados)</label>
-                    <textarea id="bulk-numbers" rows="4" placeholder="999999999, 988888888" oninput="updateCount()"></textarea>
+                    <textarea id="bulk-numbers" rows="3" placeholder="999999999, 988888888" oninput="updateCount()"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Plantilla de Mensaje</label>
@@ -326,8 +479,51 @@
         </div>
     </div>
 
+    <!-- Modal Selector de Contactos -->
+    <div class="modal" id="contactsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Seleccionar Contactos</h3>
+                <i class="fas fa-times close-modal" onclick="closeContactsModal()"></i>
+            </div>
+            
+            <div class="contact-filters">
+                <label><input type="checkbox" id="f-padres" checked onchange="renderContacts()"> Padres</label>
+                <label><input type="checkbox" id="f-estudiantes" checked onchange="renderContacts()"> Estudiantes</label>
+                <label><input type="checkbox" id="f-docentes" checked onchange="renderContacts()"> Docentes</label>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                <label><input type="checkbox" id="chk-all" onchange="toggleAllContacts(this.checked)"> Seleccionar Todos</label>
+                <span id="modal-count">0 encontrados</span>
+            </div>
+
+            <div class="contact-list" id="contact-list-container">
+                <div style="text-align:center; padding: 20px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando base de datos...
+                </div>
+            </div>
+            
+            <button class="btn" onclick="confirmContactsSelection()">Agregar Seleccionados a la Lista</button>
+        </div>
+    </div>
+
     <script>
-        // Funciones del Dashboard
+        // Variables globales
+        let allContactsData = { padres: [], estudiantes: [], docentes: [] };
+
+        // Toggle Theme
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.querySelector('.theme-toggle i');
+            if(document.body.classList.contains('light-mode')) {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+
+        // Fetch API Status
         async function fetchStatus() {
             try {
                 const res = await fetch('/api/status');
@@ -350,19 +546,53 @@
                     document.getElementById('stat-fail').innerText = data.stats.fallidos || 0;
                 }
 
+                // Actualizar Infraestructura ZKTeco
+                if(data.biometrics) {
+                    const zkList = document.getElementById('zk-list');
+                    zkList.innerHTML = '';
+                    if(data.biometrics.length === 0) {
+                        zkList.innerHTML = '<li class="infra-item" style="color:var(--text-muted)">Sin dispositivos en línea</li>';
+                    } else {
+                        data.biometrics.forEach(b => {
+                            zkList.innerHTML += \`
+                            <li class="infra-item">
+                                <div><span class="status-dot"></span> \${b.nombre} (\${b.sn})</div>
+                                <div style="color:var(--text-muted)">\${b.ip}</div>
+                            </li>\`;
+                        });
+                    }
+                }
+
+                // Actualizar Infraestructura Gateways SMS
+                if(data.gateways) {
+                    const gwList = document.getElementById('gw-list');
+                    gwList.innerHTML = '';
+                    data.gateways.forEach(g => {
+                        // Assuming Gateway is online. In a real scenario we'd ping it.
+                        // For now we show them as online if registered
+                        const isBusy = g.busy ? '<span style="color:var(--warning);font-size:10px;">(Ocupado)</span>' : '';
+                        gwList.innerHTML += \`
+                        <li class="infra-item">
+                            <div><span class="status-dot"></span> App: \${g.user} \${isBusy}</div>
+                        </li>\`;
+                    });
+                }
+
                 // Actualizar Logs
                 if(data.logs) {
                     const consoleEl = document.getElementById('console-logs');
+                    const isScrolledToBottom = consoleEl.scrollHeight - consoleEl.clientHeight <= consoleEl.scrollTop + 1;
                     consoleEl.innerHTML = data.logs.map(log => \`<div class="log-line">\${log}</div>\`).join('');
-                    // Scroll to bottom
-                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                    if(isScrolledToBottom) {
+                        consoleEl.scrollTop = consoleEl.scrollHeight;
+                    }
                 }
                 
                 document.getElementById('conn-status').innerHTML = '<i class="fas fa-circle"></i> Conectado';
                 document.getElementById('conn-status').style.color = 'var(--success)';
             } catch(e) {
-                document.getElementById('conn-status').innerHTML = '<i class="fas fa-circle"></i> Desconectado';
-                document.getElementById('conn-status').style.color = 'var(--danger)';
+                document.getElementById('conn-status').innerHTML = '<i class="fas fa-circle"></i> Re-conectando...';
+                document.getElementById('conn-status').style.color = 'var(--warning)';
             }
         }
 
@@ -373,7 +603,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ servicio, estado })
                 });
-                fetchStatus(); // Refrescar
+                fetchStatus();
             } catch(e) {
                 alert('Error al cambiar estado');
             }
@@ -388,7 +618,7 @@
                 return;
             }
 
-            if(confirm('¿Está seguro de encolar este mensaje masivo?')) {
+            if(confirm('¿Está seguro de poner en cola este envío masivo? El sistema los procesará poco a poco.')) {
                 try {
                     const res = await fetch('/api/send-bulk', {
                         method: 'POST',
@@ -409,51 +639,101 @@
             }
         }
 
-        async function loadContacts() {
-            try {
-                const btn = event.currentTarget;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
-                
-                const res = await fetch('/api/contacts');
-                const data = await res.json();
-                
-                let numerosExtraidos = [];
-                
-                if(document.getElementById('chk-padres').checked && data.padres) {
-                    numerosExtraidos.push(...data.padres.map(p => p.tel));
-                }
-                if(document.getElementById('chk-estudiantes').checked && data.estudiantes) {
-                    numerosExtraidos.push(...data.estudiantes.map(e => e.tel));
-                }
-                if(document.getElementById('chk-docentes').checked && data.docentes) {
-                    numerosExtraidos.push(...data.docentes.map(d => d.tel));
-                }
-                
-                // Filtrar duplicados y vacíos
-                numerosExtraidos = [...new Set(numerosExtraidos.filter(n => n && n.trim().length > 5))];
-                
-                if(numerosExtraidos.length === 0) {
-                    alert('No se encontraron números válidos para los grupos seleccionados.');
-                } else {
-                    document.getElementById('bulk-numbers').value = numerosExtraidos.join(', ');
-                    updateCount();
-                }
-                
-                btn.innerHTML = '<i class="fas fa-users"></i> Importar Números a la Lista';
-            } catch(e) {
-                alert('Error al cargar contactos de la base de datos');
-                event.currentTarget.innerHTML = '<i class="fas fa-users"></i> Importar Números a la Lista';
-            }
-        }
-
         function updateCount() {
             const numStr = document.getElementById('bulk-numbers').value;
             const count = numStr ? numStr.split(/[\n,]/).filter(n => n.trim().length > 5).length : 0;
             document.getElementById('numbers-count').innerText = count;
         }
 
-        // Refrescar cada 2 segundos
-        setInterval(fetchStatus, 2000);
+        // Lógica Modal Contactos
+        async function openContactsModal() {
+            document.getElementById('contactsModal').classList.add('active');
+            
+            // Fetch contacts if not loaded
+            if(allContactsData.padres.length === 0 && allContactsData.estudiantes.length === 0) {
+                try {
+                    const res = await fetch('/api/contacts');
+                    allContactsData = await res.json();
+                    if(!allContactsData.estudiantes) allContactsData.estudiantes = [];
+                } catch(e) {
+                    document.getElementById('contact-list-container').innerHTML = '<div style="color:var(--danger); padding:20px;">Error cargando contactos.</div>';
+                    return;
+                }
+            }
+            renderContacts();
+        }
+
+        function closeContactsModal() {
+            document.getElementById('contactsModal').classList.remove('active');
+        }
+
+        function renderContacts() {
+            const container = document.getElementById('contact-list-container');
+            const showPadres = document.getElementById('f-padres').checked;
+            const showEstud = document.getElementById('f-estudiantes').checked;
+            const showDoc = document.getElementById('f-docentes').checked;
+            
+            let listHTML = '';
+            let count = 0;
+
+            const addToList = (items, type, color) => {
+                if(!items) return;
+                items.forEach(c => {
+                    if(c.tel && c.tel.length > 5) {
+                        listHTML += \`
+                        <label class="contact-item">
+                            <input type="checkbox" class="contact-checkbox" value="\${c.tel}">
+                            <div>
+                                <strong>\${c.label}</strong> <br>
+                                <span style="color:var(--text-muted)">\${c.tel}</span>
+                            </div>
+                            <div class="contact-badge" style="background:\${color}">\${type}</div>
+                        </label>\`;
+                        count++;
+                    }
+                });
+            };
+
+            if(showPadres) addToList(allContactsData.padres, 'Padre', 'var(--primary)');
+            if(showEstud) addToList(allContactsData.estudiantes, 'Estudiante', 'var(--warning)');
+            if(showDoc) addToList(allContactsData.docentes, 'Docente', 'var(--success)');
+
+            if(count === 0) {
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted)">No hay contactos para mostrar.</div>';
+            } else {
+                container.innerHTML = listHTML;
+            }
+            document.getElementById('modal-count').innerText = count + ' encontrados';
+            document.getElementById('chk-all').checked = false;
+        }
+
+        function toggleAllContacts(checked) {
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => cb.checked = checked);
+        }
+
+        function confirmContactsSelection() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
+            const selectedNumbers = Array.from(checkboxes).map(cb => cb.value);
+            
+            if(selectedNumbers.length === 0) {
+                alert('Selecciona al menos un contacto.');
+                return;
+            }
+
+            // Append to existing
+            const currentVal = document.getElementById('bulk-numbers').value;
+            let currentArr = currentVal ? currentVal.split(/[\n,]/).map(n=>n.trim()).filter(n=>n) : [];
+            
+            let finalArr = [...new Set([...currentArr, ...selectedNumbers])]; // avoid duplicates
+            
+            document.getElementById('bulk-numbers').value = finalArr.join(', ');
+            updateCount();
+            closeContactsModal();
+        }
+
+        // Init
+        setInterval(fetchStatus, 3000); // 3 seconds is safer
         fetchStatus();
     </script>
 </body>
