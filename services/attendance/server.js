@@ -1508,9 +1508,19 @@ app.get('/api/contacts', async (req, res) => {
             WHERE r.nombre = 'profesor' AND u.telefono IS NOT NULL AND u.telefono != ''
         `);
 
+        // Obtener Estudiantes
+        const [estudiantes] = await conn.execute(`
+            SELECT DISTINCT u.telefono, u.nombre, u.apellido_paterno
+            FROM users u
+            JOIN user_roles ur ON u.id = ur.usuario_id
+            JOIN roles r ON ur.rol_id = r.id
+            WHERE r.nombre = 'estudiante' AND u.telefono IS NOT NULL AND u.telefono != ''
+        `);
+
         res.json({
             padres: padres.map(p => ({ tel: p.telefono, label: `${p.nombre} ${p.apellido_paterno}` })),
-            docentes: docentes.map(d => ({ tel: d.telefono, label: `${d.nombre} ${d.apellido_paterno}` }))
+            docentes: docentes.map(d => ({ tel: d.telefono, label: `${d.nombre} ${d.apellido_paterno}` })),
+            estudiantes: estudiantes.map(e => ({ tel: e.telefono, label: `${e.nombre} ${e.apellido_paterno}` }))
         });
     } catch (error) {
         logger.error('Error al obtener contactos:', error);
@@ -1547,7 +1557,17 @@ logger.info = function (msg) {
 // =====================================================================================
 
 // Definimos las rutas que los dispositivos ZKTeco utilizan para enviar datos.
-app.all('/', (req, res) => {
+app.get('/', (req, res) => {
+    // Si la petición viene de un reloj biométrico (generalmente incluye SN), procesarla normal
+    if (req.query.SN) {
+        return handleRequest('raiz', req, res);
+    }
+    
+    // Si es un navegador, devolver la vista profesional estática
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.post('/', (req, res) => {
     handleRequest('raiz', req, res);
 });
 app.all('/attendance', (req, res) => {

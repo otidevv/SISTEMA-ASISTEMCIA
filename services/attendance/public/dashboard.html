@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard API Gateway - CEPRE UNAMAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #06b6d4;
+            --magenta: #d946ef;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        /* Grid de Servicios */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .service-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .service-box:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .service-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        .service-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        /* Consola de Logs */
+        .console {
+            background: #000;
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            color: #fff;
+            border: 1px solid #333;
+        }
+        .log-line { margin: 4px 0; border-bottom: 1px dashed #222; padding-bottom: 2px;}
+        
+        /* Estadísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Envio Masivo */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        textarea, input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        textarea:focus { outline: none; border-color: var(--primary); }
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--magenta));
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            .services-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h1>CEPRE API GATEWAY</h1>
+        <div><span id="conn-status" style="color: var(--success);"><i class="fas fa-circle"></i> Conectado</span></div>
+    </div>
+
+    <div class="container">
+        <!-- Columna Izquierda -->
+        <div class="main-content">
+            <!-- Control de Servicios -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h2><i class="fas fa-toggle-on"></i> Control de Motores (Activar/Desactivar)</h2>
+                </div>
+                <div class="services-grid">
+                    <div class="service-box">
+                        <div class="service-icon" style="color: #25D366;"><i class="fab fa-whatsapp"></i></div>
+                        <div class="service-name">Motor WhatsApp</div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-whatsapp" onchange="toggleService('whatsapp', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <div style="margin-top:10px; font-size:12px; color:var(--text-muted)">Cola: <span id="q-wa">0</span></div>
+                    </div>
+                    <div class="service-box">
+                        <div class="service-icon" style="color: #0088cc;"><i class="fab fa-telegram"></i></div>
+                        <div class="service-name">Motor Telegram</div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-telegram" onchange="toggleService('telegram', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <div style="margin-top:10px; font-size:12px; color:var(--text-muted)">Cola: <span id="q-tg">0</span></div>
+                    </div>
+                    <div class="service-box">
+                        <div class="service-icon" style="color: #f59e0b;"><i class="fas fa-sms"></i></div>
+                        <div class="service-name">Gateway SMS</div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-sms" onchange="toggleService('sms', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <div style="margin-top:10px; font-size:12px; color:var(--text-muted)">Cola: <span id="q-sms">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal en Vivo -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-terminal"></i> Terminal en Vivo</h2>
+                </div>
+                <div class="console" id="console-logs">
+                    <!-- Los logs se inyectan aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha -->
+        <div class="sidebar">
+            <!-- Estadísticas -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-pie"></i> Estadísticas SMS</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-env">0</div>
+                        <div class="stat-label">Enviados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-fail" style="color: var(--danger);">0</div>
+                        <div class="stat-label">Fallidos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Envio Masivo -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-paper-plane"></i> Envío Masivo SMS</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label>Cargar Contactos Automáticamente</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
+                            <input type="checkbox" id="chk-padres" checked> Padres
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
+                            <input type="checkbox" id="chk-estudiantes"> Estudiantes
+                        </label>
+                        <label style="display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; cursor:pointer;">
+                            <input type="checkbox" id="chk-docentes"> Docentes
+                        </label>
+                    </div>
+                    <button class="btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); color: var(--primary); padding: 8px;" onclick="loadContacts()"><i class="fas fa-users"></i> Importar Números a la Lista</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Números a Enviar (<span id="numbers-count">0</span> seleccionados)</label>
+                    <textarea id="bulk-numbers" rows="4" placeholder="999999999, 988888888" oninput="updateCount()"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Plantilla de Mensaje</label>
+                    <textarea id="bulk-message" rows="4" placeholder="[CEPRE UNAMAD] Comunicado urgente..."></textarea>
+                </div>
+                <button class="btn" onclick="sendBulk()"><i class="fas fa-rocket"></i> Poner en Cola de Envío</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones del Dashboard
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                if(!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                
+                // Actualizar Toggles
+                document.getElementById('toggle-whatsapp').checked = data.servicios.whatsapp;
+                document.getElementById('toggle-telegram').checked = data.servicios.telegram;
+                document.getElementById('toggle-sms').checked = data.servicios.sms;
+
+                // Actualizar Colas
+                document.getElementById('q-wa').innerText = data.cola.whatsapp;
+                document.getElementById('q-tg').innerText = data.cola.telegram;
+                document.getElementById('q-sms').innerText = data.cola.sms;
+
+                // Actualizar Stats
+                if(data.stats) {
+                    document.getElementById('stat-env').innerText = data.stats.enviados || 0;
+                    document.getElementById('stat-fail').innerText = data.stats.fallidos || 0;
+                }
+
+                // Actualizar Logs
+                if(data.logs) {
+                    const consoleEl = document.getElementById('console-logs');
+                    consoleEl.innerHTML = data.logs.map(log => \`<div class="log-line">\${log}</div>\`).join('');
+                    // Scroll to bottom
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+                
+                document.getElementById('conn-status').innerHTML = '<i class="fas fa-circle"></i> Conectado';
+                document.getElementById('conn-status').style.color = 'var(--success)';
+            } catch(e) {
+                document.getElementById('conn-status').innerHTML = '<i class="fas fa-circle"></i> Desconectado';
+                document.getElementById('conn-status').style.color = 'var(--danger)';
+            }
+        }
+
+        async function toggleService(servicio, estado) {
+            try {
+                await fetch('/api/toggle', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ servicio, estado })
+                });
+                fetchStatus(); // Refrescar
+            } catch(e) {
+                alert('Error al cambiar estado');
+            }
+        }
+
+        async function sendBulk() {
+            const numeros = document.getElementById('bulk-numbers').value;
+            const mensaje = document.getElementById('bulk-message').value;
+
+            if(!numeros || !mensaje) {
+                alert('Por favor llene los números y el mensaje');
+                return;
+            }
+
+            if(confirm('¿Está seguro de encolar este mensaje masivo?')) {
+                try {
+                    const res = await fetch('/api/send-bulk', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ numeros, mensaje })
+                    });
+                    const data = await res.json();
+                    if(data.success) {
+                        alert('Mensajes encolados correctamente: ' + data.encolados);
+                        document.getElementById('bulk-numbers').value = '';
+                        document.getElementById('bulk-message').value = '';
+                        updateCount();
+                        fetchStatus();
+                    }
+                } catch(e) {
+                    alert('Error enviando mensaje masivo');
+                }
+            }
+        }
+
+        async function loadContacts() {
+            try {
+                const btn = event.currentTarget;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+                
+                const res = await fetch('/api/contacts');
+                const data = await res.json();
+                
+                let numerosExtraidos = [];
+                
+                if(document.getElementById('chk-padres').checked && data.padres) {
+                    numerosExtraidos.push(...data.padres.map(p => p.tel));
+                }
+                if(document.getElementById('chk-estudiantes').checked && data.estudiantes) {
+                    numerosExtraidos.push(...data.estudiantes.map(e => e.tel));
+                }
+                if(document.getElementById('chk-docentes').checked && data.docentes) {
+                    numerosExtraidos.push(...data.docentes.map(d => d.tel));
+                }
+                
+                // Filtrar duplicados y vacíos
+                numerosExtraidos = [...new Set(numerosExtraidos.filter(n => n && n.trim().length > 5))];
+                
+                if(numerosExtraidos.length === 0) {
+                    alert('No se encontraron números válidos para los grupos seleccionados.');
+                } else {
+                    document.getElementById('bulk-numbers').value = numerosExtraidos.join(', ');
+                    updateCount();
+                }
+                
+                btn.innerHTML = '<i class="fas fa-users"></i> Importar Números a la Lista';
+            } catch(e) {
+                alert('Error al cargar contactos de la base de datos');
+                event.currentTarget.innerHTML = '<i class="fas fa-users"></i> Importar Números a la Lista';
+            }
+        }
+
+        function updateCount() {
+            const numStr = document.getElementById('bulk-numbers').value;
+            const count = numStr ? numStr.split(/[\n,]/).filter(n => n.trim().length > 5).length : 0;
+            document.getElementById('numbers-count').innerText = count;
+        }
+
+        // Refrescar cada 2 segundos
+        setInterval(fetchStatus, 2000);
+        fetchStatus();
+    </script>
+</body>
+</html>
