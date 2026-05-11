@@ -103,9 +103,33 @@ const SMS_GATEWAYS = [
         pass: process.env.SMS_GATEWAY_2_PASS,
         deviceId: process.env.SMS_GATEWAY_2_DEVICE_ID
     }
-];
-let gatewaysBusy = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de qué celular está ocupado enviado ahora mismo
+].filter(g => g.url && g.url.trim() !== '');
+let gatewaysBusy = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de qu celular est ocupado enviado ahora mismo
+let gatewaysOnline = new Array(SMS_GATEWAYS.length).fill(false); // Seguimiento de si el celular responde a ping en la red local
 let nextGatewayToStart = 0; // Para rotar el inicio y balancear la carga entre celulares
+
+// Loop para hacer ping a los gateways y saber si estn en lnea
+setInterval(async () => {
+    for (let i = 0; i < SMS_GATEWAYS.length; i++) {
+        const gw = SMS_GATEWAYS[i];
+        if (!gw.url) continue;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos timeout
+            
+            await fetch(gw.url, { method: 'HEAD', signal: controller.signal });
+            clearTimeout(timeoutId);
+            gatewaysOnline[i] = true;
+        } catch (e) {
+            // Incluso si da 404 o 405, si el error no es de conexin, es que est en lnea
+            if (e.name !== 'AbortError' && !e.message.includes('fetch failed')) {
+                gatewaysOnline[i] = true;
+            } else {
+                gatewaysOnline[i] = false;
+            }
+        }
+    }
+}, 10000);
 
 // 📁 Ruta del archivo de configuración para mapear teléfonos a Chat IDs de Telegram
 const TELEGRAM_CONFIG_FILE = path.join(__dirname, 'telegram_users.json');
@@ -1456,7 +1480,8 @@ app.get('/api/status', async (req, res) => {
             id: i + 1,
             user: g.user,
             deviceId: g.deviceId,
-            busy: gatewaysBusy[i]
+            busy: gatewaysBusy[i],
+            online: gatewaysOnline[i]
         })),
         biometrics: biometrics,
         stats: statsSMS,

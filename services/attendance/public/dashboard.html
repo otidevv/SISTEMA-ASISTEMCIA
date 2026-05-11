@@ -566,12 +566,11 @@
                     const gwList = document.getElementById('gw-list');
                     gwList.innerHTML = '';
                     data.gateways.forEach(g => {
-                        // Assuming Gateway is online. In a real scenario we'd ping it.
-                        // For now we show them as online if registered
+                        const statusClass = g.online ? '' : 'offline';
                         const isBusy = g.busy ? '<span style="color:var(--warning);font-size:10px;">(Ocupado)</span>' : '';
                         gwList.innerHTML += `
                         <li class="infra-item">
-                            <div><span class="status-dot"></span> App: ${g.user} ${isBusy}</div>
+                            <div><span class="status-dot ${statusClass}"></span> App: ${g.user} ${isBusy}</div>
                         </li>`;
                     });
                 }
