@@ -552,11 +552,11 @@
                         zkList.innerHTML = '<li class="infra-item" style="color:var(--text-muted)">Sin dispositivos en línea</li>';
                     } else {
                         data.biometrics.forEach(b => {
-                            zkList.innerHTML += \`
+                            zkList.innerHTML += `
                             <li class="infra-item">
-                                <div><span class="status-dot"></span> \${b.nombre} (\${b.sn})</div>
-                                <div style="color:var(--text-muted)">\${b.ip}</div>
-                            </li>\`;
+                                <div><span class="status-dot"></span> ${b.nombre} (${b.sn})</div>
+                                <div style="color:var(--text-muted)">${b.ip}</div>
+                            </li>`;
                         });
                     }
                 }
@@ -569,10 +569,10 @@
                         // Assuming Gateway is online. In a real scenario we'd ping it.
                         // For now we show them as online if registered
                         const isBusy = g.busy ? '<span style="color:var(--warning);font-size:10px;">(Ocupado)</span>' : '';
-                        gwList.innerHTML += \`
+                        gwList.innerHTML += `
                         <li class="infra-item">
-                            <div><span class="status-dot"></span> App: \${g.user} \${isBusy}</div>
-                        </li>\`;
+                            <div><span class="status-dot"></span> App: ${g.user} ${isBusy}</div>
+                        </li>`;
                     });
                 }
 
@@ -580,7 +580,7 @@
                 if(data.logs) {
                     const consoleEl = document.getElementById('console-logs');
                     const isScrolledToBottom = consoleEl.scrollHeight - consoleEl.clientHeight <= consoleEl.scrollTop + 1;
-                    consoleEl.innerHTML = data.logs.map(log => \`<div class="log-line">\${log}</div>\`).join('');
+                    consoleEl.innerHTML = data.logs.map(log => `<div class="log-line">${log}</div>`).join('');
                     if(isScrolledToBottom) {
                         consoleEl.scrollTop = consoleEl.scrollHeight;
                     }
@@ -658,12 +658,12 @@
                     const filterContainer = document.getElementById('dynamic-filters');
                     filterContainer.innerHTML = '';
                     for (const role in allContactsData) {
-                        filterContainer.innerHTML += \`
+                        filterContainer.innerHTML += `
                             <label>
-                                <input type="checkbox" id="f-\${role}" checked onchange="renderContacts()"> 
-                                \${role.toUpperCase()}
+                                <input type="checkbox" id="f-${role}" checked onchange="renderContacts()"> 
+                                ${role.toUpperCase()}
                             </label>
-                        \`;
+                        `;
                     }
                 } catch(e) {
                     document.getElementById('contact-list-container').innerHTML = '<div style="color:var(--danger); padding:20px;">Error cargando contactos.</div>';
@@ -686,15 +686,15 @@
                 if(!items) return;
                 items.forEach(c => {
                     if(c.tel && c.tel.length > 5) {
-                        listHTML += \`
+                        listHTML += `
                         <label class="contact-item">
-                            <input type="checkbox" class="contact-checkbox" value="\${c.tel}">
+                            <input type="checkbox" class="contact-checkbox" value="${c.tel}">
                             <div>
-                                <strong>\${c.label}</strong> <br>
-                                <span style="color:var(--text-muted)">\${c.tel}</span>
+                                <strong>${c.label}</strong> <br>
+                                <span style="color:var(--text-muted)">${c.tel}</span>
                             </div>
-                            <div class="contact-badge" style="background:\${color}">\${type.toUpperCase()}</div>
-                        </label>\`;
+                            <div class="contact-badge" style="background:${color}">${type.toUpperCase()}</div>
+                        </label>`;
                         count++;
                     }
                 });
@@ -704,7 +704,7 @@
             let colorIdx = 0;
 
             for (const role in allContactsData) {
-                const checkbox = document.getElementById(\`f-\${role}\`);
+                const checkbox = document.getElementById(`f-${role}`);
                 if (checkbox && checkbox.checked) {
                     const color = colors[colorIdx % colors.length];
                     addToList(allContactsData[role], role, color);
@@ -752,3 +752,4 @@
     </script>
 </body>
 </html>
+
