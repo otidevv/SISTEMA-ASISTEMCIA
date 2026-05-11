@@ -45,10 +45,10 @@
         /* 🔹 Borde Azul (Navy) - Capa Base */
         .border-navy {
             position: absolute;
-            top: 10mm;
-            left: 10mm;
-            right: 10mm;
-            bottom: 12mm;
+            top: 8mm;
+            left: 8mm;
+            right: 8mm;
+            bottom: 10mm;
             border: 3px double #0f172a;
             z-index: 1;
         }
@@ -56,10 +56,10 @@
         /* 🔹 Borde Dorado - Capa Independiente */
         .border-gold {
             position: absolute;
-            top: 12mm;
-            left: 12mm;
-            right: 12mm;
-            bottom: 14mm;
+            top: 10mm;
+            left: 10mm;
+            right: 10mm;
+            bottom: 12mm;
             border: 1px solid #b45309;
             z-index: 2;
         }
@@ -74,32 +74,32 @@
         }
 
         .top-left {
-            top: 12mm;
-            left: 12mm;
+            top: 10mm;
+            left: 10mm;
             border-right: 0;
             border-bottom: 0;
             margin: -1px;
         }
 
         .top-right {
-            top: 12mm;
-            right: 12mm;
+            top: 10mm;
+            right: 10mm;
             border-left: 0;
             border-bottom: 0;
             margin: -1px;
         }
 
         .bottom-left {
-            bottom: 14mm;
-            left: 12mm;
+            bottom: 12mm;
+            left: 10mm;
             border-right: 0;
             border-top: 0;
             margin: -1px;
         }
 
         .bottom-right {
-            bottom: 14mm;
-            right: 12mm;
+            bottom: 12mm;
+            right: 10mm;
             border-left: 0;
             border-top: 0;
             margin: -1px;
@@ -120,9 +120,9 @@
         /* 🔹 Contenedor de Texto */
         .content-container {
             position: absolute;
-            top: 25mm;
-            left: 25mm;
-            right: 25mm;
+            top: 20mm;
+            left: 18mm;
+            right: 18mm;
             z-index: 20;
         }
 
@@ -157,13 +157,13 @@
             font-weight: bold;
             border-radius: 4px;
             display: inline-block;
-            margin: 10px 0;
+            margin: 8px 0 2px 0;
             letter-spacing: 1px;
         }
 
         .main-title {
             text-align: center;
-            margin: 10px 0;
+            margin: 5px 0 10px 0;
             color: #0f172a;
         }
 
@@ -226,9 +226,9 @@
         /* 🔹 Footer Anclado - Al ras de las líneas */
         .footer-area {
             position: absolute;
-            bottom: 16mm;
-            left: 20mm;
-            right: 20mm;
+            bottom: 14mm;
+            left: 18mm;
+            right: 18mm;
             z-index: 30;
         }
 
@@ -373,6 +373,10 @@
                         </td>
                     </tr>
                 </table>
+                <div style="text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 8px; font-style: italic; border-top: 1px dashed #e2e8f0; padding-top: 4px;">
+                    <b>Nota de Validez:</b> Este documento es válido únicamente durante el ciclo académico
+                    <b>{{ $ciclo->nombre }}</b> ({{ $ciclo->fecha_inicio->format('d/m/Y') }} – {{ $ciclo->fecha_fin->format('d/m/Y') }}).
+                </div>
             </div>
         </div>
 
