@@ -59,7 +59,24 @@ class CarnetController extends Controller
                 $query->where('turno_id', $request->turno_id);
             }
             if ($request->aula_id) {
-                $query->where('aula_id', $request->aula_id);
+                $aula_id = $request->aula_id;
+                $query->where(function($q) use ($aula_id) {
+                    $q->where('aula_id', $aula_id)
+                      ->orWhere(function($sq) use ($aula_id) {
+                          $sq->whereNull('aula_id')
+                             ->where(function($subSq) use ($aula_id) {
+                                 $subSq->whereHas('estudiante.inscripciones', function($iq) use ($aula_id) {
+                                     $iq->where('aula_id', $aula_id)
+                                        ->where('estado_inscripcion', 'activo')
+                                        ->whereColumn('ciclo_id', 'carnets.ciclo_id');
+                                 })
+                                 ->orWhereHas('estudiante.inscripcionesReforzamiento', function($rq) use ($aula_id) {
+                                     $rq->where('aula_id', $aula_id)
+                                        ->whereColumn('ciclo_id', 'carnets.ciclo_id');
+                                 });
+                             });
+                      });
+                });
             }
             if ($request->estado) {
                 $query->where('estado', $request->estado);
