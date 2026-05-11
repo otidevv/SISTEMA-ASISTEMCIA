@@ -956,13 +956,20 @@ async function ejecutarEnvioSMS(numero, texto, gateway) {
             numeroFormateado = '+' + numeroFormateado;
         }
 
+        // Construir el payload según el modo (Cloud o Local)
+        const isCloud = gateway.url.includes('api.sms-gate.app');
         const payload = {
             phoneNumbers: [numeroFormateado],
-            textMessage: {
-                text: texto
-            },
             withDeliveryReport: true
         };
+
+        if (isCloud) {
+            // Formato para Modo Nube (api.sms-gate.app)
+            payload.message = texto;
+        } else {
+            // Formato para Modo Local (IP directa)
+            payload.textMessage = { text: texto };
+        }
 
         // Si el gateway tiene un Device ID específico, lo agregamos al payload
         if (gateway.deviceId) {
@@ -977,19 +984,27 @@ async function ejecutarEnvioSMS(numero, texto, gateway) {
             },
             body: JSON.stringify(payload),
         });
-        const result = await response.json();
+
+        let result;
+        const responseText = await response.text();
+        try {
+            result = JSON.parse(responseText);
+        } catch (e) {
+            result = { raw: responseText };
+        }
+
         if (response.ok) {
             statsSMS.enviados++;
-            logger.info(`SMS enviado correctamente a ${numero} usando ${gateway.user}. Respuesta API: ${JSON.stringify(result)}`);
+            logger.info(`✅ [ÉXITO] SMS enviado a ${numero} via ${gateway.user}. Respuesta: ${JSON.stringify(result)}`);
             return true;
         } else {
             statsSMS.fallidos++;
-            logger.error(`Error al enviar SMS a ${numero} con ${gateway.user}. Estado HTTP: ${response.status}, Respuesta API: ${JSON.stringify(result)}`);
+            logger.error(`❌ [ERROR API] Gateway ${gateway.user} respondió ${response.status}. Cuerpo: ${responseText}`);
             return false;
         }
     } catch (error) {
         statsSMS.fallidos++;
-        logger.error(`Error de conexión al enviar SMS a ${numero} con ${gateway.user}:`, error);
+        logger.error(`🚨 [ERROR RED] No se pudo conectar con el Gateway ${gateway.user} (${gateway.url}): ${error.message}`);
         return false;
     }
 }
