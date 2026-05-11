@@ -1494,43 +1494,43 @@ app.post('/api/send-bulk', async (req, res) => {
     res.json({ success: true, encolados: listaNumeros.length });
 });
 
-// NUEVO: Endpoint para obtener todos los contactos registrados (Padres y Docentes)
 app.get('/api/contacts', async (req, res) => {
     let conn;
     try {
         conn = await pool.getConnection();
 
-        // Obtener Padres
-        const [padres] = await conn.execute(`
+        // Obtener todos los usuarios con sus roles
+        const [rows] = await conn.execute(`
+            SELECT DISTINCT r.nombre as rol, u.telefono, u.nombre, u.apellido_paterno
+            FROM users u
+            JOIN user_roles ur ON u.id = ur.usuario_id
+            JOIN roles r ON ur.rol_id = r.id
+            WHERE u.telefono IS NOT NULL AND u.telefono != ''
+        `);
+
+        // Obtener Padres explícitamente desde parentescos por si no tienen el rol asignado
+        const [padresRows] = await conn.execute(`
             SELECT DISTINCT u.telefono, u.nombre, u.apellido_paterno
             FROM users u
             JOIN parentescos p ON u.id = p.padre_id
             WHERE u.telefono IS NOT NULL AND u.telefono != ''
         `);
 
-        // Obtener Docentes
-        const [docentes] = await conn.execute(`
-            SELECT DISTINCT u.telefono, u.nombre, u.apellido_paterno
-            FROM users u
-            JOIN user_roles ur ON u.id = ur.usuario_id
-            JOIN roles r ON ur.rol_id = r.id
-            WHERE r.nombre = 'profesor' AND u.telefono IS NOT NULL AND u.telefono != ''
-        `);
-
-        // Obtener Estudiantes
-        const [estudiantes] = await conn.execute(`
-            SELECT DISTINCT u.telefono, u.nombre, u.apellido_paterno
-            FROM users u
-            JOIN user_roles ur ON u.id = ur.usuario_id
-            JOIN roles r ON ur.rol_id = r.id
-            WHERE r.nombre = 'estudiante' AND u.telefono IS NOT NULL AND u.telefono != ''
-        `);
-
-        res.json({
-            padres: padres.map(p => ({ tel: p.telefono, label: `${p.nombre} ${p.apellido_paterno}` })),
-            docentes: docentes.map(d => ({ tel: d.telefono, label: `${d.nombre} ${d.apellido_paterno}` })),
-            estudiantes: estudiantes.map(e => ({ tel: e.telefono, label: `${e.nombre} ${e.apellido_paterno}` }))
+        // Agrupar por rol dinámicamente
+        const contactos = {};
+        rows.forEach(row => {
+            const role = row.rol.toLowerCase();
+            if (!contactos[role]) contactos[role] = [];
+            contactos[role].push({ tel: row.telefono, label: `${row.nombre} ${row.apellido_paterno}` });
         });
+
+        // Asegurar que los padres existan
+        if (!contactos['padre']) contactos['padre'] = [];
+        padresRows.forEach(row => {
+            contactos['padre'].push({ tel: row.telefono, label: `${row.nombre} ${row.apellido_paterno}` });
+        });
+
+        res.json(contactos);
     } catch (error) {
         logger.error('Error al obtener contactos:', error);
         res.status(500).json({ error: 'Error interno' });

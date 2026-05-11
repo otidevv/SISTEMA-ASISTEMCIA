@@ -487,10 +487,8 @@
                 <i class="fas fa-times close-modal" onclick="closeContactsModal()"></i>
             </div>
             
-            <div class="contact-filters">
-                <label><input type="checkbox" id="f-padres" checked onchange="renderContacts()"> Padres</label>
-                <label><input type="checkbox" id="f-estudiantes" checked onchange="renderContacts()"> Estudiantes</label>
-                <label><input type="checkbox" id="f-docentes" checked onchange="renderContacts()"> Docentes</label>
+            <div class="contact-filters" id="dynamic-filters" style="flex-wrap: wrap;">
+                <!-- Filtros dinámicos inyectados aquí -->
             </div>
             
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
@@ -650,11 +648,23 @@
             document.getElementById('contactsModal').classList.add('active');
             
             // Fetch contacts if not loaded
-            if(allContactsData.padres.length === 0 && allContactsData.estudiantes.length === 0) {
+            // Fetch contacts if not loaded
+            if(Object.keys(allContactsData).length <= 3) {
                 try {
                     const res = await fetch('/api/contacts');
                     allContactsData = await res.json();
-                    if(!allContactsData.estudiantes) allContactsData.estudiantes = [];
+                    
+                    // Construir filtros dinámicamente
+                    const filterContainer = document.getElementById('dynamic-filters');
+                    filterContainer.innerHTML = '';
+                    for (const role in allContactsData) {
+                        filterContainer.innerHTML += \`
+                            <label>
+                                <input type="checkbox" id="f-\${role}" checked onchange="renderContacts()"> 
+                                \${role.toUpperCase()}
+                            </label>
+                        \`;
+                    }
                 } catch(e) {
                     document.getElementById('contact-list-container').innerHTML = '<div style="color:var(--danger); padding:20px;">Error cargando contactos.</div>';
                     return;
@@ -669,10 +679,6 @@
 
         function renderContacts() {
             const container = document.getElementById('contact-list-container');
-            const showPadres = document.getElementById('f-padres').checked;
-            const showEstud = document.getElementById('f-estudiantes').checked;
-            const showDoc = document.getElementById('f-docentes').checked;
-            
             let listHTML = '';
             let count = 0;
 
@@ -687,16 +693,24 @@
                                 <strong>\${c.label}</strong> <br>
                                 <span style="color:var(--text-muted)">\${c.tel}</span>
                             </div>
-                            <div class="contact-badge" style="background:\${color}">\${type}</div>
+                            <div class="contact-badge" style="background:\${color}">\${type.toUpperCase()}</div>
                         </label>\`;
                         count++;
                     }
                 });
             };
 
-            if(showPadres) addToList(allContactsData.padres, 'Padre', 'var(--primary)');
-            if(showEstud) addToList(allContactsData.estudiantes, 'Estudiante', 'var(--warning)');
-            if(showDoc) addToList(allContactsData.docentes, 'Docente', 'var(--success)');
+            const colors = ['var(--primary)', 'var(--warning)', 'var(--success)', 'var(--magenta)', '#ef4444', '#10b981', '#f59e0b', '#3b82f6'];
+            let colorIdx = 0;
+
+            for (const role in allContactsData) {
+                const checkbox = document.getElementById(\`f-\${role}\`);
+                if (checkbox && checkbox.checked) {
+                    const color = colors[colorIdx % colors.length];
+                    addToList(allContactsData[role], role, color);
+                }
+                colorIdx++;
+            }
 
             if(count === 0) {
                 container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted)">No hay contactos para mostrar.</div>';
