@@ -1518,7 +1518,10 @@ app.post('/api/toggle', (req, res) => {
     const { servicio, estado } = req.body;
     logger.info(`Dashboard: Solicitando cambiar ${servicio} a ${estado}`);
 
-    if (servicio === 'sms') SMS_HABILITADO = estado;
+    if (servicio === 'sms') {
+        SMS_HABILITADO = estado;
+        if (estado) procesarColaMensajesSMS();
+    }
     if (servicio === 'telegram') TELEGRAM_HABILITADO = estado;
     if (servicio === 'whatsapp') WHATSAPP_HABILITADO = estado;
 
