@@ -256,6 +256,13 @@
 
 <body>
 
+    @php
+        // Función para eliminar emojis (DomPDF no los soporta)
+        function stripEmojis($text) {
+            return preg_replace('/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{1F1E0}-\x{1F1FF}\x{2600}-\x{27BF}\x{FE00}-\x{FE0F}\x{1F900}-\x{1F9FF}\x{200D}\x{20E3}\x{E0020}-\x{E007F}]/u', '', $text);
+        }
+    @endphp
+
     <div class="page-wrapper">
 
         <!-- Bordes Independientes -->
@@ -322,8 +329,8 @@
                     el presente <b>{{ $ciclo->nombre }}</b> ({{ $ciclo->fecha_inicio->format('d/m/Y') }} –
                     {{ $ciclo->fecha_fin->format('d/m/Y') }}), con Código de Postulante N°
                     <b>{{ $inscripcion->codigo_inscripcion }}</b>, perteneciente a la Carrera Profesional de
-                    <b>{{ $carrera->nombre }}</b>, en el grupo <b>{{ $aula ? $aula->nombre : 'N/A' }}</b> y en el turno
-                    de la <b>{{ $turno->nombre }}</b>.
+                    <b>{{ stripEmojis($carrera->nombre) }}</b>, en el grupo <b>{{ $aula ? stripEmojis($aula->nombre) : 'N/A' }}</b> y en el turno
+                    de la <b>{{ stripEmojis($turno->nombre) }}</b>.
                 </p>
                 <p style="text-indent: 3em; margin-top: 12px;">
                     Se expide la presente constancia a solicitud del interesado(a) para los fines que estime por
