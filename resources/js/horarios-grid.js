@@ -118,9 +118,9 @@ async function cargarHorarios(mostrarAlerta = true) {
         return;
     }
 
-    // REDIBUJADO VITAL: Si el ciclo principal cambia, los recesos cambian. 
-    // Debemos recargar toda la página web para que el PHP Blade construya los huecos verdes nuevos del fondo.
-    if (String(cicloId) !== String(window.scheduleData.cicloId)) {
+    // REDIBUJADO VITAL: Si el ciclo o el turno cambian, la estructura de la grilla cambia. 
+    // Debemos recargar toda la página web para que el PHP Blade construya los slots de tiempo correctos.
+    if (String(cicloId) !== String(window.scheduleData.cicloId) || String(turno) !== String(window.scheduleData.turno)) {
         window.location.href = window.location.pathname + '?ciclo_id=' + cicloId + '&aula_id=' + aulaId + '&turno=' + turno;
         return;
     }

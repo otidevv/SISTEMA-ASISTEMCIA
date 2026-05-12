@@ -713,13 +713,14 @@ class HorarioDocenteController extends Controller
         }
         
         // AJUSTE DE RANGO SEGÚN TURNO OFICIAL
-        if ($turno === 'MAÑANA') {
-            if ($minHora > 7) $minHora = 7;
-            if ($maxHora < 13) $maxHora = 13; // Turno mañana termina a la 1pm
-        } elseif ($turno === 'TARDE') {
-            if ($minHora > 14) $minHora = 14;
-            if ($maxHora < 20) $maxHora = 20; // Turno tarde termina a las 8pm
-        } elseif ($turno === 'NOCHE') {
+        $turnoActual = strtoupper(trim((string)$turno));
+        if ($turnoActual === 'MAÑANA') {
+            $minHora = 7;
+            $maxHora = 13.5; // Turno mañana termina 13:30
+        } elseif ($turnoActual === 'TARDE') {
+            $minHora = 15;
+            $maxHora = 21.5; // Turno tarde termina 21:30
+        } elseif ($turnoActual === 'NOCHE') {
             if ($minHora > 18) $minHora = 18;
             if ($maxHora < 22) $maxHora = 22; 
         } else {

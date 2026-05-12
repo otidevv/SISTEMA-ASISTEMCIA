@@ -484,9 +484,23 @@
                         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
                         
                         $slots = [];
-                        $h_start = 7; $h_end = 21;
+                        
+                        // Normalizar el turno para la comparación (más robusto)
+                        $turnoActual = strtoupper(trim((string)($turnoSeleccionado ?? 'MAÑANA')));
+                        
+                        // Determinar límites según el turno
+                        if ($turnoActual == 'MAÑANA') {
+                            $h_start = 7;
+                            $limit = 13.5 * 60; // 13:30
+                        } elseif ($turnoActual == 'TARDE') {
+                            $h_start = 15;
+                            $limit = 21.5 * 60; // 21:30
+                        } else {
+                            $h_start = 7;
+                            $limit = 21 * 60;
+                        }
+                        
                         $curr = $h_start * 60;
-                        $limit = $h_end * 60;
                         
                         $recesoMananaInicioStr = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_inicio, 0, 5) : null;
                         $recesoMananaFinStr    = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_fin, 0, 5) : null;
