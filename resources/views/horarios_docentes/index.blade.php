@@ -56,6 +56,36 @@
     .card-sidebar .card-header { background: linear-gradient(135deg, #f8f9fe 0%, #f1f3f9 100%); border-bottom: 1px solid #eef2f7; }
     .avatar-sm[data-bg-color] { color: white; }
     .highlight { background-color: #f8e479; border-radius: 3px; }
+
+    /* --- PAGINACIÓN PROFESIONAL --- */
+    .pagination {
+        margin-bottom: 0;
+        gap: 5px;
+    }
+    .page-item .page-link {
+        border: 1px solid #eef2f7;
+        border-radius: 8px !important;
+        color: #6c757d;
+        padding: 8px 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .page-item.active .page-link {
+        background: var(--primary-gradient) !important;
+        border-color: transparent !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(115, 103, 240, 0.3);
+    }
+    .page-item.disabled .page-link {
+        background-color: #f8f9fa;
+        color: #adb5bd;
+    }
+    .page-item:not(.active):not(.disabled) .page-link:hover {
+        background-color: #f1f3fa;
+        color: #7367f0;
+        transform: translateY(-1px);
+    }
 </style>
 @endpush
 
