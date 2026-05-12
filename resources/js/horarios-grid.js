@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     indexarCeldasGrilla();
     cargarHorarios();
     inicializarEventos();
+    inicializarSelect2();
 });
 
 // Exponer funciones al scope global para los event handlers inline del HTML
@@ -642,6 +643,10 @@ function abrirModalCreacion(dia, hora, cursoId = null) {
     const horaFin = `${String(parseInt(horaInicio[0]) + 1).padStart(2, '0')}:${horaInicio[1]}`;
     document.getElementById('modal-hora-fin').value = horaFin;
 
+    // Actualizar Select2
+    $('#modal-docente').val('').trigger('change');
+    $('#modal-curso').val(cursoId || '').trigger('change');
+
     const modal = new bootstrap.Modal(document.getElementById('quickCreateModal'));
     modal.show();
 }
@@ -683,6 +688,10 @@ function abrirModalEdicion(horario) {
         document.getElementById('modal-docente').setAttribute('required', 'required');
         document.getElementById('dias-receso-field').style.display = 'none';
     }
+
+    // Actualizar Select2
+    $('#modal-curso').val(horario.curso_id || '').trigger('change');
+    $('#modal-docente').val(horario.docente_id || '').trigger('change');
 
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('quickCreateModal'));
@@ -1520,4 +1529,30 @@ async function ejecutarDeleteHorario(horarioId) {
     }
 
     return response;
+}
+
+/**
+ * Inicializar Select2 para los selectores del modal
+ */
+function inicializarSelect2() {
+    if (typeof $ === 'undefined') return;
+
+    const selectConfigs = {
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownParent: $('#quickCreateModal'),
+        language: {
+            noResults: function() { return "No se encontraron resultados"; },
+            searching: function() { return "Buscando..."; }
+        }
+    };
+
+    $('#modal-docente').select2(selectConfigs);
+    $('#modal-curso').select2(selectConfigs);
+
+    // Re-inicializar cuando el modal se muestra para asegurar el foco y renderizado
+    $('#quickCreateModal').on('shown.bs.modal', function () {
+        $('#modal-docente').select2(selectConfigs);
+        $('#modal-curso').select2(selectConfigs);
+    });
 }

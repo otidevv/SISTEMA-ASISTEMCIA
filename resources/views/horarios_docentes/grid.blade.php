@@ -3,12 +3,38 @@
 @section('title', 'Grilla Visual de Horarios')
 
 @push('css')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
     :root {
         --primary-gradient: linear-gradient(135deg, #4f32c2 0%, #7367f0 100%);
         --success-gradient: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
         --warning-gradient: linear-gradient(135deg, #ff9f43 0%, #ff8b1b 100%);
         --info-gradient: linear-gradient(135deg, #00cfe8 0%, #1ce1ff 100%);
+    }
+
+    /* Select2 Custom Styles - Corregido para alineación perfecta */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 1px solid #ced4da !important;
+        border-radius: 0.375rem !important;
+        height: 38px !important; /* Altura estándar de Bootstrap 5 */
+        display: flex !important;
+        align-items: center !important;
+        box-shadow: none !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        line-height: normal !important;
+        padding-left: 0.75rem !important;
+        color: #212529 !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        right: 10px !important;
+        height: auto !important;
+    }
+    .select2-container {
+        z-index: 2000 !important;
     }
 
     /* Contenedor de la grilla */
@@ -740,5 +766,6 @@
 @endsection
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @vite('resources/js/horarios-grid.js')
 @endpush
