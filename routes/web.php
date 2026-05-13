@@ -41,6 +41,11 @@ Route::get('/secundaria', [HomeController::class, 'secundaria'])->name('public.s
 // Ruta para sitemap.xml
 Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 
+// Ruta para Política de Privacidad (Requerida por Google Play)
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('public.privacy');
+
 // Agregar temporalmente en tu routes/web.php para debugging
 Route::get('/debug-horarios-docentes', function () {
     $docentes = \App\Models\User::whereHas('roles', function ($query) {

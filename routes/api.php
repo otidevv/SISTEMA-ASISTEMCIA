@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/exam-results', [AcademicApiController::class, 'getExamResults']);
         Route::get('/eligibility', [AcademicApiController::class, 'getEligibility']);
         Route::get('/report-cards', [AcademicApiController::class, 'getReportCards']);
+        Route::get('/schedule', [AcademicApiController::class, 'getSchedule']);
     });
 
     // --- SERVICIOS DOCENTES ---
@@ -117,12 +118,6 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::delete('/{id}', [MaterialAcademicoApiController::class, 'destroy']);
     });
 
-    // --- NUEVAS RUTAS ACADÉMICAS PARA ESTUDIANTES ---
-    Route::prefix('academic')->group(function () {
-        Route::get('/exam-results', [AcademicApiController::class, 'getExamResults']);
-        Route::get('/eligibility', [AcademicApiController::class, 'getEligibility']);
-        Route::get('/report-cards', [AcademicApiController::class, 'getReportCards']);
-    });
 
     // --- PAGOS ---
     Route::get('/payments/validate/{dni}', [PaymentApiController::class, 'validateByDni']);

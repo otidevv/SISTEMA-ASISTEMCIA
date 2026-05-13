@@ -17,19 +17,33 @@ class DocumentApiController extends BaseController
     {
         $user = $request->user();
         
-        $carnet = Carnet::where('estudiante_id', $user->id)
-            ->whereHas('ciclo', fn($q) => $q->where('es_activo', true))
+        $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+            ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'carrera', 'aula'])
             ->first();
 
-        if (!$carnet) {
-            return $this->sendError('No se encontró carnet activo para el estudiante.', [], 404);
+        if (!$inscripcion) {
+            $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
+                $q->where('numero_documento', $user->numero_documento);
+            })
+            ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'carrera', 'aula'])
+            ->first();
+        }
+
+        if (!$inscripcion) {
+            return $this->sendError('No se encontró una inscripción activa para generar el carnet.', [], 404);
         }
 
         return $this->sendResponse([
-            'id' => $carnet->id,
-            'qr_code' => $carnet->codigo_qr,
-            'status' => $carnet->entregado ? 'entregado' : ($carnet->impreso ? 'impreso' : 'pendiente'),
-            'photo_url' => asset(Storage::url('carnets/' . $user->numero_documento . '.jpg')),
+            'nombre_completo' => $user->nombre . ' ' . $user->apellido_paterno . ' ' . $user->apellido_materno,
+            'numero_documento' => $user->numero_documento,
+            'carrera' => $inscripcion->carrera->nombre ?? 'N/A',
+            'ciclo' => $inscripcion->ciclo->nombre ?? 'N/A',
+            'aula' => $inscripcion->aula->nombre ?? 'N/A',
+            'qr_code' => $user->numero_documento, // El DNI es el estándar para el escáner
+            'photo_url' => $user->foto_perfil ? asset(Storage::url($user->foto_perfil)) : null,
+            'color_primario' => '#003366', // Azul UNAMAD
         ], 'Carnet recuperado con éxito.');
     }
 

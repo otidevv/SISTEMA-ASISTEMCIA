@@ -86,60 +86,45 @@ class DashboardController extends Controller
                 ->orderBy('fecha_registro')
                 ->first();
 
-            // 3. Calcular asistencia detallada
+            // 3. Calcular asistencia detallada y obtener HISTORIAL
             $infoAsistencia = [
-                'total_ciclo' => ['dias_asistidos' => 0, 'dias_falta' => 0, 'estado' => 'REGULAR']
+                'total_ciclo' => ['dias_asistidos' => 0, 'dias_falta' => 0, 'estado' => 'REGULAR'],
+                'historial' => [] // Aquí guardaremos las fechas
             ];
 
             try {
                 if ($primerRegistro && $ciclo && $ciclo->fecha_inicio) {
-                    // Primer Examen
+                    // (Mantenemos los cálculos existentes por examen)
                     if ($ciclo->fecha_primer_examen) {
-                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                            $user->numero_documento,
-                            $primerRegistro->fecha_registro,
-                            $ciclo->fecha_primer_examen,
-                            $ciclo
-                        );
+                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $primerRegistro->fecha_registro, $ciclo->fecha_primer_examen, $ciclo);
                     }
-
-                    // Segundo Examen
                     if ($ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
                         $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
                         if ($inicioSegundo) {
-                            $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                                $user->numero_documento,
-                                $inicioSegundo,
-                                $ciclo->fecha_segundo_examen,
-                                $ciclo
-                            );
+                            $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioSegundo, $ciclo->fecha_segundo_examen, $ciclo);
                         }
                     }
-
-                    // Tercer Examen
                     if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
                         $inicioTercero = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
                         if ($inicioTercero) {
-                            $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                                $user->numero_documento,
-                                $inicioTercero,
-                                $ciclo->fecha_tercer_examen,
-                                $ciclo
-                            );
+                            $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioTercero, $ciclo->fecha_tercer_examen, $ciclo);
                         }
                     }
 
-                    // Total Ciclo
+                    // Total Ciclo y OBTENER FECHAS DETALLADAS
                     $fechaFinParaTotal = $ciclo->fecha_fin ? min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)) : Carbon::now();
-                    $infoAsistencia['total_ciclo'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $resultadoDetallado = AsistenciaHelper::calcularInfoAsistenciaExamen(
                         $user->numero_documento,
                         $primerRegistro->fecha_registro,
                         $fechaFinParaTotal,
-                        $ciclo
+                        $ciclo,
+                        true // Nuevo parámetro para que nos devuelva el historial
                     );
+                    
+                    $infoAsistencia['total_ciclo'] = $resultadoDetallado;
                 }
             } catch (\Exception $e) {
-                \Log::warning("Fallo cálculo asistencia: " . $e->getMessage());
+                \Log::warning("Fallo cálculo asistencia detallada: " . $e->getMessage());
             }
 
             // 4. Anuncios

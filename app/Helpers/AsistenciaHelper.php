@@ -175,7 +175,7 @@ class AsistenciaHelper
     /**
      * Calcula la asistencia de un estudiante para un período específico (Reutilizado por Web y API).
      */
-    public static function calcularInfoAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo)
+    public static function calcularInfoAsistenciaExamen($numeroDocumento, $fechaInicio, $fechaExamen, $ciclo, $returnHistory = false)
     {
         $hoy = Carbon::now()->startOfDay();
         $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
@@ -197,14 +197,14 @@ class AsistenciaHelper
                 'puede_rendir' => true,
                 'fecha_inicio' => $fechaInicio,
                 'fecha_fin' => $fechaExamen,
-                'es_proyeccion' => true
+                'es_proyeccion' => true,
+                'historial' => []
             ];
         }
 
         $diasHabilesTotales = self::contarDiasHabiles($fechaInicio, $fechaExamen, $ciclo);
-        $diasHabilesTranscurridos = self::contarDiasHabiles($fechaInicio, $fechaFinCalculo, $ciclo);
-
-        // Obtener el primer registro de asistencia del estudiante dentro de este ciclo para el primer examen
+        
+        // Obtener el primer registro de asistencia del estudiante dentro de este ciclo
         $primerRegistroGlobal = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
             ->where('fecha_registro', '<=', $ciclo->fecha_fin)
@@ -218,34 +218,57 @@ class AsistenciaHelper
             $fechaPrimerReg = Carbon::parse($primerRegistroGlobal->fecha_registro)->startOfDay();
             if ($fechaPrimerReg->gt($adjInicio)) {
                 $adjInicio = $fechaPrimerReg;
-                // Recalcular días si el ajuste aplica
-                $diasHabilesTotales = self::contarDiasHabiles($adjInicio, $fechaExamenCarbon, $ciclo);
-                $diasHabilesTranscurridos = self::contarDiasHabiles($adjInicio, $fechaFinCalculo, $ciclo);
             }
         }
+        
+        // Recalcular días si el ajuste aplica
+        $diasHabilesTranscurridos = self::contarDiasHabiles($adjInicio, $fechaFinCalculo, $ciclo);
+        $diasHabilesTotales = self::contarDiasHabiles($adjInicio, $fechaExamenCarbon, $ciclo);
 
-        $registrosAsistencia = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+        // Obtener todos los registros en el periodo para el historial
+        $registrosMap = RegistroAsistencia::where('nro_documento', $numeroDocumento)
             ->whereBetween('fecha_registro', [
                 $adjInicio->copy()->startOfDay(),
                 $fechaFinCalculo->copy()->endOfDay()
             ])
-            ->select(DB::raw('DATE(fecha_registro) as fecha'))
-            ->distinct()
+            ->select(DB::raw('DATE(fecha_registro) as fecha'), 'fecha_registro')
             ->get()
-            ->pluck('fecha');
+            ->groupBy('fecha');
 
+        $historial = [];
         $diasConAsistencia = 0;
-        foreach ($registrosAsistencia as $fecha) {
-            if ($ciclo->esDiaHabil(Carbon::parse($fecha))) {
-                $diasConAsistencia++;
+        
+        if ($returnHistory) {
+            $tempFecha = $adjInicio->copy();
+            while ($tempFecha <= $fechaFinCalculo) {
+                if ($ciclo->esDiaHabil($tempFecha)) {
+                    $fechaStr = $tempFecha->toDateString();
+                    if (isset($registrosMap[$fechaStr])) {
+                        $diasConAsistencia++;
+                        $historial[] = [
+                            'fecha' => $fechaStr,
+                            'dia_semana' => $tempFecha->translatedFormat('l'),
+                            'estado' => 'asistio',
+                            'hora' => Carbon::parse($registrosMap[$fechaStr][0]->fecha_registro)->format('H:i:s')
+                        ];
+                    } else {
+                        $historial[] = [
+                            'fecha' => $fechaStr,
+                            'dia_semana' => $tempFecha->translatedFormat('l'),
+                            'estado' => 'falta',
+                            'hora' => null
+                        ];
+                    }
+                }
+                $tempFecha->addDay();
             }
+        } else {
+            $diasConAsistencia = $registrosMap->count();
         }
 
         $diasFaltaActuales = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-
         $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
-        $porcentajeInasistenciaProyectado = 100 - $porcentajeAsistenciaProyectado;
 
         $limiteAmonestacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_amonestacion ?? 20) / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_inhabilitacion ?? 30) / 100));
@@ -257,41 +280,32 @@ class AsistenciaHelper
         if ($hoy >= $fechaExamenCarbon) {
             if ($diasFaltaActuales >= $limiteInhabilitacion) {
                 $estado = 'inhabilitado';
-                $mensaje = 'Has superado el ' . ($ciclo->porcentaje_inhabilitacion ?? 30) . '% de inasistencias. No pudiste rendir este examen.';
+                $mensaje = 'Has superado el ' . ($ciclo->porcentaje_inhabilitacion ?? 30) . '% de inasistencias.';
                 $puedeRendir = false;
             } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
                 $estado = 'amonestado';
-                $mensaje = 'Superaste el ' . ($ciclo->porcentaje_amonestacion ?? 20) . '% de inasistencias pero pudiste rendir el examen.';
+                $mensaje = 'Superaste el ' . ($ciclo->porcentaje_amonestacion ?? 20) . '% de inasistencias.';
             } else {
-                $mensaje = 'Tu asistencia fue adecuada para este examen.';
+                $mensaje = 'Asistencia adecuada.';
             }
         } else {
             $diasRestantes = $diasHabilesTotales - $diasHabilesTranscurridos;
-            $faltasMaximasPermitidas = $limiteInhabilitacion - 1;
-            $faltasParaInhabilitacion = $faltasMaximasPermitidas - $diasFaltaActuales;
-
             if ($diasFaltaActuales >= $limiteInhabilitacion) {
                 $estado = 'inhabilitado';
-                $mensaje = "Ya has acumulado {$diasFaltaActuales} faltas. Has superado el límite de {$limiteInhabilitacion} faltas permitidas.";
+                $mensaje = "Límite superado ({$diasFaltaActuales} faltas).";
                 $puedeRendir = false;
             } elseif ($diasFaltaActuales >= $limiteAmonestacion) {
                 $estado = 'amonestado';
-                if ($faltasParaInhabilitacion > 0) {
-                    $mensaje = "Tienes {$diasFaltaActuales} faltas. ¡Cuidado! Solo puedes faltar {$faltasParaInhabilitacion} día" . ($faltasParaInhabilitacion > 1 ? 's' : '') . " más antes de ser inhabilitado.";
-                } else {
-                    $mensaje = "Tienes {$diasFaltaActuales} faltas. ¡No puedes faltar más o serás inhabilitado!";
-                }
+                $faltasInh = $limiteInhabilitacion - $diasFaltaActuales;
+                $mensaje = "Amonestado. Quedan {$faltasInh} faltas para inhabilitación.";
             } else {
-                $faltasParaAmonestacion = $limiteAmonestacion - $diasFaltaActuales;
-                $mensaje = "Tu asistencia va bien. Tienes {$diasFaltaActuales} faltas. Puedes faltar hasta {$faltasParaAmonestacion} día" . ($faltasParaAmonestacion > 1 ? 's' : '') . " más sin ser amonestado.";
+                $faltasAmon = $limiteAmonestacion - $diasFaltaActuales;
+                $mensaje = "Vas bien. Puedes faltar {$faltasAmon} días más.";
             }
-
-            $mensaje .= " Quedan {$diasRestantes} día" . ($diasRestantes > 1 ? 's' : '') . " hábil" . ($diasRestantes > 1 ? 'es' : '') . " hasta el examen.";
         }
 
         return [
             'dias_habiles' => $diasHabilesTotales,
-            'dias_habiles_transcurridos' => $diasHabilesTranscurridos,
             'dias_asistidos' => $diasConAsistencia,
             'dias_falta' => $diasFaltaActuales,
             'porcentaje_asistencia' => $porcentajeAsistenciaProyectado,
@@ -301,7 +315,7 @@ class AsistenciaHelper
             'mensaje' => $mensaje,
             'puede_rendir' => $puedeRendir,
             'es_proyeccion' => $hoy < $fechaExamenCarbon,
-            'dias_restantes' => max(0, $diasHabilesTotales - $diasHabilesTranscurridos)
+            'historial' => array_reverse($historial) // De más reciente a más antiguo
         ];
     }
 

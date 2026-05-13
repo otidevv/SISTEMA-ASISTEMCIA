@@ -7,6 +7,7 @@ use App\Models\ResultadoExamen;
 use App\Models\Ciclo;
 use App\Models\Inscripcion;
 use App\Models\BoletinEntrega;
+use App\Models\HorarioDocente;
 use App\Helpers\AsistenciaHelper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\BaseController;
@@ -192,5 +193,73 @@ class AcademicApiController extends BaseController
         });
 
         return $this->sendResponse($datos, 'Boletines de notas recuperados.');
+    }
+
+    /**
+     * Get the class schedule for the student based on their assigned classroom.
+     */
+    public function getSchedule(Request $request)
+    {
+        $user = $request->user();
+        
+        // 1. Obtener inscripción activa
+        $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+            ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'aula'])
+            ->first();
+
+        if (!$inscripcion) {
+            $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
+                $q->where('numero_documento', $user->numero_documento);
+            })
+            ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'aula'])
+            ->first();
+        }
+
+        if (!$inscripcion || !$inscripcion->aula_id) {
+            return $this->sendResponse([
+                'aula' => 'N/A',
+                'hoy' => $this->getDiaSemanaSpanish(now()->dayOfWeek),
+                'clases_hoy' => [],
+                'semana_completa' => []
+            ], 'No tienes un aula asignada actualmente.');
+        }
+
+        $hoy = now();
+        $diaSemana = $this->getDiaSemanaSpanish($hoy->dayOfWeek);
+
+        // 2. Obtener horarios del aula
+        $horarios = HorarioDocente::with(['curso', 'docente', 'aula'])
+            ->where('aula_id', $inscripcion->aula_id)
+            ->where('ciclo_id', $inscripcion->ciclo_id)
+            ->orderByRaw("FIELD(dia_semana, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo')")
+            ->orderBy('hora_inicio')
+            ->get()
+            ->groupBy('dia_semana');
+
+        // 3. Formatear datos
+        $datos = [
+            'aula' => $inscripcion->aula->nombre ?? 'N/A',
+            'hoy' => $diaSemana,
+            'clases_hoy' => $horarios[$diaSemana] ?? [],
+            'semana_completa' => $horarios
+        ];
+
+        return $this->sendResponse($datos, 'Horario recuperado con éxito.');
+    }
+
+    private function getDiaSemanaSpanish($dayIndex)
+    {
+        $dias = [
+            0 => 'Domingo',
+            1 => 'Lunes',
+            2 => 'Martes',
+            3 => 'Miércoles',
+            4 => 'Jueves',
+            5 => 'Viernes',
+            6 => 'Sábado',
+        ];
+        return $dias[$dayIndex] ?? 'Lunes';
     }
 }
