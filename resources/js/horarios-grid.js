@@ -119,9 +119,11 @@ async function cargarHorarios(mostrarAlerta = true) {
         return;
     }
 
-    // REDIBUJADO VITAL: Si el ciclo o el turno cambian, la estructura de la grilla cambia. 
+    // REDIBUJADO VITAL: Si el ciclo, el aula o el turno cambian, la estructura de la grilla puede cambiar. 
     // Debemos recargar toda la página web para que el PHP Blade construya los slots de tiempo correctos.
-    if (String(cicloId) !== String(window.scheduleData.cicloId) || String(turno) !== String(window.scheduleData.turno)) {
+    if (String(cicloId) !== String(window.scheduleData.cicloId) || 
+        String(turno) !== String(window.scheduleData.turno) || 
+        String(aulaId) !== String(window.scheduleData.aulaId)) {
         window.location.href = window.location.pathname + '?ciclo_id=' + cicloId + '&aula_id=' + aulaId + '&turno=' + turno;
         return;
     }
@@ -223,57 +225,68 @@ function renderizarHorarios() {
  * Renderizar un bloque simple (sin dividir)
  */
 function renderizarBloqueSimple(horario, mostrarInfo) {
+    // 1. Encontrar la celda de inicio con "fuzzy match" (Snapping)
     const cellInicio = encontrarCelda(horario.dia_semana, horario.hora_inicio);
-    if (!cellInicio) return;
+    if (!cellInicio) {
+        const err = document.createElement('div');
+        err.style.cssText = "position:fixed; bottom:10px; right:10px; background:red; color:white; padding:10px; z-index:9999; border-radius:5px;";
+        err.innerText = `[Debug] Falla cellInicio: ${horario.curso_nombre} | Día: ${horario.dia_semana} | Hora: ${horario.hora_inicio}`;
+        document.body.appendChild(err);
+        return;
+    }
 
-    const minInicio = parseMinutos(horario.hora_inicio);
     const minFin = parseMinutos(horario.hora_fin);
-
-    // Contar cuántas celdas reales de la grilla abarca este bloque
     const diaKey = normalizarDiaKey(horario.dia_semana);
+    
     let celdasCubiertas = [];
     
-    gridCellIndex.forEach((cell, key) => {
-        const [cellDia, cellHora] = key.split('|');
-        if (cellDia !== diaKey) return;
+    const celdasColumna = Array.from(document.querySelectorAll('.grid-cell'))
+        .filter(c => c.dataset.dia && normalizarDiaKey(c.dataset.dia) === diaKey)
+        .sort((a, b) => parseMinutos(a.dataset.hora) - parseMinutos(b.dataset.hora));
+
+    let capturando = false;
+    for (let i = 0; i < celdasColumna.length; i++) {
+        const cell = celdasColumna[i];
+        if (cell === cellInicio) capturando = true;
         
-        const cellMin = parseMinutos(cellHora);
-        // La celda está dentro del bloque si su hora de inicio >= inicio del horario
-        // y < fin del horario (usamos -1 para evitar capturar la celda donde empieza el siguiente bloque)
-        if (cellMin >= minInicio && cellMin <= (minFin - 1)) {
+        if (capturando) {
+            const cellMin = parseMinutos(cell.dataset.hora);
+            if (cellMin >= minFin) break;
             celdasCubiertas.push(cell);
         }
-    });
+    }
 
-    // Ordenar por posición vertical real en el DOM
-    celdasCubiertas.sort((a, b) => {
-        return (a.offsetTop || 0) - (b.offsetTop || 0);
+    if (celdasCubiertas.length === 0) {
+        const err = document.createElement('div');
+        err.style.cssText = "position:fixed; bottom:50px; right:10px; background:orange; color:white; padding:10px; z-index:9999; border-radius:5px;";
+        err.innerText = `[Debug] 0 celdas: ${horario.curso_nombre} | Fin: ${horario.hora_fin}`;
+        document.body.appendChild(err);
+        return;
+    }
+
+    const firstCell = celdasCubiertas[0];
+    const lastCell = celdasCubiertas[celdasCubiertas.length - 1];
+
+    // 3. Calcular dimensiones sumando exactamente las alturas visuales de las celdas
+    let alturaTotal = 0;
+    celdasCubiertas.forEach(cell => {
+        alturaTotal += cell.getBoundingClientRect().height;
     });
+    
+    // Añadimos los píxeles de los gaps del grid (1px por cada separación entre celdas)
+    const gapTotal = (celdasCubiertas.length - 1) * 1;
+    const height = alturaTotal + gapTotal;
 
     const block = crearBloqueHorario(horario, mostrarInfo);
-
-    if (celdasCubiertas.length >= 1) {
-        // Calcular la altura total sumando las alturas de las celdas
-        const gap = 1;
-        let alturaTotal = 0;
-        
-        celdasCubiertas.forEach((cell, idx) => {
-            alturaTotal += cell.getBoundingClientRect().height;
-            if (idx > 0) alturaTotal += gap;
-        });
-
-        // Ajustar el bloque
-        block.style.position = 'absolute';
-        block.style.top = '0';
-        block.style.left = '0';
-        block.style.right = '0';
-        block.style.margin = '0';
-        block.style.width = '100%';
-        block.style.height = `${alturaTotal}px`;
-        block.style.maxHeight = `${alturaTotal}px`;
-        block.style.zIndex = '10';
-        block.style.borderRadius = '4px';
-    }
+    
+    block.style.position = 'absolute';
+    block.style.top = '-1px';
+    block.style.left = '-1px';
+    block.style.width = 'calc(100% + 2px)';
+    block.style.height = `${height + 2}px`;
+    block.style.zIndex = '10';
+    block.style.borderRadius = '0';
+    block.style.border = '1px solid rgba(0,0,0,0.1)';
 
     cellInicio.appendChild(block);
 }
@@ -375,9 +388,27 @@ function crearBloqueHorario(horario, mostrarInfo = true) {
  */
 function encontrarCelda(dia, hora) {
     const diaKey = normalizarDiaKey(dia);
-    const horaKey = normalizarHoraKey(hora);
-    const key = `${diaKey}|${horaKey}`;
-    return gridCellIndex.get(key) || null;
+    const targetMin = parseMinutos(hora);
+    
+    let bestCell = null;
+    let closestDiff = 9999;
+    
+    // Buscar la celda del mismo día que empiece antes o igual a la hora buscada
+    // pero que sea la más cercana (para manejar el "snapping" de 5-10 min)
+    gridCellIndex.forEach((cell, key) => {
+        const [cellDia, cellHora] = key.split('|');
+        if (cellDia !== diaKey) return;
+        
+        const cellMin = parseMinutos(cellHora);
+        const diff = targetMin - cellMin;
+        
+        if (diff >= 0 && diff < closestDiff) {
+            closestDiff = diff;
+            bestCell = cell;
+        }
+    });
+    
+    return bestCell;
 }
 
 /**

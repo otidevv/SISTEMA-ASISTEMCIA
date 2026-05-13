@@ -347,8 +347,10 @@ class HorarioDocenteController extends Controller
 
         // Límite: máximo 6 horas (360 minutos) por turno
         if ($totalMinutos > 360) {
+            $horasActuales = round($horasTotalesDocente / 60, 1);
+            $horasNuevas = round($minutosNuevoHorario / 60, 1);
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'hora_fin' => 'El docente excedería el límite máximo de 6 horas por turno en este ciclo.',
+                'hora_fin' => "El docente ya tiene {$horasActuales} horas en este turno. Sumando las {$horasNuevas} horas nuevas, excedería el límite máximo de 6 horas por turno en este ciclo.",
             ]);
         }
     }
@@ -515,6 +517,31 @@ class HorarioDocenteController extends Controller
         // Obtener aula y turno seleccionados
         $aulaSeleccionadaId = $request->input('aula_id', $aulas->first()?->id);
         $turnoSeleccionado = $request->input('turno', 'MAÑANA');
+
+        // Obtener horarios para determinar los slots dinámicos
+        $horarios = HorarioDocente::where('ciclo_id', $cicloSeleccionadoId)
+            ->where('aula_id', $aulaSeleccionadaId)
+            ->where('turno', $turnoSeleccionado)
+            ->get();
+        
+        $slotsRaw = $this->obtenerRangoHoras($horarios, $cicloSeleccionado, $turnoSeleccionado);
+        
+        // Convertir slotsRaw a formato estructurado para la vista
+        $slots = [];
+        $recesoMananaInicio = $cicloSeleccionado ? $this->parseToMinutes($cicloSeleccionado->receso_manana_inicio) : -1;
+        $recesoTardeInicio = $cicloSeleccionado ? $this->parseToMinutes($cicloSeleccionado->receso_tarde_inicio) : -1;
+
+        foreach ($slotsRaw as $s) {
+            $partes = explode(' - ', $s);
+            $inicioMin = $this->parseToMinutes($partes[0]);
+            $finMin = $this->parseToMinutes($partes[1]);
+            $slots[] = [
+                'inicio' => $partes[0],
+                'fin' => $partes[1],
+                'minutos' => ($finMin - $inicioMin),
+                'es_receso' => ($inicioMin === $recesoMananaInicio || $inicioMin === $recesoTardeInicio)
+            ];
+        }
         
         return view('horarios_docentes.grid', compact(
             'ciclos',
@@ -524,8 +551,10 @@ class HorarioDocenteController extends Controller
             'cursos',
             'docentes',
             'aulaSeleccionadaId',
-            'turnoSeleccionado'
+            'turnoSeleccionado',
+            'slots'
         ));
+
     }
 
     /**
@@ -672,7 +701,7 @@ class HorarioDocenteController extends Controller
         $horasRango = $this->obtenerRangoHoras($horarios, $ciclo, $turno);
         
         $grilla = [];
-        foreach ($horasRango as $hora) {
+        foreach ($horasRango as $index => $hora) {
             $fila = ['hora' => $hora];
             foreach ($dias as $dia) {
                 $fila[$dia] = $this->obtenerHorarioEnCelda($horarios, $dia, $hora);
@@ -680,98 +709,160 @@ class HorarioDocenteController extends Controller
             $grilla[] = $fila;
         }
 
+        // Lógica de Rowspan para el PDF
+        $rowspans = [];
+        foreach ($dias as $dia) {
+            $skip = 0;
+            foreach ($grilla as $index => $fila) {
+                if ($skip > 0) {
+                    $rowspans[$index][$dia] = 0; // Celda a saltar
+                    $skip--;
+                    continue;
+                }
+                
+                $horario = $fila[$dia];
+                if ($horario) {
+                    // Contar cuántas filas ocupa este horario
+                    $count = 1;
+                    $currentIdx = $index + 1;
+                    while ($currentIdx < count($grilla)) {
+                        $nextHorario = $grilla[$currentIdx][$dia];
+                        if ($nextHorario && $nextHorario->id === $horario->id) {
+                            $count++;
+                            $currentIdx++;
+                        } else {
+                            break;
+                        }
+                    }
+                    $rowspans[$index][$dia] = $count;
+                    $skip = $count - 1;
+                } else {
+                    $rowspans[$index][$dia] = 1;
+                }
+            }
+        }
+
         $urlValidacion = route('publico.validar_horario', ['id' => $aula->id, 'ciclo' => $ciclo->id, 'tipo' => 'aula']);
         $qrCode = base64_encode(QrCode::format('svg')->size(100)->margin(0)->generate($urlValidacion));
 
-        $pdf = Pdf::loadView('horarios_docentes.pdf', [
+        return Pdf::loadView('horarios_docentes.pdf', [
             'ciclo' => $ciclo,
             'aula' => $aula,
             'turno' => $turno,
             'grilla' => $grilla,
+            'rowspans' => $rowspans,
             'dias' => $dias,
             'qrCode' => $qrCode,
             'hayClasesSabado' => $hayClasesSabado
-        ]);
-
-        $pdf->setPaper('A4', 'landscape');
-        
-        return $pdf->download("Horario_{$aula->nombre}_{$turno}_{$ciclo->nombre}.pdf");
+        ])->setPaper('A4', 'landscape')
+          ->download("Horario_{$aula->nombre}_{$turno}_{$ciclo->nombre}.pdf");
     }
 
     /**
-     * Obtener rango de horas de los horarios Dinaminamente
+     * Obtener rango de horas de los horarios Dinámicamente
      */
     private function obtenerRangoHoras($horarios, $ciclo = null, $turno = 'MAÑANA')
     {
-        // Determinar el rango necesario según los horarios existentes
-        $minHora = 24; $maxHora = 0;
+        $timePoints = [];
+        
+        $pointsInteres = [];
+        
+        // 1. Recolectar puntos de interés (Horarios existentes)
         foreach ($horarios as $horario) {
-            $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
-            $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
-            if ($inicio->hour < $minHora) $minHora = $inicio->hour;
-            if ($fin->hour > $maxHora) $maxHora = $fin->hour;
+            $pointsInteres[] = $this->parseToMinutes($horario->hora_inicio);
+            $pointsInteres[] = $this->parseToMinutes($horario->hora_fin);
         }
-        
-        // AJUSTE DE RANGO SEGÚN TURNO OFICIAL
-        $turnoActual = strtoupper(trim((string)$turno));
-        if ($turnoActual === 'MAÑANA') {
-            $minHora = 7;
-            $maxHora = 13.5; // Turno mañana termina 13:30
-        } elseif ($turnoActual === 'TARDE') {
-            $minHora = 15;
-            $maxHora = 21.5; // Turno tarde termina 21:30
-        } elseif ($turnoActual === 'NOCHE') {
-            if ($minHora > 18) $minHora = 18;
-            if ($maxHora < 22) $maxHora = 22; 
-        } else {
-            if ($minHora == 24) $minHora = 7;
-            if ($maxHora == 0) $maxHora = 22;
-        }
-        
-        $slots = [];
-        $curr = $minHora * 60; // En minutos
-        $limit = $maxHora * 60;
-        
-        // Leer recesos del ciclo de la BD de forma dinámica
-        $recesoMananaInicioStr = $ciclo ? substr($ciclo->receso_manana_inicio, 0, 5) : null;
-        $recesoMananaFinStr    = $ciclo ? substr($ciclo->receso_manana_fin, 0, 5) : null;
-        $recesoTardeInicioStr  = $ciclo ? substr($ciclo->receso_tarde_inicio, 0, 5) : null;
-        $recesoTardeFinStr     = $ciclo ? substr($ciclo->receso_tarde_fin, 0, 5) : null;
-        
-        $recesoMananaMins    = $recesoMananaInicioStr ? (intval(substr($recesoMananaInicioStr, 0, 2)) * 60 + intval(substr($recesoMananaInicioStr, 3, 2))) : -1;
-        $recesoMananaFinMins = $recesoMananaFinStr    ? (intval(substr($recesoMananaFinStr, 0, 2)) * 60 + intval(substr($recesoMananaFinStr, 3, 2))) : -1;
-        
-        $recesoTardeMins     = $recesoTardeInicioStr  ? (intval(substr($recesoTardeInicioStr, 0, 2)) * 60 + intval(substr($recesoTardeInicioStr, 3, 2))) : -1;
-        $recesoTardeFinMins  = $recesoTardeFinStr     ? (intval(substr($recesoTardeFinStr, 0, 2)) * 60 + intval(substr($recesoTardeFinStr, 3, 2))) : -1;
-        
-        while ($curr < $limit) {
-            $h = floor($curr / 60);
-            $m = $curr % 60;
-            $dur = 60; // Por defecto 1 hora
-            
-            // Si el puntero toca una hora oficial de receso
-            if ($recesoMananaMins !== -1 && $curr == $recesoMananaMins) {
-                $dur = $recesoMananaFinMins - $recesoMananaMins;
-            } elseif ($recesoTardeMins !== -1 && $curr == $recesoTardeMins) {
-                $dur = $recesoTardeFinMins - $recesoTardeMins;
-            } else {
-                // Verificar si una clase de 60 mins cruzaría o invadiría con la hora del receso venidero
-                if ($recesoMananaMins !== -1 && $recesoMananaMins > $curr && $recesoMananaMins < $curr + 60) {
-                    $dur = $recesoMananaMins - $curr;
-                } elseif ($recesoTardeMins !== -1 && $recesoTardeMins > $curr && $recesoTardeMins < $curr + 60) {
-                    $dur = $recesoTardeMins - $curr;
-                }
-            }
-            
-            // Salvaguarda
-            if ($dur <= 0) $dur = 60;
 
-            $nxt = $curr + $dur;
-            $slots[] = sprintf('%02d:%02d', $h, $m) . ' - ' . sprintf('%02d:%02d', floor($nxt/60), $nxt % 60);
-            $curr = $nxt;
+        // 2. Puntos de recesos del ciclo (Solo si corresponden al turno)
+        $turnoActual = strtoupper(trim((string)$turno));
+        if ($ciclo) {
+            if ($turnoActual === 'MAÑANA') {
+                if ($ciclo->receso_manana_inicio) $pointsInteres[] = $this->parseToMinutes($ciclo->receso_manana_inicio);
+                if ($ciclo->receso_manana_fin)    $pointsInteres[] = $this->parseToMinutes($ciclo->receso_manana_fin);
+            } else {
+                if ($ciclo->receso_tarde_inicio)  $pointsInteres[] = $this->parseToMinutes($ciclo->receso_tarde_inicio);
+                if ($ciclo->receso_tarde_fin)     $pointsInteres[] = $this->parseToMinutes($ciclo->receso_tarde_fin);
+            }
+        }
+
+        // 3. Determinar Límites (Dinamismo solicitado: si hay clases, recortar al primer y último evento)
+        if (!empty($pointsInteres)) {
+            $timePoints[] = min($pointsInteres);
+            $timePoints[] = max($pointsInteres);
+        } else {
+            // Si no hay clases, usar límites por defecto del turno
+            if ($turnoActual === 'MAÑANA') {
+                $timePoints[] = 7 * 60;   // 07:00
+                $timePoints[] = 13.5 * 60; // 13:30
+            } elseif ($turnoActual === 'TARDE') {
+                $timePoints[] = 15 * 60;   // 15:00
+                $timePoints[] = 22 * 60;
+            } else {
+                $timePoints[] = 18 * 60;
+                $timePoints[] = 22 * 60;
+            }
+        }
+
+        // 4. Agregar todos los puntos intermedios
+        foreach ($pointsInteres as $p) {
+            $timePoints[] = $p;
+        }
+
+        // 4. Limpiar y filtrar
+        $timePoints = array_unique(array_filter($timePoints, fn($p) => $p !== null && $p >= 0));
+        sort($timePoints);
+
+        // 4b. SNAPPING: Unificamos puntos muy cercanos para que la grilla sea limpia y alineada
+        $snappedPoints = [];
+        if (count($timePoints) > 0) {
+            $snappedPoints[] = $timePoints[0];
+            for ($i = 1; $i < count($timePoints); $i++) {
+                $last = end($snappedPoints);
+                // Si la diferencia es menor a 10 min, unificamos al punto anterior
+                if ($timePoints[$i] - $last < 10) {
+                    continue;
+                }
+                $snappedPoints[] = $timePoints[$i];
+            }
+        }
+        $timePoints = $snappedPoints;
+
+        // 5. Generar slots (con subdivisiones de máximo 1 hora para estética)
+        $slots = [];
+        for ($i = 0; $i < count($timePoints) - 1; $i++) {
+            $start = $timePoints[$i];
+            $end = $timePoints[$i + 1];
+            
+            // Si la brecha es de más de 60 mins, subdividir
+            $curr = $start;
+            while ($curr < $end) {
+                $next = min($curr + 60, $end);
+                
+                // Si el remanente es muy pequeño (menos de 15 min), lo absorbemos
+                if ($end - $next < 15) {
+                    $next = $end;
+                }
+                
+                // Evitar micro-slots (ej. de 1 minuto) si es posible, pero mantener exactitud para boundaries
+                // Si la diferencia es de 1-5 mins y estamos subdividiendo una brecha grande, ajustamos.
+                // Pero si 'end' es un punto oficial (horario), DEBEMOS respetarlo.
+                
+                $slots[] = sprintf('%02d:%02d', floor($curr/60), $curr % 60) . ' - ' . sprintf('%02d:%02d', floor($next/60), $next % 60);
+                $curr = $next;
+            }
         }
         
-        return $slots;
+        return array_unique($slots);
+    }
+
+    /**
+     * Helper para convertir HH:mm:ss a minutos
+     */
+    private function parseToMinutes($time)
+    {
+        if (!$time) return null;
+        $parts = explode(':', $time);
+        return (int)$parts[0] * 60 + (int)$parts[1];
     }
 
     /**
@@ -781,15 +872,14 @@ class HorarioDocenteController extends Controller
     {
         // Parsear el rango de hora (ej. "10:00 - 10:30")
         $partes = explode(' - ', $horaRango);
-        $horaSlotInicio = Carbon::createFromFormat('H:i', trim($partes[0]));
-        $horaSlotFin = Carbon::createFromFormat('H:i', trim($partes[1]));
+        $horaSlotInicio = $this->parseToMinutes(trim($partes[0]));
         
         foreach ($horarios as $horario) {
             if ($horario->dia_semana === $dia) {
-                $inicio = Carbon::createFromFormat('H:i', substr($horario->hora_inicio, 0, 5));
-                $fin = Carbon::createFromFormat('H:i', substr($horario->hora_fin, 0, 5));
+                $inicio = $this->parseToMinutes($horario->hora_inicio);
+                $fin = $this->parseToMinutes($horario->hora_fin);
                 
-                // Verificar si el slot está dentro del horario
+                // Verificar si el slot de la grilla empieza justo o dentro de este horario
                 if ($horaSlotInicio >= $inicio && $horaSlotInicio < $fin) {
                     return $horario;
                 }

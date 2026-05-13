@@ -49,18 +49,21 @@
     .schedule-grid {
         display: grid;
         grid-template-columns: 140px repeat(6, 1fr);
-        gap: 1px;
-        background: #e5e7eb;
+        gap: 0; /* Eliminamos el gap para evitar "separadores" gruesos */
+        background: white;
+        border: 1px solid #e2e8f0;
         min-height: 600px;
     }
 
     /* Celdas de la grilla */
     .grid-cell {
         background: white;
-        padding: 8px;
-        min-height: 80px;
+        padding: 0; /* Eliminamos padding para que los bloques cubran todo */
+        min-height: 40px;
         position: relative;
         transition: all 0.2s ease;
+        border-right: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
     }
 
     .grid-cell:hover {
@@ -92,19 +95,19 @@
         justify-content: center;
         font-size: 0.75rem;
         text-align: center;
-        padding: 4px;
+        padding: 8px; /* Restauramos padding solo para las etiquetas de hora */
     }
 
     /* Bloques de horario */
     .schedule-block {
         background: var(--primary-gradient);
         color: white;
-        border-radius: 6px;
+        border-radius: 0;
         padding: 4px 6px;
         margin: 0;
         cursor: move;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        box-shadow: none; /* Quitamos sombras que generan "bordes" o separaciones falsas */
         position: relative;
         overflow: hidden;
         width: 100%;
@@ -112,6 +115,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        border: 1px solid rgba(0,0,0,0.1);
     }
 
     .schedule-block:hover {
@@ -505,76 +509,18 @@
                     <div class="grid-cell header">Viernes</div>
                     <div class="grid-cell header">Sábado</div>
 
-                    <!-- Filas de horarios con slots sincronizados (1h + recesos DINÁMICOS) -->
+                    <!-- Filas de horarios con slots sincronizados (DINÁMICOS del Controlador) -->
                     @php
                         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-                        
-                        $slots = [];
-                        
-                        // Normalizar el turno para la comparación (más robusto)
-                        $turnoActual = strtoupper(trim((string)($turnoSeleccionado ?? 'MAÑANA')));
-                        
-                        // Determinar límites según el turno
-                        if ($turnoActual == 'MAÑANA') {
-                            $h_start = 7;
-                            $limit = 13.5 * 60; // 13:30
-                        } elseif ($turnoActual == 'TARDE') {
-                            $h_start = 15;
-                            $limit = 21.5 * 60; // 21:30
-                        } else {
-                            $h_start = 7;
-                            $limit = 21 * 60;
-                        }
-                        
-                        $curr = $h_start * 60;
-                        
-                        $recesoMananaInicioStr = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_inicio, 0, 5) : null;
-                        $recesoMananaFinStr    = $cicloSeleccionado ? substr($cicloSeleccionado->receso_manana_fin, 0, 5) : null;
-                        $recesoTardeInicioStr  = $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_inicio, 0, 5) : null;
-                        $recesoTardeFinStr     = $cicloSeleccionado ? substr($cicloSeleccionado->receso_tarde_fin, 0, 5) : null;
-                        
-                        $recesoMananaMins    = $recesoMananaInicioStr ? (intval(substr($recesoMananaInicioStr, 0, 2)) * 60 + intval(substr($recesoMananaInicioStr, 3, 2))) : -1;
-                        $recesoMananaFinMins = $recesoMananaFinStr    ? (intval(substr($recesoMananaFinStr, 0, 2)) * 60 + intval(substr($recesoMananaFinStr, 3, 2))) : -1;
-                        $recesoTardeMins     = $recesoTardeInicioStr  ? (intval(substr($recesoTardeInicioStr, 0, 2)) * 60 + intval(substr($recesoTardeInicioStr, 3, 2))) : -1;
-                        $recesoTardeFinMins  = $recesoTardeFinStr     ? (intval(substr($recesoTardeFinStr, 0, 2)) * 60 + intval(substr($recesoTardeFinStr, 3, 2))) : -1;
-                        
-                        while($curr < $limit) {
-                            $h = floor($curr / 60);
-                            $m = $curr % 60;
-                            $dur = 60; // Por defecto 1 hora
-                            $isReceso = false;
-                            
-                            // Si toca justo la hora oficial de receso
-                            if ($recesoMananaMins !== -1 && $curr == $recesoMananaMins) {
-                                $dur = $recesoMananaFinMins - $recesoMananaMins;
-                                $isReceso = true;
-                            } elseif ($recesoTardeMins !== -1 && $curr == $recesoTardeMins) {
-                                $dur = $recesoTardeFinMins - $recesoTardeMins;
-                                $isReceso = true;
-                            } else {
-                                // Verificar empalmes previos
-                                if ($recesoMananaMins !== -1 && $recesoMananaMins > $curr && $recesoMananaMins < $curr + 60) {
-                                    $dur = $recesoMananaMins - $curr;
-                                } elseif ($recesoTardeMins !== -1 && $recesoTardeMins > $curr && $recesoTardeMins < $curr + 60) {
-                                    $dur = $recesoTardeMins - $curr;
-                                }
-                            }
-                            
-                            // Salvaguarda visual
-                            if ($dur <= 0) $dur = 60;
-                            
-                            $nxt = $curr + $dur;
-                            $slots[] = [
-                                'inicio' => sprintf('%02d:%02d', $h, $m),
-                                'fin' => sprintf('%02d:%02d', floor($nxt/60), $nxt % 60),
-                                'es_receso' => $isReceso
-                            ];
-                            $curr = $nxt;
-                        }
                     @endphp
 
                     @foreach ($slots as $slot)
-                        <div class="grid-cell time-slot {{ $slot['es_receso'] ? 'receso-slot' : '' }}">
+                        @php
+                            // Altura proporcional: base de 40px + 0.8px por cada minuto
+                            $pixelHeight = 40 + ($slot['minutos'] * 0.8);
+                        @endphp
+                        <div class="grid-cell time-slot {{ $slot['es_receso'] ? 'receso-slot' : '' }}" 
+                             style="height: {{ $pixelHeight }}px; min-height: {{ $pixelHeight }}px;">
                             {{ $slot['inicio'] }} - {{ $slot['fin'] }}
                             @if($slot['es_receso'])
                                 <br><small style="font-size: 0.65rem; opacity: 0.8;">RECESO</small>
@@ -584,6 +530,7 @@
                             <div class="grid-cell {{ $slot['es_receso'] ? 'receso-cell-grid' : '' }}" 
                                  data-dia="{{ $dia }}" 
                                  data-hora="{{ $slot['inicio'] }}"
+                                 style="height: {{ $pixelHeight }}px; min-height: {{ $pixelHeight }}px;"
                                  ondrop="drop(event)" 
                                  ondragover="allowDrop(event)">
                             </div>

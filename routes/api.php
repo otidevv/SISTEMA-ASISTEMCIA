@@ -113,8 +113,15 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/', [MaterialAcademicoApiController::class, 'index']);
         Route::get('/form-data', [MaterialAcademicoApiController::class, 'getFormData']);
         Route::post('/', [MaterialAcademicoApiController::class, 'store']);
-        Route::post('/{id}', [MaterialAcademicoApiController::class, 'update']); // Usar POST para update con files por limitaciones de PUT en multipart
+        Route::post('/{id}', [MaterialAcademicoApiController::class, 'update']);
         Route::delete('/{id}', [MaterialAcademicoApiController::class, 'destroy']);
+    });
+
+    // --- NUEVAS RUTAS ACADÉMICAS PARA ESTUDIANTES ---
+    Route::prefix('academic')->group(function () {
+        Route::get('/exam-results', [AcademicApiController::class, 'getExamResults']);
+        Route::get('/eligibility', [AcademicApiController::class, 'getEligibility']);
+        Route::get('/report-cards', [AcademicApiController::class, 'getReportCards']);
     });
 
     // --- PAGOS ---

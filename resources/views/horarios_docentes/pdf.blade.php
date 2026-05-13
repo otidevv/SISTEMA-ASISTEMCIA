@@ -198,7 +198,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($grilla as $fila)
+                @foreach ($grilla as $index => $fila)
                     @php
                         $horaFilaParts = explode(' - ', $fila['hora']);
                         $inicioFilaStr = trim($horaFilaParts[0]); 
@@ -214,9 +214,12 @@
                         </tr>
                     @else
                         <tr>
-                            <td class="time-col">{{ $fila['hora'] }}</td>
+                            <td class="time-col" style="height: auto;">{{ $fila['hora'] }}</td>
                             @foreach ($dias as $dia)
                                 @php
+                                    $span = $rowspans[$index][$dia] ?? 1;
+                                    if ($span === 0) continue; // Celda saltada por rowspan
+
                                     $horario = $fila[$dia] ?? null;
                                     $esCursoReceso = $horario && (stripos($horario->curso->nombre, 'receso') !== false || $horario->curso->nombre === 'RECESO');
                                     $bgColor = '#ffffff';
@@ -227,11 +230,16 @@
                                     }
                                 @endphp
                                 
-                                <td style="background-color: {{ $bgColor }}; color: {{ $textColor }};">
+                                <td rowspan="{{ $span }}" style="background-color: {{ $bgColor }}; color: {{ $textColor }}; {{ $span > 1 ? 'height: auto;' : 'height: 40px;' }}">
                                     @if ($horario && !$esCursoReceso)
                                         <div class="course-block">
                                             <span class="course-name">{{ strtoupper($horario->curso->nombre) }}</span>
                                             <span class="teacher-name">{{ $horario->docente->nombre_completo ?? 'Sin docente' }}</span>
+                                            @if($span > 1)
+                                                <div style="font-size: 7px; margin-top: 2px; opacity: 0.8;">
+                                                    {{ substr($horario->hora_inicio, 0, 5) }} - {{ substr($horario->hora_fin, 0, 5) }}
+                                                </div>
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
