@@ -11,6 +11,7 @@ use App\Helpers\AsistenciaHelper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\BaseController;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class AcademicApiController extends BaseController
 {
@@ -21,13 +22,23 @@ class AcademicApiController extends BaseController
     {
         $user = $request->user();
         
-        // Get active inscription
+        // 1. Obtener inscripción activa con fallback (igual que en Dashboard)
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
             ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'carrera', 'aula', 'turno'])
             ->first();
 
         if (!$inscripcion) {
-            return $this->sendError('El estudiante no tiene inscripciones activas.', [], 404);
+            $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
+                $q->where('numero_documento', $user->numero_documento);
+            })
+            ->where('estado_inscripcion', 'activo')
+            ->with(['ciclo', 'carrera', 'aula', 'turno'])
+            ->first();
+        }
+
+        if (!$inscripcion) {
+            return $this->sendError('No se encontró una inscripción activa para tu usuario.', [], 404);
         }
 
         $materiales = MaterialAcademico::with('curso', 'profesor')
@@ -113,20 +124,24 @@ class AcademicApiController extends BaseController
                 'aula' => $inscripcion->aula->nombre ?? 'N/A',
                 'aula_detalle' => $inscripcion->aula->descripcion ?? '',
             ],
-            'examenes' => [
+            'examenes' => []
+        ];
+
+        try {
+            $resumen['examenes'] = [
                 'total_ciclo' => AsistenciaHelper::calcularInfoAsistenciaExamen(
                     $numeroDocumento, 
                     $ciclo->fecha_inicio, 
-                    $ciclo->fecha_fin ?? $ciclo->fecha_tercer_examen ?? $ciclo->fecha_segundo_examen ?? now(), 
+                    $ciclo->fecha_fin ?? ($ciclo->fecha_tercer_examen ?? ($ciclo->fecha_segundo_examen ?? now())), 
                     $ciclo
                 ),
-                'primer_examen' => AsistenciaHelper::calcularInfoAsistenciaExamen(
+                'primer_examen' => $ciclo->fecha_primer_examen ? AsistenciaHelper::calcularInfoAsistenciaExamen(
                     $numeroDocumento, 
                     $ciclo->fecha_inicio, 
                     $ciclo->fecha_primer_examen, 
                     $ciclo
-                ),
-                'segundo_examen' => $ciclo->fecha_segundo_examen ? AsistenciaHelper::calcularInfoAsistenciaExamen(
+                ) : null,
+                'segundo_examen' => ($ciclo->fecha_primer_examen && $ciclo->fecha_segundo_examen) ? AsistenciaHelper::calcularInfoAsistenciaExamen(
                     $numeroDocumento, 
                     AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo), 
                     $ciclo->fecha_segundo_examen, 
@@ -138,9 +153,11 @@ class AcademicApiController extends BaseController
                     $ciclo->fecha_tercer_examen, 
                     $ciclo
                 ) : null,
-            ]
-        ];
-        
+            ];
+        } catch (\Exception $e) {
+            // Silently fail to allow the rest of the data to load
+        }
+
         return $this->sendResponse($resumen, 'Estado de habilitación detallado recuperado.');
     }
 

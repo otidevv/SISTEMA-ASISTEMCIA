@@ -36,71 +36,110 @@ class DashboardController extends Controller
         try {
             $user = Auth::user();
             
-            // 1. Obtener inscripción activa del estudiante
-            $inscripcionActiva = Inscripcion::where('estudiante_id', $user->id)
-                ->whereIn('estado_inscripcion', ['activo', 'aprobada'])
+            // 1. Obtener inscripción activa (Búsqueda por usuario)
+            $inscripcionActiva = $user->inscripciones()
+                ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
                 ->whereHas('ciclo', function ($query) {
                     $query->where('es_activo', true);
                 })
                 ->with(['ciclo', 'carrera', 'aula', 'turno'])
                 ->first();
 
+            // Si falla, buscar cualquier inscripción reciente del usuario
             if (!$inscripcionActiva) {
-                 return response()->json([
-                    'error' => 'No se encontró una inscripción activa.',
-                    'message' => 'Asegúrese de que su inscripción esté aprobada para el ciclo actual.'
-                ], 404);
+                $inscripcionActiva = $user->inscripciones()
+                    ->with(['ciclo', 'carrera', 'aula', 'turno'])
+                    ->latest()
+                    ->first();
+            }
+
+            if (!$inscripcionActiva) {
+                // Si no hay inscripción, devolvemos datos del usuario pero sin ciclo
+                return response()->json([
+                    'success' => true,
+                    'user' => [
+                        'id' => $user->id,
+                        'nombre' => $user->nombre_completo,
+                        'rol' => 'estudiante'
+                    ],
+                    'message' => 'No se encontró una inscripción activa, pero el perfil cargó correctamente.'
+                ]);
             }
 
             $ciclo = $inscripcionActiva->ciclo;
+            if (!$ciclo) {
+                return response()->json([
+                    'success' => true,
+                    'user' => [
+                        'id' => $user->id,
+                        'nombre' => $user->nombre_completo,
+                        'rol' => 'estudiante'
+                    ],
+                    'message' => 'Tu inscripción no tiene un ciclo académico asignado.'
+                ]);
+            }
 
             // 2. Obtener el primer registro de asistencia del estudiante dentro del ciclo
             $primerRegistro = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
-                ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+                ->where('fecha_registro', '>=', $ciclo->fecha_inicio ?? now())
+                ->where('fecha_registro', '<=', $ciclo->fecha_fin ?? now())
                 ->orderBy('fecha_registro')
                 ->first();
 
-            // 3. Calcular asistencia detallada (Igual que en el dashboard web)
-            $infoAsistencia = [];
-            if ($primerRegistro) {
-                // Primer Examen
-                $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                    $user->numero_documento,
-                    $primerRegistro->fecha_registro,
-                    $ciclo->fecha_primer_examen,
-                    $ciclo
-                );
+            // 3. Calcular asistencia detallada
+            $infoAsistencia = [
+                'total_ciclo' => ['dias_asistidos' => 0, 'dias_falta' => 0, 'estado' => 'REGULAR']
+            ];
 
-                // Segundo Examen
-                if ($ciclo->fecha_segundo_examen) {
-                    $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
-                    $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+            try {
+                if ($primerRegistro && $ciclo && $ciclo->fecha_inicio) {
+                    // Primer Examen
+                    if ($ciclo->fecha_primer_examen) {
+                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                            $user->numero_documento,
+                            $primerRegistro->fecha_registro,
+                            $ciclo->fecha_primer_examen,
+                            $ciclo
+                        );
+                    }
+
+                    // Segundo Examen
+                    if ($ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
+                        $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
+                        if ($inicioSegundo) {
+                            $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                                $user->numero_documento,
+                                $inicioSegundo,
+                                $ciclo->fecha_segundo_examen,
+                                $ciclo
+                            );
+                        }
+                    }
+
+                    // Tercer Examen
+                    if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                        $inicioTercero = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
+                        if ($inicioTercero) {
+                            $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                                $user->numero_documento,
+                                $inicioTercero,
+                                $ciclo->fecha_tercer_examen,
+                                $ciclo
+                            );
+                        }
+                    }
+
+                    // Total Ciclo
+                    $fechaFinParaTotal = $ciclo->fecha_fin ? min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)) : Carbon::now();
+                    $infoAsistencia['total_ciclo'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
                         $user->numero_documento,
-                        $inicioSegundo,
-                        $ciclo->fecha_segundo_examen,
+                        $primerRegistro->fecha_registro,
+                        $fechaFinParaTotal,
                         $ciclo
                     );
                 }
-
-                // Tercer Examen
-                if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
-                    $inicioTercero = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
-                    $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                        $user->numero_documento,
-                        $inicioTercero,
-                        $ciclo->fecha_tercer_examen,
-                        $ciclo
-                    );
-                }
-
-                // Total Ciclo
-                $infoAsistencia['total_ciclo'] = AsistenciaHelper::calcularInfoAsistenciaExamen(
-                    $user->numero_documento,
-                    $primerRegistro->fecha_registro,
-                    min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
-                    $ciclo
-                );
+            } catch (\Exception $e) {
+                \Log::warning("Fallo cálculo asistencia: " . $e->getMessage());
             }
 
             // 4. Anuncios
@@ -110,9 +149,9 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            // 5. Resultados de exámenes (si existen)
-            $resultados = ResultadoExamen::where('estudiante_id', $user->id)
-                ->where('ciclo_id', $ciclo->id)
+            // 5. Resultados de exámenes (Generales por ciclo)
+            $resultados = ResultadoExamen::where('ciclo_id', $ciclo->id)
+                ->where('visible', true)
                 ->get();
 
             return response()->json([
@@ -132,17 +171,27 @@ class DashboardController extends Controller
                 'eligibility' => [
                     'totalAsistencias' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
                     'totalFaltas' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
-                    'totalAmonestaciones' => 0, // Implementar si existe modelo de amonestaciones
+                    'dias_asistidos' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
+                    'dias_falta' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
                     'estadoTotal' => $infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR',
                 ],
                 'anuncios' => $anuncios,
                 'resultados' => $resultados,
                 'constanciaSubida' => !empty($inscripcionActiva->postulacion_id) ? 
-                    Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false
+                    \App\Models\Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error("Error en Dashboard Estudiante: " . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudieron cargar los datos académicos. Intente nuevamente más tarde.'
+            ], 500);
         }
     }
 
