@@ -23,16 +23,15 @@ class AutoLoginController extends Controller
             return redirect('/login')->with('error', 'Token de acceso no proporcionado');
         }
 
-        // Buscar los datos asociados al token en el Cache
-        $data = Cache::get('mobile_auth_' . $token);
-        
-        // Validar si el token existe y si la IP coincide
-        if (!$data || !is_array($data) || $data['ip'] !== $request->ip()) {
-            return redirect('/login')->with('error', 'El enlace de acceso es inválido, ha expirado o se está usando desde una conexión no autorizada');
+        // Buscar el user_id asociado al token en el Cache
+        $userId = Cache::get('mobile_auth_' . $token);
+
+        if (!$userId) {
+            return redirect('/login')->with('error', 'El enlace de acceso ha expirado o ya fue utilizado');
         }
 
         // Buscar al usuario
-        $user = User::find($data['user_id']);
+        $user = User::find($userId);
 
         if (!$user) {
             return redirect('/login')->with('error', 'Usuario no encontrado');

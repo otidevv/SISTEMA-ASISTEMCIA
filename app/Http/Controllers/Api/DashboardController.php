@@ -185,29 +185,11 @@ class DashboardController extends Controller
                     'resultados' => $resultados,
                     'constanciaSubida' => !empty($inscripcionActiva->postulacion_id) ? 
                         \App\Models\Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false,
-                    'url_constancia' => (function() use ($user, $inscripcionActiva) {
-                        $postulacionId = ($inscripcionActiva && isset($inscripcionActiva->postulacion_id) ? $inscripcionActiva->postulacion_id : null) 
-                            ?? \App\Models\Postulacion::where('estudiante_id', $user->id)->latest()->value('id');
-                        
-                        if (!$postulacionId) return null;
-
-                        $token = bin2hex(random_bytes(20));
-                        // Guardamos el user_id y la IP del solicitante, expira en 1 minuto
-                        \Illuminate\Support\Facades\Cache::put('mobile_auth_' . $token, [
-                            'user_id' => $user->id,
-                            'ip' => request()->ip()
-                        ], now()->addMinute());
-                        
-                        return url("/postulacion/constancia/generar/{$postulacionId}/{$token}");
-                    })(),
+                    'url_constancia' => $inscripcionActiva ? 
+                        url("/constancias/estudios/generar/{$inscripcionActiva->id}") : null,
                     'url_subir_constancia' => (function() use ($user) {
                         $token = bin2hex(random_bytes(20));
-                        // Guardamos el user_id y la IP del solicitante, expira en 1 minuto
-                        \Illuminate\Support\Facades\Cache::put('mobile_auth_' . $token, [
-                            'user_id' => $user->id,
-                            'ip' => request()->ip()
-                        ], now()->addMinute());
-                        
+                        \Illuminate\Support\Facades\Cache::put('mobile_auth_' . $token, $user->id, now()->addMinutes(5));
                         return url("/auth/auto-login?token=" . $token . "&redirect=" . urlencode('/dashboard'));
                     })()
                 ]);

@@ -16,20 +16,9 @@ class ConstanciaPostulacionController extends Controller
     /**
      * Generar constancia de inscripción en PDF
      */
-    public function generarConstancia($postulacionId, $token = null)
+    public function generarConstancia($postulacionId)
     {
         try {
-            // Si no hay usuario autenticado pero hay un token, intentamos login por token (para la App Móvil)
-            if (!Auth::check() && $token) {
-                $data = \Illuminate\Support\Facades\Cache::get('mobile_auth_' . $token);
-                if ($data && is_array($data) && $data['ip'] === request()->ip()) {
-                    $user = User::find($data['user_id']);
-                    if ($user) {
-                        Auth::login($user);
-                    }
-                }
-            }
-
             $postulacion = Postulacion::with([
                 'estudiante.parentescos.padre', 
                 'ciclo', 
@@ -41,9 +30,9 @@ class ConstanciaPostulacionController extends Controller
             
             // Verificar que el usuario tenga permiso para generar la constancia
             $user = Auth::user();
-            if (!$user || ($user->id !== $postulacion->estudiante_id && !$user->hasRole('admin'))) {
-                if (!$user || !$user->hasPermission('postulaciones.generar-constancia')) {
-                    abort(403, 'No tienes permiso o sesión no válida para generar esta constancia');
+            if ($user->id !== $postulacion->estudiante_id && !$user->hasRole('admin')) {
+                if (!$user->hasPermission('postulaciones.generar-constancia')) {
+                    abort(403, 'No tienes permiso para generar esta constancia');
                 }
             }
             
