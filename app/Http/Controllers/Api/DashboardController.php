@@ -96,18 +96,18 @@ class DashboardController extends Controller
                 if ($primerRegistro && $ciclo && $ciclo->fecha_inicio) {
                     // (Mantenemos los cálculos existentes por examen)
                     if ($ciclo->fecha_primer_examen) {
-                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $primerRegistro->fecha_registro, $ciclo->fecha_primer_examen, $ciclo);
+                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $primerRegistro->fecha_registro, $ciclo->fecha_primer_examen, $ciclo, true);
                     }
                     if ($ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
                         $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
                         if ($inicioSegundo) {
-                            $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioSegundo, $ciclo->fecha_segundo_examen, $ciclo);
+                            $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioSegundo, $ciclo->fecha_segundo_examen, $ciclo, true);
                         }
                     }
                     if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
                         $inicioTercero = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
                         if ($inicioTercero) {
-                            $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioTercero, $ciclo->fecha_tercer_examen, $ciclo);
+                            $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $inicioTercero, $ciclo->fecha_tercer_examen, $ciclo, true);
                         }
                     }
 
@@ -139,32 +139,60 @@ class DashboardController extends Controller
                 ->where('visible', true)
                 ->get();
 
-            return response()->json([
-                'user' => [
-                    'id' => $user->id,
-                    'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
-                    'rol' => 'estudiante'
-                ],
-                'inscripcion' => [
-                    'ciclo' => $ciclo->nombre,
-                    'carrera' => $inscripcionActiva->carrera->nombre ?? 'N/A',
-                    'aula' => $inscripcionActiva->aula->nombre ?? 'N/A',
-                    'turno' => $inscripcionActiva->turno->nombre ?? 'N/A',
-                    'aula_id' => $inscripcionActiva->aula_id,
-                ],
-                'infoAsistencia' => $infoAsistencia,
-                'eligibility' => [
-                    'totalAsistencias' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
-                    'totalFaltas' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
-                    'dias_asistidos' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
-                    'dias_falta' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
-                    'estadoTotal' => $infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR',
-                ],
-                'anuncios' => $anuncios,
-                'resultados' => $resultados,
-                'constanciaSubida' => !empty($inscripcionActiva->postulacion_id) ? 
-                    \App\Models\Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false
-            ]);
+                // Determinar etapa actual (1 a 5)
+                $etapaActual = 1;
+                if ($inscripcionActiva) {
+                    if ($inscripcionActiva->estado_inscripcion == 'validado' || $inscripcionActiva->estado_inscripcion == 'activo') {
+                        $etapaActual = 5;
+                    } elseif (!empty($inscripcionActiva->aula_id)) {
+                        $etapaActual = 4;
+                    } elseif (!empty($inscripcionActiva->postulacion_id)) {
+                        $postulacion = \App\Models\Postulacion::find($inscripcionActiva->postulacion_id);
+                        if ($postulacion) {
+                            if ($postulacion->estado == 'aprobado') {
+                                $etapaActual = 3;
+                            } elseif ($postulacion->estado == 'en_proceso') {
+                                $etapaActual = 2;
+                            }
+                        }
+                    }
+                }
+
+                return response()->json([
+                    'user' => [
+                        'id' => $user->id,
+                        'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
+                        'rol' => 'estudiante'
+                    ],
+                    'inscripcion' => [
+                        'ciclo' => $ciclo->nombre,
+                        'carrera' => $inscripcionActiva->carrera->nombre ?? 'N/A',
+                        'aula' => $inscripcionActiva->aula->nombre ?? 'N/A',
+                        'turno' => $inscripcionActiva->turno->nombre ?? 'N/A',
+                        'aula_id' => $inscripcionActiva->aula_id,
+                    ],
+                    'infoAsistencia' => $infoAsistencia,
+                    'fecha_primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : ($ciclo->fecha_inicio ? Carbon::parse($ciclo->fecha_inicio)->format('d/m/Y') : null),
+                    'etapa_actual' => $etapaActual,
+                    'eligibility' => [
+                        'totalAsistencias' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
+                        'totalFaltas' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
+                        'dias_asistidos' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
+                        'dias_falta' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
+                        'estadoTotal' => $infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR',
+                    ],
+                    'anuncios' => $anuncios,
+                    'resultados' => $resultados,
+                    'constanciaSubida' => !empty($inscripcionActiva->postulacion_id) ? 
+                        \App\Models\Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false,
+                    'url_constancia' => $inscripcionActiva ? 
+                        url("/constancias/estudios/generar/{$inscripcionActiva->id}") : null,
+                    'url_subir_constancia' => (function() use ($user) {
+                        $token = bin2hex(random_bytes(20));
+                        \Illuminate\Support\Facades\Cache::put('mobile_auth_' . $token, $user->id, now()->addMinutes(5));
+                        return url("/auth/auto-login?token=" . $token . "&redirect=" . urlencode('/dashboard'));
+                    })()
+                ]);
 
         } catch (\Exception $e) {
             \Log::error("Error en Dashboard Estudiante: " . $e->getMessage(), [

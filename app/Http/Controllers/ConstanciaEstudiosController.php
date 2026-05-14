@@ -28,9 +28,9 @@ class ConstanciaEstudiosController extends Controller
             $inscripcion = Inscripcion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])
                 ->findOrFail($inscripcionId);
 
-            // Verificar que la inscripción esté activa
-            if ($inscripcion->estado_inscripcion !== 'activo') {
-                abort(403, 'La inscripción no está activa');
+            // Verificar que la inscripción esté activa o validada (para que puedan descargar y firmar)
+            if ($inscripcion->estado_inscripcion !== 'activo' && $inscripcion->estado_inscripcion !== 'validado') {
+                abort(403, 'La inscripción no está activa o validada para este proceso');
             }
 
             // Verificar permisos

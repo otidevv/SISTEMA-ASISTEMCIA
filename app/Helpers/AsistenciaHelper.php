@@ -314,6 +314,8 @@ class AsistenciaHelper
             'estado' => $estado,
             'mensaje' => $mensaje,
             'puede_rendir' => $puedeRendir,
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin' => $fechaExamen,
             'es_proyeccion' => $hoy < $fechaExamenCarbon,
             'historial' => array_reverse($historial) // De más reciente a más antiguo
         ];

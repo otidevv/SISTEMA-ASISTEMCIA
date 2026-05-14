@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Facades\Cache;
+
+class AutoLoginController extends Controller
+{
+    /**
+     * Iniciar sesión automáticamente mediante un token temporal en Cache
+     */
+    public function autoLogin(Request $request)
+    {
+        $token = $request->query('token');
+        $redirect = $request->query('redirect', '/dashboard');
+
+        if (!$token) {
+            return redirect('/login')->with('error', 'Token de acceso no proporcionado');
+        }
+
+        // Buscar el user_id asociado al token en el Cache
+        $userId = Cache::get('mobile_auth_' . $token);
+
+        if (!$userId) {
+            return redirect('/login')->with('error', 'El enlace de acceso ha expirado o ya fue utilizado');
+        }
+
+        // Buscar al usuario
+        $user = User::find($userId);
+
+        if (!$user) {
+            return redirect('/login')->with('error', 'Usuario no encontrado');
+        }
+
+        // Borrar el token inmediatamente (One-time use)
+        Cache::forget('mobile_auth_' . $token);
+
+        // Iniciar sesión
+        Auth::login($user);
+
+        return redirect($redirect);
+    }
+}
