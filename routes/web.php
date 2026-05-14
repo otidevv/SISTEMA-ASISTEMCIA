@@ -1,10 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AutoLoginController;
-
-Route::get('/auth/auto-login', [AutoLoginController::class, 'autoLogin'])->name('auth.auto-login');
-
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -27,13 +23,18 @@ use App\Http\Controllers\Auth\PostulanteRegisterController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\ReniecController;
 use App\Http\Controllers\PostulacionController;
-use App\Http\Controllers\PostulacionUnificadaController;
 use App\Http\Controllers\MaterialAcademicoController;
 use App\Http\Controllers\TarjetasController;
 use App\Http\Controllers\BiometricController;
 use App\Http\Controllers\CargaHorariaController;
 use App\Http\Controllers\Api\CargaHorariaApiController;
+use App\Http\Controllers\Api\AutoLoginController;
+use App\Http\Controllers\ConstanciaEstudiosController;
+use App\Http\Controllers\PostulacionUnificadaController;
 use App\Http\Controllers\AuditoriaController;
+
+// Ruta para Auto-Login (Magic Link para la App Móvil)
+Route::get('/auth/auto-login', [AutoLoginController::class, 'autoLogin'])->name('auth.auto-login');
 
 // Ruta principal
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -410,8 +411,8 @@ Route::middleware('auth')->group(function () {
     });
     
     // Rutas para constancias de postulación (accesibles para estudiantes/postulantes)
-    Route::prefix('postulacion/constancia')->middleware('auth')->group(function () {
-        Route::get('/generar/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'generarConstancia'])
+    Route::prefix('postulacion/constancia')->group(function () {
+        Route::get('/generar/{postulacion}/{token?}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'generarConstancia'])
             ->name('postulacion.constancia.generar');
         Route::post('/subir/{postulacion}', [App\Http\Controllers\ConstanciaPostulacionController::class, 'subirConstanciaFirmada'])
             ->name('postulacion.constancia.subir');
