@@ -82,6 +82,12 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
     Route::prefix('postulation')->group(function () {
         Route::post('/store', [PostulationApiController::class, 'store']);
         Route::get('/status', [PostulationApiController::class, 'status']);
+        
+        // ADMIN ROUTES
+        Route::middleware('can:postulaciones.view')->group(function () {
+            Route::get('/admin/list', [PostulationApiController::class, 'index']);
+            Route::get('/admin/detail/{id}', [PostulationApiController::class, 'show']);
+        });
     });
 
     // --- RENIEC (Internal) ---
@@ -181,6 +187,12 @@ Route::prefix('public-reforzamiento')->group(function () {
     Route::get('/constancia/{id}', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'generarConstancia']);
     Route::post('/download-pack', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'generateRegistrationPack']);
     Route::post('/reniec/consultar', [\App\Http\Controllers\Api\ReniecController::class, 'consultarDni']);
+
+    // ADMIN ROUTES
+    Route::middleware(['auth:sanctum,web', 'can:postulaciones.view'])->group(function () {
+        Route::get('/admin/list', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'index']);
+        Route::get('/admin/detail/{id}', [\App\Http\Controllers\Api\ReforzamientoApiController::class, 'show']);
+    });
 });
 
 // --- CHATBOT ASSISTANT ---

@@ -477,4 +477,69 @@ class ReforzamientoApiController extends BaseController
         }
     }
 
+    /**
+     * ADMIN: List all reinforcement registrations
+     */
+    public function index(Request $request)
+    {
+        if (!$request->user()->hasPermission('postulaciones.view')) {
+            return $this->sendError('Sin permisos.', [], 403);
+        }
+
+        $cicloId = $request->input('ciclo_id');
+        if (empty($cicloId)) {
+            $cicloActivo = Ciclo::where('programa_id', 2)->where('es_activo', true)->first();
+            $cicloId = $cicloActivo ? $cicloActivo->id : null;
+        }
+
+        $query = InscripcionReforzamiento::with(['estudiante', 'pagos'])
+            ->orderBy('created_at', 'desc');
+
+        if ($cicloId) {
+            $query->where('ciclo_id', $cicloId);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('estudiante', function ($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('apellido_paterno', 'like', "%{$search}%")
+                  ->orWhere('numero_documento', 'like', "%{$search}%");
+            });
+        }
+
+        $inscripciones = $query->paginate(20);
+
+        return $this->sendResponse($inscripciones, 'Inscripciones de reforzamiento recuperadas.');
+    }
+
+    /**
+     * ADMIN: Show reinforcement detail
+     */
+    public function show(Request $request, $id)
+    {
+        if (!$request->user()->hasPermission('postulaciones.show')) {
+            return $this->sendError('Sin permisos.', [], 403);
+        }
+
+        $inscripcion = InscripcionReforzamiento::with([
+            'estudiante',
+            'apoderados',
+            'pagos',
+            'ciclo'
+        ])->findOrFail($id);
+
+        $documentos = [
+            'foto' => ['existe' => !empty($inscripcion->foto_path), 'url' => $inscripcion->foto_path ? Storage::url($inscripcion->foto_path) : null],
+            'dni_estudiante' => ['existe' => !empty($inscripcion->dni_estudiante_path), 'url' => $inscripcion->dni_estudiante_path ? Storage::url($inscripcion->dni_estudiante_path) : null],
+            'dni_apoderado' => ['existe' => !empty($inscripcion->dni_apoderado_path), 'url' => $inscripcion->dni_apoderado_path ? Storage::url($inscripcion->dni_apoderado_path) : null],
+            'compromiso' => ['existe' => !empty($inscripcion->carta_compromiso_path), 'url' => $inscripcion->carta_compromiso_path ? Storage::url($inscripcion->carta_compromiso_path) : null],
+            'certificado' => ['existe' => !empty($inscripcion->certificado_path), 'url' => $inscripcion->certificado_path ? Storage::url($inscripcion->certificado_path) : null],
+        ];
+
+        return $this->sendResponse([
+            'inscripcion' => $inscripcion,
+            'documentos' => $documentos
+        ], 'Detalle de inscripción recuperado.');
+    }
 }

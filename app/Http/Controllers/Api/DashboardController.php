@@ -80,11 +80,13 @@ class DashboardController extends Controller
             }
 
             // 2. Obtener el primer registro de asistencia del estudiante dentro del ciclo
-            $primerRegistro = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->where('fecha_registro', '>=', $ciclo->fecha_inicio ?? now())
-                ->where('fecha_registro', '<=', $ciclo->fecha_fin ?? now())
+            $docLimpio = trim(strval($user->numero_documento));
+            $primerRegistro = RegistroAsistencia::where('nro_documento', $docLimpio)
+                ->where('fecha_registro', '>=', Carbon::parse($ciclo->fecha_inicio)->startOfDay())
+                ->where('fecha_registro', '<=', Carbon::parse($ciclo->fecha_fin)->endOfDay())
                 ->orderBy('fecha_registro')
                 ->first();
+
 
             // 3. Calcular asistencia detallada y obtener HISTORIAL
             $infoAsistencia = [
@@ -93,10 +95,10 @@ class DashboardController extends Controller
             ];
 
             try {
-                if ($primerRegistro && $ciclo && $ciclo->fecha_inicio) {
-                    // (Mantenemos los cálculos existentes por examen)
+                if ($ciclo && $ciclo->fecha_inicio) {
+                    // Calcular periodos de examen aunque no haya registros todavía
                     if ($ciclo->fecha_primer_examen) {
-                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $primerRegistro->fecha_registro, $ciclo->fecha_primer_examen, $ciclo, true);
+                        $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($user->numero_documento, $ciclo->fecha_inicio, $ciclo->fecha_primer_examen, $ciclo, true);
                     }
                     if ($ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
                         $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
@@ -112,14 +114,17 @@ class DashboardController extends Controller
                     }
 
                     // Total Ciclo y OBTENER FECHAS DETALLADAS
+                    $fechaInicioParaTotal = $primerRegistro ? $primerRegistro->fecha_registro : $ciclo->fecha_inicio;
                     $fechaFinParaTotal = $ciclo->fecha_fin ? min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)) : Carbon::now();
+                    
                     $resultadoDetallado = AsistenciaHelper::calcularInfoAsistenciaExamen(
                         $user->numero_documento,
-                        $primerRegistro->fecha_registro,
-                        $fechaFinParaTotal,
+                        $ciclo->fecha_inicio, // Siempre evaluar desde el inicio del ciclo
+                        $ciclo->fecha_fin ?? now(),
                         $ciclo,
-                        true // Nuevo parámetro para que nos devuelva el historial
+                        true
                     );
+
                     
                     $infoAsistencia['total_ciclo'] = $resultadoDetallado;
                 }
@@ -172,26 +177,21 @@ class DashboardController extends Controller
                         'aula_id' => $inscripcionActiva->aula_id,
                     ],
                     'infoAsistencia' => $infoAsistencia,
-                    'fecha_primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : ($ciclo->fecha_inicio ? Carbon::parse($ciclo->fecha_inicio)->format('d/m/Y') : null),
+                    'fecha_primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : null,
                     'etapa_actual' => $etapaActual,
                     'eligibility' => [
                         'totalAsistencias' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
                         'totalFaltas' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
                         'dias_asistidos' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
                         'dias_falta' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
-                        'estadoTotal' => $infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR',
+                        'estadoTotal' => ($infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR') === 'sin_registros' ? 'SIN REGISTROS' : strtoupper($infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR'),
+
                     ],
                     'anuncios' => $anuncios,
                     'resultados' => $resultados,
-                    'constanciaSubida' => !empty($inscripcionActiva->postulacion_id) ? 
-                        \App\Models\Postulacion::where('id', $inscripcionActiva->postulacion_id)->whereNotNull('constancia_firmada_path')->exists() : false,
-                    'url_constancia' => $inscripcionActiva ? 
-                        url("/constancias/estudios/generar/{$inscripcionActiva->id}") : null,
-                    'url_subir_constancia' => (function() use ($user) {
-                        $token = bin2hex(random_bytes(20));
-                        \Illuminate\Support\Facades\Cache::put('mobile_auth_' . $token, $user->id, now()->addMinutes(5));
-                        return url("/auth/auto-login?token=" . $token . "&redirect=" . urlencode('/dashboard'));
-                    })()
+                    'postulacionValidada' => ($inscripcionActiva && in_array($inscripcionActiva->estado_inscripcion, ['activo', 'aprobada', 'validado'])),
+                    'url_constancia' => null,
+                    'url_subir_constancia' => null
                 ]);
 
         } catch (\Exception $e) {
@@ -300,7 +300,24 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
+            // Semana Completa para el Horario Semanal Móvil
+            $semanaCompleta = $todosHorariosActivos->groupBy(function($item) {
+                return mb_convert_case($item->dia_semana, MB_CASE_TITLE, "UTF-8");
+            })->map(function ($dia) {
+                return $dia->map(function ($h) {
+                    return [
+                        'id' => $h->id,
+                        'dia' => $h->dia_semana,
+                        'hora_inicio' => \Carbon\Carbon::parse($h->hora_inicio)->format('H:i'),
+                        'hora_fin' => \Carbon\Carbon::parse($h->hora_fin)->format('H:i'),
+                        'curso' => ['nombre' => $h->curso->nombre ?? 'N/A'],
+                        'aula' => ['nombre' => $h->aula->nombre ?? 'N/A'],
+                    ];
+                });
+            });
+
             return response()->json([
+                'semana_completa' => $semanaCompleta,
                 'user' => [
                     'id' => $user->id,
                     'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
@@ -641,11 +658,13 @@ class DashboardController extends Controller
                 $data['totalInscripciones'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', $estadoActivo)->count();
                 
                 if ($ciclo->programa_id == 2) {
-                    // Para reforzamiento, las postulaciones y inscripciones están en la misma tabla o se manejan distinto
-                    // Basado en ReforzamientoAdminController, cuentan 'total', 'pendiente', 'aprobado' (validado)
-                    $data['postulaciones']['total'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->count();
-                    $data['postulaciones']['pendientes'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'pendiente')->count();
-                    $data['postulaciones']['aprobadas'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'validado')->count();
+                    // Para reforzamiento, las postulaciones y inscripciones están en la misma tabla
+                    if (!isset($data['reforzamiento'])) {
+                        $data['reforzamiento'] = ['total' => 0, 'pendientes' => 0, 'aprobadas' => 0];
+                    }
+                    $data['reforzamiento']['total'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->count();
+                    $data['reforzamiento']['pendientes'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'pendiente')->count();
+                    $data['reforzamiento']['aprobadas'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', 'validado')->count();
                 } else {
                     $post = Postulacion::where('ciclo_id', $ciclo->id)
                         ->selectRaw('COUNT(*) as t, SUM(CASE WHEN estado="pendiente" THEN 1 ELSE 0 END) as p, SUM(CASE WHEN estado="aprobado" THEN 1 ELSE 0 END) as a')
