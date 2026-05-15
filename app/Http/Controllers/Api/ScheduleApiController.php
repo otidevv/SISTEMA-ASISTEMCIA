@@ -69,7 +69,7 @@ class ScheduleApiController extends BaseController
         $slots = $this->obtenerSlotsDinámicos($horarios, $ciclo, $request->turno);
 
         return $this->sendResponse([
-            'horarios' => $organizado,
+            'horarios' => $organizado->isEmpty() ? (object)[] : $organizado,
             'slots' => $slots,
             'aula' => Aula::find($request->aula_id)->nombre,
             'turno' => $request->turno
