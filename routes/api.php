@@ -128,6 +128,13 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
     // --- PAGOS ---
     Route::get('/payments/validate/{dni}', [PaymentApiController::class, 'validateByDni']);
 
+    // --- GESTIÓN DE HORARIOS Y AULAS ---
+    Route::prefix('schedules')->group(function () {
+        Route::get('/aulas', [\App\Http\Controllers\Api\ScheduleApiController::class, 'getAulas']);
+        Route::get('/ciclos', [\App\Http\Controllers\Api\ScheduleApiController::class, 'getCiclos']);
+        Route::get('/classroom', [\App\Http\Controllers\Api\ScheduleApiController::class, 'getClassroomSchedule']);
+    });
+
     // --- API V1 (Servicios para Gestión Administrativa) ---
     Route::prefix('v1')->group(function () {
         Route::get('/pagos-docentes/ultima-tarifa/{docenteId}', [\App\Http\Controllers\PagoDocenteController::class, 'getUltimaTarifa']);
