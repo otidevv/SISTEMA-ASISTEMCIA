@@ -118,12 +118,28 @@ class PostulationApiController extends BaseController
                 return strtolower($p->tipo_parentesco) === 'madre';
             })->first();
 
-            $padreData = $padre && $padre->padre ? $padre->padre->only(['nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento', 'celular']) : null;
-            $madreData = $madre && $madre->padre ? $madre->padre->only(['nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento', 'celular']) : null;
+            $padreData = $padre && $padre->padre ? [
+                'nombre' => "{$padre->padre->nombre} {$padre->padre->apellido_paterno} {$padre->padre->apellido_materno}",
+                'numero_documento' => $padre->padre->numero_documento,
+                'celular' => $padre->padre->telefono ?? $padre->padre->celular ?? 'N/A',
+                'parentesco' => 'PADRE'
+            ] : null;
+
+            $madreData = $madre && $madre->padre ? [
+                'nombre' => "{$madre->padre->nombre} {$madre->padre->apellido_paterno} {$madre->padre->apellido_materno}",
+                'numero_documento' => $madre->padre->numero_documento,
+                'celular' => $madre->padre->telefono ?? $madre->padre->celular ?? 'N/A',
+                'parentesco' => 'MADRE'
+            ] : null;
 
             // Obtener pagos desde la API de UNAMAD
             $paymentService = app(\App\Services\PaymentValidationService::class);
-            $pagos = $paymentService->validateVoucher($postulacion->estudiante->numero_documento, null, false);
+            $pagos = $paymentService->validateVoucher($postulacion->estudiante->numero_documento, null, false) ?? [];
+
+            // Calcular monto total pagado desde los pagos reales
+            $totalPagado = collect($pagos)->sum(function($p) {
+                return (float) ($p['total'] ?? 0);
+            });
 
             // Map documents
             $documentos = [
@@ -137,12 +153,14 @@ class PostulationApiController extends BaseController
             ];
 
             return $this->sendResponse([
-                'postulacion' => $postulacion,
+                'postulacion' => array_merge($postulacion->toArray(), [
+                    'monto_total_pagado' => $totalPagado
+                ]),
                 'estudiante' => [
                     'nombre_completo' => "{$postulacion->estudiante->nombre} {$postulacion->estudiante->apellido_paterno} {$postulacion->estudiante->apellido_materno}",
                     'numero_documento' => $postulacion->estudiante->numero_documento,
                     'email' => $postulacion->estudiante->email,
-                    'celular' => $postulacion->estudiante->celular,
+                    'celular' => $postulacion->estudiante->telefono ?? 'N/A',
                     'direccion' => $postulacion->estudiante->direccion,
                     'foto_perfil' => $postulacion->estudiante->foto_perfil ? \Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil) : null,
                 ],
@@ -154,7 +172,7 @@ class PostulationApiController extends BaseController
                 'padre' => $padreData,
                 'madre' => $madreData,
                 'documentos' => $documentos,
-                'pagos' => $pagos ?? [],
+                'pagos' => $pagos,
                 'academic_info' => [
                     'anio_egreso' => $postulacion->anio_egreso,
                     'centro_educativo' => $postulacion->centroEducativo ? $postulacion->centroEducativo->cen_edu : ($postulacion->colegio_nombre_manual ?? 'N/A'),

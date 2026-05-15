@@ -542,13 +542,20 @@ class ReforzamientoApiController extends BaseController
                 'certificado' => ['nombre' => 'Certificado/Constancia', 'existe' => !empty($inscripcion->certificado_path), 'url' => $inscripcion->certificado_path ? Storage::url($inscripcion->certificado_path) : null],
             ];
 
+            // Calcular monto total pagado desde los pagos reales
+            $totalPagado = collect($pagosApi)->sum(function($p) {
+                return (float) ($p['total'] ?? 0);
+            });
+
             return $this->sendResponse([
-                'inscripcion' => $inscripcion,
+                'inscripcion' => array_merge($inscripcion->toArray(), [
+                    'monto_total_pagado' => $totalPagado
+                ]),
                 'estudiante' => [
                     'nombre_completo' => "{$inscripcion->estudiante->nombre} {$inscripcion->estudiante->apellido_paterno} {$inscripcion->estudiante->apellido_materno}",
                     'numero_documento' => $inscripcion->estudiante->numero_documento,
                     'email' => $inscripcion->estudiante->email,
-                    'celular' => $inscripcion->estudiante->telefono ?? $inscripcion->estudiante->celular,
+                    'celular' => $inscripcion->estudiante->telefono ?? 'N/A',
                     'direccion' => $inscripcion->estudiante->direccion,
                     'foto_perfil' => $inscripcion->estudiante->foto_perfil ? Storage::url($inscripcion->estudiante->foto_perfil) : null,
                 ],
@@ -558,7 +565,7 @@ class ReforzamientoApiController extends BaseController
                     return [
                         'nombre' => $a->nombres,
                         'numero_documento' => $a->numero_documento,
-                        'celular' => $a->celular,
+                        'celular' => $a->telefono ?? $a->celular ?? 'N/A',
                         'parentesco' => $a->parentesco,
                     ];
                 }),
