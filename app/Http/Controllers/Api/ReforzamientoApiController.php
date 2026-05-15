@@ -522,24 +522,54 @@ class ReforzamientoApiController extends BaseController
             return $this->sendError('Sin permisos.', [], 403);
         }
 
-        $inscripcion = InscripcionReforzamiento::with([
-            'estudiante',
-            'apoderados',
-            'pagos',
-            'ciclo'
-        ])->findOrFail($id);
+        try {
+            $inscripcion = InscripcionReforzamiento::with([
+                'estudiante',
+                'apoderados',
+                'pagos',
+                'ciclo'
+            ])->findOrFail($id);
 
-        $documentos = [
-            'foto' => ['existe' => !empty($inscripcion->foto_path), 'url' => $inscripcion->foto_path ? Storage::url($inscripcion->foto_path) : null],
-            'dni_estudiante' => ['existe' => !empty($inscripcion->dni_estudiante_path), 'url' => $inscripcion->dni_estudiante_path ? Storage::url($inscripcion->dni_estudiante_path) : null],
-            'dni_apoderado' => ['existe' => !empty($inscripcion->dni_apoderado_path), 'url' => $inscripcion->dni_apoderado_path ? Storage::url($inscripcion->dni_apoderado_path) : null],
-            'compromiso' => ['existe' => !empty($inscripcion->carta_compromiso_path), 'url' => $inscripcion->carta_compromiso_path ? Storage::url($inscripcion->carta_compromiso_path) : null],
-            'certificado' => ['existe' => !empty($inscripcion->certificado_path), 'url' => $inscripcion->certificado_path ? Storage::url($inscripcion->certificado_path) : null],
-        ];
+            // Obtener pagos desde la API de UNAMAD (Concepto 598)
+            $paymentService = app(\App\Services\PaymentValidationService::class);
+            $pagosApi = $paymentService->validateVoucher($inscripcion->estudiante->numero_documento, null, false);
 
-        return $this->sendResponse([
-            'inscripcion' => $inscripcion,
-            'documentos' => $documentos
-        ], 'Detalle de inscripción recuperado.');
+            $documentos = [
+                'foto' => ['nombre' => 'Fotografía Carnet', 'existe' => !empty($inscripcion->foto_path), 'url' => $inscripcion->foto_path ? Storage::url($inscripcion->foto_path) : null],
+                'dni_estudiante' => ['nombre' => 'DNI del Estudiante', 'existe' => !empty($inscripcion->dni_estudiante_path), 'url' => $inscripcion->dni_estudiante_path ? Storage::url($inscripcion->dni_estudiante_path) : null],
+                'dni_apoderado' => ['nombre' => 'DNI del Apoderado', 'existe' => !empty($inscripcion->dni_apoderado_path), 'url' => $inscripcion->dni_apoderado_path ? Storage::url($inscripcion->dni_apoderado_path) : null],
+                'compromiso' => ['nombre' => 'Carta de Compromiso', 'existe' => !empty($inscripcion->carta_compromiso_path), 'url' => $inscripcion->carta_compromiso_path ? Storage::url($inscripcion->carta_compromiso_path) : null],
+                'certificado' => ['nombre' => 'Certificado/Constancia', 'existe' => !empty($inscripcion->certificado_path), 'url' => $inscripcion->certificado_path ? Storage::url($inscripcion->certificado_path) : null],
+            ];
+
+            return $this->sendResponse([
+                'inscripcion' => $inscripcion,
+                'estudiante' => [
+                    'nombre_completo' => "{$inscripcion->estudiante->nombre} {$inscripcion->estudiante->apellido_paterno} {$inscripcion->estudiante->apellido_materno}",
+                    'numero_documento' => $inscripcion->estudiante->numero_documento,
+                    'email' => $inscripcion->estudiante->email,
+                    'celular' => $inscripcion->estudiante->telefono ?? $inscripcion->estudiante->celular,
+                    'direccion' => $inscripcion->estudiante->direccion,
+                    'foto_perfil' => $inscripcion->estudiante->foto_perfil ? Storage::url($inscripcion->estudiante->foto_perfil) : null,
+                ],
+                'documentos' => $documentos,
+                'pagos' => $pagosApi ?? [],
+                'apoderados' => $inscripcion->apoderados->map(function($a) {
+                    return [
+                        'nombre' => $a->nombres,
+                        'numero_documento' => $a->numero_documento,
+                        'celular' => $a->celular,
+                        'parentesco' => $a->parentesco,
+                    ];
+                }),
+                'academic_info' => [
+                    'grado' => $inscripcion->grado,
+                    'turno' => $inscripcion->turno,
+                    'colegio' => $inscripcion->colegio_procedencia,
+                ],
+            ], 'Detalle de inscripción recuperado.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error al recuperar detalle.', ['error' => $e->getMessage()]);
+        }
     }
 }

@@ -91,26 +91,77 @@ class PostulationApiController extends BaseController
             return $this->sendError('Sin permisos.', [], 403);
         }
 
-        $postulacion = Postulacion::with([
-            'estudiante.parentescos.padre',
-            'ciclo',
-            'carrera',
-            'turno',
-            'centroEducativo'
-        ])->findOrFail($id);
+        try {
+            $postulacion = Postulacion::with([
+                'estudiante.parentescos.padre',
+                'ciclo',
+                'carrera',
+                'turno',
+                'centroEducativo'
+            ])->findOrFail($id);
 
-        // Map documents
-        $documentos = [
-            'dni' => ['existe' => !empty($postulacion->dni_path), 'url' => $postulacion->dni_path ? \Illuminate\Support\Facades\Storage::url($postulacion->dni_path) : null],
-            'certificado' => ['existe' => !empty($postulacion->certificado_estudios_path), 'url' => $postulacion->certificado_estudios_path ? \Illuminate\Support\Facades\Storage::url($postulacion->certificado_estudios_path) : null],
-            'foto' => ['existe' => !empty($postulacion->foto_path), 'url' => $postulacion->foto_path ? \Illuminate\Support\Facades\Storage::url($postulacion->foto_path) : null],
-            'voucher' => ['existe' => !empty($postulacion->voucher_path), 'url' => $postulacion->voucher_path ? \Illuminate\Support\Facades\Storage::url($postulacion->voucher_path) : null],
-        ];
+            // Buscar la inscripción asociada si existe y cargar el aula
+            $inscripcion = null;
+            if ($postulacion->estado === 'aprobado' || $postulacion->constancia_generada) {
+                $inscripcion = \App\Models\Inscripcion::where('estudiante_id', $postulacion->estudiante_id)
+                    ->where('ciclo_id', $postulacion->ciclo_id)
+                    ->with('aula')
+                    ->first();
+            }
 
-        return $this->sendResponse([
-            'postulacion' => $postulacion,
-            'documentos' => $documentos,
-            'foto_perfil_url' => $postulacion->estudiante->foto_perfil ? \Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil) : null,
-        ], 'Detalle de postulación recuperado.');
+            // Extraer datos del padre y la madre
+            $padre = $postulacion->estudiante->parentescos->filter(function($p) {
+                return strtolower($p->tipo_parentesco) === 'padre';
+            })->first();
+            
+            $madre = $postulacion->estudiante->parentescos->filter(function($p) {
+                return strtolower($p->tipo_parentesco) === 'madre';
+            })->first();
+
+            $padreData = $padre && $padre->padre ? $padre->padre->only(['nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento', 'celular']) : null;
+            $madreData = $madre && $madre->padre ? $madre->padre->only(['nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento', 'celular']) : null;
+
+            // Obtener pagos desde la API de UNAMAD
+            $paymentService = app(\App\Services\PaymentValidationService::class);
+            $pagos = $paymentService->validateVoucher($postulacion->estudiante->numero_documento, null, false);
+
+            // Map documents
+            $documentos = [
+                'dni' => ['nombre' => 'DNI del Postulante', 'existe' => !empty($postulacion->dni_path), 'url' => $postulacion->dni_path ? \Illuminate\Support\Facades\Storage::url($postulacion->dni_path) : null],
+                'certificado' => ['nombre' => 'Certificado de Estudios', 'existe' => !empty($postulacion->certificado_estudios_path), 'url' => $postulacion->certificado_estudios_path ? \Illuminate\Support\Facades\Storage::url($postulacion->certificado_estudios_path) : null],
+                'foto' => ['nombre' => 'Fotografía', 'existe' => !empty($postulacion->foto_path), 'url' => $postulacion->foto_path ? \Illuminate\Support\Facades\Storage::url($postulacion->foto_path) : null],
+                'voucher' => ['nombre' => 'Voucher de Pago', 'existe' => !empty($postulacion->voucher_path), 'url' => $postulacion->voucher_path ? \Illuminate\Support\Facades\Storage::url($postulacion->voucher_path) : null],
+                'compromiso' => ['nombre' => 'Carta de Compromiso', 'existe' => !empty($postulacion->carta_compromiso_path), 'url' => $postulacion->carta_compromiso_path ? \Illuminate\Support\Facades\Storage::url($postulacion->carta_compromiso_path) : null],
+                'constancia' => ['nombre' => 'Constancia de Estudios', 'existe' => !empty($postulacion->constancia_estudios_path), 'url' => $postulacion->constancia_estudios_path ? \Illuminate\Support\Facades\Storage::url($postulacion->constancia_estudios_path) : null],
+                'firmada' => ['nombre' => 'Constancia Firmada', 'existe' => !empty($postulacion->constancia_firmada_path), 'url' => $postulacion->constancia_firmada_path ? \Illuminate\Support\Facades\Storage::url($postulacion->constancia_firmada_path) : null],
+            ];
+
+            return $this->sendResponse([
+                'postulacion' => $postulacion,
+                'estudiante' => [
+                    'nombre_completo' => "{$postulacion->estudiante->nombre} {$postulacion->estudiante->apellido_paterno} {$postulacion->estudiante->apellido_materno}",
+                    'numero_documento' => $postulacion->estudiante->numero_documento,
+                    'email' => $postulacion->estudiante->email,
+                    'celular' => $postulacion->estudiante->celular,
+                    'direccion' => $postulacion->estudiante->direccion,
+                    'foto_perfil' => $postulacion->estudiante->foto_perfil ? \Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil) : null,
+                ],
+                'inscripcion' => $inscripcion ? [
+                    'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'Asignando...',
+                    'codigo' => $inscripcion->codigo_inscripcion,
+                    'estado' => $inscripcion->estado_inscripcion,
+                ] : null,
+                'padre' => $padreData,
+                'madre' => $madreData,
+                'documentos' => $documentos,
+                'pagos' => $pagos ?? [],
+                'academic_info' => [
+                    'anio_egreso' => $postulacion->anio_egreso,
+                    'centro_educativo' => $postulacion->centroEducativo ? $postulacion->centroEducativo->cen_edu : ($postulacion->colegio_nombre_manual ?? 'N/A'),
+                ],
+            ], 'Detalle de postulación recuperado.');
+        } catch (\Exception $e) {
+            return $this->sendError('Error al recuperar detalle.', ['error' => $e->getMessage()]);
+        }
     }
 }
