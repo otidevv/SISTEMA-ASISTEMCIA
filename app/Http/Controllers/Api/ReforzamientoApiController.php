@@ -555,7 +555,7 @@ class ReforzamientoApiController extends BaseController
                     'nombre_completo' => "{$inscripcion->estudiante->nombre} {$inscripcion->estudiante->apellido_paterno} {$inscripcion->estudiante->apellido_materno}",
                     'numero_documento' => $inscripcion->estudiante->numero_documento,
                     'email' => $inscripcion->estudiante->email,
-                    'celular' => $inscripcion->estudiante->telefono ?? 'N/A',
+                    'celular' => (string) ($inscripcion->estudiante->telefono ?: 'N/A'),
                     'direccion' => $inscripcion->estudiante->direccion,
                     'foto_perfil' => $inscripcion->estudiante->foto_perfil ? Storage::url($inscripcion->estudiante->foto_perfil) : null,
                 ],
@@ -563,9 +563,9 @@ class ReforzamientoApiController extends BaseController
                 'pagos' => $pagosApi ?? [],
                 'apoderados' => $inscripcion->apoderados->map(function($a) {
                     return [
-                        'nombre' => $a->nombres,
-                        'numero_documento' => $a->numero_documento,
-                        'celular' => $a->telefono ?? $a->celular ?? 'N/A',
+                        'nombre' => trim($a->nombres),
+                        'numero_documento' => (string) $a->numero_documento,
+                        'celular' => (string) ($a->celular ?: ($a->telefono ?: 'N/A')),
                         'parentesco' => $a->parentesco,
                     ];
                 }),

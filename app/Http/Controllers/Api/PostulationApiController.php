@@ -119,16 +119,16 @@ class PostulationApiController extends BaseController
             })->first();
 
             $padreData = $padre && $padre->padre ? [
-                'nombre' => "{$padre->padre->nombre} {$padre->padre->apellido_paterno} {$padre->padre->apellido_materno}",
-                'numero_documento' => $padre->padre->numero_documento,
-                'celular' => $padre->padre->telefono ?? $padre->padre->celular ?? 'N/A',
+                'nombre' => trim("{$padre->padre->nombre} {$padre->padre->apellido_paterno} {$padre->padre->apellido_materno}"),
+                'numero_documento' => (string) $padre->padre->numero_documento,
+                'celular' => (string) ($padre->padre->telefono ?: ($padre->padre->celular ?: 'N/A')),
                 'parentesco' => 'PADRE'
             ] : null;
 
             $madreData = $madre && $madre->padre ? [
-                'nombre' => "{$madre->padre->nombre} {$madre->padre->apellido_paterno} {$madre->padre->apellido_materno}",
-                'numero_documento' => $madre->padre->numero_documento,
-                'celular' => $madre->padre->telefono ?? $madre->padre->celular ?? 'N/A',
+                'nombre' => trim("{$madre->padre->nombre} {$madre->padre->apellido_paterno} {$madre->padre->apellido_materno}"),
+                'numero_documento' => (string) $madre->padre->numero_documento,
+                'celular' => (string) ($madre->padre->telefono ?: ($madre->padre->celular ?: 'N/A')),
                 'parentesco' => 'MADRE'
             ] : null;
 
@@ -160,7 +160,7 @@ class PostulationApiController extends BaseController
                     'nombre_completo' => "{$postulacion->estudiante->nombre} {$postulacion->estudiante->apellido_paterno} {$postulacion->estudiante->apellido_materno}",
                     'numero_documento' => $postulacion->estudiante->numero_documento,
                     'email' => $postulacion->estudiante->email,
-                    'celular' => $postulacion->estudiante->telefono ?? 'N/A',
+                    'celular' => (string) ($postulacion->estudiante->telefono ?: 'N/A'),
                     'direccion' => $postulacion->estudiante->direccion,
                     'foto_perfil' => $postulacion->estudiante->foto_perfil ? \Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil) : null,
                 ],
