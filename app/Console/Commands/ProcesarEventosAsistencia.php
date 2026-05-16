@@ -85,13 +85,18 @@ class ProcesarEventosAsistencia extends Command
                                 ->with('padre')
                                 ->get();
 
-                            $tipo = (Carbon::parse($registro->fecha_hora)->hour < 12) ? 'entrada' : 'salida';
                             $notificacion = new \App\Notifications\AttendanceNotification(
                                 $usuario, 
-                                $tipo, 
                                 $registro->fecha_hora
                             );
 
+                            // Notificar al estudiante
+                            if ($usuario->fcm_token) {
+                                $usuario->notify($notificacion);
+                                $this->info("Notificación de asistencia enviada al estudiante ID: {$usuario->id}");
+                            }
+
+                            // Notificar a los padres
                             foreach ($padres as $parentesco) {
                                 if ($parentesco->padre && $parentesco->padre->fcm_token) {
                                     $parentesco->padre->notify($notificacion);
