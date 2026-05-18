@@ -18,7 +18,10 @@ class DocumentApiController extends BaseController
         $user = $request->user();
         
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'carrera', 'aula'])
             ->first();
 
@@ -26,9 +29,19 @@ class DocumentApiController extends BaseController
             $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
                 $q->where('numero_documento', $user->numero_documento);
             })
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'carrera', 'aula'])
             ->first();
+        }
+
+        if (!$inscripcion) {
+            $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+                ->with(['ciclo', 'carrera', 'aula'])
+                ->latest()
+                ->first();
         }
 
         if (!$inscripcion) {

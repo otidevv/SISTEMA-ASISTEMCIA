@@ -25,7 +25,10 @@ class AcademicApiController extends BaseController
         
         // 1. Obtener inscripción activa con fallback (igual que en Dashboard)
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'carrera', 'aula', 'turno'])
             ->first();
 
@@ -33,9 +36,19 @@ class AcademicApiController extends BaseController
             $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
                 $q->where('numero_documento', $user->numero_documento);
             })
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'carrera', 'aula', 'turno'])
             ->first();
+        }
+
+        if (!$inscripcion) {
+            $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+                ->with(['ciclo', 'carrera', 'aula', 'turno'])
+                ->latest()
+                ->first();
         }
 
         if (!$inscripcion) {
@@ -204,7 +217,10 @@ class AcademicApiController extends BaseController
         
         // 1. Obtener inscripción activa
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'aula'])
             ->first();
 
@@ -212,9 +228,19 @@ class AcademicApiController extends BaseController
             $inscripcion = Inscripcion::whereHas('estudiante', function($q) use ($user) {
                 $q->where('numero_documento', $user->numero_documento);
             })
-            ->where('estado_inscripcion', 'activo')
+            ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+            ->whereHas('ciclo', function ($query) {
+                $query->where('es_activo', true);
+            })
             ->with(['ciclo', 'aula'])
             ->first();
+        }
+
+        if (!$inscripcion) {
+            $inscripcion = Inscripcion::where('estudiante_id', $user->id)
+                ->with(['ciclo', 'aula'])
+                ->latest()
+                ->first();
         }
 
         if (!$inscripcion || !$inscripcion->aula_id) {
