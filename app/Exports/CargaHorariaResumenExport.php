@@ -51,13 +51,42 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         $this->cicloId = $cicloId;
         $this->ciclo = Ciclo::findOrFail($cicloId);
 
-        // Calcular semanas de duración del ciclo
-        $inicio = Carbon::parse($this->ciclo->fecha_inicio);
-        $fin = Carbon::parse($this->ciclo->fecha_fin);
-        $diasCiclo = abs($inicio->diffInDays($fin));
-        $this->semanas = (int) round($diasCiclo / 7) ?: 1;
+        // Calcular ocurrencias de cada día en el ciclo (considerando rotación de sábados y recuperaciones)
+        $ocurrenciasDias = $this->contarOcurrenciasDias($this->ciclo);
+
+        // Calcular semanas de duración del ciclo basadas en el máximo de ocurrencias para incluir las recuperaciones
+        $this->semanas = count($ocurrenciasDias) > 0 ? max($ocurrenciasDias) : 1;
 
         $this->data = $this->collectData();
+    }
+
+    /**
+     * Cuenta cuántas veces ocurre cada día de la semana en el ciclo,
+     * considerando la rotación de los sábados.
+     */
+    private function contarOcurrenciasDias($ciclo)
+    {
+        $inicio = Carbon::parse($ciclo->fecha_inicio);
+        $fin = Carbon::parse($ciclo->fecha_fin);
+        
+        $conteo = [
+            'Lunes' => 0,
+            'Martes' => 0,
+            'Miércoles' => 0,
+            'Jueves' => 0,
+            'Viernes' => 0,
+        ];
+        
+        $actual = $inicio->copy();
+        while ($actual <= $fin) {
+            $diaHorario = $ciclo->getDiaHorarioParaFecha($actual);
+            if ($diaHorario && isset($conteo[$diaHorario])) {
+                $conteo[$diaHorario]++;
+            }
+            $actual->addDay();
+        }
+        
+        return $conteo;
     }
 
     /**
