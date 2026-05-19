@@ -72,7 +72,7 @@ class AcademicApiController extends BaseController
                     'profesor' => $material->profesor->nombre_completo ?? 'N/A',
                     'url' => $material->tipo === 'link' 
                              ? $material->archivo 
-                             : asset(Storage::url($material->archivo)),
+                             : url('/api/academic/materials/' . $material->id . '/download'),
                     'fecha' => $material->created_at->format('d/m/Y'),
                 ];
             });
@@ -99,13 +99,55 @@ class AcademicApiController extends BaseController
                     'descripcion' => $res->descripcion,
                     'ciclo' => $res->ciclo->nombre ?? 'N/A',
                     'tipo' => $res->tipo_resultado,
-                    'url_pdf' => $res->archivo_pdf ? asset(Storage::url($res->archivo_pdf)) : null,
+                    'url_pdf' => $res->archivo_pdf ? url('/api/academic/exam-results/' . $res->id . '/download') : null,
                     'url_externa' => $res->link_externo,
                     'fecha_examen' => $res->fecha_examen->format('d/m/Y'),
                 ];
             });
 
         return $this->sendResponse($resultados, 'Resultados de exámenes recuperados con éxito');
+    }
+
+    /**
+     * Download Material PDF securely.
+     */
+    public function downloadMaterialPdf($id)
+    {
+        $material = MaterialAcademico::findOrFail($id);
+
+        if ($material->tipo === 'link') {
+            return redirect($material->archivo);
+        }
+
+        if (!$material->archivo || !Storage::disk('public')->exists($material->archivo)) {
+            abort(404, 'Archivo no encontrado.');
+        }
+
+        $path = Storage::disk('public')->path($material->archivo);
+        
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . basename($material->archivo) . '"'
+        ]);
+    }
+
+    /**
+     * Download Exam Result PDF securely.
+     */
+    public function downloadExamResultPdf($id)
+    {
+        $resultado = ResultadoExamen::findOrFail($id);
+
+        if (!$resultado->archivo_pdf || !Storage::disk('public')->exists($resultado->archivo_pdf)) {
+            abort(404, 'Archivo no encontrado.');
+        }
+
+        $path = Storage::disk('public')->path($resultado->archivo_pdf);
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . basename($resultado->archivo_pdf) . '"'
+        ]);
     }
 
     /**

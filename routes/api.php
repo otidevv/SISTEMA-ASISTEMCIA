@@ -58,7 +58,9 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
     // --- SERVICIOS ACADÉMICOS (ESTUDIANTES) ---
     Route::prefix('academic')->group(function () {
         Route::get('/materials', [AcademicApiController::class, 'getMaterials']);
+        Route::get('/materials/{id}/download', [AcademicApiController::class, 'downloadMaterialPdf']);
         Route::get('/exam-results', [AcademicApiController::class, 'getExamResults']);
+        Route::get('/exam-results/{id}/download', [AcademicApiController::class, 'downloadExamResultPdf']);
         Route::get('/eligibility', [AcademicApiController::class, 'getEligibility']);
         Route::get('/report-cards', [AcademicApiController::class, 'getReportCards']);
         Route::get('/schedule', [AcademicApiController::class, 'getSchedule']);

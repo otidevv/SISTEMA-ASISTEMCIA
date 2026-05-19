@@ -60,7 +60,7 @@ class MaterialAcademicoApiController extends BaseController
                     'tipo' => $material->tipo,
                     'curso' => $material->curso->nombre ?? 'N/A',
                     'profesor' => $material->profesor ? ($material->profesor->nombre . ' ' . $material->profesor->apellido_paterno) : 'N/A',
-                    'url' => ($material->tipo !== 'link') ? Storage::url($material->archivo) : $material->archivo,
+                    'url' => ($material->tipo !== 'link') ? url('/api/academic/materials/' . $material->id . '/download') : $material->archivo,
                     'fecha' => $material->created_at->format('d/m/Y'),
                 ];
             });
