@@ -867,7 +867,10 @@ $(document).ready(function () {
             type: 'GET',
             success: function (response) {
                 if (response.success) {
-                    recuperacionesData = response.fechas_recuperacion || {};
+                    recuperacionesData = response.fechas_recuperacion;
+                    if (Array.isArray(recuperacionesData) || !recuperacionesData) {
+                        recuperacionesData = {};
+                    }
                     renderizarTablaRecuperaciones();
                     $('#recuperacionesModal').modal('show');
                 }

@@ -152,7 +152,6 @@ class Ciclo extends Model
         $this->save();
     }
 
-    // Métodos para obtener información de exámenes
     public function getProximoExamen()
     {
         $hoy = now();
@@ -160,7 +159,7 @@ class Ciclo extends Model
         if ($this->fecha_primer_examen && $this->fecha_primer_examen > $hoy) {
             return [
                 'numero' => 1,
-                'fecha' => $this->fecha_primer_examen,
+                'fecha' => $this->fecha_primer_examen->format('Y-m-d'),
                 'nombre' => 'Primer Examen'
             ];
         }
@@ -168,7 +167,7 @@ class Ciclo extends Model
         if ($this->fecha_segundo_examen && $this->fecha_segundo_examen > $hoy) {
             return [
                 'numero' => 2,
-                'fecha' => $this->fecha_segundo_examen,
+                'fecha' => $this->fecha_segundo_examen->format('Y-m-d'),
                 'nombre' => 'Segundo Examen'
             ];
         }
@@ -176,7 +175,7 @@ class Ciclo extends Model
         if ($this->fecha_tercer_examen && $this->fecha_tercer_examen > $hoy) {
             return [
                 'numero' => 3,
-                'fecha' => $this->fecha_tercer_examen,
+                'fecha' => $this->fecha_tercer_examen->format('Y-m-d'),
                 'nombre' => 'Tercer Examen'
             ];
         }

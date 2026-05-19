@@ -378,7 +378,7 @@ class CicloController extends Controller
 
         return response()->json([
             'success' => true,
-            'fechas_recuperacion' => $ciclo->fechas_recuperacion ?? []
+            'fechas_recuperacion' => empty($ciclo->fechas_recuperacion) ? new \stdClass() : $ciclo->fechas_recuperacion
         ]);
     }
 
