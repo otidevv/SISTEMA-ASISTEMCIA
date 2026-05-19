@@ -32,17 +32,18 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
     protected $mergeTeacherRanges = [];
     protected $mergeCourseRanges = [];
 
-    // Paleta de colores institucional
+    // Paleta de colores moderna y premium
     private const COLORS = [
-        'PRIMARY_BLUE'      => 'FF1B365D',    // Azul institucional principal
-        'SECONDARY_BLUE'    => 'FF2E5A87',    // Azul secundario
-        'ACCENT_GOLD'       => 'FFD4AF37',    // Dorado de acento
-        'LIGHT_BLUE'        => 'FFE8F0F8',    // Azul claro para alternos
-        'HEADER_BLUE'       => 'FF4A6FA5',    // Azul para encabezados de tabla
+        'PRIMARY_BLUE'      => 'FF1A2A40',    // Slate oscuro / azul profundo
+        'SECONDARY_BLUE'    => 'FF2B4C7E',    // Azul acero / secundario
+        'ACCENT_GOLD'       => 'FFC5A880',    // Dorado cálido / arena premium
+        'LIGHT_BLUE'        => 'FFF0F4F8',    // Celeste grisáceo muy claro (alternados)
         'WHITE'             => 'FFFFFFFF',    // Blanco puro
-        'LIGHT_GRAY'        => 'FFF5F7FA',    // Gris muy claro
-        'BORDER_GRAY'       => 'FFBDC3C7',    // Gris para bordes
-        'TEXT_DARK'         => 'FF2C3E50',    // Texto oscuro
+        'TEXT_DARK'         => 'FF2D3748',    // Gris carbón para textos
+        'BEIGE_PAYMENT'     => 'FFFDFBF7',    // Crema muy suave para pago
+        'BORDER_GRAY'       => 'FFE2E8F0',    // Gris claro moderno para bordes
+        'HEADER_BG'         => 'FF2B4C7E',    // Fondo encabezado tabla
+        'WARNING_RED'       => 'FFE53E3E',    // Rojo para errores
     ];
 
     public function __construct($cicloId)
@@ -95,29 +96,38 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
 
             // Calcular horas y montos a nivel de docente
             $totalHorasSemana = $horariosReales->sum('horas_decimal');
-            $totalHorasCiclo = $totalHorasSemana * $this->semanas;
+            
+            // 📅 CÁLCULO EN BASE AL HORARIO Y CLASES DE RECUPERACIÓN (Calculado en el controlador usando ocurrencias y sábados rotativos)
+            $totalHorasCiclo = $datos['horas_totales_ciclo'];
             $tarifa = $datos['tarifa_por_hora'];
-            $montoTotal = $totalHorasCiclo * $tarifa;
+            $montoTotal = $datos['pago_total_ciclo'];
 
             // Determinar color de fondo para alternar por docente
             $bgColor = ($contador % 2 === 0) ? self::COLORS['LIGHT_BLUE'] : self::COLORS['WHITE'];
 
             $startTeacherRow = $currentRow;
-            $isFirstCourse = true;
+            $isFirstTeacherRow = true;
 
             foreach ($horariosPorCurso as $cursoId => $slots) {
                 $startCourseRow = $currentRow;
                 $horasCursoSemana = $slots->sum('horas_decimal');
                 $cursoNombre = $slots->first()->curso ? $slots->first()->curso->nombre : 'Sin curso';
 
-                foreach ($slots as $slotIndex => $slot) {
-                    $aulaNombre = $slot->aula ? $slot->aula->nombre : 'Sin aula';
-                    $horasSlot = $slot->horas_decimal;
+                // ⚡ AGRUPAR POR AULA: Evita duplicados si el docente enseña en la misma aula para el mismo curso
+                $slotsAgrupadosPorAula = $slots->groupBy('aula_id');
+                $isFirstCourseRow = true;
+
+                foreach ($slotsAgrupadosPorAula as $aulaId => $slotsDeAula) {
+                    $primerSlot = $slotsDeAula->first();
+                    $aulaNombre = $primerSlot->aula ? $primerSlot->aula->nombre : 'Sin aula';
+                    
+                    // Sumar las horas semanales asignadas a esta misma aula
+                    $horasSlot = $slotsDeAula->sum('horas_decimal');
 
                     $results->push([
                         'contador' => $contador,
                         'nombre' => $docente->nombre_completo,
-                        'condicion' => 'CONTRATADO', // Condición por defecto
+                        'condicion' => ($tarifa >= 40) ? 'EXTERNO' : 'CON VINCULO',
                         'curso' => $cursoNombre,
                         'aula' => $aulaNombre,
                         'horas_por_curso' => round($horasSlot, 2),
@@ -127,10 +137,12 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                         'tarifa' => $tarifa,
                         'monto_total' => $montoTotal,
                         'bg_color' => $bgColor,
-                        'is_first_teacher_row' => ($slotIndex === 0 && $isFirstCourse),
-                        'is_first_course_row' => ($slotIndex === 0),
+                        'is_first_teacher_row' => $isFirstTeacherRow,
+                        'is_first_course_row' => $isFirstCourseRow,
                     ]);
 
+                    $isFirstTeacherRow = false;
+                    $isFirstCourseRow = false;
                     $currentRow++;
                 }
 
@@ -138,7 +150,6 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 if ($endCourseRow > $startCourseRow) {
                     $this->mergeCourseRanges[] = [$startCourseRow, $endCourseRow];
                 }
-                $isFirstCourse = false;
             }
 
             $endTeacherRow = $currentRow - 1;
@@ -227,18 +238,20 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 $sheet->getPageSetup()->setFitToWidth(1);
                 $sheet->getPageSetup()->setFitToHeight(0);
                 $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
-                $sheet->getStyle("A1:{$lastCol}{$lastDataRow}")->getFont()->setName('Calibri');
+                $sheet->getStyle("A1:{$lastCol}{$lastDataRow}")->getFont()->setName('Segoe UI');
 
                 // 2. --- ESTILIZAR CABECERAS DE TÍTULO (FILAS 1-3) ---
                 $sheet->mergeCells("A1:{$lastCol}1");
                 $sheet->mergeCells("A2:{$lastCol}2");
                 $sheet->mergeCells("A3:{$lastCol}3");
+                
                 $sheet->getStyle("A1:A3")->applyFromArray([
-                    'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
+                    'font' => ['bold' => true, 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
                 ]);
-                $sheet->getStyle("A1")->getFont()->setSize(18);
-                $sheet->getStyle("A3")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(self::COLORS['SECONDARY_BLUE']));
+                $sheet->getStyle("A1")->getFont()->setSize(16);
+                $sheet->getStyle("A2")->getFont()->setSize(12)->setBold(false)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF5A6B82'));
+                $sheet->getStyle("A3")->getFont()->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(self::COLORS['SECONDARY_BLUE']));
 
                 // Agregar logos institucionales si existen
                 $logoUnamad = public_path('assets/images/logo unamad constancia.png');
@@ -246,7 +259,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                     $drawing = new Drawing();
                     $drawing->setName('Logo UNAMAD');
                     $drawing->setPath($logoUnamad);
-                    $drawing->setHeight(75);
+                    $drawing->setHeight(70);
                     $drawing->setCoordinates('A1');
                     $drawing->setOffsetX(15);
                     $drawing->setOffsetY(5);
@@ -257,7 +270,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                     $drawing2 = new Drawing();
                     $drawing2->setName('Logo CEPRE');
                     $drawing2->setPath($logoCepre);
-                    $drawing2->setHeight(75);
+                    $drawing2->setHeight(70);
                     $drawing2->setCoordinates('J1');
                     $drawing2->setOffsetX(80);
                     $drawing2->setOffsetY(5);
@@ -275,7 +288,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 $sheet->getStyle("B4")->applyFromArray([
                     'font' => ['bold' => true, 'size' => 10, 'color' => ['argb' => self::COLORS['PRIMARY_BLUE']]],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['LIGHT_BLUE']]],
-                    'borders' => ['outline' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]]
+                    'borders' => ['outline' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]]
                 ]);
 
                 // 4. --- METADATOS DE AUDITORÍA (FILA 6) ---
@@ -289,17 +302,17 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 // 5. --- ENCABEZADOS DE TABLA (FILA 7) ---
                 $rowHeaders = 7;
                 $sheet->getStyle("A{$rowHeaders}:{$lastCol}{$rowHeaders}")->applyFromArray([
-                    'font' => ['bold' => true, 'color' => ['argb' => self::COLORS['WHITE']], 'size' => 10],
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['HEADER_BLUE']]],
+                    'font' => ['bold' => true, 'color' => ['argb' => self::COLORS['WHITE']], 'size' => 9.5],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['HEADER_BG']]],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
                     'borders' => [
                         'allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFFFFFFF']],
-                        'bottom' => ['borderStyle' => Border::BORDER_THICK, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]
+                        'bottom' => ['borderStyle' => Border::BORDER_MEDIUM, 'color' => ['argb' => self::COLORS['ACCENT_GOLD']]]
                     ]
                 ]);
-                $sheet->getRowDimension($rowHeaders)->setRowHeight(40);
+                $sheet->getRowDimension($rowHeaders)->setRowHeight(45);
 
-                // 6. --- APLICACIÓN DE BORDES Y FONDOS ---
+                // 6. --- APLICACIÓN DE BORDES Y FONDOS DE FILAS ---
                 $sheet->getStyle("A{$dataStart}:{$lastCol}{$lastDataRow}")->applyFromArray([
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => self::COLORS['BORDER_GRAY']]]],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
@@ -315,14 +328,17 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
 
                     // Fondo de área económica (Columnas J a K)
                     $sheet->getStyle("J{$row}:K{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
-                        ->getStartColor()->setARGB('FFFFFAEB');
+                        ->getStartColor()->setARGB(self::COLORS['BEIGE_PAYMENT']);
 
                     // Highlight red if hourly rate is zero
                     $tarifaRaw = $sheet->getCell('J' . $row)->getValue();
                     if ($tarifaRaw === 0 || $tarifaRaw === "0" || $tarifaRaw === 0.0 || $tarifaRaw === '') {
-                        $sheet->getStyle("J{$row}:K{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_RED))->setBold(true);
+                        $sheet->getStyle("J{$row}:K{$row}")->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(self::COLORS['WARNING_RED']))->setBold(true);
                     }
                 }
+
+                // Ajustar tamaños de fuente de datos
+                $sheet->getStyle("A{$dataStart}:{$lastCol}{$lastDataRow}")->getFont()->setSize(9.5);
 
                 // Alineaciones de texto
                 $sheet->getStyle("A{$dataStart}:A{$lastDataRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
