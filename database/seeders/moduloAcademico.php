@@ -34,6 +34,12 @@ class ModuloAcademico extends Seeder
                 'modulo' => 'ciclos'
             ],
             [
+                'nombre' => 'Gestionar Recuperación de Clases',
+                'codigo' => 'ciclos.recuperaciones',
+                'descripcion' => 'Permite configurar fechas de recuperación (sábados de recuperación u otros) para ciclos académicos',
+                'modulo' => 'ciclos'
+            ],
+            [
                 'nombre' => 'Eliminar Ciclo',
                 'codigo' => 'ciclos.delete',
                 'descripcion' => 'Permite eliminar ciclos académicos',

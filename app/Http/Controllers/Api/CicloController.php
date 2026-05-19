@@ -62,6 +62,9 @@ class CicloController extends Controller
 
         if (auth()->user()->hasPermission('ciclos.edit')) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-ciclo" data-id="' . $ciclo->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
+        }
+
+        if (auth()->user()->hasPermission('ciclos.recuperaciones')) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info edit-recuperaciones" data-id="' . $ciclo->id . '" title="Recuperación de Clases"><i class="uil uil-calendar-alt"></i></a> ';
         }
 
@@ -357,6 +360,13 @@ class CicloController extends Controller
 
     public function getRecuperaciones($id)
     {
+        if (!auth()->user()->hasPermission('ciclos.recuperaciones')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permisos para realizar esta acción'
+            ], 403);
+        }
+
         $ciclo = Ciclo::find($id);
 
         if (!$ciclo) {
@@ -374,6 +384,13 @@ class CicloController extends Controller
 
     public function updateRecuperaciones(Request $request, $id)
     {
+        if (!auth()->user()->hasPermission('ciclos.recuperaciones')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permisos para realizar esta acción'
+            ], 403);
+        }
+
         $ciclo = Ciclo::find($id);
 
         if (!$ciclo) {
