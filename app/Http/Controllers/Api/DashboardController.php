@@ -732,6 +732,9 @@ class DashboardController extends Controller
     /**
      * Exportar PDF de Asistencia Individual para el docente autenticado.
      */
+    /**
+     * Exportar PDF de Asistencia Individual para el docente autenticado.
+     */
     public function exportAttendancePdf(Request $request)
     {
         try {
@@ -744,7 +747,251 @@ class DashboardController extends Controller
             return $controller->exportarPdfIndividual($request);
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error al generar PDF de asistencia: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar PDF de asistencia: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener datos consolidados para el dashboard del Padre.
+     */
+    public function getDatosPadre(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Buscar estudiantes vinculados
+            $parentescos = \App\Models\Parentesco::where('padre_id', $user->id)
+                ->where('estado', true)
+                ->with(['estudiante'])
+                ->get();
+                
+            $hijosData = [];
+            
+            foreach ($parentescos as $parentesco) {
+                $estudiante = $parentesco->estudiante;
+                if (!$estudiante) continue;
+                
+                // 1. Obtener inscripción activa
+                $inscripcionActiva = $estudiante->inscripciones()
+                    ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])
+                    ->whereHas('ciclo', function ($query) {
+                        $query->where('es_activo', true);
+                    })
+                    ->with(['ciclo', 'carrera', 'aula', 'turno'])
+                    ->first();
+    
+                if (!$inscripcionActiva) {
+                    $inscripcionActiva = $estudiante->inscripciones()
+                        ->with(['ciclo', 'carrera', 'aula', 'turno'])
+                        ->latest()
+                        ->first();
+                }
+                
+                if (!$inscripcionActiva) {
+                    $hijosData[] = [
+                        'estudiante_id' => $estudiante->id,
+                        'nombre' => $estudiante->nombre_completo,
+                        'numero_documento' => $estudiante->numero_documento,
+                        'tiene_inscripcion' => false,
+                        'mensaje' => 'No se encontró una inscripción activa para el estudiante.'
+                    ];
+                    continue;
+                }
+    
+                $ciclo = $inscripcionActiva->ciclo;
+                if (!$ciclo) {
+                    $hijosData[] = [
+                        'estudiante_id' => $estudiante->id,
+                        'nombre' => $estudiante->nombre_completo,
+                        'numero_documento' => $estudiante->numero_documento,
+                        'tiene_inscripcion' => false,
+                        'mensaje' => 'La inscripción del estudiante no tiene un ciclo académico asignado.'
+                    ];
+                    continue;
+                }
+    
+                // 2. Obtener el primer registro de asistencia del estudiante dentro del ciclo
+                $docLimpio = trim(strval($estudiante->numero_documento));
+                $primerRegistro = RegistroAsistencia::where('nro_documento', $docLimpio)
+                    ->where('fecha_registro', '>=', Carbon::parse($ciclo->fecha_inicio)->startOfDay())
+                    ->where('fecha_registro', '<=', Carbon::parse($ciclo->fecha_fin)->endOfDay())
+                    ->orderBy('fecha_registro')
+                    ->first();
+    
+                // 3. Calcular asistencia detallada
+                $infoAsistencia = [
+                    'total_ciclo' => ['dias_asistidos' => 0, 'dias_falta' => 0, 'estado' => 'REGULAR'],
+                    'historial' => []
+                ];
+    
+                try {
+                    if ($ciclo && $ciclo->fecha_inicio) {
+                        if ($ciclo->fecha_primer_examen) {
+                            $infoAsistencia['primer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($estudiante->numero_documento, $ciclo->fecha_inicio, $ciclo->fecha_primer_examen, $ciclo, true);
+                        }
+                        if ($ciclo->fecha_segundo_examen && $ciclo->fecha_primer_examen) {
+                            $inicioSegundo = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
+                            if ($inicioSegundo) {
+                                $infoAsistencia['segundo_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($estudiante->numero_documento, $inicioSegundo, $ciclo->fecha_segundo_examen, $ciclo, true);
+                            }
+                        }
+                        if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                            $inicioTercero = AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
+                            if ($inicioTercero) {
+                                $infoAsistencia['tercer_examen'] = AsistenciaHelper::calcularInfoAsistenciaExamen($estudiante->numero_documento, $inicioTercero, $ciclo->fecha_tercer_examen, $ciclo, true);
+                            }
+                        }
+    
+                        $resultadoDetallado = AsistenciaHelper::calcularInfoAsistenciaExamen(
+                            $estudiante->numero_documento,
+                            $ciclo->fecha_inicio,
+                            $ciclo->fecha_fin ?? now(),
+                            $ciclo,
+                            true
+                        );
+    
+                        $infoAsistencia['total_ciclo'] = $resultadoDetallado;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning("Fallo cálculo asistencia detallada para hijo: " . $e->getMessage());
+                }
+    
+                // Resultados de exámenes
+                $resultados = ResultadoExamen::where('ciclo_id', $ciclo->id)
+                    ->where('visible', true)
+                    ->get();
+    
+                // Determinar etapa actual (1 a 5)
+                $etapaActual = 1;
+                if ($inscripcionActiva->estado_inscripcion == 'validado' || $inscripcionActiva->estado_inscripcion == 'activo') {
+                    $etapaActual = 5;
+                } elseif (!empty($inscripcionActiva->aula_id)) {
+                    $etapaActual = 4;
+                } elseif (!empty($inscripcionActiva->postulacion_id)) {
+                    $postulacion = \App\Models\Postulacion::find($inscripcionActiva->postulacion_id);
+                    if ($postulacion) {
+                        if ($postulacion->estado == 'aprobado') {
+                            $etapaActual = 3;
+                        } elseif ($postulacion->estado == 'en_proceso') {
+                            $etapaActual = 2;
+                        }
+                    }
+                }
+                
+                // Obtener marcajes del alumno
+                $ultimosMarcajes = RegistroAsistencia::where('nro_documento', $docLimpio)
+                    ->orderBy('fecha_registro', 'desc')
+                    ->take(10)
+                    ->get()
+                    ->map(function ($marcaje) {
+                        return [
+                            'id' => $marcaje->id,
+                            'fecha_hora' => $marcaje->fecha_registro,
+                            'tipo_verificacion' => $marcaje->tipo_verificacion,
+                        ];
+                    });
+    
+                $hijosData[] = [
+                    'estudiante_id' => $estudiante->id,
+                    'nombre' => $estudiante->nombre . ' ' . $estudiante->apellido_paterno . ' ' . $estudiante->apellido_materno,
+                    'numero_documento' => $estudiante->numero_documento,
+                    'recibe_notificaciones' => (bool)$parentesco->recibe_notificaciones,
+                    'tiene_inscripcion' => true,
+                    'inscripcion' => [
+                        'ciclo' => $ciclo->nombre,
+                        'ciclo_id' => $ciclo->id,
+                        'carrera' => $inscripcionActiva->carrera->nombre ?? 'N/A',
+                        'aula' => $inscripcionActiva->aula->nombre ?? 'N/A',
+                        'turno' => $inscripcionActiva->turno->nombre ?? 'N/A',
+                        'aula_id' => $inscripcionActiva->aula_id,
+                    ],
+                    'infoAsistencia' => $infoAsistencia,
+                    'ultimos_marcajes' => $ultimosMarcajes,
+                    'fecha_primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : null,
+                    'etapa_actual' => $etapaActual,
+                    'eligibility' => [
+                        'totalAsistencias' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
+                        'totalFaltas' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
+                        'dias_asistidos' => $infoAsistencia['total_ciclo']['dias_asistidos'] ?? 0,
+                        'dias_falta' => $infoAsistencia['total_ciclo']['dias_falta'] ?? 0,
+                        'estadoTotal' => ($infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR') === 'sin_registros' ? 'SIN REGISTROS' : strtoupper($infoAsistencia['total_ciclo']['estado'] ?? 'REGULAR'),
+                    ],
+                    'resultados' => $resultados,
+                    'postulacionValidada' => in_array($inscripcionActiva->estado_inscripcion, ['activo', 'aprobada', 'validado']),
+                ];
+            }
+            
+            // Anuncios generales
+            $anuncios = Anuncio::where('es_activo', true)
+                ->where('fecha_publicacion', '<=', now())
+                ->orderBy('fecha_publicacion', 'desc')
+                ->take(5)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
+                    'rol' => 'padre'
+                ],
+                'hijos' => $hijosData,
+                'anuncios' => $anuncios
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error("Error en Dashboard Padre: " . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudieron cargar los datos de los estudiantes vinculados. Intente nuevamente más tarde.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Alternar la recepción de notificaciones para un hijo.
+     */
+    public function toggleNotificacionesHijo(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $estudianteId = $request->input('estudiante_id');
+            $recibe = $request->input('recibe_notificaciones');
+            
+            $parentesco = \App\Models\Parentesco::where('padre_id', $user->id)
+                ->where('estudiante_id', $estudianteId)
+                ->where('estado', true)
+                ->first();
+                
+            if (!$parentesco) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vinculación de parentesco no encontrada o inactiva.'
+                ], 404);
+            }
+            
+            $parentesco->recibe_notificaciones = (bool)$recibe;
+            $parentesco->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Configuración de notificaciones actualizada correctamente.',
+                'recibe_notificaciones' => $parentesco->recibe_notificaciones
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar configuración: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

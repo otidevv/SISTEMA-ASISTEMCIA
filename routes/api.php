@@ -46,6 +46,8 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/admin/estadisticas-asistencia', [DashboardController::class, 'getEstadisticasAsistencia']);
         Route::get('/admin', [DashboardController::class, 'getDatosAdmin']);
         Route::get('/estudiante', [DashboardController::class, 'getDatosEstudiante']);
+        Route::get('/padre', [DashboardController::class, 'getDatosPadre']);
+        Route::post('/padre/toggle-notificaciones', [DashboardController::class, 'toggleNotificacionesHijo']);
         Route::get('/profesor', [DashboardController::class, 'getDatosProfesor']);
         Route::post('/profesor/registrar-tema', [DashboardController::class, 'registrarTemaDesarrollado']);
         Route::get('/profesor/reporte/carga-horaria/{type?}', [DashboardController::class, 'exportWorkloadPdf']);

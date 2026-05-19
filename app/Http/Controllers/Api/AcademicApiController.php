@@ -21,7 +21,7 @@ class AcademicApiController extends BaseController
      */
     public function getMaterials(Request $request)
     {
-        $user = $request->user();
+        $user = $this->resolveStudentUser($request);
         
         // 1. Obtener inscripción activa con fallback (igual que en Dashboard)
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
@@ -113,7 +113,7 @@ class AcademicApiController extends BaseController
      */
     public function getEligibility(Request $request)
     {
-        $user = $request->user();
+        $user = $this->resolveStudentUser($request);
         
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
             ->whereIn('estado_inscripcion', ['activo', 'aprobada'])
@@ -180,7 +180,7 @@ class AcademicApiController extends BaseController
      */
     public function getReportCards(Request $request)
     {
-        $user = $request->user();
+        $user = $this->resolveStudentUser($request);
         
         $inscripciones = Inscripcion::where('estudiante_id', $user->id)
             ->with(['ciclo'])
@@ -213,7 +213,7 @@ class AcademicApiController extends BaseController
      */
     public function getSchedule(Request $request)
     {
-        $user = $request->user();
+        $user = $this->resolveStudentUser($request);
         
         // 1. Obtener inscripción activa
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)

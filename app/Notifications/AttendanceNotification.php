@@ -18,6 +18,7 @@ class AttendanceNotification extends Notification
     public function __construct($student, $time, $location = 'Local Central')
     {
         $this->student = $student;
+        // fecha_registro viene del servidor MySQL (NOW()), no del reloj del ZKTeco
         $this->time = Carbon::parse($time);
         $this->location = $location;
     }
@@ -31,10 +32,13 @@ class AttendanceNotification extends Notification
     {
         $nombreEstudiante = $this->student->nombre . ' ' . $this->student->apellido_paterno;
         $fecha = $this->time->format('d/m/Y');
-        $hora = $this->time->format('H:i A');
+        $hora = $this->time->format('h:i A'); // Formato 12h con AM/PM
         
         // Determinar si el destinatario es el propio estudiante o un padre
-        $esParaAlumno = ($notifiable->id === $this->student->id);
+        // Comparamos IDs como strings y verificamos el rol explícitamente para mayor seguridad
+        $esParaAlumno = ((string) $notifiable->id === (string) $this->student->id) && 
+                        !$notifiable->hasRole('padre') && 
+                        !$notifiable->hasRole('apoderado');
         
         // Lógica de rangos (minutos desde las 00:00)
         $minutosTotales = $this->time->hour * 60 + $this->time->minute;

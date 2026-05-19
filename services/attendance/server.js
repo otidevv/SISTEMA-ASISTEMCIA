@@ -1129,8 +1129,14 @@ async function procesarAsistencia(sn_dispositivo, datos_asistencia) {
              WHERE ur.usuario_id = ?`,
             [usuario.id]
         );
-        const esEstudiante = roles.some(rol => rol.nombre === 'estudiante');
-        const esProfesor = roles.some(rol => rol.nombre === 'profesor');
+        const esEstudiante = roles.some(rol => {
+            const r = rol.nombre.toLowerCase().trim();
+            return r === 'estudiante' || r === 'postulante';
+        });
+        const esProfesor = roles.some(rol => {
+            const r = rol.nombre.toLowerCase().trim();
+            return r === 'profesor' || r === 'docente';
+        });
 
         const fechaHoraRegistro = moment(fecha_registro);
         const fechaMostrar = fechaHoraRegistro.format('DD/MM/YYYY');

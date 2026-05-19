@@ -15,7 +15,7 @@ class DocumentApiController extends BaseController
      */
     public function getMyCarnet(Request $request)
     {
-        $user = $request->user();
+        $user = $this->resolveStudentUser($request);
         
         $inscripcion = Inscripcion::where('estudiante_id', $user->id)
             ->whereIn('estado_inscripcion', ['activo', 'aprobada', 'validado'])

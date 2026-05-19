@@ -120,7 +120,26 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasRole($roleName)
     {
-        return $this->roles()->where('nombre', $roleName)->exists();
+        $normalizedInput = strtolower(trim($roleName));
+        
+        $synonyms = [
+            'profesor' => ['profesor', 'docente'],
+            'docente' => ['profesor', 'docente'],
+            'estudiante' => ['estudiante', 'postulante'],
+            'postulante' => ['estudiante', 'postulante'],
+            'padre' => ['padre', 'apoderado'],
+            'apoderado' => ['padre', 'apoderado'],
+        ];
+
+        $targetRoles = isset($synonyms[$normalizedInput]) ? $synonyms[$normalizedInput] : [$normalizedInput];
+
+        foreach ($this->roles as $role) {
+            if (in_array(strtolower(trim($role->nombre)), $targetRoles)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -131,7 +150,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasAnyRole($roleNames)
     {
-        return $this->roles()->whereIn('nombre', $roleNames)->exists();
+        foreach ($roleNames as $roleName) {
+            if ($this->hasRole($roleName)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

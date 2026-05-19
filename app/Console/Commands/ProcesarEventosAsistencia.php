@@ -35,7 +35,9 @@ class ProcesarEventosAsistencia extends Command
                     if ($usuario) {
                         // 1. Lógica para DOCENTES
                         if ($usuario->hasRole('profesor')) {
-                            $fecha = Carbon::parse($registro->fecha_hora);
+                            // Usamos fecha_registro (hora del servidor) en vez de fecha_hora (hora del ZKTeco)
+                            // porque el reloj del biométrico puede estar desconfigurado
+                            $fecha = Carbon::parse($registro->fecha_registro);
                             $hora = $fecha->format('H:i:s');
                             $dia = $fecha->locale('es')->dayName;
 
@@ -87,7 +89,7 @@ class ProcesarEventosAsistencia extends Command
 
                             $notificacion = new \App\Notifications\AttendanceNotification(
                                 $usuario, 
-                                $registro->fecha_hora
+                                $registro->fecha_registro // Usamos hora del servidor, no del ZKTeco
                             );
 
                             // Notificar al estudiante
