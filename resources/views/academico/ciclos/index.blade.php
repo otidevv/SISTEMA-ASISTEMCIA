@@ -518,4 +518,93 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para Gestionar Recuperaciones (Sábados/Otros) -->
+    <div class="modal fade" id="recuperacionesModal" tabindex="-1" role="dialog" aria-labelledby="recuperacionesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="recuperacionesModalLabel">
+                        <i class="mdi mdi-calendar-clock me-1"></i> Recuperación de Clases (Sábados/Otros)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="mdi mdi-information-outline me-1"></i>
+                            Ciclo: <span id="recuperaciones-ciclo-nombre" class="fw-bold"></span>
+                        </h6>
+                        <p class="mb-0 small">
+                            Configure fechas específicas (por ejemplo, sábados de recuperación) en las que se impartirán clases con el horario de otro día de la semana. Estas fechas serán consideradas días hábiles y afectarán la carga horaria, planillas y control de asistencia de los docentes.
+                        </p>
+                    </div>
+
+                    <!-- Formulario para agregar una nueva fecha de recuperación -->
+                    <div class="card mb-3 border-light">
+                        <div class="card-body bg-light">
+                            <h6 class="card-title mb-3">Agregar Fecha de Recuperación</h6>
+                            <form id="addRecuperacionForm" class="row g-3 align-items-end">
+                                <div class="col-md-5">
+                                    <label for="recuperacion_fecha" class="form-label">Fecha a Recuperar</label>
+                                    <input type="date" class="form-control" id="recuperacion_fecha" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="recuperacion_dia" class="form-label">Horario del Día a Aplicar</label>
+                                    <select class="form-select" id="recuperacion_dia" required>
+                                        <option value="">Seleccione día...</option>
+                                        <option value="Lunes">Lunes</option>
+                                        <option value="Martes">Martes</option>
+                                        <option value="Miércoles">Miércoles</option>
+                                        <option value="Jueves">Jueves</option>
+                                        <option value="Viernes">Viernes</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-info w-100" id="btnAgregarRecuperacion">
+                                        <i class="mdi mdi-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de fechas de recuperación -->
+                    <div class="card border-light">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Fechas de Recuperación Programadas</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover mb-0" id="tablaRecuperaciones">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Día de la Semana Real</th>
+                                            <th>Horario del Día que Aplica</th>
+                                            <th class="text-center" style="width: 100px;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recuperacionesTableBody">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                                <div id="noRecuperacionesMessage" class="text-center py-4 text-muted">
+                                    <i class="mdi mdi-calendar-blank fs-1"></i>
+                                    <p class="mb-0 mt-1">No hay fechas de recuperación programadas para este ciclo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarRecuperaciones">
+                        <i class="mdi mdi-content-save me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush

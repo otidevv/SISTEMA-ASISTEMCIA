@@ -62,6 +62,7 @@ class CicloController extends Controller
 
         if (auth()->user()->hasPermission('ciclos.edit')) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-ciclo" data-id="' . $ciclo->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info edit-recuperaciones" data-id="' . $ciclo->id . '" title="Recuperación de Clases"><i class="uil uil-calendar-alt"></i></a> ';
         }
 
         if (auth()->user()->hasPermission('ciclos.activate')) {
@@ -352,5 +353,90 @@ class CicloController extends Controller
             'total_activos' => $ciclos->count(),
             'todos_activos' => $ciclos
         ]);
+    }
+
+    public function getRecuperaciones($id)
+    {
+        $ciclo = Ciclo::find($id);
+
+        if (!$ciclo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ciclo académico no encontrado'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'fechas_recuperacion' => $ciclo->fechas_recuperacion ?? []
+        ]);
+    }
+
+    public function updateRecuperaciones(Request $request, $id)
+    {
+        $ciclo = Ciclo::find($id);
+
+        if (!$ciclo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ciclo académico no encontrado'
+            ], 404);
+        }
+
+        $fechas = $request->input('fechas_recuperacion', []);
+        if (!is_array($fechas)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El formato de las fechas de recuperación es inválido'
+            ], 422);
+        }
+
+        foreach ($fechas as $fecha => $dia) {
+            // Validar formato YYYY-MM-DD
+            $d = \DateTime::createFromFormat('Y-m-d', $fecha);
+            if (!$d || $d->format('Y-m-d') !== $fecha) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "La fecha '$fecha' no tiene un formato válido (YYYY-MM-DD)."
+                ], 422);
+            }
+
+            // Validar día
+            if (!in_array($dia, ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "El día '$dia' no es un día de la semana válido."
+                ], 422);
+            }
+
+            // Validar que esté en el rango del ciclo
+            if ($fecha < $ciclo->fecha_inicio->format('Y-m-d') || $fecha > $ciclo->fecha_fin->format('Y-m-d')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "La fecha de recuperación '$fecha' está fuera del rango del ciclo académico ({$ciclo->fecha_inicio->format('d/m/Y')} al {$ciclo->fecha_fin->format('d/m/Y')})."
+                ], 422);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $ciclo->fechas_recuperacion = $fechas;
+            $ciclo->actualizado_por = auth()->id();
+            $ciclo->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Fechas de recuperación actualizadas exitosamente',
+                'fechas_recuperacion' => $ciclo->fechas_recuperacion
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar las fechas de recuperación: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

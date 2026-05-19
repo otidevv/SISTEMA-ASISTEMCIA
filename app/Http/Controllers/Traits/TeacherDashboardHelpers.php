@@ -174,10 +174,22 @@ trait TeacherDashboardHelpers
     protected function obtenerProximaClaseCorregida($docenteId, $cicloActivo)
     {
         $ahora = Carbon::now();
-        $diaActualSemana = $ahora->locale('es')->dayName;
+        
+        if (!$cicloActivo) {
+            $cicloActivo = Ciclo::where('es_activo', true)->first();
+        }
+        
+        if ($cicloActivo) {
+            $diaActualSemana = $cicloActivo->getDiaHorarioParaFecha($ahora);
+        } else {
+            $diaActualSemana = $ahora->locale('es')->dayName;
+        }
 
         $proximaClaseHoy = HorarioDocente::where('docente_id', $docenteId)
-            ->where('dia_semana', $diaActualSemana)
+            ->where(function($q) use ($diaActualSemana) {
+                $q->where('dia_semana', $diaActualSemana)
+                  ->orWhere(DB::raw('LOWER(dia_semana)'), mb_strtolower($diaActualSemana, 'UTF-8'));
+            })
             ->where('hora_inicio', '>', $ahora->format('H:i:s'))
             ->when($cicloActivo, function ($query, $ciclo) {
                 return $query->where('ciclo_id', $ciclo->id);

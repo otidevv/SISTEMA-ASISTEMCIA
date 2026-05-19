@@ -253,7 +253,11 @@ class AcademicApiController extends BaseController
         }
 
         $hoy = now();
-        $diaSemana = $this->getDiaSemanaSpanish($hoy->dayOfWeek);
+        if ($inscripcion->ciclo) {
+            $diaSemana = $inscripcion->ciclo->getDiaHorarioParaFecha($hoy);
+        } else {
+            $diaSemana = $this->getDiaSemanaSpanish($hoy->dayOfWeek);
+        }
 
         // 2. Obtener horarios del aula
         $horarios = HorarioDocente::with(['curso', 'docente', 'aula'])

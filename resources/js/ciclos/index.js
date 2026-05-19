@@ -817,5 +817,169 @@ $(document).ready(function () {
             Toast.fire({ icon: 'error', title: 'Error al procesar la solicitud' });
         }
     }
+
+    // ============= GESTIÓN DE RECUPERACIONES =============
+    let recuperacionesData = {};
+    let recuperacionesCicloId = null;
+    let recuperacionesCicloFechaInicio = null;
+    let recuperacionesCicloFechaFin = null;
+
+    // Cargar y abrir modal de recuperaciones
+    $('#ciclos-datatable').on('click', '.edit-recuperaciones', function () {
+        const id = $(this).data('id');
+        recuperacionesCicloId = id;
+
+        // Resetear formulario
+        $('#addRecuperacionForm')[0].reset();
+
+        // Obtener datos del ciclo primero para saber las fechas límites y el nombre
+        $.ajax({
+            url: default_server + "/json/ciclos/" + id,
+            type: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    const ciclo = response.data;
+                    $('#recuperaciones-ciclo-nombre').text(ciclo.nombre);
+                    
+                    // Guardar fechas límites
+                    recuperacionesCicloFechaInicio = ciclo.fecha_inicio;
+                    recuperacionesCicloFechaFin = ciclo.fecha_fin;
+
+                    // Asignar min/max al input de fecha
+                    $('#recuperacion_fecha').attr('min', recuperacionesCicloFechaInicio);
+                    $('#recuperacion_fecha').attr('max', recuperacionesCicloFechaFin);
+
+                    // Cargar las recuperaciones configuradas
+                    cargarRecuperaciones(id);
+                } else {
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la información del ciclo' });
+                }
+            },
+            error: function () {
+                Toast.fire({ icon: 'error', title: 'Error al obtener los datos del ciclo' });
+            }
+        });
+    });
+
+    function cargarRecuperaciones(cicloId) {
+        $.ajax({
+            url: default_server + `/json/ciclos/${cicloId}/recuperaciones`,
+            type: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    recuperacionesData = response.fechas_recuperacion || {};
+                    renderizarTablaRecuperaciones();
+                    $('#recuperacionesModal').modal('show');
+                }
+            },
+            error: function () {
+                Toast.fire({ icon: 'error', title: 'Error al cargar las fechas de recuperación' });
+            }
+        });
+    }
+
+    function renderizarTablaRecuperaciones() {
+        const tbody = $('#recuperacionesTableBody');
+        tbody.empty();
+
+        const dates = Object.keys(recuperacionesData).sort();
+
+        if (dates.length === 0) {
+            $('#tablaRecuperaciones').hide();
+            $('#noRecuperacionesMessage').show();
+        } else {
+            $('#tablaRecuperaciones').show();
+            $('#noRecuperacionesMessage').hide();
+
+            dates.forEach(function (fecha) {
+                const diaAplica = recuperacionesData[fecha];
+                const realWeekday = getRealWeekdayName(fecha);
+                
+                const row = `
+                    <tr data-fecha="${fecha}">
+                        <td>${formatDateSimple(fecha)}</td>
+                        <td><span class="badge bg-secondary">${realWeekday}</span></td>
+                        <td><span class="badge bg-primary">${diaAplica}</span></td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger btn-eliminar-recuperacion" data-fecha="${fecha}">
+                                <i class="uil uil-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+    }
+
+    function getRealWeekdayName(dateString) {
+        if (!dateString) return '';
+        const [year, month, day] = dateString.split('-');
+        const date = new Date(year, month - 1, day);
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        return days[date.getDay()];
+    }
+
+    // Agregar nueva recuperación a la lista local
+    $('#btnAgregarRecuperacion').on('click', function () {
+        const fechaVal = $('#recuperacion_fecha').val();
+        const diaVal = $('#recuperacion_dia').val();
+
+        if (!fechaVal || !diaVal) {
+            Toast.fire({ icon: 'warning', title: 'Por favor seleccione la fecha y el día a aplicar' });
+            return;
+        }
+
+        // Validar que la fecha esté dentro del rango del ciclo
+        if (fechaVal < recuperacionesCicloFechaInicio || fechaVal > recuperacionesCicloFechaFin) {
+            Toast.fire({ 
+                icon: 'error', 
+                title: 'La fecha seleccionada está fuera del rango de este ciclo (' + 
+                       formatDateSimple(recuperacionesCicloFechaInicio) + ' a ' + 
+                       formatDateSimple(recuperacionesCicloFechaFin) + ')' 
+            });
+            return;
+        }
+
+        // Agregar al objeto local
+        recuperacionesData[fechaVal] = diaVal;
+        renderizarTablaRecuperaciones();
+
+        // Limpiar formulario de agregar
+        $('#recuperacion_fecha').val('');
+        $('#recuperacion_dia').val('');
+    });
+
+    // Eliminar de la lista local
+    $(document).on('click', '.btn-eliminar-recuperacion', function () {
+        const fecha = $(this).data('fecha');
+        delete recuperacionesData[fecha];
+        renderizarTablaRecuperaciones();
+    });
+
+    // Guardar cambios en el servidor
+    $('#btnGuardarRecuperaciones').on('click', function () {
+        $.ajax({
+            url: default_server + `/json/ciclos/${recuperacionesCicloId}/recuperaciones`,
+            type: 'POST',
+            data: {
+                fechas_recuperacion: recuperacionesData
+            },
+            success: function (response) {
+                if (response.success) {
+                    Toast.fire({ icon: 'success', title: response.message });
+                    $('#recuperacionesModal').modal('hide');
+                    table.ajax.reload();
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 422) {
+                    Toast.fire({ icon: 'error', title: xhr.responseJSON.message || 'Error de validación al guardar' });
+                } else {
+                    Toast.fire({ icon: 'error', title: 'Error al guardar los cambios en el servidor' });
+                }
+            }
+        });
+    });
 });
 

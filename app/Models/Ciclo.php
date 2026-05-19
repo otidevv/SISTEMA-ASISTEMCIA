@@ -37,6 +37,7 @@ class Ciclo extends Model
         'estado',
         'programa_id',
         'correlativo_inicial',
+        'fechas_recuperacion',
         'creado_por',
         'actualizado_por'
     ];
@@ -51,7 +52,8 @@ class Ciclo extends Model
         'incluye_sabados' => 'boolean',
         'porcentaje_avance' => 'decimal:2',
         'porcentaje_amonestacion' => 'decimal:2',
-        'porcentaje_inhabilitacion' => 'decimal:2'
+        'porcentaje_inhabilitacion' => 'decimal:2',
+        'fechas_recuperacion' => 'array'
     ];
 
     // Relaciones
@@ -238,6 +240,15 @@ class Ciclo extends Model
     }
 
     /**
+     * Obtener fechas de recuperación configuradas
+     * @return array
+     */
+    public function obtenerFechasRecuperacion()
+    {
+        return $this->fechas_recuperacion ?? [];
+    }
+
+    /**
      * Determinar si una fecha es día hábil según la configuración del ciclo
      * @param mixed $fecha Fecha a verificar
      * @return bool True si es día hábil, false si no
@@ -245,14 +256,22 @@ class Ciclo extends Model
     public function esDiaHabil($fecha)
     {
         $carbonFecha = \Carbon\Carbon::parse($fecha);
+        $fechaString = $carbonFecha->format('Y-m-d');
+        
+        // Verificar primero si es una fecha de recuperación excepcional
+        $recuperaciones = $this->obtenerFechasRecuperacion();
+        if (isset($recuperaciones[$fechaString])) {
+            return true;
+        }
+
         $dayOfWeek = $carbonFecha->dayOfWeek;
         
-        // Domingo nunca es día hábil
+        // Domingo nunca es día hábil (a menos que esté en recuperaciones, que ya se verificó)
         if ($dayOfWeek == 0) {
             return false;
         }
         
-        // Sábado solo es día hábil si el ciclo lo incluye
+        // Sábado solo es día hábil si el ciclo lo incluye de manera global
         if ($dayOfWeek == 6) {
             return $this->incluye_sabados;
         }
@@ -321,6 +340,14 @@ class Ciclo extends Model
     public function getDiaHorarioParaFecha($fecha)
     {
         $fechaCarbon = \Carbon\Carbon::parse($fecha);
+        $fechaString = $fechaCarbon->format('Y-m-d');
+        
+        // 1. Verificar si la fecha está en las fechas de recuperación específicas
+        $recuperaciones = $this->obtenerFechasRecuperacion();
+        if (isset($recuperaciones[$fechaString])) {
+            return $recuperaciones[$fechaString]; // Retorna el día asignado (ej. "Lunes")
+        }
+
         $map = [
             1 => 'Lunes',
             2 => 'Martes',
@@ -332,7 +359,7 @@ class Ciclo extends Model
         ];
         $diaSemana = $map[$fechaCarbon->dayOfWeek];
         
-        // Si es sábado, aplicar rotación
+        // 2. Si es sábado y no es recuperación específica, aplicar rotación global
         if ($diaSemana === 'Sábado') {
             return $this->getDiaEquivalenteSabado($fecha);
         }

@@ -831,14 +831,11 @@ class AsistenciaDocenteController extends Controller
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
             
-            // Aplicar rotación de sábado si corresponde
-            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
-            $esSabado = $diaReal === 'sábado';
-            $diaSemana = $diaReal;
-            
-            if ($esSabado && $cicloActivo) {
-                // Usar el día equivalente según la rotación semanal
-                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            // Obtener el día de la semana correspondiente (tomando en cuenta rotaciones y recuperaciones)
+            if ($cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaHorarioParaFecha($fechaCarbon);
+            } else {
+                $diaSemana = $fechaCarbon->locale('es')->dayName;
             }
             
             // Query base para horarios
@@ -1877,13 +1874,11 @@ class AsistenciaDocenteController extends Controller
             // Obtener ciclo activo
             $cicloActivo = Ciclo::where('es_activo', true)->first();
             
-            // Aplicar rotación de sábado si corresponde
-            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
-            $esSabado = $diaReal === 'sábado';
-            $diaSemana = $diaReal;
-            
-            if ($esSabado && $cicloActivo) {
-                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            // Obtener el día de la semana correspondiente (tomando en cuenta rotaciones y recuperaciones)
+            if ($cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaHorarioParaFecha($fechaCarbon);
+            } else {
+                $diaSemana = $fechaCarbon->locale('es')->dayName;
             }
             
             $horariosQuery = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
@@ -2034,13 +2029,11 @@ class AsistenciaDocenteController extends Controller
             
             $cicloActivo = Ciclo::where('es_activo', true)->first();
             
-            // Aplicar rotación de sábado si corresponde
-            $diaReal = strtolower($fechaCarbon->locale('es')->dayName);
-            $esSabado = $diaReal === 'sábado';
-            $diaSemana = $diaReal;
-            
-            if ($esSabado && $cicloActivo) {
-                $diaSemana = $cicloActivo->getDiaEquivalenteSabado($fecha);
+            // Obtener el día de la semana correspondiente (tomando en cuenta rotaciones y recuperaciones)
+            if ($cicloActivo) {
+                $diaSemana = $cicloActivo->getDiaHorarioParaFecha($fechaCarbon);
+            } else {
+                $diaSemana = $fechaCarbon->locale('es')->dayName;
             }
             
             $horariosQuery = HorarioDocente::with(['docente', 'curso'])

@@ -1182,18 +1182,29 @@ class DashboardController extends Controller
 
             $user = Auth::user();
             $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay();
-            $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
             
-            // Verificar que el horario pertenece al docente
+            // Obtener el día de la semana correspondiente (tomando en cuenta rotaciones y recuperaciones)
+            $horarioAux = HorarioDocente::find($request->horario_id);
+            $cicloDelHorario = $horarioAux ? $horarioAux->ciclo : null;
+            if ($cicloDelHorario) {
+                $diaSemanaSeleccionada = $cicloDelHorario->getDiaHorarioParaFecha($fechaSeleccionada);
+            } else {
+                $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
+            }
+            
+            // Verificar que el horario pertenece al docente y corresponde al día académico programado
             $horario = HorarioDocente::where('id', $request->horario_id)
                 ->where('docente_id', $user->id)
-                ->where('dia_semana', $diaSemanaSeleccionada)
+                ->where(function($q) use ($diaSemanaSeleccionada) {
+                    $q->where('dia_semana', $diaSemanaSeleccionada)
+                      ->orWhere(DB::raw('LOWER(dia_semana)'), mb_strtolower($diaSemanaSeleccionada, 'UTF-8'));
+                })
                 ->first();
                 
             if (!$horario) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Horario no válido o no corresponde al día de la semana de la fecha seleccionada.'
+                    'message' => 'Horario no válido o no corresponde al día de la sesión (Día detectado: ' . $diaSemanaSeleccionada . ').'
                 ], 400);
             }
 

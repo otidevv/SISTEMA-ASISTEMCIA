@@ -689,6 +689,8 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::post('/{id}/activar', [App\Http\Controllers\Api\CicloController::class, 'activar']);
         Route::post('/{id}/desactivar', [App\Http\Controllers\Api\CicloController::class, 'desactivar']);
         Route::get('/activo/actual', [App\Http\Controllers\Api\CicloController::class, 'cicloActivo']);
+        Route::get('/{id}/recuperaciones', [App\Http\Controllers\Api\CicloController::class, 'getRecuperaciones']);
+        Route::post('/{id}/recuperaciones', [App\Http\Controllers\Api\CicloController::class, 'updateRecuperaciones']);
         
         // Vacantes por ciclo
         Route::get('/{cicloId}/vacantes', [App\Http\Controllers\Api\CicloVacanteController::class, 'getVacantesByCiclo']);

@@ -395,10 +395,11 @@ class DashboardController extends Controller
             $user = Auth::user();
             $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay();
             
-            // Corregido: Usar el día rotativo si es sábado
-            $cicloActivo = Ciclo::where('es_activo', true)->find(HorarioDocente::find($request->horario_id)->ciclo_id ?? 0);
-            if ($cicloActivo) {
-                $diaSemanaSeleccionada = $cicloActivo->getDiaHorarioParaFecha($fechaSeleccionada);
+            // Obtener el día de la semana correspondiente (tomando en cuenta rotaciones y recuperaciones)
+            $horarioAux = HorarioDocente::find($request->horario_id);
+            $cicloDelHorario = $horarioAux ? $horarioAux->ciclo : null;
+            if ($cicloDelHorario) {
+                $diaSemanaSeleccionada = $cicloDelHorario->getDiaHorarioParaFecha($fechaSeleccionada);
             } else {
                 $diaSemanaSeleccionada = $fechaSeleccionada->locale('es')->dayName;
             }
