@@ -87,6 +87,19 @@ class DashboardController extends Controller
                 ->orderBy('fecha_registro')
                 ->first();
 
+            // Obtener marcajes del alumno para el carnet y banner
+            $ultimosMarcajes = RegistroAsistencia::where('nro_documento', $docLimpio)
+                ->orderBy('fecha_registro', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function ($marcaje) {
+                    return [
+                        'id' => $marcaje->id,
+                        'fecha_hora' => $marcaje->fecha_registro,
+                        'tipo_verificacion' => $marcaje->tipo_verificacion,
+                    ];
+                });
+
 
             // 3. Calcular asistencia detallada y obtener HISTORIAL
             $infoAsistencia = [
@@ -177,6 +190,7 @@ class DashboardController extends Controller
                         'aula_id' => $inscripcionActiva->aula_id,
                     ],
                     'infoAsistencia' => $infoAsistencia,
+                    'ultimos_marcajes' => $ultimosMarcajes,
                     'fecha_primer_registro' => $primerRegistro ? Carbon::parse($primerRegistro->fecha_registro)->format('d/m/Y') : null,
                     'etapa_actual' => $etapaActual,
                     'eligibility' => [
