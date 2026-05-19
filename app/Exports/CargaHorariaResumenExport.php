@@ -41,7 +41,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         'WHITE'             => 'FFFFFFFF',    // Blanco puro
         'TEXT_DARK'         => 'FF2D3748',    // Gris carbón para textos
         'BEIGE_PAYMENT'     => 'FFFDFBF7',    // Crema muy suave para pago
-        'BORDER_GRAY'       => 'FFE2E8F0',    // Gris claro moderno para bordes
+        'BORDER_GRAY'       => 'FFBDC3C7',    // Gris medio-claro definido para bordes
         'HEADER_BG'         => 'FF2B4C7E',    // Fondo encabezado tabla
         'WARNING_RED'       => 'FFE53E3E',    // Rojo para errores
     ];
@@ -58,6 +58,48 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         $this->semanas = (int) round($diasCiclo / 7) ?: 1;
 
         $this->data = $this->collectData();
+    }
+
+    /**
+     * Genera una versión pastel suave de un color hexadecimal para que el texto sea perfectamente legible
+     */
+    private function getPastelColor($hex, $factor = 0.85)
+    {
+        if (empty($hex)) {
+            return 'FFFFFFFF';
+        }
+        $hex = str_replace('#', '', $hex);
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        if (strlen($hex) !== 6) {
+            return 'FFFFFFFF';
+        }
+
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        // Mezclar con blanco según el factor (0.85 significa 85% blanco, 15% color)
+        $r = (int) (($r * (1 - $factor)) + (255 * $factor));
+        $g = (int) (($g * (1 - $factor)) + (255 * $factor));
+        $b = (int) (($b * (1 - $factor)) + (255 * $factor));
+
+        return sprintf('FF%02X%02X%02X', $r, $g, $b);
+    }
+
+    /**
+     * Genera un color pastel único para cada aula basado en su nombre
+     */
+    private function getAulaColor($aulaNombre)
+    {
+        if (empty($aulaNombre) || $aulaNombre === 'Sin aula') {
+            return 'FFFFFFFF';
+        }
+        // Crear un hash del nombre del aula para obtener un color consistente
+        $hash = md5($aulaNombre);
+        $hex = substr($hash, 0, 6);
+        return $this->getPastelColor($hex, 0.90); // 90% blanco para un fondo muy sutil
     }
 
     private function collectData()
@@ -97,7 +139,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
             // Calcular horas y montos a nivel de docente
             $totalHorasSemana = $horariosReales->sum('horas_decimal');
             
-            // 📅 CÁLCULO EN BASE AL HORARIO Y CLASES DE RECUPERACIÓN (Calculado en el controlador usando ocurrencias y sábados rotativos)
+            // CÁLCULO EN BASE AL HORARIO Y CLASES DE RECUPERACIÓN (Calculado en el controlador usando ocurrencias y sábados rotativos)
             $totalHorasCiclo = $datos['horas_totales_ciclo'];
             $tarifa = $datos['tarifa_por_hora'];
             $montoTotal = $datos['pago_total_ciclo'];
@@ -111,9 +153,14 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
             foreach ($horariosPorCurso as $cursoId => $slots) {
                 $startCourseRow = $currentRow;
                 $horasCursoSemana = $slots->sum('horas_decimal');
-                $cursoNombre = $slots->first()->curso ? $slots->first()->curso->nombre : 'Sin curso';
+                
+                $primerSlotCurso = $slots->first()->curso;
+                $cursoNombre = $primerSlotCurso ? $primerSlotCurso->nombre : 'Sin curso';
+                $cursoColorDb = $primerSlotCurso ? $primerSlotCurso->color : '#FFFFFF';
+                // Obtener el color pastel del curso
+                $cursoColorPastel = $this->getPastelColor($cursoColorDb, 0.85);
 
-                // ⚡ AGRUPAR POR AULA: Evita duplicados si el docente enseña en la misma aula para el mismo curso
+                // AGRUPAR POR AULA: Evita duplicados si el docente enseña en la misma aula para el mismo curso
                 $slotsAgrupadosPorAula = $slots->groupBy('aula_id');
                 $isFirstCourseRow = true;
 
@@ -123,6 +170,8 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                     
                     // Sumar las horas semanales asignadas a esta misma aula
                     $horasSlot = $slotsDeAula->sum('horas_decimal');
+                    // Obtener el color pastel de la aula
+                    $aulaColorPastel = $this->getAulaColor($aulaNombre);
 
                     $results->push([
                         'contador' => $contador,
@@ -137,6 +186,8 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                         'tarifa' => $tarifa,
                         'monto_total' => $montoTotal,
                         'bg_color' => $bgColor,
+                        'curso_color' => $cursoColorPastel,
+                        'aula_color' => $aulaColorPastel,
                         'is_first_teacher_row' => $isFirstTeacherRow,
                         'is_first_course_row' => $isFirstCourseRow,
                     ]);
@@ -240,6 +291,9 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 $sheet->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 7);
                 $sheet->getStyle("A1:{$lastCol}{$lastDataRow}")->getFont()->setName('Segoe UI');
 
+                // Asegurar que las cuadrículas (gridlines) estén visibles
+                $sheet->setShowGridlines(true);
+
                 // 2. --- ESTILIZAR CABECERAS DE TÍTULO (FILAS 1-3) ---
                 $sheet->mergeCells("A1:{$lastCol}1");
                 $sheet->mergeCells("A2:{$lastCol}2");
@@ -313,17 +367,41 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 $sheet->getRowDimension($rowHeaders)->setRowHeight(45);
 
                 // 6. --- APLICACIÓN DE BORDES Y FONDOS DE FILAS ---
+                // Aplicar un borde completo a toda la tabla de datos de forma predeterminada
                 $sheet->getStyle("A{$dataStart}:{$lastCol}{$lastDataRow}")->applyFromArray([
-                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => self::COLORS['BORDER_GRAY']]]],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => self::COLORS['BORDER_GRAY']]
+                        ]
+                    ],
                     'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
                 ]);
 
                 for ($row = $dataStart; $row <= $lastDataRow; $row++) {
                     $rowData = $this->data->get($row - $dataStart);
                     $bgColor = $rowData['bg_color'] ?? self::COLORS['WHITE'];
+                    $cursoColor = $rowData['curso_color'] ?? self::COLORS['WHITE'];
+                    $aulaColor = $rowData['aula_color'] ?? self::COLORS['WHITE'];
 
-                    // Fondo de área académica (Columnas A a I)
-                    $sheet->getStyle("A{$row}:I{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                    // Fondo de área de Docente (Columnas A a C)
+                    $sheet->getStyle("A{$row}:C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB($bgColor);
+
+                    // Fondo de área de Curso (Columna D) - CON COLOR DEL CURSO
+                    $sheet->getStyle("D{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB($cursoColor);
+
+                    // Fondo de área de Aula (Columna E) - CON COLOR DEL AULA
+                    $sheet->getStyle("E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB($aulaColor);
+
+                    // Fondo de área de Horas del Curso (Columnas F a G)
+                    $sheet->getStyle("F{$row}:G{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setARGB($bgColor);
+
+                    // Fondo de totales semanales y de ciclo (Columnas H a I)
+                    $sheet->getStyle("H{$row}:I{$row}")->getFill()->setFillType(Fill::FILL_SOLID)
                         ->getStartColor()->setARGB($bgColor);
 
                     // Fondo de área económica (Columnas J a K)
