@@ -29,6 +29,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
     protected $ciclo;
     protected $data;
     protected $semanas;
+    protected $textoSemanas;
     protected $mergeTeacherRanges = [];
     protected $mergeCourseRanges = [];
 
@@ -51,11 +52,31 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
         $this->cicloId = $cicloId;
         $this->ciclo = Ciclo::findOrFail($cicloId);
 
-        // Calcular ocurrencias de cada día en el ciclo (considerando rotación de sábados y recuperaciones)
-        $ocurrenciasDias = $this->contarOcurrenciasDias($this->ciclo);
+        // Calcular semanas base del ciclo por calendario
+        $inicio = Carbon::parse($this->ciclo->fecha_inicio);
+        $fin = Carbon::parse($this->ciclo->fecha_fin);
+        $diasCiclo = abs($inicio->diffInDays($fin));
+        $semanasBase = (int) round($diasCiclo / 7) ?: 1;
 
-        // Calcular semanas de duración del ciclo basadas en el máximo de ocurrencias para incluir las recuperaciones
-        $this->semanas = count($ocurrenciasDias) > 0 ? max($ocurrenciasDias) : 1;
+        // Calcular días de recuperación
+        $fechasRec = $this->ciclo->fechas_recuperacion ?? [];
+        $diasRecuperacion = count($fechasRec);
+
+        // Conversión: cada 5 días de recuperación equivalen a 1 semana adicional
+        $semanasAdicionales = (int) ($diasRecuperacion / 5);
+        $diasRestantes = $diasRecuperacion % 5;
+
+        $totalSemanas = $semanasBase + $semanasAdicionales;
+
+        // Construir el texto en formato legible: "X semanas" o "X semanas y Y días"
+        if ($diasRestantes > 0) {
+            $this->textoSemanas = $totalSemanas . " " . ($totalSemanas == 1 ? "semana" : "semanas") . " y " . $diasRestantes . " " . ($diasRestantes == 1 ? "día" : "días");
+        } else {
+            $this->textoSemanas = $totalSemanas . " " . ($totalSemanas == 1 ? "semana" : "semanas");
+        }
+
+        // Mantener también el número decimal para uso de cálculos internos si se requiere
+        $this->semanas = $totalSemanas + ($diasRestantes / 5);
 
         $this->data = $this->collectData();
     }
@@ -255,7 +276,7 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
 
     public function headings(): array
     {
-        $titulo3 = "REPORTE DE CARGA HORARIA - " . strtoupper($this->ciclo->nombre) . " (" . $this->semanas . " SEMANAS)";
+        $titulo3 = "REPORTE DE CARGA HORARIA - " . strtoupper($this->ciclo->nombre) . " (" . strtoupper($this->textoSemanas) . ")";
 
         return [
             ['UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS'],
@@ -271,9 +292,9 @@ class CargaHorariaResumenExport implements FromCollection, WithTitle, WithHeadin
                 'HORAS POR CURSO',
                 'HORAS A LA SEMANA POR CURSO',
                 'TOTAL DE HORAS A LA SEMANA POR DOCENTE',
-                'TOTAL DE HORAS POR ' . $this->semanas . ' SEMANAS',
+                'TOTAL DE HORAS POR ' . strtoupper($this->textoSemanas),
                 'COSTO POR HORA',
-                'MONTO TOTAL POR ' . $this->semanas . ' SEMANAS'
+                'MONTO TOTAL POR ' . strtoupper($this->textoSemanas)
             ]
         ];
     }

@@ -177,8 +177,18 @@ class CargaHorariaController extends Controller
         // Calcular ocurrencias de cada día en el ciclo (considerando rotación de sábados y recuperaciones)
         $ocurrenciasDias = $this->contarOcurrenciasDias($ciclo);
 
-        // Calcular semanas del ciclo basadas en el máximo de ocurrencias de los días laborables para incluir las recuperaciones
-        $semanasCiclo = count($ocurrenciasDias) > 0 ? max($ocurrenciasDias) : 1;
+        // Calcular semanas base del ciclo por calendario
+        $inicio = Carbon::parse($ciclo->fecha_inicio);
+        $fin = Carbon::parse($ciclo->fecha_fin);
+        $diasCiclo = abs($inicio->diffInDays($fin));
+        $semanasBase = round($diasCiclo / 7, 1) ?: 1;
+
+        // Calcular días de recuperación
+        $fechasRec = $ciclo->fechas_recuperacion ?? [];
+        $diasRecuperacion = count($fechasRec);
+
+        // Semanas totales del ciclo (incluye parte fraccional de las recuperaciones)
+        $semanasCiclo = $semanasBase + ($diasRecuperacion / 5);
 
         // 📅 NUEVO: Horas Base Semanal (Suma simple de Lun-Vie sin repeticiones)
         $horasBaseSemanal = $horariosReales->whereNotIn('dia_semana', ['Sábado', 'Sabado', 'Domingo'])->sum('horas_decimal');
