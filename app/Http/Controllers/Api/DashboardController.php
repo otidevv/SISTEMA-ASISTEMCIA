@@ -726,7 +726,7 @@ class DashboardController extends Controller
                                 $proximoHitoGlobal = [
                                     'nombre' => ($ciclo_id === 'global' ? "[{$ciclo->nombre}] " : "") . $h['n'],
                                     'fecha' => $fHito->format('Y-m-d H:i:s'),
-                                    'dias_faltantes' => $hoy->diffInDays($fHito, false)
+                                    'dias_faltantes' => (int) round($hoy->diffInDays($fHito, false))
                                 ];
                             }
                         }
@@ -860,27 +860,105 @@ class DashboardController extends Controller
                 return response()->json(['error' => 'Estudiante no encontrado.'], 404);
             }
 
+            // Obtener todos los ciclos en los que está inscrito el estudiante (CEPRE o Reforzamiento)
+            $inscripcionesCepre = Inscripcion::where('estudiante_id', $estudiante->id)
+                ->with('ciclo')
+                ->get();
+            $inscripcionesReforzamiento = \App\Models\InscripcionReforzamiento::where('estudiante_id', $estudiante->id)
+                ->with('ciclo')
+                ->get();
+
+            $ciclosEstudiante = [];
+            foreach ($inscripcionesCepre as $insc) {
+                if ($insc->ciclo) {
+                    $ciclosEstudiante[$insc->ciclo->id] = [
+                        'id' => $insc->ciclo->id,
+                        'nombre' => $insc->ciclo->nombre,
+                        'es_activo' => (bool)$insc->ciclo->es_activo,
+                        'programa_id' => $insc->ciclo->programa_id,
+                    ];
+                }
+            }
+            foreach ($inscripcionesReforzamiento as $insc) {
+                if ($insc->ciclo) {
+                    $ciclosEstudiante[$insc->ciclo->id] = [
+                        'id' => $insc->ciclo->id,
+                        'nombre' => $insc->ciclo->nombre,
+                        'es_activo' => (bool)$insc->ciclo->es_activo,
+                        'programa_id' => $insc->ciclo->programa_id,
+                    ];
+                }
+            }
+            krsort($ciclosEstudiante);
+            $ciclosList = array_values($ciclosEstudiante);
+
             $cicloId = $request->input('ciclo_id');
+            $ciclo = null;
+            $inscripcion = null;
+
             if ($cicloId) {
                 $ciclo = Ciclo::find($cicloId);
+                if ($ciclo) {
+                    $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
+                        ->where('ciclo_id', $ciclo->id)
+                        ->first();
+                    if (!$inscripcion) {
+                        $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $estudiante->id)
+                            ->where('ciclo_id', $ciclo->id)
+                            ->first();
+                    }
+                }
             } else {
-                $ciclo = Ciclo::where('es_activo', true)->first();
+                // Seleccionar el ciclo más reciente de su lista de ciclos
+                if (!empty($ciclosList)) {
+                    $defaultCicloId = $ciclosList[0]['id'];
+                    $ciclo = Ciclo::find($defaultCicloId);
+                    if ($ciclo) {
+                        $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
+                            ->where('ciclo_id', $ciclo->id)
+                            ->first();
+                        if (!$inscripcion) {
+                            $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $estudiante->id)
+                                ->where('ciclo_id', $ciclo->id)
+                                ->first();
+                        }
+                    }
+                } else {
+                    // Fallback a primer ciclo activo si no tiene inscripciones registradas
+                    $ciclosActivos = Ciclo::where('es_activo', true)->get();
+                    if ($ciclosActivos->isNotEmpty()) {
+                        $ciclo = $ciclosActivos->first();
+                    }
+                }
             }
 
             if (!$ciclo) {
-                return response()->json(['error' => 'No hay un ciclo activo para consultar.'], 404);
+                return response()->json(['error' => 'No hay un ciclo activo o matrícula para consultar.'], 404);
             }
 
-            // Buscar la inscripción para obtener el turno
-            $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
-                ->where('ciclo_id', $ciclo->id)
-                ->first();
-                
-            if (!$inscripcion) {
-                // Podría ser de reforzamiento
-                $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $estudiante->id)
-                    ->where('ciclo_id', $ciclo->id)
-                    ->first();
+            // Determinar carrera y turno
+            $carreraNombre = 'Sin carrera';
+            $turnoNombre = 'Sin turno';
+            $turnoId = 1; // Mañana por defecto
+
+            if ($inscripcion) {
+                if (method_exists($inscripcion, 'carrera') && $inscripcion->carrera) {
+                    $carreraNombre = $inscripcion->carrera->nombre;
+                } else if ($inscripcion->programa) {
+                    $carreraNombre = $inscripcion->programa->nombre . ($inscripcion->grado ? ' - ' . $inscripcion->grado : '');
+                } else if (isset($inscripcion->grado)) {
+                    $carreraNombre = 'Reforzamiento - ' . $inscripcion->grado;
+                } else {
+                    $carreraNombre = 'Reforzamiento';
+                }
+
+                if (isset($inscripcion->turno_id)) {
+                    $turnoId = $inscripcion->turno_id;
+                    $turnoNombre = ($turnoId == 1) ? 'Mañana' : 'Tarde';
+                } else if (isset($inscripcion->turno)) {
+                    $turnoNombre = ucfirst($inscripcion->turno);
+                    $turnoId = (strtolower($inscripcion->turno) === 'tarde') ? 2 : 1;
+                }
             }
 
             $primerRegistro = RegistroAsistencia::where('nro_documento', $documento)
@@ -894,19 +972,27 @@ class DashboardController extends Controller
                     'estudiante' => [
                         'nombre_completo' => "{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}",
                         'numero_documento' => $estudiante->numero_documento,
-                        'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null
+                        'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null,
+                        'carrera' => $carreraNombre,
+                        'turno' => $turnoNombre,
                     ],
-                    'detalle_asistencias' => []
+                    'ciclo_actual' => [
+                        'id' => $ciclo->id,
+                        'nombre' => $ciclo->nombre,
+                    ],
+                    'ciclos_disponibles' => $ciclosList,
+                    'detalle_asistencias' => [],
+                    'info_asistencia' => []
                 ]);
             }
 
-            // Obtener el historial mensual detallado usando la nueva función en AsistenciaHelper
+            // Obtener el historial mensual detallado usando la función de AsistenciaHelper
             $detalleAsistencias = \App\Helpers\AsistenciaHelper::obtenerDetalleAsistenciasPorMes(
                 $documento,
                 $primerRegistro->fecha_registro,
                 min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
                 $ciclo,
-                $inscripcion ? $inscripcion->turno_id : 1 // 1 por defecto (Mañana)
+                $turnoId
             );
 
             // Información de asistencia por exámenes
@@ -959,9 +1045,14 @@ class DashboardController extends Controller
                     'nombre_completo' => "{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}",
                     'numero_documento' => $estudiante->numero_documento,
                     'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null,
-                    'carrera' => $inscripcion ? $inscripcion->carrera->nombre : 'Sin carrera',
-                    'turno' => $inscripcion ? ($inscripcion->turno_id == 1 ? 'Mañana' : 'Tarde') : 'Sin turno',
+                    'carrera' => $carreraNombre,
+                    'turno' => $turnoNombre,
                 ],
+                'ciclo_actual' => [
+                    'id' => $ciclo->id,
+                    'nombre' => $ciclo->nombre,
+                ],
+                'ciclos_disponibles' => $ciclosList,
                 'detalle_asistencias' => $detalleAsistencias,
                 'info_asistencia' => $infoAsistencia
             ]);
