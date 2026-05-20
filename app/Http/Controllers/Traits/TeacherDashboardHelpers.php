@@ -368,21 +368,29 @@ trait TeacherDashboardHelpers
     /**
      * Calcular fecha de próxima clase
      */
-    protected function calcularFechaProximaClase($diaSemana)
+    protected function calcularFechaProximaClase($diaSemana, $horaInicio = null)
     {
         $diasMap = [
             'lunes' => 1, 'martes' => 2, 'miércoles' => 3, 'jueves' => 4,
             'viernes' => 5, 'sábado' => 6, 'domingo' => 0
         ];
         
-        $targetDay = $diasMap[mb_strtolower($diaSemana, 'UTF-8')];
+        $targetDay = $diasMap[mb_strtolower($diaSemana, 'UTF-8')] ?? 1;
         $ahora = Carbon::now();
         $daysUntilTarget = ($targetDay - $ahora->dayOfWeek + 7) % 7;
         
         if ($daysUntilTarget == 0) {
-            $daysUntilTarget = 7;
+            if ($horaInicio) {
+                $horaClase = Carbon::parse($horaInicio);
+                $horaCompleta = $ahora->copy()->setTime($horaClase->hour, $horaClase->minute);
+                if ($ahora->gt($horaCompleta)) {
+                    $daysUntilTarget = 7;
+                }
+            } else {
+                $daysUntilTarget = 7;
+            }
         }
         
-        return $ahora->addDays($daysUntilTarget);
+        return $ahora->copy()->startOfDay()->addDays($daysUntilTarget);
     }
 }

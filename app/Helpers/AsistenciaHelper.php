@@ -117,7 +117,17 @@ class AsistenciaHelper
             ];
         }
 
+        $tieneAsistenciaHoy = false;
+        if ($nro_documento) {
+            $tieneAsistenciaHoy = RegistroAsistencia::where('nro_documento', $nro_documento)
+                ->whereDate('fecha_registro', $hoy->toDateString())
+                ->exists();
+        }
+
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->endOfDay() : $fechaExamenCarbon;
+        if ($hoy < $fechaExamenCarbon && !$tieneAsistenciaHoy) {
+            $fechaFinCalculo = $hoy->copy()->subDay()->endOfDay();
+        }
 
         $diasHabilesTotales = self::contarDiasHabiles($fechaInicioConteo, $fechaExamenCarbon, $cicloActivo);
         $diasHabilesTranscurridos = self::contarDiasHabiles($fechaInicioConteo, $fechaFinCalculo, $cicloActivo);
@@ -183,8 +193,19 @@ class AsistenciaHelper
         $fechaInicioCarbon = Carbon::parse($fechaInicio)->startOfDay();
         $fechaExamenCarbon = Carbon::parse($fechaExamen)->startOfDay();
 
+        $docLimpio = trim(strval($numeroDocumento));
+        $tieneAsistenciaHoy = false;
+        if ($numeroDocumento) {
+            $tieneAsistenciaHoy = RegistroAsistencia::where('nro_documento', $docLimpio)
+                ->whereDate('fecha_registro', $hoy->toDateString())
+                ->exists();
+        }
+
         // La fecha final para el cálculo no puede ser futura
         $fechaFinCalculo = $hoy < $fechaExamenCarbon ? $hoy->copy()->endOfDay() : $fechaExamenCarbon->copy()->endOfDay();
+        if ($hoy < $fechaExamenCarbon && !$tieneAsistenciaHoy) {
+            $fechaFinCalculo = $hoy->copy()->subDay()->endOfDay();
+        }
 
         // Solo procesar si el inicio no es en el futuro
         if ($fechaInicioCarbon > $hoy) {

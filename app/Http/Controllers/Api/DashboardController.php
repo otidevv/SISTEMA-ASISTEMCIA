@@ -188,6 +188,16 @@ class DashboardController extends Controller
                         'aula' => $inscripcionActiva->aula->nombre ?? 'N/A',
                         'turno' => $inscripcionActiva->turno->nombre ?? 'N/A',
                         'aula_id' => $inscripcionActiva->aula_id,
+                        'turno_config' => $inscripcionActiva->turno ? [
+                            'hora_inicio' => $inscripcionActiva->turno->hora_inicio,
+                            'hora_fin' => $inscripcionActiva->turno->hora_fin,
+                            'hora_entrada_inicio' => $inscripcionActiva->turno->hora_entrada_inicio,
+                            'hora_entrada_fin' => $inscripcionActiva->turno->hora_entrada_fin,
+                            'hora_tarde_inicio' => $inscripcionActiva->turno->hora_tarde_inicio,
+                            'hora_tarde_fin' => $inscripcionActiva->turno->hora_tarde_fin,
+                            'hora_salida_inicio' => $inscripcionActiva->turno->hora_salida_inicio,
+                            'hora_salida_fin' => $inscripcionActiva->turno->hora_salida_fin,
+                        ] : null,
                     ],
                     'infoAsistencia' => $infoAsistencia,
                     'ultimos_marcajes' => $ultimosMarcajes,
@@ -385,11 +395,18 @@ class DashboardController extends Controller
                     'curso' => $proximaClase->curso->nombre,
                     'aula' => $proximaClase->aula->nombre ?? 'N/A',
                     'hora' => Carbon::parse($proximaClase->hora_inicio)->format('H:i'),
-                    'dia' => $proximaClase->dia_semana
+                    'dia' => $proximaClase->dia_semana,
+                    'fecha' => $this->calcularFechaProximaClase($proximaClase->dia_semana, $proximaClase->hora_inicio)->format('Y-m-d')
                 ] : null,
                 
                 'anuncios' => $anuncios,
-                'fecha_actual' => $fechaSeleccionada->format('Y-m-d')
+                'fecha_actual' => $fechaSeleccionada->format('Y-m-d'),
+                'ciclo' => $cicloActivo ? [
+                    'id' => $cicloActivo->id,
+                    'nombre' => $cicloActivo->nombre,
+                    'fecha_inicio' => $cicloActivo->fecha_inicio,
+                    'fecha_fin' => $cicloActivo->fecha_fin,
+                ] : null
             ]);
 
         } catch (\Exception $e) {
@@ -921,6 +938,16 @@ class DashboardController extends Controller
                         'aula' => $inscripcionActiva->aula->nombre ?? 'N/A',
                         'turno' => $inscripcionActiva->turno->nombre ?? 'N/A',
                         'aula_id' => $inscripcionActiva->aula_id,
+                        'turno_config' => $inscripcionActiva->turno ? [
+                            'hora_inicio' => $inscripcionActiva->turno->hora_inicio,
+                            'hora_fin' => $inscripcionActiva->turno->hora_fin,
+                            'hora_entrada_inicio' => $inscripcionActiva->turno->hora_entrada_inicio,
+                            'hora_entrada_fin' => $inscripcionActiva->turno->hora_entrada_fin,
+                            'hora_tarde_inicio' => $inscripcionActiva->turno->hora_tarde_inicio,
+                            'hora_tarde_fin' => $inscripcionActiva->turno->hora_tarde_fin,
+                            'hora_salida_inicio' => $inscripcionActiva->turno->hora_salida_inicio,
+                            'hora_salida_fin' => $inscripcionActiva->turno->hora_salida_fin,
+                        ] : null,
                     ],
                     'infoAsistencia' => $infoAsistencia,
                     'ultimos_marcajes' => $ultimosMarcajes,
