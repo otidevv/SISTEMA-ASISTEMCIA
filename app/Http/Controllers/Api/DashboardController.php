@@ -338,9 +338,84 @@ class DashboardController extends Controller
                         'aula' => ['nombre' => $h->aula->nombre ?? 'N/A'],
                     ];
                 });
-            });
+            $calendarioClases = [];
+            if ($cicloActivo) {
+                $inicioMes = $fechaSeleccionada->copy()->startOfMonth();
+                $finMes = $fechaSeleccionada->copy()->endOfMonth();
+                
+                $inicioVentana = $inicioMes->copy()->subDays(7);
+                $finVentana = $finMes->copy()->addDays(7);
+                
+                $fechaInicioCiclo = Carbon::parse($cicloActivo->fecha_inicio);
+                $fechaFinCiclo = Carbon::parse($cicloActivo->fecha_fin);
+                
+                $inicioVentana = $inicioVentana->max($fechaInicioCiclo);
+                $finVentana = $finVentana->min($fechaFinCiclo);
+                
+                $todosRegistrosVentana = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                    ->whereBetween('fecha_registro', [$inicioVentana->copy()->startOfDay(), $finVentana->copy()->endOfDay()])
+                    ->orderBy('fecha_registro')
+                    ->get()
+                    ->groupBy(function ($r) {
+                        return Carbon::parse($r->fecha_registro)->toDateString();
+                    });
+
+                $todasAsistenciasVentana = AsistenciaDocente::where('docente_id', $user->id)
+                    ->whereBetween('fecha_hora', [$inicioVentana->copy()->startOfDay(), $finVentana->copy()->endOfDay()])
+                    ->get()
+                    ->groupBy(function ($a) {
+                        return Carbon::parse($a->fecha_hora)->toDateString();
+                    });
+
+                foreach ($todasAsistenciasVentana as $fechaStr => $asistencias) {
+                    foreach ($asistencias as $asistencia) {
+                        $cacheKey = $user->id . '_' . $asistencia->horario_id . '_' . $fechaStr;
+                        self::$asistenciasCache[$cacheKey] = $asistencia;
+                    }
+                }
+
+                for ($date = $inicioVentana->copy(); $date->lte($finVentana); $date->addDay()) {
+                    $diaSemanaEsp = $cicloActivo->getDiaHorarioParaFecha($date);
+                    if (!$diaSemanaEsp) continue;
+                    
+                    $horariosDelDiaTemp = $todosHorariosActivos->filter(function ($h) use ($diaSemanaEsp) {
+                        return mb_strtolower($diaSemanaEsp, 'UTF-8') === mb_strtolower($h->dia_semana, 'UTF-8');
+                    });
+                    
+                    if ($horariosDelDiaTemp->isEmpty()) continue;
+                    
+                    $fechaString = $date->toDateString();
+                    $registrosDelDiaTemp = $todosRegistrosVentana->get($fechaString) ?? collect();
+                    
+                    if ($date->isAfter(Carbon::today())) {
+                        $calendarioClases[$fechaString] = 'proxima';
+                    } else {
+                        $totalSchedules = $horariosDelDiaTemp->count();
+                        $completas = 0;
+                        
+                        foreach ($horariosDelDiaTemp as $horario) {
+                            $sessionDetails = $this->processTeacherSessionLogic($horario, $date, $registrosDelDiaTemp, $user);
+                            if ($sessionDetails) {
+                                $tema = $sessionDetails['tema_desarrollado'];
+                                $tieneRegistros = $sessionDetails['tiene_registros'] ?? false;
+                                
+                                if ($tieneRegistros && !empty($tema)) {
+                                    $completas++;
+                                }
+                            }
+                        }
+                        
+                        if ($completas === $totalSchedules) {
+                            $calendarioClases[$fechaString] = 'completada';
+                        } else {
+                            $calendarioClases[$fechaString] = 'incompleta';
+                        }
+                    }
+                }
+            }
 
             return response()->json([
+                'calendario_clases' => $calendarioClases,
                 'semana_completa' => $semanaCompleta,
                 'user' => [
                     'id' => $user->id,
