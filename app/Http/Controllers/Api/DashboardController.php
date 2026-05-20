@@ -807,7 +807,7 @@ class DashboardController extends Controller
 
             // Feed en vivo: Últimas marcaciones del día
             $ultimosMarcajes = RegistroAsistencia::whereDate('fecha_registro', Carbon::today())
-                ->orderBy('created_at', 'desc')
+                ->orderBy('fecha_hora', 'desc')
                 ->take(8)
                 ->get()
                 ->map(function($registro) {
