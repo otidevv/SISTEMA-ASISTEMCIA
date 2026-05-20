@@ -802,7 +802,7 @@ class DashboardController extends Controller
             $data['admin'] = [
                 'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
                 'foto_perfil' => $user->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($user->foto_perfil)) : null,
-                'rol' => $user->roles->first() ? strtoupper($user->roles->first()->name) : 'ADMINISTRADOR'
+                'rol' => $user->roles->first() ? strtoupper($user->roles->first()->nombre) : 'ADMINISTRADOR'
             ];
 
             // Feed en vivo: Últimas marcaciones del día
