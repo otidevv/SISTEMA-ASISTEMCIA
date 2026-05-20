@@ -357,45 +357,97 @@ class AsistenciaController extends Controller
         try {
             $query = User::whereHas('roles', function ($q) {
                 $q->where('roles.nombre', 'estudiante');
-            })
-            ->whereHas('inscripciones', function ($q) use ($request) {
-                $q->where('estado_inscripcion', 'activo');
-                
-                if ($request->filled('ciclo_id')) {
-                    $q->where('ciclo_id', $request->ciclo_id);
-                }
-                
-                if ($request->filled('aula_id')) {
-                    $q->where('aula_id', $request->aula_id);
-                }
-                
-                if ($request->filled('turno_id')) {
-                    $q->where('turno_id', $request->turno_id);
-                }
-                
-                if ($request->filled('carrera_id')) {
-                    $q->where('carrera_id', $request->carrera_id);
-                }
-            })
-            ->with(['inscripciones' => function ($q) use ($request) {
-                $q->where('estado_inscripcion', 'activo');
-                
-                if ($request->filled('ciclo_id')) {
-                    $q->where('ciclo_id', $request->ciclo_id);
-                }
-            }, 'inscripciones.aula', 'inscripciones.turno', 'inscripciones.carrera'])
-            ->select('id', 'numero_documento', 'nombre', 'apellido_paterno', 'apellido_materno')
-            ->orderBy('apellido_paterno')
-            ->get();
+            });
 
-            $estudiantes = $query->map(function ($estudiante) {
+            if ($request->filled('documento')) {
+                $doc = $request->documento;
+                $query->where(function ($q) use ($doc) {
+                    $q->where('numero_documento', 'like', "%{$doc}%")
+                      ->orWhere('nombre', 'like', "%{$doc}%")
+                      ->orWhere('apellido_paterno', 'like', "%{$doc}%")
+                      ->orWhere('apellido_materno', 'like', "%{$doc}%")
+                      ->orWhereRaw("CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) like ?", ["%{$doc}%"]);
+                });
+            }
+
+            $hasInscripcionFilters = $request->filled('ciclo_id') || $request->filled('aula_id') || $request->filled('turno_id') || $request->filled('carrera_id');
+            
+            if ($hasInscripcionFilters) {
+                $query->whereHas('inscripciones', function ($q) use ($request) {
+                    $q->where('estado_inscripcion', 'activo');
+                    
+                    if ($request->filled('ciclo_id')) {
+                        $q->where('ciclo_id', $request->ciclo_id);
+                    }
+                    
+                    if ($request->filled('aula_id')) {
+                        $q->where('aula_id', $request->aula_id);
+                    }
+                    
+                    if ($request->filled('turno_id')) {
+                        $q->where('turno_id', $request->turno_id);
+                    }
+                    
+                    if ($request->filled('carrera_id')) {
+                        $q->where('carrera_id', $request->carrera_id);
+                    }
+                });
+            }
+
+            $query->with([
+                'inscripciones' => function ($q) use ($request) {
+                    $q->where('estado_inscripcion', 'activo');
+                    if ($request->filled('ciclo_id')) {
+                        $q->where('ciclo_id', $request->ciclo_id);
+                    }
+                }, 
+                'inscripciones.aula', 
+                'inscripciones.turno', 
+                'inscripciones.carrera',
+                'inscripcionesReforzamiento' => function ($q) {
+                    $q->orderBy('id', 'desc');
+                },
+                'inscripcionesReforzamiento.ciclo',
+            ]);
+
+            if ($request->filled('documento')) {
+                $query->limit(50);
+            }
+
+            $users = $query->select('id', 'numero_documento', 'nombre', 'apellido_paterno', 'apellido_materno', 'foto_perfil')
+                ->orderBy('apellido_paterno')
+                ->get();
+
+            $estudiantes = $users->map(function ($estudiante) {
                 $inscripcion = $estudiante->inscripciones->first();
+                $carrera = 'Sin carrera';
+                $turno = 'Sin turno';
+                $aula = 'Sin aula';
+
+                if ($inscripcion) {
+                    $carrera = $inscripcion->carrera ? $inscripcion->carrera->nombre : 'Sin carrera';
+                    $turno = $inscripcion->turno ? $inscripcion->turno->nombre : 'Sin turno';
+                    $aula = $inscripcion->aula ? $inscripcion->aula->nombre : 'Sin aula';
+                } else {
+                    $reforzamiento = $estudiante->inscripcionesReforzamiento->first();
+                    if ($reforzamiento) {
+                        if ($reforzamiento->programa) {
+                            $carrera = $reforzamiento->programa->nombre . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
+                        } else {
+                            $carrera = 'Reforzamiento' . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
+                        }
+                        $turno = $reforzamiento->turno ? ucfirst($reforzamiento->turno) : 'Sin turno';
+                        $aula = $reforzamiento->aula ? $reforzamiento->aula : 'Sin aula';
+                    }
+                }
+
                 return [
                     'numero_documento' => $estudiante->numero_documento,
                     'nombre_completo' => trim("{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}"),
-                    'aula' => $inscripcion && $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
-                    'turno' => $inscripcion && $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
-                    'carrera' => $inscripcion && $inscripcion->carrera ? $inscripcion->carrera->nombre : 'N/A',
+                    'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null,
+                    'aula' => $aula,
+                    'turno' => $turno,
+                    'carrera' => $carrera,
                 ];
             });
 
