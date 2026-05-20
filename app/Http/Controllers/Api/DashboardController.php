@@ -338,6 +338,7 @@ class DashboardController extends Controller
                         'aula' => ['nombre' => $h->aula->nombre ?? 'N/A'],
                     ];
                 });
+            });
             $calendarioClases = [];
             if ($cicloActivo) {
                 $inicioMes = $fechaSeleccionada->copy()->startOfMonth();
