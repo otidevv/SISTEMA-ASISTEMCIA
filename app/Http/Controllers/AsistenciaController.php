@@ -370,44 +370,80 @@ class AsistenciaController extends Controller
                 });
             }
 
+            // Identificar si el ciclo es de Reforzamiento de Secundaria (programa_id = 2)
+            $isReforzamientoCiclo = false;
+            if ($request->filled('ciclo_id')) {
+                $ciclo = \App\Models\Ciclo::find($request->ciclo_id);
+                if ($ciclo && $ciclo->programa_id == 2) {
+                    $isReforzamientoCiclo = true;
+                }
+            }
+
             $hasInscripcionFilters = $request->filled('ciclo_id') || $request->filled('aula_id') || $request->filled('turno_id') || $request->filled('carrera_id');
             
             if ($hasInscripcionFilters) {
-                $query->whereHas('inscripciones', function ($q) use ($request) {
-                    $q->where('estado_inscripcion', 'activo');
-                    
-                    if ($request->filled('ciclo_id')) {
-                        $q->where('ciclo_id', $request->ciclo_id);
-                    }
-                    
-                    if ($request->filled('aula_id')) {
-                        $q->where('aula_id', $request->aula_id);
-                    }
-                    
-                    if ($request->filled('turno_id')) {
-                        $q->where('turno_id', $request->turno_id);
-                    }
-                    
-                    if ($request->filled('carrera_id')) {
-                        $q->where('carrera_id', $request->carrera_id);
-                    }
-                });
+                if ($isReforzamientoCiclo) {
+                    $query->whereHas('inscripcionesReforzamiento', function ($q) use ($request) {
+                        $q->whereIn('estado_inscripcion', ['validado', 'finalizado']);
+                        
+                        if ($request->filled('ciclo_id')) {
+                            $q->where('ciclo_id', $request->ciclo_id);
+                        }
+                        
+                        if ($request->filled('aula_id')) {
+                            $q->where('aula_id', $request->aula_id);
+                        }
+                        
+                        if ($request->filled('turno_id')) {
+                            $turnoStr = strtolower($request->turno_id == 1 ? 'mañana' : ($request->turno_id == 2 ? 'tarde' : $request->turno_id));
+                            $q->where('turno', $turnoStr);
+                        }
+                    });
+                } else {
+                    $query->whereHas('inscripciones', function ($q) use ($request) {
+                        $q->where('estado_inscripcion', 'activo');
+                        
+                        if ($request->filled('ciclo_id')) {
+                            $q->where('ciclo_id', $request->ciclo_id);
+                        }
+                        
+                        if ($request->filled('aula_id')) {
+                            $q->where('aula_id', $request->aula_id);
+                        }
+                        
+                        if ($request->filled('turno_id')) {
+                            $q->where('turno_id', $request->turno_id);
+                        }
+                        
+                        if ($request->filled('carrera_id')) {
+                            $q->where('carrera_id', $request->carrera_id);
+                        }
+                    });
+                }
             }
 
             $query->with([
-                'inscripciones' => function ($q) use ($request) {
-                    $q->where('estado_inscripcion', 'activo');
-                    if ($request->filled('ciclo_id')) {
-                        $q->where('ciclo_id', $request->ciclo_id);
+                'inscripciones' => function ($q) use ($request, $isReforzamientoCiclo) {
+                    if ($isReforzamientoCiclo) {
+                        $q->where('id', 0); // Retornar vacío si filtramos explícitamente por reforzamiento de secundaria
+                    } else {
+                        $q->where('estado_inscripcion', 'activo');
+                        if ($request->filled('ciclo_id')) {
+                            $q->where('ciclo_id', $request->ciclo_id);
+                        }
                     }
                 }, 
                 'inscripciones.aula', 
                 'inscripciones.turno', 
                 'inscripciones.carrera',
-                'inscripcionesReforzamiento' => function ($q) {
+                'inscripcionesReforzamiento' => function ($q) use ($request) {
+                    if ($request->filled('ciclo_id')) {
+                        $q->where('ciclo_id', $request->ciclo_id);
+                    }
                     $q->orderBy('id', 'desc');
                 },
                 'inscripcionesReforzamiento.ciclo',
+                'inscripcionesReforzamiento.aula',
             ]);
 
             if ($request->filled('documento')) {
@@ -418,8 +454,10 @@ class AsistenciaController extends Controller
                 ->orderBy('apellido_paterno')
                 ->get();
 
-            $estudiantes = $users->map(function ($estudiante) {
+            $estudiantes = $users->map(function ($estudiante) use ($isReforzamientoCiclo) {
+                $reforzamiento = $estudiante->inscripcionesReforzamiento->first();
                 $inscripcion = $estudiante->inscripciones->first();
+
                 $carrera = 'Sin carrera';
                 $turno = 'Sin turno';
                 $aula = 'Sin aula';
@@ -428,16 +466,18 @@ class AsistenciaController extends Controller
                     $carrera = $inscripcion->carrera ? $inscripcion->carrera->nombre : 'Sin carrera';
                     $turno = $inscripcion->turno ? $inscripcion->turno->nombre : 'Sin turno';
                     $aula = $inscripcion->aula ? $inscripcion->aula->nombre : 'Sin aula';
-                } else {
-                    $reforzamiento = $estudiante->inscripcionesReforzamiento->first();
-                    if ($reforzamiento) {
-                        if ($reforzamiento->programa) {
-                            $carrera = $reforzamiento->programa->nombre . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
-                        } else {
-                            $carrera = 'Reforzamiento' . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
-                        }
-                        $turno = $reforzamiento->turno ? ucfirst($reforzamiento->turno) : 'Sin turno';
-                        $aula = $reforzamiento->aula ? $reforzamiento->aula : 'Sin aula';
+                } else if ($reforzamiento) {
+                    if ($reforzamiento->programa) {
+                        $carrera = $reforzamiento->programa->nombre . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
+                    } else {
+                        $carrera = 'Reforzamiento de Secundaria' . ($reforzamiento->grado ? ' - ' . $reforzamiento->grado : '');
+                    }
+                    $turno = $reforzamiento->turno ? ucfirst($reforzamiento->turno) : 'Sin turno';
+                    
+                    if ($reforzamiento->aula) {
+                        $aula = is_object($reforzamiento->aula) ? $reforzamiento->aula->nombre : $reforzamiento->aula;
+                    } else {
+                        $aula = 'Sin aula';
                     }
                 }
 
@@ -448,6 +488,9 @@ class AsistenciaController extends Controller
                     'aula' => $aula,
                     'turno' => $turno,
                     'carrera' => $carrera,
+                    'inscripcion_id' => $inscripcion ? $inscripcion->id : null,
+                    'inscripcion_reforzamiento_id' => $reforzamiento ? $reforzamiento->id : null,
+                    'tipo_inscripcion' => $inscripcion ? $inscripcion->tipo_inscripcion : ($reforzamiento ? 'reforzamiento_secundaria' : null),
                 ];
             });
 

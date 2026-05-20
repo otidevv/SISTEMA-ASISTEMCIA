@@ -455,11 +455,15 @@ class AsistenciaHelper
         }
         
         // Último caso: Primer examen
+        $fechaExamen = $ciclo->fecha_primer_examen ?: $ciclo->fecha_fin;
+        if (!$fechaExamen) {
+            return null;
+        }
         return [
             'id' => 1,
             'nombre' => 'Primer Examen',
             'fecha_inicio' => $ciclo->fecha_inicio,
-            'fecha_examen' => $ciclo->fecha_primer_examen
+            'fecha_examen' => $fechaExamen
         ];
     }
 

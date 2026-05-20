@@ -697,76 +697,94 @@ class DashboardController extends Controller
                 'alertas' => []
             ];
 
-            // Info estratégica consolidada
-            $proximoHitoGlobal = null;
-            $totalPct = 0;
-            $ciclosCount = $ciclosToProcess->count();
+            // Separar ciclos por programa (CEPRE != 2, Reforzamiento Secundaria == 2)
+            $ciclosCepre = $ciclosToProcess->filter(fn($c) => $c->programa_id != 2)->values();
+            $ciclosReforzamiento = $ciclosToProcess->filter(fn($c) => $c->programa_id == 2)->values();
 
-            foreach ($ciclosToProcess as $ciclo) {
-                $inicio = Carbon::parse($ciclo->fecha_inicio);
-                $fin = Carbon::parse($ciclo->fecha_fin);
-                $totalDias = max(1, $inicio->diffInDays($fin));
-                $transcurridos = max(0, $inicio->diffInDays($hoy));
-                $totalPct += min(100, round(($transcurridos / $totalDias) * 100, 1));
+            // Helper: calcula progreso y próximo hito para una colección de ciclos
+            $calcularInfoCiclos = function($ciclos, $label) use ($hoy) {
+                if ($ciclos->isEmpty()) return null;
 
-                // Escanear hitos de este ciclo para encontrar el más cercano globalmente
-                $hitosCiclo = [
-                    ['n' => 'Inicio de Clases', 'f' => $ciclo->fecha_inicio],
-                    ['n' => '1er Examen', 'f' => $ciclo->fecha_primer_examen],
-                    ['n' => '2do Examen', 'f' => $ciclo->fecha_segundo_examen],
-                    ['n' => '3er Examen', 'f' => $ciclo->fecha_tercer_examen],
-                    ['n' => 'Cierre de Ciclo', 'f' => $ciclo->fecha_fin]
-                ];
+                $totalPct = 0;
+                $proximoHito = null;
 
-                foreach ($hitosCiclo as $h) {
-                    if ($h['f'] && $h['f'] !== '-' && $h['f'] !== '00/00/0000') {
-                        $fHito = Carbon::parse($h['f']);
-                        if ($fHito->endOfDay()->greaterThan($hoy)) {
-                            if (!$proximoHitoGlobal || $fHito->lessThan(Carbon::parse($proximoHitoGlobal['fecha']))) {
-                                $proximoHitoGlobal = [
-                                    'nombre' => ($ciclo_id === 'global' ? "[{$ciclo->nombre}] " : "") . $h['n'],
-                                    'fecha' => $fHito->format('Y-m-d H:i:s'),
-                                    'dias_faltantes' => (int) round($hoy->diffInDays($fHito, false))
-                                ];
+                foreach ($ciclos as $ciclo) {
+                    $inicio = Carbon::parse($ciclo->fecha_inicio);
+                    $fin = Carbon::parse($ciclo->fecha_fin);
+                    $totalDias = max(1, $inicio->diffInDays($fin));
+                    $transcurridos = max(0, $inicio->diffInDays($hoy));
+                    $totalPct += min(100, round(($transcurridos / $totalDias) * 100, 1));
+
+                    $hitos = [
+                        ['n' => 'Inicio de Clases', 'f' => $ciclo->fecha_inicio],
+                        ['n' => '1er Examen',        'f' => $ciclo->fecha_primer_examen],
+                        ['n' => '2do Examen',        'f' => $ciclo->fecha_segundo_examen],
+                        ['n' => '3er Examen',        'f' => $ciclo->fecha_tercer_examen],
+                        ['n' => 'Cierre de Ciclo',   'f' => $ciclo->fecha_fin],
+                    ];
+
+                    foreach ($hitos as $h) {
+                        if ($h['f'] && $h['f'] !== '-' && $h['f'] !== '00/00/0000') {
+                            $fHito = Carbon::parse($h['f']);
+                            if ($fHito->endOfDay()->greaterThan($hoy)) {
+                                if (!$proximoHito || $fHito->lessThan(Carbon::parse($proximoHito['fecha']))) {
+                                    $proximoHito = [
+                                        'nombre'         => "[{$ciclo->nombre}] " . $h['n'],
+                                        'fecha'          => $fHito->format('Y-m-d H:i:s'),
+                                        'dias_faltantes' => (int) round($hoy->diffInDays($fHito, false)),
+                                    ];
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            $cRef = $ciclosToProcess->first();
+                $count = $ciclos->count();
+                $cRef = $ciclos->first();
+                return [
+                    'nombre'              => $count === 1 ? $cRef->nombre : "CONSOLIDADO {$label}",
+                    'fecha_inicio'        => Carbon::parse($cRef->fecha_inicio)->format('d/m/Y'),
+                    'fecha_fin'           => Carbon::parse($cRef->fecha_fin)->format('d/m/Y'),
+                    'progreso_porcentaje' => $count > 0 ? round($totalPct / $count, 1) : 0,
+                    'proximo_hito'        => $proximoHito,
+                    'total_ciclos'        => $count,
+                    'es_global'           => true,
+                ];
+            };
+
+            $data['ciclo_cepre']         = $calcularInfoCiclos($ciclosCepre, 'CEPRE');
+            $data['ciclo_reforzamiento'] = $calcularInfoCiclos($ciclosReforzamiento, 'REFORZAMIENTO');
+
+            // Mantener cicloActivo para retrocompatibilidad
+            $cicloRef = $ciclosCepre->isNotEmpty() ? $ciclosCepre->first() : $ciclosToProcess->first();
             $data['cicloActivo'] = [
-                'nombre' => $ciclo_id === 'global' ? "CONSOLIDADO MAESTRO" : $cRef->nombre,
-                'fecha_inicio' => Carbon::parse($cRef->fecha_inicio)->format('d/m/Y'),
-                'fecha_fin' => Carbon::parse($cRef->fecha_fin)->format('d/m/Y'),
-                'progreso_porcentaje' => $ciclosCount > 0 ? round($totalPct / $ciclosCount, 1) : 0,
-                'proximo_hito' => $proximoHitoGlobal,
-                'total_ciclos' => $ciclosCount,
-                'es_global' => $ciclo_id === 'global'
+                'nombre'              => $ciclo_id === 'global' ? 'CONSOLIDADO MAESTRO' : $cicloRef->nombre,
+                'fecha_inicio'        => Carbon::parse($cicloRef->fecha_inicio)->format('d/m/Y'),
+                'fecha_fin'           => Carbon::parse($cicloRef->fecha_fin)->format('d/m/Y'),
+                'progreso_porcentaje' => $data['ciclo_cepre']['progreso_porcentaje'] ?? 0,
+                'proximo_hito'        => $data['ciclo_cepre']['proximo_hito'] ?? null,
+                'total_ciclos'        => $ciclosToProcess->count(),
+                'es_global'           => $ciclo_id === 'global',
             ];
 
             if ($ciclo_id !== 'global') {
-                $data['cicloActivo']['fecha_examen_1'] = $cRef->fecha_primer_examen ? Carbon::parse($cRef->fecha_primer_examen)->format('d/m/Y') : null;
-                $data['cicloActivo']['fecha_examen_2'] = $cRef->fecha_segundo_examen ? Carbon::parse($cRef->fecha_segundo_examen)->format('d/m/Y') : null;
-                $data['cicloActivo']['fecha_examen_3'] = $cRef->fecha_tercer_examen ? Carbon::parse($cRef->fecha_tercer_examen)->format('d/m/Y') : null;
+                $data['cicloActivo']['fecha_examen_1'] = $cicloRef->fecha_primer_examen ? Carbon::parse($cicloRef->fecha_primer_examen)->format('d/m/Y') : null;
+                $data['cicloActivo']['fecha_examen_2'] = $cicloRef->fecha_segundo_examen ? Carbon::parse($cicloRef->fecha_segundo_examen)->format('d/m/Y') : null;
+                $data['cicloActivo']['fecha_examen_3'] = $cicloRef->fecha_tercer_examen ? Carbon::parse($cicloRef->fecha_tercer_examen)->format('d/m/Y') : null;
             }
 
             foreach ($ciclosToProcess as $ciclo) {
-                // Seleccionar modelo según programa
                 if ($ciclo->programa_id == 2) {
                     $inscModel = \App\Models\InscripcionReforzamiento::query();
-                    $postModel = \App\Models\InscripcionReforzamiento::query();
-                    $estadoActivo = 'validado'; // Reforzamiento usa 'validado'
+                    $estadoActivo = 'validado';
                 } else {
                     $inscModel = Inscripcion::query();
-                    $postModel = Postulacion::query();
-                    $estadoActivo = 'activo'; // CEPRE usa 'activo'
+                    $estadoActivo = 'activo';
                 }
 
                 $data['totalInscripciones'] += (clone $inscModel)->where('ciclo_id', $ciclo->id)->where('estado_inscripcion', $estadoActivo)->count();
                 
                 if ($ciclo->programa_id == 2) {
-                    // Para reforzamiento, las postulaciones y inscripciones están en la misma tabla
                     if (!isset($data['reforzamiento'])) {
                         $data['reforzamiento'] = ['total' => 0, 'pendientes' => 0, 'aprobadas' => 0];
                     }
