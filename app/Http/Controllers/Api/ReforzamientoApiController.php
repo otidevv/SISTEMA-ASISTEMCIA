@@ -557,7 +557,7 @@ class ReforzamientoApiController extends BaseController
                     'email' => $inscripcion->estudiante->email,
                     'celular' => (string) ($inscripcion->estudiante->telefono ?: 'N/A'),
                     'direccion' => $inscripcion->estudiante->direccion,
-                    'foto_perfil' => $inscripcion->estudiante->foto_perfil ? Storage::url($inscripcion->estudiante->foto_perfil) : null,
+                    'foto_perfil' => $inscripcion->estudiante->foto_perfil ? asset(Storage::url($inscripcion->estudiante->foto_perfil)) : null,
                 ],
                 'documentos' => $documentos,
                 'pagos' => $pagosApi ?? [],

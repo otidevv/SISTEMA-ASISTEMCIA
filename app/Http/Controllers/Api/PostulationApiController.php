@@ -162,7 +162,7 @@ class PostulationApiController extends BaseController
                     'email' => $postulacion->estudiante->email,
                     'celular' => (string) ($postulacion->estudiante->telefono ?: 'N/A'),
                     'direccion' => $postulacion->estudiante->direccion,
-                    'foto_perfil' => $postulacion->estudiante->foto_perfil ? \Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil) : null,
+                    'foto_perfil' => $postulacion->estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($postulacion->estudiante->foto_perfil)) : null,
                 ],
                 'inscripcion' => $inscripcion ? [
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'Asignando...',

@@ -853,7 +853,7 @@ class InscripcionController extends Controller
             );
 
             // Obtener detalle de asistencias por mes
-            $detalleAsistencias = $this->obtenerDetalleAsistenciasPorMes(
+            $detalleAsistencias = \App\Helpers\AsistenciaHelper::obtenerDetalleAsistenciasPorMes(
                 $estudiante->numero_documento,
                 $primerRegistro->fecha_registro,
                 min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),

@@ -798,12 +798,178 @@ class DashboardController extends Controller
                 'porcentaje' => $data['totalInscripciones'] > 0 ? round(($estudiantesHoy / $data['totalInscripciones']) * 100, 1) : 0
             ];
 
+            // Datos del Admin para la App Móvil
+            $data['admin'] = [
+                'nombre' => $user->nombre . ' ' . $user->apellido_paterno,
+                'foto_perfil' => $user->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($user->foto_perfil)) : null,
+                'rol' => $user->roles->first() ? strtoupper($user->roles->first()->name) : 'ADMINISTRADOR'
+            ];
+
+            // Feed en vivo: Últimas marcaciones del día
+            $ultimosMarcajes = RegistroAsistencia::whereDate('fecha_registro', Carbon::today())
+                ->orderBy('created_at', 'desc')
+                ->take(8)
+                ->get()
+                ->map(function($registro) {
+                    $estudiante = User::where('numero_documento', $registro->nro_documento)->first();
+                    $hora = Carbon::parse($registro->fecha_registro);
+                    return [
+                        'nro_documento' => $registro->nro_documento,
+                        'nombre' => $estudiante ? $estudiante->nombre . ' ' . $estudiante->apellido_paterno : 'Estudiante',
+                        'foto' => ($estudiante && $estudiante->foto_perfil) ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null,
+                        'hora' => $hora->format('H:i'),
+                        'tipo' => $hora->hour < 12 ? 'Entrada' : 'Salida' // Lógica rápida de tipo para el feed
+                    ];
+                });
+            $data['ultimos_marcajes'] = $ultimosMarcajes;
+
+            // Datos de carnets (CEPRE) si es ciclo global o específico
+            if (class_exists(\App\Models\Carnet::class)) {
+                $qCarnet = \App\Models\Carnet::query();
+                if ($ciclo_id !== 'global') {
+                    $qCarnet->whereHas('inscripcion', function($q) use ($ciclo_id) {
+                        $q->where('ciclo_id', $ciclo_id);
+                    });
+                }
+                $data['carnets']['total'] = (clone $qCarnet)->count();
+                $data['carnets']['pendientes_impresion'] = (clone $qCarnet)->where('estado', 'generado')->count();
+                $data['carnets']['pendientes_entrega'] = (clone $qCarnet)->where('estado', 'impreso')->count();
+                $data['carnets']['entregados'] = (clone $qCarnet)->where('estado', 'entregado')->count();
+            }
+
             return response()->json($data);
         } catch (\Exception $e) { return response()->json(['error' => $e->getMessage()], 500); }
     }
 
     public function getEstadisticasAsistencia(Request $request) { return $this->getDatosAdmin($request); }
     public function getAnuncios() { return response()->json(Anuncio::where('es_activo', true)->orderBy('fecha_publicacion', 'desc')->take(3)->get()); }
+
+    /**
+     * Obtener el historial mensual detallado de un estudiante (Exclusivo para Admin)
+     */
+    public function getHistorialEstudianteAdmin(Request $request, $documento)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user->hasRole('admin') && !$user->hasPermission('postulaciones.view')) {
+                return response()->json(['error' => 'No tienes permisos para ver el historial de estudiantes.'], 403);
+            }
+
+            $estudiante = User::where('numero_documento', $documento)->first();
+            if (!$estudiante) {
+                return response()->json(['error' => 'Estudiante no encontrado.'], 404);
+            }
+
+            $cicloId = $request->input('ciclo_id');
+            if ($cicloId) {
+                $ciclo = Ciclo::find($cicloId);
+            } else {
+                $ciclo = Ciclo::where('es_activo', true)->first();
+            }
+
+            if (!$ciclo) {
+                return response()->json(['error' => 'No hay un ciclo activo para consultar.'], 404);
+            }
+
+            // Buscar la inscripción para obtener el turno
+            $inscripcion = Inscripcion::where('estudiante_id', $estudiante->id)
+                ->where('ciclo_id', $ciclo->id)
+                ->first();
+                
+            if (!$inscripcion) {
+                // Podría ser de reforzamiento
+                $inscripcion = \App\Models\InscripcionReforzamiento::where('estudiante_id', $estudiante->id)
+                    ->where('ciclo_id', $ciclo->id)
+                    ->first();
+            }
+
+            $primerRegistro = RegistroAsistencia::where('nro_documento', $documento)
+                ->where('fecha_registro', '>=', Carbon::parse($ciclo->fecha_inicio)->startOfDay())
+                ->where('fecha_registro', '<=', Carbon::parse($ciclo->fecha_fin)->endOfDay())
+                ->orderBy('fecha_registro')
+                ->first();
+
+            if (!$primerRegistro) {
+                return response()->json([
+                    'estudiante' => [
+                        'nombre_completo' => "{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}",
+                        'numero_documento' => $estudiante->numero_documento,
+                        'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null
+                    ],
+                    'detalle_asistencias' => []
+                ]);
+            }
+
+            // Obtener el historial mensual detallado usando la nueva función en AsistenciaHelper
+            $detalleAsistencias = \App\Helpers\AsistenciaHelper::obtenerDetalleAsistenciasPorMes(
+                $documento,
+                $primerRegistro->fecha_registro,
+                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                $ciclo,
+                $inscripcion ? $inscripcion->turno_id : 1 // 1 por defecto (Mañana)
+            );
+
+            // Información de asistencia por exámenes
+            $infoAsistencia = [];
+
+            // Primer Examen
+            $infoAsistencia['primer_examen'] = \App\Helpers\AsistenciaHelper::calcularInfoAsistenciaExamen(
+                $documento,
+                $primerRegistro->fecha_registro,
+                $ciclo->fecha_primer_examen,
+                $ciclo,
+                true // returnHistory
+            );
+
+            // Segundo Examen
+            if ($ciclo->fecha_segundo_examen) {
+                $inicioSegundo = \App\Helpers\AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_primer_examen, $ciclo);
+                $infoAsistencia['segundo_examen'] = \App\Helpers\AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $documento,
+                    $inicioSegundo,
+                    $ciclo->fecha_segundo_examen,
+                    $ciclo,
+                    true
+                );
+            }
+
+            // Tercer Examen
+            if ($ciclo->fecha_tercer_examen && $ciclo->fecha_segundo_examen) {
+                $inicioTercero = \App\Helpers\AsistenciaHelper::getSiguienteDiaHabil($ciclo->fecha_segundo_examen, $ciclo);
+                $infoAsistencia['tercer_examen'] = \App\Helpers\AsistenciaHelper::calcularInfoAsistenciaExamen(
+                    $documento,
+                    $inicioTercero,
+                    $ciclo->fecha_tercer_examen,
+                    $ciclo,
+                    true
+                );
+            }
+
+            // Asistencia total del ciclo
+            $infoAsistencia['total_ciclo'] = \App\Helpers\AsistenciaHelper::calcularInfoAsistenciaExamen(
+                $documento,
+                $primerRegistro->fecha_registro,
+                min(Carbon::now(), Carbon::parse($ciclo->fecha_fin)),
+                $ciclo,
+                true
+            );
+
+            return response()->json([
+                'estudiante' => [
+                    'nombre_completo' => "{$estudiante->nombre} {$estudiante->apellido_paterno} {$estudiante->apellido_materno}",
+                    'numero_documento' => $estudiante->numero_documento,
+                    'foto_perfil' => $estudiante->foto_perfil ? asset(\Illuminate\Support\Facades\Storage::url($estudiante->foto_perfil)) : null,
+                    'carrera' => $inscripcion ? $inscripcion->carrera->nombre : 'Sin carrera',
+                    'turno' => $inscripcion ? ($inscripcion->turno_id == 1 ? 'Mañana' : 'Tarde') : 'Sin turno',
+                ],
+                'detalle_asistencias' => $detalleAsistencias,
+                'info_asistencia' => $infoAsistencia
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al recuperar historial: ' . $e->getMessage()], 500);
+        }
+    }
 
     /**
      * Exportar PDF de Carga Horaria (Visual o Detallado) para el docente autenticado.

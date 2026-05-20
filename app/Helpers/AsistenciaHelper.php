@@ -662,4 +662,186 @@ class AsistenciaHelper
 
         return $diasHabiles;
     }
+
+    /**
+     * Obtener detalle de asistencias por mes incluyendo faltas (Movido desde InscripcionController)
+     */
+    public static function obtenerDetalleAsistenciasPorMes($numeroDocumento, $fechaInicio, $fechaFin, $ciclo = null, $turno_id = 1)
+    {
+        // Primero, obtener todos los registros de asistencia
+        $registros = RegistroAsistencia::where('nro_documento', $numeroDocumento)
+            ->whereBetween('fecha_registro', [
+                Carbon::parse($fechaInicio)->startOfDay(),
+                Carbon::parse($fechaFin)->endOfDay()
+            ])
+            ->orderBy('fecha_registro')
+            ->get();
+
+        // Organizar registros por fecha
+        $registrosPorFecha = [];
+        foreach ($registros as $registro) {
+            $fecha = Carbon::parse($registro->fecha_registro)->format('Y-m-d');
+            if (!isset($registrosPorFecha[$fecha])) {
+                $registrosPorFecha[$fecha] = [];
+            }
+            $registrosPorFecha[$fecha][] = $registro;
+        }
+
+        // Generar todos los días hábiles del período
+        $detallesPorMes = [];
+        $fechaActual = Carbon::parse($fechaInicio)->startOfDay();
+        $fechaFinCarbon = Carbon::parse($fechaFin)->endOfDay();
+
+        // Obtener configuración del turno para validar las horas
+        $turnoConfig = \App\Models\Turno::find($turno_id);
+
+        while ($fechaActual <= $fechaFinCarbon) {
+            // Solo procesar días hábiles según configuración del ciclo
+            $esDiaHabil = $ciclo ? $ciclo->esDiaHabil($fechaActual) : $fechaActual->isWeekday();
+            
+            if ($esDiaHabil) {
+                $mes = $fechaActual->format('Y-m');
+                $nombreMes = $fechaActual->locale('es')->monthName;
+                $anio = $fechaActual->year;
+                $fechaStr = $fechaActual->format('Y-m-d');
+
+                // Inicializar el mes si no existe
+                if (!isset($detallesPorMes[$mes])) {
+                    $detallesPorMes[$mes] = [
+                        'mes' => ucfirst($nombreMes),
+                        'anio' => $anio,
+                        'dias_asistidos' => 0,
+                        'dias_falta' => 0,
+                        'registros' => []
+                    ];
+                }
+
+                // Datos básicos del día
+                $datosDelDia = [
+                    'fecha' => $fechaActual->format('d/m/Y'),
+                    'dia_semana' => ucfirst($fechaActual->locale('es')->dayName),
+                    'hora_entrada' => null,
+                    'hora_salida' => null,
+                    'asistio' => false
+                ];
+
+                // Verificar si hay registros para este día
+                if (isset($registrosPorFecha[$fechaStr])) {
+                    $datosDelDia['asistio'] = true;
+                    $detallesPorMes[$mes]['dias_asistidos']++;
+
+                    // Procesar los registros del día
+                    $registrosDelDia = [];
+                    foreach ($registrosPorFecha[$fechaStr] as $reg) {
+                        $dt = Carbon::parse($reg->fecha_registro);
+                        $registrosDelDia[] = [
+                            'hora' => $dt->hour,
+                            'minutos' => $dt->minute,
+                            'hora_formateada' => $dt->format('H:i'),
+                            'total_minutos' => $dt->hour * 60 + $dt->minute
+                        ];
+                    }
+
+                    // Ordenar registros por hora
+                    usort($registrosDelDia, function ($a, $b) {
+                        return $a['total_minutos'] - $b['total_minutos'];
+                    });
+
+                    $entrada = null;
+                    $salida = null;
+                    $esTarde = false;
+
+                    // Aplicar lógica según el turno oficial del estudiante y su configuración en BD
+                    foreach ($registrosDelDia as $reg) {
+                        $cat = self::categorizarAsistencia($reg['total_minutos'], $turnoConfig);
+                        
+                        if ($cat === 'Entrada' && !$entrada) {
+                            $entrada = $reg['hora_formateada'];
+                        } elseif ($cat === 'Tarde' && !$entrada) {
+                            $entrada = $reg['hora_formateada'];
+                            $esTarde = true;
+                        } elseif ($cat === 'Salida') {
+                            $salida = $reg['hora_formateada']; // El último registro de salida gana
+                        }
+                    }
+
+                    // Fallbacks si no se detectó nada específico por categorías pero hay registros
+                    if (!$entrada && count($registrosDelDia) > 0) {
+                        $entrada = $registrosDelDia[0]['hora_formateada'];
+                        // Determinar si fue tarde comparando con los límites del turno dinámicamente
+                        $minEntrada = $registrosDelDia[0]['total_minutos'];
+                        
+                        // Usar hora_entrada_fin como límite de tolerancia si existe
+                        $limiteEntrada = $turnoConfig ? self::timeStringToMinutes($turnoConfig->hora_entrada_fin) : null;
+                        
+                        if ($limiteEntrada && $minEntrada > $limiteEntrada) {
+                            $esTarde = true;
+                        }
+                    }
+                    
+                    if (!$salida && count($registrosDelDia) > 1) {
+                        // Si hay más de un registro, el último es la salida (si no se marcó por categoría)
+                        if (!$salida || $salida === $entrada) {
+                             $salida = $registrosDelDia[count($registrosDelDia) - 1]['hora_formateada'];
+                        }
+                    }
+
+                    $datosDelDia['hora_entrada'] = $entrada ?: 'Sin registro';
+                    $datosDelDia['hora_salida'] = ($salida && $salida !== $entrada) ? $salida : '-';
+                    $datosDelDia['es_tarde'] = $esTarde;
+                } else {
+                    // NO ASISTIÓ
+                    $datosDelDia['hora_entrada'] = 'FALTA';
+                    $datosDelDia['hora_salida'] = 'FALTA';
+                    $datosDelDia['es_tarde'] = false;
+                    $detallesPorMes[$mes]['dias_falta']++;
+                }
+
+                // Agregar el día al mes correspondiente
+                $detallesPorMes[$mes]['registros'][] = $datosDelDia;
+            }
+
+            // Avanzar al siguiente día
+            $fechaActual->addDay();
+        }
+
+        // Convertir asociativo a numérico para respuesta JSON limpia
+        return array_values($detallesPorMes);
+    }
+
+    /**
+     * Helper para convertir hora HH:MM a minutos
+     */
+    public static function timeStringToMinutes($timeStr)
+    {
+        if (!$timeStr) return null;
+        $parts = explode(':', $timeStr);
+        return intval($parts[0]) * 60 + intval($parts[1]);
+    }
+
+    /**
+     * Categorizar asistencia según los rangos configurados en la BD
+     */
+    public static function categorizarAsistencia($minutos, $turno)
+    {
+        if (!$turno) return 'Otro';
+
+        $entradaInicio = self::timeStringToMinutes($turno->hora_entrada_inicio);
+        $entradaFin = self::timeStringToMinutes($turno->hora_entrada_fin);
+        $tardeInicio = self::timeStringToMinutes($turno->hora_tarde_inicio);
+        $tardeFin = self::timeStringToMinutes($turno->hora_tarde_fin);
+        $salidaInicio = self::timeStringToMinutes($turno->hora_salida_inicio);
+        $salidaFin = self::timeStringToMinutes($turno->hora_salida_fin);
+
+        // Si no hay configuración en BD, retornar Otro
+        if ($entradaInicio === null) {
+            return 'Otro';
+        }
+
+        if ($minutos >= $entradaInicio && $minutos <= $entradaFin) return 'Entrada';
+        if ($minutos >= $tardeInicio && $minutos <= $tardeFin) return 'Tarde';
+        if ($minutos >= $salidaInicio && $minutos <= $salidaFin) return 'Salida';
+
+        return 'Otro';
+    }
 }
