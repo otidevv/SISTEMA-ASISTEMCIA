@@ -23,6 +23,7 @@ use App\Exports\AsistenciasDocentesExport;
 class AsistenciaDocenteController extends Controller
 {
     use \App\Http\Controllers\Traits\HandlesSaturdayRotation;
+    use \App\Http\Controllers\Traits\TeacherDashboardHelpers;
     // La tarifa por minuto fija se remueve si es dinámica por docente.
     // const TARIFA_POR_MINUTO = 3.00; 
 
@@ -1246,78 +1247,211 @@ class AsistenciaDocenteController extends Controller
 
     public function registrarTema(Request $request)
     {
-        $request->validate([
-            'horario_id' => 'required|integer',
-            'tema_desarrollado' => 'required|string|min:10|max:1000',
-            'fecha_seleccionada' => 'required|date_format:Y-m-d', // Validar que la fecha venga en el formato correcto
-        ]);
-    
-        $user = auth()->user();
-        // Usar la fecha seleccionada del request en lugar de Carbon::today()
-        $fechaParaRegistro = Carbon::parse($request->fecha_seleccionada); 
-    
-        // Primero, encontrar el horario específico solicitado por horario_id
-        $horario = HorarioDocente::find($request->horario_id);
-        if (!$horario) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No se encontró el horario seleccionado.',
-            ], 404);
-        }
-    
-        // Buscar registros de AsistenciaDocente existentes para la FECHA SELECCIONADA y este horario
-        $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
-            ->where('docente_id', $user->id)
-            ->whereDate('fecha_hora', $fechaParaRegistro->toDateString())
-            ->get();
-    
-        if ($asistencias->isEmpty()) {
-            // Si no existe un registro de AsistenciaDocente, necesitamos encontrar la entrada biométrica.
-            // La entrada biométrica debe haber ocurrido dentro de la ventana de tolerancia de entrada o el horario de clase.
-            $horarioStartTime = Carbon::parse($horario->hora_inicio);
-            $horarioEndTime = Carbon::parse($horario->hora_fin);
-            $tolerantEntryStart = $horarioStartTime->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS);
-    
-            $entrada = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $fechaParaRegistro->toDateString()) // Usar $fechaParaRegistro
-                // La hora de entrada biométrica debe estar dentro del inicio tolerante y el final real del horario.
-                ->whereTime('fecha_registro', '>=', $tolerantEntryStart->format('H:i:s'))
-                ->whereTime('fecha_registro', '<=', $horarioEndTime->format('H:i:s'))
-                ->orderBy('fecha_registro', 'asc')
-                ->first();
-    
-            if (!$entrada) {
+        try {
+            $request->validate([
+                'horario_id' => 'required|integer',
+                'tema_desarrollado' => 'required|string|min:10|max:1000',
+                'fecha_seleccionada' => 'required|date_format:Y-m-d', // Validar que la fecha venga en el formato correcto
+            ]);
+            
+            // Limpiar HTML antes de procesar
+            $temaLimpio = \App\Models\AsistenciaDocente::cleanQuillHtml($request->tema_desarrollado);
+
+            $user = auth()->user();
+            $fechaSeleccionada = Carbon::parse($request->fecha_seleccionada)->startOfDay(); 
+        
+            // Primero, encontrar el horario específico solicitado por horario_id
+            $horario = HorarioDocente::find($request->horario_id);
+            if (!$horario) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontró la asistencia biométrica para este horario en la fecha seleccionada dentro del rango de tolerancia. Marca tu entrada primero.',
+                    'message' => 'No se encontró el horario seleccionado.',
                 ], 404);
             }
-    
-            AsistenciaDocente::create([
-                'docente_id' => $user->id,
-                'horario_id' => $horario->id,
-                'curso_id'   => $horario->curso_id,
-                'aula_id'    => $horario->aula_id,
-                'fecha_hora' => $entrada->fecha_registro, // Usar la hora de entrada biométrica
-                'estado'     => 'entrada',
-                'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
-                'terminal_id'       => $entrada->terminal_id ?? null,
-                'codigo_trabajo'    => $entrada->codigo_trabajo ?? null,
-                'turno'      => $horario->turno,
-                'tema_desarrollado' => $request->tema_desarrollado,
-            ]);
-        } else {
-            // Si ya existen registros de AsistenciaDocente, los actualizamos todos
-            foreach ($asistencias as $asistencia) {
-                $asistencia->tema_desarrollado = $request->tema_desarrollado;
-                $asistencia->save();
+            
+            // Combinar la fecha seleccionada con las horas del horario
+            $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
+            $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
+        
+            // Buscar registros de AsistenciaDocente existentes para la FECHA SELECCIONADA y este horario
+            $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
+                ->where('docente_id', $user->id)
+                ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
+                ->get();
+        
+            // Obtener registros biométricos para la fecha seleccionada
+            $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+                ->orderBy('fecha_registro')
+                ->get();
+
+            // Buscar entrada válida
+            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioInicioClase->copy()->subMinutes(15),
+                    $horarioInicioClase->copy()->addMinutes(30)
+                );
+            })->first();
+
+            // Buscar salida válida
+            $salida = $registrosDiaSeleccionado->filter(function($r) use ($horarioFinClase) {
+                $horaRegistro = Carbon::parse($r->fecha_registro);
+                return $horaRegistro->between(
+                    $horarioFinClase->copy()->subMinutes(15),
+                    $horarioFinClase->copy()->addMinutes(60)
+                );
+            })->sortByDesc('fecha_registro')->first();
+
+            $horaEntrada = null;
+            $horaSalida = null;
+
+            if ($entrada) {
+                $horaEntrada = Carbon::parse($entrada->fecha_registro);
             }
+            if ($salida) {
+                $horaSalida = Carbon::parse($salida->fecha_registro);
+            }
+
+            // Si no hay biométricos pero ya existen asistencias grabadas,
+            // intentamos recuperar las horas de los registros de asistencia existentes.
+            if ($asistencias->isNotEmpty()) {
+                if (!$horaEntrada) {
+                    $asisEntrada = $asistencias->where('estado', 'entrada')->first();
+                    if ($asisEntrada) {
+                        $horaEntrada = Carbon::parse($asisEntrada->fecha_hora);
+                    }
+                }
+                if (!$horaSalida) {
+                    $asisSalida = $asistencias->where('estado', 'salida')->first();
+                    if ($asisSalida) {
+                        $horaSalida = Carbon::parse($asisSalida->fecha_hora);
+                    }
+                }
+                
+                // Si aún falta alguno, hacemos fallback a las horas programadas
+                if (!$horaEntrada) {
+                    $horaEntrada = $horarioInicioClase->copy();
+                }
+                if (!$horaSalida) {
+                    $horaSalida = $horarioFinClase->copy();
+                }
+            }
+
+            if (!$horaEntrada || !$horaSalida) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontraron registros de asistencia ni biométricos de entrada/salida válidos para esta sesión.'
+                ], 400);
+            }
+
+            // Calcular datos de asistencia
+            $horasTrabajadas = 0;
+            $montoTotal = 0;
+
+            // El inicio efectivo es el más tardío entre la hora programada y la hora de entrada.
+            $inicioEfectivo = $horaEntrada->max($horarioInicioClase);
+            
+            // El fin efectivo es el más temprano entre la hora programada y la hora de salida.
+            $finEfectivo = $horaSalida->min($horarioFinClase);
+            
+            if ($finEfectivo->greaterThan($inicioEfectivo)) {
+                $minutosBrutos = $inicioEfectivo->diffInMinutes($finEfectivo);
+
+                // Descuento de recesos - Obtener valores del ciclo del horario
+                $cicloDelHorario = $horario->ciclo;
+                $minutosRecesoManana = 0;
+                $minutosRecesoTarde = 0;
+                
+                // Receso de mañana (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
+                    $recesoMananaInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
+                    $recesoMananaFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
+                    
+                    if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
+                        $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
+                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
+                }
+
+                // Receso de tarde (configurable por ciclo)
+                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
+                    $recesoTardeInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
+                    $recesoTardeFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
+                    
+                    if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
+                        $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
+                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
+                        if ($superposicionFin > $superposicionInicio) {
+                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
+                        }
+                    }
+                }
+
+                $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
+                $horasTrabajadas = $minutosNetos / 60;
+                
+                // Usar el ciclo del horario para evitar cruces
+                $cicloTarifa = $horario->ciclo ?: Ciclo::where('es_activo', true)->first();
+                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloTarifa, $fechaSeleccionada);
+                $montoTotal = $horasTrabajadas * $tarifaHora;
+            } else {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'No hay tiempo de clase efectivo. La hora de entrada/salida está fuera del horario de clase o es inválida.'
+                ], 400);
+            }
+
+            if ($asistencias->isNotEmpty()) {
+                foreach ($asistencias as $asistencia) {
+                    $asistencia->update([
+                        'tema_desarrollado' => $temaLimpio,
+                        'hora_entrada' => $horaEntrada->toDateTimeString(),
+                        'hora_salida' => $horaSalida->toDateTimeString(),
+                        'horas_dictadas' => round($horasTrabajadas, 2),
+                        'monto_total' => round($montoTotal, 2),
+                    ]);
+                }
+            } else {
+                AsistenciaDocente::create([
+                    'docente_id' => $user->id,
+                    'horario_id' => $horario->id,
+                    'curso_id'   => $horario->curso_id,
+                    'aula_id'    => $horario->aula_id,
+                    'fecha_hora' => $entrada->fecha_registro ?? $fechaSeleccionada->copy()->setTimeFromTimeString($horario->hora_inicio),
+                    'estado'     => 'entrada',
+                    'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
+                    'terminal_id'       => $entrada->terminal_id ?? null,
+                    'codigo_trabajo'    => $entrada->codigo_trabajo ?? null,
+                    'turno'      => $horario->turno,
+                    'tema_desarrollado' => $temaLimpio,
+                    'hora_entrada' => $horaEntrada->toDateTimeString(),
+                    'hora_salida' => $horaSalida->toDateTimeString(),
+                    'horas_dictadas' => round($horasTrabajadas, 2),
+                    'monto_total' => round($montoTotal, 2),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tema desarrollado registrado correctamente.'
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar: ' . $e->getMessage()
+            ], 500);
         }
-    
-        return response()->json([
-            'success' => true,
-            'message' => 'Tema desarrollado registrado correctamente.'
-        ]);
     }
 
     public function exportar(Request $request)

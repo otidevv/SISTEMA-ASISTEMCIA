@@ -165,4 +165,82 @@ class AsistenciaDocente extends Model
 
         return ['horas_dictadas' => $horasDictadas, 'monto_total' => $montoTotal];
     }
+
+    /**
+     * Limpia el HTML proveniente del Quill Editor de residuos vacíos, cursores y caracteres invisibles.
+     *
+     * @param string $html
+     * @return string
+     */
+    public static function cleanQuillHtml($html)
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        // 1. Eliminar etiquetas de cursor de Quill (con o sin spans, y caracteres invisibles \uFEFF)
+        $html = preg_replace('/<span[^>]*class="ql-cursor"[^>]*>.*?<\/span>/u', '', $html);
+        $html = preg_replace('/\x{FEFF}/u', '', $html);
+
+        // 2. Limpiar etiquetas vacías recursivamente
+        $pattern = '/<(strong|em|u|span|p|li|ol|ul|br)[^>]*>\s*<\/\1>/u';
+        do {
+            $cleaned = preg_replace($pattern, '', $html);
+            $changed = ($cleaned !== $html);
+            $html = $cleaned;
+        } while ($changed);
+
+        return trim($html);
+    }
+
+    /**
+     * Convierte el HTML estructurado del tema en un formato de texto plano limpio e indentado.
+     *
+     * @param string $tema
+     * @return string
+     */
+    public static function getPlainTema($tema)
+    {
+        if (empty($tema) || trim($tema) === 'Pendiente' || trim($tema) === '') {
+            return 'Pendiente';
+        }
+
+        // Si es HTML, lo limpiamos de cursores primero
+        $tema = self::cleanQuillHtml($tema);
+
+        // Convertir listas ordenadas <ol> a texto plano numerado
+        $tema = preg_replace_callback('/<ol\b[^>]*>(.*?)<\/ol>/su', function($matches) {
+            $listContent = $matches[1];
+            $index = 1;
+            $listContent = preg_replace_callback('/<li\b[^>]*>(.*?)<\/li>/su', function($liMatches) use (&$index) {
+                return "\n" . ($index++) . '. ' . trim($liMatches[1]);
+            }, $listContent);
+            return $listContent . "\n";
+        }, $tema);
+
+        // Convertir listas desordenadas <ul> a texto plano con viñetas
+        $tema = preg_replace_callback('/<ul\b[^>]*>(.*?)<\/ul>/su', function($matches) {
+            $listContent = $matches[1];
+            $listContent = preg_replace('/<li\b[^>]*>(.*?)<\/li>/su', "\n- $1", $listContent);
+            return $listContent . "\n";
+        }, $tema);
+
+        // Convertir párrafos y saltos de línea a saltos reales
+        $tema = preg_replace('/<(p|div|br)\b[^>]*>/iu', "\n", $tema);
+        $tema = preg_replace('/<\/(p|div)>/iu', "", $tema);
+
+        // Eliminar cualquier etiqueta restante
+        $plain = strip_tags($tema);
+
+        // Decodificar entidades HTML (&nbsp;, &amp;, etc.)
+        $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
+
+        // Limpiar espaciado duplicado
+        $plain = preg_replace('/[ \t]+/', ' ', $plain);
+        $plain = preg_replace('/\n\s*\n+/', "\n", $plain);
+        $plain = trim($plain);
+
+        return empty($plain) ? 'Pendiente' : $plain;
+    }
 }
+
