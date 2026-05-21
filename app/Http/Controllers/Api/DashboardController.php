@@ -289,6 +289,12 @@ class DashboardController extends Controller
                     ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
                     ->first();
 
+                if($asistencia) {
+                    $asistencia->tema_desarrollado = $sessionDetails['tema_desarrollado'];
+                }
+
+                $puedeRegistrarTema = ($sessionDetails['estado_sesion'] === 'COMPLETADA') || ($asistencia && $asistencia->tema_desarrollado);
+
                 if ($claseTerminada && !$asistencia && $sessionDetails['tiene_registros']) {
                     $sesionesPendientes++;
                 }
@@ -305,6 +311,7 @@ class DashboardController extends Controller
                     'aula_nombre' => $horario->aula->nombre ?? 'N/A',
                     'tarifa_sesion' => $this->obtenerTarifaDocente($user->id, $horario->ciclo, $fechaSeleccionada),
                     'ciclo_nombre' => $horario->ciclo->nombre ?? 'N/A',
+                    'puede_registrar_tema' => $puedeRegistrarTema,
                 ]);
             })->filter()->values();
 
@@ -439,7 +446,6 @@ class DashboardController extends Controller
                     'asistencia' => $eficienciaData['eficiencia'], // Mapeado a "Cumplimiento"
                     'tendencia' => $this->calcularTendenciaSemanal($user->id)
                 ],
-                
                 // Lista de sesiones esperada por el UI
                 'horariosDelDia' => $horariosDelDiaConDetalles->map(function($s) {
                     return [
@@ -464,6 +470,7 @@ class DashboardController extends Controller
                         'tarifa_sesion' => $s['tarifa_sesion'],
                         'pago_sesion' => round($s['pago'], 2),
                         'ciclo_nombre' => $s['ciclo_nombre'],
+                        'puede_registrar_tema' => $s['puede_registrar_tema'],
                     ];
                 }),
                 
@@ -526,89 +533,6 @@ class DashboardController extends Controller
                 ], 400);
             }
 
-            $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
-            $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
-            
-            $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
-                ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
-                ->orderBy('fecha_registro')
-                ->get();
-
-            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
-                $horaRegistro = Carbon::parse($r->fecha_registro);
-                return $horaRegistro->between(
-                    $horarioInicioClase->copy()->subMinutes(15),
-                    $horarioInicioClase->copy()->addMinutes(120) // Tolerancia unificada con web
-                );
-            })->first();
-
-            $salida = $registrosDiaSeleccionado->filter(function($r) use ($horarioFinClase) {
-                $horaRegistro = Carbon::parse($r->fecha_registro);
-                return $horaRegistro->between(
-                    $horarioFinClase->copy()->subMinutes(15),
-                    $horarioFinClase->copy()->addMinutes(60)
-                );
-            })->sortByDesc('fecha_registro')->first();
-
-            if (!$entrada || !$salida) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No se encontraron registros biométricos de entrada/salida válidos.'
-                ], 400);
-            }
-
-            $horaEntrada = Carbon::parse($entrada->fecha_registro);
-            $horaSalida = Carbon::parse($salida->fecha_registro);
-            
-            $inicioEfectivo = $horaEntrada->max($horarioInicioClase);
-            $finEfectivo = $horaSalida->min($horarioFinClase);
-            
-            $horasTrabajadas = 0;
-            $montoTotal = 0;
-
-            if ($finEfectivo->greaterThan($inicioEfectivo)) {
-                $minutosBrutos = $inicioEfectivo->diffInMinutes($finEfectivo);
-
-                $cicloDelHorario = $horario->ciclo;
-                $minutosRecesoManana = 0;
-                $minutosRecesoTarde = 0;
-                
-                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
-                    $recesoMananaInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
-                    $recesoMananaFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
-                    if ($inicioEfectivo < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
-                        $superposicionInicio = $inicioEfectivo->max($recesoMananaInicio);
-                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
-                        if ($superposicionFin > $superposicionInicio) {
-                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
-                        }
-                    }
-                }
-
-                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
-                    $recesoTardeInicio = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
-                    $recesoTardeFin = $fechaSeleccionada->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
-                    if ($inicioEfectivo < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
-                        $superposicionInicio = $inicioEfectivo->max($recesoTardeInicio);
-                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
-                        if ($superposicionFin > $superposicionInicio) {
-                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
-                        }
-                    }
-                }
-
-                $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
-                $horasTrabajadas = max(0, $minutosNetos) / 60;
-                
-                $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloDelHorario, $fechaSeleccionada);
-                $montoTotal = $horasTrabajadas * $tarifaHora;
-            } else {
-                 return response()->json([
-                    'success' => false,
-                    'message' => 'No hay tiempo de clase efectivo.'
-                ], 400);
-            }
-
             // Buscar si ya existen registros de asistencia para esta fecha y horario
             $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
                 ->where('docente_id', $user->id)
@@ -616,33 +540,52 @@ class DashboardController extends Controller
                 ->get();
 
             if ($asistencias->isNotEmpty()) {
+                // Si ya existen registros, los actualizamos todos directamente (igual que en la web)
                 foreach ($asistencias as $asistencia) {
-                    $asistencia->update([
-                        'tema_desarrollado' => $request->tema_desarrollado,
-                        'hora_entrada' => $horaEntrada->toDateTimeString(),
-                        'hora_salida' => $horaSalida->toDateTimeString(),
-                        'horas_dictadas' => round($horasTrabajadas, 2),
-                        'monto_total' => round($montoTotal, 2),
-                    ]);
+                    $asistencia->tema_desarrollado = $request->tema_desarrollado;
+                    $asistencia->save();
                 }
                 $asistencia = $asistencias->first();
             } else {
+                // Si no existen, buscamos el registro biométrico de entrada
+                $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
+                
+                $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
+                    ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
+                    ->orderBy('fecha_registro')
+                    ->get();
+
+                $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
+                    $horaRegistro = Carbon::parse($r->fecha_registro);
+                    return $horaRegistro->between(
+                        $horarioInicioClase->copy()->subMinutes(15),
+                        $horarioInicioClase->copy()->addMinutes(120) // Tolerancia unificada con web
+                    );
+                })->first();
+
+                if (!$entrada) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No se encontró la asistencia biométrica para este horario en la fecha seleccionada dentro del rango de tolerancia. Marca tu entrada primero.'
+                    ], 400);
+                }
+
                 $asistencia = AsistenciaDocente::create([
                     'docente_id' => $user->id,
                     'horario_id' => $horario->id,
                     'curso_id'   => $horario->curso_id,
                     'aula_id'    => $horario->aula_id,
-                    'fecha_hora' => $entrada->fecha_registro ?? $fechaSeleccionada->copy()->setTimeFromTimeString($horario->hora_inicio),
+                    'fecha_hora' => $entrada->fecha_registro,
                     'estado'     => 'entrada',
                     'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
                     'terminal_id'       => $entrada->terminal_id ?? null,
                     'codigo_trabajo'    => $entrada->codigo_trabajo ?? null,
                     'turno'      => $horario->turno,
                     'tema_desarrollado' => $request->tema_desarrollado,
-                    'hora_entrada' => $horaEntrada->toDateTimeString(),
-                    'hora_salida' => $horaSalida->toDateTimeString(),
-                    'horas_dictadas' => round($horasTrabajadas, 2),
-                    'monto_total' => round($montoTotal, 2),
+                    'hora_entrada' => Carbon::parse($entrada->fecha_registro)->toDateTimeString(),
+                    'hora_salida' => null,
+                    'horas_dictadas' => 0,
+                    'monto_total' => 0,
                 ]);
             }
 

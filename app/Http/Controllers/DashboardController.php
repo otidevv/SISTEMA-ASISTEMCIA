@@ -1212,6 +1212,12 @@ class DashboardController extends Controller
             $horarioInicioClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_inicio)->hour, Carbon::parse($horario->hora_inicio)->minute);
             $horarioFinClase = $fechaSeleccionada->copy()->setTime(Carbon::parse($horario->hora_fin)->hour, Carbon::parse($horario->hora_fin)->minute);
             
+            // Buscar si ya existen registros de asistencia para esta fecha y horario
+            $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
+                ->where('docente_id', $user->id)
+                ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
+                ->get();
+
             // Obtener registros biométricos para la fecha seleccionada
             $registrosDiaSeleccionado = RegistroAsistencia::where('nro_documento', $user->numero_documento)
                 ->whereDate('fecha_registro', $fechaSeleccionada->format('Y-m-d'))
@@ -1236,18 +1242,49 @@ class DashboardController extends Controller
                 );
             })->sortByDesc('fecha_registro')->first();
 
-            // Validar que existan registros de entrada y salida
-            if (!$entrada || !$salida) {
+            $horaEntrada = null;
+            $horaSalida = null;
+
+            if ($entrada) {
+                $horaEntrada = Carbon::parse($entrada->fecha_registro);
+            }
+            if ($salida) {
+                $horaSalida = Carbon::parse($salida->fecha_registro);
+            }
+
+            // Si no hay biométricos pero ya existen asistencias grabadas,
+            // intentamos recuperar las horas de los registros de asistencia existentes.
+            if ($asistencias->isNotEmpty()) {
+                if (!$horaEntrada) {
+                    $asisEntrada = $asistencias->where('estado', 'entrada')->first();
+                    if ($asisEntrada) {
+                        $horaEntrada = Carbon::parse($asisEntrada->fecha_hora);
+                    }
+                }
+                if (!$horaSalida) {
+                    $asisSalida = $asistencias->where('estado', 'salida')->first();
+                    if ($asisSalida) {
+                        $horaSalida = Carbon::parse($asisSalida->fecha_hora);
+                    }
+                }
+                
+                // Si aún falta alguno, hacemos fallback a las horas programadas
+                if (!$horaEntrada) {
+                    $horaEntrada = $horarioInicioClase->copy();
+                }
+                if (!$horaSalida) {
+                    $horaSalida = $horarioFinClase->copy();
+                }
+            }
+
+            if (!$horaEntrada || !$horaSalida) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No se encontraron registros biométricos de entrada y/o salida válidos para esta sesión en la fecha seleccionada. No se puede registrar el tema.'
+                    'message' => 'No se encontraron registros de asistencia ni biométricos de entrada/salida válidos para esta sesión.'
                 ], 400);
             }
 
             // Calcular datos de asistencia
-            $horaEntrada = Carbon::parse($entrada->fecha_registro);
-            $horaSalida = Carbon::parse($salida->fecha_registro);
-            
             $horasTrabajadas = 0;
             $montoTotal = 0;
 
@@ -1296,7 +1333,7 @@ class DashboardController extends Controller
                 $minutosNetos = $minutosBrutos - $minutosRecesoManana - $minutosRecesoTarde;
                 $horasTrabajadas = $minutosNetos / 60;
                 
-                // CORREGIDO: usar el ciclo del horario para evitar cruces cuando hay m�ltiples ciclos activos
+                // CORREGIDO: usar el ciclo del horario para evitar cruces cuando hay mltiples ciclos activos
                 $cicloTarifa = $horario->ciclo ?: Ciclo::where('es_activo', true)->first();
                 $tarifaHora = $this->obtenerTarifaDocente($user->id, $cicloTarifa, $fechaSeleccionada);
                 $montoTotal = $horasTrabajadas * $tarifaHora;
@@ -1306,12 +1343,6 @@ class DashboardController extends Controller
                     'message' => 'No hay tiempo de clase efectivo. La hora de entrada/salida está fuera del horario de clase o es inválida.'
                 ], 400);
             }
-
-            // Buscar si ya existen registros de asistencia para esta fecha y horario
-            $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
-                ->where('docente_id', $user->id)
-                ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
-                ->get();
 
             if ($asistencias->isNotEmpty()) {
                 foreach ($asistencias as $asistencia) {
