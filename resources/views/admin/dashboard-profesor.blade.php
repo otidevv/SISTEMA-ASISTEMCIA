@@ -1806,7 +1806,7 @@
                                                     <div class="tema-registrado">
                                                         <p class="mb-0">
                                                             <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
-                                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit($asistencia->tema_desarrollado, 100) }}</span>
+                                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit(\App\Models\AsistenciaDocente::getPlainTema($asistencia->tema_desarrollado), 100) }}</span>
                                                         </p>
                                                     </div>
                                                 @else
@@ -1949,7 +1949,7 @@
                                     <div class="tema-registrado">
                                         <p class="mb-0">
                                             <strong class="text-primary"><i class="mdi mdi-notebook-check-outline"></i> Tema:</strong>
-                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit($asistencia->tema_desarrollado, 100) }}</span>
+                                            <span id="display-tema-{{ $horario->id }}">{{ Str::limit(\App\Models\AsistenciaDocente::getPlainTema($asistencia->tema_desarrollado), 100) }}</span>
                                         </p>
                                     </div>
                                 @else
@@ -2553,7 +2553,10 @@
                 const horarioId = document.getElementById('horario_id').value;
                 const displayTema = document.getElementById(`display-tema-${horarioId}`);
                 if (displayTema && data.tema_desarrollado) {
-                    displayTema.textContent = data.tema_desarrollado.substring(0, 100) + (data.tema_desarrollado.length > 100 ? '...' : '');
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.tema_desarrollado;
+                    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+                    displayTema.textContent = plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
                 }
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalTemaDesarrollado'));

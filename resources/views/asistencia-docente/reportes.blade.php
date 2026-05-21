@@ -833,7 +833,7 @@
                                                 <tr>
                                                     <td>{{ \Carbon\Carbon::parse($detail['fecha'])->format('d/m/Y') }}</td>
                                                     <td>{{ $detail['curso'] }}</td>
-                                                    <td>{{ $detail['tema_desarrollado'] }}</td>
+                                                    <td>{{ \App\Models\AsistenciaDocente::getPlainTema($detail['tema_desarrollado']) }}</td>
                                                     <td>{{ $detail['aula'] }}</td>
                                                     <td>{{ $detail['turno'] }}</td>
                                                     <td>{{ $detail['hora_entrada'] }}</td>

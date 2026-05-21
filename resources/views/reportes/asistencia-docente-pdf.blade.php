@@ -255,7 +255,7 @@
                             </td>
                             <td style="font-size: 8px;">
                                 @if($session['tema_desarrollado'] && $session['tema_desarrollado'] != 'Pendiente')
-                                    {{ $session['tema_desarrollado'] }}
+                                    {{ \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']) }}
                                 @else
                                     <span style="color: #e74c3c; font-style: italic;">[Sin tema]</span>
                                 @endif

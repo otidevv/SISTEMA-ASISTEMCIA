@@ -44,7 +44,7 @@ class ReporteDiarioDocenteExport implements FromCollection, WithHeadings, WithSt
                 'Salida Real' => $item['hora_salida'],
                 'Horas Dictadas' => $item['horas_dictadas'],
                 'Estado' => $item['estado'],
-                'Tema Desarrollado' => $item['tema_desarrollado'],
+                'Tema Desarrollado' => \App\Models\AsistenciaDocente::getPlainTema($item['tema_desarrollado']),
             ];
         });
     }

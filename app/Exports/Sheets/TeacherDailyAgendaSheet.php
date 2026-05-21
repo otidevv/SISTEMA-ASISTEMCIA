@@ -131,7 +131,7 @@ class TeacherDailyAgendaSheet implements FromCollection, WithTitle, WithHeadings
                                     '', '', // Columnas de agrupación vacías
                                     Carbon::parse($detail['fecha'])->format('d/m/Y'), 
                                     $detail['curso'],
-                                    $detail['tema_desarrollado'],
+                                    \App\Models\AsistenciaDocente::getPlainTema($detail['tema_desarrollado']),
                                     $detail['aula'],
                                     $detail['turno'],
                                     $detail['hora_entrada'],

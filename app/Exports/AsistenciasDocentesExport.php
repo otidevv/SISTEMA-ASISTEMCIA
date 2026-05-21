@@ -581,7 +581,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                     $isFirstRowForSemana ? 'SEMANA ' . sprintf('%02d', $semana) : '',
                                     Carbon::parse($session['fecha'])->format('d/m/Y'),
                                     $session['curso'],
-                                    $session['tema_desarrollado'],
+                                    \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']),
                                     $session['aula'],
                                     $session['turno'],
                                     $session['hora_entrada'],
