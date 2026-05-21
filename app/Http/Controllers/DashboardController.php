@@ -1307,22 +1307,42 @@ class DashboardController extends Controller
                 ], 400);
             }
 
-            // Crear o actualizar registro de AsistenciaDocente
-            $asistencia = AsistenciaDocente::updateOrCreate(
-                [
+            // Buscar si ya existen registros de asistencia para esta fecha y horario
+            $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
+                ->where('docente_id', $user->id)
+                ->whereDate('fecha_hora', $fechaSeleccionada->toDateString())
+                ->get();
+
+            if ($asistencias->isNotEmpty()) {
+                foreach ($asistencias as $asistencia) {
+                    $asistencia->update([
+                        'tema_desarrollado' => $request->tema_desarrollado,
+                        'hora_entrada' => $horaEntrada->toDateTimeString(),
+                        'hora_salida' => $horaSalida->toDateTimeString(),
+                        'horas_dictadas' => round($horasTrabajadas, 2),
+                        'monto_total' => round($montoTotal, 2),
+                    ]);
+                }
+                $asistencia = $asistencias->first();
+            } else {
+                $asistencia = AsistenciaDocente::create([
                     'docente_id' => $user->id,
-                    'horario_id' => $request->horario_id,
-                    'fecha_hora' => $fechaSeleccionada->toDateString()
-                ],
-                [
+                    'horario_id' => $horario->id,
+                    'curso_id'   => $horario->curso_id,
+                    'aula_id'    => $horario->aula_id,
+                    'fecha_hora' => $entrada->fecha_registro ?? $fechaSeleccionada->copy()->setTimeFromTimeString($horario->hora_inicio),
+                    'estado'     => 'entrada',
+                    'tipo_verificacion' => $entrada->tipo_verificacion ?? 'biometrico',
+                    'terminal_id'       => $entrada->terminal_id ?? null,
+                    'codigo_trabajo'    => $entrada->codigo_trabajo ?? null,
+                    'turno'      => $horario->turno,
                     'tema_desarrollado' => $request->tema_desarrollado,
                     'hora_entrada' => $horaEntrada->toDateTimeString(),
                     'hora_salida' => $horaSalida->toDateTimeString(),
                     'horas_dictadas' => round($horasTrabajadas, 2),
                     'monto_total' => round($montoTotal, 2),
-                    'estado' => 'completada'
-                ]
-            );
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

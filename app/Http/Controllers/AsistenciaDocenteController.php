@@ -1265,13 +1265,13 @@ class AsistenciaDocenteController extends Controller
             ], 404);
         }
     
-        // Buscar un registro de AsistenciaDocente existente para la FECHA SELECCIONADA y este horario
-        $asistencia = AsistenciaDocente::where('horario_id', $request->horario_id)
+        // Buscar registros de AsistenciaDocente existentes para la FECHA SELECCIONADA y este horario
+        $asistencias = AsistenciaDocente::where('horario_id', $request->horario_id)
             ->where('docente_id', $user->id)
-            ->whereDate('fecha_hora', $fechaParaRegistro->toDateString()) // Usar $fechaParaRegistro
-            ->first();
+            ->whereDate('fecha_hora', $fechaParaRegistro->toDateString())
+            ->get();
     
-        if (!$asistencia) {
+        if ($asistencias->isEmpty()) {
             // Si no existe un registro de AsistenciaDocente, necesitamos encontrar la entrada biométrica.
             // La entrada biométrica debe haber ocurrido dentro de la ventana de tolerancia de entrada o el horario de clase.
             $horarioStartTime = Carbon::parse($horario->hora_inicio);
@@ -1307,9 +1307,11 @@ class AsistenciaDocenteController extends Controller
                 'tema_desarrollado' => $request->tema_desarrollado,
             ]);
         } else {
-            // Si ya existe un registro de AsistenciaDocente, simplemente actualiza el tema
-            $asistencia->tema_desarrollado = $request->tema_desarrollado;
-            $asistencia->save();
+            // Si ya existen registros de AsistenciaDocente, los actualizamos todos
+            foreach ($asistencias as $asistencia) {
+                $asistencia->tema_desarrollado = $request->tema_desarrollado;
+                $asistencia->save();
+            }
         }
     
         return response()->json([
