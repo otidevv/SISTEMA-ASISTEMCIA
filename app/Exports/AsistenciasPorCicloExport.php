@@ -171,6 +171,13 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
                 if (isset($diasHabilesPorPeriodo[$periodoKey])) {
                     $inicioPeriodo = Carbon::parse($periodos[$periodoKey]['inicio']);
                     $finCalculo = min($hoy, Carbon::parse($periodos[$periodoKey]['fin']));
+                    $finPeriodo = Carbon::parse($periodos[$periodoKey]['fin']);
+                    
+                    // Si el período inicia con el ciclo, ajustamos la fecha de inicio al primer registro del estudiante
+                    $inicioCicloStr = Carbon::parse($ciclo->fecha_inicio)->toDateString();
+                    if ($primerRegistro && $inicioPeriodo->toDateString() === $inicioCicloStr) {
+                        $inicioPeriodo = $primerRegistro->copy()->startOfDay();
+                    }
                     
                     // Contar asistencias dentro del rango del período (en memoria)
                     $asistenciasEnPeriodo = 0;
@@ -181,10 +188,14 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
                         }
                     }
 
+                    // Recalcular los días hábiles para este estudiante en base a su inicio de evaluación ajustado
+                    $diasTotales = $this->contarDiasHabiles($inicioPeriodo, $finPeriodo, $ciclo);
+                    $diasTranscurridos = $this->contarDiasHabiles($inicioPeriodo, $finCalculo, $ciclo);
+
                     $data[$key] = $this->calcularEstadisticasMemoria(
                         $asistenciasEnPeriodo,
-                        $diasHabilesPorPeriodo[$periodoKey]['totales'],
-                        $diasHabilesPorPeriodo[$periodoKey]['transcurridos'],
+                        $diasTotales,
+                        $diasTranscurridos,
                         $ciclo,
                         $inicioPeriodo
                     );
