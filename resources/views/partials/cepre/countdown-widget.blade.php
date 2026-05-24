@@ -1,3 +1,6 @@
+@php
+    $inscripcionesAbiertas = $inscripcionesAbiertas ?? (isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto());
+@endphp
 @if(isset($proximoExamen) && $proximoExamen || isset($proximoCiclo) && $proximoCiclo)
 <div id="countdown-bubble" class="countdown-premium-wrapper animate__animated animate__fadeInLeft">
     
@@ -46,9 +49,15 @@
                 <div id="timer-ciclo" data-date="{{ $proximoCiclo['fecha'] }}" class="timer-grid"></div>
             </div>
 
-            <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" class="premium-btn-enroll">
-                <i class="fas fa-user-plus"></i> ¡INSCRÍBETE AHORA!
-            </a>
+            @if($inscripcionesAbiertas)
+                <a href="javascript:void(0)" onclick="openPostulacionModal(); return false;" class="premium-btn-enroll">
+                    <i class="fas fa-user-plus"></i> ¡INSCRÍBETE AHORA!
+                </a>
+            @else
+                <a href="javascript:void(0)" onclick="mostrarAvisoInscripcionesCerradas(); return false;" class="premium-btn-enroll" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); opacity: 0.8; box-shadow: none;">
+                    <i class="fas fa-lock"></i> CERRADO
+                </a>
+            @endif
             @endif
         </div>
 

@@ -1237,6 +1237,12 @@ async function handleFinalSubmit(e) {
 }
 
 window.openReforzamientoModal = function() {
+    if (window.INSCRIPCIONES_ABIERTAS === false) {
+        if (typeof mostrarAvisoInscripcionesCerradas === 'function') {
+            mostrarAvisoInscripcionesCerradas();
+        }
+        return;
+    }
     const modal = document.getElementById('reforzamientoModal');
     if (modal) { modal.classList.add('modal-open'); currentStep = 1; updateWizardUI(); }
 };

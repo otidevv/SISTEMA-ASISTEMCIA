@@ -1,3 +1,6 @@
+@php
+    $inscripcionesAbiertas = $inscripcionesAbiertas ?? (isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto());
+@endphp
 {{-- resources/views/partials/cepre/modal-detalles-ciclo.blade.php --}}
 <div class="modal fade premium-modal-v3" id="modalDetallesCicloV3" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -41,7 +44,7 @@
                             </div>
                         </div>
 
-                        <!-- Columna Derecha: Información -->
+                         <!-- Columna Derecha: Información -->
                         <div class="col-lg-7">
                             <div class="detail-content-box ps-lg-5">
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
@@ -111,11 +114,19 @@
                                 </div>
 
                                 <div class="mt-5">
-                                    <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); openPostulacionModal()">
-                                        <i class="fas fa-user-plus"></i>
-                                        <span>INICIAR INSCRIPCIÓN AHORA</span>
-                                        <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
-                                    </button>
+                                    @if($inscripcionesAbiertas)
+                                        <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); openPostulacionModal()">
+                                            <i class="fas fa-user-plus"></i>
+                                            <span>INICIAR INSCRIPCIÓN AHORA</span>
+                                            <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
+                                        </button>
+                                    @else
+                                        <button class="btn w-100 d-flex align-items-center justify-content-center gap-3" style="background: linear-gradient(135deg, #64748b, #475569); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 800; font-size: 15px; letter-spacing: 1px;" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); mostrarAvisoInscripcionesCerradas()">
+                                            <i class="fas fa-lock"></i>
+                                            <span>Inscripciones Culminadas</span>
+                                            <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
+                                        </button>
+                                    @endif
                                     <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 15px; font-weight: 600;">
                                         <i class="fas fa-shield-alt"></i> Registro 100% Seguro y Validado
                                     </p>

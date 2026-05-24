@@ -1,6 +1,9 @@
 @php
     $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
 @endphp
+<script>
+    window.INSCRIPCIONES_ABIERTAS = {{ $inscripcionesAbiertas ? 'true' : 'false' }};
+</script>
 @extends('layouts.cepre')
 
 @section('title', 'Nivel Secundaria | CEPRE UNAMAD - Inicia tu preparación')

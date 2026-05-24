@@ -1,6 +1,9 @@
 @php
     $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
 @endphp
+<script>
+    window.INSCRIPCIONES_ABIERTAS = {{ $inscripcionesAbiertas ? 'true' : 'false' }};
+</script>
 @include('partials.cepre.head')
 
 @include('partials.cepre.header')
@@ -678,6 +681,14 @@
         // Cerrar el tour si está activo
         if (typeof window.closeCepreTour === 'function') {
             window.closeCepreTour();
+        }
+
+        // Si las inscripciones están cerradas, bloquear apertura y mostrar aviso
+        if (window.INSCRIPCIONES_ABIERTAS === false) {
+            if (typeof mostrarAvisoInscripcionesCerradas === 'function') {
+                mostrarAvisoInscripcionesCerradas();
+            }
+            return;
         }
 
         const modal = document.getElementById('postulacionModal');

@@ -3,6 +3,9 @@
 @section('title', 'Cuadro de Vacantes | CEPRE UNAMAD')
 
 @section('content')
+    @php
+        $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
+    @endphp
     @include('partials.cepre.head')
     @include('partials.cepre.header')
 
@@ -137,10 +140,17 @@
                                     </div>
                                 </td>
                                 <td data-label="Acciones" style="padding: 25px 40px; text-align: right;">
-                                    <a href="{{ route('home', ['postula' => 1]) }}" class="btn-postular-table animate-pulse-btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; border-radius: 15px; background: var(--azul-oscuro); color: white; text-decoration: none; font-weight: 800; font-size: 13px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                                        <span>POSTULAR</span>
-                                        <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
-                                    </a>
+                                    @if($inscripcionesAbiertas)
+                                        <a href="{{ route('home', ['postula' => 1]) }}" class="btn-postular-table animate-pulse-btn" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; border-radius: 15px; background: var(--azul-oscuro); color: white; text-decoration: none; font-weight: 800; font-size: 13px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                            <span>POSTULAR</span>
+                                            <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
+                                        </a>
+                                    @else
+                                        <a href="javascript:void(0)" onclick="mostrarAvisoInscripcionesCerradas()" class="btn-postular-table-cerrado" style="display: inline-flex; align-items: center; gap: 10px; padding: 12px 25px; border-radius: 15px; background: #64748b; color: white; text-decoration: none; font-weight: 800; font-size: 13px; opacity: 0.7; cursor: not-allowed; transition: all 0.3s;">
+                                            <span>CERRADO</span>
+                                            <i class="fas fa-lock" style="font-size: 10px;"></i>
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -300,3 +310,24 @@
     @include('partials.cepre.footer')
     @include('partials.cepre.scripts')
 @endsection
+
+@push('js')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function mostrarAvisoInscripcionesCerradas() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¡Inscripciones Culminadas!',
+                    html: '<p style="color:#fff;">El proceso de inscripciones oficiales para el ciclo <strong>{{ $cicloActivo->nombre ?? "CEPRE" }}</strong> ha concluido.</p><p style="color:rgba(255,255,255,0.7); font-size: 13px;">Si tienes una postulación en revisión, puedes verificar su estado en la página de inicio presionando "Verificar mi Estado".</p>',
+                    icon: 'info',
+                    background: '#0c1e2f',
+                    color: '#fff',
+                    confirmButtonColor: '#00aeef',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                alert('El proceso de inscripciones para el CEPRE ha concluido. Si tienes una postulación en revisión, puedes verificar tu estado en el botón respectivo de la página de inicio.');
+            }
+        }
+    </script>
+@endpush
