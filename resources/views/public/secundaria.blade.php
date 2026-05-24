@@ -1,3 +1,6 @@
+@php
+    $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
+@endphp
 @extends('layouts.cepre')
 
 @section('title', 'Nivel Secundaria | CEPRE UNAMAD - Inicia tu preparación')
@@ -309,9 +312,15 @@
                         mientras terminas tus estudios secundarios. ¡El futuro comienza hoy!
                     </p>
                     <div class="hero-btns wow fadeInUp" data-wow-delay="0.6s">
-                        <button class="btn-premium btn-magenta btn-postulacion-main" onclick="openReforzamientoModal()">
-                            <i class="fas fa-edit mr-2"></i> ¡INSCRIBIRSE AHORA!
-                        </button>
+                        @if($inscripcionesAbiertas)
+                            <button class="btn-premium btn-magenta btn-postulacion-main" onclick="openReforzamientoModal()">
+                                <i class="fas fa-edit mr-2"></i> ¡INSCRIBIRSE AHORA!
+                            </button>
+                        @else
+                            <button class="btn-premium" style="background: #475569; color: white; box-shadow: none; opacity: 0.8;" onclick="mostrarAvisoInscripcionesCerradas()">
+                                <i class="fas fa-lock mr-2"></i> Inscripciones Culminadas
+                            </button>
+                        @endif
                     </div>
                 </div>
                 <div class="col-lg-5 d-none d-lg-block">
@@ -523,9 +532,15 @@
                             <li><i class="fas fa-plus-circle text-info mr-2"></i> Prepárate para las carreras más demandadas.</li>
                             <li><i class="fas fa-plus-circle text-info mr-2"></i> Plus de asesoramiento personalizado.</li>
                         </ul>
-                        <button class="btn-premium btn-magenta" onclick="openReforzamientoModal()">
-                            Quiero inscribirme ahora
-                        </button>
+                        @if($inscripcionesAbiertas)
+                            <button class="btn-premium btn-magenta" onclick="openReforzamientoModal()">
+                                Quiero inscribirme ahora
+                            </button>
+                        @else
+                            <button class="btn-premium" style="background: #475569; color: white; box-shadow: none; opacity: 0.8;" onclick="mostrarAvisoInscripcionesCerradas()">
+                                <i class="fas fa-lock mr-2"></i> Inscripciones Culminadas
+                            </button>
+                        @endif
                     </div>
                     <div class="col-lg-4 text-center mt-4 mt-lg-0">
                         <div class="plus-img-container wow fadeInRight">
@@ -643,4 +658,22 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/js/reforzamiento/publico-modal.js'])
     @include('partials.cepre.scripts')
+
+    <script>
+        function mostrarAvisoInscripcionesCerradas() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¡Inscripciones Culminadas!',
+                    html: '<p style="color:#fff;">El proceso de inscripciones para el programa de <strong>Reforzamiento Escolar</strong> ha concluido.</p><p style="color:rgba(255,255,255,0.7); font-size: 13px;">Agradecemos su interés. Esté atento al inicio del próximo ciclo.</p>',
+                    icon: 'info',
+                    background: '#0c1e2f',
+                    color: '#fff',
+                    confirmButtonColor: '#ec008c',
+                    confirmButtonText: 'Entendido'
+                });
+            } else {
+                alert('El proceso de inscripciones para el Reforzamiento Escolar ha concluido.');
+            }
+        }
+    </script>
 @endsection

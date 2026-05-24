@@ -56,6 +56,13 @@ class PublicPostulacionController extends Controller
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
         }
 
+        if (!$cicloActivo->estaPeriodoInscripcionAbierto()) {
+            return response()->json([
+                'error' => 'El proceso de inscripciones para el CEPRE ha culminado.',
+                'message' => 'El periodo oficial de postulaciones ya no se encuentra vigente.'
+            ], 400);
+        }
+
         // VALIDACIÓN DE SEGURIDAD: Verificar dígito con la API de Base de Datos
         try {
             $cacheKey = 'reniec_dni_' . $dni;
@@ -341,6 +348,10 @@ class PublicPostulacionController extends Controller
         DB::beginTransaction();
         try {
             $cicloActivo = Ciclo::where('es_activo', 1)->where('programa_id', 1)->firstOrFail();
+
+            if (!$cicloActivo->estaPeriodoInscripcionAbierto()) {
+                throw new \Exception("El proceso de inscripciones para el CEPRE ha culminado.");
+            }
             $rolPostulante = Role::where('nombre', 'postulante')->first();
             $rolPadre = Role::where('nombre', 'padre')->first();
 

@@ -38,6 +38,9 @@ class Ciclo extends Model
         'programa_id',
         'correlativo_inicial',
         'fechas_recuperacion',
+        'inscripciones_abiertas',
+        'fecha_inicio_inscripcion',
+        'fecha_fin_inscripcion',
         'creado_por',
         'actualizado_por'
     ];
@@ -53,7 +56,10 @@ class Ciclo extends Model
         'porcentaje_avance' => 'decimal:2',
         'porcentaje_amonestacion' => 'decimal:2',
         'porcentaje_inhabilitacion' => 'decimal:2',
-        'fechas_recuperacion' => 'array'
+        'fechas_recuperacion' => 'array',
+        'inscripciones_abiertas' => 'boolean',
+        'fecha_inicio_inscripcion' => 'datetime',
+        'fecha_fin_inscripcion' => 'datetime'
     ];
 
     // Relaciones
@@ -376,5 +382,25 @@ class Ciclo extends Model
             ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
     }
 
+    /**
+     * Determina si el proceso de inscripciones está abierto para este ciclo.
+     * @return bool
+     */
+    public function estaPeriodoInscripcionAbierto()
+    {
+        if (!$this->inscripciones_abiertas) {
+            return false;
+        }
+
+        if ($this->fecha_inicio_inscripcion && now()->lt($this->fecha_inicio_inscripcion)) {
+            return false;
+        }
+
+        if ($this->fecha_fin_inscripcion && now()->gt($this->fecha_fin_inscripcion)) {
+            return false;
+        }
+
+        return true;
+    }
 }
 

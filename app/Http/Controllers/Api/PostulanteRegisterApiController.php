@@ -71,6 +71,10 @@ class PostulanteRegisterApiController extends BaseController
         try {
             $ciclo = Ciclo::findOrFail($request->ciclo_id);
 
+            if (!$ciclo->estaPeriodoInscripcionAbierto()) {
+                return $this->sendError('El proceso de inscripciones para este ciclo ha culminado.', [], 400);
+            }
+
             // 1. Crear o Actualizar Estudiante
             $estudiante = User::updateOrCreate(
                 ['numero_documento' => $request->numero_documento],

@@ -1,3 +1,6 @@
+@php
+    $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
+@endphp
 @include('partials.cepre.head')
 
 @include('partials.cepre.header')
@@ -181,11 +184,19 @@
                         <i class="fas fa-book"></i>
                         <span>EXPLORAR PROGRAMAS</span>
                     </a>
-                    <a href="javascript:void(0)" onclick="openPostulacionModal()"
-                        class="btn btn-secondary btn-postulacion-main" style="box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
-                        <i class="fas fa-edit"></i>
-                        <span>¡INSCRIBIRSE AHORA!</span>
-                    </a>
+                    @if($inscripcionesAbiertas)
+                        <a href="javascript:void(0)" onclick="openPostulacionModal()"
+                            class="btn btn-secondary btn-postulacion-main" style="box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px);">
+                            <i class="fas fa-edit"></i>
+                            <span>¡INSCRIBIRSE AHORA!</span>
+                        </a>
+                    @else
+                        <a href="javascript:void(0)" onclick="mostrarAvisoInscripcionesCerradas()"
+                            class="btn btn-secondary" style="box-shadow: 0 4px 15px rgba(0,0,0,0.8); backdrop-filter: blur(5px); opacity: 0.7;">
+                            <i class="fas fa-lock"></i>
+                            <span>Inscripciones Culminadas</span>
+                        </a>
+                    @endif
                 </div>
 
 
@@ -213,14 +224,22 @@
         <div class="marquee-item"><i class="fas fa-graduation-cap"></i> Educación de calidad</div>
         <div class="marquee-item"><i class="fas fa-university"></i> CEPRE UNAMAD</div>
         <div class="marquee-item"><i class="fas fa-door-open"></i> Ciclo {{ $cicloActivo->nombre ?? 'Vigente' }}</div>
-        <div class="marquee-item"><i class="fas fa-calendar-check"></i> Inscripciones abiertas</div>
+        @if($inscripcionesAbiertas)
+            <div class="marquee-item"><i class="fas fa-calendar-check"></i> Inscripciones abiertas</div>
+        @else
+            <div class="marquee-item text-warning"><i class="fas fa-calendar-times"></i> Inscripciones culminadas</div>
+        @endif
         <div class="marquee-item"><i class="fas fa-chalkboard-teacher"></i> Docentes expertos</div>
         <div class="marquee-item"><i class="fas fa-book"></i> Más de {{ $stats['cursos'] ?? 15 }} cursos</div>
         <div class="marquee-item"><i class="fas fa-trophy"></i> Ingreso directo garantizado</div>
         <div class="marquee-item"><i class="fas fa-graduation-cap"></i> Educación de calidad</div>
         <div class="marquee-item"><i class="fas fa-university"></i> CEPRE UNAMAD</div>
         <div class="marquee-item"><i class="fas fa-door-open"></i> Ciclo {{ $cicloActivo->nombre ?? 'Vigente' }}</div>
-        <div class="marquee-item"><i class="fas fa-calendar-check"></i> Inscripciones abiertas</div>
+        @if($inscripcionesAbiertas)
+            <div class="marquee-item"><i class="fas fa-calendar-check"></i> Inscripciones abiertas</div>
+        @else
+            <div class="marquee-item text-warning"><i class="fas fa-calendar-times"></i> Inscripciones culminadas</div>
+        @endif
         <div class="marquee-item"><i class="fas fa-chalkboard-teacher"></i> Docentes expertos</div>
         <div class="marquee-item"><i class="fas fa-book"></i> Más de {{ $stats['cursos'] ?? 15 }} cursos</div>
         <div class="marquee-item"><i class="fas fa-trophy"></i> Ingreso directo garantizado</div>
@@ -244,13 +263,23 @@
         <div class="dual-cta-container mb-4">
             <div class="cta-wrapper">
                 <!-- Botón Principal: Inscribirse -->
-                <a href="javascript:void(0)" onclick="openPostulacionModal()" class="cta-btn cta-primary">
-                    <div class="cta-icon"><i class="fas fa-user-plus"></i></div>
-                    <div class="cta-content">
-                        <span class="cta-tag">PASO 1</span>
-                        <span class="cta-text">Iniciar Inscripción</span>
-                    </div>
-                </a>
+                @if($inscripcionesAbiertas)
+                    <a href="javascript:void(0)" onclick="openPostulacionModal()" class="cta-btn cta-primary">
+                        <div class="cta-icon"><i class="fas fa-user-plus"></i></div>
+                        <div class="cta-content">
+                            <span class="cta-tag">PASO 1</span>
+                            <span class="cta-text">Iniciar Inscripción</span>
+                        </div>
+                    </a>
+                @else
+                    <a href="javascript:void(0)" onclick="mostrarAvisoInscripcionesCerradas()" class="cta-btn" style="background: linear-gradient(135deg, #64748b, #475569); color: white; box-shadow: none; opacity: 0.8; display: flex; align-items: center; gap: 12px; padding: 10px 25px; border-radius: 80px; text-decoration: none !important;">
+                        <div class="cta-icon"><i class="fas fa-lock"></i></div>
+                        <div class="cta-content">
+                            <span class="cta-tag">CERRADO</span>
+                            <span class="cta-text">Inscripciones Culminadas</span>
+                        </div>
+                    </a>
+                @endif
 
                 <div class="cta-divider"></div>
 
@@ -688,3 +717,21 @@
 <!-- Incluir Modal de Postulación -->
 @include('partials.postulacion-modal')
 @include('partials.cepre.results-modal')
+
+<script>
+    function mostrarAvisoInscripcionesCerradas() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '¡Inscripciones Culminadas!',
+                html: '<p style="color:#fff;">El proceso de inscripciones oficiales para el ciclo <strong>{{ $cicloActivo->nombre ?? "CEPRE" }}</strong> ha concluido.</p><p style="color:rgba(255,255,255,0.7); font-size: 13px;">Si tienes una postulación en revisión, puedes consultar su estado presionando el botón "Verificar mi Estado".</p>',
+                icon: 'info',
+                background: '#0c1e2f',
+                color: '#fff',
+                confirmButtonColor: '#00aeef',
+                confirmButtonText: 'Entendido'
+            });
+        } else {
+            alert('El proceso de inscripciones para el CEPRE ha concluido. Si tienes una postulación en revisión, puedes verificar tu estado en el botón respectivo.');
+        }
+    }
+</script>

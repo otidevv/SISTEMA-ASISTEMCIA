@@ -45,6 +45,9 @@ class CicloController extends Controller
                 'estado' => $ciclo->estado,
                 'programa_id' => $ciclo->programa_id,
                 'inscripciones_count' => $ciclo->inscripciones_count,
+                'inscripciones_abiertas' => (bool)$ciclo->inscripciones_abiertas,
+                'fecha_inicio_inscripcion' => $ciclo->fecha_inicio_inscripcion ? $ciclo->fecha_inicio_inscripcion->format('Y-m-d\TH:i') : null,
+                'fecha_fin_inscripcion' => $ciclo->fecha_fin_inscripcion ? $ciclo->fecha_fin_inscripcion->format('Y-m-d\TH:i') : null,
                 'creado_por' => $ciclo->creadoPor ? $ciclo->creadoPor->nombre . ' ' . $ciclo->creadoPor->apellido_paterno : null,
                 'actions' => $this->getActionButtons($ciclo)
             ];
@@ -104,6 +107,10 @@ class CicloController extends Controller
             'receso_tarde_inicio' => 'nullable|date_format:H:i',
             'receso_tarde_fin' => 'nullable|date_format:H:i',
             'programa_id' => 'required|exists:programas_academicos,id',
+            // Campos de inscripciones
+            'inscripciones_abiertas' => 'nullable|boolean',
+            'fecha_inicio_inscripcion' => 'nullable|date',
+            'fecha_fin_inscripcion' => 'nullable|date|after_or_equal:fecha_inicio_inscripcion',
         ]);
 
         if ($validator->fails()) {
@@ -119,6 +126,7 @@ class CicloController extends Controller
             $data['creado_por'] = auth()->id();
             $data['porcentaje_avance'] = 0;
             $data['es_activo'] = false;
+            $data['inscripciones_abiertas'] = $request->has('inscripciones_abiertas') ? (bool)$request->inscripciones_abiertas : true;
 
             // Valores por defecto para porcentajes si no se envían
             $data['porcentaje_amonestacion'] = $data['porcentaje_amonestacion'] ?? 20.00;
@@ -168,6 +176,10 @@ class CicloController extends Controller
         $cicloData['receso_manana_fin'] = $ciclo->receso_manana_fin;
         $cicloData['receso_tarde_inicio'] = $ciclo->receso_tarde_inicio;
         $cicloData['receso_tarde_fin'] = $ciclo->receso_tarde_fin;
+        // Campos de inscripciones
+        $cicloData['fecha_inicio_inscripcion'] = $ciclo->fecha_inicio_inscripcion ? $ciclo->fecha_inicio_inscripcion->format('Y-m-d\TH:i') : null;
+        $cicloData['fecha_fin_inscripcion'] = $ciclo->fecha_fin_inscripcion ? $ciclo->fecha_fin_inscripcion->format('Y-m-d\TH:i') : null;
+        $cicloData['inscripciones_abiertas'] = (bool)$ciclo->inscripciones_abiertas;
 
         return response()->json([
             'success' => true,
@@ -205,6 +217,10 @@ class CicloController extends Controller
             'receso_tarde_inicio' => 'nullable|date_format:H:i',
             'receso_tarde_fin' => 'nullable|date_format:H:i',
             'programa_id' => 'required|exists:programas_academicos,id',
+            // Campos de inscripciones
+            'inscripciones_abiertas' => 'nullable|boolean',
+            'fecha_inicio_inscripcion' => 'nullable|date',
+            'fecha_fin_inscripcion' => 'nullable|date|after_or_equal:fecha_inicio_inscripcion',
         ]);
 
         if ($validator->fails()) {
@@ -219,6 +235,7 @@ class CicloController extends Controller
             $data = $request->all();
             $data['actualizado_por'] = auth()->id();
             $data['porcentaje_avance'] = $ciclo->calcularPorcentajeAvance();
+            $data['inscripciones_abiertas'] = $request->has('inscripciones_abiertas') ? (bool)$request->inscripciones_abiertas : false;
 
             $ciclo->update($data);
 

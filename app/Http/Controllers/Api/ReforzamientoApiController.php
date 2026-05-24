@@ -149,6 +149,10 @@ class ReforzamientoApiController extends BaseController
             return $this->sendError('No hay un ciclo de reforzamiento activo en este momento.', [], 422);
         }
 
+        if (!$ciclo->estaPeriodoInscripcionAbierto()) {
+            return $this->sendError('El proceso de inscripciones para el ciclo de reforzamiento ha culminado.', [], 400);
+        }
+
         // 2. Verificar si ya está inscrito
         $estudiante = User::where('numero_documento', $dni)->first();
         if ($estudiante) {
@@ -296,6 +300,12 @@ class ReforzamientoApiController extends BaseController
 
         if ($validator->fails()) {
             return $this->sendError('Validación fallida: ' . implode(', ', $validator->errors()->all()), $validator->errors()->toArray(), 422);
+        }
+
+        // Validar si el ciclo tiene inscripciones abiertas
+        $ciclo = Ciclo::find($request->ciclo_id);
+        if (!$ciclo || !$ciclo->estaPeriodoInscripcionAbierto()) {
+            return $this->sendError('El proceso de inscripciones para este ciclo ha culminado.', [], 400);
         }
 
         // Buscar ID del Programa de Reforzamiento

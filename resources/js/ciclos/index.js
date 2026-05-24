@@ -365,6 +365,10 @@ $(document).ready(function () {
         var incluye_sabados = $('#incluye_sabados').is(':checked') ? 1 : 0;
         formData += '&incluye_sabados=' + incluye_sabados;
 
+        // Agregar explícitamente el valor del checkbox inscripciones_abiertas
+        var inscripciones_abiertas = $('#inscripciones_abiertas').is(':checked') ? 1 : 0;
+        formData += '&inscripciones_abiertas=' + inscripciones_abiertas;
+
         $.ajax({
             url: default_server + "/json/ciclos",
             type: 'POST',
@@ -434,6 +438,11 @@ $(document).ready(function () {
                     $('#edit_porcentaje').val(ciclo.porcentaje_avance || 0);
                     $('#edit_programa_id').val(ciclo.programa_id || '');
 
+                    // Cargar periodo de inscripciones
+                    $('#edit_inscripciones_abiertas').prop('checked', ciclo.inscripciones_abiertas || false);
+                    $('#edit_fecha_inicio_inscripcion').val(ciclo.fecha_inicio_inscripcion ? ciclo.fecha_inicio_inscripcion.substring(0, 16) : '');
+                    $('#edit_fecha_fin_inscripcion').val(ciclo.fecha_fin_inscripcion ? ciclo.fecha_fin_inscripcion.substring(0, 16) : '');
+
                     // Manejar checkbox de rotación de sábados
                     $('#edit_incluye_sabados').prop('checked', ciclo.incluye_sabados || false);
 
@@ -472,6 +481,10 @@ $(document).ready(function () {
         // Agregar explícitamente el valor del checkbox incluye_sabados
         var incluye_sabados = $('#edit_incluye_sabados').is(':checked') ? 1 : 0;
         formData += '&incluye_sabados=' + incluye_sabados;
+
+        // Agregar explícitamente el valor del checkbox inscripciones_abiertas
+        var inscripciones_abiertas = $('#edit_inscripciones_abiertas').is(':checked') ? 1 : 0;
+        formData += '&inscripciones_abiertas=' + inscripciones_abiertas;
 
         $.ajax({
             url: default_server + "/json/ciclos/" + id,

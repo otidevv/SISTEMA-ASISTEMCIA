@@ -25,6 +25,12 @@ class PostulationApiController extends BaseController
             return $this->sendError('Error de validación.', $validator->errors());
         }
 
+        // Obtener el ciclo activo para CEPRE (programa_id = 1)
+        $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->where('programa_id', 1)->first();
+        if (!$cicloActivo || !$cicloActivo->estaPeriodoInscripcionAbierto()) {
+            return $this->sendError('El proceso de inscripciones para el CEPRE ha culminado.', [], 400);
+        }
+
         // Logic to create or update postulation
         return $this->sendResponse([], 'Postulación registrada correctamente.');
     }

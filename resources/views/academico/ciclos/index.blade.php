@@ -220,6 +220,30 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Periodo de Inscripciones -->
+                        <div class="row border-top pt-3 mt-2">
+                            <div class="col-md-12 mb-2">
+                                <h6 class="text-info"><i class="mdi mdi-calendar-clock me-1"></i>Periodo de Inscripciones</h6>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check form-switch pt-2">
+                                    <input class="form-check-input" type="checkbox" id="inscripciones_abiertas" name="inscripciones_abiertas" value="1" checked>
+                                    <label class="form-check-label" for="inscripciones_abiertas">
+                                        <strong>Inscripciones Habilitadas</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="fecha_inicio_inscripcion" class="form-label">Fecha de Inicio Inscripción</label>
+                                <input type="datetime-local" class="form-control" id="fecha_inicio_inscripcion" name="fecha_inicio_inscripcion">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="fecha_fin_inscripcion" class="form-label">Fecha de Fin Inscripción</label>
+                                <input type="datetime-local" class="form-control" id="fecha_fin_inscripcion" name="fecha_fin_inscripcion">
+                            </div>
+                        </div>
                         <!-- NUEVO: Horarios de Receso -->
                         <div class="row">
                             <div class="col-md-12 mb-2">
@@ -386,6 +410,30 @@
                                         Marque esta opción si el ciclo tendrá clases los días sábados. Si no se marca, el ciclo solo tendrá clases de lunes a viernes.
                                     </small>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- Periodo de Inscripciones -->
+                        <div class="row border-top pt-3 mt-2">
+                            <div class="col-md-12 mb-2">
+                                <h6 class="text-info"><i class="mdi mdi-calendar-clock me-1"></i>Periodo de Inscripciones</h6>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check form-switch pt-2">
+                                    <input class="form-check-input" type="checkbox" id="edit_inscripciones_abiertas" name="inscripciones_abiertas" value="1">
+                                    <label class="form-check-label" for="edit_inscripciones_abiertas">
+                                        <strong>Inscripciones Habilitadas</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_fecha_inicio_inscripcion" class="form-label">Fecha de Inicio Inscripción</label>
+                                <input type="datetime-local" class="form-control" id="edit_fecha_inicio_inscripcion" name="fecha_inicio_inscripcion">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_fecha_fin_inscripcion" class="form-label">Fecha de Fin Inscripción</label>
+                                <input type="datetime-local" class="form-control" id="edit_fecha_fin_inscripcion" name="fecha_fin_inscripcion">
                             </div>
                         </div>
                         <!-- NUEVO: Horarios de Receso -->
