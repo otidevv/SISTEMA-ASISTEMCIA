@@ -149,9 +149,14 @@
         min-width: 300px;
         display: flex;
         flex-direction: column;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* Imagen con Corte */
+    .modalidad-item:hover {
+        transform: translateY(-8px);
+    }
+
+    /* Imagen con Corte (Efecto Polarid / Polaroid Rotate) */
     .modalidad-image-wrapper {
         width: 100%;
         height: 420px;
@@ -162,17 +167,23 @@
         border: 4px solid #ffffff;
         background: #f1f5f9;
         z-index: 1;
+        transform-origin: top center;
     }
 
     .modalidad-image-wrapper img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 1s ease;
+        transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .modalidad-item:hover .modalidad-image-wrapper img {
-        transform: scale(1.1);
+        transform: scale(1.08);
+    }
+
+    .modalidad-item:hover .modalidad-image-wrapper {
+        transform: rotate(-1.5deg);
+        box-shadow: 0 25px 60px rgba(0,0,0,0.18);
     }
 
     /* Caja de Información Overlap */
@@ -189,14 +200,14 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        transition: all 0.4s ease;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         z-index: 2;
         border: 1px solid rgba(0,0,0,0.03);
     }
 
     .modalidad-item:hover .modalidad-info-box {
-        transform: translateY(-10px);
-        box-shadow: 0 35px 80px rgba(236, 0, 140, 0.2);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 35px 80px rgba(236, 0, 140, 0.18);
     }
 
     .modalidad-name {
@@ -215,11 +226,18 @@
         letter-spacing: 1px;
         padding: 6px 16px;
         border-radius: 20px;
+        transition: all 0.3s;
     }
 
     .modalidad-status.vigente { 
         color: var(--cyan-acento, #00aeef); 
         background: rgba(0, 174, 239, 0.08);
+        animation: status-badge-pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes status-badge-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(0, 174, 239, 0.25); }
+        50% { box-shadow: 0 0 0 6px rgba(0, 174, 239, 0); }
     }
     
     .modalidad-status.proximamente { 
@@ -235,7 +253,7 @@
         font-weight: 800;
         font-size: 14px;
         text-decoration: none !important;
-        transition: all 0.3s;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         box-shadow: 0 8px 20px rgba(236, 0, 140, 0.3);
         display: flex;
         align-items: center;
@@ -250,6 +268,7 @@
     .btn-premium-action:hover {
         background: var(--azul-oscuro, #0c1e2f);
         transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(12, 30, 47, 0.3);
     }
 
     .btn-premium-action:hover::after {
@@ -296,6 +315,7 @@
         opacity: 0.6;
         backdrop-filter: blur(1px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.4s ease, opacity 0.4s ease;
     }
     
     .washi-magenta {
@@ -325,6 +345,11 @@
         border-right: 2px dashed rgba(255,255,255,0.5);
     }
 
+    .modalidad-item:hover .washi-tape {
+        transform: rotate(38deg) scale(1.08);
+        opacity: 0.85;
+    }
+
     /* NUMERACIÓN DE FONDO */
     .modalidad-number {
         position: absolute;
@@ -337,5 +362,12 @@
         z-index: 0;
         font-family: 'Sora', sans-serif;
         pointer-events: none;
+        transition: transform 0.4s ease, opacity 0.4s ease, color 0.4s ease;
+    }
+
+    .modalidad-item:hover .modalidad-number {
+        transform: translateY(-8px);
+        opacity: 0.09;
+        color: var(--magenta-unamad, #ec008c);
     }
 </style>

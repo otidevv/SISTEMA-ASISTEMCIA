@@ -170,13 +170,61 @@
                         #inicio .hero-buttons { bottom: 2% !important; gap: 5px !important; }
                         #inicio .hero-buttons .btn { padding: 8px 15px !important; font-size: 13px !important; }
                     }
+
+                    /* Efecto Ken Burns (Zoom Cinematográfico Lento) */
+                    .ken-burns-wrapper {
+                        width: 100%;
+                        overflow: hidden;
+                        position: relative;
+                        display: flex;
+                    }
+                    .ken-burns-img {
+                        width: 100%;
+                        height: auto;
+                        display: flex;
+                        animation: kenburns-effect 28s ease-in-out infinite;
+                        transform-origin: center center;
+                    }
+                    @keyframes kenburns-effect {
+                        0%, 100% { transform: scale(1.0); }
+                        50% { transform: scale(1.035); }
+                    }
+
+                    /* Efecto Light Sweep (Barrido de luz traslúcido) */
+                    .light-sweep-overlay {
+                        position: absolute;
+                        top: 0;
+                        left: -150%;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(90deg, 
+                            transparent, 
+                            rgba(255, 255, 255, 0.05) 30%, 
+                            rgba(255, 255, 255, 0.18) 50%, 
+                            rgba(255, 255, 255, 0.05) 70%, 
+                            transparent
+                        );
+                        z-index: 6;
+                        pointer-events: none;
+                        animation: lightsweep-effect 12s infinite ease-in-out;
+                    }
+                    @keyframes lightsweep-effect {
+                        0% { left: -150%; }
+                        12% { left: 150%; }
+                        100% { left: 150%; }
+                    }
                 </style>
 
-                <!-- Fondo Dinámico -->
-                <picture style="width: 100%; height: auto; display: flex;">
-                    <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.webp') }}">
-                    <img src="{{ asset('assets_cepre/img/portada/portada2.jpg') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;" fetchpriority="high">
-                </picture>
+                <!-- Contenedor con efectos de animación fluidos -->
+                <div class="ken-burns-wrapper">
+                    <!-- Barrido de luz traslúcido -->
+                    <div class="light-sweep-overlay"></div>
+                    
+                    <picture class="ken-burns-img">
+                        <source media="(max-width: 768px)" srcset="{{ asset('assets_cepre/img/portada/flyer.webp') }}">
+                        <img src="{{ asset('assets_cepre/img/portada/portada2.jpg') }}" alt="Portal CEPRE UNAMAD" style="width: 100%; height: auto; object-fit: contain;" fetchpriority="high">
+                    </picture>
+                </div>
 
                 <!-- Capa oscurecedora inferior para resaltar los botones HTML -->
                 <div style="position: absolute; bottom: 0; width: 100%; height: 16%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); z-index: 5;"></div>
@@ -253,6 +301,8 @@
 <div class="academic-notebook-pattern" style="position: relative; overflow: hidden;">
     <!-- Patrón Kené de fondo para toda la hoja -->
     <div class="kene-pattern-overlay"></div>
+    <!-- Contenedor para Partículas 3D (Three.js) del Fondo Maestro -->
+    <div id="notebook-particles-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; opacity: 0.65;"></div>
 
     <!-- Divisor superior para iniciar la hoja -->
     <div class="torn-paper-edge" style="transform: rotate(180deg); margin-bottom: 0; position: relative; z-index: 15;"></div>
