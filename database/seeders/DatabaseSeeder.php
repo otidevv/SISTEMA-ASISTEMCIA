@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\ResultadosExamenesPermissionsSeeder::class,
             \Database\Seeders\CarnetTemplateSeeder::class,
             \Database\Seeders\ReforzamientoPermissionsSeeder::class,
+            \Database\Seeders\ActividadOperadorPermissionsSeeder::class,
         ]);
     }
 

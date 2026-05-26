@@ -1041,6 +1041,14 @@
                                         </a>
                                     </li>
                                 @endif
+
+                                @if (Auth::user()->hasPermission('reportes.actividad-operador'))
+                                    <li>
+                                        <a href="{{ route('reportes.operador-actividad.index') }}">
+                                            <i class="mdi mdi-account-clock-outline me-1"></i> Mi Informe de Trabajo
+                                        </a>
+                                    </li>
+                                @endif
                                 
                                 @if (Auth::user()->hasPermission('reportes.financieros.ver'))
                                     <li>

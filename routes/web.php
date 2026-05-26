@@ -584,6 +584,22 @@ Route::middleware('auth')->group(function () {
                 ->middleware('can:reportes.estadisticos.ver');
         });
 
+        // Reporte de Actividad del Operador (Mi Informe de Trabajo)
+        Route::prefix('reportes/operador-actividad')->name('reportes.operador-actividad.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ReporteOperadorController::class, 'index'])
+                ->name('index')
+                ->middleware('can:reportes.actividad-operador');
+            Route::get('/data', [\App\Http\Controllers\ReporteOperadorController::class, 'getData'])
+                ->name('data')
+                ->middleware('can:reportes.actividad-operador');
+            Route::post('/pdf', [\App\Http\Controllers\ReporteOperadorController::class, 'exportPdf'])
+                ->name('pdf')
+                ->middleware('can:reportes.actividad-operador');
+            Route::post('/excel', [\App\Http\Controllers\ReporteOperadorController::class, 'exportExcel'])
+                ->name('excel')
+                ->middleware('can:reportes.actividad-operador');
+        });
+
     // Boletines
     Route::prefix('boletines')->name('boletines.')->middleware('auth')->group(function () {
         Route::get('/', [App\Http\Controllers\BoletinController::class, 'index'])->name('index')->middleware('can:boletines.view');
