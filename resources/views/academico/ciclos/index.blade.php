@@ -655,4 +655,162 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para Estructura de Examen (Preguntas por Grupo) -->
+    <div class="modal fade" id="examenEstructuraModal" tabindex="-1" role="dialog" aria-labelledby="examenEstructuraModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title" id="examenEstructuraModalLabel">
+                        <i class="mdi mdi-format-list-numbered me-1"></i> Estructura y Distribución de Preguntas del Examen
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="mdi mdi-information-outline me-1"></i>
+                            Ciclo: <span id="examen-ciclo-nombre" class="fw-bold"></span>
+                        </h6>
+                        <p class="mb-0 small">
+                            Configure la cantidad de preguntas asignadas a cada curso/asignatura por grupo de carrera, así como el tema de examen correspondiente y los puntajes. Los totales se calcularán de manera automática.
+                        </p>
+                    </div>
+
+                    <form id="examenEstructuraForm">
+                        <!-- Configuraciones generales de grupos -->
+                        <div class="row mb-4">
+                            <!-- Grupo A -->
+                            <div class="col-md-4">
+                                <div class="card border border-primary">
+                                    <div class="card-header bg-soft-primary text-primary py-2 text-center">
+                                        <h6 class="mb-0 fw-bold">GRUPO A (Ingenierías)</h6>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Tema por Defecto</label>
+                                            <input type="text" class="form-control form-control-sm" name="configs[A][tema]" id="config_A_tema" placeholder="Ej: P">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Duración (minutos)</label>
+                                            <input type="number" class="form-control form-control-sm" name="configs[A][duracion_minutos]" id="config_A_duracion" required min="1">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Máx.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[A][puntaje_maximo]" id="config_A_max" required min="0">
+                                            </div>
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Mín.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[A][puntaje_minimo_aprobatorio]" id="config_A_min" required min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grupo B -->
+                            <div class="col-md-4">
+                                <div class="card border border-success">
+                                    <div class="card-header bg-soft-success text-success py-2 text-center">
+                                        <h6 class="mb-0 fw-bold">GRUPO B (Salud)</h6>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Tema por Defecto</label>
+                                            <input type="text" class="form-control form-control-sm" name="configs[B][tema]" id="config_B_tema" placeholder="Ej: Q">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Duración (minutos)</label>
+                                            <input type="number" class="form-control form-control-sm" name="configs[B][duracion_minutos]" id="config_B_duracion" required min="1">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Máx.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[B][puntaje_maximo]" id="config_B_max" required min="0">
+                                            </div>
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Mín.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[B][puntaje_minimo_aprobatorio]" id="config_B_min" required min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grupo C -->
+                            <div class="col-md-4">
+                                <div class="card border border-purple" style="border-color: #6f42c1 !important;">
+                                    <div class="card-header bg-soft-purple py-2 text-center" style="background-color: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                                        <h6 class="mb-0 fw-bold">GRUPO C (Sociales)</h6>
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Tema por Defecto</label>
+                                            <input type="text" class="form-control form-control-sm" name="configs[C][tema]" id="config_C_tema" placeholder="Ej: R">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label mb-1">Duración (minutos)</label>
+                                            <input type="number" class="form-control form-control-sm" name="configs[C][duracion_minutos]" id="config_C_duracion" required min="1">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Máx.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[C][puntaje_maximo]" id="config_C_max" required min="0">
+                                            </div>
+                                            <div class="col-6 mb-2">
+                                                <label class="form-label mb-1">Puntaje Mín.</label>
+                                                <input type="number" class="form-control form-control-sm" name="configs[C][puntaje_minimo_aprobatorio]" id="config_C_min" required min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de asignaturas -->
+                        <div class="card">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0 fw-bold"><i class="mdi mdi-table me-1"></i> Distribución de Preguntas por Curso</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-centered mb-0" id="tablaEstructuraExamen">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Asignatura (Curso)</th>
+                                                <th>Código</th>
+                                                <th class="text-center" style="width: 180px;">Grupo A (Preguntas)</th>
+                                                <th class="text-center" style="width: 180px;">Grupo B (Preguntas)</th>
+                                                <th class="text-center" style="width: 180px;">Grupo C (Preguntas)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="estructuraExamenTableBody">
+                                            <!-- Se llenará dinámicamente -->
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr style="border-top: 2px solid #dee2e6;">
+                                                <td colspan="2" class="text-end fw-bold">TOTAL PREGUNTAS:</td>
+                                                <td class="text-center fw-bold text-primary fs-5" id="total_preguntas_A">0</td>
+                                                <td class="text-center fw-bold text-success fs-5" id="total_preguntas_B">0</td>
+                                                <td class="text-center fw-bold text-purple fs-5" style="color: #6f42c1;" id="total_preguntas_C">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarEstructura">
+                        <i class="mdi mdi-content-save me-1"></i> Guardar Estructura
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush
+

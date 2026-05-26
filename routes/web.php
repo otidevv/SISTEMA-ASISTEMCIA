@@ -40,6 +40,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/carreras-profesionales', [HomeController::class, 'carreras'])->name('public.carreras.index');
 Route::get('/carreras-profesionales/{slug}', [HomeController::class, 'showCarrera'])->name('public.carreras.show');
 Route::get('/cuadro-vacantes', [HomeController::class, 'vacantes'])->name('public.vacantes');
+Route::get('/estructura-examen', [HomeController::class, 'estructuraExamen'])->name('public.estructura');
 Route::get('/secundaria', [HomeController::class, 'secundaria'])->name('public.secundaria');
 
 // Ruta para sitemap.xml
@@ -707,6 +708,10 @@ Route::middleware(['auth'])->prefix('json')->group(function () {
         Route::get('/activo/actual', [App\Http\Controllers\Api\CicloController::class, 'cicloActivo']);
         Route::get('/{id}/recuperaciones', [App\Http\Controllers\Api\CicloController::class, 'getRecuperaciones']);
         Route::post('/{id}/recuperaciones', [App\Http\Controllers\Api\CicloController::class, 'updateRecuperaciones']);
+        
+        // Estructura de exámenes por ciclo
+        Route::get('/{id}/examen-estructura', [App\Http\Controllers\Api\ExamenEstructuraApiController::class, 'getEstructura']);
+        Route::post('/{id}/examen-estructura', [App\Http\Controllers\Api\ExamenEstructuraApiController::class, 'saveEstructura']);
         
         // Vacantes por ciclo
         Route::get('/{cicloId}/vacantes', [App\Http\Controllers\Api\CicloVacanteController::class, 'getVacantesByCiclo']);

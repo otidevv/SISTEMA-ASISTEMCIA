@@ -65,6 +65,7 @@ class CicloController extends Controller
 
         if (auth()->user()->hasPermission('ciclos.edit')) {
             $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-primary edit-ciclo" data-id="' . $ciclo->id . '" title="Editar"><i class="uil uil-edit"></i></a> ';
+            $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-secondary edit-examen-estructura" data-id="' . $ciclo->id . '" title="Estructura de Examen"><i class="uil uil-question-circle"></i></a> ';
         }
 
         if (auth()->user()->hasPermission('ciclos.recuperaciones')) {

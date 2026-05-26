@@ -141,6 +141,59 @@ class HomeController extends Controller
     }
 
     /**
+     * Mostrar la distribución de preguntas por grupo del ciclo activo.
+     */
+    public function estructuraExamen()
+    {
+        $cicloActivo = Ciclo::activo()->first();
+        
+        $examenConfigs = [];
+        $examenDistribucion = [];
+        $carrerasPorGrupo = [];
+
+        if ($cicloActivo) {
+            // Obtener configuraciones de exámenes por grupo
+            $configsRaw = \App\Models\ExamenGrupoConfig::where('ciclo_id', $cicloActivo->id)->get();
+            $defaultTemas = ['A' => 'P', 'B' => 'Q', 'C' => 'R'];
+            foreach (['A', 'B', 'C'] as $g) {
+                $c = $configsRaw->where('grupo', $g)->first();
+                $examenConfigs[$g] = $c ?: (object)[
+                    'tema' => $defaultTemas[$g],
+                    'duracion_minutos' => 150,
+                    'puntaje_maximo' => 400,
+                    'puntaje_minimo_aprobatorio' => 160
+                ];
+            }
+
+            // Obtener distribución de preguntas (cursos con cantidad > 0)
+            $examenDistribucion = \App\Models\ExamenPreguntaDistribucion::with('curso')
+                ->where('ciclo_id', $cicloActivo->id)
+                ->where('cantidad_preguntas', '>', 0)
+                ->get()
+                ->groupBy('grupo');
+
+            // Obtener carreras agrupadas por grupo
+            $carrerasPorGrupo = \App\Models\Carrera::activas()->orderBy('nombre')->get()->groupBy('grupo');
+        }
+
+        // Datos para el countdown widget
+        $proximoExamen = null;
+        if ($cicloActivo) {
+            $proximoExamenInfo = $cicloActivo->getProximoExamen();
+            if ($proximoExamenInfo) {
+                $proximoExamen = [
+                    'nombre' => $proximoExamenInfo['nombre'],
+                    'fecha'  => Carbon::parse($proximoExamenInfo['fecha'])->format('M d, Y H:i:s')
+                ];
+            }
+        }
+        $proximoCicloRaw = Ciclo::where('fecha_inicio', '>', now())->orderBy('fecha_inicio')->first();
+        $proximoCiclo = $proximoCicloRaw ? ['nombre' => $proximoCicloRaw->nombre, 'fecha' => Carbon::parse($proximoCicloRaw->fecha_inicio)->format('M d, Y H:i:s')] : null;
+
+        return view('public.estructura-examen', compact('cicloActivo', 'proximoExamen', 'proximoCiclo', 'examenConfigs', 'examenDistribucion', 'carrerasPorGrupo'));
+    }
+
+    /**
      * Listado público de cursos académicos.
      */
     public function cursos()

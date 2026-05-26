@@ -79,6 +79,9 @@
             <li><a href="{{ route('public.vacantes') }}"
                     class="{{ request()->routeIs('public.vacantes') ? 'active' : '' }}">Vacantes <span
                         class="badge-new">NEW</span></a></li>
+            <li><a href="{{ route('public.estructura') }}"
+                    class="{{ request()->routeIs('public.estructura') ? 'active' : '' }}">Estructura <span
+                        class="badge-new">NEW</span></a></li>
             <li><a href="{{ route('resultados-examenes.public') }}"
                     class="{{ request()->routeIs('resultados-examenes.public') ? 'active' : '' }}">Resultados</a></li>
             <li><a href="{{ route('home') }}#contacto">Contacto</a></li>

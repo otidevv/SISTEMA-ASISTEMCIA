@@ -997,5 +997,167 @@ $(document).ready(function () {
             }
         });
     });
+
+    // ============= GESTIÓN DE ESTRUCTURA DE EXAMEN =============
+    let examenCicloId = null;
+
+    $('#ciclos-datatable').on('click', '.edit-examen-estructura', function () {
+        var id = $(this).data('id');
+
+        $.ajax({
+            url: default_server + "/json/ciclos/" + id + "/examen-estructura",
+            type: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    examenCicloId = response.ciclo.id;
+                    $('#examen-ciclo-nombre').text(response.ciclo.nombre);
+
+                    // Llenar configuraciones de los grupos
+                    $.each(response.configs, function (grupo, config) {
+                        $(`#config_${grupo}_tema`).val(config.tema || '');
+                        $(`#config_${grupo}_duracion`).val(config.duracion_minutos || 150);
+                        $(`#config_${grupo}_max`).val(config.puntaje_maximo || 400);
+                        $(`#config_${grupo}_min`).val(config.puntaje_minimo_aprobatorio || 160);
+                    });
+
+                    // Llenar tabla de asignaturas
+                    const tbody = $('#estructuraExamenTableBody');
+                    tbody.empty();
+
+                    if (response.cursos.length === 0) {
+                        tbody.append('<tr><td colspan="5" class="text-center py-3 text-muted">No hay asignaturas registradas.</td></tr>');
+                    } else {
+                        response.cursos.forEach(function (curso) {
+                            const row = `
+                                <tr data-curso-id="${curso.id}">
+                                    <td><strong>${curso.nombre}</strong></td>
+                                    <td><span class="badge bg-soft-secondary text-secondary">${curso.codigo}</span></td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control form-control-sm text-center preg-A-input" 
+                                               value="${curso.preguntas.A || 0}" min="0" style="max-width: 100px; margin: 0 auto;">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control form-control-sm text-center preg-B-input" 
+                                               value="${curso.preguntas.B || 0}" min="0" style="max-width: 100px; margin: 0 auto;">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control form-control-sm text-center preg-C-input" 
+                                               value="${curso.preguntas.C || 0}" min="0" style="max-width: 100px; margin: 0 auto;">
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                    }
+
+                    // Calcular totales
+                    calcularTotalesExamen();
+
+                    $('#examenEstructuraModal').modal('show');
+                } else {
+                    Toast.fire({ icon: 'error', title: 'No se pudo cargar la estructura del examen' });
+                }
+            },
+            error: function () {
+                Toast.fire({ icon: 'error', title: 'Error al obtener la estructura del examen' });
+            }
+        });
+    });
+
+    // Calcular totales de preguntas automáticamente al escribir
+    $(document).on('input', '.preg-A-input, .preg-B-input, .preg-C-input', function () {
+        calcularTotalesExamen();
+    });
+
+    function calcularTotalesExamen() {
+        let totalA = 0;
+        let totalB = 0;
+        let totalC = 0;
+
+        $('.preg-A-input').each(function () {
+            totalA += parseInt($(this).val()) || 0;
+        });
+
+        $('.preg-B-input').each(function () {
+            totalB += parseInt($(this).val()) || 0;
+        });
+
+        $('.preg-C-input').each(function () {
+            totalC += parseInt($(this).val()) || 0;
+        });
+
+        $('#total_preguntas_A').text(totalA);
+        $('#total_preguntas_B').text(totalB);
+        $('#total_preguntas_C').text(totalC);
+    }
+
+    // Guardar estructura en el servidor
+    $('#btnGuardarEstructura').on('click', function () {
+        // Validar configuraciones
+        let formValido = true;
+        $('#examenEstructuraForm input[required]').each(function () {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                formValido = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        if (!formValido) {
+            Toast.fire({ icon: 'warning', title: 'Por favor complete todos los campos obligatorios de los grupos' });
+            return;
+        }
+
+        // Construir objeto de configuraciones
+        let configs = {};
+        ['A', 'B', 'C'].forEach(function (grupo) {
+            configs[grupo] = {
+                tema: $(`#config_${grupo}_tema`).val(),
+                duracion_minutos: $(`#config_${grupo}_duracion`).val(),
+                puntaje_maximo: $(`#config_${grupo}_max`).val(),
+                puntaje_minimo_aprobatorio: $(`#config_${grupo}_min`).val()
+            };
+        });
+
+        // Construir arreglo de preguntas
+        let preguntas = [];
+        $('#estructuraExamenTableBody tr').each(function () {
+            const row = $(this);
+            const cursoId = row.data('curso-id');
+            if (cursoId) {
+                preguntas.push({
+                    curso_id: cursoId,
+                    preguntas_A: parseInt(row.find('.preg-A-input').val()) || 0,
+                    preguntas_B: parseInt(row.find('.preg-B-input').val()) || 0,
+                    preguntas_C: parseInt(row.find('.preg-C-input').val()) || 0
+                });
+            }
+        });
+
+        $.ajax({
+            url: default_server + `/json/ciclos/${examenCicloId}/examen-estructura`,
+            type: 'POST',
+            data: {
+                configs: configs,
+                preguntas: preguntas
+            },
+            success: function (response) {
+                if (response.success) {
+                    Toast.fire({ icon: 'success', title: response.message });
+                    $('#examenEstructuraModal').modal('hide');
+                    table.ajax.reload(); // Recargar la tabla principal
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 422) {
+                    Toast.fire({ icon: 'error', title: xhr.responseJSON.message || 'Error de validación al guardar' });
+                } else {
+                    Toast.fire({ icon: 'error', title: 'Error al guardar la estructura del examen' });
+                }
+            }
+        });
+    });
 });
+
 

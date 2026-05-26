@@ -100,6 +100,17 @@ class Ciclo extends Model
                     ->withTimestamps();
     }
 
+    public function examenGrupoConfigs()
+    {
+        return $this->hasMany(ExamenGrupoConfig::class);
+    }
+
+    public function examenPreguntaDistribuciones()
+    {
+        return $this->hasMany(ExamenPreguntaDistribucion::class);
+    }
+
+
     // Scopes
     public function scopeActivo($query)
     {
