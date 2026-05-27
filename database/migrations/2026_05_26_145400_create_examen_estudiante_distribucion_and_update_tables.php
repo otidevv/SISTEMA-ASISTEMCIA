@@ -15,6 +15,12 @@ return new class extends Migration
 
         // 1. Modificar la tabla examen_distribucion
         Schema::table('examen_distribucion', function (Blueprint $table) {
+            // Crear índices simples primero para satisfacer la foreign key en MySQL
+            $table->index('ciclo_id', 'exam_dist_ciclo_id_idx');
+            $table->index('aula_id', 'exam_dist_aula_id_idx');
+        });
+
+        Schema::table('examen_distribucion', function (Blueprint $table) {
             try {
                 // Forzar eliminación del índice único usando el nombre exacto de la base de datos
                 $table->dropUnique('examen_distribucion_ciclo_id_aula_id_unique');
@@ -71,6 +77,12 @@ return new class extends Migration
             } catch (\Exception $e) {}
 
             $table->dropColumn(['examen_numero', 'rango_inicio', 'rango_fin']);
+
+            try {
+                $table->dropIndex('exam_dist_ciclo_id_idx');
+                $table->dropIndex('exam_dist_aula_id_idx');
+            } catch (\Exception $e) {}
+
             $table->unique(['ciclo_id', 'aula_id']);
         });
 
