@@ -6,19 +6,10 @@
     <title>Etiquetas de Examen - UNAMAD (2x3)</title>
     
     <style>
-        /* Variables y configuración de color principal */
-        :root {
-            --color-unama-blue: #0A3C59;
-            --color-tema-p: #0d6efd;
-            --color-tema-q: #198754;
-            --color-tema-r: #ffc107;
-        }
-        
         /* CONFIGURACIÓN BASE Y PÁGINA A4 HORIZONTAL */
         @page {
-            /* A4 Landscape: 297mm x 210mm */
             size: A4 landscape;
-            margin: 8mm;
+            margin: 5mm;
         }
         
         * {
@@ -28,56 +19,50 @@
         }
         
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-weight: 500;
-            /* Asegura que los colores se impriman correctamente */
+            background-color: #ffffff;
+            color: #1e293b;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-
-        /* CONTENEDOR PRINCIPAL */
+  
         .tarjetas-container {
             width: 100%;
             text-align: center;
         }
-
-        /* FILA DE TARJETAS (2 por fila) */
+  
         .tarjeta-fila {
             width: 100%;
             margin-bottom: 0;
             page-break-inside: avoid;
             text-align: left;
-            margin-bottom: 2mm; /* Espacio entre filas */
+            margin-bottom: 1mm; 
         }
-
-        /* WRAPPER CON LÍNEAS DE CORTE - APROX. 13.5CM DE ANCHO */
+  
         .tarjeta-wrapper {
             display: inline-block;
-            width: 13.5cm; 
-            height: 6.3cm; 
+            width: 14.1cm; 
+            height: 6.4cm; 
             vertical-align: top;
             position: relative;
             page-break-inside: avoid;
-            margin-right: 5mm; 
+            margin-right: 2mm; 
         }
         
-        /* Eliminar margen extra en la segunda tarjeta de cada fila (la última) */
         .tarjeta-fila .tarjeta-wrapper:nth-child(2n) {
             margin-right: 0;
         }
-
-        /* LÍNEAS DE CORTE (Esquinas) */
+  
+        /* Líneas de corte sutiles */
         .linea-corte {
             position: absolute;
-            background-color: #666;
+            background-color: #cbd5e1;
+            z-index: 10;
         }
+        .linea-corte-h { height: 0.5px; width: 6mm; }
+        .linea-corte-v { width: 0.5px; height: 6mm; }
         
-        /* Líneas horizontales */
-        .linea-corte-h { height: 0.5px; width: 8mm; }
-        /* Líneas verticales */
-        .linea-corte-v { width: 0.5px; height: 8mm; }
-        
-        /* Posiciones de las líneas */
         .corte-tl-h { top: 0; left: 0; }
         .corte-tl-v { top: 0; left: 0; }
         .corte-tr-h { top: 0; right: 0; }
@@ -86,153 +71,127 @@
         .corte-bl-v { bottom: 0; left: 0; }
         .corte-br-h { bottom: 0; right: 0; }
         .corte-br-v { bottom: 0; right: 0; }
-
-        /* TARJETA BASE - NUEVAS DIMENSIONES AMPLIADAS */
+  
         .tarjeta {
-            width: 13.1cm; 
-            height: 5.9cm;
-            border: 1px dashed #999;
+            width: 13.8cm; 
+            height: 6.0cm;
+            border: 1.5px solid #64748b;
             margin: 2mm; 
             padding: 0;
-            font-size: 10px;
             border-radius: 8px;
             overflow: hidden;
             background-color: #fff;
             position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-
-        /* Franja de Color Lateral y TEMA */
+  
+        /* Franja de Color Lateral y TEMA (Alto contraste para B&W) */
         .franja-tema {
-            position: absolute; left: 0; top: 0; width: 35px; height: 100%;
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 38px; 
+            height: 100%;
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+            z-index: 2;
+            text-align: center;
         }
-        .tarjeta-p .franja-tema { background-color: var(--color-tema-p); }
-        .tarjeta-q .franja-tema { background-color: var(--color-tema-q); }
-        .tarjeta-r .franja-tema { background-color: var(--color-tema-r); }
-        .tema-indicator { position: absolute; left: 0; top: 50%; width: 35px; transform: translateY(-50%); text-align: center; }
-        .tema-indicator .tema-letra { font-size: 64px; font-weight: 900; line-height: 1; color: white; text-shadow: 3px 3px 6px rgba(0,0,0,0.4); display: block; }
-        .tema-indicator .tema-label { font-size: 8px; font-weight: 800; color: white; text-transform: uppercase; display: block; margin-top: 6px; letter-spacing: 1px; }
-
-        /* Contenedor principal de datos */
+        .tarjeta-p .franja-tema { background-color: #1e40af; } /* Azul oscuro */
+        .tarjeta-q .franja-tema { background-color: #15803d; } /* Verde oscuro */
+        .tarjeta-r .franja-tema { background-color: #b45309; } /* Naranja/Marrón oscuro */
+        
+        .tema-indicator { 
+            position: absolute; 
+            left: 0; 
+            top: 50%; 
+            width: 38px; 
+            transform: translateY(-50%); 
+            text-align: center; 
+        }
+        .tema-indicator .tema-letra { 
+            font-size: 44px; 
+            font-weight: 900; 
+            line-height: 1; 
+            color: #ffffff; 
+            display: block; 
+        }
+        .tema-indicator .tema-label { 
+            font-size: 7px; 
+            font-weight: 800; 
+            color: #ffffff; 
+            text-transform: uppercase; 
+            display: block; 
+            margin-top: 2px; 
+            letter-spacing: 0.5px; 
+        }
+  
         .contenido-principal {
             margin-left: 38px; 
             height: 100%;
             position: relative;
+            z-index: 1;
         }
         
-        /* 1. HEADER INSTITUCIONAL - REESTRUCTURADO */
+        /* Header en Fondo Blanco para máxima nitidez en B&W */
         .header-institucional {
-            background-color: var(--color-unama-blue);
-            color: white;
-            /* AJUSTE 1: Reducimos el padding superior a 1px para subir el texto */
-            padding: 1px 5px 2px 5px; 
-            height: 28px; 
-            font-size: 8px; 
-            font-weight: 700;
-            overflow: hidden;
+            background-color: #ffffff;
+            border-bottom: 2px solid #0f172a;
+            color: #0f172a;
+            padding: 3px 8px; 
+            height: 46px; 
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            display: flex; 
-            /* AJUSTE 2: Alineamos el contenido al inicio (arriba) */
-            align-items: flex-start;
-            justify-content: space-between;
         }
-
-        /* Contenedores de Logos */
+  
         .header-logo-container {
-            /* Fija el tamaño del contenedor */
-            width: 24px; /* Aumentado de 20px a 24px */
-            height: 24px; /* Aumentado de 20px a 24px */
-            flex-shrink: 0;
-            /* Si la alineación es flex-start, necesitamos asegurarnos que los logos no estén muy arriba. */
-            /* Dándoles un margen superior de 1px para compensar la reducción del padding del padre */
-            margin-top: 1px;
+            width: 36px;
+            height: 36px;
+            float: left;
+            margin-top: 2px;
         }
-        .header-logo-container img {
+        .header-logo-container-right {
+            width: 36px;
+            height: 36px;
+            float: right;
+            margin-top: 2px;
+        }
+        .header-logo-container img, .header-logo-container-right img {
             width: 100%; 
             height: 100%; 
-            border-radius: 50%; 
-            padding: 1px;
-            object-fit: contain; /* Asegura que la imagen quepa sin desbordar */
             display: block;
         }
         
-        /* Contenedor de Texto Central */
         .texto-header-container {
-            flex-grow: 1;
+            margin-left: 40px;
+            margin-right: 40px;
             text-align: center;
             line-height: 1.1;
-            /* AJUSTE CLAVE 1: Reducir el padding horizontal para más espacio */
-            padding: 0 2px; 
         }
         
-        /* === ESTILOS PARA QUE EL TÍTULO DE LA UNIVERSIDAD ENCAJE === */
         .texto-header-container .universidad-title {
-            /* Reducimos la fuente para asegurar que entre */
-            font-size: 6.5px; 
+            font-size: 9px; 
             font-weight: 800;
             display: block;
-            line-height: 1; 
             text-transform: uppercase;
+            color: #0f172a;
+            letter-spacing: 0.1px;
         }
         
         .texto-header-container .cepre-title {
-            /* Título del CEPRE en segunda línea, ajustado ligeramente */
-            font-size: 7.5px;
-            font-weight: 700;
-            line-height: 1; /* Reducimos la altura de línea */
+            font-size: 11px;
+            font-weight: 800;
             display: block;
-            /* AJUSTE CLAVE 2: Reducir el margen superior para compactar el espacio */
-            margin-top: 0px; 
+            color: #1e3a8a;
         }
         
         .texto-header-container .ciclo {
-            font-size: 7.5px;
+            font-size: 8.5px;
             font-weight: 700;
-            /* AJUSTE CLAVE 3: Reducir el margen superior para compactar el espacio */
-            margin-top: 1px;
-            line-height: 1;
+            display: block;
+            color: #475569;
         }
-        /* ========================================================== */
-
-        /* 2. UBICACIÓN CLAVE (Carrera y Código) */
-        .ubicacion-clave-table { width: 100%; border-collapse: collapse; margin-top: 1px; }
-        .ubicacion-clave-table td { text-align: center; vertical-align: top; padding: 2px 0; width: 50%; }
-        .ubicacion-clave-table .separator { border-left: 1px solid #d1d5db; }
-        .ubicacion-clave-table .label { color: #9ca3af; font-weight: 800; font-size: 8px; display: block; line-height: 1; margin-bottom: 2px; letter-spacing: 0.3px; }
-        
-        .ubicacion-clave-table .carrera-profesional { 
-            font-weight: 900; font-size: 20px; line-height: 1.2; color: #dc2626; 
-            padding: 0 4px; text-transform: uppercase; max-height: 96px; overflow: hidden; display: inline-block;
-        }
-        
-        .ubicacion-clave-table .codigo { 
-            font-weight: 900; font-size: 26px; line-height: 1; color: #1f2937; 
-        }
-
-        /* 3. IDENTIFICACIÓN FOTOGRÁFICA */
-        .identificacion-detalle-table {
-            width: 100%; background-color: #f3f4f6; border-collapse: collapse; margin-top: 1px; 
-            -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        }
-        .identificacion-detalle-table .foto-cell { width: 85px; padding: 1px 0 1px 8px; vertical-align: top; }
-        .identificacion-detalle-table .datos-cell { padding: 1px 4px 1px 4px; vertical-align: top; }
-        .identificacion-detalle-table img { 
-            width: 80px; height: 80px; border-radius: 4px; border: 2px solid #60a5fa; display: block; 
-        }
-        .datos-postulante .label { color: #9ca3af; font-size: 8px; display: block; text-transform: uppercase; line-height: 1.1; margin-bottom: 1px; font-weight: 700; }
-        .nombre-postulante { font-weight: 800; font-size: 16px; line-height: 1.2; color: #1f2937; margin-bottom: 1px; max-height: 38px; overflow: hidden; }
-        .carrera-postulante { display: none; }
-
-        /* Footer */
-        .footer-grupo-tema {
-            font-size: 9px; font-weight: 700; padding: 2px 8px; border-top: 1px solid #d1d5db;
-            text-align: center; background-color: #f3f4f6; -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        }
-        .footer-grupo-tema strong { color: #1f2937; font-weight: 800; }
-        
-        /* Utilidades de limpieza */
+  
         .clearfix::after { content: ""; display: table; clear: both; }
     </style>
 </head>
@@ -241,8 +200,7 @@
         @foreach($tarjetas as $index => $tarjeta)
             @php
                 $claseTema = 'tarjeta-' . strtolower($tarjeta['tema'] ?? 'r');
-                $fotoSrc = $tarjeta['foto'] ?? 'https://placehold.co/80x80/E0E7FF/1E40AF?text=FOTO'; 
-                
+                $fotoSrc = $tarjeta['foto'] ?? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; 
                 $carreraSuperior = strtoupper($tarjeta['carrera'] ?? 'SIN CARRERA');
                 $abrirFila = ($index % 2 == 0);
                 $cerrarFila = ($index % 2 == 1) || ($index == count($tarjetas) - 1);
@@ -262,9 +220,18 @@
                 <div class="linea-corte linea-corte-v corte-bl-v"></div>
                 <div class="linea-corte linea-corte-h corte-br-h"></div>
                 <div class="linea-corte linea-corte-v corte-br-v"></div>
-
+                
                 <div class="tarjeta {{ $claseTema }}">
-                    <!-- Franja de Color Vertical con TEMA EXTRA GRANDE -->
+                    <!-- Sello de Inhabilitado (Centrado absoluto) -->
+                    @if(!empty($tarjeta['inhabilitado']))
+                        <div style="position: absolute; top: 1.8cm; left: 2.8cm; width: 8.5cm; z-index: 999; text-align: center;">
+                            <div style="color: #dc2626; font-size: 24px; font-weight: 900; border: 4px solid #dc2626; padding: 6px 14px; display: inline-block; transform: rotate(-12deg); background-color: #ffffff; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);">
+                                INHABILITADO
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Franja de Color Vertical -->
                     <div class="franja-tema">
                         <div class="tema-indicator">
                             <span class="tema-label">TEMA</span>
@@ -273,60 +240,81 @@
                     </div>
 
                     <div class="contenido-principal">
-                        
-                        <!-- 1. HEADER INSTITUCIONAL - CON DOS LOGOS Y RUTAS ORIGINALES -->
-                        <div class="header-institucional">
-                            
-                            <!-- LOGO IZQUIERDO (UNAMAD) -->
-                            <div class="header-logo-container">
-                                <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="Logo UNAMAD"/> 
-                            </div>
-                            
-                            <!-- TEXTO CENTRAL (Ajustado para que el nombre de la U entre en una línea y se mueva hacia arriba) -->
-                            <div class="texto-header-container">
-                                <span class="universidad-title">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</span>
-                                <span class="cepre-title">CENTRO PRE UNIVERSITARIO</span>
-                                <div class="ciclo">CICLO 2024-II</div>
-                            </div>
-                            
-                            <!-- LOGO DERECHO (CEPRE) -->
-                            <div class="header-logo-container">
-                                <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="Logo CEPRE"/> 
-                            </div>
-
-                        </div>
-
-                        <!-- 2. UBICACIÓN CLAVE (CARRERA PROFESIONAL) -->
-                        <table class="ubicacion-clave-table">
-                            <tr>
-                                <td>
-                                    <span class="label">CARRERA PROFESIONAL</span>
-                                    <div class="carrera-profesional">{{ $carreraSuperior }}</div>
+                        <!-- 1. HEADER INSTITUCIONAL (Centrado perfecto con tabla de 3 columnas) -->
+                        <table style="width: 100%; height: 48px; border-collapse: collapse; border: none; border-bottom: 2px solid #0f172a; margin-bottom: 2px; background-color: #ffffff;">
+                            <tr style="border: none;">
+                                <td style="width: 44px; vertical-align: middle; text-align: left; border: none; padding: 2px 0 2px 8px;">
+                                    <img src="{{ public_path('assets/images/logo unamad constancia_optimized.png') }}" style="width: 36px; height: 36px; display: block;" alt="Logo UNAMAD"/> 
                                 </td>
-                                <td class="separator">
-                                    <span class="label">CÓDIGO / CODE</span>
-                                    <div class="codigo">{{ $tarjeta['codigo'] ?? '---' }}</div>
+                                <td style="vertical-align: middle; text-align: center; border: none; padding: 2px 0;">
+                                    <span style="font-size: 8.5px; font-weight: 800; display: block; text-transform: uppercase; color: #0f172a; letter-spacing: 0.1px; line-height: 1.15;">UNIVERSIDAD NACIONAL AMAZÓNICA DE MADRE DE DIOS</span>
+                                    <span style="font-size: 12.5px; font-weight: 900; display: block; color: #1e3a8a; line-height: 1.2; text-transform: uppercase; margin-top: 1px;">CENTRO PRE UNIVERSITARIO</span>
+                                    <span style="font-size: 8.5px; font-weight: 800; display: block; color: #475569; line-height: 1.1; margin-top: 1px;">{{ $ciclo_nombre ?? 'CICLO ACTUAL' }}</span>
+                                </td>
+                                <td style="width: 44px; vertical-align: middle; text-align: right; border: none; padding: 2px 8px 2px 0;">
+                                    <img src="{{ public_path('assets/images/logo cepre costancia_optimized.png') }}" style="width: 36px; height: 36px; display: block;" alt="Logo CEPRE"/> 
                                 </td>
                             </tr>
                         </table>
 
-                        <!-- 3. IDENTIFICACIÓN FOTOGRÁFICA -->
-                        <table class="identificacion-detalle-table">
-                            <tr>
-                                <td class="foto-cell" rowspan="2">
-                                    <img src="{{ $fotoSrc }}" onerror="this.onerror=null;this.src='https://placehold.co/80x80/E0E7FF/1E40AF?text=FOTO';" alt="Foto"/>
+                        <!-- TABLA DE DATOS (Perfecta maquetación sin desbordes) -->
+                        <table style="width: 100%; height: 172px; border-collapse: collapse; border: none; table-layout: fixed;">
+                            <!-- Fila 1: Carrera y Código -->
+                            <tr style="height: 48px;">
+                                <td style="width: 63%; padding: 4px 8px; vertical-align: middle; text-align: left; border: none; overflow: hidden;">
+                                    <span style="color: #475569; font-weight: 800; font-size: 7.5px; text-transform: uppercase; display: block; margin-bottom: 2px; letter-spacing: 0.3px;">CARRERA PROFESIONAL</span>
+                                    <div style="font-weight: 800; font-size: 11px; line-height: 1.2; color: #000000; text-transform: uppercase;">{{ $carreraSuperior }}</div>
                                 </td>
-                                <td class="datos-cell">
-                                    <div class="datos-postulante">
-                                        <span class="label">Postulante</span>
-                                        <div class="nombre-postulante">{{ $tarjeta['nombres'] ?? 'SIN NOMBRE' }}</div>
-                                        <div class="carrera-postulante"></div>
-                                    </div>
+                                <td style="width: 37%; padding: 4px 8px; vertical-align: middle; text-align: center; border-left: 1.5px solid #000000; border-top: none; border-bottom: none; border-right: none;">
+                                    <span style="color: #475569; font-weight: 800; font-size: 7.5px; text-transform: uppercase; display: block; margin-bottom: 1px; letter-spacing: 0.3px;">CÓDIGO POSTULANTE</span>
+                                    <div style="font-weight: 900; font-size: 21px; color: #000000; letter-spacing: 0.5px;">{{ $tarjeta['codigo'] ?? '---' }}</div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td class="footer-grupo-tema">
-                                    <strong>GRUPO:</strong> {{ $tarjeta['grupo'] ?? '---' }} | <strong>TEMA:</strong> {{ $tarjeta['tema'] ?? '---' }}
+                            
+                            <!-- Fila 2: Foto y Datos del Postulante -->
+                            <tr style="height: 108px; border-top: 1.5px solid #000000; border-bottom: 1.5px solid #000000; border-left: none; border-right: none;">
+                                <td colspan="2" style="padding: 6px 8px; vertical-align: middle; border: none; background-color: #f8fafc;">
+                                    <table style="width: 100%; border-collapse: collapse; border: none;">
+                                        <tr style="border: none;">
+                                            <!-- Columna Foto -->
+                                            <td style="width: 82px; vertical-align: middle; text-align: left; border: none; padding: 0;">
+                                                <div style="width: 78px; height: 90px; border: 2px solid #000000; border-radius: 4px; overflow: hidden; background-color: #ffffff;">
+                                                    <img src="{{ $fotoSrc }}" onerror="this.onerror=null;this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';" style="width: 100%; height: 100%; display: block; object-fit: cover;"/>
+                                                </div>
+                                            </td>
+                                            <!-- Columna Datos -->
+                                            <td style="padding-left: 10px; vertical-align: middle; text-align: left; border: none;">
+                                                <span style="color: #475569; font-size: 8px; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 2px; letter-spacing: 0.2px;">POSTULANTE</span>
+                                                <div style="font-weight: 800; font-size: 13.5px; line-height: 1.25; color: #000000; text-transform: uppercase; margin-bottom: 3px;">{{ $tarjeta['nombres'] ?? 'SIN NOMBRE' }}</div>
+                                                <div style="font-size: 9.5px; font-weight: 700; color: #475569; margin-bottom: 5px;">DNI: <strong style="color: #000000; font-weight: 800; font-size: 11px;">{{ $tarjeta['dni'] ?? '--------' }}</strong></div>
+                                                
+                                                <!-- Fila de Información Clave (Aula y Asiento en Badges de alto contraste) -->
+                                                <table style="width: 100%; border-collapse: collapse; border: none;">
+                                                    <tr>
+                                                        <td style="padding-right: 6px; border: none;">
+                                                            <div style="border: 1.5px solid #000000; background-color: #ffffff; padding: 3px 6px; border-radius: 4px; text-align: center;">
+                                                                <span style="font-size: 7px; font-weight: 800; display: block; color: #475569; line-height: 1;">AULA</span>
+                                                                <span style="font-size: 13px; font-weight: 900; color: #000000; display: block; margin-top: 1px;">{{ $tarjeta['aula'] ?? '---' }}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td style="border: none;">
+                                                            <div style="border: 1.5px solid #000000; background-color: #0f172a; padding: 3px 6px; border-radius: 4px; text-align: center;">
+                                                                <span style="font-size: 7px; font-weight: 800; display: block; color: #cbd5e1; line-height: 1;">N° ASIENTO</span>
+                                                                <span style="font-size: 13px; font-weight: 900; color: #ffffff; display: block; margin-top: 1px;">{{ $tarjeta['asiento'] ?? $tarjeta['numero_asiento'] ?? '---' }}</span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            
+                            <!-- Fila 3: Footer Grupo y Tema -->
+                            <tr style="height: 28px; background-color: #ffffff; border: none;">
+                                <td colspan="2" style="text-align: center; vertical-align: middle; font-size: 9.5px; font-weight: 700; color: #0f172a; border: none;">
+                                    GRUPO: <strong style="font-weight: 900; font-size: 11px;">{{ $tarjeta['grupo'] ?? '---' }}</strong> &nbsp;&nbsp;|&nbsp;&nbsp; TEMA ASIGNADO: <strong style="font-weight: 900; font-size: 11px;">{{ $tarjeta['tema'] ?? '---' }}</strong>
                                 </td>
                             </tr>
                         </table>

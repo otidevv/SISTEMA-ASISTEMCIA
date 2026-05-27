@@ -848,4 +848,98 @@ class AsistenciaHelper
 
         return 'Otro';
     }
+
+    /**
+     * Obtener documentos de alumnos inhabilitados para un examen y ciclo específico.
+     */
+    public static function obtenerDocumentosInhabilitados($ciclo, $examenNumero)
+    {
+        $examenActivo = self::getExamenPeriodoPorId($ciclo, $examenNumero);
+        if (!$examenActivo) return [];
+
+        $periodoInicio = Carbon::parse($examenActivo['fecha_inicio'])->startOfDay();
+        $periodoExamen = Carbon::parse($examenActivo['fecha_examen'])->endOfDay();
+        $ahora = Carbon::now();
+        $fechaFinCalculo = $ahora < $periodoExamen ? $ahora->copy()->endOfDay() : $periodoExamen;
+
+        // Obtener todas las inscripciones del ciclo
+        $inscripciones = \App\Models\Inscripcion::where('ciclo_id', $ciclo->id)
+            ->where('estado_inscripcion', 'activo')
+            ->with('estudiante:id,numero_documento')
+            ->get();
+
+        $totalEstudiantes = $inscripciones->count();
+        if ($totalEstudiantes === 0) return [];
+
+        $documentosInscritos = $inscripciones->pluck('estudiante.numero_documento')->filter()->toArray();
+
+        // Obtener primeras asistencias
+        $primerasAsistencias = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentosInscritos)
+            ->where('fecha_registro', '>=', $ciclo->fecha_inicio)
+            ->where('fecha_registro', '<=', $ciclo->fecha_fin)
+            ->select('nro_documento', DB::raw('MIN(fecha_registro) as first_reg'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('first_reg', 'nro_documento')
+            ->toArray();
+
+        // Obtener asistencias del periodo
+        $asistenciasCount = DB::table('registros_asistencia')
+            ->whereIn('nro_documento', $documentosInscritos)
+            ->where('fecha_registro', '>=', $periodoInicio)
+            ->where('fecha_registro', '<=', $fechaFinCalculo)
+            ->select('nro_documento', DB::raw('COUNT(DISTINCT DATE(fecha_registro)) as total'))
+            ->groupBy('nro_documento')
+            ->get()
+            ->pluck('total', 'nro_documento')
+            ->toArray();
+
+        // Pre-calcular mapa de días hábiles
+        $cycleStart = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
+        $cycleEnd = Carbon::parse($ciclo->fecha_fin)->endOfDay();
+        $cumulativeBusinessDays = [];
+        $count = 0;
+        $temp = $cycleStart->copy();
+        while ($temp <= $cycleEnd) {
+            if ($ciclo->esDiaHabil($temp)) $count++;
+            $cumulativeBusinessDays[$temp->toDateString()] = $count;
+            $temp->addDay();
+        }
+
+        $inhabilitados = [];
+        $isPrimerExamen = ($examenActivo['nombre'] === 'Primer Examen');
+        $porcentajeInhabilitacion = $ciclo->porcentaje_inhabilitacion ?? 30;
+
+        foreach ($inscripciones as $inscripcion) {
+            $doc = $inscripcion->estudiante->numero_documento ?? '';
+            if (empty($doc) || !isset($primerasAsistencias[$doc])) {
+                continue;
+            }
+
+            $currentInicioConteo = $periodoInicio->copy();
+            if ($isPrimerExamen) {
+                $fechaPrimerRegistro = Carbon::parse($primerasAsistencias[$doc])->startOfDay();
+                if ($fechaPrimerRegistro->gt($currentInicioConteo)) {
+                    $currentInicioConteo = $fechaPrimerRegistro;
+                }
+            }
+
+            if ($currentInicioConteo > $ahora) continue;
+
+            $diasHabilesTotales = self::getBusinessDaysCountStatic($currentInicioConteo, $periodoExamen, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
+            $diasHabilesTranscurridos = self::getBusinessDaysCountStatic($currentInicioConteo, $fechaFinCalculo, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
+            
+            $diasConAsistencia = $asistenciasCount[$doc] ?? 0;
+            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+            
+            $limiteInhabilitacion = ceil($diasHabilesTotales * ($porcentajeInhabilitacion / 100));
+
+            if ($totalFaltas >= $limiteInhabilitacion) {
+                $inhabilitados[] = $doc;
+            }
+        }
+
+        return $inhabilitados;
+    }
 }

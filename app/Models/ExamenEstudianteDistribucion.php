@@ -7,24 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 
-class ExamenDistribucion extends Model
+class ExamenEstudianteDistribucion extends Model
 {
     use HasFactory;
     use LogsActivity;
 
-    protected $table = 'examen_distribucion';
+    protected $table = 'examen_estudiante_distribucion';
 
     protected $fillable = [
         'ciclo_id',
-        'aula_id',
         'examen_numero',
-        'docente_id',
-        'docente_invitado',
+        'inscripcion_id',
+        'aula_id',
+        'numero_asiento',
         'tema',
-        'grupo',
-        'cantidad_estudiantes',
-        'rango_inicio',
-        'rango_fin'
+        'grupo'
     ];
 
     public function ciclo()
@@ -32,14 +29,14 @@ class ExamenDistribucion extends Model
         return $this->belongsTo(Ciclo::class);
     }
 
+    public function inscripcion()
+    {
+        return $this->belongsTo(Inscripcion::class);
+    }
+
     public function aula()
     {
         return $this->belongsTo(Aula::class);
-    }
-
-    public function docente()
-    {
-        return $this->belongsTo(User::class, 'docente_id');
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -48,6 +45,6 @@ class ExamenDistribucion extends Model
             ->logAll()
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Registro {$eventName}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Registro estudiante examen {$eventName}");
     }
 }
