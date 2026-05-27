@@ -34,7 +34,7 @@ class ExamenDistribucion extends Model
 
     public function aula()
     {
-        return $this->belongsTo(Aula::class);
+        return $this->belongsTo(ExamenAula::class);
     }
 
     public function docente()

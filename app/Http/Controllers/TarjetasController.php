@@ -9,6 +9,7 @@ use App\Models\Postulacion;
 use App\Models\ExamenEstudianteDistribucion;
 use App\Models\ExamenDistribucion;
 use App\Models\ExamenGrupoConfig;
+use App\Models\ExamenAula;
 use App\Helpers\AsistenciaHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Http;
@@ -507,7 +508,7 @@ class TarjetasController extends Controller
 
             $examenNumero = $request->input('examen_numero', 1);
 
-            $aulas = \App\Models\Aula::where('estado', true)->get()->map(function($aula) {
+            $aulas = ExamenAula::where('estado', true)->get()->map(function($aula) {
                 if (!$aula->piso && is_numeric($aula->nombre)) {
                     $aula->piso = substr($aula->nombre, 0, 1);
                 }
@@ -757,7 +758,7 @@ class TarjetasController extends Controller
             }
 
             // 3. Obtener Aulas Disponibles con capacidad > 0
-            $aulas = \App\Models\Aula::where('estado', true)
+            $aulas = ExamenAula::where('estado', true)
                 ->where('capacidad', '>', 0)
                 ->orderBy('nombre')
                 ->get()
@@ -899,7 +900,7 @@ class TarjetasController extends Controller
             if (!$cicloActivo) return response()->json(['error' => 'No hay ciclo activo'], 404);
 
             $examenNumero = $request->input('examen_numero', 1);
-            $aula = \App\Models\Aula::findOrFail($id);
+            $aula = ExamenAula::findOrFail($id);
             
             $estudiantes = ExamenEstudianteDistribucion::where('aula_id', $id)
                 ->where('ciclo_id', $cicloActivo->id)
@@ -1077,7 +1078,7 @@ class TarjetasController extends Controller
             $codigo = 'A-' . $data['nombre'];
 
             if (!empty($data['id'])) {
-                $aula = \App\Models\Aula::findOrFail($data['id']);
+                $aula = ExamenAula::findOrFail($data['id']);
                 $aula->update([
                     'nombre' => $data['nombre'],
                     'piso' => $data['piso'],
@@ -1085,7 +1086,7 @@ class TarjetasController extends Controller
                     'codigo' => $codigo
                 ]);
             } else {
-                $aula = \App\Models\Aula::updateOrCreate(
+                $aula = ExamenAula::updateOrCreate(
                     ['codigo' => $codigo], // Buscar por código que es el campo único
                     [
                         'nombre' => $data['nombre'],
@@ -1123,7 +1124,7 @@ class TarjetasController extends Controller
                 $nombreAula = $piso . str_pad($numero, 2, '0', STR_PAD_LEFT);
                 $codigoAula = 'A-' . $nombreAula;
                 
-                \App\Models\Aula::updateOrCreate(
+                ExamenAula::updateOrCreate(
                     ['codigo' => $codigoAula], // Buscar por código que es el campo único
                     [
                         'nombre' => $nombreAula,
@@ -1146,7 +1147,7 @@ class TarjetasController extends Controller
     public function eliminarAula($id)
     {
         try {
-            $aula = \App\Models\Aula::findOrFail($id);
+            $aula = ExamenAula::findOrFail($id);
             
             try {
                 // Intentar eliminación física
