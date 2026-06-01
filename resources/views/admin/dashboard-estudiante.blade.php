@@ -1591,7 +1591,7 @@
                                 @foreach ($anuncios as $key => $anuncio)
                                     <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
                                         @if ($anuncio->imagen)
-                                            <img src="{{ asset('storage/' . $anuncio->imagen) }}" class="d-block w-100" alt="{{ $anuncio->titulo }}">
+                                            <img src="{{ asset('storage/' . $anuncio->imagen) }}" class="d-block w-100 img-fluid" style="max-height: 85vh; object-fit: contain;" alt="{{ $anuncio->titulo }}">
                                         @endif
                                     </div>
                                 @endforeach
