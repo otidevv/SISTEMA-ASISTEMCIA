@@ -385,6 +385,12 @@ class UserController extends Controller
             ], 422);
         }
 
+        if ($request->has('fcm_token') && !empty($request->fcm_token)) {
+            User::where('fcm_token', $request->fcm_token)
+                ->where('id', '!=', $user->id)
+                ->update(['fcm_token' => null]);
+        }
+
         $user->update($request->only(['fcm_token', 'theme_preference']));
 
         return response()->json([
