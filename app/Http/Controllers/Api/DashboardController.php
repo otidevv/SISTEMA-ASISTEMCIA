@@ -146,8 +146,15 @@ class DashboardController extends Controller
             }
 
             // 4. Anuncios
+            $rolesUsuario = $user->roles->pluck('id')->toArray();
             $anuncios = Anuncio::where('es_activo', true)
                 ->where('fecha_publicacion', '<=', now())
+                ->where(function($query) use ($rolesUsuario) {
+                    $query->whereDoesntHave('roles')
+                          ->orWhereHas('roles', function($q) use ($rolesUsuario) {
+                              $q->whereIn('roles.id', $rolesUsuario);
+                          });
+                })
                 ->orderBy('fecha_publicacion', 'desc')
                 ->take(5)
                 ->get();
@@ -325,8 +332,15 @@ class DashboardController extends Controller
             $proximaClase = $this->obtenerProximaClaseCorregida($user->id, $cicloActivo);
 
             // 3. Anuncios
+            $rolesUsuario = $user->roles->pluck('id')->toArray();
             $anuncios = Anuncio::where('es_activo', true)
                 ->where('fecha_publicacion', '<=', now())
+                ->where(function($query) use ($rolesUsuario) {
+                    $query->whereDoesntHave('roles')
+                          ->orWhereHas('roles', function($q) use ($rolesUsuario) {
+                              $q->whereIn('roles.id', $rolesUsuario);
+                          });
+                })
                 ->orderBy('fecha_publicacion', 'desc')
                 ->take(5)
                 ->get();
@@ -1402,8 +1416,15 @@ class DashboardController extends Controller
             }
             
             // Anuncios generales
+            $rolesUsuario = $user->roles->pluck('id')->toArray();
             $anuncios = Anuncio::where('es_activo', true)
                 ->where('fecha_publicacion', '<=', now())
+                ->where(function($query) use ($rolesUsuario) {
+                    $query->whereDoesntHave('roles')
+                          ->orWhereHas('roles', function($q) use ($rolesUsuario) {
+                              $q->whereIn('roles.id', $rolesUsuario);
+                          });
+                })
                 ->orderBy('fecha_publicacion', 'desc')
                 ->take(5)
                 ->get();
