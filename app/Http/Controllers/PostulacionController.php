@@ -82,7 +82,21 @@ class PostulacionController extends Controller
 
             // Otros filtros
             if ($request->filled('estado')) {
-                $query->where('estado', $request->estado);
+                if ($request->estado === 'retirado') {
+                    $query->whereHas('inscripcion', function ($q) {
+                        $q->where('estado_inscripcion', 'retirado');
+                    });
+                } elseif ($request->estado === 'aprobado') {
+                    $query->where('estado', 'aprobado')
+                          ->where(function ($q) {
+                              $q->whereDoesntHave('inscripcion')
+                                ->orWhereHas('inscripcion', function ($sub) {
+                                    $sub->where('estado_inscripcion', '!=', 'retirado');
+                                });
+                          });
+                } else {
+                    $query->where('estado', $request->estado);
+                }
             }
             if ($request->filled('carrera_id')) {
                 $query->where('carrera_id', $request->carrera_id);

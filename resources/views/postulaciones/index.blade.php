@@ -1545,6 +1545,7 @@
                             <option value="aprobado">Aprobado</option>
                             <option value="rechazado">Rechazado</option>
                             <option value="observado">Observado</option>
+                            <option value="retirado">Retirado</option>
                         </select>
                     </div>
                     <div class="col-md-3">
