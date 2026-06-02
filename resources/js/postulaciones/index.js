@@ -823,7 +823,11 @@ function viewPostulacion(id) {
                 html += renderSpecItem('bi-clock-history', 'Turno / Horario', (typeof post.turno === 'object' ? post.turno?.nombre : post.turno) || 'No asignado');
                 
                 if (insc && insc.aula) {
-                    html += renderSpecItem('bi-door-closed-fill', 'Aula Asignada', insc.aula.nombre, 'text-success fw-800');
+                    if (insc.estado_inscripcion === 'retirado') {
+                        html += renderSpecItem('bi-door-closed', 'Aula Anterior', insc.aula.nombre + ' (Retirado)', 'text-muted italic');
+                    } else {
+                        html += renderSpecItem('bi-door-closed-fill', 'Aula Asignada', insc.aula.nombre, 'text-success fw-800');
+                    }
                 } else {
                     html += renderSpecItem('bi-door-closed', 'Aula Asignada', 'Pendiente de asignación', 'text-muted italic');
                 }

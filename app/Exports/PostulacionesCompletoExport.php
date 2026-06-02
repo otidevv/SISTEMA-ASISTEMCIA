@@ -287,7 +287,7 @@ class PostulacionesCompletoExport implements FromCollection, WithHeadings, WithM
             $aula ? $aula->nombre : 'N/A',
             $postulacion->tipo_inscripcion,
             $postulacion->fecha_postulacion ? $postulacion->fecha_postulacion->format('d/m/Y H:i') : 'N/A',
-            $postulacion->estado,
+            ($inscripcion && $inscripcion->estado_inscripcion === 'retirado') ? 'Retirado' : ucfirst($postulacion->estado),
             $postulacion->documentos_verificados ? 'Si' : 'No',
             $postulacion->pago_verificado ? 'Si' : 'No',
             $postulacion->numero_recibo,
