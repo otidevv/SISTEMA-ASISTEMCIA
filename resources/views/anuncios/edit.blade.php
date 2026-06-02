@@ -274,7 +274,7 @@
                         <!-- Dirigido A (Roles Dinámicos) -->
                         <div class="form-group mb-4">
                             <label class="form-label fw-bold">
-                                <i class="bi bi-people me-1"></i>Dirigido A: <span class="text-muted">(Público General si no seleccionas ninguno)</span>
+                                <i class="bi bi-people me-1"></i>Dirigido A:
                             </label>
                             <div class="card bg-light border-0 shadow-none">
                                 <div class="card-body p-3">
