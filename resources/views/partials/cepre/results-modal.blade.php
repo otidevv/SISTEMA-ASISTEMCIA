@@ -325,6 +325,29 @@
 </button>
 
 <script>
+    function logDebug(msg) {
+        if (!window.location.search.includes('debug=1')) return;
+        let debugDiv = document.getElementById('web-debugger');
+        if (!debugDiv) {
+            debugDiv = document.createElement('div');
+            debugDiv.id = 'web-debugger';
+            debugDiv.style.position = 'fixed';
+            debugDiv.style.top = '10px';
+            debugDiv.style.left = '10px';
+            debugDiv.style.background = 'rgba(0,0,0,0.85)';
+            debugDiv.style.color = '#00ff00';
+            debugDiv.style.padding = '10px';
+            debugDiv.style.borderRadius = '5px';
+            debugDiv.style.zIndex = '999999';
+            debugDiv.style.fontSize = '12px';
+            debugDiv.style.fontFamily = 'monospace';
+            debugDiv.style.maxHeight = '200px';
+            debugDiv.style.overflowY = 'auto';
+            document.body.appendChild(debugDiv);
+        }
+        debugDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    }
+
     let allAnnouncements = [];
     let currentAnnouncementIndex = 0;
     let autoplayInterval = null;
@@ -333,21 +356,34 @@
     const AUTOPLAY_TIME = 5000; // 5 segundos
 
     async function fetchActiveAnnouncements() {
+        logDebug('Iniciando fetchActiveAnnouncements...');
         try {
             const response = await fetch('/api/anuncios/activos');
-            if (!response.ok) throw new Error('Network error');
-            return await response.json();
+            logDebug('Fetch completado, response status: ' + response.status);
+            if (!response.ok) throw new Error('Network error status: ' + response.status);
+            const data = await response.json();
+            logDebug('Datos parseados correctos, total anuncios: ' + data.length);
+            return data;
         } catch (error) {
+            logDebug('Error en fetchActiveAnnouncements: ' + error.message);
             console.error('Error:', error);
             return [];
         }
     }
 
     function openResultsModal() {
+        logDebug('openResultsModal ejecutado');
         const modal = document.getElementById('resultsModal');
-        if (!modal) return;
+        if (!modal) {
+            logDebug('ERROR: No se encontró #resultsModal en el DOM');
+            return;
+        }
         modal.style.display = 'flex';
-        setTimeout(() => modal.classList.add('active'), 10);
+        logDebug('modal display establecido a flex');
+        setTimeout(() => {
+            modal.classList.add('active');
+            logDebug('Clase active agregada al modal');
+        }, 10);
         document.body.style.overflow = 'hidden';
         startAutoplay();
     }
@@ -460,34 +496,58 @@
     }
 
     async function initAnnouncements() {
+        logDebug('initAnnouncements ejecutado');
         const ads = await fetchActiveAnnouncements();
+        logDebug('Anuncios obtenidos en init: ' + (ads ? ads.length : 0));
         if (ads && ads.length > 0) {
             allAnnouncements = ads;
             
             const floatingBtn = document.getElementById('floating-results-btn');
-            floatingBtn.style.display = 'flex';
-            document.getElementById('floating-badge-text').textContent = ads.length;
+            if (floatingBtn) {
+                floatingBtn.style.display = 'flex';
+                logDebug('Botón flotante visible (display = flex)');
+            } else {
+                logDebug('ERROR: No se encontró #floating-results-btn en el DOM');
+            }
+            
+            const badge = document.getElementById('floating-badge-text');
+            if (badge) badge.textContent = ads.length;
             
             displayCurrentAnnouncement();
             
             const modalContent = document.querySelector('.results-modal-content');
-            
-            // Pausar al pasar el mouse
-            modalContent.addEventListener('mouseenter', stopAutoplay);
-            modalContent.addEventListener('mouseleave', startAutoplay);
-            
-            // Eventos táctiles para el dedo
-            modalContent.addEventListener('touchstart', handleTouchStart, {passive: true});
-            modalContent.addEventListener('touchend', handleTouchEnd, {passive: true});
+            if (modalContent) {
+                // Pausar al pasar el mouse
+                modalContent.addEventListener('mouseenter', stopAutoplay);
+                modalContent.addEventListener('mouseleave', startAutoplay);
+                
+                // Eventos táctiles para el dedo
+                modalContent.addEventListener('touchstart', handleTouchStart, {passive: true});
+                modalContent.addEventListener('touchend', handleTouchEnd, {passive: true});
+                logDebug('Eventos touch agregados correctamente');
+            } else {
+                logDebug('ERROR: No se encontró .results-modal-content en el DOM');
+            }
             
             // SIEMPRE MOSTRAR AL CARGAR
-            setTimeout(openResultsModal, 1500);
+            logDebug('Programando openResultsModal en 1.5s...');
+            setTimeout(() => {
+                logDebug('Lanzando openResultsModal (timeout)...');
+                openResultsModal();
+            }, 1500);
+        } else {
+            logDebug('No se mostraron anuncios (array vacío o nulo)');
         }
     }
 
+    logDebug('Cargando script de anuncios... readyState actual: ' + document.readyState);
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAnnouncements);
+        document.addEventListener('DOMContentLoaded', () => {
+            logDebug('Evento DOMContentLoaded disparado');
+            initAnnouncements();
+        });
     } else {
+        logDebug('El DOM ya estaba cargado, iniciando de inmediato');
         initAnnouncements();
     }
 </script>
