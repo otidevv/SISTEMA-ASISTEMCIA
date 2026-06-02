@@ -118,12 +118,14 @@ body {
 .estado-aprobado { border-left: 4px solid var(--cepre-green); }
 .estado-rechazado { border-left: 4px solid var(--cepre-magenta); }
 .estado-observado { border-left: 4px solid var(--cepre-cyan); }
+.estado-retirado { border-left: 4px solid #6c757d; }
 
 /* MODO OSCURO - AJUSTE DE COLORES DE FILA */
 [data-bs-theme="dark"] .estado-pendiente { background-color: rgba(255, 215, 0, 0.05) !important; }
 [data-bs-theme="dark"] .estado-aprobado { background-color: rgba(147, 192, 31, 0.05) !important; }
 [data-bs-theme="dark"] .estado-rechazado { background-color: rgba(226, 0, 122, 0.05) !important; }
 [data-bs-theme="dark"] .estado-observado { background-color: rgba(0, 174, 239, 0.05) !important; }
+[data-bs-theme="dark"] .estado-retirado { background-color: rgba(108, 117, 125, 0.05) !important; }
 
 /* 🏷️ ESTILOS DE BADGES DE ESTADO (PREMIUM) */
 .badge {
@@ -156,6 +158,12 @@ body {
     background-color: var(--cepre-cyan) !important; 
     color: #fff !important; 
     border: 1px solid rgba(0, 174, 239, 0.3);
+}
+
+.badge-estado-retirado { 
+    background-color: #6c757d !important; 
+    color: #fff !important; 
+    border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
 /* Asegurar que el nombre del estudiante sea legible */

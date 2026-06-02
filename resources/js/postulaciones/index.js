@@ -156,7 +156,7 @@ function initDataTable() {
             const estado = data.estado ? data.estado.toLowerCase() : '';
 
             // Remover clases previas de estado
-            $(row).removeClass('estado-pendiente estado-aprobado estado-rechazado estado-observado');
+            $(row).removeClass('estado-pendiente estado-aprobado estado-rechazado estado-observado estado-retirado');
 
             // Agregar clase según el estado actual
             if (estado === 'pendiente') {
@@ -167,6 +167,8 @@ function initDataTable() {
                 $(row).addClass('estado-rechazado');
             } else if (estado === 'observado') {
                 $(row).addClass('estado-observado');
+            } else if (estado === 'retirado') {
+                $(row).addClass('estado-retirado');
             }
         },
         drawCallback: function () {
@@ -557,6 +559,76 @@ function setupEventHandlers() {
             }
         });
     });
+
+    // Retirar estudiante directo
+    $(document).on('click', '.retirar-estudiante-directo', function () {
+        const id = $(this).data('id');
+        const inscripcionId = $(this).data('inscripcion-id');
+
+        if (!inscripcionId) {
+            Toast.fire({ icon: 'error', title: 'No se encontró la inscripción asociada' });
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Retirar Estudiante?',
+            html: `
+                <div class="text-start">
+                    <p class="mb-3 text-muted">Esta acción retirará al estudiante de las clases, listas de asistencia y liberará su vacante en el aula.</p>
+                    <div class="alert alert-warning p-2 small border-0 mb-3" style="border-radius: 8px;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <strong>Importante:</strong> Si ya generó la distribución de aulas para el examen, recuerde liberar su asiento manualmente en el módulo de Aulas o regenerar la distribución.
+                    </div>
+                    <label class="form-label mb-1">Motivo del Retiro / Devolución <span class="text-danger">*</span></label>
+                    <textarea id="retiro-motivo-text" class="form-control" rows="3" placeholder="Ej: Devolución de dinero solicitada por el alumno..."></textarea>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Confirmar Retiro',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const motivo = $('#retiro-motivo-text').val().trim();
+                if (!motivo) {
+                    Swal.showValidationMessage('Debe ingresar un motivo para el retiro');
+                    return false;
+                }
+                if (motivo.length < 10) {
+                    Swal.showValidationMessage('El motivo debe tener al menos 10 caracteres');
+                    return false;
+                }
+                return { motivo: motivo };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const motivo = result.value.motivo;
+                
+                $.ajax({
+                    url: `/json/inscripciones/${inscripcionId}/estado`,
+                    type: 'PATCH',
+                    data: {
+                        estado: 'retirado',
+                        motivo: motivo
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            Toast.fire({ icon: 'success', title: 'Estudiante retirado exitosamente' });
+                            $('#viewModal').modal('hide');
+                            table.ajax.reload();
+                        } else {
+                            Toast.fire({ icon: 'error', title: response.message || 'Error al procesar el retiro' });
+                        }
+                    },
+                    error: function (xhr) {
+                        const errorMsg = xhr.responseJSON?.message || 'Error al procesar el retiro';
+                        Toast.fire({ icon: 'error', title: errorMsg });
+                    }
+                });
+            }
+        });
+    });
 }
 
 function viewPostulacion(id) {
@@ -801,6 +873,17 @@ function viewPostulacion(id) {
                 html += '</div></div>';
 
                 // 3.5 ALERTAS DE ESTADO
+                if (insc && insc.estado_inscripcion === 'retirado') {
+                    html += `<div class="alert alert-secondary d-flex align-items-center gap-3 mt-3 border-0 shadow-sm p-3" style="border-radius: 15px; background-color: #f1f5f9; border-left: 5px solid #6c757d !important;">
+                        <i class="bi bi-person-slash fs-2 text-secondary"></i>
+                        <div>
+                            <div class="fw-800 text-uppercase small text-secondary" style="letter-spacing: 1px;">Estudiante Retirado del Ciclo:</div>
+                            <div class="fw-bold text-dark">Fecha de Retiro: ${insc.fecha_retiro ? new Date(insc.fecha_retiro).toLocaleDateString() : '---'}</div>
+                            <div class="text-muted small"><strong>Motivo:</strong> ${insc.motivo_retiro || 'No especificado'}</div>
+                        </div>
+                    </div>`;
+                }
+
                 if (post.observaciones || post.motivo_rechazo) {
                     const tint = post.motivo_rechazo ? 'danger' : 'warning';
                     const icon = post.motivo_rechazo ? 'bi-shield-x' : 'bi-shield-exclamation';
@@ -829,6 +912,15 @@ function viewPostulacion(id) {
                             ${post.documentos_verificados && post.pago_verificado ? 
                                 `<button class="btn btn-premium-action btn-success approve-postulacion shadow-sm" data-id="${post.id}"><i class="bi bi-check-lg me-1"></i> APROBAR AHORA</button>` : ''
                             }
+                        ` : ''}
+                        ${post.estado === 'aprobado' ? `
+                            ${insc && insc.estado_inscripcion === 'activo' ? `
+                                <button class="btn btn-premium-action btn-outline-danger retirar-estudiante-directo" data-id="${post.id}" data-inscripcion-id="${insc.id}"><i class="bi bi-person-x me-1"></i> RETIRO / DEVOLUCIÓN ESTUDIANTE</button>
+                            ` : `
+                                ${insc && insc.estado_inscripcion === 'retirado' ? `
+                                    <button class="btn btn-premium-action btn-secondary" disabled><i class="bi bi-person-slash me-1"></i> RETIRADO / DEVOLUCIÓN PROCESADA</button>
+                                ` : ''}
+                            `}
                         ` : ''}
                     </div>
                     <div class="footer-actions-right">

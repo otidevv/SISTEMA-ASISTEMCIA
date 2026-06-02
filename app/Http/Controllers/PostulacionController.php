@@ -66,7 +66,7 @@ class PostulacionController extends Controller
         }
 
         try {
-            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo'])
+            $query = Postulacion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'centroEducativo', 'inscripcion'])
                 ->select('postulaciones.*');
 
             // Filtro de ciclo: si no se especifica un ciclo, usar el ciclo activo por defecto.
@@ -139,6 +139,12 @@ class PostulacionController extends Controller
                 })
                 ->addColumn('turno_nombre', function ($postulacion) {
                     return $postulacion->turno?->nombre;
+                })
+                 ->editColumn('estado', function ($postulacion) {
+                    if ($postulacion->inscripcion?->estado_inscripcion === 'retirado') {
+                        return 'retirado';
+                    }
+                    return $postulacion->estado;
                 })
                 ->editColumn('fecha_postulacion', function ($postulacion) {
                     return $postulacion->fecha_postulacion ? $postulacion->fecha_postulacion->format('d/m/Y H:i') : '';
