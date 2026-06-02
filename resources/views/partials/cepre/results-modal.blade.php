@@ -485,5 +485,9 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', initAnnouncements);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAnnouncements);
+    } else {
+        initAnnouncements();
+    }
 </script>

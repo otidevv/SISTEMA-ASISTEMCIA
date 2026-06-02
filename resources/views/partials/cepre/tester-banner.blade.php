@@ -11,15 +11,15 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Google Play">
             </div>
             <div class="play-text-content">
-                <span class="play-label">PROYECTO BETA</span>
+                <span class="play-label">APP OFICIAL</span>
                 <h4>App CEPRE UNAMAD</h4>
-                <p>¡Optimiza tu preparación! Únete como tester y ayúdanos a mejorar tu camino al <strong>Ingreso Directo</strong>.</p>
+                <p>¡Optimiza tu preparación! Descarga ya nuestra app oficial desde la Play Store y asegura tu camino al <strong>Ingreso Directo</strong>.</p>
             </div>
         </div>
         
         <div class="play-card-actions">
-            <a href="https://wa.me/51989043261?text=Hola,%20quiero%20ser%20tester%20de%20la%20App%20CEPRE%20UNAMAD" target="_blank" class="play-btn-main">
-                <i class="fa fa-rocket"></i> Unirme ahora
+            <a href="https://play.google.com/store/apps/details?id=pe.edu.unamad.portalcepre&hl=es" target="_blank" class="play-btn-main">
+                <i class="fa fa-download"></i> Descargar ahora
             </a>
         </div>
         
@@ -36,7 +36,7 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Play Store">
         </div>
         <div class="tab-text">
-            <span>PROBAR APP</span>
+            <span>DESCARGAR APP</span>
         </div>
         <div class="tab-pulse"></div>
     </div>
