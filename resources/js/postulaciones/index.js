@@ -576,6 +576,7 @@ function setupEventHandlers() {
 
         Swal.fire({
             title: '¿Retirar Estudiante?',
+            target: '#viewModal',
             html: `
                 <div class="text-start">
                     <p class="mb-3 text-muted">Esta acción retirará al estudiante de las clases, listas de asistencia y liberará su vacante en el aula.</p>
