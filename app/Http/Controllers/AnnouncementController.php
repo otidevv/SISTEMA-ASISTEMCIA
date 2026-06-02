@@ -266,8 +266,10 @@ class AnnouncementController extends Controller
 
             if (Auth::check()) {
                 $userRoleIds = Auth::user()->roles->pluck('id')->toArray();
-                $query->whereHas('roles', function($q) use ($userRoleIds) {
-                    $q->whereIn('roles.id', $userRoleIds);
+                $query->where(function($q) use ($userRoleIds) {
+                    $q->whereHas('roles', function($r) use ($userRoleIds) {
+                        $r->whereIn('roles.id', $userRoleIds);
+                    })->orWhereDoesntHave('roles');
                 });
             } else {
                 // Si es un visitante (no logeado), permitir ver anuncios sin roles (públicos)
