@@ -74,7 +74,7 @@ class AnnouncementController extends Controller
             'fecha_expiracion' => 'nullable|date|after_or_equal:fecha_publicacion',
             'prioridad' => 'required|integer|between:1,4',
             'tipo' => 'required|in:informativo,importante,urgente,mantenimiento,evento',
-            'role_ids' => 'required|array',
+            'role_ids' => 'nullable|array',
             'role_ids.*' => 'exists:roles,id',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             'archivo_adjunto' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip,rar,mp4,mov,avi|max:102400',
@@ -111,9 +111,7 @@ class AnnouncementController extends Controller
 
             $anuncio = Anuncio::create($data);
             
-            if ($request->has('role_ids')) {
-                $anuncio->roles()->sync($request->role_ids);
-            }
+            $anuncio->roles()->sync($request->input('role_ids', []));
 
             if ($request->boolean('enviar_notificacion', false)) {
                 $this->enviarNotificaciones($anuncio);
@@ -144,7 +142,7 @@ class AnnouncementController extends Controller
             'fecha_expiracion' => 'nullable|date|after_or_equal:fecha_publicacion',
             'prioridad' => 'required|integer|between:1,4',
             'tipo' => 'required|in:informativo,importante,urgente,mantenimiento,evento',
-            'role_ids' => 'required|array',
+            'role_ids' => 'nullable|array',
             'role_ids.*' => 'exists:roles,id',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -182,9 +180,7 @@ class AnnouncementController extends Controller
 
             $anuncio->update($data);
             
-            if ($request->has('role_ids')) {
-                $anuncio->roles()->sync($request->role_ids);
-            }
+            $anuncio->roles()->sync($request->input('role_ids', []));
 
             return redirect()->route('anuncios.index')
                 ->with('success', 'Anuncio actualizado exitosamente.');
