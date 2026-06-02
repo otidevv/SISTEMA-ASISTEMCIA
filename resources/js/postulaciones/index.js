@@ -570,6 +570,10 @@ function setupEventHandlers() {
             return;
         }
 
+        // REMOVER TEMPORALMENTE EL TABINDEX DEL MODAL BOOTSTRAP
+        // Esto evita que Bootstrap bloquee el foco/escritura en los inputs de SweetAlert2
+        $('#viewModal').removeAttr('tabindex');
+
         Swal.fire({
             title: '¿Retirar Estudiante?',
             html: `
@@ -589,6 +593,14 @@ function setupEventHandlers() {
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Confirmar Retiro',
             cancelButtonText: 'Cancelar',
+            didOpen: () => {
+                // Darle foco automático al textarea una vez abierto
+                $('#retiro-motivo-text').focus();
+            },
+            didClose: () => {
+                // RESTAURAR EL TABINDEX AL CERRAR EL SWEETALERT
+                $('#viewModal').attr('tabindex', '-1');
+            },
             preConfirm: () => {
                 const motivo = $('#retiro-motivo-text').val().trim();
                 if (!motivo) {
