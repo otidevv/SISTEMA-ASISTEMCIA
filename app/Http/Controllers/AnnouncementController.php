@@ -274,13 +274,11 @@ class AnnouncementController extends Controller
                 });
             } else {
                 // Si es un visitante (no logeado), permitir ver anuncios sin roles (públicos)
-                // o anuncios dirigidos expresamente al rol "Público General" o "Postulante"
+                // o anuncios dirigidos expresamente al rol "Público General"
                 $query->where(function($q) {
                     $q->whereDoesntHave('roles')
                       ->orWhereHas('roles', function($r) {
-                          $r->where('nombre', 'Público General')
-                            ->orWhere('nombre', 'Postulante')
-                            ->orWhere('nombre', 'postulante');
+                          $r->where('nombre', 'Público General');
                       });
                 });
             }
