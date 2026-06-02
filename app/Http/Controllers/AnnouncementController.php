@@ -274,7 +274,15 @@ class AnnouncementController extends Controller
                     $q->whereIn('roles.id', $userRoleIds);
                 });
             } else {
-                $query->whereDoesntHave('roles');
+                // Si es un visitante (no logeado), permitir ver anuncios sin roles (públicos)
+                // o anuncios dirigidos expresamente al rol "Postulante"
+                $query->where(function($q) {
+                    $q->whereDoesntHave('roles')
+                      ->orWhereHas('roles', function($r) {
+                          $r->where('nombre', 'Postulante')
+                            ->orWhere('nombre', 'postulante');
+                      });
+                });
             }
 
             $anuncios = $query->get(['id', 'titulo', 'descripcion', 'imagen', 'archivo_adjunto', 'tipo_archivo', 'tipo', 'prioridad']);
