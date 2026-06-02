@@ -112,6 +112,7 @@
 .bg-premium-rejected { background: linear-gradient(135deg, #c62828 0%, #ef5350 100%); } /* Rojo Sangre */
 .bg-premium-observed { background: linear-gradient(135deg, #ad1457 0%, #ec407a 100%); } /* Magenta Eléctrico */
 .bg-premium-default { background: linear-gradient(135deg, #37474f 0%, #78909c 100%); }
+.bg-premium-retired { background: linear-gradient(135deg, #475569 0%, #64748b 100%); } /* Gris Pizarra premium para retirados */
 
 /* SIDEBAR - CREDENCIAL */
 .premium-sidebar {
@@ -138,6 +139,45 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative; /* Referencia para elementos absolutos como la cinta */
+}
+
+.premium-photo-container.status-retirado {
+    border-color: #cbd5e1;
+}
+
+.premium-photo-container.status-retirado .premium-photo {
+    filter: grayscale(100%) contrast(90%) brightness(80%);
+}
+
+.premium-photo-overlay-retirado {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35); /* Capa oscura translúcida */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.premium-photo-ribbon-retirado {
+    background: #ef4444; /* Rojo vibrante premium */
+    color: white;
+    font-weight: 900;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 6px 0;
+    width: 140%;
+    text-align: center;
+    transform: rotate(-35deg);
+    position: absolute;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    left: -20%;
+    top: 25%;
 }
 
 .premium-photo {

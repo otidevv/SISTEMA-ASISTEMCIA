@@ -673,7 +673,12 @@ function viewPostulacion(id) {
                     'observado': { class: 'bg-premium-observed', icon: 'bi-exclamation-diamond-fill', label: 'Con Observaciones', color: 'var(--cepre-magenta)' }
                 };
 
-                const config = statusConfig[post.estado] || { class: 'bg-premium-default', icon: 'bi-info-circle', label: post.estado.toUpperCase(), color: 'var(--cepre-navy)' };
+                const isRetirado = insc && insc.estado_inscripcion === 'retirado';
+                let config = statusConfig[post.estado] || { class: 'bg-premium-default', icon: 'bi-info-circle', label: post.estado.toUpperCase(), color: 'var(--cepre-navy)' };
+
+                if (isRetirado) {
+                    config = { class: 'bg-premium-retired', icon: 'bi-person-dash-fill', label: 'Retirado / Devolución', color: '#64748b' };
+                }
 
                 let html = '<div class="fade-in-premium">';
                 
@@ -693,7 +698,7 @@ function viewPostulacion(id) {
                             </div>
                         </div>
                         <button type="button" class="btn-close-premium" data-bs-dismiss="modal" aria-label="Close">
-                            <i class="bi bi-x-lg"></i>
+                           <i class="bi bi-x-lg"></i>
                         </button>
                     </div>
                 </div>`;
@@ -706,11 +711,21 @@ function viewPostulacion(id) {
                 html += '<div class="premium-sidebar h-100">';
                 
                 const fotoUrl = post.foto_path ? '/storage/' + post.foto_path : (data.foto_perfil_url || null);
-                html += '<div class="premium-photo-container shadow-sm">';
+                html += `<div class="premium-photo-container ${isRetirado ? 'status-retirado' : ''} shadow-sm">`;
                 if (fotoUrl) {
                     html += `<img src="${fotoUrl}" class="premium-photo" alt="Foto de Perfil">`;
+                    if (isRetirado) {
+                        html += `<div class="premium-photo-overlay-retirado">
+                            <div class="premium-photo-ribbon-retirado">RETIRADO</div>
+                        </div>`;
+                    }
                 } else {
                     html += '<div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted"><i class="bi bi-person-bounding-box" style="font-size: 3rem;"></i><span class="small mt-2">SIN FOTO</span></div>';
+                    if (isRetirado) {
+                        html += `<div class="premium-photo-overlay-retirado">
+                            <div class="premium-photo-ribbon-retirado">RETIRADO</div>
+                        </div>`;
+                    }
                 }
                 html += '</div>';
 
