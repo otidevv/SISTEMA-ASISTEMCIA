@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 titulo: tituloInput.value + ' (Copia)',
                 tipo: document.getElementById('tipo').value,
                 prioridad: document.getElementById('prioridad').value,
-                dirigido_a: document.getElementById('dirigido_a').value,
+                dirigido_a: document.getElementById('dirigido_a') ? document.getElementById('dirigido_a').value : '',
                 descripcion: descripcionInput.value,
                 contenido: contenidoInput.value
             });
