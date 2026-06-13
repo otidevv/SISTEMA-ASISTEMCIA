@@ -60,6 +60,18 @@ class ProcesarEventosAsistencia extends Command
                                 'codigo_trabajo' => $registro->codigo_trabajo,
                             ]);
 
+                            // Notificación instantánea de huella (entrada o salida) para el docente
+                            if ($usuario->fcm_token) {
+                                $cursoNombre = $horario->curso->nombre ?? null;
+                                $usuario->notify(new \App\Notifications\TeacherFingerprintNotification(
+                                    $usuario,
+                                    $registro->fecha_registro,
+                                    $estado,
+                                    $cursoNombre
+                                ));
+                                $this->info("Notificación instantánea de huella ({$estado}) enviada al docente ID: {$usuario->id}");
+                            }
+
                             // NUEVO: Notificación instantánea si es SALIDA y falta el tema
                             if ($estado === 'salida' && $usuario->fcm_token) {
                                 // Verificar si ya registró el tema en esta sesión
