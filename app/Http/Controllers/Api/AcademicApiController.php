@@ -334,4 +334,33 @@ class AcademicApiController extends BaseController
         ];
         return $dias[$dayIndex] ?? 'Lunes';
     }
+
+    /**
+     * List student's registrations (inscripciones).
+     */
+    public function getInscripciones(Request $request)
+    {
+        $user = $request->user();
+        
+        $inscripciones = Inscripcion::where('estudiante_id', $user->id)
+            ->with(['ciclo', 'carrera', 'turno', 'aula'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($ins) {
+                return [
+                    'id' => $ins->id,
+                    'es_activo' => (bool)($ins->ciclo?->es_activo),
+                    'estado' => $ins->estado_inscripcion,
+                    'ciclo' => $ins->ciclo?->nombre ?? 'N/A',
+                    'codigo' => $ins->codigo_inscripcion ?? 'N/A',
+                    'carrera' => $ins->carrera?->nombre ?? 'N/A',
+                    'turno' => $ins->turno?->nombre ?? 'N/A',
+                    'aula' => $ins->aula?->nombre ?? 'N/A',
+                    'fecha_inscripcion' => $ins->fecha_inscripcion ? Carbon::parse($ins->fecha_inscripcion)->format('d/m/Y') : '--',
+                    'observaciones' => $ins->observacion ?? '',
+                ];
+            });
+
+        return $this->sendResponse($inscripciones, 'Historial de inscripciones recuperado.');
+    }
 }

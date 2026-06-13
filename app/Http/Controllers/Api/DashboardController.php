@@ -439,6 +439,7 @@ class DashboardController extends Controller
             return response()->json([
                 'calendario_clases' => $calendarioClases,
                 'semana_completa' => $semanaCompleta,
+                'hoy' => $cicloActivo ? $cicloActivo->getDiaHorarioParaFecha($fechaSeleccionada) : 'Lunes',
                 'user' => [
                     'id' => $user->id,
                     'nombre' => $user->nombre . ' ' . $user->apellido_paterno,

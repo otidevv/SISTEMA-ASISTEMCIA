@@ -55,6 +55,8 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/profesor/reporte/carga-horaria/{type?}', [DashboardController::class, 'exportWorkloadPdf']);
         Route::get('/profesor/reporte/asistencia', [DashboardController::class, 'exportAttendancePdf']);
         Route::get('/admin/monitoreo-diario', [\App\Http\Controllers\AsistenciaDocenteController::class, 'getDailySchedule']);
+        Route::get('/admin/realtime-docentes', [\App\Http\Controllers\Api\RealtimeDocenteController::class, 'getRealtimeStatus']);
+        Route::post('/admin/realtime-docentes/alerta-docente', [\App\Http\Controllers\Api\RealtimeDocenteController::class, 'enviarAlertaDocente']);
     });
 
     // --- SERVICIOS ACADÉMICOS (ESTUDIANTES) ---
@@ -66,6 +68,7 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
         Route::get('/eligibility', [AcademicApiController::class, 'getEligibility']);
         Route::get('/report-cards', [AcademicApiController::class, 'getReportCards']);
         Route::get('/schedule', [AcademicApiController::class, 'getSchedule']);
+        Route::get('/inscripciones', [AcademicApiController::class, 'getInscripciones']);
     });
 
     // --- SERVICIOS DOCENTES ---
