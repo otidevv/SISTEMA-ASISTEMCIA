@@ -87,16 +87,22 @@ class DashboardController extends Controller
                 ->orderBy('fecha_registro')
                 ->first();
 
-            // Obtener marcajes del alumno para el carnet y banner
+            // Obtener marcajes del alumno para el carnet y banner.
+            // La situación (entrada/tarde/salida) la calcula el backend con la config
+            // real del turno; los clientes solo la muestran (fuente única de la lógica).
+            $turnoMarcaje = $inscripcionActiva->turno;
             $ultimosMarcajes = RegistroAsistencia::where('nro_documento', $docLimpio)
                 ->orderBy('fecha_registro', 'desc')
                 ->take(10)
                 ->get()
-                ->map(function ($marcaje) {
+                ->map(function ($marcaje) use ($turnoMarcaje) {
+                    $desc = AsistenciaHelper::describirMarcaje($marcaje->fecha_registro, $turnoMarcaje);
                     return [
                         'id' => $marcaje->id,
                         'fecha_hora' => $marcaje->fecha_registro,
                         'tipo_verificacion' => $marcaje->tipo_verificacion,
+                        'situacion' => $desc['situacion'],
+                        'tipo' => $desc['tipo'],
                     ];
                 });
 
@@ -1363,16 +1369,21 @@ class DashboardController extends Controller
                     }
                 }
                 
-                // Obtener marcajes del alumno
+                // Obtener marcajes del alumno (situación calculada en el backend; el
+                // cliente solo la muestra, no la recalcula).
+                $turnoMarcaje = $inscripcionActiva->turno;
                 $ultimosMarcajes = RegistroAsistencia::where('nro_documento', $docLimpio)
                     ->orderBy('fecha_registro', 'desc')
                     ->take(10)
                     ->get()
-                    ->map(function ($marcaje) {
+                    ->map(function ($marcaje) use ($turnoMarcaje) {
+                        $desc = AsistenciaHelper::describirMarcaje($marcaje->fecha_registro, $turnoMarcaje);
                         return [
                             'id' => $marcaje->id,
                             'fecha_hora' => $marcaje->fecha_registro,
                             'tipo_verificacion' => $marcaje->tipo_verificacion,
+                            'situacion' => $desc['situacion'],
+                            'tipo' => $desc['tipo'],
                         ];
                     });
     

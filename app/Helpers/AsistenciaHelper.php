@@ -850,6 +850,33 @@ class AsistenciaHelper
     }
 
     /**
+     * Describe un marcaje para mostrarlo en los clientes (web y app móvil).
+     *
+     * Fuente ÚNICA de clasificación de marcajes: reutiliza categorizarAsistencia(),
+     * que se basa en la configuración real del turno (BD). Los clientes solo deben
+     * MOSTRAR estos valores, nunca recalcular la situación por su cuenta.
+     *
+     * @param mixed $fechaHora Fecha/hora del marcaje
+     * @param \App\Models\Turno|null $turno Turno del alumno (de su inscripción)
+     * @return array{tipo: string, situacion: string}
+     */
+    public static function describirMarcaje($fechaHora, $turno): array
+    {
+        $carbon = $fechaHora instanceof Carbon ? $fechaHora : Carbon::parse($fechaHora);
+        $minutos = $carbon->hour * 60 + $carbon->minute;
+        $categoria = self::categorizarAsistencia($minutos, $turno); // Entrada/Tarde/Salida/Otro
+
+        $mapa = [
+            'Entrada' => ['tipo' => 'entrada', 'situacion' => 'ENTRADA NORMAL'],
+            'Tarde'   => ['tipo' => 'tarde',   'situacion' => 'ENTRADA TARDE'],
+            'Salida'  => ['tipo' => 'salida',  'situacion' => 'SALIDA NORMAL'],
+            'Otro'    => ['tipo' => 'otro',    'situacion' => 'REGISTRO'],
+        ];
+
+        return $mapa[$categoria] ?? $mapa['Otro'];
+    }
+
+    /**
      * Obtener documentos de alumnos inhabilitados para un examen y ciclo específico.
      */
     public static function obtenerDocumentosInhabilitados($ciclo, $examenNumero)
