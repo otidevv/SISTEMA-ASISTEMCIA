@@ -38,16 +38,45 @@ class ProcesarEventosAsistencia extends Command
                             // Usamos fecha_registro (hora del servidor) en vez de fecha_hora (hora del ZKTeco)
                             // porque el reloj del biométrico puede estar desconfigurado
                             $fecha = Carbon::parse($registro->fecha_registro);
-                            $hora = $fecha->format('H:i:s');
                             $dia = $fecha->locale('es')->dayName;
 
-                            $horario = \App\Models\HorarioDocente::where('docente_id', $usuario->id)
+                            // Buscar los horarios del docente para ese día
+                            $horariosDia = \App\Models\HorarioDocente::where('docente_id', $usuario->id)
                                 ->where('dia_semana', $dia)
-                                ->whereTime('hora_inicio', '<=', $hora)
-                                ->whereTime('hora_fin', '>=', $hora)
-                                ->first();
+                                ->get();
 
-                            $estado = ($hora < '12:00:00') ? 'entrada' : 'salida';
+                            // Determinar el horario más cercano a la marca y si es ENTRADA o
+                            // SALIDA según el horario PROGRAMADO (no por una hora fija).
+                            // Tolerancia de entrada anticipada (misma que AsistenciaDocenteController).
+                            $tolAnticipada = 15;
+
+                            $horario = null;
+                            $estado = 'entrada';
+                            if ($horariosDia->isNotEmpty()) {
+                                // Elegir el horario más cercano a la marca (contemplando que
+                                // pudo marcar hasta 15 min antes del inicio).
+                                $menorDist = null;
+                                foreach ($horariosDia as $h) {
+                                    $ini = $fecha->copy()->setTimeFromTimeString($h->hora_inicio);
+                                    $fin = $fecha->copy()->setTimeFromTimeString($h->hora_fin);
+                                    $dist = $fecha->between($ini->copy()->subMinutes($tolAnticipada), $fin)
+                                        ? 0
+                                        : min(abs($fecha->diffInMinutes($ini)), abs($fecha->diffInMinutes($fin)));
+                                    if ($menorDist === null || $dist < $menorDist) {
+                                        $menorDist = $dist;
+                                        $horario = $h;
+                                    }
+                                }
+                                // Lógica oficial: más cerca del INICIO => entrada; más cerca del FIN => salida.
+                                $ini = $fecha->copy()->setTimeFromTimeString($horario->hora_inicio);
+                                $fin = $fecha->copy()->setTimeFromTimeString($horario->hora_fin);
+                                $diffInicio = abs($fecha->diffInMinutes($ini));
+                                $diffFin = abs($fecha->diffInMinutes($fin));
+                                $estado = $diffInicio < $diffFin ? 'entrada' : 'salida';
+                            } else {
+                                // Respaldo cuando no hay horario ese día.
+                                $estado = ($fecha->format('H:i:s') < '12:00:00') ? 'entrada' : 'salida';
+                            }
 
                             \App\Models\AsistenciaDocente::create([
                                 'docente_id' => $usuario->id,
@@ -60,6 +89,20 @@ class ProcesarEventosAsistencia extends Command
                                 'codigo_trabajo' => $registro->codigo_trabajo,
                             ]);
 
+                            // Calcular tardanza (solo en ENTRADA) según la tolerancia del horario.
+                            $esTardanza = false;
+                            $minutosTardanza = 0;
+                            if ($estado === 'entrada' && $horario) {
+                                $tolTarde = 5; // TOLERANCIA_TARDE_MINUTOS
+                                $umbral = $fecha->copy()
+                                    ->setTimeFromTimeString($horario->hora_inicio)
+                                    ->addMinutes($tolTarde);
+                                if ($fecha->greaterThan($umbral)) {
+                                    $esTardanza = true;
+                                    $minutosTardanza = $umbral->diffInMinutes($fecha);
+                                }
+                            }
+
                             // Notificación instantánea de huella (entrada o salida) para el docente
                             if ($usuario->fcm_token) {
                                 $cursoNombre = $horario->curso->nombre ?? null;
@@ -67,7 +110,9 @@ class ProcesarEventosAsistencia extends Command
                                     $usuario,
                                     $registro->fecha_registro,
                                     $estado,
-                                    $cursoNombre
+                                    $cursoNombre,
+                                    $esTardanza,
+                                    $minutosTardanza
                                 ));
                                 $this->info("Notificación instantánea de huella ({$estado}) enviada al docente ID: {$usuario->id}");
                             }

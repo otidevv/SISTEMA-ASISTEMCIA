@@ -97,12 +97,20 @@ class AttendanceNotification extends Notification
                 "🕒 Hora: {$hora}\n" .
                 "📌 Estado: {$situacion}";
 
+        // Foto del estudiante para mostrarla en la notificación push (avatar / imagen).
+        $fotoUrl = !empty($this->student->foto_perfil)
+            ? asset('storage/' . $this->student->foto_perfil)
+            : null;
+
         return [
             'title' => $title,
             'body' => $body,
+            'image' => $fotoUrl,
             'extra' => [
                 'type' => 'student_attendance',
                 'student_id' => (string) $this->student->id,
+                'student_photo' => $fotoUrl ?? '',
+                'situacion' => $situacion,
                 'click_action' => 'OPEN_ATTENDANCE_HISTORY',
             ]
         ];
