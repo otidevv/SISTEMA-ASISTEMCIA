@@ -574,12 +574,14 @@ class DashboardController extends Controller
                 ->orderBy('fecha_registro')
                 ->get();
 
-            // Buscar entrada válida
-            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
+            // Buscar entrada válida: primer marcaje desde 15 min antes del inicio
+            // hasta 15 min antes del fin de clase. Tolerante a tardanzas (el pago se
+            // calcula desde la hora real de entrada, no desde el inicio programado).
+            $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase, $horarioFinClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
                     $horarioInicioClase->copy()->subMinutes(15),
-                    $horarioInicioClase->copy()->addMinutes(30)
+                    $horarioFinClase->copy()->subMinutes(15)
                 );
             })->first();
 
