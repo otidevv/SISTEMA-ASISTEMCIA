@@ -24,6 +24,7 @@ class AsistenciaDocenteController extends Controller
 {
     use \App\Http\Controllers\Traits\HandlesSaturdayRotation;
     use \App\Http\Controllers\Traits\TeacherDashboardHelpers;
+    use \App\Http\Controllers\Traits\ProcessesTeacherSessions;
     // La tarifa por minuto fija se remueve si es dinámica por docente.
     // const TARIFA_POR_MINUTO = 3.00; 
 
@@ -31,11 +32,6 @@ class AsistenciaDocenteController extends Controller
     const TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS = 15; 
     // Tolerancia en minutos para considerar tardanza (ej. si la hora de inicio es 7:00 AM, la tardanza es a partir de las 7:05 AM)
     const TOLERANCIA_TARDE_MINUTOS = 5; 
-
-    public function __construct()
-    {
-        Artisan::call('asistencia:procesar-eventos');
-    }
 
     public function reports(Request $request)
     {
@@ -298,6 +294,11 @@ class AsistenciaDocenteController extends Controller
             ->get()
             ->groupBy('nro_documento');
 
+        // ⚡ OPTIMIZACIÓN: precargar en bloque las asistencias procesadas (tema) y cachear tarifas.
+        // Evita una consulta por cada sesión dentro del bucle (eran miles en un ciclo completo).
+        $this->reiniciarCacheSesiones();
+        $this->precargarAsistenciasProcesadas($idsDocentes, $startDate, $endDate);
+
         foreach ($docentesParaProcesar as $docente) {
             $docenteSessions = [];
             $horariosDocente = $todosHorarios->get($docente->id, collect());
@@ -402,10 +403,14 @@ class AsistenciaDocenteController extends Controller
 
     public function index(Request $request)
     {
+        // Procesar eventos pendientes para esta vista en tiempo real (antes vivía en el constructor)
+        Artisan::call('asistencia:procesar-eventos');
+
         // 1. Obtener ciclos y determinar el ciclo seleccionado
         $ciclos = Ciclo::orderBy('nombre', 'desc')->get();
         $cicloSeleccionadoId = $request->input('ciclo_id');
-        $cicloActivo = $ciclos->firstWhere('es_activo', true);
+        // Por defecto el ciclo activo de CEPRE (menor programa_id), no el de Reforzamiento
+        $cicloActivo = $ciclos->where('es_activo', true)->sortBy('programa_id')->first();
 
         if ($cicloSeleccionadoId) {
             $cicloSeleccionado = $ciclos->find($cicloSeleccionadoId);
@@ -417,33 +422,59 @@ class AsistenciaDocenteController extends Controller
         $fecha = $request->get('fecha');
         $documento = $request->get('documento');
 
-        // 3. Construir la consulta base
-        $docentesDocumentos = User::whereHas('roles', function ($query) {
+        // Por defecto mostrar HOY en la carga inicial.
+        // Si el usuario limpia la fecha y filtra (envía fecha vacía), se respeta el rango del ciclo.
+        if (!$request->has('fecha')) {
+            $fecha = Carbon::today()->toDateString();
+        }
+
+        // 3. Construir la consulta base — docentes LIGADOS al ciclo seleccionado (por su carga horaria)
+        $docentesBase = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
-        })->pluck('numero_documento')->toArray();
+        });
+        if ($cicloSeleccionado) {
+            $docentesBase->whereHas('horarios', function ($q) use ($cicloSeleccionado) {
+                $q->where('ciclo_id', $cicloSeleccionado->id);
+            });
+        }
+
+        $docentesDocumentos = (clone $docentesBase)->pluck('numero_documento')->toArray();
 
         $query = RegistroAsistencia::with(['usuario.roles'])
             ->whereIn('nro_documento', $docentesDocumentos);
 
-        // 4. Aplicar filtros de fecha (con prioridad para el ciclo)
+        // 4. Aplicar filtros de fecha (se COMBINAN con la búsqueda por docente):
+        // - Si hay fecha específica → solo ese día.
+        // - Si la fecha está vacía → todo el rango del ciclo (útil para ver el histórico de un docente).
         if ($fecha) {
-            // Si se especifica una fecha, se usa esa fecha
             $query->whereDate('fecha_registro', $fecha);
         } elseif ($cicloSeleccionado) {
-            // Si no hay fecha, pero sí ciclo, usar el rango de fechas del ciclo
             $query->whereBetween('fecha_registro', [$cicloSeleccionado->fecha_inicio, $cicloSeleccionado->fecha_fin]);
         }
-        // Si no hay ni fecha ni ciclo, no se aplica filtro de fecha (se podría añadir un default si se quiere)
 
         if ($documento) {
-            $query->where('nro_documento', 'like', '%' . $documento . '%');
+            // Buscar por DNI o por nombre/apellidos. Cada palabra debe aparecer en algún campo
+            // del nombre (así "Juan Perez" coincide con nombre="Juan" y apellido="Perez").
+            $terminos = array_filter(preg_split('/\s+/', trim($documento)));
+            $query->where(function ($q) use ($documento, $terminos) {
+                $q->where('nro_documento', 'like', '%' . $documento . '%')
+                  ->orWhereHas('usuario', function ($u) use ($terminos) {
+                      foreach ($terminos as $t) {
+                          $u->where(function ($w) use ($t) {
+                              $w->where('nombre', 'like', '%' . $t . '%')
+                                ->orWhere('apellido_paterno', 'like', '%' . $t . '%')
+                                ->orWhere('apellido_materno', 'like', '%' . $t . '%');
+                          });
+                      }
+                  });
+            });
         }
 
         $asistencias = $query->orderBy('fecha_hora', 'desc')->paginate(15);
 
-        $docentes = User::whereHas('roles', function ($query) {
-            $query->where('nombre', 'profesor');
-        })->select('id', 'numero_documento', 'nombre', 'apellido_paterno')->get();
+        $docentes = (clone $docentesBase)
+            ->select('id', 'numero_documento', 'nombre', 'apellido_paterno')
+            ->orderBy('apellido_paterno')->orderBy('nombre')->get();
 
         // (La lógica de transformación de la colección de asistencias permanece igual)
         $asistencias->getCollection()->transform(function ($asistencia) {
@@ -508,6 +539,9 @@ class AsistenciaDocenteController extends Controller
 
     public function monitor()
     {
+        // Procesar eventos pendientes para el monitor en tiempo real (antes vivía en el constructor)
+        Artisan::call('asistencia:procesar-eventos');
+
         $hoy = Carbon::today();
         
         // Últimas asistencias del día
@@ -542,6 +576,9 @@ class AsistenciaDocenteController extends Controller
     public function getDailySchedule(Request $request)
     {
         try {
+            // Procesar eventos pendientes para datos en tiempo real (antes vivía en el constructor)
+            Artisan::call('asistencia:procesar-eventos');
+
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
             
@@ -650,6 +687,9 @@ class AsistenciaDocenteController extends Controller
     public function getTeachersWithoutTheme(Request $request)
     {
         try {
+            // Procesar eventos pendientes para datos en tiempo real (antes vivía en el constructor)
+            Artisan::call('asistencia:procesar-eventos');
+
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $fechaCarbon = Carbon::parse($fecha);
             
@@ -823,6 +863,9 @@ class AsistenciaDocenteController extends Controller
     public function getDailyReport(Request $request)
     {
         try {
+            // Procesar eventos pendientes para datos en tiempo real (antes vivía en el constructor)
+            Artisan::call('asistencia:procesar-eventos');
+
             $fecha = $request->input('fecha', Carbon::today()->toDateString());
             $cicloId = $request->input('ciclo_id');
             $turno = $request->input('turno');
@@ -1678,43 +1721,21 @@ class AsistenciaDocenteController extends Controller
         $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
         $horaFinProgramada = Carbon::parse($horario->hora_fin);
 
-        $horarioInicioHoy = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
-        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second); 
+        $horarioFinHoy = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second);
 
-        // Buscar registros biométricos
-        $entradaBiometrica = $registrosBiometricosDelDia
-            ->filter(function($r) use ($horarioInicioHoy) {
-                $horaRegistro = Carbon::parse($r->fecha_registro); 
-                return $horaRegistro->between(
-                    $horarioInicioHoy->copy()->subMinutes(self::TOLERANCIA_ENTRADA_ANTICIPADA_MINUTOS),
-                    $horarioInicioHoy->copy()->addMinutes(120)
-                );
-            })
-            ->sortBy('fecha_registro')
-            ->first();
+        // ⚡ FUENTE ÚNICA DE VERDAD: el trait calcula matching biométrico, horas, tardanza y pago.
+        // Aquí solo enriquecemos con campos de presentación específicos del reporte/planilla.
+        $base = $this->processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente);
 
-        $salidaBiometrica = $registrosBiometricosDelDia
-            ->filter(function($r) use ($horarioFinHoy) {
-                $horaRegistro = Carbon::parse($r->fecha_registro); 
-                return $horaRegistro->between(
-                    $horarioFinHoy->copy()->subMinutes(15),
-                    $horarioFinHoy->copy()->addMinutes(60)
-                );
-            })
-            ->sortByDesc('fecha_registro')
-            ->first();
-        
-        // Buscar tema desarrollado
-        $asistenciaDocenteProcesada = AsistenciaDocente::where('docente_id', $docente->id)
-            ->where('horario_id', $horario->id)
-            ->whereDate('fecha_hora', $currentDate->toDateString())
-            ->first();
+        $entradaCarbon = $base['entrada_carbon'];
+        $salidaCarbon = $base['salida_carbon'];
 
-        $temaDesarrollado = $asistenciaDocenteProcesada->tema_desarrollado ?? 'Pendiente';
-        
-        // Calcular horas
-        $horasProgramadas = $horaInicioProgramada->diffInMinutes($horaFinProgramada, true) / 60;
-        $horasDictadas = 0; // ⚡ FIJADO: Inicializar en 0 para evitar fallthrough bug
+        // Tema desarrollado (criterio de reportes: por defecto "Pendiente")
+        $temaDesarrollado = $base['tema_desarrollado'] ?? 'Pendiente';
+
+        // Horas (provenientes del trait, fuente única de la matemática de planilla)
+        $horasProgramadas = $base['horas_programadas'];
+        $horasDictadas = $base['horas_dictadas'];
         $estadoTexto = 'PENDIENTE';
         $duracionTexto = '00:00:00'; // Inicializar por defecto
 
@@ -1722,108 +1743,36 @@ class AsistenciaDocenteController extends Controller
         $aulaNombre = $horario->aula->nombre ?? 'N/A';
         $turnoNombre = $horario->turno ?? 'N/A';
 
-        // Determinar estado
-        if ($entradaBiometrica && $salidaBiometrica) {
+        // Determinar estado (criterio de reportes: por fecha y distinguiendo SIN TEMA).
+        // Las horas/pago YA vienen calculados del trait; aquí solo se decide la etiqueta de estado.
+        if ($entradaCarbon && $salidaCarbon) {
             // Validación Adicional: Para estar COMPLETADA debe tener tema registrado
             if ($temaDesarrollado && $temaDesarrollado !== 'Pendiente') {
                 $estadoTexto = 'COMPLETADA';
             } else {
                 $estadoTexto = 'SIN TEMA'; // Asistencia ok, pero falta tema
             }
-            
-            $entradaCarbon = Carbon::parse($entradaBiometrica->fecha_registro);
-            $salidaCarbon = Carbon::parse($salidaBiometrica->fecha_registro);
 
-            // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
-            // Determinar la hora de inicio efectiva para el cálculo, respetando la tolerancia de tardanza.
-            $tardinessThreshold = $horarioInicioHoy->copy()->addMinutes(self::TOLERANCIA_TARDE_MINUTOS);
-            
-            $effectiveStartTime = null;
-            // Si la entrada es ANTES o DENTRO del umbral de tardanza, se usa la hora de inicio programada.
-            if ($entradaCarbon->lessThanOrEqualTo($tardinessThreshold)) {
-                $effectiveStartTime = $horarioInicioHoy;
-            } else {
-                // Si la entrada es DESPUÉS del umbral, se usa la hora de entrada real (se aplica descuento).
-                $effectiveStartTime = $entradaCarbon;
-            }
-            
-            // ⚡ CORRECCIÓN CRÍTICA: El fin efectivo es el MÍNIMO entre la hora programada y la hora de salida real
-            // Esto asegura que si el docente sale después de la hora programada, solo se cuenta hasta la hora programada
-            $finEfectivo = $salidaCarbon->min($horarioFinHoy);
-            
-            // Validar que hay tiempo positivo
-            if ($finEfectivo <= $effectiveStartTime) {
-                $horasDictadas = 0;
-                $duracionTexto = '00:00:00';
-            } else {
-                $duracionBruta = $effectiveStartTime->diffInMinutes($finEfectivo);
-
-                // --- INICIO DE LA LÓGICA DE RECESO PARA REPORTES ---
-                // Obtener recesos configurables del ciclo del horario
-                $cicloDelHorario = $horario->ciclo;
-                $minutosRecesoManana = 0;
-                $minutosRecesoTarde = 0;
-                
-                // Receso de Mañana (configurable por ciclo)
-                if ($cicloDelHorario && $cicloDelHorario->receso_manana_inicio && $cicloDelHorario->receso_manana_fin) {
-                    $recesoMananaInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_inicio);
-                    $recesoMananaFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_manana_fin);
-                    
-                    if ($effectiveStartTime < $recesoMananaFin && $finEfectivo > $recesoMananaInicio) {
-                        $superposicionInicio = $effectiveStartTime->max($recesoMananaInicio);
-                        $superposicionFin = $finEfectivo->min($recesoMananaFin);
-                        if ($superposicionFin > $superposicionInicio) {
-                            $minutosRecesoManana = $superposicionInicio->diffInMinutes($superposicionFin);
-                        }
-                    }
-                }
-
-                // Receso de Tarde (configurable por ciclo)
-                if ($cicloDelHorario && $cicloDelHorario->receso_tarde_inicio && $cicloDelHorario->receso_tarde_fin) {
-                    $recesoTardeInicio = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_inicio);
-                    $recesoTardeFin = $currentDate->copy()->setTimeFromTimeString($cicloDelHorario->receso_tarde_fin);
-                    
-                    if ($effectiveStartTime < $recesoTardeFin && $finEfectivo > $recesoTardeInicio) {
-                        $superposicionInicio = $effectiveStartTime->max($recesoTardeInicio);
-                        $superposicionFin = $finEfectivo->min($recesoTardeFin);
-                        if ($superposicionFin > $superposicionInicio) {
-                            $minutosRecesoTarde = $superposicionInicio->diffInMinutes($superposicionFin);
-                        }
-                    }
-                }
-
-                $minutosDictados = $duracionBruta - $minutosRecesoManana - $minutosRecesoTarde;
-                
-                // Las horas dictadas son los minutos netos divididos por 60 (sin redondeo prematuro)
-                $horasDictadas = max(0, $minutosDictados) / 60;
-
-                // Formato H:i:s para mostrar al usuario
-                $seconds = max(0, $minutosDictados) * 60;
-                $hours = floor($seconds / 3600);
-                $mins = floor(($seconds - ($hours * 3600)) / 60);
-                $secs = floor($seconds % 60);
-                $duracionTexto = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
-            }
-
-        } elseif ($entradaBiometrica && !$salidaBiometrica) {
+            // Duración en texto HH:MM:SS a partir de las horas dictadas (trait)
+            $segundos = (int) round($horasDictadas * 3600);
+            $hH = floor($segundos / 3600);
+            $mM = floor(($segundos - ($hH * 3600)) / 60);
+            $sS = floor($segundos % 60);
+            $duracionTexto = sprintf('%02d:%02d:%02d', $hH, $mM, $sS);
+        } elseif ($entradaCarbon && !$salidaCarbon) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'INCOMPLETA';
             } else {
                 $estadoTexto = 'EN CURSO';
             }
             $duracionTexto = '00:00:00';
-            // Si está incompleta o en curso (sin salida), no debería sumar horas ni pago aún.
-            $horasDictadas = 0;
-            $montoTotal = 0; // Se recalculará abajo si horasDictadas > 0, pero forzamos 0 aquí por seguridad visual.
-        } elseif (!$entradaBiometrica && !$salidaBiometrica) {
+        } elseif (!$entradaCarbon && !$salidaCarbon) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'FALTA';
             } else {
                 $estadoTexto = 'PROGRAMADA';
             }
             $duracionTexto = '00:00:00';
-            // ⚡ CORRECCIÓN: Las faltas no deben sumar horas ni pago
-            $horasDictadas = 0;
         }
 
         // Calcular pago
@@ -1862,13 +1811,8 @@ class AsistenciaDocenteController extends Controller
 
         // FORMATO DE HORAS CORREGIDO - CON SEGUNDOS Y SIN DATOS FALSOS
         // Si no hay registro biométrico, mostramos "---" para que sea evidente la falta
-        $horaEntradaDisplay = $entradaBiometrica ? 
-            Carbon::parse($entradaBiometrica->fecha_registro)->format('g:i:s A') : 
-            '--:--:--';
-        
-        $horaSalidaDisplay = $salidaBiometrica ? 
-            Carbon::parse($salidaBiometrica->fecha_registro)->format('g:i:s A') : 
-            '--:--:--';
+        $horaEntradaDisplay = $entradaCarbon ? $entradaCarbon->format('g:i:s A') : '--:--:--';
+        $horaSalidaDisplay = $salidaCarbon ? $salidaCarbon->format('g:i:s A') : '--:--:--';
 
         return [
             'fecha' => $currentDate->toDateString(),
@@ -1890,7 +1834,7 @@ class AsistenciaDocenteController extends Controller
             'mes' => $currentDate->locale('es')->monthName,
             'semana' => floor($currentDate->diffInDays(Carbon::parse($fechaInicioCiclo), false) * -1 / 7) + 1,
             'carbon_date' => $currentDate->copy(),
-            'tiene_registros' => ($entradaBiometrica && $salidaBiometrica) ? 'SI' : 'NO'
+            'tiene_registros' => ($entradaCarbon && $salidaCarbon) ? 'SI' : 'NO'
         ];
     }
 

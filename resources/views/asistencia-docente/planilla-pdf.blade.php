@@ -15,7 +15,7 @@
         .header { 
             text-align: center; 
             margin-bottom: 20px; 
-            border-bottom: 2px solid #2c3e50; 
+            border-bottom: 3px solid #e2007a;
             padding-bottom: 10px; 
             position: relative;
             min-height: 70px;
@@ -23,7 +23,7 @@
         .header-logo-left { position: absolute; left: 0; top: 0; width: 60px; }
         .header-logo-right { position: absolute; right: 0; top: 0; width: 60px; }
         .header-logo-left img, .header-logo-right img { width: 60px; height: auto; }
-        .header h1 { margin: 0; color: #2c3e50; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
+        .header h1 { margin: 0; color: #1a237e; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
         .header p { margin: 5px 0 0; font-size: 12px; color: #7f8c8d; }
         
         .informe-box {
@@ -34,12 +34,13 @@
             border-radius: 5px;
         }
         .informe-item { margin-bottom: 3px; }
-        .informe-label { font-weight: bold; width: 60px; display: inline-block; text-transform: uppercase; color: #2c3e50; }
+        .informe-label { font-weight: bold; width: 60px; display: inline-block; text-transform: uppercase; color: #1a237e; }
         
-        .section-title { 
-            background: #2c3e50;
+        .section-title {
+            background: #1a237e;
             color: white;
-            padding: 8px 12px; 
+            border-left: 5px solid #e2007a;
+            padding: 8px 12px;
             margin: 20px 0 10px; 
             font-weight: bold; 
             text-transform: uppercase; 
@@ -50,7 +51,7 @@
         .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .data-table th { 
             background-color: #f1f3fa; 
-            color: #2c3e50; 
+            color: #1a237e; 
             padding: 8px 5px; 
             text-align: center; 
             font-size: 9px; 
@@ -69,8 +70,8 @@
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
         
-        .total-row { background-color: #2c3e50 !important; color: white !important; font-weight: bold; }
-        .total-row td { border-color: #2c3e50 !important; }
+        .total-row { background-color: #1a237e !important; color: white !important; font-weight: bold; }
+        .total-row td { border-color: #1a237e !important; }
 
         .signature-section { margin-top: 40px; width: 100%; }
         .signature-box { border-top: 1px solid #000; margin: 30px 15px 0; padding-top: 5px; text-align: center; font-size: 9px; }
@@ -84,14 +85,14 @@
 <body>
     <div class="header">
         <div class="header-logo-left">
-            <img src="{{ public_path('assets/images/logo unamad constancia.png') }}" alt="Logo UNAMAD">
+            <img src="{{ public_path('assets/images/logo unamad constancia_optimized.png') }}" alt="Logo UNAMAD">
         </div>
         <div class="header-logo-right">
-            <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="Logo CEPRE">
+            <img src="{{ public_path('assets/images/logo cepre costancia_optimized.png') }}" alt="Logo CEPRE">
         </div>
         <h1>CENTRO PREUNIVERSITARIO</h1>
         <p>Universidad Nacional Amazónica de Madre de Dios</p>
-        <p style="font-weight: bold; color: #34495e; font-size: 14px; margin-top: 10px;">RESUMEN DE PAGOS POR DOCENTE</p>
+        <p style="font-weight: bold; color: #e2007a; font-size: 14px; margin-top: 10px;">RESUMEN DE PAGOS POR DOCENTE</p>
     </div>
 
     <div class="informe-box">

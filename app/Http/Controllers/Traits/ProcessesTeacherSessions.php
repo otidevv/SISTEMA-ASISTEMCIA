@@ -17,6 +17,42 @@ trait ProcessesTeacherSessions
     
     // ⚡ OPTIMIZACIÓN: Cache para asistencias procesadas
     private static $asistenciasCache = [];
+    // Cuando es true, el cache se precargó en bloque y NO se consulta la BD por cada sesión faltante
+    private static $asistenciasPrecargadas = false;
+    // ⚡ OPTIMIZACIÓN: Cache de tarifas por docente+ciclo (no depende de la fecha)
+    private static $pagosCache = [];
+
+    /**
+     * Precarga en bloque las asistencias docentes procesadas (tema desarrollado) de un rango,
+     * para evitar una consulta por cada sesión en reportes masivos.
+     */
+    public function precargarAsistenciasProcesadas($docenteIds, $startDate, $endDate)
+    {
+        $rows = AsistenciaDocente::whereIn('docente_id', $docenteIds)
+            ->whereBetween('fecha_hora', [$startDate, $endDate])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($rows as $asistencia) {
+            $key = $asistencia->docente_id . '_' . $asistencia->horario_id . '_' . Carbon::parse($asistencia->fecha_hora)->toDateString();
+            // Conservar la primera coincidencia (equivalente a ->first())
+            if (!isset(self::$asistenciasCache[$key])) {
+                self::$asistenciasCache[$key] = $asistencia;
+            }
+        }
+
+        self::$asistenciasPrecargadas = true;
+    }
+
+    /**
+     * Reinicia los caches estáticos de sesiones (usar antes de un procesamiento masivo).
+     */
+    public function reiniciarCacheSesiones()
+    {
+        self::$asistenciasCache = [];
+        self::$pagosCache = [];
+        self::$asistenciasPrecargadas = false;
+    }
 
     /**
      * Procesa una sesión de un docente para calcular estado, duración y pago.
@@ -65,14 +101,14 @@ trait ProcessesTeacherSessions
         // ⚡ OPTIMIZACIÓN: Usar cache para asistencias procesadas
         $cacheKey = $docente->id . '_' . $horario->id . '_' . $currentDate->toDateString();
         
-        if (!isset(self::$asistenciasCache[$cacheKey])) {
+        if (!isset(self::$asistenciasCache[$cacheKey]) && !self::$asistenciasPrecargadas) {
             self::$asistenciasCache[$cacheKey] = AsistenciaDocente::where('docente_id', $docente->id)
                 ->where('horario_id', $horario->id)
                 ->whereDate('fecha_hora', $currentDate->toDateString())
                 ->first();
         }
-        
-        $asistenciaDocenteProcesada = self::$asistenciasCache[$cacheKey];
+
+        $asistenciaDocenteProcesada = self::$asistenciasCache[$cacheKey] ?? null;
         $temaDesarrollado = ($asistenciaDocenteProcesada) ? $asistenciaDocenteProcesada->tema_desarrollado : null;
 
         // Inicialización de variables
@@ -174,10 +210,15 @@ trait ProcessesTeacherSessions
 
         // Priorizar pago asignado al ciclo del horario para soportar m�ltiples ciclos activos
         if ($horario->ciclo_id) {
-            $pagoDocente = PagoDocente::where('docente_id', $docente->id)
-                ->where('ciclo_id', $horario->ciclo_id)
-                ->orderBy('fecha_inicio', 'desc')
-                ->first();
+            // Cacheado por docente+ciclo (la tarifa no depende de la fecha de la sesión)
+            $pagoCacheKey = $docente->id . '_' . $horario->ciclo_id;
+            if (!array_key_exists($pagoCacheKey, self::$pagosCache)) {
+                self::$pagosCache[$pagoCacheKey] = PagoDocente::where('docente_id', $docente->id)
+                    ->where('ciclo_id', $horario->ciclo_id)
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
+            }
+            $pagoDocente = self::$pagosCache[$pagoCacheKey];
         }
 
         // Fallback por rango de fechas (compatibilidad con registros sin ciclo_id)
@@ -213,8 +254,14 @@ trait ProcessesTeacherSessions
 
             // Cálculos de tiempo y pago
             'horas_dictadas' => $horasDictadas,
+            'horas_programadas' => $horaInicioProgramada->diffInMinutes($horaFinProgramada, true) / 60,
             'pago' => $montoTotal,
+            'tarifa_por_hora' => $pagoDocente->tarifa_por_hora ?? 0,
             'minutos_tardanza' => $minutosTardanza,
+
+            // Datos crudos (fuente única para que reportes/exports formateen a su gusto)
+            'entrada_carbon' => $entradaBiometrica ? Carbon::parse($entradaBiometrica->fecha_registro) : null,
+            'salida_carbon' => $salidaBiometrica ? Carbon::parse($salidaBiometrica->fecha_registro) : null,
 
             // Datos para ordenamiento y agrupación
             'year' => $currentDate->year,

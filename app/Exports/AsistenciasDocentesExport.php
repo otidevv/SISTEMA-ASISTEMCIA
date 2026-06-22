@@ -422,20 +422,31 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                 private $docenteName;
                 private $filterPeriodHeader;
                 private $selectedCicloAcademico;
+                // Mapa: número de fila de la hoja => ['estado' => ..., 'tardanza' => ...] para colorear por estado
+                private $rowEstados = [];
 
                 // PALETA FORMAL Y PROFESIONAL
                 private const COLORS = [
-                    'PRIMARY_BLUE'      => 'FF1B3B6F',    // Azul marino corporativo
-                    'SECONDARY_BLUE'    => 'FF2C5282',    // Azul oscuro
-                    'ACCENT_GOLD'       => 'FFC19A6B',    // Dorado elegante
-                    'LIGHT_BLUE'        => 'FFF8F9FA',    // Gris muy claro
-                    'HEADER_BLUE'       => 'FF1E3A5F',    // Azul encabezado
+                    'PRIMARY_BLUE'      => 'FF1A237E',    // Navy CEPRE (marca)
+                    'SECONDARY_BLUE'    => 'FF9B0058',    // Magenta oscuro CEPRE
+                    'ACCENT_GOLD'       => 'FFE2007A',    // Magenta CEPRE (acento de marca)
+                    'LIGHT_BLUE'        => 'FFF8F9FA',    // Gris muy claro (bg principal)
+                    'HEADER_BLUE'       => 'FF1A237E',    // Navy CEPRE (barra de encabezado)
                     'WHITE'             => 'FFFFFFFF',    // Blanco
                     'LIGHT_GRAY'        => 'FFF1F3F5',    // Gris claro
                     'BORDER_GRAY'       => 'FFDEE2E6',    // Gris borde
                     'TEXT_DARK'         => 'FF2D3748',    // Texto oscuro
                     'SUCCESS_GREEN'     => 'FF2F855A',    // Verde formal
-                    'WARNING_ORANGE'    => 'FFED8936'     // Naranja formal
+                    'WARNING_ORANGE'    => 'FFED8936',    // Naranja formal
+                    // Colores semánticos por estado de la sesión
+                    'FALTA_FILL'        => 'FFF8D7DA',    // Rojo claro (falta)
+                    'FALTA_TEXT'        => 'FF9C0006',    // Rojo oscuro
+                    'TARDE_FILL'        => 'FFFFF3CD',    // Ámbar claro (tardanza)
+                    'TARDE_TEXT'        => 'FF9C6500',    // Marrón ámbar
+                    'OK_FILL'           => 'FFD4EDDA',    // Verde claro (completada a tiempo)
+                    'OK_TEXT'           => 'FF155724',    // Verde oscuro
+                    'INCOMP_FILL'       => 'FFFCE8D5',    // Naranja claro (incompleta)
+                    'INCOMP_TEXT'       => 'FF8A4B08'     // Naranja oscuro
                 ];
 
                 public function __construct(array $docenteData, string $docenteName, string $filterPeriodHeader, ?string $selectedCicloAcademico)
@@ -551,6 +562,9 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $docenteTotalPago = 0;
                     $isFirstRowForDocente = true;
 
+                    // Las sesiones empiezan en la fila 8 (filas 1-6 encabezado + fila 7 títulos de columna)
+                    $rowColorIndex = 8;
+
                     foreach ($sessionsByMonth as $monthKey => $monthData) {
                         $isFirstRowForMes = true;
                         
@@ -575,13 +589,31 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 $minutos = floor($minutosDecimales);
                                 $segundos = round(($minutosDecimales - $minutos) * 60);
                                 $horasFormateadas = sprintf('%02d:%02d:%02d', $horas, $minutos, $segundos);
-                                
+
+                                // Texto del tema según el estado de la sesión:
+                                // - tema real si lo registró
+                                // - "Por registrar tema" si asistió pero no lo registró
+                                // - "FALTA" si no asistió
+                                // - "—" si aún no corresponde (clase futura / en curso)
+                                $temaPlano = \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']);
+                                $estadoSesionTema = strtoupper($session['estado_sesion'] ?? '');
+                                $tieneTema = $temaPlano !== 'Pendiente' && trim($temaPlano) !== '';
+                                if ($tieneTema) {
+                                    $temaDisplay = $temaPlano;
+                                } elseif ($estadoSesionTema === 'FALTA') {
+                                    $temaDisplay = 'FALTA';
+                                } elseif (in_array($estadoSesionTema, ['COMPLETADA', 'INCOMPLETA', 'SIN TEMA'])) {
+                                    $temaDisplay = 'Por registrar tema';
+                                } else {
+                                    $temaDisplay = '—'; // PROGRAMADA / EN CURSO (aún no corresponde tema)
+                                }
+
                                 $dataRows->push([
                                     $isFirstRowForMes ? strtoupper($monthData['month_name']) : '',
                                     $isFirstRowForSemana ? 'SEMANA ' . sprintf('%02d', $semana) : '',
                                     Carbon::parse($session['fecha'])->format('d/m/Y'),
                                     $session['curso'],
-                                    \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']),
+                                    $temaDisplay,
                                     $session['aula'],
                                     $session['turno'],
                                     $session['hora_entrada'],
@@ -591,7 +623,14 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                     'S/. ' . number_format($session['pago'], 2),
                                     ''
                                 ]);
-                                
+
+                                // Registrar el estado de esta fila para colorearla después
+                                $this->rowEstados[$rowColorIndex] = [
+                                    'estado' => $session['estado_sesion'] ?? '',
+                                    'tardanza' => $minutosTardanza,
+                                ];
+                                $rowColorIndex++;
+
                                 $docenteTotalHoras += $session['horas_dictadas'];
                                 $docenteTotalPago += $session['pago'];
                                 
@@ -691,10 +730,10 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                         ],
                         3 => [
                             'font' => [
-                                'bold' => true, 
-                                'size' => 22, 
+                                'bold' => true,
+                                'size' => 22,
                                 'name' => 'Calibri',
-                                'color' => ['argb' => self::COLORS['TEXT_DARK']]
+                                'color' => ['argb' => self::COLORS['ACCENT_GOLD']] // Magenta CEPRE
                             ]
                         ],
                         4 => [
@@ -763,7 +802,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     // ═══════════════════════════════════════════════════
                     
                     // Logo UNAMAD (izquierda) - Flotando sobre el encabezado
-                    $logoUnamad = public_path('assets/images/logo unamad constancia.png');
+                    $logoUnamad = public_path('assets/images/logo unamad constancia_optimized.png');
                     if (file_exists($logoUnamad)) {
                         $drawingUnamad = new Drawing();
                         $drawingUnamad->setName('Logo UNAMAD');
@@ -777,7 +816,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     }
                     
                     // Logo CEPRE (derecha) - Flotando sobre el encabezado
-                    $logoCepre = public_path('assets/images/logo cepre costancia.png');
+                    $logoCepre = public_path('assets/images/logo cepre costancia_optimized.png');
                     if (file_exists($logoCepre)) {
                         $drawingCepre = new Drawing();
                         $drawingCepre->setName('Logo CEPRE');
@@ -896,6 +935,35 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     ]);
                 }
 
+                /**
+                 * Devuelve ['fill' => argb, 'text' => argb] según el estado de la sesión,
+                 * o null si el estado no requiere color especial (usa zebra).
+                 */
+                private function estadoFillColor($estado, $tardanza)
+                {
+                    $estado = strtoupper((string) $estado);
+
+                    if ($estado === 'FALTA') {
+                        return ['fill' => self::COLORS['FALTA_FILL'], 'text' => self::COLORS['FALTA_TEXT']];
+                    }
+
+                    // Tardanza: llegó tarde aunque haya marcado entrada/salida
+                    if ($tardanza > 0 && in_array($estado, ['COMPLETADA', 'INCOMPLETA', 'SIN TEMA'])) {
+                        return ['fill' => self::COLORS['TARDE_FILL'], 'text' => self::COLORS['TARDE_TEXT']];
+                    }
+
+                    if ($estado === 'COMPLETADA') {
+                        return ['fill' => self::COLORS['OK_FILL'], 'text' => self::COLORS['OK_TEXT']];
+                    }
+
+                    if ($estado === 'INCOMPLETA') {
+                        return ['fill' => self::COLORS['INCOMP_FILL'], 'text' => self::COLORS['INCOMP_TEXT']];
+                    }
+
+                    // EN CURSO, PROGRAMADA, PENDIENTE → sin color especial
+                    return null;
+                }
+
                 private function applyAdvancedFormatting($sheet)
                 {
                     $lastRow = $sheet->getHighestRow();
@@ -914,12 +982,32 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     $totalsRow = $lastRow - 8;
                     
                     for ($row = 8; $row < $totalsRow; $row++) {
-                        $fillColor = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
-                        
-                        $sheet->getStyle('A' . $row . ':L' . $row)->applyFromArray([
+                        $zebra = ($row % 2 == 0) ? self::COLORS['WHITE'] : self::COLORS['LIGHT_GRAY'];
+
+                        // Color por estado de la sesión (FALTA, TARDANZA, etc.); si no aplica, zebra
+                        $estadoColor = isset($this->rowEstados[$row])
+                            ? $this->estadoFillColor($this->rowEstados[$row]['estado'], $this->rowEstados[$row]['tardanza'])
+                            : null;
+
+                        // Columnas de datos C:L: fondo por estado o zebra
+                        $sheet->getStyle('C' . $row . ':L' . $row)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
-                                'startColor' => ['argb' => $fillColor]
+                                'startColor' => ['argb' => $estadoColor ? $estadoColor['fill'] : $zebra]
+                            ]
+                        ]);
+
+                        // Resaltar el texto del estado en columnas que no se sobrescriben después (D:I, K)
+                        if ($estadoColor) {
+                            $sheet->getStyle('D' . $row . ':I' . $row)->getFont()->getColor()->setARGB($estadoColor['text']);
+                            $sheet->getStyle('K' . $row)->getFont()->getColor()->setARGB($estadoColor['text']);
+                        }
+
+                        // Columnas A:B (MES/SEMANA) mantienen zebra; el agrupado las repinta luego
+                        $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['argb' => $zebra]
                             ]
                         ]);
                     }

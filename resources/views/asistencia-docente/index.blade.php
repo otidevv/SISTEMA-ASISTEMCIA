@@ -129,7 +129,7 @@
     <div class="card">
         <div class="card-body">
             <!-- Filtros y Acciones -->
-            <form method="GET" action="{{ route('asistencia-docente.index') }}" class="row g-3 mb-4 align-items-end bg-light p-3 rounded">
+            <form method="GET" action="{{ route('asistencia-docente.index') }}" id="filtrosForm" class="row g-3 mb-4 align-items-end bg-light p-3 rounded">
                 <div class="col-md-3">
                     <label for="ciclo_id" class="form-label fw-bold">Ciclo Académico</label>
                     <select name="ciclo_id" id="ciclo_id" class="form-select form-select-sm">
@@ -143,11 +143,14 @@
                 </div>
                 <div class="col-md-3">
                     <label for="fecha" class="form-label fw-bold">Fecha Específica</label>
-                    <input type="date" class="form-control form-control-sm" name="fecha" value="{{ $fecha ?? '' }}">
+                    <input type="date" id="fechaFiltro" class="form-control form-control-sm" name="fecha" value="{{ $fecha ?? '' }}">
                 </div>
                 <div class="col-md-3">
                     <label for="documento" class="form-label fw-bold">Docente (DNI o Nombre)</label>
-                    <input type="text" class="form-control form-control-sm" name="documento" placeholder="Buscar..." value="{{ request('documento') ?? '' }}">
+                    <div class="position-relative">
+                        <input type="text" id="documentoFiltro" class="form-control form-control-sm" name="documento" placeholder="Buscar por DNI o nombre..." value="{{ request('documento') ?? '' }}" autocomplete="off">
+                        <div id="docenteSugerencias" class="list-group position-absolute w-100 shadow-sm" style="z-index:1050; max-height:240px; overflow-y:auto; display:none;"></div>
+                    </div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary btn-sm w-100"><i class="mdi mdi-filter-variant"></i> Filtrar</button>
@@ -212,8 +215,12 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-info btn-sm" title="Ver Detalles"><i class="mdi mdi-eye"></i></button>
                                     <a href="{{ route('asistencia-docente.edit', $asistencia->id) }}" class="btn btn-warning btn-sm" title="Editar"><i class="mdi mdi-pencil"></i></a>
+                                    <form action="{{ route('asistencia-docente.destroy', $asistencia->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este registro de asistencia? Esta acción no se puede deshacer.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar"><i class="mdi mdi-delete"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty
@@ -282,6 +289,105 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-bg-color]').forEach((el, index) => {
         el.style.backgroundColor = colors[index % colors.length];
     });
+
+    // --- BÚSQUEDA / FILTROS ---
+    const filtrosForm = document.getElementById('filtrosForm');
+    if (filtrosForm) {
+        const cicloSel   = document.getElementById('ciclo_id');
+        const fechaInput = document.getElementById('fechaFiltro');
+        const docInput   = document.getElementById('documentoFiltro');
+
+        // Ciclo y fecha cambian el conjunto de datos: se aplican en el servidor
+        if (cicloSel)   cicloSel.addEventListener('change',   () => filtrosForm.submit());
+        if (fechaInput) fechaInput.addEventListener('change', () => filtrosForm.submit());
+
+        // Documento: filtrado INSTANTÁNEO en pantalla (sin recargar)
+        if (docInput) {
+            const tbody = document.getElementById('asistenciasTableBody');
+
+            const filtrarFilas = () => {
+                const q = docInput.value.trim().toLowerCase();
+                const filas = tbody.querySelectorAll('tr.asistencia-row-item');
+                let visibles = 0;
+                filas.forEach(fila => {
+                    const coincide = fila.textContent.toLowerCase().includes(q);
+                    fila.style.display = coincide ? '' : 'none';
+                    if (coincide) visibles++;
+                });
+
+                // Aviso cuando no hay coincidencias en la página actual
+                let aviso = document.getElementById('sinCoincidencias');
+                if (visibles === 0 && q !== '') {
+                    if (!aviso) {
+                        aviso = document.createElement('tr');
+                        aviso.id = 'sinCoincidencias';
+                        aviso.innerHTML = '<td colspan="6" class="text-center py-4 text-muted">' +
+                            '<i class="mdi mdi-magnify-close fs-2"></i>' +
+                            '<h6 class="mt-2 mb-0">Sin coincidencias en esta página. Pulsa <b>Enter</b> para buscar en el servidor, o borra la fecha para ver todo el ciclo.</h6></td>';
+                        tbody.appendChild(aviso);
+                    }
+                } else if (aviso) {
+                    aviso.remove();
+                }
+            };
+
+            // Lista de docentes para el autocompletado propio (estilizado, no el datalist nativo)
+            const DOCENTES = @json($docentes->map(fn($d) => ['nombre' => trim($d->nombre . ' ' . $d->apellido_paterno), 'dni' => (string) $d->numero_documento])->values());
+            const sugBox = document.getElementById('docenteSugerencias');
+
+            const cerrarSugerencias = () => { sugBox.style.display = 'none'; sugBox.innerHTML = ''; };
+
+            const mostrarSugerencias = () => {
+                const q = docInput.value.trim().toLowerCase();
+                if (q.length < 2) { cerrarSugerencias(); return; }
+                const matches = DOCENTES.filter(d =>
+                    d.nombre.toLowerCase().includes(q) || d.dni.includes(q)
+                ).slice(0, 8);
+                if (matches.length === 0) { cerrarSugerencias(); return; }
+                sugBox.innerHTML = matches.map(d =>
+                    '<button type="button" class="list-group-item list-group-item-action py-1 px-2" data-valor="' + d.nombre + '">' +
+                        '<span class="fw-semibold">' + d.nombre + '</span>' +
+                        '<small class="text-muted d-block">DNI: ' + d.dni + '</small>' +
+                    '</button>'
+                ).join('');
+                sugBox.style.display = 'block';
+            };
+
+            docInput.addEventListener('input', () => {
+                filtrarFilas();
+                mostrarSugerencias();
+            });
+
+            // Clic en una sugerencia → buscar ese docente en todo el periodo
+            sugBox.addEventListener('mousedown', (e) => {
+                const btn = e.target.closest('[data-valor]');
+                if (!btn) return;
+                e.preventDefault(); // mantener el foco para que el submit lleve el valor
+                docInput.value = btn.getAttribute('data-valor');
+                cerrarSugerencias();
+                filtrosForm.submit();
+            });
+
+            // Cerrar sugerencias al perder el foco
+            docInput.addEventListener('blur', () => setTimeout(cerrarSugerencias, 150));
+
+            // Enter = búsqueda completa en el servidor (todas las páginas)
+            docInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    filtrosForm.submit();
+                }
+            });
+
+            // Si venimos de una búsqueda en servidor, mantener foco y cursor al final
+            if (docInput.value) {
+                docInput.focus();
+                const val = docInput.value;
+                docInput.value = '';
+                docInput.value = val;
+            }
+        }
+    }
 });
 </script>
 @endpush

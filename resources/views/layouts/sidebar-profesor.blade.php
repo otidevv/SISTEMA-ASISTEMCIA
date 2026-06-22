@@ -103,11 +103,6 @@
                                 <a href="{{ route('asistencia-docente.create') }}">Registrar</a>
                             </li>
                             @endcan
-                            @can('asistencia-docente.edit')
-                            <li>
-                                <a href="{{ route('asistencia-docente.index') }}">Editar</a>
-                            </li>
-                            @endcan
                             @can('asistencia-docente.monitor')
                             <li>
                                 <a href="{{ route('asistencia-docente.monitor') }}">Monitor en Tiempo Real</a>

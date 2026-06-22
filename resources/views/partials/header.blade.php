@@ -1168,13 +1168,6 @@
                                         </li>
                                     @endif
 
-                                    @if (Auth::user()->hasPermission('asistencia-docente.edit'))
-                                        <li>
-                                            <a href="{{ route('asistencia-docente.index') }}">Editar Asistencia
-                                                Docente</a>
-                                        </li>
-                                    @endif
-
                                     @if (Auth::user()->hasPermission('asistencia-docente.export'))
                                         <li>
                                             <a href="{{ route('asistencia-docente.exportar') }}">Exportar Asistencia
