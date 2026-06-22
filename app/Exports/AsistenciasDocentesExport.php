@@ -600,18 +600,22 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 $temaPlano = \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']);
                                 $estadoSesionTema = strtoupper($session['estado_sesion'] ?? '');
                                 $tieneTema = $temaPlano !== 'Pendiente' && trim($temaPlano) !== '';
+                                $tieneEntrada = !empty($session['entrada_carbon']);
+                                $tieneSalida  = !empty($session['salida_carbon']);
                                 $pendienteTema = false;
                                 if ($tieneTema) {
                                     $temaDisplay = $temaPlano;
-                                } elseif ($estadoSesionTema === 'FALTA') {
-                                    $temaDisplay = 'FALTA';
-                                } elseif ($estadoSesionTema === 'INCOMPLETA') {
+                                } elseif (!$tieneEntrada && !$tieneSalida) {
+                                    // No marcó nada: FALTA si la clase ya pasó; si no, aún programada
+                                    $temaDisplay = in_array($estadoSesionTema, ['PROGRAMADA', 'EN CURSO', 'PENDIENTE']) ? '—' : 'FALTA';
+                                } elseif ($tieneEntrada && !$tieneSalida) {
                                     $temaDisplay = 'Sin marcar salida';
-                                } elseif (in_array($estadoSesionTema, ['COMPLETADA', 'SIN TEMA'])) {
-                                    $temaDisplay = 'Por registrar tema';
-                                    $pendienteTema = true; // asistió completo pero falta el tema
+                                } elseif (!$tieneEntrada && $tieneSalida) {
+                                    $temaDisplay = 'Sin marcar entrada';
                                 } else {
-                                    $temaDisplay = '—'; // PROGRAMADA / EN CURSO (aún no corresponde tema)
+                                    // Entrada y salida completas pero sin tema
+                                    $temaDisplay = 'Por registrar tema';
+                                    $pendienteTema = true;
                                 }
 
                                 $dataRows->push([

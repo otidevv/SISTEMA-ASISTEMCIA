@@ -183,6 +183,9 @@ trait ProcessesTeacherSessions
             } else {
                 $estadoTexto = 'EN CURSO';
             }
+        } elseif (!$entradaBiometrica && $salidaBiometrica) {
+            // Marcó salida pero no entrada → asistencia incompleta
+            $estadoTexto = 'INCOMPLETA';
         } elseif (!$entradaBiometrica && !$salidaBiometrica) {
             if ($currentDate->isPast() || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'FALTA';

@@ -1766,6 +1766,10 @@ class AsistenciaDocenteController extends Controller
                 $estadoTexto = 'EN CURSO';
             }
             $duracionTexto = '00:00:00';
+        } elseif (!$entradaCarbon && $salidaCarbon) {
+            // Marcó salida pero no entrada → asistencia incompleta
+            $estadoTexto = 'INCOMPLETA';
+            $duracionTexto = '00:00:00';
         } elseif (!$entradaCarbon && !$salidaCarbon) {
             if ($currentDate->lessThan(Carbon::today()) || ($currentDate->isToday() && Carbon::now()->greaterThan($horarioFinHoy))) {
                 $estadoTexto = 'FALTA';
