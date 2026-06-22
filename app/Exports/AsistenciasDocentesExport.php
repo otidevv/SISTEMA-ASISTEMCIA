@@ -446,7 +446,9 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                     'OK_FILL'           => 'FFD4EDDA',    // Verde claro (completada a tiempo)
                     'OK_TEXT'           => 'FF155724',    // Verde oscuro
                     'INCOMP_FILL'       => 'FFFCE8D5',    // Naranja claro (incompleta)
-                    'INCOMP_TEXT'       => 'FF8A4B08'     // Naranja oscuro
+                    'INCOMP_TEXT'       => 'FF8A4B08',    // Naranja oscuro
+                    'TEMA_FILL'         => 'FFCFE2FF',    // Azul claro (tema por registrar)
+                    'TEMA_TEXT'         => 'FF084298'     // Azul oscuro
                 ];
 
                 public function __construct(array $docenteData, string $docenteName, string $filterPeriodHeader, ?string $selectedCicloAcademico)
@@ -598,12 +600,16 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 $temaPlano = \App\Models\AsistenciaDocente::getPlainTema($session['tema_desarrollado']);
                                 $estadoSesionTema = strtoupper($session['estado_sesion'] ?? '');
                                 $tieneTema = $temaPlano !== 'Pendiente' && trim($temaPlano) !== '';
+                                $pendienteTema = false;
                                 if ($tieneTema) {
                                     $temaDisplay = $temaPlano;
                                 } elseif ($estadoSesionTema === 'FALTA') {
                                     $temaDisplay = 'FALTA';
-                                } elseif (in_array($estadoSesionTema, ['COMPLETADA', 'INCOMPLETA', 'SIN TEMA'])) {
+                                } elseif ($estadoSesionTema === 'INCOMPLETA') {
+                                    $temaDisplay = 'Sin marcar salida';
+                                } elseif (in_array($estadoSesionTema, ['COMPLETADA', 'SIN TEMA'])) {
                                     $temaDisplay = 'Por registrar tema';
+                                    $pendienteTema = true; // asistió completo pero falta el tema
                                 } else {
                                     $temaDisplay = '—'; // PROGRAMADA / EN CURSO (aún no corresponde tema)
                                 }
@@ -628,6 +634,7 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 $this->rowEstados[$rowColorIndex] = [
                                     'estado' => $session['estado_sesion'] ?? '',
                                     'tardanza' => $minutosTardanza,
+                                    'pendienteTema' => $pendienteTema,
                                 ];
                                 $rowColorIndex++;
 
@@ -1003,6 +1010,14 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                             $sheet->getStyle('K' . $row)->getFont()->getColor()->setARGB($estadoColor['text']);
                         }
 
+                        // Columna TEMA (E) con color propio cuando está por registrar (no se confunde con la tardanza)
+                        if (isset($this->rowEstados[$row]) && !empty($this->rowEstados[$row]['pendienteTema'])) {
+                            $sheet->getStyle('E' . $row)->applyFromArray([
+                                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS['TEMA_FILL']]],
+                                'font' => ['color' => ['argb' => self::COLORS['TEMA_TEXT']], 'bold' => true]
+                            ]);
+                        }
+
                         // Columnas A:B (MES/SEMANA) mantienen zebra; el agrupado las repinta luego
                         $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
                             'fill' => [
@@ -1010,6 +1025,29 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 'startColor' => ['argb' => $zebra]
                             ]
                         ]);
+                    }
+
+                    // ═══ LEYENDA DE COLORES (en una fila espaciadora del pie) ═══
+                    $legendRow = $lastRow - 6;
+                    if ($legendRow > $totalsRow) {
+                        $sheet->setCellValue('A' . $legendRow, 'LEYENDA:');
+                        $sheet->getStyle('A' . $legendRow)->getFont()->setBold(true)->setSize(8);
+
+                        $leyenda = [
+                            ['B', 'Falta',          'FALTA_FILL',  'FALTA_TEXT'],
+                            ['D', 'Tardanza',       'TARDE_FILL',  'TARDE_TEXT'],
+                            ['F', 'Completa',       'OK_FILL',     'OK_TEXT'],
+                            ['H', 'Incompleta',     'INCOMP_FILL', 'INCOMP_TEXT'],
+                            ['J', 'Tema pendiente', 'TEMA_FILL',   'TEMA_TEXT'],
+                        ];
+                        foreach ($leyenda as $item) {
+                            $sheet->setCellValue($item[0] . $legendRow, $item[1]);
+                            $sheet->getStyle($item[0] . $legendRow)->applyFromArray([
+                                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS[$item[2]]]],
+                                'font' => ['color' => ['argb' => self::COLORS[$item[3]]], 'bold' => true, 'size' => 8],
+                                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+                            ]);
+                        }
                     }
                     
                     // ═══════════════════════════════════════════════════
