@@ -881,6 +881,26 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                             ]
                         ]
                     ]);
+
+                    // ═══ LEYENDA DE COLORES (fila 6, bajo el período) ═══
+                    $sheet->setCellValue('A6', 'LEYENDA:');
+                    $sheet->getStyle('A6')->getFont()->setBold(true)->setSize(8);
+                    $leyenda = [
+                        ['B', 'Falta',          'FALTA_FILL',  'FALTA_TEXT'],
+                        ['D', 'Tardanza',       'TARDE_FILL',  'TARDE_TEXT'],
+                        ['F', 'Completa',       'OK_FILL',     'OK_TEXT'],
+                        ['H', 'Incompleta',     'INCOMP_FILL', 'INCOMP_TEXT'],
+                        ['J', 'Tema pendiente', 'TEMA_FILL',   'TEMA_TEXT'],
+                    ];
+                    foreach ($leyenda as $item) {
+                        $sheet->setCellValue($item[0] . '6', $item[1]);
+                        $sheet->getStyle($item[0] . '6')->applyFromArray([
+                            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS[$item[2]]]],
+                            'font' => ['color' => ['argb' => self::COLORS[$item[3]]], 'bold' => true, 'size' => 8],
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+                        ]);
+                    }
+                    $sheet->getRowDimension(6)->setRowHeight(18);
                 }
 
                 private function setupDataTable($sheet)
@@ -1029,29 +1049,6 @@ class AsistenciasDocentesExport implements WithMultipleSheets
                                 'startColor' => ['argb' => $zebra]
                             ]
                         ]);
-                    }
-
-                    // ═══ LEYENDA DE COLORES (en una fila espaciadora del pie) ═══
-                    $legendRow = $lastRow - 6;
-                    if ($legendRow > $totalsRow) {
-                        $sheet->setCellValue('A' . $legendRow, 'LEYENDA:');
-                        $sheet->getStyle('A' . $legendRow)->getFont()->setBold(true)->setSize(8);
-
-                        $leyenda = [
-                            ['B', 'Falta',          'FALTA_FILL',  'FALTA_TEXT'],
-                            ['D', 'Tardanza',       'TARDE_FILL',  'TARDE_TEXT'],
-                            ['F', 'Completa',       'OK_FILL',     'OK_TEXT'],
-                            ['H', 'Incompleta',     'INCOMP_FILL', 'INCOMP_TEXT'],
-                            ['J', 'Tema pendiente', 'TEMA_FILL',   'TEMA_TEXT'],
-                        ];
-                        foreach ($leyenda as $item) {
-                            $sheet->setCellValue($item[0] . $legendRow, $item[1]);
-                            $sheet->getStyle($item[0] . $legendRow)->applyFromArray([
-                                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => self::COLORS[$item[2]]]],
-                                'font' => ['color' => ['argb' => self::COLORS[$item[3]]], 'bold' => true, 'size' => 8],
-                                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
-                            ]);
-                        }
                     }
                     
                     // ═══════════════════════════════════════════════════
