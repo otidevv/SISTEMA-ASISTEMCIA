@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\CargaHorariaApiController;
 use App\Http\Controllers\Api\MailNotificationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MaterialAcademicoApiController;
+use App\Http\Controllers\Api\SolicitudApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,7 +38,17 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
     
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
-    
+
+    // --- MESA DE PARTES / SOLICITUDES (app) ---
+    Route::prefix('solicitudes')->group(function () {
+        Route::get('/tipos', [SolicitudApiController::class, 'tipos']);
+        Route::get('/', [SolicitudApiController::class, 'index']);
+        Route::post('/', [SolicitudApiController::class, 'store']);
+        Route::get('/{id}', [SolicitudApiController::class, 'show'])->whereNumber('id');
+        Route::post('/{id}/pago', [SolicitudApiController::class, 'registrarPago'])->whereNumber('id');
+        Route::post('/{id}/adjuntos', [SolicitudApiController::class, 'subirAdjunto'])->whereNumber('id');
+    });
+
     // --- SERVICIOS DE DASHBOARD ---
     Route::prefix('dashboard')->group(function () {
         Route::get('/datos-generales', [DashboardController::class, 'getDatosGenerales']);

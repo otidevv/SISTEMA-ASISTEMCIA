@@ -85,6 +85,14 @@
                 </li>
                 @endcan
 
+                <!-- Mesa de Partes -->
+                <li>
+                    <a href="{{ route('solicitudes.index') }}">
+                        <i data-feather="inbox"></i>
+                        <span> Mis Trámites </span>
+                    </a>
+                </li>
+
                 <!-- Asistencia -->
                 @can('asistencia-docente.view')
                 <li>

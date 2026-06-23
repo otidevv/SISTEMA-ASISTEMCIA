@@ -743,7 +743,12 @@ function viewPostulacion(id) {
                     <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-person-vcard"></i> <span class="small fw-800">DNI</span></div>
                     <span class="text-navy small fw-bold d-block">${est.numero_documento}</span>
                 </div>`;
-                
+
+                // Acceso a Mesa de Partes (trámites + pagos + conciliación) de este postulante
+                html += `<a href="/solicitudes/admin/estudiante?documento=${est.numero_documento}" target="_blank" class="btn btn-sm w-100 mt-2 text-white fw-bold" style="background:#1a237e;border-radius:8px;">
+                    <i class="bi bi-inbox-fill me-1"></i> Ver trámites / pagos
+                </a>`;
+
                 // Moviendo contacto al sidebar para llenar espacio
                 html += `<div class="sidebar-info-item mt-3">
                     <div class="d-flex align-items-center gap-2 mb-1 text-cyan"><i class="bi bi-envelope-at"></i> <span class="small fw-800">EMAIL</span></div>

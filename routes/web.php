@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\HorarioDocenteController;
 use App\Http\Controllers\PagoDocenteController;
 use App\Http\Controllers\AsistenciaDocenteController;
+use App\Http\Controllers\SolicitudController;
+use App\Http\Controllers\TusneController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\CarnetController;
 use App\Http\Controllers\Api\DashboardController as ApiDashboardController;
@@ -331,6 +333,69 @@ Route::middleware('auth')->group(function () {
             ->middleware('can:asistencia-docente.reports');
             
         Route::get('/exportar-pdf', [AsistenciaDocenteController::class, 'exportarPdfIndividual'])->name('asistencia-docente.exportar-pdf');
+    });
+
+    // ===========================
+    // MESA DE PARTES / SOLICITUDES (FUT digital)
+    // ===========================
+    Route::prefix('solicitudes')->group(function () {
+        // Cualquier usuario autenticado: crear y ver sus propios trámites
+        Route::get('/', [SolicitudController::class, 'index'])->name('solicitudes.index');
+        Route::get('/crear', [SolicitudController::class, 'create'])->name('solicitudes.create');
+        Route::post('/', [SolicitudController::class, 'store'])->name('solicitudes.store');
+
+        // Registrar/validar pago (voucher) de un trámite pendiente
+        Route::post('/{id}/pago', [SolicitudController::class, 'registrarPago'])->whereNumber('id')->name('solicitudes.pago');
+
+        // Adjuntos / evidencias (el dueño o un gestor; autorización fina en el controlador)
+        Route::post('/{id}/adjuntos', [SolicitudController::class, 'subirAdjunto'])->whereNumber('id')->name('solicitudes.adjuntos.store');
+        Route::delete('/{id}/adjuntos/{adjuntoId}', [SolicitudController::class, 'eliminarAdjunto'])->whereNumber('id')->whereNumber('adjuntoId')->name('solicitudes.adjuntos.destroy');
+
+        // Búsqueda de administrativos para derivar (la usan Director y quienes atienden;
+        // la autorización fina se valida dentro del controlador)
+        Route::get('/util/administrativos', [SolicitudController::class, 'buscarAdministrativos'])->name('solicitudes.administrativos');
+        Route::get('/util/estudiante-info', [SolicitudController::class, 'estudianteInfo'])->name('solicitudes.estudiante-info');
+        Route::get('/util/pagos', [SolicitudController::class, 'pagosDisponibles'])->name('solicitudes.pagos-disponibles');
+
+        // Director: bandeja de Visto Bueno y acciones
+        Route::middleware('can:solicitudes.approve')->group(function () {
+            Route::get('/bandeja/vb', [SolicitudController::class, 'bandejaVistoBueno'])->name('solicitudes.bandeja');
+            Route::post('/{id}/vb', [SolicitudController::class, 'vistoBueno'])->whereNumber('id')->name('solicitudes.vb');
+            Route::post('/{id}/observar', [SolicitudController::class, 'observar'])->whereNumber('id')->name('solicitudes.observar');
+            Route::post('/{id}/rechazar', [SolicitudController::class, 'rechazar'])->whereNumber('id')->name('solicitudes.rechazar');
+        });
+
+        // Atención de derivaciones (persona/rol responsable)
+        Route::middleware('can:solicitudes.atender')->group(function () {
+            Route::get('/bandeja/atender', [SolicitudController::class, 'porAtender'])->name('solicitudes.por-atender');
+            Route::post('/{id}/atender', [SolicitudController::class, 'atender'])->whereNumber('id')->name('solicitudes.atender');
+            Route::post('/{id}/derivar', [SolicitudController::class, 'derivar'])->whereNumber('id')->name('solicitudes.derivar');
+        });
+
+        // Consulta de control por estudiante (contadora): trámites + pagos + conciliación
+        Route::middleware('can:solicitudes.manage')->group(function () {
+            Route::get('/admin/estudiante', [SolicitudController::class, 'estudiante'])->name('solicitudes.estudiante');
+        });
+
+        // Constancia de seguimiento / Hoja de Trámite (PDF)
+        Route::get('/{id}/seguimiento-pdf', [SolicitudController::class, 'pdfSeguimiento'])->whereNumber('id')->name('solicitudes.seguimiento-pdf');
+        // Comprobante / cargo de recepción (PDF)
+        Route::get('/{id}/comprobante-pdf', [SolicitudController::class, 'pdfComprobante'])->whereNumber('id')->name('solicitudes.comprobante-pdf');
+
+        // Ver expediente (dueño o gestores) — al final para no capturar las rutas anteriores
+        Route::get('/{id}', [SolicitudController::class, 'show'])->whereNumber('id')->name('solicitudes.show');
+    });
+
+    // Catálogo TUSNE (tarifario) — gestionado por finanzas/contadora
+    Route::middleware('can:tusne.manage')->prefix('tusne')->group(function () {
+        Route::get('/', [TusneController::class, 'index'])->name('tusne.index');
+        Route::post('/documento', [TusneController::class, 'subirDocumento'])->name('tusne.documento.store');
+        Route::delete('/documento/{documento}', [TusneController::class, 'eliminarDocumento'])->name('tusne.documento.destroy');
+        Route::get('/crear', [TusneController::class, 'create'])->name('tusne.create');
+        Route::post('/', [TusneController::class, 'store'])->name('tusne.store');
+        Route::get('/{tusne}/editar', [TusneController::class, 'edit'])->name('tusne.edit');
+        Route::put('/{tusne}', [TusneController::class, 'update'])->name('tusne.update');
+        Route::delete('/{tusne}', [TusneController::class, 'destroy'])->name('tusne.destroy');
     });
 
     Route::middleware('can:ciclos.view')->group(function () {

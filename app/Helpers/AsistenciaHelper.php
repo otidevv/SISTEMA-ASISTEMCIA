@@ -6,9 +6,34 @@ use App\Models\RegistroAsistencia;
 use App\Models\Ciclo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AsistenciaHelper
 {
+    /**
+     * Devuelve las fechas (YYYY-MM-DD) con inasistencia JUSTIFICADA y aprobada de un estudiante
+     * dentro de un rango. Se usan para descontarlas del conteo de faltas (regularización).
+     */
+    public static function obtenerFechasJustificadas($nro_documento, $inicio, $fin): array
+    {
+        if (!Schema::hasTable('solicitud_inasistencias')) {
+            return [];
+        }
+
+        $ini = Carbon::parse($inicio)->toDateString();
+        $finStr = Carbon::parse($fin)->toDateString();
+
+        return DB::table('solicitud_inasistencias')
+            ->where('numero_documento', $nro_documento)
+            ->where('justificada', 1)
+            ->whereBetween('fecha', [$ini, $finStr])
+            ->pluck('fecha')
+            ->map(fn ($f) => substr((string) $f, 0, 10))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /**
      * Determina el estado de habilitación de un estudiante.
      *
@@ -140,13 +165,24 @@ class AsistenciaHelper
             ->pluck('fecha');
 
         $diasConAsistencia = 0;
+        $fechasAsistidas = [];
         foreach ($registros as $fecha) {
+            $fechaStr = substr((string) $fecha, 0, 10);
+            $fechasAsistidas[$fechaStr] = true;
             if ($cicloActivo->esDiaHabil(Carbon::parse($fecha))) {
                 $diasConAsistencia++;
             }
         }
 
-        $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+        // Descontar inasistencias JUSTIFICADAS (que no tengan ya un registro ese día)
+        $diasJustificados = 0;
+        foreach (self::obtenerFechasJustificadas($nro_documento, $fechaInicioConteo, $fechaFinCalculo) as $fj) {
+            if (!isset($fechasAsistidas[$fj]) && $cicloActivo->esDiaHabil(Carbon::parse($fj))) {
+                $diasJustificados++;
+            }
+        }
+
+        $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia - $diasJustificados);
         
         $limiteAmonestacion = ceil($diasHabilesTotales * (($cicloActivo->porcentaje_amonestacion ?? 20) / 100));
         $limiteInhabilitacion = ceil($diasHabilesTotales * (($cicloActivo->porcentaje_inhabilitacion ?? 30) / 100));
@@ -171,6 +207,7 @@ class AsistenciaHelper
             'puede_rendir' => $puede_rendir,
             'faltas' => $totalFaltas,
             'asistencias' => $diasConAsistencia,
+            'justificadas' => $diasJustificados,
             'examen' => $examenActivo['nombre'],
             'limite_amonestacion' => $limiteAmonestacion,
             'limite_inhabilitacion' => $limiteInhabilitacion,
@@ -273,8 +310,12 @@ class AsistenciaHelper
             ->groupBy('fecha');
 
         $diasConAsistencia = 0;
+        $diasJustificados = 0;
         $historial = [];
-        
+
+        // Fechas con justificación aprobada (para descontarlas y mostrarlas como "justificada")
+        $justSet = array_flip(self::obtenerFechasJustificadas($docLimpio, $inicioEfectivo, $fechaFinCalculo));
+
         // Siempre calculamos el conteo, el historial es opcional para la respuesta
         $tempFecha = $inicioEfectivo->copy();
         while ($tempFecha <= $fechaFinCalculo) {
@@ -290,6 +331,16 @@ class AsistenciaHelper
                             'hora' => Carbon::parse($registrosMap[$fechaStr][0]->fecha_registro)->format('H:i:s')
                         ];
                     }
+                } elseif (isset($justSet[$fechaStr])) {
+                    $diasJustificados++;
+                    if ($returnHistory) {
+                        $historial[] = [
+                            'fecha' => $fechaStr,
+                            'dia_semana' => $tempFecha->translatedFormat('l'),
+                            'estado' => 'justificada',
+                            'hora' => null
+                        ];
+                    }
                 } elseif ($returnHistory) {
                     $historial[] = [
                         'fecha' => $fechaStr,
@@ -302,7 +353,7 @@ class AsistenciaHelper
             $tempFecha->addDay();
         }
 
-        $diasFaltaActuales = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
+        $diasFaltaActuales = max(0, $diasHabilesTranscurridos - $diasConAsistencia - $diasJustificados);
 
         $porcentajeAsistenciaProyectado = $diasHabilesTotales > 0 ?
             round(($diasConAsistencia / $diasHabilesTotales) * 100, 2) : 0;
@@ -357,6 +408,7 @@ class AsistenciaHelper
         return [
             'dias_habiles' => $diasHabilesTotales,
             'dias_asistidos' => $diasConAsistencia,
+            'dias_justificados' => $diasJustificados,
             'dias_falta' => $diasFaltaActuales,
             'porcentaje_asistencia' => $porcentajeAsistenciaProyectado,
             'porcentaje_inasistencia' => $porcentajeInasistenciaProyectado,
@@ -528,6 +580,28 @@ class AsistenciaHelper
             ->pluck('total', 'nro_documento')
             ->toArray();
 
+        // 4b. Batch fetch días JUSTIFICADOS (aprobados) en el periodo, contando solo días hábiles
+        $justificadasPorDoc = [];
+        if (Schema::hasTable('solicitud_inasistencias')) {
+            $justRows = DB::table('solicitud_inasistencias')
+                ->whereIn('numero_documento', $documentosInscritos)
+                ->where('justificada', 1)
+                ->whereBetween('fecha', [$periodoInicio->toDateString(), $fechaFinCalculo->toDateString()])
+                ->select('numero_documento', 'fecha')
+                ->get()
+                ->groupBy('numero_documento');
+
+            foreach ($justRows as $doc => $items) {
+                $cnt = 0;
+                foreach ($items->pluck('fecha')->unique() as $f) {
+                    if ($ciclo->esDiaHabil(Carbon::parse($f))) {
+                        $cnt++;
+                    }
+                }
+                $justificadasPorDoc[$doc] = $cnt;
+            }
+        }
+
         // 5. Pre-calcular mapa de días hábiles acumulativos para el ciclo
         $cycleStart = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
         $cycleEnd = Carbon::parse($ciclo->fecha_fin)->endOfDay();
@@ -577,8 +651,9 @@ class AsistenciaHelper
             $diasHabilesTranscurridos = self::getBusinessDaysCountStatic($currentInicioConteo, $fechaFinCalculo, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
             
             $diasConAsistencia = $asistenciasCount[$doc] ?? 0;
-            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-            
+            $diasJustificados = $justificadasPorDoc[$doc] ?? 0;
+            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia - $diasJustificados);
+
             $limiteAmonestacion = ceil($diasHabilesTotales * ($porcentajeAmonestacion / 100));
             $limiteInhabilitacion = ceil($diasHabilesTotales * ($porcentajeInhabilitacion / 100));
 
@@ -922,6 +997,28 @@ class AsistenciaHelper
             ->pluck('total', 'nro_documento')
             ->toArray();
 
+        // Batch fetch días JUSTIFICADOS (aprobados) en el periodo (solo días hábiles)
+        $justificadasPorDoc = [];
+        if (Schema::hasTable('solicitud_inasistencias')) {
+            $justRows = DB::table('solicitud_inasistencias')
+                ->whereIn('numero_documento', $documentosInscritos)
+                ->where('justificada', 1)
+                ->whereBetween('fecha', [$periodoInicio->toDateString(), $fechaFinCalculo->toDateString()])
+                ->select('numero_documento', 'fecha')
+                ->get()
+                ->groupBy('numero_documento');
+
+            foreach ($justRows as $doc => $items) {
+                $cnt = 0;
+                foreach ($items->pluck('fecha')->unique() as $f) {
+                    if ($ciclo->esDiaHabil(Carbon::parse($f))) {
+                        $cnt++;
+                    }
+                }
+                $justificadasPorDoc[$doc] = $cnt;
+            }
+        }
+
         // Pre-calcular mapa de días hábiles
         $cycleStart = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
         $cycleEnd = Carbon::parse($ciclo->fecha_fin)->endOfDay();
@@ -958,8 +1055,9 @@ class AsistenciaHelper
             $diasHabilesTranscurridos = self::getBusinessDaysCountStatic($currentInicioConteo, $fechaFinCalculo, $cumulativeBusinessDays, $cycleStart, $cycleEnd);
             
             $diasConAsistencia = $asistenciasCount[$doc] ?? 0;
-            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia);
-            
+            $diasJustificados = $justificadasPorDoc[$doc] ?? 0;
+            $totalFaltas = max(0, $diasHabilesTranscurridos - $diasConAsistencia - $diasJustificados);
+
             $limiteInhabilitacion = ceil($diasHabilesTotales * ($porcentajeInhabilitacion / 100));
 
             if ($totalFaltas >= $limiteInhabilitacion) {

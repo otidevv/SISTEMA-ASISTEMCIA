@@ -1194,6 +1194,35 @@
                     @endif
                     
                     {{-- ============================== --}}
+                    {{-- Módulo: Mesa de Partes / Solicitudes --}}
+                    {{-- ============================== --}}
+                    <li>
+                        <a href="#sidebarSolicitudes" data-bs-toggle="collapse">
+                            <i data-feather="inbox"></i>
+                            <span> Mesa de Partes </span>
+                            <span class="menu-arrow"></span>
+                        </a>
+                        <div class="collapse" id="sidebarSolicitudes">
+                            <ul class="nav-second-level">
+                                <li><a href="{{ route('solicitudes.index') }}">Mis Trámites</a></li>
+                                <li><a href="{{ route('solicitudes.create') }}">Nueva Solicitud</a></li>
+                                @can('solicitudes.approve')
+                                    <li><a href="{{ route('solicitudes.bandeja') }}">Pendientes de V°B°</a></li>
+                                @endcan
+                                @can('solicitudes.atender')
+                                    <li><a href="{{ route('solicitudes.por-atender') }}">Por Atender</a></li>
+                                @endcan
+                                @can('solicitudes.manage')
+                                    <li><a href="{{ route('solicitudes.estudiante') }}">Consultar Estudiante</a></li>
+                                @endcan
+                                @can('tusne.manage')
+                                    <li><a href="{{ route('tusne.index') }}">Catálogo TUSNE</a></li>
+                                @endcan
+                            </ul>
+                        </div>
+                    </li>
+
+                    {{-- ============================== --}}
                     {{-- Módulo: Boletines Académicos --}}
                     {{-- ============================== --}}
                     @can('boletines.view')
