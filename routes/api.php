@@ -42,6 +42,8 @@ Route::middleware(['auth:sanctum,web'])->group(function () {
     // --- MESA DE PARTES / SOLICITUDES (app) ---
     Route::prefix('solicitudes')->group(function () {
         Route::get('/tipos', [SolicitudApiController::class, 'tipos']);
+        Route::get('/form/opciones', [SolicitudApiController::class, 'opcionesForm']);
+        Route::get('/form/pagos', [SolicitudApiController::class, 'pagos']);
         Route::get('/', [SolicitudApiController::class, 'index']);
         Route::post('/', [SolicitudApiController::class, 'store']);
         Route::get('/{id}', [SolicitudApiController::class, 'show'])->whereNumber('id');
