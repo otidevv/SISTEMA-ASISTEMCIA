@@ -603,64 +603,111 @@ class AsistenciaDocenteController extends Controller
             
             // Procesar cada horario con su estado de asistencia
             $schedule = $horarios->map(function ($horario) use ($fechaCarbon) {
-                // Buscar asistencias del día para este horario
-                $asistenciaEntrada = AsistenciaDocente::where('horario_id', $horario->id)
-                    ->where('docente_id', $horario->docente_id)
-                    ->whereDate('fecha_hora', $fechaCarbon)
-                    ->where('estado', 'entrada')
-                    ->first();
-                
+                // 1. Buscar marca de entrada y salida reales en registros_asistencia (fecha_registro) para evitar desfases
+                $docente = $horario->docente;
+                $registrosDocente = $docente ? RegistroAsistencia::where('nro_documento', $docente->numero_documento)
+                    ->whereDate('fecha_registro', $fechaCarbon)
+                    ->get() : collect();
+
+                $horaInicio = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_inicio);
+                $horaFin = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_fin);
+
+                $toleranciaAnticipada = 45; // minutos
+                $toleranciaTardia = 60; // minutos
+                $registroEntrada = $registrosDocente->filter(function($r) use ($horaInicio, $toleranciaAnticipada, $toleranciaTardia) {
+                    $horaReg = Carbon::parse($r->fecha_registro);
+                    return $horaReg->between(
+                        $horaInicio->copy()->subMinutes($toleranciaAnticipada),
+                        $horaInicio->copy()->addMinutes($toleranciaTardia)
+                    );
+                })->sortBy('fecha_registro')->first();
+
+                $tieneEntrada = !is_null($registroEntrada);
+                $horaEntrada = $registroEntrada ? Carbon::parse($registroEntrada->fecha_registro)->format('H:i:s') : null;
+
+                $toleranciaSalidaAnticipada = 30; // minutos
+                $toleranciaSalidaTardia = 60; // minutos
+                $registroSalida = $registrosDocente->filter(function($r) use ($horaFin, $toleranciaSalidaAnticipada, $toleranciaSalidaTardia) {
+                    $horaReg = Carbon::parse($r->fecha_registro);
+                    return $horaReg->between(
+                        $horaFin->copy()->subMinutes($toleranciaSalidaAnticipada),
+                        $horaFin->copy()->addMinutes($toleranciaSalidaTardia)
+                    );
+                })->sortByDesc('fecha_registro')->first();
+
+                $tieneSalida = !is_null($registroSalida);
+                $horaSalida = $registroSalida ? Carbon::parse($registroSalida->fecha_registro)->format('H:i:s') : null;
+
+                // 2. Determinar si hubo tardanza (tolerancia de 5 minutos)
+                $esTardanza = false;
+                $minutosTardanza = 0;
+                if ($tieneEntrada) {
+                    $tolTarde = 5;
+                    $umbralTarde = $horaInicio->copy()->addMinutes($tolTarde);
+                    $entradaCarbon = Carbon::parse($registroEntrada->fecha_registro);
+                    if ($entradaCarbon->greaterThan($umbralTarde)) {
+                        $esTardanza = true;
+                        $minutosTardanza = (int) abs($horaInicio->diffInMinutes($entradaCarbon));
+                    }
+                }
+
+                // 3. Buscar la asistencia de salida procesada para verificar si ya cargó el tema desarrollado
                 $asistenciaSalida = AsistenciaDocente::where('horario_id', $horario->id)
                     ->where('docente_id', $horario->docente_id)
                     ->whereDate('fecha_hora', $fechaCarbon)
                     ->where('estado', 'salida')
                     ->first();
-                
-                // Determinar estado
+
+                // Determinar estado para visualización
                 $ahora = Carbon::now();
-                $horaInicio = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_inicio);
-                $horaFin = Carbon::parse($fechaCarbon->toDateString() . ' ' . $horario->hora_fin);
-                
                 $estado = 'pendiente'; // Por defecto
                 $estadoTexto = 'Pendiente';
                 $estadoColor = 'secondary';
-                
-                if ($asistenciaEntrada && $asistenciaSalida) {
-                    if ($asistenciaSalida->tema_desarrollado) {
+
+                if ($tieneEntrada && $tieneSalida) {
+                    if ($asistenciaSalida && $asistenciaSalida->tema_desarrollado) {
                         $estado = 'completo';
-                        $estadoTexto = 'Completo';
+                        $estadoTexto = $esTardanza ? 'Completo (Tarde)' : 'Completo';
                         $estadoColor = 'success';
                     } else {
                         $estado = 'tema_pendiente';
-                        $estadoTexto = 'Tema Pendiente';
+                        $estadoTexto = $esTardanza ? 'Tema Pend. (Tarde)' : 'Tema Pendiente';
                         $estadoColor = 'warning';
                     }
-                } elseif ($asistenciaEntrada && $ahora->between($horaInicio, $horaFin)) {
+                } elseif ($tieneEntrada && $ahora->between($horaInicio, $horaFin)) {
                     $estado = 'en_curso';
-                    $estadoTexto = 'En Curso';
+                    $estadoTexto = $esTardanza ? 'En Curso (Tarde)' : 'En Curso';
                     $estadoColor = 'info';
-                } elseif (!$asistenciaEntrada && $ahora->greaterThan($horaFin)) {
+                } elseif (!$tieneEntrada && $ahora->greaterThan($horaFin)) {
                     $estado = 'falta';
                     $estadoTexto = 'Falta';
                     $estadoColor = 'danger';
+                } elseif ($tieneEntrada && $ahora->greaterThan($horaFin)) {
+                    $estado = 'sin_salida';
+                    $estadoTexto = $esTardanza ? 'Sin Salida (Tarde)' : 'Sin Salida';
+                    $estadoColor = 'warning';
                 }
-                
+
                 return [
                     'horario_id' => $horario->id,
                     'hora_inicio' => $horario->hora_inicio,
                     'hora_fin' => $horario->hora_fin,
                     'docente_id' => $horario->docente_id,
-                    'docente_nombre' => $horario->docente ? $horario->docente->nombre . ' ' . $horario->docente->apellido_paterno : 'N/A',
+                    'docente_nombre' => $horario->docente ? trim("{$horario->docente->nombre} {$horario->docente->apellido_paterno} {$horario->docente->apellido_materno}") : 'N/A',
                     'docente_telefono' => $horario->docente ? $horario->docente->telefono : null,
                     'curso' => $horario->curso ? $horario->curso->nombre : 'N/A',
                     'aula' => $horario->aula ? $horario->aula->nombre : 'N/A',
                     'estado' => $estado,
                     'estado_texto' => $estadoTexto,
                     'estado_color' => $estadoColor,
-                    'tiene_entrada' => $asistenciaEntrada ? true : false,
-                    'tiene_salida' => $asistenciaSalida ? true : false,
+                    'tiene_entrada' => $tieneEntrada,
+                    'tiene_salida' => $tieneSalida,
+                    'hora_entrada' => $horaEntrada,
+                    'hora_salida' => $horaSalida,
+                    'es_tardanza' => $esTardanza,
+                    'minutos_tardanza' => $minutosTardanza,
                     'tema_desarrollado' => $asistenciaSalida ? $asistenciaSalida->tema_desarrollado : null,
-                    'asistencia_id' => $asistenciaSalida ? $asistenciaSalida->id : ($asistenciaEntrada ? $asistenciaEntrada->id : null),
+                    'asistencia_id' => $asistenciaSalida ? $asistenciaSalida->id : null,
                 ];
             });
             
