@@ -54,9 +54,7 @@ class RealtimeDocenteController extends BaseController
                 ->sortBy('hora_inicio');
 
             // 3. Obtener todas las asistencias de docentes registradas hoy
-            // Usamos fecha_registro (hora del servidor) en vez de fecha_hora (hora del ZKTeco)
-            // porque el reloj del biométrico puede estar desconfigurado.
-            $asistenciasHoy = AsistenciaDocente::whereDate('fecha_registro', $hoyString)
+            $asistenciasHoy = AsistenciaDocente::whereDate('fecha_hora', $hoyString)
                 ->get()
                 ->groupBy('horario_id');
 
