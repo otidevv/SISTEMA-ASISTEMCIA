@@ -9,6 +9,7 @@ use App\Models\HorarioDocente;
 use App\Models\User;
 use App\Models\Ciclo;
 use App\Services\FcmService;
+use App\Models\RegistroAsistencia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -61,6 +62,11 @@ class RealtimeDocenteController extends BaseController
                 ->get()
                 ->groupBy('horario_id');
 
+            // 4. Obtener todos los registros biométricos originales de hoy para extraer la hora del servidor correcta (fecha_registro)
+            $registrosBiometricosHoy = RegistroAsistencia::whereDate('fecha_registro', $hoyString)
+                ->get()
+                ->groupBy('nro_documento');
+
             $dictandoAhora = [];
             $ausentesRetrasados = [];
             $proximasSesiones = [];
@@ -75,6 +81,42 @@ class RealtimeDocenteController extends BaseController
                 $asistenciaEntrada = $asistenciaHorario->firstWhere('estado', 'entrada');
                 $asistenciaSalida = $asistenciaHorario->firstWhere('estado', 'salida');
 
+                // Obtener horas de servidor reales (fecha_registro) correspondientes del biométrico
+                $docente = $horario->docente;
+                $registrosDocente = $docente ? $registrosBiometricosHoy->get($docente->numero_documento, collect()) : collect();
+
+                $horaEntradaReal = null;
+                $horaSalidaReal = null;
+
+                if ($asistenciaEntrada) {
+                    // Tolerancias para buscar la marca biométrica correspondiente (tolerancia de entrada anticipada y tardía)
+                    $toleranciaAnticipada = 45; // minutos
+                    $toleranciaTardia = 60; // minutos
+                    $registroEntrada = $registrosDocente->filter(function($r) use ($horaInicio, $toleranciaAnticipada, $toleranciaTardia) {
+                        $horaReg = Carbon::parse($r->fecha_registro);
+                        return $horaReg->between(
+                            $horaInicio->copy()->subMinutes($toleranciaAnticipada),
+                            $horaInicio->copy()->addMinutes($toleranciaTardia)
+                        );
+                    })->sortBy('fecha_registro')->first();
+
+                    $horaEntradaReal = $registroEntrada ? Carbon::parse($registroEntrada->fecha_registro)->format('H:i') : null;
+                }
+
+                if ($asistenciaSalida) {
+                    $toleranciaSalidaAnticipada = 30; // minutos
+                    $toleranciaSalidaTardia = 60; // minutos
+                    $registroSalida = $registrosDocente->filter(function($r) use ($horaFin, $toleranciaSalidaAnticipada, $toleranciaSalidaTardia) {
+                        $horaReg = Carbon::parse($r->fecha_registro);
+                        return $horaReg->between(
+                            $horaFin->copy()->subMinutes($toleranciaSalidaAnticipada),
+                            $horaFin->copy()->addMinutes($toleranciaSalidaTardia)
+                        );
+                    })->sortByDesc('fecha_registro')->first();
+
+                    $horaSalidaReal = $registroSalida ? Carbon::parse($registroSalida->fecha_registro)->format('H:i') : null;
+                }
+
                 // Determinar estado
                 $estado = 'pendiente';
                 $estadoTexto = 'Pendiente';
@@ -88,14 +130,14 @@ class RealtimeDocenteController extends BaseController
                         $minutosTranscurridos = (int) abs($ahora->diffInMinutes($horaInicio));
                         $tiempoDetalle = "Hace {$minutosTranscurridos} min";
                         
-                        $dictandoAhora[] = $this->formatRealtimeItem($horario, $asistenciaEntrada, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
+                        $dictandoAhora[] = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
                     } else {
                         $estado = 'ausente';
                         $estadoTexto = 'Ausente / Retrasado';
                         $minutosRetraso = (int) abs($ahora->diffInMinutes($horaInicio));
                         $tiempoDetalle = "Retraso de {$minutosRetraso} min";
 
-                        $ausentesRetrasados[] = $this->formatRealtimeItem($horario, null, null, $estado, $estadoTexto, $tiempoDetalle);
+                        $ausentesRetrasados[] = $this->formatRealtimeItem($horario, null, null, null, $estado, $estadoTexto, $tiempoDetalle);
                     }
                 } elseif ($ahora->lessThan($horaInicio)) {
                     // La clase es más tarde
@@ -104,7 +146,7 @@ class RealtimeDocenteController extends BaseController
                     $minutosParaIniciar = (int) abs($horaInicio->diffInMinutes($ahora));
                     $tiempoDetalle = "Inicia en {$minutosParaIniciar} min";
 
-                    $proximasSesiones[] = $this->formatRealtimeItem($horario, null, null, $estado, $estadoTexto, $tiempoDetalle);
+                    $proximasSesiones[] = $this->formatRealtimeItem($horario, null, null, null, $estado, $estadoTexto, $tiempoDetalle);
                 } else {
                     // La clase ya finalizó
                     $estado = 'finalizado';
@@ -117,7 +159,7 @@ class RealtimeDocenteController extends BaseController
                     }
                     $tiempoDetalle = "Terminó a las " . Carbon::parse($horario->hora_fin)->format('H:i');
 
-                    $finalizados[] = $this->formatRealtimeItem($horario, $asistenciaEntrada, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
+                    $finalizados[] = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
                 }
             }
 
@@ -148,7 +190,7 @@ class RealtimeDocenteController extends BaseController
     /**
      * Dar formato a un elemento de monitoreo para la respuesta JSON
      */
-    private function formatRealtimeItem($horario, $entrada, $salida, $estado, $estadoTexto, $tiempoDetalle)
+    private function formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle)
     {
         return [
             'horario_id' => $horario->id,
@@ -160,12 +202,12 @@ class RealtimeDocenteController extends BaseController
             'aula' => $horario->aula?->nombre ?? 'Sin Aula',
             'hora_inicio' => Carbon::parse($horario->hora_inicio)->format('H:i'),
             'hora_fin' => Carbon::parse($horario->hora_fin)->format('H:i'),
-            'hora_entrada' => $entrada ? Carbon::parse($entrada->fecha_registro)->format('H:i') : null,
-            'hora_salida' => $salida ? Carbon::parse($salida->fecha_registro)->format('H:i') : null,
+            'hora_entrada' => $horaEntradaReal,
+            'hora_salida' => $horaSalidaReal,
             'estado' => $estado,
             'estado_texto' => $estadoTexto,
             'tiempo_detalle' => $tiempoDetalle,
-            'tema_desarrollado' => $salida?->tema_desarrollado,
+            'tema_desarrollado' => $asistenciaSalida?->tema_desarrollado,
         ];
     }
 
