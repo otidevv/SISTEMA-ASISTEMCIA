@@ -82,14 +82,14 @@ class RealtimeDocenteController extends BaseController
                     if ($asistenciaEntrada) {
                         $estado = 'dictando';
                         $estadoTexto = 'Dictando Ahora';
-                        $minutosTranscurridos = $ahora->diffInMinutes($horaInicio);
+                        $minutosTranscurridos = (int) abs($ahora->diffInMinutes($horaInicio));
                         $tiempoDetalle = "Hace {$minutosTranscurridos} min";
                         
                         $dictandoAhora[] = $this->formatRealtimeItem($horario, $asistenciaEntrada, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
                     } else {
                         $estado = 'ausente';
                         $estadoTexto = 'Ausente / Retrasado';
-                        $minutosRetraso = $ahora->diffInMinutes($horaInicio);
+                        $minutosRetraso = (int) abs($ahora->diffInMinutes($horaInicio));
                         $tiempoDetalle = "Retraso de {$minutosRetraso} min";
 
                         $ausentesRetrasados[] = $this->formatRealtimeItem($horario, null, null, $estado, $estadoTexto, $tiempoDetalle);
@@ -98,7 +98,7 @@ class RealtimeDocenteController extends BaseController
                     // La clase es más tarde
                     $estado = 'pendiente';
                     $estadoTexto = 'Próximo bloque';
-                    $minutosParaIniciar = $horaInicio->diffInMinutes($ahora);
+                    $minutosParaIniciar = (int) abs($horaInicio->diffInMinutes($ahora));
                     $tiempoDetalle = "Inicia en {$minutosParaIniciar} min";
 
                     $proximasSesiones[] = $this->formatRealtimeItem($horario, null, null, $estado, $estadoTexto, $tiempoDetalle);
