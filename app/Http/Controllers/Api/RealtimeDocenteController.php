@@ -122,15 +122,19 @@ class RealtimeDocenteController extends BaseController
                     if ($tieneEntrada) {
                         $estado = 'dictando';
                         $estadoTexto = 'Dictando Ahora';
-                        $minutosTranscurridos = (int) abs($ahora->diffInMinutes($horaInicio));
-                        $tiempoDetalle = "Hace {$minutosTranscurridos} min";
+                        $segundosTranscurridosTotal = (int) abs($ahora->diffInSeconds($horaInicio));
+                        $minutosTranscurridos = (int) ($segundosTranscurridosTotal / 60);
+                        $segundosTranscurridos = $segundosTranscurridosTotal % 60;
+                        $tiempoDetalle = "Hace {$minutosTranscurridos} min {$segundosTranscurridos} s";
                         
                         $dictandoAhora[] = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
                     } else {
                         $estado = 'ausente';
                         $estadoTexto = 'Ausente / Retrasado';
-                        $minutosRetraso = (int) abs($ahora->diffInMinutes($horaInicio));
-                        $tiempoDetalle = "Retraso de {$minutosRetraso} min";
+                        $segundosRetrasoTotal = (int) abs($ahora->diffInSeconds($horaInicio));
+                        $minutosRetraso = (int) ($segundosRetrasoTotal / 60);
+                        $segundosRetraso = $segundosRetrasoTotal % 60;
+                        $tiempoDetalle = "Retraso de {$minutosRetraso} min {$segundosRetraso} s";
 
                         $ausentesRetrasados[] = $this->formatRealtimeItem($horario, null, null, null, $estado, $estadoTexto, $tiempoDetalle);
                     }
@@ -138,8 +142,10 @@ class RealtimeDocenteController extends BaseController
                     // La clase es más tarde
                     $estado = 'pendiente';
                     $estadoTexto = 'Próximo bloque';
-                    $minutosParaIniciar = (int) abs($horaInicio->diffInMinutes($ahora));
-                    $tiempoDetalle = "Inicia en {$minutosParaIniciar} min";
+                    $segundosParaIniciarTotal = (int) abs($horaInicio->diffInSeconds($ahora));
+                    $minutosParaIniciar = (int) ($segundosParaIniciarTotal / 60);
+                    $segundosParaIniciar = $segundosParaIniciarTotal % 60;
+                    $tiempoDetalle = "Inicia en {$minutosParaIniciar} min {$segundosParaIniciar} s";
 
                     $proximasSesiones[] = $this->formatRealtimeItem($horario, null, null, null, $estado, $estadoTexto, $tiempoDetalle);
                 } else {
