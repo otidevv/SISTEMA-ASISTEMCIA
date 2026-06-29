@@ -32,6 +32,13 @@ use App\Http\Controllers\Api\SolicitudApiController;
 // --- RUTAS PÚBLICAS ---
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register/postulante', [PostulanteRegisterController::class, 'register'])->name('api.register.postulante');
+Route::get('/clear-opcache', function () {
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+        return response()->json(['message' => 'OPcache cleared successfully!']);
+    }
+    return response()->json(['message' => 'OPcache is not enabled or function does not exist.']);
+});
 
 // Rutas protegidas - Requieren Autenticación (Soportan Token Sanctum y Sesión Web)
 Route::middleware(['auth:sanctum,web'])->group(function () {
