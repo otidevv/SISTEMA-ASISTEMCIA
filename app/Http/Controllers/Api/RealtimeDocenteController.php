@@ -194,7 +194,6 @@ class RealtimeDocenteController extends BaseController
                     }
                 }
             }
-            }
 
             $data = [
                 'ciclo_activo' => $cicloActivo->nombre,
