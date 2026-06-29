@@ -27,6 +27,9 @@ class RealtimeDocenteController extends BaseController
     public function getRealtimeStatus(Request $request)
     {
         try {
+            // Procesar eventos pendientes para datos en tiempo real de biométricos
+            \Illuminate\Support\Facades\Artisan::call('asistencia:procesar-eventos');
+
             $hoy = Carbon::today();
             $hoyString = $hoy->toDateString();
             $ahora = Carbon::now();
