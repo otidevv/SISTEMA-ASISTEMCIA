@@ -132,7 +132,7 @@ class RealtimeDocenteController extends BaseController
                 'dictando' => $dictandoAhora,
                 'ausentes' => $ausentesRetrasados,
                 'pendientes' => $proximasSesiones,
-                'finalizados' => $finalizados,
+                'finalizados' => array_reverse($finalizados),
             ];
 
             return $this->sendResponse($data, 'Monitoreo en tiempo real obtenido.');
