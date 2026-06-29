@@ -112,6 +112,19 @@ class RealtimeDocenteController extends BaseController
                 $horaSalidaReal = $registroSalida ? Carbon::parse($registroSalida->fecha_registro)->format('H:i:s') : null;
                 $tieneSalida = !is_null($horaSalidaReal);
 
+                // Determinar tardanza según tolerancia del sistema (5 minutos)
+                $esTardanza = false;
+                $minutosTardanza = 0;
+                if ($tieneEntrada) {
+                    $tolTarde = 5; // TOLERANCIA_TARDE_MINUTOS
+                    $umbralTarde = $horaInicio->copy()->addMinutes($tolTarde);
+                    $entradaCarbon = Carbon::parse($registroEntrada->fecha_registro);
+                    if ($entradaCarbon->greaterThan($umbralTarde)) {
+                        $esTardanza = true;
+                        $minutosTardanza = (int) abs($horaInicio->diffInMinutes($entradaCarbon));
+                    }
+                }
+
                 // Determinar estado
                 $estado = 'pendiente';
                 $estadoTexto = 'Pendiente';
@@ -128,6 +141,12 @@ class RealtimeDocenteController extends BaseController
                         $tiempoDetalle = "Hace {$minutosTranscurridos} min {$segundosTranscurridos} s";
                         
                         $dictandoAhora[] = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
+
+                        // Si está dictando pero ingresó tarde, también es una Tardanza del día
+                        if ($esTardanza) {
+                            $itemTardanza = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, 'tardanza', 'Tardanza', "Retraso de {$minutosTardanza} min");
+                            $ausentesRetrasados[] = $itemTardanza;
+                        }
                     } else {
                         $estado = 'ausente';
                         $estadoTexto = 'Ausente / Retrasado';
@@ -160,8 +179,21 @@ class RealtimeDocenteController extends BaseController
                     }
                     $tiempoDetalle = "Terminó a las " . Carbon::parse($horario->hora_fin)->format('H:i');
 
-                    $finalizados[] = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
+                    $itemFinalizado = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, $estado, $estadoTexto, $tiempoDetalle);
+                    $finalizados[] = $itemFinalizado;
+
+                    // Incidencias del día (Falta o Tardanza de clases finalizadas)
+                    if (!$tieneEntrada) {
+                        // Falta Injustificada
+                        $itemFalta = $this->formatRealtimeItem($horario, null, null, null, 'falta_injustificada', 'Falta Injustificada', "Clase finalizada sin ingreso");
+                        $ausentesRetrasados[] = $itemFalta;
+                    } elseif ($esTardanza) {
+                        // Llegó tarde a una clase que ya terminó
+                        $itemTardanza = $this->formatRealtimeItem($horario, $horaEntradaReal, $horaSalidaReal, $asistenciaSalida, 'tardanza', 'Tardanza', "Llegó tarde con {$minutosTardanza} min");
+                        $ausentesRetrasados[] = $itemTardanza;
+                    }
                 }
+            }
             }
 
             $data = [
