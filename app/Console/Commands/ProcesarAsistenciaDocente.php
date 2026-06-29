@@ -204,5 +204,54 @@ class ProcesarAsistenciaDocente extends Command
         }
 
         $this->info("Asistencia ({$estado}) creada para docente {$usuario->id} en horario {$horario->id}.");
+
+        // Notificar al administrador en tiempo real sobre la marcación del docente
+        try {
+            $admins = User::role([
+                'admin', 
+                'administrativos', 
+                'cepre unamad monitoreo', 
+                'coordinación academica', 
+                'asistente administrativo ii',
+                'administrativo'
+            ])->whereNotNull('fcm_token')->get();
+
+            if ($admins->isNotEmpty()) {
+                $cursoNombre = $horario->curso->nombre ?? null;
+                $aulaNombre = $horario->aula->nombre ?? null;
+                
+                // Determinar tardanza según tolerancia
+                $esTardanza = false;
+                $minutosTardanza = 0;
+                if ($estado === 'entrada') {
+                    $tolTarde = 5;
+                    $umbral = Carbon::parse($registro->fecha_registro)
+                        ->setTimeFromTimeString($horario->hora_inicio)
+                        ->addMinutes($tolTarde);
+                    $fechaReg = Carbon::parse($registro->fecha_registro);
+                    if ($fechaReg->greaterThan($umbral)) {
+                        $esTardanza = true;
+                        $minutosTardanza = $umbral->diffInMinutes($fechaReg);
+                    }
+                }
+
+                $notification = new \App\Notifications\AdminTeacherAttendanceAlertNotification(
+                    $usuario,
+                    $registro->fecha_registro,
+                    $estado,
+                    $cursoNombre,
+                    $aulaNombre,
+                    $esTardanza,
+                    $minutosTardanza
+                );
+
+                foreach ($admins as $admin) {
+                    $admin->notify($notification);
+                }
+                $this->info("Alerta de asistencia docente enviada a " . $admins->count() . " administradores.");
+            }
+        } catch (\Exception $e) {
+            $this->error("Error al notificar a administradores: " . $e->getMessage());
+        }
     }
 }

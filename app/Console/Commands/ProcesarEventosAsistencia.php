@@ -117,6 +117,39 @@ class ProcesarEventosAsistencia extends Command
                                 $this->info("Notificación instantánea de huella ({$estado}) enviada al docente ID: {$usuario->id}");
                             }
 
+                            // Notificar al administrador en tiempo real sobre la marcación del docente
+                            try {
+                                $admins = \App\Models\User::role([
+                                    'admin', 
+                                    'administrativos', 
+                                    'cepre unamad monitoreo', 
+                                    'coordinación academica', 
+                                    'asistente administrativo ii',
+                                    'administrativo'
+                                ])->whereNotNull('fcm_token')->get();
+
+                                if ($admins->isNotEmpty()) {
+                                    $cursoNombre = $horario->curso->nombre ?? null;
+                                    $aulaNombre = $horario->aula->nombre ?? null;
+                                    $notification = new \App\Notifications\AdminTeacherAttendanceAlertNotification(
+                                        $usuario,
+                                        $registro->fecha_registro,
+                                        $estado,
+                                        $cursoNombre,
+                                        $aulaNombre,
+                                        $esTardanza,
+                                        $minutosTardanza
+                                    );
+
+                                    foreach ($admins as $admin) {
+                                        $admin->notify($notification);
+                                    }
+                                    $this->info("Alerta de asistencia docente enviada a " . $admins->count() . " administradores.");
+                                }
+                            } catch (\Exception $e) {
+                                $this->error("Error al notificar a administradores: " . $e->getMessage());
+                            }
+
                             // NUEVO: Notificación instantánea si es SALIDA y falta el tema
                             if ($estado === 'salida' && $usuario->fcm_token) {
                                 // Verificar si ya registró el tema en esta sesión
