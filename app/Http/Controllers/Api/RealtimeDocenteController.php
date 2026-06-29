@@ -76,46 +76,41 @@ class RealtimeDocenteController extends BaseController
                 $horaInicio = Carbon::parse($hoyString . ' ' . $horario->hora_inicio);
                 $horaFin = Carbon::parse($hoyString . ' ' . $horario->hora_fin);
 
-                // Buscar marcaciones de entrada y salida para este horario
+                // Buscar marcaciones de entrada y salida registradas hoy
                 $asistenciaHorario = $asistenciasHoy->get($horario->id, collect());
-                $asistenciaEntrada = $asistenciaHorario->firstWhere('estado', 'entrada');
                 $asistenciaSalida = $asistenciaHorario->firstWhere('estado', 'salida');
 
                 // Obtener horas de servidor reales (fecha_registro) correspondientes del biométrico
                 $docente = $horario->docente;
                 $registrosDocente = $docente ? $registrosBiometricosHoy->get($docente->numero_documento, collect()) : collect();
 
-                $horaEntradaReal = null;
-                $horaSalidaReal = null;
+                // 1. Buscar marca de entrada biométrica en la ventana del horario
+                $toleranciaAnticipada = 45; // minutos
+                $toleranciaTardia = 60; // minutos
+                $registroEntrada = $registrosDocente->filter(function($r) use ($horaInicio, $toleranciaAnticipada, $toleranciaTardia) {
+                    $horaReg = Carbon::parse($r->fecha_registro);
+                    return $horaReg->between(
+                        $horaInicio->copy()->subMinutes($toleranciaAnticipada),
+                        $horaInicio->copy()->addMinutes($toleranciaTardia)
+                    );
+                })->sortBy('fecha_registro')->first();
 
-                if ($asistenciaEntrada) {
-                    // Tolerancias para buscar la marca biométrica correspondiente (tolerancia de entrada anticipada y tardía)
-                    $toleranciaAnticipada = 45; // minutos
-                    $toleranciaTardia = 60; // minutos
-                    $registroEntrada = $registrosDocente->filter(function($r) use ($horaInicio, $toleranciaAnticipada, $toleranciaTardia) {
-                        $horaReg = Carbon::parse($r->fecha_registro);
-                        return $horaReg->between(
-                            $horaInicio->copy()->subMinutes($toleranciaAnticipada),
-                            $horaInicio->copy()->addMinutes($toleranciaTardia)
-                        );
-                    })->sortBy('fecha_registro')->first();
+                $horaEntradaReal = $registroEntrada ? Carbon::parse($registroEntrada->fecha_registro)->format('H:i') : null;
+                $tieneEntrada = !is_null($horaEntradaReal);
 
-                    $horaEntradaReal = $registroEntrada ? Carbon::parse($registroEntrada->fecha_registro)->format('H:i') : null;
-                }
+                // 2. Buscar marca de salida biométrica en la ventana del horario
+                $toleranciaSalidaAnticipada = 30; // minutos
+                $toleranciaSalidaTardia = 60; // minutos
+                $registroSalida = $registrosDocente->filter(function($r) use ($horaFin, $toleranciaSalidaAnticipada, $toleranciaSalidaTardia) {
+                    $horaReg = Carbon::parse($r->fecha_registro);
+                    return $horaReg->between(
+                        $horaFin->copy()->subMinutes($toleranciaSalidaAnticipada),
+                        $horaFin->copy()->addMinutes($toleranciaSalidaTardia)
+                    );
+                })->sortByDesc('fecha_registro')->first();
 
-                if ($asistenciaSalida) {
-                    $toleranciaSalidaAnticipada = 30; // minutos
-                    $toleranciaSalidaTardia = 60; // minutos
-                    $registroSalida = $registrosDocente->filter(function($r) use ($horaFin, $toleranciaSalidaAnticipada, $toleranciaSalidaTardia) {
-                        $horaReg = Carbon::parse($r->fecha_registro);
-                        return $horaReg->between(
-                            $horaFin->copy()->subMinutes($toleranciaSalidaAnticipada),
-                            $horaFin->copy()->addMinutes($toleranciaSalidaTardia)
-                        );
-                    })->sortByDesc('fecha_registro')->first();
-
-                    $horaSalidaReal = $registroSalida ? Carbon::parse($registroSalida->fecha_registro)->format('H:i') : null;
-                }
+                $horaSalidaReal = $registroSalida ? Carbon::parse($registroSalida->fecha_registro)->format('H:i') : null;
+                $tieneSalida = !is_null($horaSalidaReal);
 
                 // Determinar estado
                 $estado = 'pendiente';
@@ -124,7 +119,7 @@ class RealtimeDocenteController extends BaseController
 
                 if ($ahora->between($horaInicio, $horaFin)) {
                     // La clase debería estar dictándose ahora
-                    if ($asistenciaEntrada) {
+                    if ($tieneEntrada) {
                         $estado = 'dictando';
                         $estadoTexto = 'Dictando Ahora';
                         $minutosTranscurridos = (int) abs($ahora->diffInMinutes($horaInicio));
@@ -150,9 +145,9 @@ class RealtimeDocenteController extends BaseController
                 } else {
                     // La clase ya finalizó
                     $estado = 'finalizado';
-                    if ($asistenciaEntrada && $asistenciaSalida) {
-                        $estadoTexto = $asistenciaSalida->tema_desarrollado ? 'Completo' : 'Tema Pendiente';
-                    } elseif ($asistenciaEntrada) {
+                    if ($tieneEntrada && $tieneSalida) {
+                        $estadoTexto = ($asistenciaSalida && $asistenciaSalida->tema_desarrollado) ? 'Completo' : 'Tema Pendiente';
+                    } elseif ($tieneEntrada) {
                         $estadoTexto = 'Sin Salida Registrada';
                     } else {
                         $estadoTexto = 'Falta Injustificada';
