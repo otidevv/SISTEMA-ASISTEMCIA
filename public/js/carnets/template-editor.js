@@ -191,6 +191,23 @@ class CarnetTemplateEditor {
         fieldElement.appendChild(label);
         fieldElement.appendChild(value);
 
+        // Aplicar estilos visuales por defecto para que coincida con el PDF exactamente
+        if (defaultConfig.fontFamily) value.style.fontFamily = defaultConfig.fontFamily;
+        if (defaultConfig.fontSize) {
+            // El campo fontSize puede venir como '7pt', lo asignamos directamente
+            value.style.fontSize = defaultConfig.fontSize;
+        }
+        if (defaultConfig.fontWeight) value.style.fontWeight = defaultConfig.fontWeight;
+        if (defaultConfig.color) value.style.color = defaultConfig.color;
+        if (defaultConfig.textAlign) {
+            value.style.display = 'block';
+            value.style.width = '100%';
+            value.style.textAlign = defaultConfig.textAlign;
+            label.style.display = 'block';
+            label.style.width = '100%';
+            label.style.textAlign = defaultConfig.textAlign;
+        }
+
         // Aplicar estilos por defecto si existen
         if (defaultConfig.backgroundColor && defaultConfig.backgroundColor !== 'transparent') {
             fieldElement.style.background = defaultConfig.backgroundColor;
@@ -286,8 +303,8 @@ class CarnetTemplateEditor {
             if (!this.isDragging) return;
 
             const canvasRect = this.canvas.getBoundingClientRect();
-            let newX = e.clientX - canvasRect.left - this.dragOffset.x;
-            let newY = e.clientY - canvasRect.top - this.dragOffset.y;
+            let newX = (e.clientX - canvasRect.left - this.dragOffset.x) / this.zoom;
+            let newY = (e.clientY - canvasRect.top - this.dragOffset.y) / this.zoom;
 
             // Obtener dimensiones reales del elemento
             const elementWidth = element.offsetWidth;
@@ -300,6 +317,69 @@ class CarnetTemplateEditor {
             newX = Math.max(-elementWidth + minVisible, Math.min(newX, canvasWidth - minVisible));
             newY = Math.max(-elementHeight + minVisible, Math.min(newY, canvasHeight - minVisible));
 
+            // LÓGICA DE GUÍAS MAGNÉTICAS (SMART GUIDES)
+            const snapPoints = { x: [], y: [] };
+            
+            // Añadir el centro absoluto del lienzo como punto de anclaje magnético
+            snapPoints.x.push({ pos: canvasWidth / 2, type: 'center' });
+            snapPoints.y.push({ pos: canvasHeight / 2, type: 'center' });
+
+            // Rastrear todos los bordes y centros de los demás campos
+            Object.entries(this.fields).forEach(([name, data]) => {
+                if (data.element === element) return; // Ignorar a sí mismo
+                
+                const left = parseFloat(data.element.style.left) || 0;
+                const top = parseFloat(data.element.style.top) || 0;
+                const right = left + data.element.offsetWidth;
+                const bottom = top + data.element.offsetHeight;
+                const cx = left + data.element.offsetWidth / 2;
+                const cy = top + data.element.offsetHeight / 2;
+
+                snapPoints.x.push({ pos: left }, { pos: right }, { pos: cx });
+                snapPoints.y.push({ pos: top }, { pos: bottom }, { pos: cy });
+            });
+
+            const THRESHOLD = 5 / this.zoom; // Fuerza del imán de 5px
+            let snapX = null;
+            let snapY = null;
+
+            const currentRight = newX + elementWidth;
+            const currentBottom = newY + elementHeight;
+            const currentCenterX = newX + elementWidth / 2;
+            const currentCenterY = newY + elementHeight / 2;
+
+            // Imán Horizontal (Eje X)
+            snapPoints.x.forEach(p => {
+                if (Math.abs(newX - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos; }
+                else if (Math.abs(currentRight - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos - elementWidth; }
+                else if (Math.abs(currentCenterX - p.pos) < THRESHOLD) { snapX = p.pos; newX = p.pos - elementWidth / 2; }
+            });
+
+            // Imán Vertical (Eje Y)
+            snapPoints.y.forEach(p => {
+                if (Math.abs(newY - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos; }
+                else if (Math.abs(currentBottom - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos - elementHeight; }
+                else if (Math.abs(currentCenterY - p.pos) < THRESHOLD) { snapY = p.pos; newY = p.pos - elementHeight / 2; }
+            });
+
+            // Prender o Apagar Luces Láser de las guías
+            const guideV = document.getElementById('smartGuideV');
+            const guideH = document.getElementById('smartGuideH');
+
+            if (snapX !== null) {
+                guideV.style.left = snapX + 'px';
+                guideV.style.display = 'block';
+            } else {
+                guideV.style.display = 'none';
+            }
+
+            if (snapY !== null) {
+                guideH.style.top = snapY + 'px';
+                guideH.style.display = 'block';
+            } else {
+                guideH.style.display = 'none';
+            }
+
             element.style.left = newX + 'px';
             element.style.top = newY + 'px';
         };
@@ -309,6 +389,10 @@ class CarnetTemplateEditor {
             element.classList.remove('dragging');
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+
+            // Apagar láser magnético al soltar el click
+            if (document.getElementById('smartGuideV')) document.getElementById('smartGuideV').style.display = 'none';
+            if (document.getElementById('smartGuideH')) document.getElementById('smartGuideH').style.display = 'none';
         };
 
         document.addEventListener('mousemove', onMouseMove);
@@ -337,8 +421,8 @@ class CarnetTemplateEditor {
         const onMouseMove = (e) => {
             if (!this.isResizing) return;
 
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+            const deltaX = (e.clientX - startX) / this.zoom;
+            const deltaY = (e.clientY - startY) / this.zoom;
 
             let newWidth = startWidth;
             let newHeight = startHeight;
@@ -366,21 +450,9 @@ class CarnetTemplateEditor {
             element.style.left = newLeft + 'px';
             element.style.top = newTop + 'px';
 
-            // Calcular nuevo tamaño de fuente proporcional
-            const widthRatio = newWidth / startWidth;
-            const heightRatio = newHeight / startHeight;
-            const scaleRatio = Math.min(widthRatio, heightRatio); // Usar el menor para mantener proporción
-
-            let newFontSize = Math.round(initialFontSize * scaleRatio);
-            newFontSize = Math.max(6, Math.min(24, newFontSize)); // Limitar entre 6 y 24pt
-
-            // Aplicar nuevo tamaño de fuente
-            valueElement.style.fontSize = newFontSize + 'px';
-
-            // Actualizar inputs
+            // Actualizar inputs de la barra lateral visualmente
             document.getElementById('fieldWidth').value = this.pxToMmNumber(newWidth).toFixed(1);
             document.getElementById('fieldHeight').value = this.pxToMmNumber(newHeight).toFixed(1);
-            document.getElementById('fontSize').value = newFontSize;
         };
 
         const onMouseUp = () => {
@@ -389,15 +461,13 @@ class CarnetTemplateEditor {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
 
-            // Guardar tamaño en config
+            // Guardar nuevo tamaño en la configuración interna
             const fieldName = element.dataset.field;
-            const finalFontSize = parseInt(window.getComputedStyle(valueElement).fontSize);
 
             this.fields[fieldName].config.width = this.pxToMm(element.offsetWidth);
             this.fields[fieldName].config.height = this.pxToMm(element.offsetHeight);
-            this.fields[fieldName].config.fontSize = finalFontSize + 'pt';
 
-            toastr.info(`Tamaño ajustado: ${finalFontSize}pt`, '', { timeOut: 1000 });
+            toastr.info(`Tamaño de caja ajustado`, '', { timeOut: 1000 });
         };
 
         document.addEventListener('mousemove', onMouseMove);
@@ -660,7 +730,9 @@ class CarnetTemplateEditor {
         formData.append('fondo', file);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-        fetch('/carnets/plantillas/upload-fondo', {
+        const uploadUrl = window.editorUrls ? window.editorUrls.uploadFondo : '/carnets/plantillas/upload-fondo';
+
+        fetch(uploadUrl, {
             method: 'POST',
             body: formData
         })
@@ -700,8 +772,8 @@ class CarnetTemplateEditor {
 
     showCoordinates(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const x = (e.clientX - rect.left) / this.zoom;
+        const y = (e.clientY - rect.top) / this.zoom;
 
         const xMm = (x / this.MM_TO_PX_RATIO).toFixed(2);
         const yMm = (y / this.MM_TO_PX_RATIO).toFixed(2);
@@ -744,6 +816,7 @@ class CarnetTemplateEditor {
         const formData = {
             nombre: document.getElementById('nombre').value,
             tipo: document.getElementById('tipo').value,
+            ciclo_id: document.getElementById('ciclo_id').value,
             ancho_mm: document.getElementById('ancho_mm').value,
             alto_mm: document.getElementById('alto_mm').value,
             descripcion: document.getElementById('descripcion').value,
@@ -752,9 +825,9 @@ class CarnetTemplateEditor {
             _token: document.querySelector('meta[name="csrf-token"]').content
         };
 
-        const url = window.location.pathname.includes('/editar')
-            ? window.location.pathname.replace('/editar', '')
-            : '/carnets/plantillas';
+        const url = window.editorUrls && window.editorUrls.update && window.location.pathname.includes('/editar')
+            ? window.editorUrls.update
+            : (window.editorUrls ? window.editorUrls.store : '/carnets/plantillas');
 
         const method = window.location.pathname.includes('/editar') ? 'PUT' : 'POST';
 
@@ -794,6 +867,18 @@ class CarnetTemplateEditor {
         // Cargar fondo si existe
         if (templateData.fondo_path) {
             this.fondoPath = templateData.fondo_path;
+            
+            // Cargar vista previa del fondo en panel lateral derecho
+            const uploadZone = document.getElementById('uploadZone');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            const storageBase = window.editorUrls ? window.editorUrls.storageBase : '/storage';
+            
+            if (uploadZone && imagePreview && previewImg) {
+                uploadZone.style.display = 'none';
+                previewImg.src = `${storageBase}/${templateData.fondo_path}`;
+                imagePreview.style.display = 'block';
+            }
         }
 
         // Cargar cada campo guardado

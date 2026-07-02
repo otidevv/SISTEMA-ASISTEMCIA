@@ -131,6 +131,15 @@
                                 </button>
                             @endif
 
+                            @if(Auth::user()->hasPermission('carnets.templates.activate') && $template->activa)
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-warning btn-deactivate" 
+                                        data-id="{{ $template->id }}"
+                                        title="Desactivar">
+                                    <i class="uil uil-times-circle"></i>
+                                </button>
+                            @endif
+
                             @if(Auth::user()->hasPermission('carnets.templates.delete') && !$template->activa)
                                 <button type="button" 
                                         class="btn btn-sm btn-outline-danger btn-delete" 
@@ -190,7 +199,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: `/carnets/plantillas/${templateId}/activar`,
+                            url: `{{ url('/carnets/plantillas') }}/${templateId}/activar`,
                             type: 'POST',
                             data: {
                                 _token: '{{ csrf_token() }}'
@@ -205,6 +214,43 @@
                             },
                             error: function(xhr) {
                                 toastr.error('Error al activar la plantilla');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Desactivar plantilla
+            $('.btn-deactivate').click(function() {
+                const templateId = $(this).data('id');
+                
+                Swal.fire({
+                    title: '¿Desactivar esta plantilla?',
+                    text: 'Los carnets de este tipo no tendrán plantilla activa',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ffc107',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, desactivar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `{{ url('/carnets/plantillas') }}/${templateId}/desactivar`,
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    toastr.success(response.message);
+                                    setTimeout(() => location.reload(), 1000);
+                                } else {
+                                    toastr.error(response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                toastr.error('Error al desactivar la plantilla');
                             }
                         });
                     }
@@ -227,7 +273,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: `/carnets/plantillas/${templateId}`,
+                            url: `{{ url('/carnets/plantillas') }}/${templateId}`,
                             type: 'DELETE',
                             data: {
                                 _token: '{{ csrf_token() }}'

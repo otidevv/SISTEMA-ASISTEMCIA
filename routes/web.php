@@ -471,6 +471,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/editar', [App\Http\Controllers\CarnetTemplateController::class, 'edit'])->name('carnets.templates.edit')->middleware('can:carnets.templates.edit');
         Route::put('/{id}', [App\Http\Controllers\CarnetTemplateController::class, 'update'])->name('carnets.templates.update')->middleware('can:carnets.templates.edit');
         Route::post('/{id}/activar', [App\Http\Controllers\CarnetTemplateController::class, 'activate'])->name('carnets.templates.activate')->middleware('can:carnets.templates.activate');
+        Route::post('/{id}/desactivar', [App\Http\Controllers\CarnetTemplateController::class, 'deactivate'])->name('carnets.templates.deactivate')->middleware('can:carnets.templates.activate');
         Route::delete('/{id}', [App\Http\Controllers\CarnetTemplateController::class, 'destroy'])->name('carnets.templates.destroy')->middleware('can:carnets.templates.delete');
         Route::post('/upload-fondo', [App\Http\Controllers\CarnetTemplateController::class, 'uploadFondo'])->name('carnets.templates.upload-fondo')->middleware('can:carnets.templates.create');
     });

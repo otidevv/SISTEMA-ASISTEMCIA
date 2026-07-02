@@ -730,7 +730,9 @@ class CarnetTemplateEditor {
         formData.append('fondo', file);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-        fetch('/carnets/plantillas/upload-fondo', {
+        const uploadUrl = window.editorUrls ? window.editorUrls.uploadFondo : '/carnets/plantillas/upload-fondo';
+
+        fetch(uploadUrl, {
             method: 'POST',
             body: formData
         })
@@ -823,9 +825,9 @@ class CarnetTemplateEditor {
             _token: document.querySelector('meta[name="csrf-token"]').content
         };
 
-        const url = window.location.pathname.includes('/editar')
-            ? window.location.pathname.replace('/editar', '')
-            : '/carnets/plantillas';
+        const url = window.editorUrls && window.editorUrls.update && window.location.pathname.includes('/editar')
+            ? window.editorUrls.update
+            : (window.editorUrls ? window.editorUrls.store : '/carnets/plantillas');
 
         const method = window.location.pathname.includes('/editar') ? 'PUT' : 'POST';
 
@@ -865,6 +867,18 @@ class CarnetTemplateEditor {
         // Cargar fondo si existe
         if (templateData.fondo_path) {
             this.fondoPath = templateData.fondo_path;
+            
+            // Cargar vista previa del fondo en panel lateral derecho
+            const uploadZone = document.getElementById('uploadZone');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            const storageBase = window.editorUrls ? window.editorUrls.storageBase : '/storage';
+            
+            if (uploadZone && imagePreview && previewImg) {
+                uploadZone.style.display = 'none';
+                previewImg.src = `${storageBase}/${templateData.fondo_path}`;
+                imagePreview.style.display = 'block';
+            }
         }
 
         // Cargar cada campo guardado

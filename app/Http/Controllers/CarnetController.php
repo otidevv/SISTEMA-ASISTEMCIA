@@ -564,7 +564,13 @@ class CarnetController extends Controller
 
             if ($carnet->foto_path) {
                 $path = storage_path('app/public/' . $carnet->foto_path);
-                if (file_exists($path)) $foto = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
+                if (file_exists($path)) {
+                    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                    $mime = 'image/jpeg';
+                    if ($ext === 'png') $mime = 'image/png';
+                    elseif ($ext === 'gif') $mime = 'image/gif';
+                    $foto = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                }
             }
 
             $qrCode = null;
@@ -579,7 +585,14 @@ class CarnetController extends Controller
             $fondo = null;
             if ($template && $template->fondo_path) {
                 $path = storage_path('app/public/' . $template->fondo_path);
-                if (file_exists($path)) $fondo = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
+                if (file_exists($path)) {
+                    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                    $mime = 'image/jpeg';
+                    if ($ext === 'png') $mime = 'image/png';
+                    elseif ($ext === 'gif') $mime = 'image/gif';
+                    elseif ($ext === 'svg') $mime = 'image/svg+xml';
+                    $fondo = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                }
             }
 
             // Determinación del aula (replicando la lógica de formatCarnetData)

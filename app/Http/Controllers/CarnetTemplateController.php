@@ -183,6 +183,32 @@ class CarnetTemplateController extends Controller
     }
 
     /**
+     * Desactivar plantilla
+     */
+    public function deactivate($id)
+    {
+        if (!Auth::user()->hasPermission('carnets.templates.activate')) {
+            return response()->json(['error' => 'Sin permisos'], 403);
+        }
+
+        try {
+            $template = CarnetTemplate::findOrFail($id);
+            $template->activa = false;
+            $template->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Plantilla desactivada exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al desactivar plantilla: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Eliminar plantilla
      */
     public function destroy($id)
@@ -225,7 +251,7 @@ class CarnetTemplateController extends Controller
      */
     public function uploadFondo(Request $request)
     {
-        if (!Auth::user()->hasPermission('carnets.templates.create')) {
+        if (!Auth::user()->hasPermission('carnets.templates.create') && !Auth::user()->hasPermission('carnets.templates.edit')) {
             return response()->json(['error' => 'Sin permisos'], 403);
         }
 

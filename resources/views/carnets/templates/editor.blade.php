@@ -536,7 +536,16 @@
 @push('js')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     
-    @if(isset($template) && $template->campos_config)
+    <script>
+        window.editorUrls = {
+            store: "{{ route('carnets.templates.store') }}",
+            update: "{{ isset($template) ? route('carnets.templates.update', $template->id) : '' }}",
+            uploadFondo: "{{ route('carnets.templates.upload-fondo') }}",
+            storageBase: "{{ asset('storage') }}"
+        };
+    </script>
+    
+    @if(isset($template))
     <script>
         // Pasar datos de plantilla existente al JavaScript
         window.templateData = {
@@ -545,7 +554,7 @@
             tipo: "{{ $template->tipo }}",
             ciclo_id: {{ $template->ciclo_id ?? 'null' }},
             fondo_path: "{{ $template->fondo_path ?? '' }}",
-            campos_config: {!! json_encode($template->campos_config) !!}
+            campos_config: {!! isset($template->campos_config) ? json_encode($template->campos_config) : '{}' !!}
         };
     </script>
     @endif
