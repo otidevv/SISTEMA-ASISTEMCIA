@@ -136,7 +136,7 @@ class CarnetTemplateController extends Controller
                 'nombre' => $request->nombre,
                 'tipo' => $request->tipo,
                 'ciclo_id' => $request->ciclo_id,
-                'fondo_path' => $request->fondo_path ?? $template->fondo_path,
+                'fondo_path' => $request->has('fondo_path') ? $request->fondo_path : $template->fondo_path,
                 'ancho_mm' => $request->ancho_mm,
                 'alto_mm' => $request->alto_mm,
                 'campos_config' => json_decode($request->campos_config, true),

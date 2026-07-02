@@ -879,6 +879,13 @@ class CarnetTemplateEditor {
                 previewImg.src = `${storageBase}/${templateData.fondo_path}`;
                 imagePreview.style.display = 'block';
             }
+
+            // Cargar vista previa en el lienzo (canvas)
+            const backgroundImage = document.getElementById('backgroundImage');
+            if (backgroundImage) {
+                backgroundImage.src = `${storageBase}/${templateData.fondo_path}`;
+                backgroundImage.style.display = 'block';
+            }
         }
 
         // Cargar cada campo guardado
