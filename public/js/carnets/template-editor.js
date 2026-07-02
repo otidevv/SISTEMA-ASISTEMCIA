@@ -738,15 +738,18 @@ class CarnetTemplateEditor {
         })
             .then(response => response.json())
             .then(data => {
+                console.log('[DEBUG] Upload response:', data);
                 if (data.success) {
                     this.fondoPath = data.path;
+                    console.log('[DEBUG] fondoPath actualizado a:', this.fondoPath);
                     toastr.success('Imagen subida correctamente');
                 } else {
+                    console.error('[DEBUG] Upload falló:', data);
                     toastr.error(data.message || 'Error al subir imagen');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('[DEBUG] Upload error:', error);
                 toastr.error('Error al subir imagen');
             });
     }
@@ -824,6 +827,10 @@ class CarnetTemplateEditor {
             campos_config: JSON.stringify(this.getFieldsConfig()),
             _token: document.querySelector('meta[name="csrf-token"]').content
         };
+
+        // Debug temporal - mostrar en consola del navegador
+        console.log('[DEBUG] fondoPath al guardar:', this.fondoPath);
+        console.log('[DEBUG] formData completo:', JSON.stringify(formData));
 
         const url = window.editorUrls && window.editorUrls.update && window.location.pathname.includes('/editar')
             ? window.editorUrls.update

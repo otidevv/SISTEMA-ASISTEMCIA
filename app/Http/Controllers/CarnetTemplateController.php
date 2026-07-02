@@ -131,12 +131,24 @@ class CarnetTemplateController extends Controller
 
         try {
             $template = CarnetTemplate::findOrFail($id);
+
+            // Determinar el fondo_path final
+            $fondoPath = $request->has('fondo_path') ? $request->fondo_path : $template->fondo_path;
             
+            // Log temporal para depuración
+            \Log::info('CarnetTemplate UPDATE', [
+                'id' => $id,
+                'request_has_fondo_path' => $request->has('fondo_path'),
+                'request_fondo_path' => $request->fondo_path,
+                'template_fondo_path_anterior' => $template->fondo_path,
+                'fondo_path_final' => $fondoPath,
+            ]);
+
             $template->update([
                 'nombre' => $request->nombre,
                 'tipo' => $request->tipo,
                 'ciclo_id' => $request->ciclo_id,
-                'fondo_path' => $request->has('fondo_path') ? $request->fondo_path : $template->fondo_path,
+                'fondo_path' => $fondoPath,
                 'ancho_mm' => $request->ancho_mm,
                 'alto_mm' => $request->alto_mm,
                 'campos_config' => json_decode($request->campos_config, true),
@@ -144,10 +156,14 @@ class CarnetTemplateController extends Controller
                 'actualizado_por' => Auth::id()
             ]);
 
+            // Refrescar para confirmar lo guardado
+            $template->refresh();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Plantilla actualizada exitosamente',
-                'template' => $template
+                'template' => $template,
+                'debug_fondo_path_guardado' => $template->fondo_path
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -267,6 +283,12 @@ class CarnetTemplateController extends Controller
             $file = $request->file('fondo');
             $filename = 'carnet_fondo_' . time() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('carnets/fondos', $filename, 'public');
+
+            \Log::info('CarnetTemplate UPLOAD FONDO', [
+                'filename' => $filename,
+                'path' => $path,
+                'exists' => \Storage::disk('public')->exists($path),
+            ]);
 
             return response()->json([
                 'success' => true,
