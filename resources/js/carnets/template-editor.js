@@ -736,7 +736,23 @@ class CarnetTemplateEditor {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
+            .then(response => {
+                console.log('[DEBUG] HTTP status:', response.status);
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('[DEBUG] HTTP Error body:', text);
+                        throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+                    });
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('[DEBUG] Response is not JSON:', text);
+                        throw new Error('El servidor no retornó un JSON válido');
+                    }
+                });
+            })
             .then(data => {
                 console.log('[DEBUG] Upload response:', data);
                 if (data.success) {
@@ -750,7 +766,7 @@ class CarnetTemplateEditor {
             })
             .catch(error => {
                 console.error('[DEBUG] Upload error:', error);
-                toastr.error('Error al subir imagen');
+                toastr.error('Error al subir imagen: ' + error.message);
             });
     }
 
