@@ -726,6 +726,12 @@ class CarnetTemplateEditor {
     }
 
     uploadBackground(file) {
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Subiendo imagen...';
+        }
+
         const formData = new FormData();
         formData.append('fondo', file);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
@@ -767,6 +773,12 @@ class CarnetTemplateEditor {
             .catch(error => {
                 console.error('[DEBUG] Upload error:', error);
                 toastr.error('Error al subir imagen: ' + error.message);
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="uil uil-save me-1"></i> Guardar Plantilla';
+                }
             });
     }
 
