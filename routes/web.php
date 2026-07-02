@@ -468,12 +468,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [App\Http\Controllers\CarnetTemplateController::class, 'index'])->name('carnets.templates.index');
         Route::get('/crear', [App\Http\Controllers\CarnetTemplateController::class, 'create'])->name('carnets.templates.create')->middleware('can:carnets.templates.create');
         Route::post('/', [App\Http\Controllers\CarnetTemplateController::class, 'store'])->name('carnets.templates.store')->middleware('can:carnets.templates.create');
+        Route::post('/upload-fondo', [App\Http\Controllers\CarnetTemplateController::class, 'uploadFondo'])->name('carnets.templates.upload-fondo');
         Route::get('/{id}/editar', [App\Http\Controllers\CarnetTemplateController::class, 'edit'])->name('carnets.templates.edit')->middleware('can:carnets.templates.edit');
         Route::put('/{id}', [App\Http\Controllers\CarnetTemplateController::class, 'update'])->name('carnets.templates.update')->middleware('can:carnets.templates.edit');
         Route::post('/{id}/activar', [App\Http\Controllers\CarnetTemplateController::class, 'activate'])->name('carnets.templates.activate')->middleware('can:carnets.templates.activate');
         Route::post('/{id}/desactivar', [App\Http\Controllers\CarnetTemplateController::class, 'deactivate'])->name('carnets.templates.deactivate')->middleware('can:carnets.templates.activate');
         Route::delete('/{id}', [App\Http\Controllers\CarnetTemplateController::class, 'destroy'])->name('carnets.templates.destroy')->middleware('can:carnets.templates.delete');
-        Route::post('/upload-fondo', [App\Http\Controllers\CarnetTemplateController::class, 'uploadFondo'])->name('carnets.templates.upload-fondo')->middleware('can:carnets.templates.create');
     });
     
     // Rutas para constancias de postulación (accesibles para estudiantes/postulantes)
