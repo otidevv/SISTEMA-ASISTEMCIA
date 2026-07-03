@@ -728,7 +728,7 @@ class CarnetTemplateEditor {
 
     uploadBackground(file) {
         this.isUploadingBackground = true;
-        const submitBtn = document.querySelector('button[type="submit"]');
+        const submitBtn = document.querySelector('#templateForm button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Subiendo imagen...';
