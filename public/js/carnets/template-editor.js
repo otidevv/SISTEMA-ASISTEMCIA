@@ -734,55 +734,105 @@ class CarnetTemplateEditor {
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Subiendo imagen...';
         }
 
+        // Mostrar SweetAlert2 con barra de progreso
+        Swal.fire({
+            title: 'Subiendo Imagen de Fondo',
+            html: `
+                <div class="progress mt-3" style="height: 25px; border-radius: 5px; overflow: hidden;">
+                    <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                         role="progressbar" style="width: 0%; font-weight: bold;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                </div>
+                <p class="mt-2 text-muted small" id="uploadStatusText">Preparando archivo...</p>
+            `,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         const formData = new FormData();
         formData.append('fondo', file);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
         const uploadUrl = window.editorUrls ? window.editorUrls.uploadFondo : '/carnets/plantillas/upload-fondo';
 
-        fetch(uploadUrl, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                console.log('[DEBUG] HTTP status:', response.status);
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        console.error('[DEBUG] HTTP Error body:', text);
-                        throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
-                    });
+        const xhr = new XMLHttpRequest();
+        
+        // Registrar el progreso real de la subida
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                const progressBar = document.getElementById('uploadProgressBar');
+                const statusText = document.getElementById('uploadStatusText');
+                
+                if (progressBar) {
+                    progressBar.style.width = percent + '%';
+                    progressBar.setAttribute('aria-valuenow', percent);
+                    progressBar.textContent = percent + '%';
                 }
-                return response.text().then(text => {
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        console.error('[DEBUG] Response is not JSON:', text);
-                        throw new Error('El servidor no retornó un JSON válido');
-                    }
-                });
-            })
-            .then(data => {
-                console.log('[DEBUG] Upload response:', data);
-                if (data.success) {
-                    this.fondoPath = data.path;
-                    console.log('[DEBUG] fondoPath actualizado a:', this.fondoPath);
-                    toastr.success('Imagen subida correctamente');
-                } else {
-                    console.error('[DEBUG] Upload falló:', data);
-                    toastr.error(data.message || 'Error al subir imagen');
+                if (statusText) {
+                    statusText.textContent = `Subiendo... ${percent}%`;
                 }
-            })
-            .catch(error => {
-                console.error('[DEBUG] Upload error:', error);
-                toastr.error('Error al subir imagen: ' + error.message);
-            })
-            .finally(() => {
+            }
+        });
+
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
                 this.isUploadingBackground = false;
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="uil uil-save me-1"></i> Guardar Plantilla';
                 }
-            });
+
+                if (xhr.status === 200) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            this.fondoPath = data.path;
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Completado!',
+                                text: 'Imagen subida correctamente',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error al subir',
+                                text: data.message || 'Error desconocido'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de formato',
+                            text: 'El servidor no devolvió una respuesta válida.'
+                        });
+                    }
+                } else {
+                    let errorMessage = 'No se pudo subir la imagen al servidor.';
+                    if (xhr.status === 413) {
+                        errorMessage = 'La imagen es demasiado pesada para el servidor (Límite excedido).';
+                    } else if (xhr.status === 419) {
+                        errorMessage = 'La sesión ha expirado, recarga la página por favor.';
+                    } else if (xhr.status === 500) {
+                        errorMessage = 'Error interno del servidor (500). Verifique los permisos de escritura.';
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error ' + xhr.status,
+                        text: errorMessage
+                    });
+                }
+            }
+        };
+
+        xhr.open('POST', uploadUrl, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
     }
 
     removeBackground() {
@@ -863,10 +913,6 @@ class CarnetTemplateEditor {
             campos_config: JSON.stringify(this.getFieldsConfig()),
             _token: document.querySelector('meta[name="csrf-token"]').content
         };
-
-        // Debug temporal - mostrar en consola del navegador
-        console.log('[DEBUG] fondoPath al guardar:', this.fondoPath);
-        console.log('[DEBUG] formData completo:', JSON.stringify(formData));
 
         const url = window.editorUrls && window.editorUrls.update && window.location.pathname.includes('/editar')
             ? window.editorUrls.update
