@@ -14,6 +14,7 @@ class CarnetTemplateEditor {
         this.dragOffset = { x: 0, y: 0 };
         this.resizeHandle = null;
         this.fondoPath = null;
+        this.isUploadingBackground = false;
 
         // Constantes de conversión
         this.MM_TO_PX_RATIO = 3.7795275591; // 1mm = 3.78px aproximadamente
@@ -726,6 +727,7 @@ class CarnetTemplateEditor {
     }
 
     uploadBackground(file) {
+        this.isUploadingBackground = true;
         const submitBtn = document.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -775,6 +777,7 @@ class CarnetTemplateEditor {
                 toastr.error('Error al subir imagen: ' + error.message);
             })
             .finally(() => {
+                this.isUploadingBackground = false;
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="uil uil-save me-1"></i> Guardar Plantilla';
@@ -843,6 +846,11 @@ class CarnetTemplateEditor {
 
     handleSubmit(e) {
         e.preventDefault();
+
+        if (this.isUploadingBackground) {
+            toastr.warning('Por favor, espera a que la imagen de fondo termine de subirse antes de guardar.');
+            return;
+        }
 
         const formData = {
             nombre: document.getElementById('nombre').value,
