@@ -50,7 +50,7 @@ class PublicPostulacionController extends Controller
             ], 422);
         }
 
-        $cicloActivo = Ciclo::where('es_activo', 1)->first();
+        $cicloActivo = Ciclo::where('es_activo', 1)->orderBy('id', 'desc')->first();
 
         if (!$cicloActivo) {
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
@@ -347,7 +347,7 @@ class PublicPostulacionController extends Controller
 
         DB::beginTransaction();
         try {
-            $cicloActivo = Ciclo::where('es_activo', 1)->where('programa_id', 1)->firstOrFail();
+            $cicloActivo = Ciclo::where('es_activo', 1)->where('programa_id', 1)->orderBy('id', 'desc')->firstOrFail();
 
             if (!$cicloActivo->estaPeriodoInscripcionAbierto()) {
                 throw new \Exception("El proceso de inscripciones para el CEPRE ha culminado.");
@@ -783,7 +783,7 @@ class PublicPostulacionController extends Controller
             $data = $request->all();
 
             // Obtener ciclo activo para el PDF
-            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->first();
+            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->orderBy('id', 'desc')->first();
             $cicloNombre = $cicloActivo ? $cicloActivo->nombre : date('Y');
 
             // Calcular edad si hay fecha de nacimiento

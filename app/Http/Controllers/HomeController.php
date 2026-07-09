@@ -229,7 +229,7 @@ class HomeController extends Controller
      */
     public function secundaria()
     {
-        $cicloActivo = Ciclo::where('programa_id', 2)->where('es_activo', true)->first() ?? Ciclo::activo()->first();
+        $cicloActivo = Ciclo::where('programa_id', 2)->where('es_activo', true)->orderBy('id', 'desc')->first() ?? Ciclo::activo()->first();
         $departamentos = CentroEducativo::getDepartamentos();
         
         // Cursos específicos de reforzamiento (según flyer)

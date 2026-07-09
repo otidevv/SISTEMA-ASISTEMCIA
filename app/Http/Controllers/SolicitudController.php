@@ -134,7 +134,7 @@ class SolicitudController extends Controller
             return response()->json(['encontrado' => false]);
         }
 
-        $ciclo = Ciclo::where('es_activo', true)->orderBy('programa_id')->first();
+        $ciclo = Ciclo::where('es_activo', true)->orderBy('programa_id')->orderBy('id', 'desc')->first();
         $insc = \App\Models\Inscripcion::where('estudiante_id', $user->id)
             ->when($ciclo, fn ($q) => $q->where('ciclo_id', $ciclo->id))
             ->latest()
@@ -202,7 +202,7 @@ class SolicitudController extends Controller
         }
 
         // Ligar al ciclo activo (CEPRE)
-        $ciclo = Ciclo::where('es_activo', true)->orderBy('programa_id')->first();
+        $ciclo = Ciclo::where('es_activo', true)->orderBy('programa_id')->orderBy('id', 'desc')->first();
         if ($ciclo) {
             $opts['ciclo_id'] = $ciclo->id;
             $opts['term_name'] = $ciclo->codigo ?? null;

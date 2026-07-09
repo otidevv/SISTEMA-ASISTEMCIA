@@ -25,7 +25,7 @@ class PaymentValidationService
         try {
             // FILTRO DE SEGURIDAD: Obtener el inicio del ciclo activo para evitar jalar pagos antiguos
             $fechaLimite = null;
-            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->first();
+            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->orderBy('id', 'desc')->first();
             if ($cicloActivo && $cicloActivo->fecha_inicio) {
                 // Permitimos pagos desde 2 meses antes del inicio del ciclo (igual que en Reforzamiento)
                 $fechaLimite = \Carbon\Carbon::parse($cicloActivo->fecha_inicio)->subMonths(2);

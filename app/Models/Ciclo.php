@@ -114,7 +114,7 @@ class Ciclo extends Model
     // Scopes
     public function scopeActivo($query)
     {
-        return $query->where('es_activo', true);
+        return $query->where('es_activo', true)->orderBy('id', 'desc');
     }
 
     public function scopeEnCurso($query)
