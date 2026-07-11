@@ -880,7 +880,7 @@ class AsistenciaHelper
                     }
 
                     if ($esRegularizado && ($entrada === '00:00' || !$entrada)) {
-                        $datosDelDia['hora_entrada'] = '-';
+                        $datosDelDia['hora_entrada'] = 'REGULARIZADO';
                         $datosDelDia['hora_salida'] = '-';
                     } else {
                         $datosDelDia['hora_entrada'] = $entrada ?: 'Sin registro';

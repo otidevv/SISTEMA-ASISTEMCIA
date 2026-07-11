@@ -147,109 +147,103 @@
             color: #ffffff !important;
         }
 
+        /* ─── TABLA DE DETALLE MENSUAL ─── */
         .data-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .data-table th {
-            background-color: #f8fafc;
-            color: #2b5a6f;
+        /* Thead oscuro premium igual que inhabilitados */
+        .data-table thead th {
+            background-color: #2b5a6f;
+            color: #ffffff;
             padding: 7px 10px;
             font-size: 8px;
             text-transform: uppercase;
             font-weight: bold;
-            border-bottom: 1.5px solid #cbd5e1;
-            border-top: none;
-            border-left: none;
-            border-right: none;
-            letter-spacing: 0.3px;
+            border: 1px solid #1a3d52;
+            letter-spacing: 0.5px;
         }
 
         .data-table td {
             padding: 6px 10px;
-            border-bottom: 1px solid #e2e8f0;
+            border: 1px solid #d1d5db;
             font-size: 8.5px;
-            color: #334155;
+            color: #1e293b;
             vertical-align: middle;
         }
 
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Sombreado de fila alterna */
-        .data-table tr:nth-child(even) td {
-            background-color: #fcfdfe;
-        }
-
-        .data-table tr.falta-row td {
-            background-color: #fff8f8;
-        }
-
-        .data-table tr.justificada-row td {
-            background-color: #f4f9ff;
-        }
-
+        /* ─── COLORES DE FILA POR ESTADO (sólidos, bien visibles) ─── */
         .data-table tr.puntual-row td {
-            background-color: #f9fdf7;
+            background-color: #e8f5e9;
+            color: #1b5e20;
         }
 
         .data-table tr.tarde-row td {
-            background-color: #fffdf4;
+            background-color: #fff8e1;
+            color: #5d4037;
         }
 
-        /* BADGES DE ESTADO - DISEÑO PREMIUM */
+        .data-table tr.falta-row td {
+            background-color: #fce4ec;
+            color: #880e4f;
+        }
+
+        .data-table tr.justificada-row td {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+
+        .data-table tr.regularizado-row td {
+            background-color: #ede7f6;
+            color: #4527a0;
+        }
+
+        /* ─── BADGES DE ESTADO - SÓLIDOS Y VISTOSOS ─── */
         .badge-status {
             display: inline-block;
-            padding: 2.5px 7px;
-            font-size: 7.5px;
+            padding: 2.5px 8px;
+            font-size: 7px;
             font-weight: bold;
-            border-radius: 3px;
+            border-radius: 2px;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
             text-align: center;
-            border: 1px solid #000;
+            color: #fff;
+            border: none;
         }
 
         .badge-status.puntual {
-            background-color: #eef7e2;
-            color: #5a8a1f;
-            border-color: #c3dfa1;
+            background-color: #43a047;
         }
 
         .badge-status.tarde {
-            background-color: #fff8e1;
-            color: #c07800;
-            border-color: #ffe082;
+            background-color: #fb8c00;
         }
 
         .badge-status.falta {
-            background-color: #fce4f0;
-            color: #cc0000;
-            border-color: #f5a3d3;
+            background-color: #e53935;
         }
 
         .badge-status.justificada {
-            background-color: #e3f2fd;
-            color: #0d47a1;
-            border-color: #90caf9;
+            background-color: #1e88e5;
         }
 
-        /* Textos de horas */
+        .badge-status.regularizado {
+            background-color: #7b1fa2;
+        }
+
+        /* ─── TEXTOS DE HORAS ─── */
         .time-txt {
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
             font-size: 9px;
             font-weight: bold;
         }
-        .time-txt.danger {
-            color: #cc0000;
-        }
-        .time-txt.warning {
-            color: #c07800;
-        }
+        .time-txt.danger  { color: #c62828; }
+        .time-txt.warning { color: #e65100; }
+        .time-txt.purple  { color: #6a1b9a; }
 
-        /* SECCIÓN DE FIRMAS */
+        /* ─── SECCIÓN DE FIRMAS ─── */
         .sig-container {
             margin-top: 30px;
             page-break-inside: avoid;
@@ -263,20 +257,22 @@
             margin: 0 auto;
         }
 
-        /* FOOTER */
+        /* ─── FOOTER ─── */
         .pdf-footer {
-            margin-top: 20px;
-            padding-top: 6px;
-            border-top: 2px solid #00aeef;
-            text-align: center;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            border-top: 2px solid #2b5a6f;
+            padding: 4px 0 0;
+            background: #fff;
             font-size: 7.5px;
-            color: #475569;
-            line-height: 1.4;
         }
+        .pdf-footer table { width: 100%; border-collapse: collapse; }
+        .f-left  { text-align: left;  color: #000; }
+        .f-mid   { text-align: center; color: #555; }
+        .f-right { text-align: right;  color: #000; font-weight: bold; }
+        .page-num:after { content: counter(page); }
 
-        .page-break {
-            page-break-after: always;
-        }
+        .page-break { page-break-after: always; }
     </style>
 </head>
 
@@ -398,10 +394,13 @@
                             <tbody>
                                 @foreach ($mes['registros'] as $registro)
                                     @php
+                                        $esRegularizadoBadge = ($registro['hora_entrada'] === 'REGULARIZADO');
                                         $rowClass = 'falta-row';
                                         if ($registro['asistio']) {
                                             if (isset($registro['justificada']) && $registro['justificada']) {
                                                 $rowClass = 'justificada-row';
+                                            } elseif ($esRegularizadoBadge) {
+                                                $rowClass = 'regularizado-row';
                                             } elseif ($registro['es_tarde']) {
                                                 $rowClass = 'tarde-row';
                                             } else {
@@ -410,7 +409,7 @@
                                         }
                                     @endphp
                                     <tr class="{{ $rowClass }}">
-                                        <td style="text-align: center; font-family: monospace; font-weight: bold; color: #475569;">
+                                        <td style="text-align: center; font-family: monospace; font-weight: bold;">
                                             {{ $registro['fecha'] }}
                                         </td>
                                         <td style="text-align: center; font-weight: 600;">
@@ -421,20 +420,26 @@
                                         <td style="text-align: center;">
                                             @if($registro['hora_entrada'] == 'Sin registro' || $registro['hora_entrada'] == 'FALTA')
                                                 <span class="time-txt danger">&mdash;</span>
+                                            @elseif($registro['hora_entrada'] == 'REGULARIZADO')
+                                                <span class="time-txt purple" style="font-size: 7.5px; font-weight: bold;">REGULARIZADO</span>
+                                            @elseif($registro['hora_entrada'] == '-')
+                                                <span class="time-txt" style="color: #9e9e9e;">&mdash;</span>
                                             @else
                                                 <span class="time-txt {{ $registro['es_tarde'] ? 'warning' : '' }}">
                                                     {{ $registro['hora_entrada'] }}
                                                 </span>
                                                 @if($registro['es_tarde'])
-                                                    <span style="font-size: 6.5px; display: block; color: #c07800; font-weight: bold; margin-top: 1px;">(TARDE)</span>
+                                                    <span style="font-size: 6.5px; display: block; color: #e65100; font-weight: bold; margin-top: 1px;">(TARDE)</span>
                                                 @endif
                                             @endif
                                         </td>
 
                                         {{-- Salida --}}
                                         <td style="text-align: center;">
-                                            @if($registro['hora_salida'] == 'Sin registro' || $registro['hora_salida'] == 'FALTA')
-                                                <span class="time-txt danger">&mdash;</span>
+                                            @if($esRegularizadoBadge)
+                                                <span class="time-txt" style="color: #9e9e9e;">&mdash;</span>
+                                            @elseif($registro['hora_salida'] == 'Sin registro' || $registro['hora_salida'] == 'FALTA' || $registro['hora_salida'] == '00:00' || $registro['hora_salida'] == '-')
+                                                <span class="time-txt" style="color: #9e9e9e;">&mdash;</span>
                                             @else
                                                 <span class="time-txt">
                                                     {{ $registro['hora_salida'] }}
@@ -446,6 +451,8 @@
                                         <td style="text-align: center;">
                                             @if (isset($registro['justificada']) && $registro['justificada'])
                                                 <span class="badge-status justificada">Justificada</span>
+                                            @elseif ($esRegularizadoBadge)
+                                                <span class="badge-status regularizado">Regularizado</span>
                                             @elseif ($registro['asistio'])
                                                 @if($registro['es_tarde'])
                                                     <span class="badge-status tarde">Tarde</span>
@@ -494,9 +501,13 @@
         @endif
 
         <div class="pdf-footer">
-            <strong>DOCUMENTO OFICIAL GENERADO POR EL SISTEMA DE CONTROL DE ASISTENCIA BIOMÉTRICA - CEPRE UNAMAD</strong><br>
-            Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} &nbsp;|&nbsp; Fecha y Hora: {{ $fecha_generacion }}<br>
-            Este reporte tiene validez exclusivamente académica y administrativa interna de la institución.
+            <table>
+                <tr>
+                    <td class="f-left">CEPRE-UNAMAD &nbsp;|&nbsp; Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} &nbsp;|&nbsp; {{ $fecha_generacion }}</td>
+                    <td class="f-mid">Sistema de Control de Asistencia Académica</td>
+                    <td class="f-right">Pág. <span class="page-num"></span></td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>
