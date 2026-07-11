@@ -1,3 +1,12 @@
+@php
+if (!function_exists('clean_emoji')) {
+    function clean_emoji($texto) {
+        if (!$texto) return '';
+        $clean = preg_replace('/[\x{1F300}-\x{1F6FF}\x{1F900}-\x{1FAFF}\x{2600}-\x{27BF}\x{1F1E0}-\x{1F1FF}\x{2B00}-\x{2BFF}\x{2300}-\x{23FF}\x{2190}-\x{21FF}\x{25A0}-\x{25FF}\x{2000}-\x{3300}\x{FE00}-\x{FE0F}]/u', '', $texto);
+        return trim($clean);
+    }
+}
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -143,7 +152,7 @@
             <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="Logo CEPRE">
         </div>
         <h1>REPORTE DE ASISTENCIA Y TEMAS DESARROLLADOS</h1>
-        <p>Ciclo Académico: {{ $ciclo->nombre }}</p>
+        <p>Ciclo Académico: {{ clean_emoji($ciclo->nombre) }}</p>
         <p style="font-size: 8px; font-style: italic; color: #95a5a6; margin-top: 2px;">"Centro Pre-Universitario - UNAMAD"</p>
     </div>
 
@@ -227,7 +236,7 @@
                             <td>{{ \Carbon\Carbon::parse($session['fecha'])->format('d/m/Y') }}</td>
                             <td>
                                 <strong>{{ $session['curso'] }}</strong><br>
-                                <span style="color: #7f8c8d; font-size: 8px;">{{ $session['aula'] }} - {{ $session['turno'] }}</span>
+                                <span style="color: #7f8c8d; font-size: 8px;">{{ clean_emoji($session['aula']) }} - {{ clean_emoji($session['turno']) }}</span>
                             </td>
                             <td>{{ $session['hora_entrada_prog'] ?? '' }} - {{ $session['hora_salida_prog'] ?? '' }}</td>
                             <td>

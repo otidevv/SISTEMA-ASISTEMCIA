@@ -1,8 +1,17 @@
+@php
+if (!function_exists('clean_emoji')) {
+    function clean_emoji($texto) {
+        if (!$texto) return '';
+        $clean = preg_replace('/[\x{1F300}-\x{1F6FF}\x{1F900}-\x{1FAFF}\x{2600}-\x{27BF}\x{1F1E0}-\x{1F1FF}\x{2B00}-\x{2BFF}\x{2300}-\x{23FF}\x{2190}-\x{21FF}\x{25A0}-\x{25FF}\x{2000}-\x{3300}\x{FE00}-\x{FE0F}]/u', '', $texto);
+        return trim($clean);
+    }
+}
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Inhabilitados — {{ $ciclo->nombre }}</title>
+    <title>Reporte de Inhabilitados — {{ clean_emoji($ciclo->nombre) }}</title>
     <style>
         /* =============================================================
            CEPRE-UNAMAD — Reporte Oficial de Estudiantes Inhabilitados
@@ -273,6 +282,7 @@
             margin-top: 35px;
             border-top: 1.5px solid #000;
             padding-top: 12px;
+            page-break-inside: avoid;
         }
         .firma-table { width: 100%; border-collapse: collapse; }
         .firma-cell { text-align: center; vertical-align: bottom; width: 33%; padding: 0 12px; }
@@ -295,6 +305,7 @@
             font-size: 7.5px;
             color: #000;
             background: #f8f8f8;
+            page-break-inside: avoid;
         }
         .nota-box strong { text-decoration: underline; }
 
@@ -349,7 +360,7 @@
                 <td class="hdr-title">
                     <h1>Reporte Oficial de Estudiantes Inhabilitados</h1>
                     <div class="sub">CEPRE-UNAMAD — Centro Pre-Universitario — Universidad Nacional Amazónica de Madre de Dios</div>
-                    <span class="ciclo-tag">{{ $ciclo->nombre }} | {{ $ciclo->codigo }}</span>
+                    <span class="ciclo-tag">{{ clean_emoji($ciclo->nombre) }} | {{ $ciclo->codigo }}</span>
                 </td>
                 <td class="hdr-logo" style="text-align:right;">
                     <img src="{{ public_path('assets/images/logo cepre costancia.png') }}" alt="CEPRE">
@@ -358,7 +369,7 @@
         </table>
     </div>
     <div class="hdr-stripe"></div>
-    <div class="hdr-sub-row">Documento generado el: {{ $fecha_generacion }} &nbsp;|&nbsp; Modalidad: {{ $modalidad_label }} &nbsp;|&nbsp; Periodo: <strong>{{ $periodo_label }}</strong></div>
+    <div class="hdr-sub-row">Documento generado el: {{ $fecha_generacion }} &nbsp;|&nbsp; Modalidad: {{ clean_emoji($modalidad_label) }} &nbsp;|&nbsp; Periodo: <strong>{{ clean_emoji($periodo_label) }}</strong></div>
 </div>
 
 {{-- ══════════════════════════════════════
@@ -369,15 +380,15 @@
     <table>
         <tr>
             <td class="info-lbl">Ciclo Académico:</td>
-            <td class="info-val">{{ $ciclo->nombre }} &nbsp;(Código: {{ $ciclo->codigo }})</td>
+            <td class="info-val">{{ clean_emoji($ciclo->nombre) }} &nbsp;(Código: {{ $ciclo->codigo }})</td>
             <td class="info-lbl">Fecha de Generación:</td>
             <td class="info-val">{{ $fecha_generacion }}</td>
         </tr>
         <tr>
             <td class="info-lbl">Periodo de Cálculo:</td>
-            <td class="info-val"><span class="periodo-badge">&#9658; {{ $periodo_label }}</span></td>
+            <td class="info-val"><span class="periodo-badge">&#9658; {{ clean_emoji($periodo_label) }}</span></td>
             <td class="info-lbl">Modalidad Filtrada:</td>
-            <td class="info-val bold">{{ $modalidad_label }}</td>
+            <td class="info-val bold">{{ clean_emoji($modalidad_label) }}</td>
         </tr>
         <tr>
             <td class="info-lbl">% Umbral Inhabilitación:</td>
@@ -454,7 +465,7 @@
                 $pct = $sorted->count() > 0 ? round($carreraItems->count() / $sorted->count() * 100, 1) : 0;
             @endphp
             <tr>
-                <td class="bold">{{ $carreraNom }}</td>
+                <td class="bold">{{ clean_emoji($carreraNom) }}</td>
                 <td class="tc mod-post">{{ $pc }}</td>
                 <td class="tc mod-refo">{{ $rc }}</td>
                 <td class="tc bold">{{ $carreraItems->count() }}</td>
@@ -505,7 +516,7 @@
                 {{-- Cabecera de carrera --}}
                 <tr class="career-hdr">
                     <td colspan="9">
-                        &#9654; {{ strtoupper($carreraNom) }}
+                        &#9654; {{ strtoupper(clean_emoji($carreraNom)) }}
                         &nbsp;&mdash;&nbsp;
                         {{ $carreraItems->count() }} estudiante{{ $carreraItems->count() > 1 ? 's' : '' }} inhabilitado{{ $carreraItems->count() > 1 ? 's' : '' }}
                         &nbsp;|&nbsp; <span class="badge badge-p">{{ $pc }}</span>
@@ -530,8 +541,8 @@
                             @endif
                         </td>
                         <td style="font-size:7.5px;">
-                            <span class="bold">{{ $item['aula'] }}</span><br>
-                            {{ $item['turno'] }}
+                            <span class="bold">{{ clean_emoji($item['aula']) }}</span><br>
+                            {{ clean_emoji($item['turno']) }}
                         </td>
                         <td class="tc faltas-num">{{ $item['faltas'] }}</td>
                         <td class="tc">{{ $item['limite'] }}</td>
@@ -560,19 +571,19 @@
     <table class="firma-table">
         <tr>
             <td class="firma-cell">
-                <div style="height:32px;"></div>
+                <div style="height:75px;"></div>
                 <div class="firma-line"></div>
                 <div class="firma-cargo">Director(a) CEPRE-UNAMAD</div>
                 <div class="firma-nombre">&nbsp;</div>
             </td>
             <td class="firma-cell">
-                <div style="height:32px;"></div>
+                <div style="height:75px;"></div>
                 <div class="firma-line"></div>
                 <div class="firma-cargo">Coordinador(a) Académico</div>
                 <div class="firma-nombre">&nbsp;</div>
             </td>
             <td class="firma-cell">
-                <div style="height:32px;"></div>
+                <div style="height:75px;"></div>
                 <div class="firma-line"></div>
                 <div class="firma-cargo">Responsable del Sistema</div>
                 <div class="firma-nombre">{{ Auth::user()->nombre_completo }}</div>
@@ -592,7 +603,7 @@
     El estado de <strong>Amonestado</strong> corresponde a superar el
     <strong>{{ $ciclo->porcentaje_amonestacion ?? 20 }}%</strong>.
     Estos criterios se rigen según el <em>Reglamento Académico vigente del CEPRE-UNAMAD</em>.
-    Los datos presentados corresponden al ciclo académico <strong>{{ $ciclo->nombre }}</strong>.
+    Los datos presentados corresponden al ciclo académico <strong>{{ clean_emoji($ciclo->nombre) }}</strong>.
     Este reporte tiene validez oficial únicamente con las firmas correspondientes.
 </div>
 

@@ -1,3 +1,12 @@
+@php
+if (!function_exists('clean_emoji')) {
+    function clean_emoji($texto) {
+        if (!$texto) return '';
+        $clean = preg_replace('/[\x{1F300}-\x{1F6FF}\x{1F900}-\x{1FAFF}\x{2600}-\x{27BF}\x{1F1E0}-\x{1F1FF}\x{2B00}-\x{2BFF}\x{2300}-\x{23FF}\x{2190}-\x{21FF}\x{25A0}-\x{25FF}\x{2000}-\x{3300}\x{FE00}-\x{FE0F}]/u', '', $texto);
+        return trim($clean);
+    }
+}
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 
@@ -313,13 +322,13 @@
                         @if ($filtros['carrera'])
                             <div class="info-item">
                                 <span class="info-label">Carrera:</span>
-                                {{ $filtros['carrera']->nombre }}
+                                {{ clean_emoji($filtros['carrera']->nombre) }}
                             </div>
                         @endif
                         @if ($filtros['turno'])
                             <div class="info-item">
                                 <span class="info-label">Turno:</span>
-                                {{ $filtros['turno']->nombre }}
+                                {{ clean_emoji($filtros['turno']->nombre) }}
                             </div>
                         @endif
                     </div>
@@ -327,7 +336,7 @@
                         <div class="info-row">
                             <div class="info-item" style="width: 100%;">
                                 <span class="info-label">Aula:</span>
-                                {{ $filtros['aula']->codigo }} - {{ $filtros['aula']->nombre }}
+                                {{ clean_emoji($filtros['aula']->codigo) }} - {{ clean_emoji($filtros['aula']->nombre) }}
                             </div>
                         </div>
                     @endif
@@ -403,7 +412,7 @@
                         </td>
                         <td>{{ $item['estudiante']->numero_documento }}</td>
                         <td>{{ $item['inscripcion']->carrera->codigo }}</td>
-                        <td>{{ $item['inscripcion']->turno->nombre }}</td>
+                        <td>{{ clean_emoji($item['inscripcion']->turno->nombre) }}</td>
                         <td>{{ $item['inscripcion']->aula->codigo }}</td>
                         @if ($tipo_reporte !== 'faltas_dia')
                             <td class="{{ $item['hora_entrada'] === 'Sin registro' ? 'sin-registro' : '' }}">
