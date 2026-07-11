@@ -1861,7 +1861,9 @@ class PostulacionController extends Controller
                     'asistencias' => $asistenciasCount,
                     'total_dias' => $diasHabilesTotales,
                     'porcentaje' => $diasHabilesTotales > 0 ? round(($asistenciasCount / $diasHabilesTotales) * 100, 2) : 100,
-                    'limite' => $limiteInhabilitacion
+                    'limite' => $limiteInhabilitacion,
+                    'tipo_inscripcion' => $inscripcion->tipo_inscripcion,
+                    'tipo_inscripcion_label' => $inscripcion->tipo_inscripcion === 'postulante' ? 'Postulante' : 'Reforzamiento'
                 ];
                 $estudiantesInhabilitadosCount++;
             } elseif ($faltas >= $limiteAmonestacion) {
