@@ -184,7 +184,19 @@
         }
 
         .data-table tr.falta-row td {
-            background-color: #fffafb;
+            background-color: #fff8f8;
+        }
+
+        .data-table tr.justificada-row td {
+            background-color: #f4f9ff;
+        }
+
+        .data-table tr.puntual-row td {
+            background-color: #f9fdf7;
+        }
+
+        .data-table tr.tarde-row td {
+            background-color: #fffdf4;
         }
 
         /* BADGES DE ESTADO - DISEÑO PREMIUM */
@@ -385,7 +397,19 @@
                             </thead>
                             <tbody>
                                 @foreach ($mes['registros'] as $registro)
-                                    <tr class="{{ !$registro['asistio'] ? 'falta-row' : '' }}">
+                                    @php
+                                        $rowClass = 'falta-row';
+                                        if ($registro['asistio']) {
+                                            if (isset($registro['justificada']) && $registro['justificada']) {
+                                                $rowClass = 'justificada-row';
+                                            } elseif ($registro['es_tarde']) {
+                                                $rowClass = 'tarde-row';
+                                            } else {
+                                                $rowClass = 'puntual-row';
+                                            }
+                                        }
+                                    @endphp
+                                    <tr class="{{ $rowClass }}">
                                         <td style="text-align: center; font-family: monospace; font-weight: bold; color: #475569;">
                                             {{ $registro['fecha'] }}
                                         </td>
@@ -426,7 +450,7 @@
                                                 @if($registro['es_tarde'])
                                                     <span class="badge-status tarde">Tarde</span>
                                                 @else
-                                                    <span class="badge-status punctual">Puntual</span>
+                                                    <span class="badge-status puntual">Puntual</span>
                                                 @endif
                                             @else
                                                 <span class="badge-status falta">Falta</span>
