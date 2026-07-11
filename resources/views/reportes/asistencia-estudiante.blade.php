@@ -9,7 +9,7 @@
         /* CONFIGURACIÓN PARA DOMPDF Y A4 */
         @page {
             size: A4;
-            margin: 1.2cm 1.4cm 1.8cm 1.4cm;
+            margin: 1.2cm 1.4cm 2.2cm 1.4cm;
         }
 
         * { box-sizing: border-box; }
@@ -277,6 +277,18 @@
 </head>
 
 <body>
+
+    {{-- ══ PIE DE PÁGINA FIJO (debe ir primero en el body para dompdf) ══ --}}
+    <div class="pdf-footer">
+        <table>
+            <tr>
+                <td class="f-left">CEPRE-UNAMAD &nbsp;|&nbsp; Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} &nbsp;|&nbsp; {{ $fecha_generacion }}</td>
+                <td class="f-mid">Sistema de Control de Asistencia Académica</td>
+                <td class="f-right">Pág. <span class="page-num"></span></td>
+            </tr>
+        </table>
+    </div>
+
     <!-- MARCA DE AGUA -->
     <div class="watermark">
         @php
@@ -540,15 +552,7 @@
             </div>
         @endif
 
-        <div class="pdf-footer">
-            <table>
-                <tr>
-                    <td class="f-left">CEPRE-UNAMAD &nbsp;|&nbsp; Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} &nbsp;|&nbsp; {{ $fecha_generacion }}</td>
-                    <td class="f-mid">Sistema de Control de Asistencia Académica</td>
-                    <td class="f-right">Pág. <span class="page-num"></span></td>
-                </tr>
-            </table>
-        </div>
+
     </div>
 </body>
 

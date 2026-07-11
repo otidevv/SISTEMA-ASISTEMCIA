@@ -87,11 +87,11 @@
                             de faltas acumuladas
                         </span>
 
-                        {{-- ─ Barra proporcional ─ --}}
+                        {{-- ─ Barra proporcional (faltas primero) ─ --}}
                         <table style="width:100%; border-collapse:collapse; border-radius:3px; overflow:hidden; margin-bottom:4px;">
                             <tr>
-                                <td style="width:{{ $wAsist }}%; background-color:{{ $colorAsist }}; height:11px; padding:0;"></td>
                                 <td style="width:{{ $wFalta }}%; background-color:{{ $colorFalta }}; height:11px; padding:0;"></td>
+                                <td style="width:{{ $wAsist }}%; background-color:{{ $colorAsist }}; height:11px; padding:0;"></td>
                             </tr>
                         </table>
 
@@ -99,12 +99,12 @@
                         <table style="width:100%; border-collapse:collapse;">
                             <tr>
                                 <td style="text-align:left; padding:0 2px;">
-                                    <span style="display:inline-block; width:7px; height:7px; background-color:{{ $colorAsist }}; border-radius:1px; vertical-align:middle;"></span>
-                                    <span style="font-size:6.5px; font-weight:bold; color:{{ $colorTexto }}; vertical-align:middle;"> {{ $pctAsist }}% Asist.</span>
-                                </td>
-                                <td style="text-align:right; padding:0 2px;">
                                     <span style="display:inline-block; width:7px; height:7px; background-color:{{ $colorFalta }}; border-radius:1px; vertical-align:middle;"></span>
                                     <span style="font-size:6.5px; font-weight:bold; color:{{ $colorTexto }}; vertical-align:middle;"> {{ $pctFalta }}% Faltas</span>
+                                </td>
+                                <td style="text-align:right; padding:0 2px;">
+                                    <span style="display:inline-block; width:7px; height:7px; background-color:{{ $colorAsist }}; border-radius:1px; vertical-align:middle;"></span>
+                                    <span style="font-size:6.5px; font-weight:bold; color:{{ $colorTexto }}; vertical-align:middle;"> {{ $pctAsist }}% Asist.</span>
                                 </td>
                             </tr>
                         </table>
