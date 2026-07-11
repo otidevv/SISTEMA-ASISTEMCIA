@@ -376,7 +376,7 @@ if (!function_exists('clean_emoji')) {
      II. DATOS DEL REPORTE
 ══════════════════════════════════════ --}}
 <div class="info-box">
-    <div class="info-box-header">&#9656; Datos del Reporte</div>
+    <div class="info-box-header">&raquo; Datos del Reporte</div>
     <table>
         <tr>
             <td class="info-lbl">Ciclo Académico:</td>
@@ -386,7 +386,7 @@ if (!function_exists('clean_emoji')) {
         </tr>
         <tr>
             <td class="info-lbl">Periodo de Cálculo:</td>
-            <td class="info-val"><span class="periodo-badge">&#9658; {{ clean_emoji($periodo_label) }}</span></td>
+            <td class="info-val"><span class="periodo-badge">&raquo; {{ clean_emoji($periodo_label) }}</span></td>
             <td class="info-lbl">Modalidad Filtrada:</td>
             <td class="info-val bold">{{ clean_emoji($modalidad_label) }}</td>
         </tr>
@@ -516,7 +516,7 @@ if (!function_exists('clean_emoji')) {
                 {{-- Cabecera de carrera --}}
                 <tr class="career-hdr">
                     <td colspan="9">
-                        &#9654; {{ strtoupper(clean_emoji($carreraNom)) }}
+                        &raquo; {{ strtoupper(clean_emoji($carreraNom)) }}
                         &nbsp;&mdash;&nbsp;
                         {{ $carreraItems->count() }} estudiante{{ $carreraItems->count() > 1 ? 's' : '' }} inhabilitado{{ $carreraItems->count() > 1 ? 's' : '' }}
                         &nbsp;|&nbsp; <span class="badge badge-p">{{ $pc }}</span>

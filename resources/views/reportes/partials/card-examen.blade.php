@@ -30,7 +30,7 @@
         <tr>
             <td style="padding: 10px 14px; vertical-align: middle;">
                 <span style="font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
-                    &#9656; {{ $titulo }}
+                    &raquo; {{ $titulo }}
                     @if(\Carbon\Carbon::hasFormat($fecha, 'Y-m-d H:i:s') || \Carbon\Carbon::hasFormat($fecha, 'Y-m-d'))
                         &mdash; FECHA: {{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}
                     @else
