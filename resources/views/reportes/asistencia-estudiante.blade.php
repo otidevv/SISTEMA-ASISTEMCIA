@@ -218,6 +218,12 @@
             border-color: #f5a3d3;
         }
 
+        .badge-status.justificada {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border-color: #90caf9;
+        }
+
         /* Textos de horas */
         .time-txt {
             font-family: monospace;
@@ -414,7 +420,9 @@
                                         
                                         {{-- Estado Badge --}}
                                         <td style="text-align: center;">
-                                            @if ($registro['asistio'])
+                                            @if (isset($registro['justificada']) && $registro['justificada'])
+                                                <span class="badge-status justificada">Justificada</span>
+                                            @elseif ($registro['asistio'])
                                                 @if($registro['es_tarde'])
                                                     <span class="badge-status tarde">Tarde</span>
                                                 @else

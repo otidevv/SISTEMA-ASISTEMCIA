@@ -756,6 +756,9 @@ class AsistenciaHelper
             ->orderBy('fecha_registro')
             ->get();
 
+        // Obtener fechas justificadas de la mesa de partes
+        $justSet = array_flip(self::obtenerFechasJustificadas($numeroDocumento, $fechaInicio, $fechaFin));
+
         // Organizar registros por fecha
         $registrosPorFecha = [];
         foreach ($registros as $registro) {
@@ -865,15 +868,40 @@ class AsistenciaHelper
                         }
                     }
 
-                    $datosDelDia['hora_entrada'] = $entrada ?: 'Sin registro';
-                    $datosDelDia['hora_salida'] = ($salida && $salida !== $entrada) ? $salida : '-';
+                    // Si el registro es una regularización manual y la hora es 00:00, mostramos "-" en vez de "00:00"
+                    $esRegularizado = false;
+                    if (isset($registrosPorFecha[$fechaStr])) {
+                        foreach ($registrosPorFecha[$fechaStr] as $reg) {
+                            if ($reg->sn_dispositivo === 'REGULARIZACION' || $reg->tipo_verificacion === 4) {
+                                $esRegularizado = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($esRegularizado && ($entrada === '00:00' || !$entrada)) {
+                        $datosDelDia['hora_entrada'] = '-';
+                        $datosDelDia['hora_salida'] = '-';
+                    } else {
+                        $datosDelDia['hora_entrada'] = $entrada ?: 'Sin registro';
+                        $datosDelDia['hora_salida'] = ($salida && $salida !== $entrada) ? $salida : '-';
+                    }
                     $datosDelDia['es_tarde'] = $esTarde;
                 } else {
-                    // NO ASISTIÓ
-                    $datosDelDia['hora_entrada'] = 'FALTA';
-                    $datosDelDia['hora_salida'] = 'FALTA';
-                    $datosDelDia['es_tarde'] = false;
-                    $detallesPorMes[$mes]['dias_falta']++;
+                    // NO ASISTIÓ - VERIFICAR SI ESTÁ JUSTIFICADA POR MESA DE PARTES
+                    if (isset($justSet[$fechaStr])) {
+                        $datosDelDia['asistio'] = true;
+                        $datosDelDia['justificada'] = true;
+                        $datosDelDia['hora_entrada'] = '-';
+                        $datosDelDia['hora_salida'] = '-';
+                        $datosDelDia['es_tarde'] = false;
+                        $detallesPorMes[$mes]['dias_asistidos']++;
+                    } else {
+                        $datosDelDia['hora_entrada'] = 'FALTA';
+                        $datosDelDia['hora_salida'] = 'FALTA';
+                        $datosDelDia['es_tarde'] = false;
+                        $detallesPorMes[$mes]['dias_falta']++;
+                    }
                 }
 
                 // Agregar el día al mes correspondiente
