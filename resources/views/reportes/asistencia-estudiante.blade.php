@@ -469,6 +469,48 @@
                 @endforeach
             @endif
 
+            <!-- ══ NOTA REGLAMENTARIA + LEYENDA ══ -->
+            <div style="margin-top: 18px; border: 1.5px solid #000; border-left: 5px solid #2b5a6f; padding: 9px 12px; font-size: 7.5px; color: #000; background: #f8f8f8; page-break-inside: avoid;">
+                <div style="font-weight: bold; text-transform: uppercase; font-size: 8px; margin-bottom: 5px; letter-spacing: 0.3px; border-bottom: 1px solid #ccc; padding-bottom: 3px;">NOTA REGLAMENTARIA &mdash; BASE LEGAL</div>
+                <p style="margin: 0 0 5px 0; line-height: 1.5;">
+                    Según el <strong>Reglamento Académico del CEPRE-UNAMAD</strong>, el estudiante que acumule más del
+                    <strong>30% de inasistencias</strong> sobre el total de clases dictadas en el periodo de evaluación
+                    quedará automáticamente <strong>INHABILITADO</strong> para rendir el examen correspondiente, sin
+                    derecho a recuperación por esa evaluación.
+                </p>
+                <p style="margin: 0 0 6px 0; line-height: 1.5;">
+                    Las inasistencias <strong>JUSTIFICADAS</strong> mediante solicitud aprobada por Mesa de Partes
+                    no se contabilizan como faltas para efectos del cómputo del 30%. Las asistencias
+                    <strong>REGULARIZADAS</strong> corresponden a registros corregidos manualmente por el área de
+                    Control Académico ante omisión del marcado biométrico debidamente sustentada.
+                </p>
+                <!-- Leyenda de estados -->
+                <table style="width: 100%; border-collapse: collapse; margin-top: 4px;">
+                    <tr>
+                        <td style="width: 20%; padding: 2px 5px;">
+                            <span style="display: inline-block; background-color: #43a047; color: #fff; padding: 1px 7px; border-radius: 2px; font-size: 7px; font-weight: bold; text-transform: uppercase;">PUNTUAL</span>
+                            <span style="font-size: 7px; color: #333; margin-left: 3px;">Asistió a tiempo</span>
+                        </td>
+                        <td style="width: 20%; padding: 2px 5px;">
+                            <span style="display: inline-block; background-color: #fb8c00; color: #fff; padding: 1px 7px; border-radius: 2px; font-size: 7px; font-weight: bold; text-transform: uppercase;">TARDE</span>
+                            <span style="font-size: 7px; color: #333; margin-left: 3px;">Ingresó con retraso</span>
+                        </td>
+                        <td style="width: 20%; padding: 2px 5px;">
+                            <span style="display: inline-block; background-color: #e53935; color: #fff; padding: 1px 7px; border-radius: 2px; font-size: 7px; font-weight: bold; text-transform: uppercase;">FALTA</span>
+                            <span style="font-size: 7px; color: #333; margin-left: 3px;">No asistió</span>
+                        </td>
+                        <td style="width: 20%; padding: 2px 5px;">
+                            <span style="display: inline-block; background-color: #1e88e5; color: #fff; padding: 1px 7px; border-radius: 2px; font-size: 7px; font-weight: bold; text-transform: uppercase;">JUSTIF.</span>
+                            <span style="font-size: 7px; color: #333; margin-left: 3px;">Falta justificada</span>
+                        </td>
+                        <td style="width: 20%; padding: 2px 5px;">
+                            <span style="display: inline-block; background-color: #7b1fa2; color: #fff; padding: 1px 7px; border-radius: 2px; font-size: 7px; font-weight: bold; text-transform: uppercase;">REGULAR.</span>
+                            <span style="font-size: 7px; color: #333; margin-left: 3px;">Regularizado admin.</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
             <!-- SECCIÓN DE FIRMAS AL FINAL -->
             <div class="sig-container">
                 <table style="width: 100%; border-collapse: collapse;">
