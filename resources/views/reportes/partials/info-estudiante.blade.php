@@ -8,51 +8,60 @@
     };
 @endphp
 
-<table class="info-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #ffffff; border: 1.5px solid #000; border-radius: 4px; overflow: hidden;">
-    <tr>
-        <td style="width: 110px; padding: 12px; vertical-align: middle; background-color: #f8fafc; border-right: 1.5px solid #000; text-align: center;">
-            @php
-                $photoPath = public_path('storage/' . ($estudiante->foto_perfil ?? 'default-avatar.png'));
-                if (!file_exists($photoPath) || !($estudiante->foto_perfil)) {
-                    $photoData = 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('assets/images/users/user-placeholder.png')));
-                } else {
-                    $photoData = 'data:image/' . pathinfo($photoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($photoPath));
-                }
-            @endphp
-            <img src="{{ $photoData }}" alt="Foto Estudiante" style="width: 90px; height: 110px; object-fit: cover; border: 1.5px solid #000; border-radius: 3px; background-color: white;">
-        </td>
-        <td style="padding: 12px 16px; vertical-align: top;">
-            <h3 style="font-size: 11px; color: #2b5a6f; margin: 0 0 10px 0; border-bottom: 1.5px solid #2b5a6f; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
-                Información General del Estudiante
-            </h3>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="width: 50%; padding-bottom: 6px;">
-                        <span style="font-size: 8px; font-weight: bold; color: #555; display: block; text-transform: uppercase;">Código de Inscripción:</span>
-                        <span style="font-size: 11px; font-weight: bold; color: #000;">{{ $inscripcion->codigo_inscripcion }}</span>
-                    </td>
-                    <td style="width: 50%; padding-bottom: 6px;">
-                        <span style="font-size: 8px; font-weight: bold; color: #555; display: block; text-transform: uppercase;">N° Documento (DNI):</span>
-                        <span style="font-size: 11px; font-weight: bold; color: #000; font-family: monospace;">{{ $estudiante->numero_documento }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="padding-bottom: 8px; border-top: 1px solid #eee; padding-top: 6px;">
-                        <span style="font-size: 8px; font-weight: bold; color: #555; display: block; text-transform: uppercase;">Apellidos y Nombres:</span>
-                        <span style="font-size: 13px; font-weight: bold; color: #2b5a6f; text-transform: uppercase;">{{ $estudiante->nombre_completo }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-top: 4px; border-top: 1px solid #eee;">
-                        <span style="font-size: 8px; font-weight: bold; color: #555; display: block; text-transform: uppercase;">Carrera Profesional:</span>
-                        <span style="font-size: 10px; font-weight: bold; color: #000;">{{ $limpiarTexto($carrera->nombre) }}</span>
-                    </td>
-                    <td style="padding-top: 4px; border-top: 1px solid #eee;">
-                        <span style="font-size: 8px; font-weight: bold; color: #555; display: block; text-transform: uppercase;">Turno / Aula Asignada:</span>
-                        <span style="font-size: 10px; font-weight: bold; color: #000;">{{ $limpiarTexto($turno->nombre) }} &mdash; {{ $limpiarTexto($aula->codigo) }}</span>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<div style="border: 1px solid #d1dde4; border-left: 5px solid #2b5a6f; border-radius: 8px; margin-bottom: 20px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+    <table style="width: 100%; border-collapse: collapse; margin: 0;">
+        <tr>
+            {{-- Foto del Estudiante con Fondo Estilizado --}}
+            <td style="width: 115px; padding: 15px; vertical-align: middle; background: #f8fafc; border-right: 1px solid #e2e8f0; text-align: center;">
+                @php
+                    $photoPath = public_path('storage/' . ($estudiante->foto_perfil ?? 'default-avatar.png'));
+                    if (!file_exists($photoPath) || !($estudiante->foto_perfil)) {
+                        $photoData = 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('assets/images/users/user-placeholder.png')));
+                    } else {
+                        $photoData = 'data:image/' . pathinfo($photoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode(file_get_contents($photoPath));
+                    }
+                @endphp
+                <div style="display: inline-block; padding: 3px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <img src="{{ $photoData }}" alt="Foto Estudiante" style="width: 85px; height: 105px; object-fit: cover; border-radius: 4px; display: block;">
+                </div>
+            </td>
+            
+            {{-- Información Detallada con Diseño Dashboard --}}
+            <td style="padding: 15px 20px; vertical-align: top;">
+                {{-- Badge de Categoría --}}
+                <div style="margin-bottom: 8px; display: block;">
+                    <span style="background-color: #00aeef; color: white; padding: 2px 8px; border-radius: 3px; font-size: 7px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Estudiante Matriculado</span>
+                </div>
+                
+                {{-- Nombre Completo --}}
+                <div style="font-size: 14px; font-weight: bold; color: #1e293b; text-transform: uppercase; margin-bottom: 12px; letter-spacing: -0.3px;">
+                    {{ $estudiante->nombre_completo }}
+                </div>
+                
+                {{-- Cuadrícula de Datos --}}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 50%; padding-bottom: 8px; vertical-align: top;">
+                            <span style="font-size: 7.5px; font-weight: 800; color: #64748b; display: block; text-transform: uppercase; letter-spacing: 0.3px;">Código Institucional</span>
+                            <span style="font-size: 11px; font-weight: bold; color: #2b5a6f;">{{ $inscripcion->codigo_inscripcion }}</span>
+                        </td>
+                        <td style="width: 50%; padding-bottom: 8px; vertical-align: top;">
+                            <span style="font-size: 7.5px; font-weight: 800; color: #64748b; display: block; text-transform: uppercase; letter-spacing: 0.3px;">Documento de Identidad</span>
+                            <span style="font-size: 11px; font-weight: bold; color: #2b5a6f; font-family: monospace;">{{ $estudiante->numero_documento }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-top: 4px; border-top: 1px solid #f1f5f9; vertical-align: top;">
+                            <span style="font-size: 7.5px; font-weight: 800; color: #64748b; display: block; text-transform: uppercase; letter-spacing: 0.3px;">Carrera Profesional</span>
+                            <span style="font-size: 9.5px; font-weight: bold; color: #0f172a;">{{ $limpiarTexto($carrera->nombre) }}</span>
+                        </td>
+                        <td style="padding-top: 4px; border-top: 1px solid #f1f5f9; vertical-align: top;">
+                            <span style="font-size: 7.5px; font-weight: 800; color: #64748b; display: block; text-transform: uppercase; letter-spacing: 0.3px;">Aula &amp; Turno</span>
+                            <span style="font-size: 9.5px; font-weight: bold; color: #0f172a;">{{ $limpiarTexto($turno->nombre) }} &mdash; {{ $limpiarTexto($aula->codigo) }}</span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>

@@ -41,20 +41,18 @@
             position: relative;
         }
 
-        /* CABECERA INSTITUCIONAL PREMIUM */
+        /* CABECERA INSTITUCIONAL PREMIUM (SÓLIDA COMPATIBLE CON DOMPDF) */
         .hdr-outer {
-            border: 1px solid #d1dde4;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            border: 1.5px solid #2b5a6f;
+            border-radius: 8px;
+            margin-bottom: 18px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(43,90,111,0.15);
         }
 
         .hdr-top {
-            background: #2b5a6f; /* Color oficial */
-            background: linear-gradient(135deg, #2b5a6f 0%, #1a3d52 60%, #0d2838 100%);
-            padding: 12px 18px;
-            color: white;
+            background-color: #2b5a6f !important;
+            padding: 14px 18px;
+            color: #ffffff !important;
         }
 
         .hdr-top table {
@@ -63,44 +61,46 @@
         }
 
         .hdr-logo {
-            width: 60px;
+            width: 55px;
             vertical-align: middle;
         }
 
         .hdr-logo img {
-            width: 50px;
+            width: 45px;
             height: auto;
         }
 
         .hdr-title-cell {
             text-align: center;
             vertical-align: middle;
+            color: #ffffff !important;
         }
 
         .hdr-title-cell h1 {
-            margin: 0 0 3px;
-            font-size: 14px;
-            font-weight: 800;
+            margin: 0 0 4px;
+            font-size: 13.5px;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #ffffff;
+            letter-spacing: 0.8px;
+            color: #ffffff !important;
         }
 
         .hdr-title-cell .sub {
             font-size: 9px;
-            color: rgba(255, 255, 255, 0.85);
+            color: #e2e8f0 !important;
             font-weight: bold;
             letter-spacing: 0.3px;
         }
 
         .hdr-stripe {
             height: 4px;
+            background: #000;
             background: linear-gradient(to right, #cc0000 0% 33%, #00aeef 33% 66%, #8cc63f 66% 100%);
         }
 
         .hdr-sub-row {
             background-color: #f8fafc;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #cbd5e1;
             text-align: center;
             padding: 5px;
             font-size: 8.5px;
@@ -112,8 +112,8 @@
 
         /* TÍTULOS DE SECCIÓN */
         .sec-title {
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 10.5px;
+            font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #2b5a6f;
@@ -124,28 +124,27 @@
 
         /* TABLA DE DETALLE MENSUAL REDISEÑADA */
         .month-card {
-            border: 1px solid #d1dde4;
+            border: 1px solid #cbd5e1;
             border-radius: 8px;
             overflow: hidden;
             margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             page-break-inside: avoid;
         }
 
         .month-hdr-table {
             width: 100%;
-            background: #2b5a6f;
-            background: linear-gradient(90deg, #2b5a6f 0%, #1a3d52 100%);
-            color: white;
+            background-color: #2b5a6f !important;
+            color: #ffffff !important;
             border-collapse: collapse;
         }
 
         .month-hdr-table td {
             padding: 6px 12px;
-            font-weight: 800;
-            font-size: 9px;
+            font-weight: bold;
+            font-size: 9.5px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            color: #ffffff !important;
         }
 
         .data-table {
@@ -159,8 +158,8 @@
             padding: 7px 10px;
             font-size: 8px;
             text-transform: uppercase;
-            font-weight: 800;
-            border-bottom: 2px solid #cbd5e1;
+            font-weight: bold;
+            border-bottom: 1.5px solid #cbd5e1;
             border-top: none;
             border-left: none;
             border-right: none;
@@ -191,31 +190,32 @@
         /* BADGES DE ESTADO - DISEÑO PREMIUM */
         .badge-status {
             display: inline-block;
-            padding: 3px 8px;
+            padding: 2.5px 7px;
             font-size: 7.5px;
             font-weight: bold;
-            border-radius: 4px;
+            border-radius: 3px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
             text-align: center;
+            border: 1px solid #000;
         }
 
         .badge-status.puntual {
             background-color: #eef7e2;
             color: #5a8a1f;
-            border: 1px solid #c3dfa1;
+            border-color: #c3dfa1;
         }
 
         .badge-status.tarde {
             background-color: #fff8e1;
             color: #c07800;
-            border: 1px solid #ffe082;
+            border-color: #ffe082;
         }
 
         .badge-status.falta {
             background-color: #fce4f0;
             color: #cc0000;
-            border: 1px solid #f5a3d3;
+            border-color: #f5a3d3;
         }
 
         /* Textos de horas */
@@ -295,7 +295,7 @@
                         </td>
                         <td class="hdr-title-cell">
                             <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
-                            <div class="sub">Centro Pre-Universitario (CEPRE) — Reporte de Asistencia</div>
+                            <div class="sub">Centro Pre-Universitario (CEPRE) &mdash; Reporte de Asistencia</div>
                         </td>
                         <td class="hdr-logo" style="text-align: right;">
                             @php
