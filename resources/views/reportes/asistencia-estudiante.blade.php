@@ -9,20 +9,22 @@
         /* CONFIGURACIÓN PARA DOMPDF Y A4 */
         @page {
             size: A4;
-            margin: 1.3cm 1.5cm;
+            margin: 1.2cm 1.4cm 1.8cm 1.4cm;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 10px;
-            line-height: 1.45;
-            color: #000000;
+            font-size: 9.5px;
+            line-height: 1.4;
+            color: #1e293b;
             background-color: #ffffff;
             margin: 0;
             padding: 0;
         }
 
-        /* MARCA DE AGUA INSTITUCIONAL (Sutil) */
+        /* MARCA DE AGUA INSTITUCIONAL */
         .watermark {
             position: fixed;
             top: 50%;
@@ -30,7 +32,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
             opacity: 0.035;
             z-index: -1000;
-            width: 450px;
+            width: 460px;
             text-align: center;
         }
 
@@ -39,145 +41,229 @@
             position: relative;
         }
 
-        /* TABLAS DE ESTRUCTURA */
-        .table-layout {
-            width: 100%;
-            border-collapse: collapse;
-            border: none;
-        }
-
-        /* ENCABEZADO INSTITUCIONAL */
-        .inst-header-outer {
-            border: 2px solid #000;
-            border-radius: 4px;
-            overflow: hidden;
+        /* CABECERA INSTITUCIONAL PREMIUM */
+        .hdr-outer {
+            border: 1px solid #d1dde4;
+            border-radius: 10px;
             margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(43,90,111,0.15);
         }
 
-        .inst-header-top {
-            background-color: #2b5a6f;
-            padding: 10px;
+        .hdr-top {
+            background: #2b5a6f; /* Color oficial */
+            background: linear-gradient(135deg, #2b5a6f 0%, #1a3d52 60%, #0d2838 100%);
+            padding: 12px 18px;
             color: white;
         }
 
-        .inst-header-stripe {
+        .hdr-top table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .hdr-logo {
+            width: 60px;
+            vertical-align: middle;
+        }
+
+        .hdr-logo img {
+            width: 50px;
+            height: auto;
+        }
+
+        .hdr-title-cell {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .hdr-title-cell h1 {
+            margin: 0 0 3px;
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+
+        .hdr-title-cell .sub {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .hdr-stripe {
             height: 4px;
-            background: #000;
             background: linear-gradient(to right, #cc0000 0% 33%, #00aeef 33% 66%, #8cc63f 66% 100%);
         }
 
-        .inst-header-bottom {
-            background-color: #f1f5f9;
+        .hdr-sub-row {
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
             text-align: center;
-            padding: 4px;
+            padding: 5px;
             font-size: 8.5px;
             font-weight: bold;
-            border-top: 1px solid #aaa;
-            color: #000;
+            color: #2b5a6f;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         /* TÍTULOS DE SECCIÓN */
-        .section-title {
-            font-size: 10px;
-            font-weight: bold;
-            color: #000;
-            margin: 15px 0 8px 0;
-            padding: 3px 0;
-            border-top: 2.5px solid #000;
-            border-bottom: 1px solid #888;
+        .sec-title {
+            font-size: 11px;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            color: #2b5a6f;
+            border-bottom: 2px solid #00aeef;
+            padding-bottom: 4px;
+            margin: 18px 0 10px 0;
         }
 
-        /* TABLA DE DETALLE MENSUAL */
-        .month-header-table {
+        /* TABLA DE DETALLE MENSUAL REDISEÑADA */
+        .month-card {
+            border: 1px solid #d1dde4;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            page-break-inside: avoid;
+        }
+
+        .month-hdr-table {
             width: 100%;
-            background-color: #2b5a6f;
+            background: #2b5a6f;
+            background: linear-gradient(90deg, #2b5a6f 0%, #1a3d52 100%);
             color: white;
             border-collapse: collapse;
-            margin-top: 12px;
-            border: 1px solid #000;
         }
 
-        .month-header-table td {
-            padding: 5px 8px;
-            font-weight: bold;
+        .month-hdr-table td {
+            padding: 6px 12px;
+            font-weight: 800;
             font-size: 9px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
-            border: 1.5px solid #000;
-            border-top: none;
         }
 
         .data-table th {
-            background-color: #f1f5f9;
-            color: #000;
-            padding: 4px 6px;
-            font-size: 7.5px;
+            background-color: #f8fafc;
+            color: #2b5a6f;
+            padding: 7px 10px;
+            font-size: 8px;
             text-transform: uppercase;
-            font-weight: bold;
-            border: 1px solid #888;
-            text-align: center;
+            font-weight: 800;
+            border-bottom: 2px solid #cbd5e1;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            letter-spacing: 0.3px;
         }
 
         .data-table td {
-            padding: 4px 6px;
-            border: 1px solid #aaa;
-            font-size: 8px;
+            padding: 6px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 8.5px;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Sombreado de fila alterna */
+        .data-table tr:nth-child(even) td {
+            background-color: #fcfdfe;
+        }
+
+        .data-table tr.falta-row td {
+            background-color: #fffafb;
+        }
+
+        /* BADGES DE ESTADO - DISEÑO PREMIUM */
+        .badge-status {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 7.5px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
             text-align: center;
         }
 
-        .falta-row td {
-            background-color: #f5f5f5 !important;
+        .badge-status.puntual {
+            background-color: #eef7e2;
+            color: #5a8a1f;
+            border: 1px solid #c3dfa1;
         }
 
-        .text-success { color: #5a8a1f; font-weight: bold; }
-        .text-danger { color: #cc0000; font-weight: bold; }
-        .text-muted { color: #555; font-style: italic; }
+        .badge-status.tarde {
+            background-color: #fff8e1;
+            color: #c07800;
+            border: 1px solid #ffe082;
+        }
+
+        .badge-status.falta {
+            background-color: #fce4f0;
+            color: #cc0000;
+            border: 1px solid #f5a3d3;
+        }
+
+        /* Textos de horas */
+        .time-txt {
+            font-family: monospace;
+            font-size: 9px;
+            font-weight: bold;
+        }
+        .time-txt.danger {
+            color: #cc0000;
+        }
+        .time-txt.warning {
+            color: #c07800;
+        }
 
         /* SECCIÓN DE FIRMAS */
-        .signature-container {
-            margin-top: 35px;
+        .sig-container {
+            margin-top: 30px;
+            page-break-inside: avoid;
         }
 
-        .signature-box {
-            width: 200px;
+        .sig-box {
+            width: 180px;
             text-align: center;
-            border-top: 1.5px solid #000;
-            padding-top: 4px;
+            border-top: 2px solid #2b5a6f;
+            padding-top: 5px;
             margin: 0 auto;
         }
 
         /* FOOTER */
-        .footer {
+        .pdf-footer {
             margin-top: 20px;
-            padding-top: 5px;
-            border-top: 2px solid #000;
+            padding-top: 6px;
+            border-top: 2px solid #00aeef;
             text-align: center;
             font-size: 7.5px;
-            color: #000;
+            color: #475569;
             line-height: 1.4;
         }
 
         .page-break {
             page-break-after: always;
         }
-
-        .no-break {
-            page-break-inside: avoid;
-        }
     </style>
 </head>
 
 <body>
-    <!-- ELEMENTOS DECORATIVOS FIJOS -->
+    <!-- MARCA DE AGUA -->
     <div class="watermark">
         @php
             $logoWPath = public_path('assets/images/logo unamad constancia.png');
@@ -191,12 +277,12 @@
     </div>
 
     <div class="container">
-        <!-- ENCABEZADO INSTITUCIONAL -->
-        <div class="inst-header-outer">
-            <div class="inst-header-top">
-                <table class="table-layout">
+        <!-- CABECERA INSTITUCIONAL PREMIUM -->
+        <div class="hdr-outer">
+            <div class="hdr-top">
+                <table>
                     <tr>
-                        <td style="width: 75px; vertical-align: middle; text-align: left;">
+                        <td class="hdr-logo">
                             @php
                                 $logoUnamad = public_path('assets/images/logo unamad constancia.png');
                                 $logoUnamadData = file_exists($logoUnamad) 
@@ -204,18 +290,14 @@
                                     : null;
                             @endphp
                             @if($logoUnamadData)
-                                <img src="{{ $logoUnamadData }}" alt="Logo UNAMAD" style="width: 58px; height: auto;">
+                                <img src="{{ $logoUnamadData }}" alt="Logo UNAMAD">
                             @endif
                         </td>
-                        <td style="text-align: center; vertical-align: middle;">
-                            <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase; color: #ffffff; letter-spacing: 0.5px; margin-bottom: 2px;">
-                                Universidad Nacional Amazónica de Madre de Dios
-                            </div>
-                            <div style="font-size: 9.5pt; font-weight: bold; color: #e0e0e0; font-style: italic;">
-                                "Centro Pre-Universitario (CEPRE)"
-                            </div>
+                        <td class="hdr-title-cell">
+                            <h1>Universidad Nacional Amazónica de Madre de Dios</h1>
+                            <div class="sub">Centro Pre-Universitario (CEPRE) — Reporte de Asistencia</div>
                         </td>
-                        <td style="width: 75px; vertical-align: middle; text-align: right;">
+                        <td class="hdr-logo" style="text-align: right;">
                             @php
                                 $logoCepre = public_path('assets/images/logo cepre costancia.png');
                                 $logoCepreData = file_exists($logoCepre) 
@@ -223,15 +305,15 @@
                                     : null;
                             @endphp
                             @if($logoCepreData)
-                                <img src="{{ $logoCepreData }}" alt="Logo CEPRE" style="width: 58px; height: auto;">
+                                <img src="{{ $logoCepreData }}" alt="Logo CEPRE">
                             @endif
                         </td>
                     </tr>
                 </table>
             </div>
-            <div class="inst-header-stripe"></div>
-            <div class="inst-header-bottom">
-                Reporte de Asistencia de Estudiante &mdash; Ciclo: {{ $ciclo->nombre }}
+            <div class="hdr-stripe"></div>
+            <div class="hdr-sub-row">
+                Ciclo Académico: {{ $ciclo->nombre }} &nbsp;|&nbsp; Documento Oficial Individual
             </div>
         </div>
 
@@ -240,7 +322,7 @@
 
         @if (isset($info_asistencia) && !empty($info_asistencia))
 
-            <div class="section-title">Resumen de Seguimiento Académico</div>
+            <div class="sec-title">Resumen de Seguimiento Académico</div>
 
             <!-- PRIMER EXAMEN -->
             @if (isset($info_asistencia['primer_examen']))
@@ -273,59 +355,73 @@
             @if (isset($detalle_asistencias) && count($detalle_asistencias) > 0)
                 <div class="page-break"></div>
 
-                <div class="section-title">Detalle Mensual de Asistencias</div>
+                <div class="sec-title">Detalle Mensual de Asistencias</div>
 
                 @foreach ($detalle_asistencias as $mesKey => $mes)
-                    <div class="no-break" style="margin-bottom: 12px;">
-                        <table class="month-header-table">
+                    <div class="month-card">
+                        <table class="month-hdr-table">
                             <tr>
-                                <td style="padding: 4px 8px;">{{ strtoupper($mes['mes']) }} {{ $mes['anio'] }}</td>
-                                <td style="text-align: right; padding: 4px 8px; font-size: 8.5px; font-family: monospace;">
-                                    ASISTIDOS: {{ $mes['dias_asistidos'] }} | FALTAS: {{ $mes['dias_falta'] }}
+                                <td style="text-align: left;">{{ strtoupper($mes['mes']) }} {{ $mes['anio'] }}</td>
+                                <td style="text-align: right; font-size: 8px; font-family: monospace; opacity: 0.9;">
+                                    ASISTENCIAS: {{ $mes['dias_asistidos'] }} &nbsp;|&nbsp; FALTAS: {{ $mes['dias_falta'] }}
                                 </td>
                             </tr>
                         </table>
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 18%;">Fecha</th>
-                                    <th style="width: 18%;">Día</th>
-                                    <th style="width: 18%;">Entrada</th>
-                                    <th style="width: 18%;">Salida</th>
-                                    <th style="width: 28%;">Estado del Registro</th>
+                                    <th style="width: 15%; text-align: center;">Fecha</th>
+                                    <th style="width: 15%; text-align: center;">Día</th>
+                                    <th style="width: 20%; text-align: center;">Hora Entrada</th>
+                                    <th style="width: 20%; text-align: center;">Hora Salida</th>
+                                    <th style="width: 30%; text-align: center;">Estado del Registro</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($mes['registros'] as $registro)
                                     <tr class="{{ !$registro['asistio'] ? 'falta-row' : '' }}">
-                                        <td style="font-family: monospace;">{{ $registro['fecha'] }}</td>
-                                        <td>{{ $registro['dia_semana'] }}</td>
+                                        <td style="text-align: center; font-family: monospace; font-weight: bold; color: #475569;">
+                                            {{ $registro['fecha'] }}
+                                        </td>
+                                        <td style="text-align: center; font-weight: 600;">
+                                            {{ $registro['dia_semana'] }}
+                                        </td>
                                         
-                                        {{-- Lógica de visualización de Hora de Entrada --}}
-                                        <td class="{{ 
-                                            $registro['hora_entrada'] == 'Sin registro' ? 'text-muted' : 
-                                            ($registro['hora_entrada'] == 'FALTA' ? 'text-danger' : 
-                                            ($registro['es_tarde'] ? 'text-danger fw-bold' : '')) 
-                                        }}">
-                                            {{ $registro['hora_entrada'] }}
-                                            @if($registro['es_tarde'])
-                                                <span style="font-size: 7px; display: block; color: #cc0000; font-weight: bold;">(TARDE)</span>
+                                        {{-- Entrada --}}
+                                        <td style="text-align: center;">
+                                            @if($registro['hora_entrada'] == 'Sin registro' || $registro['hora_entrada'] == 'FALTA')
+                                                <span class="time-txt danger">&mdash;</span>
+                                            @else
+                                                <span class="time-txt {{ $registro['es_tarde'] ? 'warning' : '' }}">
+                                                    {{ $registro['hora_entrada'] }}
+                                                </span>
+                                                @if($registro['es_tarde'])
+                                                    <span style="font-size: 6.5px; display: block; color: #c07800; font-weight: bold; margin-top: 1px;">(TARDE)</span>
+                                                @endif
                                             @endif
                                         </td>
 
-                                        <td class="{{ $registro['hora_salida'] == 'FALTA' ? 'text-danger' : '' }}">
-                                            {{ $registro['hora_salida'] }}
+                                        {{-- Salida --}}
+                                        <td style="text-align: center;">
+                                            @if($registro['hora_salida'] == 'Sin registro' || $registro['hora_salida'] == 'FALTA')
+                                                <span class="time-txt danger">&mdash;</span>
+                                            @else
+                                                <span class="time-txt">
+                                                    {{ $registro['hora_salida'] }}
+                                                </span>
+                                            @endif
                                         </td>
                                         
-                                        <td>
+                                        {{-- Estado Badge --}}
+                                        <td style="text-align: center;">
                                             @if ($registro['asistio'])
                                                 @if($registro['es_tarde'])
-                                                    <span style="color: #cc0000; font-weight: bold;">ASISTENCIA (TARDE)</span>
+                                                    <span class="badge-status tarde">Tarde</span>
                                                 @else
-                                                    <span class="text-success">ASISTENCIA PUNTUAL</span>
+                                                    <span class="badge-status punctual">Puntual</span>
                                                 @endif
                                             @else
-                                                <span class="text-danger">INASISTENCIA / FALTA</span>
+                                                <span class="badge-status falta">Falta</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -337,21 +433,21 @@
             @endif
 
             <!-- SECCIÓN DE FIRMAS AL FINAL -->
-            <div class="no-break signature-container">
+            <div class="sig-container">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
-                        <td style="width: 50%; padding-top: 40px;">
+                        <td style="width: 50%; padding-top: 20px; vertical-align: bottom;">
                             @if(isset($qr_code) && $qr_code)
                                 <div style="margin-left: 10px; text-align: left;">
-                                    <img src="data:image/png;base64,{{ $qr_code }}" width="55" style="display: block; margin-bottom: 4px; border: 1.5px solid #000; padding: 2px; background: #fff;">
-                                    <span style="font-size: 6.5px; color: #000; font-family: monospace; display: block;">VERIF: {{ $codigo_verificacion }}</span>
+                                    <img src="data:image/png;base64,{{ $qr_code }}" width="50" style="display: block; margin-bottom: 3px; border: 1px solid #cbd5e1; padding: 2px; background: #fff;">
+                                    <span style="font-size: 6px; color: #64748b; font-family: monospace; display: block;">VERIFICACIÓN: {{ $codigo_verificacion }}</span>
                                 </div>
                             @endif
                         </td>
                         <td style="width: 50%; text-align: center; vertical-align: bottom;">
-                            <div class="signature-box">
-                                <span style="font-weight: bold; color: #2b5a6f; font-size: 8.5px; display: block; text-transform: uppercase; letter-spacing: 0.3px;">CONTROL ACADÉMICO</span>
-                                <span style="font-weight: bold; color: #555; font-size: 8px; display: block;">CEPRE-UNAMAD</span>
+                            <div class="sig-box">
+                                <span style="font-weight: bold; color: #2b5a6f; font-size: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">CONTROL ACADÉMICO</span>
+                                <span style="font-weight: bold; color: #64748b; font-size: 7.5px; display: block; margin-top: 1px;">CEPRE-UNAMAD</span>
                             </div>
                         </td>
                     </tr>
@@ -359,16 +455,16 @@
             </div>
 
         @else
-            <div style="background-color: #fce4f0; color: #cc0000; border: 1.5px solid #cc0000; padding: 18px; border-radius: 4px; text-align: center; margin-top: 30px;">
-                <h3 style="margin: 0; font-size: 11px; text-transform: uppercase;">Sin registros de asistencia</h3>
-                <p style="margin: 4px 0 0 0; font-size: 9px;">El estudiante aún no tiene registros de asistencia en el presente ciclo.</p>
+            <div style="background-color: #fce4f0; color: #cc0000; border: 1px solid #cc0000; padding: 18px; border-radius: 6px; text-align: center; margin-top: 30px;">
+                <h3 style="margin: 0; font-size: 10px; text-transform: uppercase;">Sin registros de asistencia</h3>
+                <p style="margin: 4px 0 0 0; font-size: 8.5px;">El estudiante aún no tiene registros de asistencia en el presente ciclo.</p>
             </div>
         @endif
 
-        <div class="footer">
+        <div class="pdf-footer">
             <strong>DOCUMENTO OFICIAL GENERADO POR EL SISTEMA DE CONTROL DE ASISTENCIA BIOMÉTRICA - CEPRE UNAMAD</strong><br>
-            Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} | Fecha y Hora: {{ $fecha_generacion }}<br>
-            AST/FAL/TOT = Asistidos / Faltas / Total Días Hábiles. Este reporte tiene validez exclusivamente académica y administrativa.
+            Generado por: {{ auth()->user()->nombre_completo ?? 'Administrador' }} &nbsp;|&nbsp; Fecha y Hora: {{ $fecha_generacion }}<br>
+            Este reporte tiene validez exclusivamente académica y administrativa interna de la institución.
         </div>
     </div>
 </body>
