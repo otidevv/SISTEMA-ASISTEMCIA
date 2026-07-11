@@ -434,7 +434,9 @@
 
                                         {{-- Salida --}}
                                         <td style="text-align: center;">
-                                            @if($registro['hora_salida'] == 'Sin registro' || $registro['hora_salida'] == 'FALTA' || $registro['hora_salida'] == '00:00' || $registro['hora_salida'] == '-' || $esRegularizadoBadge)
+                                            @if($esRegularizadoBadge)
+                                                <span class="time-txt purple" style="font-size: 7.5px; font-weight: bold;">REGULARIZADO</span>
+                                            @elseif($registro['hora_salida'] == 'Sin registro' || $registro['hora_salida'] == 'FALTA' || $registro['hora_salida'] == '00:00' || $registro['hora_salida'] == '-')
                                                 <span class="time-txt" style="color: #9e9e9e;">--:--</span>
                                             @else
                                                 <span class="time-txt">
