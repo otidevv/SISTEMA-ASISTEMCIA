@@ -626,9 +626,9 @@ class AsistenciaController extends Controller
             $detalles = [];
 
             foreach ($request->fechas as $fecha) {
-                // Verificar si ya existe un registro para esta fecha
+                // Verificar si ya existe un registro para esta fecha (usando fecha_registro, que es el campo de control para los reportes)
                 $existe = RegistroAsistencia::where('nro_documento', $request->nro_documento)
-                    ->whereDate('fecha_hora', $fecha)
+                    ->whereDate('fecha_registro', $fecha)
                     ->exists();
 
                 if ($existe) {
