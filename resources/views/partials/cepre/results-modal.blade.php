@@ -43,6 +43,7 @@
         position: relative;
         width: 100%;
         max-width: 650px;
+        max-height: 90vh;
         background: var(--modal-glass-bg);
         border-radius: 24px;
         overflow: hidden;
@@ -104,9 +105,11 @@
     }
 
     .results-modal-body {
-        padding: 25px 30px;
+        padding: 20px 25px;
         text-align: center;
         background: #fff;
+        flex: 0 0 auto;
+        overflow-y: auto;
     }
 
     .results-modal-badge {
@@ -252,28 +255,37 @@
     /* FIX MOBILE LAYOUT */
     @media (max-width: 768px) {
         .results-modal {
-            padding: 10px;
+            padding: 8px;
         }
 
         .results-modal-content {
             border-radius: 20px;
-            height: auto; /* Shrink to content */
             max-height: 92vh;
             width: 100%;
-        }
-        
-        .results-modal-body {
-            padding: 20px;
-            flex: none; /* Do not stretch */
             overflow-y: auto;
         }
 
-        #modal-announcement-title {
-            font-size: 18px;
+        /* Imagen completa sin recortes ni barras negras */
+        .results-modal-image-container {
+            height: auto;
+            max-height: none;
+            background: transparent;
         }
 
-        .results-modal-image-container {
-            max-height: 50vh;
+        .results-modal-image-container img {
+            width: 100%;
+            height: auto;
+            object-fit: unset;
+            display: block;
+        }
+
+        /* Descripcion truncada a 3 lineas en mobile */
+        #modal-announcement-description {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 14px;
         }
 
         #floating-results-btn {
@@ -352,6 +364,9 @@
         }, 10);
         document.body.style.overflow = 'hidden';
         startAutoplay();
+        // Ocultar chatbot del búho para que no tape el modal
+        const chatbot = document.getElementById('cepre-chatbot');
+        if (chatbot) chatbot.style.display = 'none';
     }
 
     function closeResultsModal() {
@@ -361,6 +376,9 @@
         setTimeout(() => modal.style.display = 'none', 400);
         document.body.style.overflow = 'auto';
         stopAutoplay();
+        // Restaurar chatbot del búho
+        const chatbot = document.getElementById('cepre-chatbot');
+        if (chatbot) chatbot.style.display = '';
     }
 
     function startAutoplay() {
