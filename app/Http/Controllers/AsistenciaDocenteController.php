@@ -1887,7 +1887,7 @@ class AsistenciaDocenteController extends Controller
             'carbon_date'      => $currentDate->copy(),
             'tiene_registros'  => ($entradaCarbon && $salidaCarbon) ? 'SI' : 'NO',
             // ── Tardanza (del trait, fuente única de verdad) ──────────────────
-            'es_tardanza'      => $base['es_tardanza']      ?? false,
+            'es_tardanza'      => ($base['minutos_tardanza'] ?? 0) > 0,
             'minutos_tardanza' => $base['minutos_tardanza'] ?? 0,
             // ─────────────────────────────────────────────────────────────────
         ];
