@@ -962,6 +962,10 @@
                                                     $cI  = $docenteData['cont_incompleta']  ?? 0;
                                                     $cF  = $docenteData['cont_falta']       ?? 0;
                                                     $cP  = $docenteData['cont_programada']  ?? 0;
+                                                    $cT  = $docenteData['cont_tardanza']    ?? 0;
+                                                    $tMinT = $docenteData['total_min_tardanza'] ?? 0;
+                                                    $pTa = $docenteData['pct_tardanza']     ?? 0;
+                                                    $promMinT = $docenteData['promedio_min_tardanza'] ?? 0;
                                                     $tot = $docenteData['total_transcurridas'] ?? 0;
                                                     $pA  = $docenteData['pct_asistencia'] ?? 0;
                                                     $pT  = $docenteData['pct_temas']      ?? 0;
@@ -987,6 +991,7 @@
                                                                 <span style='color:#f9c851'>●</span> Sin tema registrado: {{ $cST }}<br>
                                                                 <span style='color:#9b59b6'>●</span> Marcado incompleto: {{ $cI }}<br>
                                                                 <span style='color:#f05050'>●</span> Inasistencias (faltas): {{ $cF }}<br>
+                                                                <span style='color:#e67e22'>●</span> Tardanzas: {{ $cT }} ses. ({{ $tMinT }} min totales)<br>
                                                                 <span style='color:#dee2e6'>●</span> Programadas/En curso: {{ $cP }}">
                                                         {{-- Segmento: Completadas --}}
                                                         @if($wC > 0)
@@ -1045,6 +1050,11 @@
                                                             <span class="perf-pill-dot"></span> {{ $cF }} falta(s)
                                                         </span>
                                                         @endif
+                                                        @if($cT > 0)
+                                                        <span class="perf-pill" style="background: rgba(230, 126, 34, 0.1); color: #d35400; border: 1px solid rgba(230, 126, 34, 0.25);">
+                                                            <span class="perf-pill-dot" style="background:#e67e22"></span> {{ $cT }} tard. ({{ $tMinT }}m)
+                                                        </span>
+                                                        @endif
                                                     </div>
 
                                                     {{-- Porcentajes clave --}}
@@ -1063,6 +1073,14 @@
                                                              title="Porcentaje de sesiones asistidas donde el docente registró el tema desarrollado.">
                                                             <span class="perf-pct-value">{{ $pT }}%</span>
                                                             <span class="perf-pct-label">Temas OK</span>
+                                                        </div>
+                                                        <div style="color:#dee2e6; font-weight:300; font-size:1.2rem; align-self:center;">|</div>
+                                                        <div class="perf-pct-item perf-pct-tardanzas"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="bottom"
+                                                             title="Porcentaje de tardanzas sobre las sesiones con asistencia. Promedio: {{ $promMinT }} min.">
+                                                            <span class="perf-pct-value" style="color: #e67e22;">{{ $pTa }}%</span>
+                                                            <span class="perf-pct-label">Tardanza</span>
                                                         </div>
                                                         <div style="color:#dee2e6; font-weight:300; font-size:1.2rem; align-self:center;">|</div>
                                                         <div class="perf-pct-item perf-pct-faltas"
@@ -1193,12 +1211,14 @@
             $grafAsistencia = [];
             $grafTemas      = [];
             $grafFaltas     = [];
+            $grafTardanzas  = [];
             foreach ($processedDetailedAsistencias as $gd) {
                 $gi = $gd['docente_info'] ?? null;
                 $grafLabels[]     = $gi ? ($gi->nombre . ' ' . $gi->apellido_paterno) : 'N/A';
                 $grafAsistencia[] = $gd['pct_asistencia'] ?? 0;
                 $grafTemas[]      = $gd['pct_temas']      ?? 0;
                 $grafFaltas[]     = $gd['pct_faltas']     ?? 0;
+                $grafTardanzas[]  = $gd['pct_tardanza']   ?? 0;
             }
         @endphp
 
@@ -1209,7 +1229,7 @@
                      style="background: linear-gradient(135deg, var(--shreyu-dark) 0%, #3f4853 100%); border-radius: 6px 6px 0 0;">
                     <i class="mdi mdi-chart-bar text-white" style="font-size:1.1rem;"></i>
                     <span class="text-white fw-semibold" style="font-size:0.9rem;">
-                        Comparativo General — % Asistencia · % Temas Registrados · % Faltas
+                        Comparativo General — % Asistencia · % Temas Registrados · % Tardanzas · % Faltas
                     </span>
                 </div>
                 <div class="card-body" style="padding: 1.25rem;">
@@ -1222,7 +1242,8 @@
                             labels:     {!! json_encode(array_values($grafLabels), JSON_UNESCAPED_UNICODE) !!},
                             asistencia: {!! json_encode(array_values($grafAsistencia)) !!},
                             temas:      {!! json_encode(array_values($grafTemas)) !!},
-                            faltas:     {!! json_encode(array_values($grafFaltas)) !!}
+                            faltas:     {!! json_encode(array_values($grafFaltas)) !!},
+                            tardanzas:  {!! json_encode(array_values($grafTardanzas)) !!}
                         };
                     </script>
                 </div>
@@ -1249,6 +1270,9 @@
                 $dCi  = $dData['cont_incompleta']  ?? 0;
                 $dCf  = $dData['cont_falta']       ?? 0;
                 $dCp  = $dData['cont_programada']  ?? 0;
+                $dTard = $dData['cont_tardanza']   ?? 0;
+                $dMinT = $dData['total_min_tardanza'] ?? 0;
+                $dPtard = $dData['pct_tardanza']   ?? 0;
                 $dTot = $dData['total_transcurridas'] ?? 0;
                 $dPa  = $dData['pct_asistencia']   ?? 0;
                 $dPt  = $dData['pct_temas']        ?? 0;
@@ -1365,6 +1389,21 @@
                                         </div>
                                     </div>
                                     @endif
+                                    {{-- Tardanzas --}}
+                                    @if($dTard > 0)
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#e67e22; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#e67e22; margin-right:3px;"></span>
+                                                Tardanzas
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#e67e22;">{{ $dTard }} ({{ $dMinT }}m)</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:linear-gradient(90deg,#e67e22,#d35400); width:{{ $dTotalSes > 0 ? round($dTard/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    @endif
                                     {{-- Faltas --}}
                                     <div class="mb-2">
                                         <div class="d-flex justify-content-between mb-1">
@@ -1396,21 +1435,26 @@
                                 </div>
                             </div>
 
-                            {{-- Footer: 3 porcentajes clave --}}
+                            {{-- Footer: 4 porcentajes clave --}}
                             <div class="d-flex justify-content-around mt-3 pt-2" style="border-top: 1px solid #f1f3fa;">
                                 <div class="text-center">
-                                    <div style="font-size:1.1rem; font-weight:800; color:#10b759;">{{ $dPa }}%</div>
-                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Asistencia</div>
+                                    <div style="font-size:1.0rem; font-weight:800; color:#10b759;">{{ $dPa }}%</div>
+                                    <div style="font-size:0.55rem; text-transform:uppercase; color:#98a6ad;">Asistencia</div>
                                 </div>
                                 <div style="width:1px; background:#dee2e6;"></div>
                                 <div class="text-center">
-                                    <div style="font-size:1.1rem; font-weight:800; color:#35b8e0;">{{ $dPt }}%</div>
-                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Temas OK</div>
+                                    <div style="font-size:1.0rem; font-weight:800; color:#35b8e0;">{{ $dPt }}%</div>
+                                    <div style="font-size:0.55rem; text-transform:uppercase; color:#98a6ad;">Temas OK</div>
                                 </div>
                                 <div style="width:1px; background:#dee2e6;"></div>
                                 <div class="text-center">
-                                    <div style="font-size:1.1rem; font-weight:800; color:#f05050;">{{ $dPf }}%</div>
-                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Faltas</div>
+                                    <div style="font-size:1.0rem; font-weight:800; color:#e67e22;">{{ $dPtard }}%</div>
+                                    <div style="font-size:0.55rem; text-transform:uppercase; color:#98a6ad;">Tardanza</div>
+                                </div>
+                                <div style="width:1px; background:#dee2e6;"></div>
+                                <div class="text-center">
+                                    <div style="font-size:1.0rem; font-weight:800; color:#f05050;">{{ $dPf }}%</div>
+                                    <div style="font-size:0.55rem; text-transform:uppercase; color:#98a6ad;">Faltas</div>
                                 </div>
                             </div>
                         @endif
@@ -1715,11 +1759,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const asistenciaVal = window.grafChartData.asistencia || [];
         const temasVal      = window.grafChartData.temas      || [];
         const faltasVal     = window.grafChartData.faltas     || [];
+        const tardanzasVal  = window.grafChartData.tardanzas  || [];
 
-        // Acortar nombres largos
+        // Acortar nombres largos eliminando títulos profesionales primero
         const labelsCortos = labelsComp.map(name => {
-            const parts = name.split(' ');
-            return parts.length >= 2 ? parts[0] + ' ' + parts[1].charAt(0) + '.' : name;
+            // Eliminar prefijos de títulos comunes (incluyendo Blgo., Blga., Psic., Mtr.)
+            const cleaned = name.replace(/^(Lic\.|Mgt\.|Dr\.|Dra\.|Ing\.|Abog\.|MSc\.|Bigo\.|Blgo\.|Blga\.|Psic\.|Psg\.|Mtr\.|Lic|Mgt|Dr|Dra|Ing|Abog|MSc|Bigo|Blgo|Blga|Psic|Psg|Mtr)\s+/i, '');
+            const parts = cleaned.split(' ');
+            return parts.length >= 2 ? parts[0] + ' ' + parts[1].charAt(0) + '.' : cleaned;
         });
 
         new Chart(compareEl.getContext('2d'), {
@@ -1741,6 +1788,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         data: temasVal,
                         backgroundColor: 'rgba(53, 184, 224, 0.75)',
                         borderColor: 'rgba(53, 184, 224, 1)',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: '% Tardanzas',
+                        data: tardanzasVal,
+                        backgroundColor: 'rgba(230, 126, 34, 0.75)',
+                        borderColor: 'rgba(230, 126, 34, 1)',
                         borderWidth: 1.5,
                         borderRadius: 4,
                         borderSkipped: false,

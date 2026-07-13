@@ -1866,28 +1866,33 @@ class AsistenciaDocenteController extends Controller
         $horaSalidaDisplay = $salidaCarbon ? $salidaCarbon->format('g:i:s A') : '--:--:--';
 
         return [
-            'fecha' => $currentDate->toDateString(),
-            'curso' => $cursoNombre,
-            'tema_desarrollado' => $temaDesarrollado,
-            'aula' => $aulaNombre,
-            'turno' => $turnoNombre,
-            'hora_entrada' => $horaEntradaDisplay,
-            'hora_salida' => $horaSalidaDisplay,
-            'hora_entrada_prog' => $horaInicioProgramada->format('g:i A'),
+            'fecha'            => $currentDate->toDateString(),
+            'curso'            => $cursoNombre,
+            'tema_desarrollado'=> $temaDesarrollado,
+            'aula'             => $aulaNombre,
+            'turno'            => $turnoNombre,
+            'hora_entrada'     => $horaEntradaDisplay,
+            'hora_salida'      => $horaSalidaDisplay,
+            'hora_entrada_prog'=> $horaInicioProgramada->format('g:i A'),
             'hora_salida_prog' => $horaFinProgramada->format('g:i A'),
-            'horas_dictadas' => $horasDictadas,
-            'horas_programadas' => $horasProgramadas,
-            'duracion_texto' => $duracionTexto,
-            'pago' => $montoTotal,
-            'monto_descuento' => $montoDescuento,
-            'tarifa_por_hora' => $pagoDocente->tarifa_por_hora ?? 0,
-            'estado_sesion' => $estadoTexto,
-            'mes' => $currentDate->locale('es')->monthName,
-            'semana' => floor($currentDate->diffInDays(Carbon::parse($fechaInicioCiclo), false) * -1 / 7) + 1,
-            'carbon_date' => $currentDate->copy(),
-            'tiene_registros' => ($entradaCarbon && $salidaCarbon) ? 'SI' : 'NO'
+            'horas_dictadas'   => $horasDictadas,
+            'horas_programadas'=> $horasProgramadas,
+            'duracion_texto'   => $duracionTexto,
+            'pago'             => $montoTotal,
+            'monto_descuento'  => $montoDescuento,
+            'tarifa_por_hora'  => $pagoDocente->tarifa_por_hora ?? 0,
+            'estado_sesion'    => $estadoTexto,
+            'mes'              => $currentDate->locale('es')->monthName,
+            'semana'           => floor($currentDate->diffInDays(Carbon::parse($fechaInicioCiclo), false) * -1 / 7) + 1,
+            'carbon_date'      => $currentDate->copy(),
+            'tiene_registros'  => ($entradaCarbon && $salidaCarbon) ? 'SI' : 'NO',
+            // ── Tardanza (del trait, fuente única de verdad) ──────────────────
+            'es_tardanza'      => $base['es_tardanza']      ?? false,
+            'minutos_tardanza' => $base['minutos_tardanza'] ?? 0,
+            // ─────────────────────────────────────────────────────────────────
         ];
     }
+
 
     /**
      * Estructurar datos por docente para reportes con métricas de rendimiento.
@@ -1910,6 +1915,9 @@ class AsistenciaDocenteController extends Controller
         $contIncompleta  = 0; // Solo entrada O solo salida
         $contFalta       = 0; // Inasistencia total
         $contProgramada  = 0; // Sesión futura / en curso (no computable)
+        // ── Tardanzas (cruzadas sobre las sesiones con asistencia) ────────────
+        $contTardanza       = 0; // Sesiones donde llegó tarde (puede solaparse con COMPLETADA o SIN TEMA)
+        $totalMinTardanza   = 0; // Minutos acumulados de tardanza
         // ──────────────────────────────────────────────────────────────────────
 
         foreach ($sessions as $session) {
@@ -1960,6 +1968,13 @@ class AsistenciaDocenteController extends Controller
                 case 'INCOMPLETA':  $contIncompleta++; break;
                 case 'FALTA':       $contFalta++;      break;
                 default:            $contProgramada++; break; // PROGRAMADA / EN CURSO
+            }
+            // ── Tardanza: se cuenta sobre sesiones con asistencia (COMPLETADA / SIN TEMA / INCOMPLETA)
+            if (!in_array($session['estado_sesion'] ?? '', ['FALTA', 'PROGRAMADA', 'EN CURSO'])) {
+                if (!empty($session['es_tardanza'])) {
+                    $contTardanza++;
+                    $totalMinTardanza += (int) ($session['minutos_tardanza'] ?? 0);
+                }
             }
             // ───────────────────────────────────────────────────────────────
         }
@@ -2019,6 +2034,19 @@ class AsistenciaDocenteController extends Controller
         $wSinTema    = $totalTranscurridas > 0 ? round($contSinTema    / $totalTranscurridas * 100, 1) : 0;
         $wIncompleta = $totalTranscurridas > 0 ? round($contIncompleta / $totalTranscurridas * 100, 1) : 0;
         $wFalta      = $totalTranscurridas > 0 ? round($contFalta      / $totalTranscurridas * 100, 1) : 0;
+
+        // ── MÉTRICAS DE TARDANZA ──────────────────────────────────────────────
+        // Denominador: sesiones donde sí hubo asistencia (COMPLETADA + SIN TEMA + INCOMPLETA)
+        $sesionesConAsistencia = $contCompletada + $contSinTema + $contIncompleta;
+        $pctTardanza  = $sesionesConAsistencia > 0
+            ? round($contTardanza / $sesionesConAsistencia * 100, 1)
+            : 0;
+        // Ancho proporcional de tardanza sobre sesiones transcurridas totales
+        $wTardanza = $totalTranscurridas > 0
+            ? round($contTardanza / $totalTranscurridas * 100, 1)
+            : 0;
+        // Promedio de minutos de tardanza (solo entre las sesiones con tardanza)
+        $promedioMinTardanza = $contTardanza > 0 ? round($totalMinTardanza / $contTardanza, 1) : 0;
         // ──────────────────────────────────────────────────────────────────────
 
         return [
@@ -2046,6 +2074,12 @@ class AsistenciaDocenteController extends Controller
             'w_sin_tema'            => $wSinTema,
             'w_incompleta'          => $wIncompleta,
             'w_falta'               => $wFalta,
+            // ── Métricas de tardanza ─────────────────────────────────────────
+            'cont_tardanza'          => $contTardanza,
+            'total_min_tardanza'     => $totalMinTardanza,
+            'pct_tardanza'           => $pctTardanza,
+            'w_tardanza'             => $wTardanza,
+            'promedio_min_tardanza'  => $promedioMinTardanza,
             // ─────────────────────────────────────────────────────────────────
         ];
     }
