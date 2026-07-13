@@ -1890,103 +1890,163 @@ class AsistenciaDocenteController extends Controller
     }
 
     /**
-     * NUEVO: Estructurar datos por docente para reportes
+     * Estructurar datos por docente para reportes con métricas de rendimiento.
+     * Preserva todos los campos originales (total_horas, total_pagos, etc.)
+     * y agrega métricas de estado de sesión para la barra de rendimiento visual.
      */
     private function structureDocenteDataForReports($docente, $sessions)
     {
-        // Agrupar sesiones por mes y semana
-        $groupedData = [];
-        $totalHoras = 0;
-        $totalPagos = 0;
+        // ── ACUMULADORES ORIGINALES ────────────────────────────────────────────
+        $groupedData    = [];
+        $totalHoras     = 0;
+        $totalPagos     = 0;
         $totalDescuentos = 0;
 
+        // ── CONTADORES DE RENDIMIENTO POR DOCENTE ─────────────────────────────
+        // Sesiones pasadas/del día donde la hora ya terminó.
+        // PROGRAMADA / EN CURSO se cuentan por separado y NO entran al denominador.
+        $contCompletada  = 0; // Asistió + tema registrado
+        $contSinTema     = 0; // Asistió pero NO registró tema
+        $contIncompleta  = 0; // Solo entrada O solo salida
+        $contFalta       = 0; // Inasistencia total
+        $contProgramada  = 0; // Sesión futura / en curso (no computable)
+        // ──────────────────────────────────────────────────────────────────────
+
         foreach ($sessions as $session) {
-            $mes = $session['mes'];
+            $mes    = $session['mes'];
             $semana = $session['semana'];
-            
+
             if (!isset($groupedData[$mes])) {
                 $groupedData[$mes] = [
-                    'month_name' => $mes,
-                    'weeks' => [],
-                    'total_horas' => 0,
-                    'total_pagos' => 0,
-                    'total_descuentos' => 0,
-                    'rowspan' => 0
+                    'month_name'      => $mes,
+                    'weeks'           => [],
+                    'total_horas'     => 0,
+                    'total_pagos'     => 0,
+                    'total_descuentos'=> 0,
+                    'rowspan'         => 0,
                 ];
             }
-            
+
             if (!isset($groupedData[$mes]['weeks'][$semana])) {
                 $groupedData[$mes]['weeks'][$semana] = [
-                    'week_number' => sprintf('%02d', $semana),
-                    'details' => [],
-                    'total_horas' => 0,
-                    'total_pagos' => 0,
-                    'total_descuentos' => 0,
-                    'rowspan' => 0
+                    'week_number'     => sprintf('%02d', $semana),
+                    'details'         => [],
+                    'total_horas'     => 0,
+                    'total_pagos'     => 0,
+                    'total_descuentos'=> 0,
+                    'rowspan'         => 0,
                 ];
             }
-            
-            $groupedData[$mes]['weeks'][$semana]['details'][] = $session;
-            $groupedData[$mes]['weeks'][$semana]['total_horas'] += $session['horas_dictadas'];
-            $groupedData[$mes]['weeks'][$semana]['total_pagos'] += $session['pago'];
-            $groupedData[$mes]['weeks'][$semana]['total_descuentos'] += $session['monto_descuento'];
+
+            $groupedData[$mes]['weeks'][$semana]['details'][]         = $session;
+            $groupedData[$mes]['weeks'][$semana]['total_horas']       += $session['horas_dictadas'];
+            $groupedData[$mes]['weeks'][$semana]['total_pagos']       += $session['pago'];
+            $groupedData[$mes]['weeks'][$semana]['total_descuentos']  += $session['monto_descuento'];
             $groupedData[$mes]['weeks'][$semana]['rowspan']++;
-            
-            $groupedData[$mes]['total_horas'] += $session['horas_dictadas'];
-            $groupedData[$mes]['total_pagos'] += $session['pago'];
+
+            $groupedData[$mes]['total_horas']      += $session['horas_dictadas'];
+            $groupedData[$mes]['total_pagos']      += $session['pago'];
             $groupedData[$mes]['total_descuentos'] += $session['monto_descuento'];
             $groupedData[$mes]['rowspan']++;
-            $totalHoras += $session['horas_dictadas'];
-            $totalPagos += $session['pago'];
-            $totalDescuentos = ($totalDescuentos ?? 0) + $session['monto_descuento'];
+
+            $totalHoras      += $session['horas_dictadas'];
+            $totalPagos      += $session['pago'];
+            $totalDescuentos += $session['monto_descuento'];
+
+            // ── Conteo de estados para la barra de rendimiento ─────────────
+            switch ($session['estado_sesion'] ?? 'PROGRAMADA') {
+                case 'COMPLETADA':  $contCompletada++; break;
+                case 'SIN TEMA':    $contSinTema++;    break;
+                case 'INCOMPLETA':  $contIncompleta++; break;
+                case 'FALTA':       $contFalta++;      break;
+                default:            $contProgramada++; break; // PROGRAMADA / EN CURSO
+            }
+            // ───────────────────────────────────────────────────────────────
         }
 
-        // Calcular redondeo: "Como se debe hacer" -> Exacto (sin redondeo a favor)
-        // CORRECCIÓN: El redondeo se aplica AL TOTAL FINAL, no a cada semana individualmente
-        // Esto evita acumulación de errores de redondeo
-        
+        // Calcular redondeo y duración por semana / mes
         foreach ($groupedData as &$mesData) {
             foreach ($mesData['weeks'] as &$weekData) {
-                 // Mantener el valor exacto para mostrar en el detalle semanal
-                 $weekData['total_pagos_redondeado'] = round($weekData['total_pagos']);
+                $weekData['total_pagos_redondeado'] = round($weekData['total_pagos']);
 
-                 // Calcular duración semanal en texto
-                 $wSeconds = round($weekData['total_horas'] * 3600);
-                 $wHours = floor($wSeconds / 3600);
-                 $wMins = floor(($wSeconds - ($wHours * 3600)) / 60);
-                 $wSecs = floor($wSeconds % 60);
-                 $weekData['total_duracion_texto'] = sprintf('%d:%02d:%02d', $wHours, $wMins, $wSecs);
+                $wSeconds = round($weekData['total_horas'] * 3600);
+                $wHours   = floor($wSeconds / 3600);
+                $wMins    = floor(($wSeconds - ($wHours * 3600)) / 60);
+                $wSecs    = floor($wSeconds % 60);
+                $weekData['total_duracion_texto'] = sprintf('%d:%02d:%02d', $wHours, $wMins, $wSecs);
             }
-            // Redondear el total del mes desde el valor exacto
             $mesData['total_pagos_redondeado'] = round($mesData['total_pagos']);
         }
-        
-        // ⚡ CORRECCIÓN CRÍTICA: Redondear el TOTAL FINAL directamente, no sumar redondeos parciales
-        // Esto asegura que S/. 3,592.36 -> S/. 3,592.00 (no S/. 3,593.00)
+
+        // ⚡ Redondeo FINAL sobre el total exacto (evita acumulación de errores)
         $totalPagosRedondeado = round($totalPagos);
-        
-        // Calcular rowspan total para el docente
+
+        // Rowspan total para el docente (para la vista de planilla)
         $totalRowspan = 0;
         foreach ($groupedData as $monthData) {
             $totalRowspan += $monthData['rowspan'];
         }
 
-        // Calcular duración total en texto (HH:MM:SS)
+        // Duración total en texto (HH:MM:SS)
         $totalSeconds = round($totalHoras * 3600);
         $tHours = floor($totalSeconds / 3600);
-        $tMins = floor(($totalSeconds - ($tHours * 3600)) / 60);
-        $tSecs = floor($totalSeconds % 60);
+        $tMins  = floor(($totalSeconds - ($tHours * 3600)) / 60);
+        $tSecs  = floor($totalSeconds % 60);
         $totalDuracionTexto = sprintf('%d:%02d:%02d', $tHours, $tMins, $tSecs);
 
+        // ── CÁLCULO DE MÉTRICAS PORCENTUALES ──────────────────────────────────
+        // Denominador: solo sesiones que YA debieron ocurrir
+        $totalTranscurridas = $contCompletada + $contSinTema + $contIncompleta + $contFalta;
+
+        // % Asistencia real (presentó entrada+salida independientemente del tema)
+        $pctAsistencia = $totalTranscurridas > 0
+            ? round(($contCompletada + $contSinTema) / $totalTranscurridas * 100, 1)
+            : 0;
+
+        // % Temas registrados sobre las sesiones en que efectivamente asistió
+        $sesionesAsistidas = $contCompletada + $contSinTema;
+        $pctTemas = $sesionesAsistidas > 0
+            ? round($contCompletada / $sesionesAsistidas * 100, 1)
+            : 0;
+
+        // % Faltas absolutas
+        $pctFaltas = $totalTranscurridas > 0
+            ? round($contFalta / $totalTranscurridas * 100, 1)
+            : 0;
+
+        // Anchos proporcionales para la barra multi-segmento (sobre $totalTranscurridas)
+        $wCompletada = $totalTranscurridas > 0 ? round($contCompletada / $totalTranscurridas * 100, 1) : 0;
+        $wSinTema    = $totalTranscurridas > 0 ? round($contSinTema    / $totalTranscurridas * 100, 1) : 0;
+        $wIncompleta = $totalTranscurridas > 0 ? round($contIncompleta / $totalTranscurridas * 100, 1) : 0;
+        $wFalta      = $totalTranscurridas > 0 ? round($contFalta      / $totalTranscurridas * 100, 1) : 0;
+        // ──────────────────────────────────────────────────────────────────────
+
         return [
-            'docente_info' => $docente,
-            'months' => $groupedData,
-            'total_horas' => $totalHoras,
-            'total_duracion_texto' => $totalDuracionTexto,
-            'total_pagos' => $totalPagos,
-            'total_descuentos' => $totalDescuentos,
-            'total_pagos_redondeado' => $totalPagosRedondeado,
-            'rowspan' => $totalRowspan
+            // ── Campos originales (no romper planilla-pdf ni demás vistas) ──
+            'docente_info'          => $docente,
+            'months'                => $groupedData,
+            'total_horas'           => $totalHoras,
+            'total_duracion_texto'  => $totalDuracionTexto,
+            'total_pagos'           => $totalPagos,
+            'total_descuentos'      => $totalDescuentos,
+            'total_pagos_redondeado'=> $totalPagosRedondeado,
+            'rowspan'               => $totalRowspan,
+
+            // ── Métricas de rendimiento por docente ──────────────────────────
+            'cont_completada'       => $contCompletada,
+            'cont_sin_tema'         => $contSinTema,
+            'cont_incompleta'       => $contIncompleta,
+            'cont_falta'            => $contFalta,
+            'cont_programada'       => $contProgramada,
+            'total_transcurridas'   => $totalTranscurridas,
+            'pct_asistencia'        => $pctAsistencia,
+            'pct_temas'             => $pctTemas,
+            'pct_faltas'            => $pctFaltas,
+            'w_completada'          => $wCompletada,
+            'w_sin_tema'            => $wSinTema,
+            'w_incompleta'          => $wIncompleta,
+            'w_falta'               => $wFalta,
+            // ─────────────────────────────────────────────────────────────────
         ];
     }
 

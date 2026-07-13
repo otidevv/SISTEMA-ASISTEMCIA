@@ -358,7 +358,200 @@
     .reports-data-table {
         font-size: 0.8125rem;
     }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BARRA DE RENDIMIENTO Y CUMPLIMIENTO POR DOCENTE
+   "Código de barras" visual multi-segmento
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Contenedor de la celda de rendimiento */
+.perf-cell {
+    min-width: 220px;
+    padding: 0.5rem 0 !important;
 }
+
+/* Barra multi-segmento apilada */
+.perf-bar-track {
+    height: 14px;
+    border-radius: 7px;
+    overflow: hidden;
+    display: flex;
+    background: #f1f3fa;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    position: relative;
+    margin-bottom: 6px;
+}
+
+/* Segmento verde: COMPLETADA (asistió + tema) */
+.perf-seg-completada {
+    background: linear-gradient(90deg, #10b759, #0d9448);
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+}
+.perf-seg-completada::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px; right: 2px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.25);
+}
+
+/* Segmento naranja: SIN TEMA (asistió pero no registró tema) */
+.perf-seg-sintema {
+    background: linear-gradient(90deg, #f9c851, #e6a817);
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s;
+}
+
+/* Segmento morado: INCOMPLETA (solo entrada o solo salida) */
+.perf-seg-incompleta {
+    background: linear-gradient(90deg, #9b59b6, #7b1fa2);
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s;
+}
+
+/* Segmento rojo: FALTA (inasistencia total) */
+.perf-seg-falta {
+    background: linear-gradient(90deg, #f05050, #c0392b);
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s;
+}
+
+/* Área restante (sesiones futuras / no computables) */
+.perf-seg-pendiente {
+    background: #dee2e6;
+    flex: 1;
+    height: 100%;
+}
+
+/* Marcador de límite crítico 30% faltas */
+.perf-bar-limit {
+    position: absolute;
+    right: 30%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(240, 80, 80, 0.6);
+    z-index: 5;
+}
+.perf-bar-limit::before {
+    content: '30%';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #f05050;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Fila de píldoras de métricas debajo de la barra */
+.perf-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+.perf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.perf-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.perf-pill-completada { background: rgba(16, 183, 89, 0.12); color: #0d9448; }
+.perf-pill-completada .perf-pill-dot { background: #10b759; }
+
+.perf-pill-sintema { background: rgba(249, 200, 81, 0.18); color: #9a6d00; }
+.perf-pill-sintema .perf-pill-dot { background: #f9c851; }
+
+.perf-pill-incompleta { background: rgba(155, 89, 182, 0.12); color: #7b1fa2; }
+.perf-pill-incompleta .perf-pill-dot { background: #9b59b6; }
+
+.perf-pill-falta { background: rgba(240, 80, 80, 0.12); color: #c0392b; }
+.perf-pill-falta .perf-pill-dot { background: #f05050; }
+
+/* Bloque de porcentajes grandes debajo de las píldoras */
+.perf-pct-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+.perf-pct-item {
+    text-align: center;
+    min-width: 55px;
+}
+.perf-pct-value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.perf-pct-label {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #98a6ad;
+    margin-top: 1px;
+}
+
+.perf-pct-asistencia .perf-pct-value { color: #10b759; }
+.perf-pct-temas      .perf-pct-value { color: #35b8e0; }
+.perf-pct-faltas     .perf-pct-value { color: #f05050; }
+
+/* Tooltip custom sobre la barra */
+.perf-bar-track [data-bs-toggle="tooltip"] {
+    cursor: default;
+}
+
+/* Leyenda de colores al pie de la tabla */
+.perf-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 6px 6px;
+}
+.perf-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: #495057;
+}
+.perf-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.legend-dot-completada { background: linear-gradient(90deg, #10b759, #0d9448); }
+.legend-dot-sintema    { background: linear-gradient(90deg, #f9c851, #e6a817); }
+.legend-dot-incompleta { background: linear-gradient(90deg, #9b59b6, #7b1fa2); }
+.legend-dot-falta      { background: linear-gradient(90deg, #f05050, #c0392b); }
+.legend-dot-pendiente  { background: #dee2e6; }
+
+
 </style>
 @endpush
 
@@ -680,11 +873,15 @@
                                         <th class="text-center" style="color: #ffffff; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 0.75rem; border: none;">
                                             MONTO ESTIMADO
                                         </th>
+                                        <th style="color: #ffffff; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 0.75rem; border: none; min-width: 260px;">
+                                            <i class="mdi mdi-chart-bar-stacked me-1"></i> RENDIMIENTO Y CUMPLIMIENTO
+                                        </th>
                                         <th class="text-center" style="color: #ffffff; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem 0.75rem; border: none;">
                                             ACCIONES
                                         </th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     @php
                                         $sortedDocentes = collect($processedDetailedAsistencias)->sortByDesc('total_horas');
@@ -753,6 +950,149 @@
                                                     S/ {{ number_format($docenteData['total_pagos'] ?? 0, 2) }}
                                                 </span>
                                             </td>
+                                            {{-- ══ CELDA: BARRA DE RENDIMIENTO Y CUMPLIMIENTO ══ --}}
+                                            <td class="perf-cell" style="padding: 0.75rem; border-bottom: 1px solid #f1f3fa; vertical-align: middle;">
+                                                @php
+                                                    $wC  = $docenteData['w_completada'] ?? 0;
+                                                    $wST = $docenteData['w_sin_tema']   ?? 0;
+                                                    $wI  = $docenteData['w_incompleta'] ?? 0;
+                                                    $wF  = $docenteData['w_falta']      ?? 0;
+                                                    $cC  = $docenteData['cont_completada']  ?? 0;
+                                                    $cST = $docenteData['cont_sin_tema']    ?? 0;
+                                                    $cI  = $docenteData['cont_incompleta']  ?? 0;
+                                                    $cF  = $docenteData['cont_falta']       ?? 0;
+                                                    $cP  = $docenteData['cont_programada']  ?? 0;
+                                                    $tot = $docenteData['total_transcurridas'] ?? 0;
+                                                    $pA  = $docenteData['pct_asistencia'] ?? 0;
+                                                    $pT  = $docenteData['pct_temas']      ?? 0;
+                                                    $pF  = $docenteData['pct_faltas']     ?? 0;
+                                                    // Alerta si % faltas >= 30%
+                                                    $alertaFaltas = $pF >= 30;
+                                                    $alertaNoTemas = ($pT < 70 && $tot > 0);
+                                                @endphp
+
+                                                @if($tot === 0 && $cP === 0)
+                                                    {{-- Sin datos aún --}}
+                                                    <div class="text-muted" style="font-size:0.75rem; text-align:center; padding:4px 0;">
+                                                        <i class="mdi mdi-clock-outline me-1"></i> Sin sesiones registradas
+                                                    </div>
+                                                @else
+                                                    {{-- Barra multi-segmento --}}
+                                                    <div class="perf-bar-track"
+                                                         data-bs-toggle="tooltip"
+                                                         data-bs-html="true"
+                                                         data-bs-placement="top"
+                                                         title="<strong>Periodo analizado:</strong> {{ $tot }} sesión(es) transcurrida(s)<br>
+                                                                <span style='color:#10b759'>●</span> Completadas (con tema): {{ $cC }}<br>
+                                                                <span style='color:#f9c851'>●</span> Sin tema registrado: {{ $cST }}<br>
+                                                                <span style='color:#9b59b6'>●</span> Marcado incompleto: {{ $cI }}<br>
+                                                                <span style='color:#f05050'>●</span> Inasistencias (faltas): {{ $cF }}<br>
+                                                                <span style='color:#dee2e6'>●</span> Programadas/En curso: {{ $cP }}">
+                                                        {{-- Segmento: Completadas --}}
+                                                        @if($wC > 0)
+                                                            <div class="perf-seg-completada" style="width:{{ $wC }}%;"
+                                                                 data-bs-toggle="tooltip"
+                                                                 data-bs-placement="top"
+                                                                 title="✅ Completadas: {{ $cC }} ses. ({{ $wC }}%)"></div>
+                                                        @endif
+                                                        {{-- Segmento: Sin Tema --}}
+                                                        @if($wST > 0)
+                                                            <div class="perf-seg-sintema" style="width:{{ $wST }}%;"
+                                                                 data-bs-toggle="tooltip"
+                                                                 data-bs-placement="top"
+                                                                 title="⚠️ Sin tema: {{ $cST }} ses. ({{ $wST }}%)"></div>
+                                                        @endif
+                                                        {{-- Segmento: Incompleta --}}
+                                                        @if($wI > 0)
+                                                            <div class="perf-seg-incompleta" style="width:{{ $wI }}%;"
+                                                                 data-bs-toggle="tooltip"
+                                                                 data-bs-placement="top"
+                                                                 title="⚡ Marcado incompleto: {{ $cI }} ses. ({{ $wI }}%)"></div>
+                                                        @endif
+                                                        {{-- Segmento: Falta --}}
+                                                        @if($wF > 0)
+                                                            <div class="perf-seg-falta" style="width:{{ $wF }}%;"
+                                                                 data-bs-toggle="tooltip"
+                                                                 data-bs-placement="top"
+                                                                 title="❌ Faltas: {{ $cF }} ses. ({{ $wF }}%)"></div>
+                                                        @endif
+                                                        {{-- Área restante (programadas/en curso) --}}
+                                                        <div class="perf-seg-pendiente"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="top"
+                                                             title="📅 Programadas/En curso: {{ $cP }} ses."></div>
+                                                    </div>
+
+                                                    {{-- Píldoras de conteo --}}
+                                                    <div class="perf-pills">
+                                                        @if($cC > 0)
+                                                        <span class="perf-pill perf-pill-completada">
+                                                            <span class="perf-pill-dot"></span> {{ $cC }} compl.
+                                                        </span>
+                                                        @endif
+                                                        @if($cST > 0)
+                                                        <span class="perf-pill perf-pill-sintema">
+                                                            <span class="perf-pill-dot"></span> {{ $cST }} sin tema
+                                                        </span>
+                                                        @endif
+                                                        @if($cI > 0)
+                                                        <span class="perf-pill perf-pill-incompleta">
+                                                            <span class="perf-pill-dot"></span> {{ $cI }} incompl.
+                                                        </span>
+                                                        @endif
+                                                        @if($cF > 0)
+                                                        <span class="perf-pill perf-pill-falta">
+                                                            <span class="perf-pill-dot"></span> {{ $cF }} falta(s)
+                                                        </span>
+                                                        @endif
+                                                    </div>
+
+                                                    {{-- Porcentajes clave --}}
+                                                    <div class="perf-pct-row">
+                                                        <div class="perf-pct-item perf-pct-asistencia"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="bottom"
+                                                             title="Porcentaje de sesiones donde el docente asistió (completa o sin tema), sobre el total de sesiones transcurridas.">
+                                                            <span class="perf-pct-value">{{ $pA }}%</span>
+                                                            <span class="perf-pct-label">Asistencia</span>
+                                                        </div>
+                                                        <div style="color:#dee2e6; font-weight:300; font-size:1.2rem; align-self:center;">|</div>
+                                                        <div class="perf-pct-item perf-pct-temas"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="bottom"
+                                                             title="Porcentaje de sesiones asistidas donde el docente registró el tema desarrollado.">
+                                                            <span class="perf-pct-value">{{ $pT }}%</span>
+                                                            <span class="perf-pct-label">Temas OK</span>
+                                                        </div>
+                                                        <div style="color:#dee2e6; font-weight:300; font-size:1.2rem; align-self:center;">|</div>
+                                                        <div class="perf-pct-item perf-pct-faltas"
+                                                             data-bs-toggle="tooltip"
+                                                             data-bs-placement="bottom"
+                                                             title="Porcentaje de faltas absolutas (inasistencias) sobre el total de sesiones transcurridas.">
+                                                            <span class="perf-pct-value">{{ $pF }}%</span>
+                                                            <span class="perf-pct-label">Faltas</span>
+                                                        </div>
+                                                        @if($alertaFaltas)
+                                                            <div class="align-self-center ms-1">
+                                                                <span class="badge bg-danger" style="font-size:0.6rem; animation: blink 1s step-start infinite;"
+                                                                      data-bs-toggle="tooltip" title="¡Supera el 30% de faltas reglamentarias!">
+                                                                    <i class="mdi mdi-alert"></i> +30% faltas
+                                                                </span>
+                                                            </div>
+                                                        @endif
+                                                        @if($alertaNoTemas)
+                                                            <div class="align-self-center ms-1">
+                                                                <span class="badge bg-warning text-dark" style="font-size:0.6rem;"
+                                                                      data-bs-toggle="tooltip" title="Bajo registro de temas (< 70% de sesiones asistidas tienen tema registrado).">
+                                                                    <i class="mdi mdi-pencil-off"></i> Temas pendientes
+                                                                </span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </td>
+                                            {{-- ══ FIN CELDA RENDIMIENTO ══ --}}
+
                                             <td class="text-center" style="padding: 0.875rem 0.75rem; border-bottom: 1px solid #f1f3fa; vertical-align: middle;">
                                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#detalleModal{{ $docenteId }}">
                                                     <i class="mdi mdi-eye me-1"></i> Ver Detalle
@@ -782,12 +1122,43 @@
                                                 S/ {{ number_format($totalMonto, 2) }}
                                             </span>
                                         </td>
+                                        {{-- Celda vacía para columna rendimiento en totales --}}
+                                        <td style="padding: 1rem 0.75rem; border: none; font-size: 0.7rem; color: rgba(255,255,255,0.6); text-align: center;">
+                                            Ver barra por docente
+                                        </td>
                                         <td style="padding: 1rem 0.75rem; border: none;"></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        {{-- Leyenda de colores de la barra de rendimiento --}}
+                        <div class="perf-legend mt-0">
+                            <span style="font-size:0.75rem; font-weight:600; color:#495057; margin-right:4px;">
+                                <i class="mdi mdi-information-outline me-1"></i>Leyenda:
+                            </span>
+                            <div class="perf-legend-item">
+                                <div class="perf-legend-dot legend-dot-completada"></div>
+                                Completada (asistió + tema registrado)
+                            </div>
+                            <div class="perf-legend-item">
+                                <div class="perf-legend-dot legend-dot-sintema"></div>
+                                Sin tema (asistió pero no registró tema)
+                            </div>
+                            <div class="perf-legend-item">
+                                <div class="perf-legend-dot legend-dot-incompleta"></div>
+                                Incompleta (solo entrada o salida)
+                            </div>
+                            <div class="perf-legend-item">
+                                <div class="perf-legend-dot legend-dot-falta"></div>
+                                Falta (inasistencia total)
+                            </div>
+                            <div class="perf-legend-item">
+                                <div class="perf-legend-dot legend-dot-pendiente"></div>
+                                Programadas / En curso
+                            </div>
+                        </div>
                     @else
+
                         <div class="text-center py-5 text-muted">
                             <i class="mdi mdi-account-group" style="font-size: 4rem; opacity: 0.3;"></i>
                             <h5 class="mt-3">No hay datos de asistencia</h5>
@@ -799,8 +1170,260 @@
         </div>
     </div>
 
+    {{-- ══════════════════════════════════════════════════════════════════
+         SECCIÓN DE GRÁFICOS: Rendimiento por Docente
+         ═══════════════════════════════════════════════════════════════ --}}
+    @if(count($processedDetailedAsistencias) > 0)
+    <div class="row mt-4" id="seccion-graficos">
+        {{-- Encabezado de sección de gráficos --}}
+        <div class="col-12 mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="mdi mdi-chart-areaspline" style="font-size:1.5rem; color:var(--shreyu-primary);"></i>
+                <h5 class="mb-0 fw-bold">Análisis Gráfico de Rendimiento Docente</h5>
+                <span class="badge bg-primary ms-2">{{ count($processedDetailedAsistencias) }} Docentes</span>
+            </div>
+            <p class="text-muted mt-1 mb-0" style="font-size:0.82rem;">
+                Distribución visual de asistencias, faltas y registro de temas por docente durante el periodo consultado.
+            </p>
+        </div>
+
+        {{-- Pre-calcular arrays para el gráfico comparativo --}}
+        @php
+            $grafLabels     = [];
+            $grafAsistencia = [];
+            $grafTemas      = [];
+            $grafFaltas     = [];
+            foreach ($processedDetailedAsistencias as $gd) {
+                $gi = $gd['docente_info'] ?? null;
+                $grafLabels[]     = $gi ? ($gi->nombre . ' ' . $gi->apellido_paterno) : 'N/A';
+                $grafAsistencia[] = $gd['pct_asistencia'] ?? 0;
+                $grafTemas[]      = $gd['pct_temas']      ?? 0;
+                $grafFaltas[]     = $gd['pct_faltas']     ?? 0;
+            }
+        @endphp
+
+        {{-- ── GRÁFICO 1: Barras comparativas de % por todos los docentes ── --}}
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header d-flex align-items-center gap-2 py-3"
+                     style="background: linear-gradient(135deg, var(--shreyu-dark) 0%, #3f4853 100%); border-radius: 6px 6px 0 0;">
+                    <i class="mdi mdi-chart-bar text-white" style="font-size:1.1rem;"></i>
+                    <span class="text-white fw-semibold" style="font-size:0.9rem;">
+                        Comparativo General — % Asistencia · % Temas Registrados · % Faltas
+                    </span>
+                </div>
+                <div class="card-body" style="padding: 1.25rem;">
+                    <div style="height: 320px; position: relative;">
+                        <canvas id="graficoBarsComparativo"></canvas>
+                    </div>
+                    {{-- Inyectar datos del gráfico comparativo como variables JS --}}
+                    <script id="chart-compare-data">
+                        window.grafChartData = {
+                            labels:     {!! json_encode(array_values($grafLabels), JSON_UNESCAPED_UNICODE) !!},
+                            asistencia: {!! json_encode(array_values($grafAsistencia)) !!},
+                            temas:      {!! json_encode(array_values($grafTemas)) !!},
+                            faltas:     {!! json_encode(array_values($grafFaltas)) !!}
+                        };
+                    </script>
+                </div>
+            </div>
+        </div>
+
+
+        {{-- ── GRÁFICO 2: Donas individuales por docente ── --}}
+        <div class="col-12 mb-2">
+            <h6 class="fw-semibold text-muted mb-3">
+                <i class="mdi mdi-chart-donut me-1"></i>
+                Distribución de Sesiones por Docente
+            </h6>
+        </div>
+
+        @php $sortedGrafDoc = collect($processedDetailedAsistencias)->sortByDesc('total_horas'); @endphp
+        @foreach($sortedGrafDoc as $dId => $dData)
+            @php
+                $dInfo = $dData['docente_info'];
+                $dNombre = $dInfo ? $dInfo->nombre . ' ' . $dInfo->apellido_paterno : 'N/A';
+                $dIniciales = $dInfo ? strtoupper(substr($dInfo->nombre, 0, 1) . substr($dInfo->apellido_paterno, 0, 1)) : 'ND';
+                $dCc  = $dData['cont_completada']  ?? 0;
+                $dCst = $dData['cont_sin_tema']    ?? 0;
+                $dCi  = $dData['cont_incompleta']  ?? 0;
+                $dCf  = $dData['cont_falta']       ?? 0;
+                $dCp  = $dData['cont_programada']  ?? 0;
+                $dTot = $dData['total_transcurridas'] ?? 0;
+                $dPa  = $dData['pct_asistencia']   ?? 0;
+                $dPt  = $dData['pct_temas']        ?? 0;
+                $dPf  = $dData['pct_faltas']       ?? 0;
+                $dTotalSes = $dCc + $dCst + $dCi + $dCf + $dCp;
+                // Color del anillo exterior por nivel de asistencia
+                $ringColor = $dPa >= 90 ? '#10b759' : ($dPa >= 70 ? '#f9c851' : '#f05050');
+            @endphp
+            <div class="col-12 col-md-6 col-xl-4 mb-4">
+                <div class="card h-100 shadow-sm border-0" style="border-top: 3px solid {{ $ringColor }} !important;">
+                    {{-- Header tarjeta docente --}}
+                    <div class="card-header d-flex align-items-center gap-2 py-2 bg-transparent border-bottom" style="border-color: #f1f3fa !important;">
+                        @if($dInfo && $dInfo->foto_perfil)
+                            <img src="{{ asset('storage/' . $dInfo->foto_perfil) }}"
+                                 class="rounded-circle" style="width:2rem; height:2rem; object-fit:cover;">
+                        @else
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                                 style="width:2rem; height:2rem; background: linear-gradient(135deg, var(--shreyu-primary) 0%, var(--shreyu-dark) 100%); font-size:0.75rem; flex-shrink:0;">
+                                {{ $dIniciales }}
+                            </div>
+                        @endif
+                        <div class="flex-fill overflow-hidden">
+                            <div class="fw-semibold text-truncate" style="font-size:0.82rem; color:var(--shreyu-dark);">
+                                {{ $dNombre }}
+                            </div>
+                            <div style="font-size:0.68rem; color:#98a6ad;">
+                                {{ $dTotalSes }} sesión(es) en total
+                            </div>
+                        </div>
+                        {{-- Badge nivel asistencia --}}
+                        @if($dPa >= 90)
+                            <span class="badge" style="background:rgba(16,183,89,0.15); color:#0d9448; font-size:0.65rem; border:1px solid rgba(16,183,89,0.3);">
+                                <i class="mdi mdi-check-circle"></i> Excelente
+                            </span>
+                        @elseif($dPa >= 70)
+                            <span class="badge" style="background:rgba(249,200,81,0.15); color:#9a6d00; font-size:0.65rem; border:1px solid rgba(249,200,81,0.3);">
+                                <i class="mdi mdi-alert-circle"></i> Regular
+                            </span>
+                        @else
+                            <span class="badge" style="background:rgba(240,80,80,0.15); color:#c0392b; font-size:0.65rem; border:1px solid rgba(240,80,80,0.3);">
+                                <i class="mdi mdi-close-circle"></i> Crítico
+                            </span>
+                        @endif
+                    </div>
+
+                    <div class="card-body p-3">
+                        @if($dTotalSes === 0)
+                            <div class="text-center py-4 text-muted">
+                                <i class="mdi mdi-calendar-blank" style="font-size:2.5rem; opacity:0.3;"></i>
+                                <p class="mb-0 mt-2" style="font-size:0.8rem;">Sin sesiones registradas</p>
+                            </div>
+                        @else
+                            <div class="d-flex align-items-center gap-3">
+                                {{-- Dona --}}
+                                <div style="position:relative; width:130px; height:130px; flex-shrink:0;">
+                                    <canvas id="donaDocente{{ $dId }}"
+                                            data-completada="{{ $dCc }}"
+                                            data-sintema="{{ $dCst }}"
+                                            data-incompleta="{{ $dCi }}"
+                                            data-falta="{{ $dCf }}"
+                                            data-programada="{{ $dCp }}"
+                                            width="130" height="130"></canvas>
+                                    {{-- Centro de la dona: % asistencia --}}
+                                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none;">
+                                        <div style="font-size:1.3rem; font-weight:800; line-height:1; color:{{ $ringColor }};">
+                                            {{ $dPa }}%
+                                        </div>
+                                        <div style="font-size:0.55rem; text-transform:uppercase; letter-spacing:0.05em; color:#98a6ad; margin-top:2px;">
+                                            Asistencia
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Stats a la derecha de la dona --}}
+                                <div class="flex-fill">
+                                    {{-- Barra mini de completadas --}}
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#0d9448; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#10b759; margin-right:3px;"></span>
+                                                Completadas
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#0d9448;">{{ $dCc }}</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:linear-gradient(90deg,#10b759,#0d9448); width:{{ $dTotalSes > 0 ? round($dCc/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    {{-- Sin tema --}}
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#9a6d00; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#f9c851; margin-right:3px;"></span>
+                                                Sin tema
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#9a6d00;">{{ $dCst }}</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:linear-gradient(90deg,#f9c851,#e6a817); width:{{ $dTotalSes > 0 ? round($dCst/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    {{-- Incompleta --}}
+                                    @if($dCi > 0)
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#7b1fa2; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#9b59b6; margin-right:3px;"></span>
+                                                Incompl.
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#7b1fa2;">{{ $dCi }}</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:linear-gradient(90deg,#9b59b6,#7b1fa2); width:{{ $dTotalSes > 0 ? round($dCi/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    @endif
+                                    {{-- Faltas --}}
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#c0392b; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#f05050; margin-right:3px;"></span>
+                                                Faltas
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#c0392b;">{{ $dCf }}</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:linear-gradient(90deg,#f05050,#c0392b); width:{{ $dTotalSes > 0 ? round($dCf/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    {{-- Prog. --}}
+                                    @if($dCp > 0)
+                                    <div class="mb-0">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span style="font-size:0.7rem; color:#98a6ad; font-weight:600;">
+                                                <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:#dee2e6; margin-right:3px;"></span>
+                                                Programadas
+                                            </span>
+                                            <span style="font-size:0.7rem; font-weight:700; color:#98a6ad;">{{ $dCp }}</span>
+                                        </div>
+                                        <div style="height:5px; border-radius:3px; background:#f1f3fa; overflow:hidden;">
+                                            <div style="height:100%; border-radius:3px; background:#dee2e6; width:{{ $dTotalSes > 0 ? round($dCp/$dTotalSes*100) : 0 }}%;"></div>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Footer: 3 porcentajes clave --}}
+                            <div class="d-flex justify-content-around mt-3 pt-2" style="border-top: 1px solid #f1f3fa;">
+                                <div class="text-center">
+                                    <div style="font-size:1.1rem; font-weight:800; color:#10b759;">{{ $dPa }}%</div>
+                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Asistencia</div>
+                                </div>
+                                <div style="width:1px; background:#dee2e6;"></div>
+                                <div class="text-center">
+                                    <div style="font-size:1.1rem; font-weight:800; color:#35b8e0;">{{ $dPt }}%</div>
+                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Temas OK</div>
+                                </div>
+                                <div style="width:1px; background:#dee2e6;"></div>
+                                <div class="text-center">
+                                    <div style="font-size:1.1rem; font-weight:800; color:#f05050;">{{ $dPf }}%</div>
+                                    <div style="font-size:0.6rem; text-transform:uppercase; color:#98a6ad;">Faltas</div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>{{-- fin #seccion-graficos --}}
+    @endif
+
     {{-- Modales de Detalle por Docente --}}
     @foreach($processedDetailedAsistencias as $docenteId => $docenteData)
+
         <div class="modal fade" id="detalleModal{{ $docenteId }}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
@@ -880,6 +1503,26 @@
  * REPORTES DE ASISTENCIA DOCENTE - JavaScript
  */
 document.addEventListener('DOMContentLoaded', function() {
+
+    // ── Inicializar todos los tooltips de Bootstrap (incluye la barra de rendimiento) ──
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(el =>
+        new bootstrap.Tooltip(el, { html: true, trigger: 'hover', delay: { show: 200, hide: 100 } })
+    );
+
+    // ── Animación de parpadeo para la alerta de +30% faltas ──────────────────
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes blink {
+            0%  { opacity: 1; }
+            50% { opacity: 0.3; }
+            100%{ opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    // ─────────────────────────────────────────────────────────────────────────
+
+
     // 0. Inicializar Select2 para búsqueda de docentes
     $('#docente_id').select2({
         theme: 'bootstrap-5',
@@ -1056,6 +1699,191 @@ document.addEventListener('DOMContentLoaded', function() {
             element.textContent = formattedValue;
         }, 30);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GRÁFICOS DE RENDIMIENTO DOCENTE
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── Configuración global de Chart.js ──────────────────────────
+    Chart.defaults.font.family = "'Nunito', 'Inter', sans-serif";
+    Chart.defaults.color = '#6c757d';
+
+    // ── 1. Gráfico de Barras Comparativo (todos los docentes) ─────
+    const compareEl = document.getElementById('graficoBarsComparativo');
+    if (compareEl && window.grafChartData) {
+        const labelsComp    = window.grafChartData.labels     || [];
+        const asistenciaVal = window.grafChartData.asistencia || [];
+        const temasVal      = window.grafChartData.temas      || [];
+        const faltasVal     = window.grafChartData.faltas     || [];
+
+        // Acortar nombres largos
+        const labelsCortos = labelsComp.map(name => {
+            const parts = name.split(' ');
+            return parts.length >= 2 ? parts[0] + ' ' + parts[1].charAt(0) + '.' : name;
+        });
+
+        new Chart(compareEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labelsCortos,
+                datasets: [
+                    {
+                        label: '% Asistencia',
+                        data: asistenciaVal,
+                        backgroundColor: 'rgba(16, 183, 89, 0.75)',
+                        borderColor: 'rgba(16, 183, 89, 1)',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: '% Temas OK',
+                        data: temasVal,
+                        backgroundColor: 'rgba(53, 184, 224, 0.75)',
+                        borderColor: 'rgba(53, 184, 224, 1)',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: '% Faltas',
+                        data: faltasVal,
+                        backgroundColor: 'rgba(240, 80, 80, 0.75)',
+                        borderColor: 'rgba(240, 80, 80, 1)',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            padding: 20,
+                            font: { size: 12, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#313a46',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#dee2e6',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            title: function(context) {
+                                // Mostrar nombre completo en el tooltip
+                                return labelsComp[context[0].dataIndex] || context[0].label;
+                            },
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    },
+                    // Línea de referencia al 30% de faltas
+                    annotation: undefined
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: val => val + '%',
+                            stepSize: 10,
+                            color: '#98a6ad'
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        ticks: { color: '#6c757d', maxRotation: 35, minRotation: 0 },
+                        grid: { display: false }
+                    }
+                },
+                animation: {
+                    duration: 900,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    }
+
+    // ── 2. Donas individuales por docente ──────────────────────────
+    const coloresDonas = {
+        completada : { bg: 'rgba(16,183,89,0.85)',  border: '#0d9448' },
+        sintema    : { bg: 'rgba(249,200,81,0.85)', border: '#e6a817' },
+        incompleta : { bg: 'rgba(155,89,182,0.85)', border: '#7b1fa2' },
+        falta      : { bg: 'rgba(240,80,80,0.85)',  border: '#c0392b' },
+        programada : { bg: 'rgba(222,226,230,0.85)',border: '#adb5bd' },
+    };
+
+    document.querySelectorAll('canvas[id^="donaDocente"]').forEach(canvas => {
+        const cc  = parseInt(canvas.dataset.completada  || '0');
+        const cst = parseInt(canvas.dataset.sintema     || '0');
+        const ci  = parseInt(canvas.dataset.incompleta  || '0');
+        const cf  = parseInt(canvas.dataset.falta       || '0');
+        const cp  = parseInt(canvas.dataset.programada  || '0');
+
+        const totalSes = cc + cst + ci + cf + cp;
+        if (totalSes === 0) return;
+
+        // Construir datasets solo con segmentos no cero
+        const segs = [];
+        if (cc  > 0) segs.push({ label: 'Completadas',  value: cc,  ...coloresDonas.completada  });
+        if (cst > 0) segs.push({ label: 'Sin tema',      value: cst, ...coloresDonas.sintema     });
+        if (ci  > 0) segs.push({ label: 'Incompleta',    value: ci,  ...coloresDonas.incompleta  });
+        if (cf  > 0) segs.push({ label: 'Faltas',        value: cf,  ...coloresDonas.falta       });
+        if (cp  > 0) segs.push({ label: 'Programadas',   value: cp,  ...coloresDonas.programada  });
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: segs.map(s => s.label),
+                datasets: [{
+                    data: segs.map(s => s.value),
+                    backgroundColor: segs.map(s => s.bg),
+                    borderColor: segs.map(s => s.border),
+                    borderWidth: 1.5,
+                    hoverOffset: 6,
+                    spacing: 1,
+                }]
+            },
+            options: {
+                responsive: false,
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#313a46',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        borderColor: '#dee2e6',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(ctx) {
+                                const pct = totalSes > 0 ? ((ctx.parsed / totalSes) * 100).toFixed(1) : 0;
+                                return ` ${ctx.label}: ${ctx.parsed} ses. (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: false,
+                    duration: 800,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+    });
+
 });
 </script>
 @endpush
