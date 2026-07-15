@@ -33,6 +33,7 @@ trait TeacherDashboardHelpers
             // Fallback por rango de fechas
             if (!$pagoDocente) {
                 $pagoDocente = PagoDocente::where('docente_id', $docenteId)
+                    ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
                     ->whereDate('fecha_inicio', '<=', $fechaReferencia)
                     ->where(function ($query) use ($fechaReferencia) {
                         $query->whereDate('fecha_fin', '>=', $fechaReferencia)

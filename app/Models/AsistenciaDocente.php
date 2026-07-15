@@ -142,14 +142,23 @@ class AsistenciaDocente extends Model
         $tarifaPorHora = 40; // Valor por defecto en soles
 
         if ($cicloActivo) {
+            // Priorizar pago asignado explícitamente al ciclo activo
             $pago = PagoDocente::where('docente_id', $this->docente_id)
-                ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
-                ->where(function ($query) use ($cicloActivo) {
-                    $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
-                          ->orWhereNull('fecha_fin');
-                })
-                ->orderBy('fecha_inicio', 'desc')
+                ->where('ciclo_id', $cicloActivo->id)
                 ->first();
+
+            // Fallback por rango de fechas (solo tarifas generales)
+            if (!$pago) {
+                $pago = PagoDocente::where('docente_id', $this->docente_id)
+                    ->whereNull('ciclo_id')
+                    ->where('fecha_inicio', '<=', $cicloActivo->fecha_fin)
+                    ->where(function ($query) use ($cicloActivo) {
+                        $query->where('fecha_fin', '>=', $cicloActivo->fecha_inicio)
+                              ->orWhereNull('fecha_fin');
+                    })
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
+            }
 
             if ($pago) {
                 $tarifaPorHora = $pago->tarifa_por_hora;

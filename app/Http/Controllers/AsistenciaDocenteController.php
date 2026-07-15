@@ -1843,6 +1843,7 @@ class AsistenciaDocenteController extends Controller
         // Fallback por rango de fechas (compatibilidad con registros sin ciclo_id)
         if (!$pagoDocente) {
             $pagoDocente = PagoDocente::where('docente_id', $docente->id)
+                ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
                 ->whereDate('fecha_inicio', '<=', $currentDate)
                 ->where(function ($query) use ($currentDate) {
                     $query->whereDate('fecha_fin', '>=', $currentDate)

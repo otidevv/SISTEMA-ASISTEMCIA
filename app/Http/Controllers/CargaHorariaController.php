@@ -164,13 +164,20 @@ class CargaHorariaController extends Controller
         // Obtener ciclo y tarifa
         $ciclo = Ciclo::find($cicloId);
         $pago = PagoDocente::where('docente_id', $docenteId)
-            ->where('fecha_inicio', '<=', $ciclo->fecha_fin)
-            ->where(function ($query) use ($ciclo) {
-                $query->where('fecha_fin', '>=', $ciclo->fecha_inicio)
-                      ->orWhereNull('fecha_fin');
-            })
-            ->orderBy('fecha_inicio', 'desc')
+            ->where('ciclo_id', $cicloId)
             ->first();
+        
+        if (!$pago) {
+            $pago = PagoDocente::where('docente_id', $docenteId)
+                ->whereNull('ciclo_id')
+                ->where('fecha_inicio', '<=', $ciclo->fecha_fin)
+                ->where(function ($query) use ($ciclo) {
+                    $query->where('fecha_fin', '>=', $ciclo->fecha_inicio)
+                          ->orWhereNull('fecha_fin');
+                })
+                ->orderBy('fecha_inicio', 'desc')
+                ->first();
+        }
         
         $tarifaPorHora = $pago ? $pago->tarifa_por_hora : 0;
 

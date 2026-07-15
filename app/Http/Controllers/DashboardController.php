@@ -341,6 +341,7 @@ class DashboardController extends Controller
                         } else {
                             // Fallback: buscar por fechas si no hay registro específico por ciclo
                             $pagoDocenteFecha = PagoDocente::where('docente_id', $user->id)
+                                ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
                                 ->where('fecha_inicio', '<=', $fechaSeleccionada)
                                 ->where(function ($q) use ($fechaSeleccionada) {
                                     $q->where('fecha_fin', '>=', $fechaSeleccionada)
@@ -732,15 +733,16 @@ class DashboardController extends Controller
         }
 
         if ($cicloActivo) {
-            // Priorizar tarifa asociada expl�citamente al ciclo
+            // Priorizar tarifa asociada explícitamente al ciclo
             $pagoDocente = PagoDocente::where('docente_id', $docenteId)
                 ->where('ciclo_id', $cicloActivo->id)
                 ->orderBy('fecha_inicio', 'desc')
                 ->first();
 
-            // Fallback por rango de fechas (compatibilidad con registros hist�ricos sin ciclo_id)
+            // Fallback por rango de fechas (compatibilidad con registros históricos sin ciclo_id)
             if (!$pagoDocente) {
                 $pagoDocente = PagoDocente::where('docente_id', $docenteId)
+                    ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
                     ->whereDate('fecha_inicio', '<=', $fechaReferencia)
                     ->where(function ($query) use ($fechaReferencia) {
                         $query->whereDate('fecha_fin', '>=', $fechaReferencia)
