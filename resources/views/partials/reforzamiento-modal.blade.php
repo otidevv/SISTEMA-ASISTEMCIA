@@ -1,8 +1,7 @@
 {{-- resources/views/partials/reforzamiento-modal.blade.php --}}
 @php
-    $cicloActivoRef = \App\Models\Ciclo::where('es_activo', true)
-                        ->where('nombre', 'like', '%REFORZAMIENTO%')
-                        ->first() ?? \App\Models\Ciclo::where('es_activo', true)->first();
+    $cicloActivoRef = \App\Models\Ciclo::reforzamiento()->activo()->first() 
+                        ?? \App\Models\Ciclo::where('es_activo', true)->where('nombre', 'like', '%REFORZAMIENTO%')->first();
 @endphp
 
 <link rel="preconnect" href="https://fonts.googleapis.com">

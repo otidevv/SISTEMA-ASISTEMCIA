@@ -13,7 +13,7 @@
         <div class="modalidades-flex">
             <!-- Modalidad 1: Ciclo Ordinario -->
             @php
-                $ordinario = \App\Models\Ciclo::activo()->where('nombre', 'LIKE', '%Ordinario%')->first();
+                $ordinario = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Ordinario%')->first();
                 $statusOrd = $ordinario ? 'Vigente' : 'Próximamente';
                 $classOrd = $ordinario ? 'vigente' : 'proximamente';
                 $nombreOrd = $ordinario ? $ordinario->nombre : 'Ciclo Ordinario';
@@ -48,7 +48,7 @@
 
             <!-- Modalidad 2: Primera Oportunidad -->
             @php
-                $primera = \App\Models\Ciclo::activo()->where('nombre', 'LIKE', '%Primera%')->first();
+                $primera = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Primera%')->first();
                 $statusPri = $primera ? 'Vigente' : 'Próximamente';
                 $classPri = $primera ? 'vigente' : 'proximamente';
                 $nombrePri = $primera ? $primera->nombre : 'Ciclo Primera Oportunidad';
@@ -83,7 +83,7 @@
 
             <!-- Modalidad 3: Reforzamiento Escolar -->
             @php
-                $reforzamiento = \App\Models\Ciclo::activo()->where('nombre', 'LIKE', '%Reforzamiento%')->first();
+                $reforzamiento = \App\Models\Ciclo::reforzamiento()->activo()->first() ?? \App\Models\Ciclo::activo()->where('nombre', 'LIKE', '%Reforzamiento%')->first();
                 $statusRef = $reforzamiento ? 'Inscripciones Abiertas' : 'Próximamente';
                 $classRef = $reforzamiento ? 'vigente' : 'proximamente';
                 $nombreRef = $reforzamiento ? $reforzamiento->nombre : 'Reforzamiento Escolar';

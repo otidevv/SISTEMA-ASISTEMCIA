@@ -24,7 +24,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $cicloActivo = Ciclo::activo()->first();
+        $cicloActivo = Ciclo::cepre()->activo()->first();
         $cursos = Curso::where('estado', 1)->orderBy('id', 'asc')->get();
         
         // Departamentos para el formulario de postulación (Hydration)
@@ -113,7 +113,7 @@ class HomeController extends Controller
      */
     public function vacantes()
     {
-        $cicloActivo = Ciclo::activo()->first();
+        $cicloActivo = Ciclo::cepre()->activo()->first();
         $vacantes = [];
 
         if ($cicloActivo) {
@@ -145,7 +145,7 @@ class HomeController extends Controller
      */
     public function estructuraExamen()
     {
-        $cicloActivo = Ciclo::activo()->first();
+        $cicloActivo = Ciclo::cepre()->activo()->first();
         
         $examenConfigs = [];
         $examenDistribucion = [];
@@ -229,7 +229,7 @@ class HomeController extends Controller
      */
     public function secundaria()
     {
-        $cicloActivo = Ciclo::where('programa_id', 2)->where('es_activo', true)->orderBy('id', 'desc')->first() ?? Ciclo::activo()->first();
+        $cicloActivo = Ciclo::reforzamiento()->activo()->first();
         $departamentos = CentroEducativo::getDepartamentos();
         
         // Cursos específicos de reforzamiento (según flyer)

@@ -50,7 +50,7 @@ class PublicPostulacionController extends Controller
             ], 422);
         }
 
-        $cicloActivo = Ciclo::where('es_activo', 1)->orderBy('id', 'desc')->first();
+        $cicloActivo = Ciclo::cepre()->activo()->first();
 
         if (!$cicloActivo) {
             return response()->json(['error' => 'No hay un ciclo activo para postulaciones.'], 400);
@@ -783,7 +783,7 @@ class PublicPostulacionController extends Controller
             $data = $request->all();
 
             // Obtener ciclo activo para el PDF
-            $cicloActivo = \App\Models\Ciclo::where('es_activo', 1)->orderBy('id', 'desc')->first();
+            $cicloActivo = \App\Models\Ciclo::cepre()->activo()->first();
             $cicloNombre = $cicloActivo ? $cicloActivo->nombre : date('Y');
 
             // Calcular edad si hay fecha de nacimiento
