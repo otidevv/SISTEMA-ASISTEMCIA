@@ -722,7 +722,7 @@
 @push('js')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    @vite('resources/js/postulaciones/publico-modal.js')
+    @vite(['resources/js/postulaciones/publico-modal.js', 'resources/js/reforzamiento/publico-modal.js'])
 @endpush
 
 <!-- Script para abrir modal de postulación (usado por el floating button) -->
@@ -777,6 +777,7 @@
 
 <!-- Incluir Modal de Postulación -->
 @include('partials.postulacion-modal')
+@include('partials.reforzamiento-modal')
 @include('partials.cepre.results-modal')
 
 <script>

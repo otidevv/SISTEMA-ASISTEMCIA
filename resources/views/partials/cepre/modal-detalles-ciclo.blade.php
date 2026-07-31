@@ -172,7 +172,7 @@
 
         if (isOpen) {
             const openAction = isReforzamiento 
-                ? "if(typeof openReforzamientoModal === 'function'){ openReforzamientoModal(); } else if(typeof openPostulacionModal === 'function') { openPostulacionModal(); }"
+                ? "if(typeof openReforzamientoModal === 'function'){ openReforzamientoModal(); } else { window.location.href = '" + "{{ route('public.secundaria') }}" + "'; }"
                 : "openPostulacionModal()";
 
             btnContainer.innerHTML = `
