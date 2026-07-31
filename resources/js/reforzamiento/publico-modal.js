@@ -1237,8 +1237,14 @@ async function handleFinalSubmit(e) {
 }
 
 window.openReforzamientoModal = function() {
-    if (window.INSCRIPCIONES_ABIERTAS === false) {
-        if (typeof mostrarAvisoInscripcionesCerradas === 'function') {
+    const isOpen = typeof window.INSCRIPCIONES_REFORZAMIENTO_ABIERTAS !== 'undefined' 
+        ? window.INSCRIPCIONES_REFORZAMIENTO_ABIERTAS 
+        : window.INSCRIPCIONES_ABIERTAS;
+
+    if (isOpen === false) {
+        if (typeof mostrarAvisoInscripcionesCerradasReforzamiento === 'function') {
+            mostrarAvisoInscripcionesCerradasReforzamiento();
+        } else if (typeof mostrarAvisoInscripcionesCerradas === 'function') {
             mostrarAvisoInscripcionesCerradas();
         }
         return;

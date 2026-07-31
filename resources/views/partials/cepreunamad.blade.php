@@ -1,8 +1,12 @@
 @php
     $inscripcionesAbiertas = isset($cicloActivo) && $cicloActivo->estaPeriodoInscripcionAbierto();
+    $cicloActivoRef = \App\Models\Ciclo::reforzamiento()->activo()->first() 
+                        ?? \App\Models\Ciclo::where('es_activo', true)->where('nombre', 'like', '%REFORZAMIENTO%')->first();
+    $inscripcionesRefAbiertas = $cicloActivoRef && $cicloActivoRef->estaPeriodoInscripcionAbierto();
 @endphp
 <script>
     window.INSCRIPCIONES_ABIERTAS = {{ $inscripcionesAbiertas ? 'true' : 'false' }};
+    window.INSCRIPCIONES_REFORZAMIENTO_ABIERTAS = {{ $inscripcionesRefAbiertas ? 'true' : 'false' }};
 </script>
 @include('partials.cepre.head')
 
@@ -794,6 +798,22 @@
             });
         } else {
             alert('El proceso de inscripciones para el CEPRE ha concluido. Si tienes una postulación en revisión, puedes verificar tu estado en el botón respectivo.');
+        }
+    }
+
+    function mostrarAvisoInscripcionesCerradasReforzamiento() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '¡Inscripciones Culminadas!',
+                html: '<p style="color:#fff;">El proceso de inscripciones oficiales para el ciclo <strong>{{ $cicloActivoRef->nombre ?? "Reforzamiento Escolar" }}</strong> ha concluido.</p><p style="color:rgba(255,255,255,0.7); font-size: 13px;">Si tienes una postulación en revisión, puedes consultar su estado presionando el botón "Verificar mi Estado".</p>',
+                icon: 'info',
+                background: '#0c1e2f',
+                color: '#fff',
+                confirmButtonColor: '#00aeef',
+                confirmButtonText: 'Entendido'
+            });
+        } else {
+            alert('El proceso de inscripciones para Reforzamiento Escolar ha concluido.');
         }
     }
 </script>

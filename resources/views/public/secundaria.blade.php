@@ -3,6 +3,7 @@
 @endphp
 <script>
     window.INSCRIPCIONES_ABIERTAS = {{ $inscripcionesAbiertas ? 'true' : 'false' }};
+    window.INSCRIPCIONES_REFORZAMIENTO_ABIERTAS = {{ $inscripcionesAbiertas ? 'true' : 'false' }};
 </script>
 @extends('layouts.cepre')
 
