@@ -13,10 +13,12 @@
         <div class="modalidades-flex">
             <!-- Modalidad 1: Ciclo Ordinario -->
             @php
-                $ordinario = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Ordinario%')->first();
-                $statusOrd = $ordinario ? 'Vigente' : 'Próximamente';
-                $classOrd = $ordinario ? 'vigente' : 'proximamente';
-                $nombreOrd = $ordinario ? $ordinario->nombre : 'Ciclo Ordinario';
+                $ordinarioObj = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Ordinario%')->first();
+                $ordinarioActivo = $ordinarioObj && $ordinarioObj->estaPeriodoInscripcionAbierto();
+                $statusOrd = $ordinarioActivo ? 'Vigente' : 'Próximamente';
+                $classOrd = $ordinarioActivo ? 'vigente' : 'proximamente';
+                $nombreOrd = $ordinarioObj ? $ordinarioObj->nombre : 'Ciclo Ordinario';
+                $ordinario = $ordinarioObj;
             @endphp
             <div class="modalidad-item wow fadeInUp" data-wow-delay="0.1s">
                 <span class="modalidad-number">01</span>
@@ -48,10 +50,12 @@
 
             <!-- Modalidad 2: Primera Oportunidad -->
             @php
-                $primera = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Primera%')->first();
-                $statusPri = $primera ? 'Vigente' : 'Próximamente';
-                $classPri = $primera ? 'vigente' : 'proximamente';
-                $nombrePri = $primera ? $primera->nombre : 'Ciclo Primera Oportunidad';
+                $primeraObj = \App\Models\Ciclo::cepre()->activo()->where('nombre', 'LIKE', '%Primera%')->first();
+                $primeraActivo = $primeraObj && $primeraObj->estaPeriodoInscripcionAbierto();
+                $statusPri = $primeraActivo ? 'Vigente' : 'Próximamente';
+                $classPri = $primeraActivo ? 'vigente' : 'proximamente';
+                $nombrePri = $primeraObj ? $primeraObj->nombre : 'Ciclo Primera Oportunidad';
+                $primera = $primeraObj;
             @endphp
             <div class="modalidad-item wow fadeInUp" data-wow-delay="0.2s">
                 <span class="modalidad-number">02</span>
@@ -83,10 +87,13 @@
 
             <!-- Modalidad 3: Reforzamiento Escolar -->
             @php
-                $reforzamiento = \App\Models\Ciclo::reforzamiento()->activo()->first() ?? \App\Models\Ciclo::activo()->where('nombre', 'LIKE', '%Reforzamiento%')->first();
-                $statusRef = $reforzamiento ? 'Inscripciones Abiertas' : 'Próximamente';
-                $classRef = $reforzamiento ? 'vigente' : 'proximamente';
-                $nombreRef = $reforzamiento ? $reforzamiento->nombre : 'Reforzamiento Escolar';
+                $reforzamientoObj = \App\Models\Ciclo::reforzamiento()->activo()->first() 
+                    ?? \App\Models\Ciclo::where('es_activo', true)->where('nombre', 'LIKE', '%Reforzamiento%')->first();
+                $reforzamientoActivo = $reforzamientoObj && $reforzamientoObj->estaPeriodoInscripcionAbierto();
+                $statusRef = $reforzamientoActivo ? 'Inscripciones Abiertas' : 'Próximamente';
+                $classRef = $reforzamientoActivo ? 'vigente' : 'proximamente';
+                $nombreRef = $reforzamientoObj ? $reforzamientoObj->nombre : 'Reforzamiento Escolar';
+                $reforzamiento = $reforzamientoObj;
             @endphp
             <div class="modalidad-item wow fadeInUp" data-wow-delay="0.3s">
                 <span class="modalidad-number">03</span>

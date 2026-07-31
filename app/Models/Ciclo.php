@@ -148,24 +148,27 @@ class Ciclo extends Model
         return 0;
     }
 
-    public function activar($deactivateOthers = false)
+    public function activar($deactivateOthers = true)
     {
         if ($deactivateOthers) {
-            // Desactivar otros ciclos
-            self::where('es_activo', true)->where('id', '!=', $this->id)->update(['es_activo' => false]);
+            // Desactivar otros ciclos del MISMO programa académico
+            self::where('programa_id', $this->programa_id)
+                ->where('id', '!=', $this->id)
+                ->update(['es_activo' => false, 'inscripciones_abiertas' => false]);
         }
 
         // Activar este ciclo
         $this->es_activo = true;
+        $this->inscripciones_abiertas = true;
         $this->estado = 'en_curso';
         $this->save();
     }
 
     public function desactivar()
     {
-        // Desactivar este ciclo
+        // Desactivar este ciclo e inhabilitar inscripciones
         $this->es_activo = false;
-        // No cambiamos el estado necesariamente a finalizado, ya que podría volver a activarse
+        $this->inscripciones_abiertas = false;
         $this->save();
     }
 
@@ -399,7 +402,7 @@ class Ciclo extends Model
      */
     public function estaPeriodoInscripcionAbierto()
     {
-        if (!$this->inscripciones_abiertas) {
+        if (!$this->es_activo || !$this->inscripciones_abiertas) {
             return false;
         }
 
