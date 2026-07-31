@@ -113,20 +113,12 @@
                                     </div>
                                 </div>
 
-                                <div class="mt-5">
-                                    @if($inscripcionesAbiertas)
-                                        <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); openPostulacionModal()">
-                                            <i class="fas fa-user-plus"></i>
-                                            <span>INICIAR INSCRIPCIÓN AHORA</span>
-                                            <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
-                                        </button>
-                                    @else
-                                        <button class="btn w-100 d-flex align-items-center justify-content-center gap-3" style="background: linear-gradient(135deg, #64748b, #475569); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 800; font-size: 15px; letter-spacing: 1px;" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); mostrarAvisoInscripcionesCerradas()">
-                                            <i class="fas fa-lock"></i>
-                                            <span>Inscripciones Culminadas</span>
-                                            <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
-                                        </button>
-                                    @endif
+                                <div class="mt-5" id="md-ciclo-button-container-v3">
+                                    <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); openPostulacionModal()">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>INICIAR INSCRIPCIÓN AHORA</span>
+                                        <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
+                                    </button>
                                     <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 15px; font-weight: 600;">
                                         <i class="fas fa-shield-alt"></i> Registro 100% Seguro y Validado
                                     </p>
@@ -142,7 +134,7 @@
 
 <script>
     function openCicloDetails(data) {
-        const ciclo = JSON.parse(data);
+        const ciclo = typeof data === 'string' ? JSON.parse(data) : data;
         
         // Función para traducir fechas de inglés a español
         const traducirFecha = (fechaStr) => {
@@ -173,6 +165,42 @@
         document.getElementById('md-ciclo-exam2-v3').innerText = traducirFecha(ciclo.exam2);
         document.getElementById('md-ciclo-exam3-v3').innerText = traducirFecha(ciclo.exam3);
         
+        // Actualizar dinámicamente el botón de inscripción según el ciclo seleccionado
+        const btnContainer = document.getElementById('md-ciclo-button-container-v3');
+        const isOpen = ciclo.inscripciones_abiertas || ciclo.status === 'Inscripciones Abiertas' || ciclo.status === 'Vigente';
+        const isReforzamiento = (ciclo.programa_id == 2) || (ciclo.nombre && ciclo.nombre.toLowerCase().includes('reforzamiento'));
+
+        if (isOpen) {
+            const openAction = isReforzamiento 
+                ? "if(typeof openReforzamientoModal === 'function'){ openReforzamientoModal(); } else if(typeof openPostulacionModal === 'function') { openPostulacionModal(); }"
+                : "openPostulacionModal()";
+
+            btnContainer.innerHTML = `
+                <button class="btn btn-action-premium-v3 w-100 d-flex align-items-center justify-content-center gap-3" 
+                        onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); ${openAction}">
+                    <i class="fas fa-user-plus"></i>
+                    <span>INICIAR INSCRIPCIÓN AHORA</span>
+                    <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
+                </button>
+                <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 15px; font-weight: 600;">
+                    <i class="fas fa-shield-alt"></i> Registro 100% Seguro y Validado
+                </p>
+            `;
+        } else {
+            btnContainer.innerHTML = `
+                <button class="btn w-100 d-flex align-items-center justify-content-center gap-3" 
+                        style="background: linear-gradient(135deg, #64748b, #475569); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 800; font-size: 15px; letter-spacing: 1px;" 
+                        onclick="bootstrap.Modal.getInstance(document.getElementById('modalDetallesCicloV3')).hide(); mostrarAvisoInscripcionesCerradas()">
+                    <i class="fas fa-lock"></i>
+                    <span>Inscripciones Culminadas</span>
+                    <i class="fas fa-chevron-right" style="font-size: 12px; opacity: 0.7;"></i>
+                </button>
+                <p style="text-align: center; font-size: 12px; color: #94a3b8; margin-top: 15px; font-weight: 600;">
+                    <i class="fas fa-shield-alt"></i> Registro 100% Seguro y Validado
+                </p>
+            `;
+        }
+
         var myModal = new bootstrap.Modal(document.getElementById('modalDetallesCicloV3'));
         myModal.show();
     }

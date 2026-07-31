@@ -33,6 +33,8 @@
                         $dataOrd = json_encode([
                             'nombre' => $nombreOrd,
                             'status' => $statusOrd,
+                            'programa_id' => 1,
+                            'inscripciones_abiertas' => (bool)$ordinarioActivo,
                             'descripcion' => $ordinario ? $ordinario->descripcion : 'Preparación exclusiva para el examen ordinario UNAMAD.',
                             'fecha_inicio_fmt' => $ordinario && $ordinario->fecha_inicio ? $ordinario->fecha_inicio->format('d M, Y') : 'Por definir',
                             'fecha_fin_fmt' => $ordinario && $ordinario->fecha_fin ? $ordinario->fecha_fin->format('d M, Y') : 'Por definir',
@@ -70,6 +72,8 @@
                         $dataPri = json_encode([
                             'nombre' => $nombrePri,
                             'status' => $statusPri,
+                            'programa_id' => 1,
+                            'inscripciones_abiertas' => (bool)$primeraActivo,
                             'descripcion' => $primera ? $primera->descripcion : 'Dirigido a estudiantes de 5to de secundaria que buscan su ingreso temprano.',
                             'fecha_inicio_fmt' => $primera && $primera->fecha_inicio ? $primera->fecha_inicio->format('d M, Y') : 'Por definir',
                             'fecha_fin_fmt' => $primera && $primera->fecha_fin ? $primera->fecha_fin->format('d M, Y') : 'Por definir',
@@ -108,6 +112,8 @@
                         $dataRef = json_encode([
                             'nombre' => $nombreRef,
                             'status' => $statusRef,
+                            'programa_id' => 2,
+                            'inscripciones_abiertas' => (bool)$reforzamientoActivo,
                             'descripcion' => $reforzamiento ? $reforzamiento->descripcion : 'Nivelación académica para escolares de 1ro a 5to de secundaria.',
                             'fecha_inicio_fmt' => $reforzamiento && $reforzamiento->fecha_inicio ? $reforzamiento->fecha_inicio->format('d M, Y') : 'Por definir',
                             'fecha_fin_fmt' => $reforzamiento && $reforzamiento->fecha_fin ? $reforzamiento->fecha_fin->format('d M, Y') : 'Por definir',
