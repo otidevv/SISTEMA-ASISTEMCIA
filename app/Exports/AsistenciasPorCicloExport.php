@@ -98,7 +98,10 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         // 3. Obtener TODAS las asistencias del ciclo para TODOS los estudiantes de una sola vez
         // Agrupamos por documento y fecha para procesar en memoria
         $todasAsistencias = RegistroAsistencia::whereIn('nro_documento', $documentos)
-            ->whereBetween('fecha_registro', [$ciclo->fecha_inicio, $ciclo->fecha_fin])
+            ->whereBetween('fecha_registro', [
+                Carbon::parse($ciclo->fecha_inicio)->startOfDay(),
+                Carbon::parse($ciclo->fecha_fin)->endOfDay()
+            ])
             ->select('nro_documento', DB::raw('DATE(fecha_registro) as fecha'))
             ->distinct()
             ->get()
@@ -125,7 +128,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
 
         // 4. Pre-calcular días hábiles para cada período del ciclo una sola vez
         $periodos = [
-            'total' => ['inicio' => $ciclo->fecha_inicio, 'fin' => min($hoy, Carbon::parse($ciclo->fecha_fin))],
+            'total' => ['inicio' => $ciclo->fecha_inicio, 'fin' => min($hoy, Carbon::parse($ciclo->fecha_fin)->endOfDay())],
             'p1' => ['inicio' => $ciclo->fecha_inicio, 'fin' => $ciclo->fecha_primer_examen],
         ];
 
