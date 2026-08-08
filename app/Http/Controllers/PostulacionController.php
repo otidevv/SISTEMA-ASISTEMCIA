@@ -1794,6 +1794,41 @@ class PostulacionController extends Controller
             ->get()
             ->groupBy('nro_documento');
 
+        // 3b. Obtener inasistencias JUSTIFICADAS aprobadas en batch para el periodo
+        $justificadasPorDoc = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('solicitud_inasistencias')) {
+            $justRows = DB::table('solicitud_inasistencias')
+                ->whereIn('numero_documento', $documentos)
+                ->where('justificada', 1)
+                ->whereBetween('fecha', [
+                    $fechaInicioConteoOriginal->toDateString(),
+                    $fechaFinCalculo->toDateString()
+                ])
+                ->select('numero_documento', 'fecha')
+                ->get()
+                ->groupBy('numero_documento');
+
+            // Obtener fechas de asistencia por doc para evitar doble conteo
+            $fechasAsistenciasPorDoc = [];
+            foreach ($todasAsistencias as $docKey => $regs) {
+                foreach ($regs as $reg) {
+                    $fechasAsistenciasPorDoc[$docKey][substr((string) $reg->fecha, 0, 10)] = true;
+                }
+            }
+
+            foreach ($justRows as $docKey => $items) {
+                $cnt = 0;
+                foreach ($items->pluck('fecha')->unique() as $f) {
+                    $fStr = substr((string) $f, 0, 10);
+                    // Solo contar si no tuvo asistencia ese día y es día hábil
+                    if (!isset($fechasAsistenciasPorDoc[$docKey][$fStr]) && $ciclo->esDiaHabil(Carbon::parse($fStr))) {
+                        $cnt++;
+                    }
+                }
+                $justificadasPorDoc[$docKey] = $cnt;
+            }
+        }
+
         // 4. Pre-calcular mapa de días hábiles del ciclo para rapidez
         $cumulativeDays = [];
         $count = 0;
@@ -1846,7 +1881,8 @@ class PostulacionController extends Controller
                 }
             }
 
-            $faltas = max(0, $diasHabilesTranscurridos - $asistenciasCount);
+            $diasJustificados = $justificadasPorDoc[$doc] ?? 0;
+            $faltas = max(0, $diasHabilesTranscurridos - $asistenciasCount - $diasJustificados);
             $limiteAmonestacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_amonestacion ?? 20) / 100));
             $limiteInhabilitacion = ceil($diasHabilesTotales * (($ciclo->porcentaje_inhabilitacion ?? 30) / 100));
 
@@ -1858,6 +1894,7 @@ class PostulacionController extends Controller
                     'aula' => $inscripcion->aula ? $inscripcion->aula->nombre : 'N/A',
                     'turno' => $inscripcion->turno ? $inscripcion->turno->nombre : 'N/A',
                     'faltas' => $faltas,
+                    'justificadas' => $diasJustificados,
                     'asistencias' => $asistenciasCount,
                     'total_dias' => $diasHabilesTotales,
                     'porcentaje' => $diasHabilesTotales > 0 ? round(($asistenciasCount / $diasHabilesTotales) * 100, 2) : 100,

@@ -104,6 +104,25 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
             ->get()
             ->groupBy('nro_documento');
 
+        // 3b. Obtener inasistencias JUSTIFICADAS aprobadas para todo el ciclo en batch
+        $justificadasPorDoc = [];
+        if (\Illuminate\Support\Facades\Schema::hasTable('solicitud_inasistencias')) {
+            $justRows = DB::table('solicitud_inasistencias')
+                ->whereIn('numero_documento', $documentos)
+                ->where('justificada', 1)
+                ->whereBetween('fecha', [
+                    Carbon::parse($ciclo->fecha_inicio)->toDateString(),
+                    Carbon::parse($ciclo->fecha_fin)->toDateString()
+                ])
+                ->select('numero_documento', 'fecha')
+                ->get()
+                ->groupBy('numero_documento');
+
+            foreach ($justRows as $docKey => $items) {
+                $justificadasPorDoc[$docKey] = $items->pluck('fecha')->unique()->values()->all();
+            }
+        }
+
         // 4. Pre-calcular días hábiles para cada período del ciclo una sola vez
         $periodos = [
             'total' => ['inicio' => $ciclo->fecha_inicio, 'fin' => min($hoy, Carbon::parse($ciclo->fecha_fin))],
@@ -128,7 +147,7 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         }
 
         // 5. Mapear inscripciones procesando todo en memoria
-        return $inscripciones->map(function ($inscripcion) use ($ciclo, $todasAsistencias, $diasHabilesPorPeriodo, $hoy, $periodos) {
+        return $inscripciones->map(function ($inscripcion) use ($ciclo, $todasAsistencias, $justificadasPorDoc, $diasHabilesPorPeriodo, $hoy, $periodos) {
             $estudiante = $inscripcion->estudiante;
             $documento = $estudiante->numero_documento;
             
@@ -181,10 +200,25 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
                     
                     // Contar asistencias dentro del rango del período (en memoria)
                     $asistenciasEnPeriodo = 0;
+                    $fechasAsistidas = [];
                     foreach ($registrosEstudiante as $f) {
                         $fC = Carbon::parse($f);
                         if ($fC->between($inicioPeriodo, $finCalculo) && $ciclo->esDiaHabil($fC)) {
                             $asistenciasEnPeriodo++;
+                            $fechasAsistidas[substr($f, 0, 10)] = true;
+                        }
+                    }
+
+                    // Contar justificadas del periodo (sin solapar con asistencias)
+                    $justificadasEnPeriodo = 0;
+                    $justFechas = $justificadasPorDoc[$documento] ?? [];
+                    foreach (array_unique($justFechas) as $fj) {
+                        $fjStr = substr((string) $fj, 0, 10);
+                        $fjC = Carbon::parse($fjStr);
+                        if (!isset($fechasAsistidas[$fjStr])
+                            && $fjC->between($inicioPeriodo, $finCalculo)
+                            && $ciclo->esDiaHabil($fjC)) {
+                            $justificadasEnPeriodo++;
                         }
                     }
 
@@ -197,7 +231,8 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
                         $diasTotales,
                         $diasTranscurridos,
                         $ciclo,
-                        $inicioPeriodo
+                        $inicioPeriodo,
+                        $justificadasEnPeriodo
                     );
                 } else {
                     $data[$key] = $this->getExamenVacio();
@@ -208,13 +243,13 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         });
     }
 
-    private function calcularEstadisticasMemoria($asistencias, $diasHabilesTotales, $diasHabilesTranscurridos, $ciclo, $fechaInicio)
+    private function calcularEstadisticasMemoria($asistencias, $diasHabilesTotales, $diasHabilesTranscurridos, $ciclo, $fechaInicio, $justificadas = 0)
     {
         if ($fechaInicio > Carbon::now()) {
             return $this->getExamenVacio();
         }
 
-        $diasFalta = max(0, $diasHabilesTranscurridos - $asistencias);
+        $diasFalta = max(0, $diasHabilesTranscurridos - $asistencias - $justificadas);
         $porcentajeAsistencia = $diasHabilesTotales > 0 ? round(($asistencias / $diasHabilesTotales) * 100, 2) : 0;
         $porcentajeFalta = $diasHabilesTotales > 0 ? round(($diasFalta / $diasHabilesTotales) * 100, 2) : 0;
 
@@ -232,13 +267,14 @@ class AsistenciasPorCicloExport implements WithMultipleSheets
         }
 
         $resultado = [
-            'dias_habiles' => $diasHabilesTotales,
-            'dias_asistidos' => $asistencias,
-            'dias_falta' => $diasFalta,
-            'porcentaje_asistencia' => $porcentajeAsistencia,
-            'porcentaje_falta' => $porcentajeFalta,
-            'condicion' => $condicion,
-            'puede_rendir' => $puedeRendir
+            'dias_habiles'         => $diasHabilesTotales,
+            'dias_asistidos'       => $asistencias,
+            'dias_justificados'    => $justificadas,
+            'dias_falta'           => $diasFalta,
+            'porcentaje_asistencia'=> $porcentajeAsistencia,
+            'porcentaje_falta'     => $porcentajeFalta,
+            'condicion'            => $condicion,
+            'puede_rendir'         => $puedeRendir
         ];
 
         if ($diasHabilesTranscurridos < $diasHabilesTotales) {

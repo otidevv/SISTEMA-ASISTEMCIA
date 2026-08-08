@@ -90,24 +90,24 @@
             <th style="background-color: #ffebee; vertical-align: middle;">% Falta</th>
             <th style="background-color: #ffebee; vertical-align: middle;">Estado</th>
             <th style="background-color: #ffebee; vertical-align: middle;">Puede Rendir</th>
-            <th style="background-color: #ffebee; vertical-align: middle;">Días (A/F/T)</th>
+            <th style="background-color: #ffebee; vertical-align: middle;">Días (A/J/F/T)</th>
 
             {{-- Segundo Examen --}}
             <th style="background-color: #fff3e0; vertical-align: middle;">% Asist.</th>
             <th style="background-color: #fff3e0; vertical-align: middle;">% Falta</th>
             <th style="background-color: #fff3e0; vertical-align: middle;">Estado</th>
             <th style="background-color: #fff3e0; vertical-align: middle;">Puede Rendir</th>
-            <th style="background-color: #fff3e0; vertical-align: middle;">Días (A/F/T)</th>
+            <th style="background-color: #fff3e0; vertical-align: middle;">Días (A/J/F/T)</th>
 
             {{-- Tercer Examen --}}
             <th style="background-color: #f3e5f5; vertical-align: middle;">% Asist.</th>
             <th style="background-color: #f3e5f5; vertical-align: middle;">% Falta</th>
             <th style="background-color: #f3e5f5; vertical-align: middle;">Estado</th>
             <th style="background-color: #f3e5f5; vertical-align: middle;">Puede Rendir</th>
-            <th style="background-color: #f3e5f5; vertical-align: middle;">Días (A/F/T)</th>
+            <th style="background-color: #f3e5f5; vertical-align: middle;">Días (A/J/F/T)</th>
 
             {{-- Total Ciclo --}}
-            <th style="background-color: #e8f5e9; vertical-align: middle;">Días (A/F/T)</th>
+            <th style="background-color: #e8f5e9; vertical-align: middle;">Días (A/J/F/T)</th>
             <th style="background-color: #e8f5e9; vertical-align: middle;">Transcurridos</th>
         </tr>
     </thead>
@@ -158,7 +158,7 @@
                     {{ $inscripcion['primer_examen']['puede_rendir'] }}
                 </td>
                 <td style="text-align: center;">
-                    {{ $inscripcion['primer_examen']['dias_asistidos'] }}/{{ $inscripcion['primer_examen']['dias_falta'] }}/{{ $inscripcion['primer_examen']['dias_habiles'] }}
+                    {{ $inscripcion['primer_examen']['dias_asistidos'] }}/{{ $inscripcion['primer_examen']['dias_justificados'] ?? 0 }}/{{ $inscripcion['primer_examen']['dias_falta'] }}/{{ $inscripcion['primer_examen']['dias_habiles'] }}
                 </td>
 
                 {{-- Segundo Examen --}}
@@ -194,7 +194,7 @@
                     {{ $inscripcion['segundo_examen']['puede_rendir'] }}
                 </td>
                 <td style="text-align: center;">
-                    {{ $inscripcion['segundo_examen']['dias_asistidos'] }}/{{ $inscripcion['segundo_examen']['dias_falta'] }}/{{ $inscripcion['segundo_examen']['dias_habiles'] }}
+                    {{ $inscripcion['segundo_examen']['dias_asistidos'] }}/{{ $inscripcion['segundo_examen']['dias_justificados'] ?? 0 }}/{{ $inscripcion['segundo_examen']['dias_falta'] }}/{{ $inscripcion['segundo_examen']['dias_habiles'] }}
                 </td>
 
                 {{-- Tercer Examen --}}
@@ -230,13 +230,13 @@
                     {{ $inscripcion['tercer_examen']['puede_rendir'] }}
                 </td>
                 <td style="text-align: center;">
-                    {{ $inscripcion['tercer_examen']['dias_asistidos'] }}/{{ $inscripcion['tercer_examen']['dias_falta'] }}/{{ $inscripcion['tercer_examen']['dias_habiles'] }}
+                    {{ $inscripcion['tercer_examen']['dias_asistidos'] }}/{{ $inscripcion['tercer_examen']['dias_justificados'] ?? 0 }}/{{ $inscripcion['tercer_examen']['dias_falta'] }}/{{ $inscripcion['tercer_examen']['dias_habiles'] }}
                 </td>
 
                 {{-- Total Ciclo --}}
 
                 <td style="text-align: center;">
-                    {{ $inscripcion['total_ciclo']['dias_asistidos'] }}/{{ $inscripcion['total_ciclo']['dias_falta'] }}/{{ $inscripcion['total_ciclo']['dias_habiles'] }}
+                    {{ $inscripcion['total_ciclo']['dias_asistidos'] }}/{{ $inscripcion['total_ciclo']['dias_justificados'] ?? 0 }}/{{ $inscripcion['total_ciclo']['dias_falta'] }}/{{ $inscripcion['total_ciclo']['dias_habiles'] }}
                 </td>
                 <td style="text-align: center;">
                     {{ $inscripcion['total_ciclo']['dias_habiles_transcurridos'] ?? $inscripcion['total_ciclo']['dias_habiles'] }}
@@ -253,15 +253,16 @@
                     <br>• <span style="color: #c62828;">Inhabilitado</span> = Más del {{ $ciclo->porcentaje_inhabilitacion }}% de faltas
                 @else
                     <strong>Leyenda:</strong>
-                    <br>• A/F/T = Asistidos/Faltas/Total días hábiles
-                    <br>• <span style="color: #2e7d32;">Regular</span> = Asistencia adecuada |
+                    <br>&bull; A/J/F/T = Asistidos / Justificados / Faltas / Total días hábiles
+                    <br>&bull; <span style="color: #2e7d32;">Regular</span> = Asistencia adecuada |
                     <span style="color: #f57c00;">Amonestado</span> = Más del {{ $ciclo->porcentaje_amonestacion }}% de
                     faltas |
                     <span style="color: #c62828;">Inhabilitado</span> = Más del {{ $ciclo->porcentaje_inhabilitacion }}% de
                     faltas
-                    <br>• <strong>(Proyección)</strong> = Estado calculado asumiendo que no habrá más asistencias hasta el
+                    <br>&bull; <strong>Justificados</strong> = Días con inasistencia justificada aprobada (no cuentan como falta)
+                    <br>&bull; <strong>(Proyección)</strong> = Estado calculado asumiendo que no habrá más asistencias hasta el
                     examen
-                    <br>• <strong>Porcentaje Actual</strong> = Calculado sobre los días transcurridos hasta hoy
+                    <br>&bull; <strong>Porcentaje Actual</strong> = Calculado sobre los días transcurridos hasta hoy
                 @endif
             </td>
         </tr>
