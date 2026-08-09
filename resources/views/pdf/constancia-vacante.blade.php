@@ -293,7 +293,7 @@
                         <div class="cepre-subtitle">"Centro Pre-Universitario"</div>
                         <p
                             style="font-size: 6.5pt; text-align: center; text-transform: uppercase; color: #64748b; margin-top: 5px; line-height: 1.1;">
-                            "Año de la Recuperación y Consolidación de la Economía Peruana"<br>
+                            "Año de la Esperanza y el Fortalecimiento de la Democracia"<br>
                             "Madre de Dios Capital de la Biodiversidad del Perú"
                         </p>
                     </td>
