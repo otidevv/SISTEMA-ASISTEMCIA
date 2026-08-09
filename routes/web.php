@@ -325,6 +325,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/monitor/notificar-masivo', [AsistenciaDocenteController::class, 'notificarMasivoWhatsApp'])->name('asistencia-docente.monitor.notificar-masivo');
             Route::get('/monitor/estadisticas-graficos', [AsistenciaDocenteController::class, 'getEstadisticasGraficos'])->name('asistencia-docente.monitor.estadisticas');
             Route::get('/ultimas-procesadas', [AsistenciaDocenteController::class, 'ultimasProcesadas'])->name('asistencia-docente.ultimas-procesadas');
+            Route::get('/pendientes-regularizar', [AsistenciaDocenteController::class, 'getPendientesRegularizar'])->name('asistencia-docente.pendientes-regularizar');
         });
 
         // Rutas de Docente (Mis Reportes)
@@ -980,6 +981,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/constancias/{constancia}', [App\Http\Controllers\ConstanciaController::class, 'eliminar'])
         ->name('constancias.eliminar')
         ->middleware('can:constancias.eliminar');
+    Route::match(['get', 'post'], '/constancias/generar-masiva', [App\Http\Controllers\ConstanciaController::class, 'generarMasiva'])
+        ->name('constancias.generar-masiva');
 });
 
 // Rutas públicas para validación de constancias

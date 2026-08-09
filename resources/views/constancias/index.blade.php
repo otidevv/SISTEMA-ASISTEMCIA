@@ -34,9 +34,13 @@
                         <!-- Botón de Acción -->
                         <div class="col-md-6 text-end">
                             @if(Auth::user()->hasPermission('constancias.generar-estudios') || Auth::user()->hasPermission('constancias.generar-vacante'))
-                                <button type="button" class="btn btn-primary waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#generarConstanciaModal">
+                                <button type="button" class="btn btn-success waves-effect waves-light me-2 mb-1" data-bs-toggle="modal" data-bs-target="#generarConstanciaMasivaModal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                                    Generación Masiva (Lista / Excel)
+                                </button>
+                                <button type="button" class="btn btn-primary waves-effect waves-light mb-1" data-bs-toggle="modal" data-bs-target="#generarConstanciaModal">
                                     <!-- Icono de Lucide: PlusCircle (Usando un SVG para estilo moderno sin colisionar CSS) -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-1"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
                                     Generar Nueva Constancia
                                 </button>
                             @endif
@@ -445,6 +449,107 @@
                 </div>
                 <p class="mb-0">Procesando...</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Generación Masiva -->
+<div class="modal fade" id="generarConstanciaMasivaModal" tabindex="-1" aria-labelledby="generarConstanciaMasivaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <form action="{{ route('constancias.generar-masiva') }}" method="POST" enctype="multipart/form-data" target="_blank">
+                @csrf
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title text-white d-flex align-items-center" id="generarConstanciaMasivaModalLabel">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                        Generación Masiva de Constancias (Por Lista / Excel)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">1. Tipo de Constancia</label>
+                            <select name="tipo" class="form-select fw-semibold" required>
+                                <option value="vacante" selected>🏆 Constancia de Vacante</option>
+                                <option value="estudios">🎓 Constancia de Estudios</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">2. Ciclo Académico</label>
+                            <select name="ciclo_id" class="form-select fw-semibold">
+                                <option value="">-- Ciclo Vigente (Automático) --</option>
+                                @if(isset($ciclos) && count($ciclos) > 0)
+                                    @foreach($ciclos as $c)
+                                        <option value="{{ $c->id }}" {{ $c->es_activo ? 'selected' : '' }}>
+                                            {{ $c->nombre }} {{ $c->es_activo ? '⭐ (Vigente)' : '' }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">3. Formato de Salida</label>
+                            <select name="formato_salida" class="form-select fw-semibold" required>
+                                <option value="pdf" selected>📄 PDF Consolidado</option>
+                                <option value="zip">📦 Archivo ZIP</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <label class="form-label fw-bold mb-2">3. Origen de Datos (Selecciona una opción):</label>
+                    <ul class="nav nav-pills nav-justified mb-3" id="masiva-pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="pills-texto-tab" data-bs-toggle="pill" data-bs-target="#pills-texto" type="button" role="tab" onclick="document.getElementById('input-origen').value='texto'">
+                                📋 Pegar Lista de DNIs
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="pills-excel-tab" data-bs-toggle="pill" data-bs-target="#pills-excel" type="button" role="tab" onclick="document.getElementById('input-origen').value='excel'">
+                                📊 Subir Archivo Excel / CSV
+                            </button>
+                        </li>
+                    </ul>
+
+                    <input type="hidden" name="origen" id="input-origen" value="texto">
+
+                    <div class="tab-content" id="masiva-pills-tabContent">
+                        <!-- TAB TEXTO -->
+                        <div class="tab-pane fade show active" id="pills-texto" role="tabpanel">
+                            <div class="mb-2">
+                                <label for="dnis_texto" class="form-label text-muted small">
+                                    Pega la lista de DNIs de los estudiantes (puedes copiar la columna DNI directamente de tu Excel). Se procesarán automáticamente todos los números de 8 dígitos.
+                                </label>
+                                <textarea name="dnis_texto" id="dnis_texto" class="form-control font-monospace" rows="6" placeholder="Ejemplo:&#10;60370454&#10;61502166&#10;07339094&#10;60485398"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- TAB EXCEL -->
+                        <div class="tab-pane fade" id="pills-excel" role="tabpanel">
+                            <div class="mb-2">
+                                <label for="archivo_excel" class="form-label text-muted small">
+                                    Selecciona el archivo Excel (.xlsx, .xls) o CSV que contiene la lista de estudiantes.
+                                </label>
+                                <input type="file" name="archivo_excel" id="archivo_excel" class="form-control" accept=".xlsx, .xls, .csv">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 mt-3 mb-0 small">
+                        <strong><i class="fas fa-info-circle me-1"></i> Nota:</strong> El sistema buscará las inscripciones activas correspondientes a los DNIs ingresados y generará automáticamente sus registros oficiales con Código QR y Código de Verificación para cada documento.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary waves-effect" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success waves-effect waves-light fw-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block me-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Procesar y Generar Constancias
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

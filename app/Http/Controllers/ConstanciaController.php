@@ -64,7 +64,9 @@ class ConstanciaController extends Controller
             return $constancia;
         });
 
-        return view('constancias.index', compact('constancias'));
+        $ciclos = \App\Models\Ciclo::orderBy('created_at', 'desc')->get();
+
+        return view('constancias.index', compact('constancias', 'ciclos'));
     }
 
     /**
@@ -251,6 +253,232 @@ class ConstanciaController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error al eliminar constancia: ' . $e->getMessage());
             return response()->json(['error' => 'Error al eliminar la constancia'], 500);
+        }
+    }
+
+    /**
+     * Generar constancias de vacante o estudios de forma masiva (por lista de DNIs o Excel)
+     */
+    public function generarMasiva(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if ($request->isMethod('get') && !$request->has('dnis_texto') && !$request->hasFile('archivo_excel')) {
+                return redirect()->route('constancias.index');
+            }
+            
+            // Validaciones
+            $tipo = $request->input('tipo', 'vacante'); // 'vacante' o 'estudios'
+            $formatoSalida = $request->input('formato_salida', 'pdf'); // 'pdf' o 'zip'
+            $origen = $request->input('origen', 'texto'); // 'texto' o 'excel'
+            
+            // Verificar permisos
+            $permisoRequerido = $tipo === 'vacante' ? 'constancias.generar-vacante' : 'constancias.generar-estudios';
+            if (!$user->hasRole('admin') && !$user->hasPermission($permisoRequerido)) {
+                return back()->with('error', 'No tienes permiso para generar constancias masivas de ' . $tipo);
+            }
+
+            $dnis = [];
+
+            if ($origen === 'excel' && $request->hasFile('archivo_excel')) {
+                $file = $request->file('archivo_excel');
+                $arrays = \Maatwebsite\Excel\Facades\Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+                    public function array(array $array) { return $array; }
+                }, $file);
+                
+                $allText = json_encode($arrays);
+                preg_match_all('/\b\d{8}\b/', $allText, $matches);
+                $dnis = array_unique(array_filter($matches[0]));
+            } else {
+                $dnisTexto = $request->input('dnis_texto', '');
+                preg_match_all('/\b\d{8}\b/', $dnisTexto, $matches);
+                $dnis = array_unique(array_filter($matches[0]));
+            }
+
+            if (empty($dnis)) {
+                return back()->with('error', 'No se encontraron DNIs válidos de 8 dígitos en la información proporcionada.');
+            }
+
+            // Filtrar inscripciones activas por ciclo específico o por ciclo activo vigente
+            $cicloId = $request->input('ciclo_id');
+            $queryInscripciones = \App\Models\Inscripcion::with(['estudiante', 'ciclo', 'carrera', 'turno', 'aula'])
+                ->whereHas('estudiante', function($q) use ($dnis) {
+                    $q->whereIn('numero_documento', $dnis);
+                })
+                ->whereIn('estado_inscripcion', ['activo', 'validado']);
+
+            if ($cicloId) {
+                $queryInscripciones->where('ciclo_id', $cicloId);
+            } else {
+                $cicloActivo = \App\Models\Ciclo::where('es_activo', true)->first();
+                if ($cicloActivo) {
+                    $queryInscripciones->where('ciclo_id', $cicloActivo->id);
+                }
+            }
+
+            $inscripciones = $queryInscripciones->orderBy('created_at', 'desc')
+                ->get()
+                ->keyBy(function($item) {
+                    return trim($item->estudiante->numero_documento);
+                });
+
+            if ($inscripciones->isEmpty()) {
+                return back()->with('error', 'Ninguno de los ' . count($dnis) . ' DNIs ingresados cuenta con una inscripción activa o validada en el sistema.');
+            }
+
+            // Contador para correlativo en este lote
+            $año = date('Y');
+            $ultimo = DB::table('constancias_generadas')
+                ->where('tipo', $tipo)
+                ->whereYear('created_at', $año)
+                ->count();
+
+            \Carbon\Carbon::setLocale('es');
+            setlocale(LC_TIME, 'es_PE.UTF-8', 'es_ES.UTF-8', 'Spanish');
+            $fecha = ucfirst(\Carbon\Carbon::now()->translatedFormat('d \d\e F \d\e Y'));
+
+            $itemsData = [];
+
+            foreach ($inscripciones as $dniKey => $inscripcion) {
+                // Verificar si ya existe constancia registrada
+                $constanciaExistente = DB::table('constancias_generadas')
+                    ->where('tipo', $tipo)
+                    ->where('estudiante_id', $inscripcion->estudiante_id)
+                    ->where('inscripcion_id', $inscripcion->id)
+                    ->first();
+
+                if ($constanciaExistente) {
+                    $datosStored = json_decode($constanciaExistente->datos, true);
+                    $numeroConstancia = $constanciaExistente->numero_constancia;
+                    $codigoVerificacion = $constanciaExistente->codigo_verificacion;
+                    $qrCode = $datosStored['qr_code'] ?? '';
+                } else {
+                    $ultimo++;
+                    $numeroConstancia = sprintf('%s-%04d', $año, $ultimo);
+                    $prefix = $tipo === 'vacante' ? 'VAC' : 'EST';
+                    $codigoVerificacion = $prefix . '-' . $numeroConstancia . '-' . md5($inscripcion->id . now()->timestamp . rand(1000, 9999));
+                    
+                    $urlValidacion = route('constancias.validar', $codigoVerificacion);
+                    try {
+                        $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(150)->generate($urlValidacion));
+                    } catch (\Exception $e) {
+                        $qrCode = '';
+                    }
+
+                    $dataRegister = [
+                        'inscripcion' => $inscripcion,
+                        'estudiante' => $inscripcion->estudiante,
+                        'ciclo' => $inscripcion->ciclo,
+                        'carrera' => $inscripcion->carrera,
+                        'turno' => $inscripcion->turno,
+                        'aula' => $inscripcion->aula,
+                        'numero_constancia' => $numeroConstancia,
+                        'codigo_verificacion' => $codigoVerificacion,
+                        'qr_code' => $qrCode,
+                        'fecha_generacion' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+                        'lugar' => 'Puerto Maldonado',
+                        'fecha' => $fecha
+                    ];
+
+                    if ($tipo === 'estudios') {
+                        $dataRegister['pie_linea1'] = 'UNAMAD: Parque científico Tecnológico sostenible con Investigación e Innovación';
+                        $dataRegister['pie_linea2'] = 'Av. Dos de Mayo N° 960 — Puerto Maldonado — CEL: 917061893 — 975844977';
+                        $dataRegister['pie_linea3'] = 'CEPRE-UNAMAD CEL: 993110927';
+                    }
+
+                    DB::table('constancias_generadas')->insert([
+                        'tipo' => $tipo,
+                        'codigo_verificacion' => $codigoVerificacion,
+                        'numero_constancia' => $numeroConstancia,
+                        'inscripcion_id' => $inscripcion->id,
+                        'estudiante_id' => $inscripcion->estudiante_id,
+                        'datos' => json_encode($dataRegister),
+                        'generado_por' => $user->id,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+
+                $itemsData[] = [
+                    'inscripcion' => $inscripcion,
+                    'estudiante' => $inscripcion->estudiante,
+                    'ciclo' => $inscripcion->ciclo,
+                    'carrera' => $inscripcion->carrera,
+                    'turno' => $inscripcion->turno,
+                    'aula' => $inscripcion->aula,
+                    'numero_constancia' => $numeroConstancia,
+                    'codigo_verificacion' => $codigoVerificacion,
+                    'qr_code' => $qrCode,
+                    'fecha_generacion' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+                    'lugar' => 'Puerto Maldonado',
+                    'fecha' => $fecha
+                ];
+            }
+
+            if ($formatoSalida === 'zip') {
+                $zipFileName = 'constancias_' . $tipo . '_masivas_' . date('Ymd_His') . '.zip';
+                $zipPath = storage_path('app/public/' . $zipFileName);
+
+                $zip = new \ZipArchive();
+                if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                    $viewName = $tipo === 'vacante' ? 'pdf.constancia-vacante' : 'pdf.constancia-estudios';
+                    foreach ($itemsData as $item) {
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $item);
+                        $pdf->setPaper('A4', 'portrait');
+                        $pdfContent = $pdf->output();
+
+                        $est = $item['estudiante'];
+                        $nombreLimpio = preg_replace('/[^A-Za-z0-9_]/', '_', $est->nombre . '_' . $est->apellido_paterno);
+                        $filenameInZip = "Constancia_{$tipo}_{$est->numero_documento}_{$nombreLimpio}.pdf";
+                        $zip->addFromString($filenameInZip, $pdfContent);
+                    }
+                    $zip->close();
+                }
+
+                return response()->download($zipPath)->deleteFileAfterSend(true);
+            } else {
+                // PDF Consolidado multipágina utilizando TAL CUAL la plantilla individual exacta
+                $viewName = $tipo === 'vacante' ? 'pdf.constancia-vacante' : 'pdf.constancia-estudios';
+                $combinedHtml = '';
+                $extractedStyles = '';
+
+                foreach ($itemsData as $index => $item) {
+                    $singleHtml = view($viewName, $item)->render();
+                    
+                    if ($index === 0 && preg_match('/<style[^>]*>(.*?)<\/style>/is', $singleHtml, $styleMatches)) {
+                        $extractedStyles = $styleMatches[1];
+                    }
+
+                    if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $singleHtml, $bodyMatches)) {
+                        $bodyContent = $bodyMatches[1];
+                    } else {
+                        $bodyContent = $singleHtml;
+                    }
+
+                    $pageBreakStyle = ($index < count($itemsData) - 1) ? 'style="page-break-after: always; position: relative;"' : 'style="position: relative;"';
+                    $combinedHtml .= '<div class="single-constancia-item" ' . $pageBreakStyle . '>' . $bodyContent . '</div>';
+                }
+
+                $fullDocumentHtml = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Constancias Masivas</title><style>' 
+                    . $extractedStyles . 
+                    ' .page-break { page-break-after: always; } .single-constancia-item { width: 100%; position: relative; }</style></head><body>' 
+                    . $combinedHtml . '</body></html>';
+
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHtml($fullDocumentHtml);
+                $pdf->setPaper('A4', 'portrait');
+
+                $filename = 'constancias_masivas_' . $tipo . '_' . date('Ymd_His') . '.pdf';
+                return response($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error en generación masiva de constancias: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->with('error', 'Ocurrió un error al procesar las constancias masivas: ' . $e->getMessage());
         }
     }
 }
