@@ -184,7 +184,7 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
         if (file_exists($logoCepre)) {
             $ciclo = Ciclo::find($this->ciclo_id);
             $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
-            $colLogo = $isReforzamiento ? 'Q1' : 'AE1';
+            $colLogo = $isReforzamiento ? 'R1' : 'AH1';
 
             $drawing2 = new Drawing();
             $drawing2->setName('CEPRE');
@@ -202,7 +202,7 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
         $ciclo = Ciclo::find($this->ciclo_id);
         if ($ciclo && $ciclo->programa_id == 2) {
             return [
-                'N°', 'DNI Estudiante', 'Apellido Paterno', 'Apellido Materno', 'Nombres', 
+                'N°', 'DNI Estudiante', 'Apellido Paterno', 'Apellido Materno', 'Nombres', 'Fecha Nacimiento',
                 'Telefono', 'Email', 'Grado', 'Turno/Sección', 'Colegio Procedencia', 
                 'Estado', 'Nro Constancia', 'Fecha Registro', 'Apoderado', 'DNI Apoderado', 'Celular Apoderado', 
                 'Monto Pagado', 'Mes Pagado', 'Nro Operación'
@@ -210,10 +210,10 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
         }
 
         return [
-            'N°', 'Codigo Postulante', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'DNI', 'Email', 'Telefono', 'Género', 'Dirección',
+            'N°', 'Codigo Postulante', 'Nombres', 'Apellido Paterno', 'Apellido Materno', 'DNI', 'Fecha Nacimiento', 'Email', 'Telefono', 'Género', 'Dirección',
             'Ciclo', 'Carrera', 'Turno', 'Aula', 'Tipo Inscripcion', 
             'Fecha Postulacion', 'Estado', 'Documentos Verificados', 'Pago Verificado', 'Numero Recibo', 'Monto Total',
-            'Colegio', 'Cod. Modular', 'Ubigeo Col.', 'Dpto Col.', 'Prov Col.', 'Dist Col.', 'Dirección Col.', 'Nivel Col.', 'Gestión Col.',
+            'Colegio', 'Año de Egreso', 'Cod. Modular', 'Ubigeo Col.', 'Dpto Col.', 'Prov Col.', 'Dist Col.', 'Dirección Col.', 'Nivel Col.', 'Gestión Col.',
             'Lugar Residencia (RENIEC)', 'Ubigeo Nacimiento (RENIEC)',
             'Apoderado', 'Teléfono Apoderado', 'Registrado Por',
         ];
@@ -250,12 +250,22 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
             }
             $mesesList = !empty($meses) ? implode(', ', array_unique($meses)) : 'N/A';
 
+            $fechaNacimiento = 'N/A';
+            if ($estudiante && $estudiante->fecha_nacimiento) {
+                try {
+                    $fechaNacimiento = \Carbon\Carbon::parse($estudiante->fecha_nacimiento)->format('d/m/Y');
+                } catch (\Exception $e) {
+                    $fechaNacimiento = 'N/A';
+                }
+            }
+
             return [
                 $this->rowNumber,
                 $estudiante ? $estudiante->numero_documento : 'N/A',
                 $estudiante ? $estudiante->apellido_paterno : 'N/A',
                 $estudiante ? $estudiante->apellido_materno : 'N/A',
                 $estudiante ? $item->estudiante->nombre : 'N/A',
+                $fechaNacimiento,
                 $estudiante ? $estudiante->telefono : 'N/A',
                 $estudiante ? $estudiante->email : 'N/A',
                 $item->grado,
@@ -305,6 +315,15 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
             });
         }
 
+        $fechaNacimiento = 'N/A';
+        if ($estudiante && $estudiante->fecha_nacimiento) {
+            try {
+                $fechaNacimiento = \Carbon\Carbon::parse($estudiante->fecha_nacimiento)->format('d/m/Y');
+            } catch (\Exception $e) {
+                $fechaNacimiento = 'N/A';
+            }
+        }
+
         return [
             $this->rowNumber,
             $postulacion->codigo_postulante,
@@ -312,6 +331,7 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
             $estudiante ? $estudiante->apellido_paterno : 'N/A',
             $estudiante ? $estudiante->apellido_materno : 'N/A',
             $estudiante ? $estudiante->numero_documento : 'N/A',
+            $fechaNacimiento,
             $estudiante ? $estudiante->email : 'N/A',
             $estudiante ? $estudiante->telefono : 'N/A',
             $estudiante ? $estudiante->genero : 'N/A',
@@ -328,6 +348,7 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
             $postulacion->numero_recibo,
             $postulacion->monto_total_pagado,
             $colegio ? $colegio->cen_edu : 'N/A',
+            $postulacion->anio_egreso ?: 'N/A',
             $colegio ? $colegio->cod_mod : 'N/A',
             $colegio ? $colegio->codgeo : 'N/A',
             $colegio ? $colegio->d_dpto : 'N/A',
@@ -400,11 +421,11 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
         if ($highestRow >= 8) {
             if ($isReforzamiento) {
                 $sheet->getStyle('B8:B' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-                $sheet->getStyle('O8:O' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+                $sheet->getStyle('P8:P' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
             } else {
                 $sheet->getStyle('F8:F' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-                $sheet->getStyle('H8:H' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
-                $sheet->getStyle('AH8:AH' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+                $sheet->getStyle('I8:I' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
+                $sheet->getStyle('AJ8:AJ' . $highestRow)->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_TEXT);
             }
         }
 
@@ -417,12 +438,14 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
             'C' => 25, // Nombres
             'D' => 20, // Apellido P.
             'E' => 20, // Apellido M.
-            'J' => 35, // Dirección
-            'L' => 25, // Carrera
-            'V' => 45, // Colegio
-            'AB' => 45, // Dirección Col.
-            'AE' => 30, // Lugar Residencia
-            'AG' => 30, // Apoderado
+            'G' => 15, // Fecha Nacimiento
+            'K' => 35, // Dirección
+            'M' => 25, // Carrera
+            'W' => 45, // Colegio
+            'X' => 15, // Año de Egreso
+            'AD' => 45, // Dirección Col.
+            'AG' => 30, // Lugar Residencia
+            'AI' => 30, // Apoderado
         ];
 
         foreach ($manualWidths as $col => $width) {
@@ -440,7 +463,7 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
                 $sheet = $event->sheet->getDelegate();
                 $ciclo = Ciclo::find($this->ciclo_id);
                 $isReforzamiento = $ciclo && $ciclo->programa_id == 2;
-                $highestColumn = $isReforzamiento ? 'S' : 'AI';
+                $highestColumn = $isReforzamiento ? 'T' : 'AK';
 
                 // 1. Títulos Institucionales (A1:A4)
                 $sheet->mergeCells("A1:{$highestColumn}1");
@@ -474,64 +497,64 @@ class PostulacionesCompletoSheet implements FromCollection, WithHeadings, WithMa
 
                 if ($isReforzamiento) {
                     // --- DISEÑO PARA REFORZAMIENTO ---
-                    $sheet->mergeCells('A6:G6');
+                    $sheet->mergeCells('A6:H6');
                     $sheet->setCellValue('A6', 'DATOS DEL ESTUDIANTE');
-                    $this->applyHeaderGroupStyle($sheet, 'A6:G6', 'FF3498DB');
+                    $this->applyHeaderGroupStyle($sheet, 'A6:H6', 'FF3498DB');
 
-                    $sheet->mergeCells('H6:J6');
-                    $sheet->setCellValue('H6', 'DATOS ACADÉMICOS');
-                    $this->applyHeaderGroupStyle($sheet, 'H6:J6', 'FF2ECC71');
+                    $sheet->mergeCells('I6:K6');
+                    $sheet->setCellValue('I6', 'DATOS ACADÉMICOS');
+                    $this->applyHeaderGroupStyle($sheet, 'I6:K6', 'FF2ECC71');
 
-                    $sheet->mergeCells('K6:M6');
-                    $sheet->setCellValue('K6', 'PROCESO Y ESTADO');
-                    $this->applyHeaderGroupStyle($sheet, 'K6:M6', 'FFE67E22');
+                    $sheet->mergeCells('L6:N6');
+                    $sheet->setCellValue('L6', 'PROCESO Y ESTADO');
+                    $this->applyHeaderGroupStyle($sheet, 'L6:N6', 'FFE67E22');
 
-                    $sheet->mergeCells('N6:P6');
-                    $sheet->setCellValue('N6', 'DATOS DEL APODERADO');
-                    $this->applyHeaderGroupStyle($sheet, 'N6:P6', 'FF9B59B6');
+                    $sheet->mergeCells('O6:Q6');
+                    $sheet->setCellValue('O6', 'DATOS DEL APODERADO');
+                    $this->applyHeaderGroupStyle($sheet, 'O6:Q6', 'FF9B59B6');
 
-                    $sheet->mergeCells('Q6:S6');
-                    $sheet->setCellValue('Q6', 'PAGOS');
-                    $this->applyHeaderGroupStyle($sheet, 'Q6:S6', 'FF1ABC9C');
+                    $sheet->mergeCells('R6:T6');
+                    $sheet->setCellValue('R6', 'PAGOS');
+                    $this->applyHeaderGroupStyle($sheet, 'R6:T6', 'FF1ABC9C');
 
-                    $this->applySubHeaderStyle($sheet, 'A7:G7', 'FF2980B9');
-                    $this->applySubHeaderStyle($sheet, 'H7:J7', 'FF27AE60');
-                    $this->applySubHeaderStyle($sheet, 'K7:M7', 'FFD35400');
-                    $this->applySubHeaderStyle($sheet, 'N7:P7', 'FF8E44AD');
-                    $this->applySubHeaderStyle($sheet, 'Q7:S7', 'FF16A085');
+                    $this->applySubHeaderStyle($sheet, 'A7:H7', 'FF2980B9');
+                    $this->applySubHeaderStyle($sheet, 'I7:K7', 'FF27AE60');
+                    $this->applySubHeaderStyle($sheet, 'L7:N7', 'FFD35400');
+                    $this->applySubHeaderStyle($sheet, 'O7:Q7', 'FF8E44AD');
+                    $this->applySubHeaderStyle($sheet, 'R7:T7', 'FF16A085');
 
                 } else {
                     // --- DISEÑO PARA CEPRE REGULAR ---
-                    $sheet->mergeCells('A6:J6');
+                    $sheet->mergeCells('A6:K6');
                     $sheet->setCellValue('A6', 'DATOS DEL POSTULANTE');
-                    $this->applyHeaderGroupStyle($sheet, 'A6:J6', 'FF3498DB');
+                    $this->applyHeaderGroupStyle($sheet, 'A6:K6', 'FF3498DB');
 
-                    $sheet->mergeCells('K6:O6');
-                    $sheet->setCellValue('K6', 'DATOS ACADÉMICOS');
-                    $this->applyHeaderGroupStyle($sheet, 'K6:O6', 'FF2ECC71');
+                    $sheet->mergeCells('L6:P6');
+                    $sheet->setCellValue('L6', 'DATOS ACADÉMICOS');
+                    $this->applyHeaderGroupStyle($sheet, 'L6:P6', 'FF2ECC71');
 
-                    $sheet->mergeCells('P6:U6');
-                    $sheet->setCellValue('P6', 'PROCESO Y ESTADO');
-                    $this->applyHeaderGroupStyle($sheet, 'P6:U6', 'FFE67E22');
+                    $sheet->mergeCells('Q6:V6');
+                    $sheet->setCellValue('Q6', 'PROCESO Y ESTADO');
+                    $this->applyHeaderGroupStyle($sheet, 'Q6:V6', 'FFE67E22');
 
-                    $sheet->mergeCells('V6:AD6');
-                    $sheet->setCellValue('V6', 'DATOS DEL COLEGIO');
-                    $this->applyHeaderGroupStyle($sheet, 'V6:AD6', 'FF9B59B6');
+                    $sheet->mergeCells('W6:AF6');
+                    $sheet->setCellValue('W6', 'DATOS DEL COLEGIO');
+                    $this->applyHeaderGroupStyle($sheet, 'W6:AF6', 'FF9B59B6');
 
-                    $sheet->mergeCells('AE6:AF6');
-                    $sheet->setCellValue('AE6', 'VALIDACIÓN RENIEC');
-                    $this->applyHeaderGroupStyle($sheet, 'AE6:AF6', 'FF1ABC9C');
+                    $sheet->mergeCells('AG6:AH6');
+                    $sheet->setCellValue('AG6', 'VALIDACIÓN RENIEC');
+                    $this->applyHeaderGroupStyle($sheet, 'AG6:AH6', 'FF1ABC9C');
 
-                    $sheet->mergeCells('AG6:AI6');
-                    $sheet->setCellValue('AG6', 'REFERENCIAS Y REGISTRO');
-                    $this->applyHeaderGroupStyle($sheet, 'AG6:AI6', 'FF95A5A6');
+                    $sheet->mergeCells('AI6:AK6');
+                    $sheet->setCellValue('AI6', 'REFERENCIAS Y REGISTRO');
+                    $this->applyHeaderGroupStyle($sheet, 'AI6:AK6', 'FF95A5A6');
 
-                    $this->applySubHeaderStyle($sheet, 'A7:J7', 'FF2980B9');
-                    $this->applySubHeaderStyle($sheet, 'K7:O7', 'FF27AE60');
-                    $this->applySubHeaderStyle($sheet, 'P7:U7', 'FFD35400');
-                    $this->applySubHeaderStyle($sheet, 'V7:AD7', 'FF8E44AD');
-                    $this->applySubHeaderStyle($sheet, 'AE7:AF7', 'FF16A085');
-                    $this->applySubHeaderStyle($sheet, 'AG7:AI7', 'FF7F8C8D');
+                    $this->applySubHeaderStyle($sheet, 'A7:K7', 'FF2980B9');
+                    $this->applySubHeaderStyle($sheet, 'L7:P7', 'FF27AE60');
+                    $this->applySubHeaderStyle($sheet, 'Q7:V7', 'FFD35400');
+                    $this->applySubHeaderStyle($sheet, 'W7:AF7', 'FF8E44AD');
+                    $this->applySubHeaderStyle($sheet, 'AG7:AH7', 'FF16A085');
+                    $this->applySubHeaderStyle($sheet, 'AI7:AK7', 'FF7F8C8D');
                 }
                 
                 $sheet->getRowDimension('1')->setRowHeight(30);
