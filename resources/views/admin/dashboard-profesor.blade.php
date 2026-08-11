@@ -1826,7 +1826,7 @@
                                                     <div class="d-flex gap-2">
                                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                                             <button id="btn-tema-{{ $horario->id }}" class="action-button btn-sm" 
-                                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS))'>
+                                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS), @json($fechaSeleccionada->format("Y-m-d"), JSON_HEX_APOS))'>
                                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                                             </button>
@@ -1969,7 +1969,7 @@
                                     <div class="d-flex gap-2">
                                         @if($item['puede_registrar_tema'] || ($asistencia && $asistencia->tema_desarrollado))
                                             <button class="action-button btn-sm" 
-                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS))'>
+                                                    onclick='abrirModalTema({{ $horario->id }}, @json($asistencia ? $asistencia->tema_desarrollado : "", JSON_HEX_APOS), {{ $asistencia ? $asistencia->id : "null" }}, @json($horario->curso->nombre ?? "", JSON_HEX_APOS), @json($horaInicio->format("h:i A") . " - " . $horaFin->format("h:i A"), JSON_HEX_APOS), @json($fechaSeleccionada->format("Y-m-d"), JSON_HEX_APOS))'>
                                                 <i class="mdi mdi-{{ $asistencia && $asistencia->tema_desarrollado ? 'pencil' : 'plus' }}"></i>
                                                 {{ $asistencia && $asistencia->tema_desarrollado ? 'Editar Tema' : 'Registrar Tema' }}
                                             </button>
@@ -2453,22 +2453,26 @@
         else contador.style.color = 'var(--success-text)';
     }
 
-    function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null, cursoNombre = '', horario = '') {
+    function abrirModalTema(horarioId, temaExistente = '', asistenciaId = null, cursoNombre = '', horario = '', fecha = '') {
         const modalElement = document.getElementById('modalTemaDesarrollado');
         const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
         document.getElementById('horario_id').value = horarioId;
         document.getElementById('asistencia_id_para_editar').value = asistenciaId;
+
+        if (fecha) {
+            document.getElementById('fecha_seleccionada_input_oculto').value = fecha;
+        } else {
+            const fechaAgendaInput = document.getElementById('fecha-agenda');
+            if (fechaAgendaInput && fechaAgendaInput.value) {
+                document.getElementById('fecha_seleccionada_input_oculto').value = fechaAgendaInput.value;
+            }
+        }
 
         // Cargar contenido en Quill
         if (temaExistente && temaExistente !== 'null' && temaExistente !== 'No registrado.') {
             quill.root.innerHTML = temaExistente;
         } else {
             quill.setContents([]);
-        }
-
-        const fechaAgendaInput = document.getElementById('fecha-agenda');
-        if (fechaAgendaInput) {
-            document.getElementById('fecha_seleccionada_input_oculto').value = fechaAgendaInput.value;
         }
 
         // NUEVO: Actualizar información de la sesión en el modal

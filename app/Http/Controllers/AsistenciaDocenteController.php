@@ -328,6 +328,45 @@ class AsistenciaDocenteController extends Controller
             }
 
             if (!empty($docenteSessions)) {
+                $esReforzamiento = false;
+                if ($selectedCicloAcademico) {
+                    $cicloActual = Ciclo::where('codigo', $selectedCicloAcademico)->first();
+                    if ($cicloActual && stripos($cicloActual->nombre, 'reforzamiento') !== false) {
+                        $esReforzamiento = true;
+                    }
+                } else {
+                    $cicloActivo = Ciclo::where('es_activo', true)->first();
+                    if ($cicloActivo && stripos($cicloActivo->nombre, 'reforzamiento') !== false) {
+                        $esReforzamiento = true;
+                    }
+                }
+
+                // Asignar DÍA XX basado en fechas únicas (múltiples sesiones el mismo día comparten el mismo DÍA XX)
+                $fechaToDiaMap = [];
+                $diaCounter = 1;
+                foreach ($docenteSessions as $session) {
+                    $fechaStr = Carbon::parse($session['fecha'])->toDateString();
+                    if (!isset($fechaToDiaMap[$fechaStr])) {
+                        $fechaToDiaMap[$fechaStr] = $diaCounter++;
+                    }
+                }
+
+                foreach ($docenteSessions as &$session) {
+                    $fechaStr = Carbon::parse($session['fecha'])->toDateString();
+                    $diaNum = $fechaToDiaMap[$fechaStr];
+
+                    if ($esReforzamiento) {
+                        if (isset($session['semana']) && $session['semana'] > 8) {
+                            $session['semana'] = 8;
+                        }
+                        $diaVisual = $diaNum > 40 ? 40 : $diaNum;
+                        $session['dia_texto'] = 'DÍA ' . str_pad($diaVisual, 2, '0', STR_PAD_LEFT);
+                    } else {
+                        $session['dia_texto'] = 'DÍA ' . str_pad($diaNum, 2, '0', STR_PAD_LEFT);
+                    }
+                }
+                unset($session);
+
                 $processedDetailedAsistencias[$docente->id] = $this->structureDocenteDataForReports($docente, $docenteSessions);
             }
         }
@@ -1061,10 +1100,11 @@ class AsistenciaDocenteController extends Controller
      */
     public function create()
     {
-        // Obtener docentes para el select (ordenados alfabéticamente)
+        // Obtener docentes para el select (ordenados alfabéticamente, solo campos necesarios)
         $docentes = User::whereHas('roles', function ($query) {
             $query->where('nombre', 'profesor');
-        })->orderBy('apellido_paterno', 'asc')
+        })->select(['id', 'nombre', 'apellido_paterno', 'apellido_materno', 'numero_documento', 'email', 'telefono'])
+          ->orderBy('apellido_paterno', 'asc')
           ->orderBy('apellido_materno', 'asc')
           ->orderBy('nombre', 'asc')
           ->get();
@@ -1077,6 +1117,73 @@ class AsistenciaDocenteController extends Controller
      */
     public function store(Request $request)
     {
+        // ⚡ NUEVO: Registro Rápido de Sesión Completa (Entrada + Salida Simultáneas)
+        if ($request->input('tipo_registro') === 'sesion_completa') {
+            $request->validate([
+                'docente_id' => 'required|exists:users,id',
+                'fecha_base' => 'required|date',
+                'hora_entrada' => 'required',
+                'hora_salida' => 'required',
+                'tipo_verificacion' => 'nullable|in:manual,biometrico,tarjeta,codigo',
+                'terminal_id' => 'nullable|string',
+            ], [
+                'docente_id.required' => 'Debe seleccionar un docente',
+                'fecha_base.required' => 'La fecha de la clase es obligatoria',
+                'hora_entrada.required' => 'La hora de entrada es obligatoria',
+                'hora_salida.required' => 'La hora de salida es obligatoria',
+            ]);
+
+            try {
+                $docente = User::findOrFail($request->docente_id);
+                if (!$docente->hasRole('profesor')) {
+                    return back()->withErrors(['docente_id' => 'El usuario seleccionado no es un docente.']);
+                }
+
+                $fechaBase = $request->fecha_base;
+                $fechaHoraEntrada = Carbon::parse($fechaBase . ' ' . $request->hora_entrada)->format('Y-m-d H:i:s');
+                $fechaHoraSalida  = Carbon::parse($fechaBase . ' ' . $request->hora_salida)->format('Y-m-d H:i:s');
+
+                $tipoVerificacionMap = ['biometrico' => 0, 'tarjeta' => 1, 'facial' => 2, 'codigo' => 3, 'manual' => 4];
+                $tipoVerificacion = $tipoVerificacionMap[$request->tipo_verificacion] ?? 4;
+                $terminalId = is_numeric($request->terminal_id) ? (int)$request->terminal_id : 999;
+
+                // Crear marca de Entrada
+                RegistroAsistencia::create([
+                    'usuario_id' => $docente->id,
+                    'nro_documento' => $docente->numero_documento,
+                    'fecha_hora' => $fechaHoraEntrada,
+                    'tipo_verificacion' => $tipoVerificacion,
+                    'estado' => 1,
+                    'codigo_trabajo' => $request->codigo_trabajo,
+                    'terminal_id' => $terminalId,
+                    'sn_dispositivo' => $request->terminal_id ?? 'MANUAL',
+                    'fecha_registro' => $fechaHoraEntrada,
+                ]);
+
+                // Crear marca de Salida
+                RegistroAsistencia::create([
+                    'usuario_id' => $docente->id,
+                    'nro_documento' => $docente->numero_documento,
+                    'fecha_hora' => $fechaHoraSalida,
+                    'tipo_verificacion' => $tipoVerificacion,
+                    'estado' => 1,
+                    'codigo_trabajo' => $request->codigo_trabajo,
+                    'terminal_id' => $terminalId,
+                    'sn_dispositivo' => $request->terminal_id ?? 'MANUAL',
+                    'fecha_registro' => $fechaHoraSalida,
+                ]);
+
+                return redirect()
+                    ->route('asistencia-docente.create')
+                    ->with('success', "⚡ Sesión completa registrada con éxito para {$docente->nombre} {$docente->apellido_paterno} (Entrada: {$request->hora_entrada} | Salida: {$request->hora_salida})");
+
+            } catch (\Exception $e) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['error' => 'Error al registrar la sesión completa: ' . $e->getMessage()]);
+            }
+        }
+
         // NUEVO: Si viene docente_id sin tema_desarrollado, es registro manual de asistencia biométrica
         if ($request->has('docente_id') && !$request->has('tema_desarrollado')) {
             $request->validate([
@@ -1251,10 +1358,14 @@ class AsistenciaDocenteController extends Controller
     {
         try {
             $registros = RegistroAsistencia::select([
-                'registros_asistencia.*',
+                'registros_asistencia.id',
+                'registros_asistencia.fecha_registro',
+                'registros_asistencia.tipo_verificacion',
+                'registros_asistencia.terminal_id',
                 DB::raw("CONCAT(users.nombre, ' ', users.apellido_paterno, ' ', COALESCE(users.apellido_materno, '')) as docente_nombre")
             ])
             ->join('users', 'registros_asistencia.usuario_id', '=', 'users.id')
+            ->where('registros_asistencia.fecha_registro', '>=', Carbon::now()->subDays(30))
             ->whereHas('usuario.roles', function ($query) {
                 $query->where('nombre', 'profesor');
             })
@@ -1294,6 +1405,199 @@ class AsistenciaDocenteController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener registros: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * NUEVO: Obtiene las sesiones con marcas de entrada o salida faltantes (o ambas)
+     * para permitir su regularización manual rápida desde la pantalla de registro.
+     */
+    public function getPendientesRegularizar(Request $request)
+    {
+        try {
+            $docenteId = $request->input('docente_id');
+            $diasParam = $request->input('dias', 'ciclo');
+
+            $cicloActivo = Ciclo::where('es_activo', true)
+                ->orderBy('programa_id', 'asc')
+                ->first();
+
+            if (!$cicloActivo) {
+                return response()->json([
+                    'success' => true,
+                    'pendientes' => [],
+                    'message' => 'No hay un ciclo académico activo.'
+                ]);
+            }
+
+            // Obtener docentes a evaluar
+            $docentesQuery = User::whereHas('roles', function ($query) {
+                $query->where('nombre', 'profesor');
+            });
+
+            if ($docenteId) {
+                $docentesQuery->where('id', $docenteId);
+            }
+
+            $docentes = $docentesQuery->get()->keyBy('id');
+
+            if ($docentes->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'pendientes' => []
+                ]);
+            }
+
+            $docenteIds = $docentes->keys()->toArray();
+
+            // Cargar todos los horarios activos del ciclo para los docentes
+            $horarios = HorarioDocente::with(['docente', 'curso', 'aula', 'ciclo'])
+                ->whereIn('docente_id', $docenteIds)
+                ->where('ciclo_id', $cicloActivo->id)
+                ->get();
+
+            if ($horarios->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'pendientes' => []
+                ]);
+            }
+
+            $fechaFin = Carbon::today();
+
+            if ($diasParam === 'ciclo' || $diasParam === '0' || $diasParam === 0) {
+                $fechaInicio = $cicloActivo->fecha_inicio 
+                    ? Carbon::parse($cicloActivo->fecha_inicio)->startOfDay() 
+                    : $fechaFin->copy()->subDays(60);
+            } else {
+                $diasAtras = max(1, min((int)$diasParam, 90));
+                $fechaInicio = $fechaFin->copy()->subDays($diasAtras);
+                if ($cicloActivo->fecha_inicio && $fechaInicio->lt(Carbon::parse($cicloActivo->fecha_inicio))) {
+                    $fechaInicio = Carbon::parse($cicloActivo->fecha_inicio)->startOfDay();
+                }
+            }
+
+            // Obtener registros biométricos en el rango de fechas
+            $documentos = $docentes->pluck('numero_documento')->filter()->toArray();
+            $registrosBiometricos = RegistroAsistencia::whereIn('nro_documento', $documentos)
+                ->whereBetween('fecha_registro', [$fechaInicio->copy()->startOfDay(), $fechaFin->copy()->endOfDay()])
+                ->get()
+                ->groupBy('nro_documento');
+
+            $pendientes = [];
+
+            // Iterar por cada día en el rango
+            for ($date = $fechaInicio->copy(); $date->lte($fechaFin); $date->addDay()) {
+                $fechaStr = $date->toDateString();
+
+                foreach ($horarios as $horario) {
+                    $docente = $docentes->get($horario->docente_id);
+                    if (!$docente) continue;
+
+                    // Determinar el día oficial del horario para esta fecha
+                    $diaNecesario = $horario->ciclo ? $horario->ciclo->getDiaHorarioParaFecha($date) : null;
+                    if (!$diaNecesario || strtolower($diaNecesario) !== strtolower($horario->dia_semana)) {
+                        continue;
+                    }
+
+                    $horaInicio = Carbon::parse($fechaStr . ' ' . $horario->hora_inicio);
+                    $horaFin = Carbon::parse($fechaStr . ' ' . $horario->hora_fin);
+
+                    // Si es el día de hoy, solo evaluar si la clase ya terminó o pasaron al menos 15 min de inicio
+                    if ($date->isToday() && Carbon::now()->lessThan($horaInicio->copy()->addMinutes(15))) {
+                        continue;
+                    }
+
+                    $regsDocente = $registrosBiometricos->get($docente->numero_documento, collect());
+                    $regsDia = $regsDocente->filter(function ($r) use ($fechaStr) {
+                        return Carbon::parse($r->fecha_registro)->toDateString() === $fechaStr;
+                    });
+
+                    $session = $this->processTeacherSessionLogic($horario, $date->copy(), $regsDia, $docente);
+
+                    if (!$session) continue;
+
+                    $tieneEntrada = !empty($session['entrada_carbon']);
+                    $tieneSalida  = !empty($session['salida_carbon']);
+
+                    // Si está incompleto (falta entrada, falta salida, o ambas)
+                    if (!$tieneEntrada || !$tieneSalida) {
+                        $tipoFalta = '';
+                        $tipoFaltaTexto = '';
+                        $sugerenciaModo = '';
+                        $sugerenciaEstado = '';
+                        $sugerenciaHora = '';
+
+                        if ($tieneEntrada && !$tieneSalida) {
+                            $tipoFalta = 'falta_salida';
+                            $tipoFaltaTexto = 'Falta Marca de Salida';
+                            $sugerenciaModo = 'individual';
+                            $sugerenciaEstado = 'salida';
+                            $sugerenciaHora = $horario->hora_fin;
+                        } elseif (!$tieneEntrada && $tieneSalida) {
+                            $tipoFalta = 'falta_entrada';
+                            $tipoFaltaTexto = 'Falta Marca de Entrada';
+                            $sugerenciaModo = 'individual';
+                            $sugerenciaEstado = 'entrada';
+                            $sugerenciaHora = $horario->hora_inicio;
+                        } else {
+                            if (in_array($session['estado_sesion'], ['FALTA', 'INCOMPLETA'])) {
+                                $tipoFalta = 'falta_ambas';
+                                $tipoFaltaTexto = 'Falta Entrada y Salida';
+                                $sugerenciaModo = 'sesion_completa';
+                                $sugerenciaEstado = 'ambas';
+                                $sugerenciaHora = $horario->hora_inicio;
+                            } else {
+                                continue;
+                            }
+                        }
+
+                        $diasEsp = ['Sunday'=>'Domingo','Monday'=>'Lunes','Tuesday'=>'Martes','Wednesday'=>'Miércoles','Thursday'=>'Jueves','Friday'=>'Viernes','Saturday'=>'Sábado'];
+                        $diaNombre = $diasEsp[$date->format('l')] ?? $date->format('l');
+
+                        $pendientes[] = [
+                            'docente_id' => $docente->id,
+                            'docente_nombre' => "{$docente->nombre} {$docente->apellido_paterno} " . ($docente->apellido_materno ?? ''),
+                            'docente_dni' => $docente->numero_documento,
+                            'fecha' => $fechaStr,
+                            'fecha_formateada' => "{$diaNombre}, " . $date->format('d/m/Y'),
+                            'curso' => $horario->curso?->nombre ?? 'Curso no especificado',
+                            'aula' => $horario->aula?->nombre ?? 'Aula no especificada',
+                            'hora_inicio' => Carbon::parse($horario->hora_inicio)->format('H:i'),
+                            'hora_fin' => Carbon::parse($horario->hora_fin)->format('H:i'),
+                            'entrada_registrada' => $session['entrada_carbon'] ? $session['entrada_carbon']->format('H:i:s') : null,
+                            'salida_registrada' => $session['salida_carbon'] ? $session['salida_carbon']->format('H:i:s') : null,
+                            'tipo_falta' => $tipoFalta,
+                            'tipo_falta_texto' => $tipoFaltaTexto,
+                            'sugerencia' => [
+                                'modo' => $sugerenciaModo,
+                                'estado' => $sugerenciaEstado,
+                                'fecha' => $fechaStr,
+                                'fecha_hora' => "{$fechaStr}T{$sugerenciaHora}",
+                                'hora_entrada' => Carbon::parse($horario->hora_inicio)->format('H:i'),
+                                'hora_salida' => Carbon::parse($horario->hora_fin)->format('H:i'),
+                            ]
+                        ];
+                    }
+                }
+            }
+
+            // Ordenar por fecha descendente
+            usort($pendientes, function ($a, $b) {
+                return strcmp($b['fecha'], $a['fecha']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'total' => count($pendientes),
+                'pendientes' => array_slice($pendientes, 0, 250)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener asistencias pendientes: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1375,12 +1679,12 @@ class AsistenciaDocenteController extends Controller
                 ->orderBy('fecha_registro')
                 ->get();
 
-            // Buscar entrada válida
+            // Buscar entrada válida (hasta 120 min después del inicio para permitir marcaciones con tardanza)
             $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
                     $horarioInicioClase->copy()->subMinutes(15),
-                    $horarioInicioClase->copy()->addMinutes(30)
+                    $horarioInicioClase->copy()->addMinutes(120)
                 );
             })->first();
 
@@ -1420,6 +1724,14 @@ class AsistenciaDocenteController extends Controller
                 }
                 
                 // Si aún falta alguno, hacemos fallback a las horas programadas
+                if (!$horaEntrada) {
+                    $horaEntrada = $horarioInicioClase->copy();
+                }
+                if (!$horaSalida) {
+                    $horaSalida = $horarioFinClase->copy();
+                }
+            } elseif ($horaEntrada || $horaSalida) {
+                // Si existe al menos un marcaje biométrico (entrada o salida), completar la hora faltante con el horario programado
                 if (!$horaEntrada) {
                     $horaEntrada = $horarioInicioClase->copy();
                 }
@@ -1669,28 +1981,58 @@ class AsistenciaDocenteController extends Controller
             $ciclo = Ciclo::where('es_activo', true)->first();
         }
 
+        $offsetDays = 0;
+        $contractStartDate = null;
+        $pagoDocente = null;
+        if ($ciclo) {
+            $pagoDocente = \App\Models\PagoDocente::where('docente_id', $docente->id)
+                ->where('ciclo_id', $ciclo->id)
+                ->first();
+            if ($pagoDocente && $pagoDocente->fecha_inicio) {
+                $contractStartDate = Carbon::parse($pagoDocente->fecha_inicio);
+                $diffDays = Carbon::parse($ciclo->fecha_inicio)->diffInDays($contractStartDate, false);
+                $offsetWeeks = (int) round($diffDays / 7);
+                $offsetDays = $offsetWeeks * 7;
+            }
+        }
+
         if ($ciclo) {
             $cicloStartDate = Carbon::parse($ciclo->fecha_inicio)->startOfDay();
             $cicloEndDate = Carbon::parse($ciclo->fecha_fin)->endOfDay();
             
+            // ⚡ APLAZAMIENTO: Desplazamos las fechas del ciclo para que la interfaz cuadre con el contrato
+            $effectiveCicloStart = $cicloStartDate->copy()->addDays($offsetDays);
+            $effectiveCicloEnd = $cicloEndDate->copy()->addDays($offsetDays);
+            
             if (!$fechaInicio && !$fechaFin && !$selectedMonth && !$selectedYear) {
-                $startDate = $cicloStartDate;
-                $endDate = Carbon::now()->endOfDay()->min($cicloEndDate);
+                $effectiveStartDate = $effectiveCicloStart;
+                $effectiveEndDate = Carbon::now()->addDays($offsetDays)->endOfDay()->min($effectiveCicloEnd);
             } elseif ($fechaInicio && $fechaFin) {
-                $startDate = Carbon::parse($fechaInicio)->startOfDay()->max($cicloStartDate);
-                $endDate = Carbon::parse($fechaFin)->endOfDay()->min($cicloEndDate);
+                $effectiveStartDate = Carbon::parse($fechaInicio)->startOfDay()->max($effectiveCicloStart);
+                $effectiveEndDate = Carbon::parse($fechaFin)->endOfDay()->min($effectiveCicloEnd);
             } elseif ($selectedMonth && $selectedYear) {
                 $monthStart = Carbon::createFromDate($selectedYear, (int)$selectedMonth, 1)->startOfDay();
                 $monthEnd = $monthStart->copy()->endOfMonth()->endOfDay();
-                $startDate = $monthStart->max($cicloStartDate);
-                $endDate = $monthEnd->min($cicloEndDate);
+                $effectiveStartDate = $monthStart->max($effectiveCicloStart);
+                $effectiveEndDate = $monthEnd->min($effectiveCicloEnd);
             } else {
-                $startDate = $cicloStartDate;
-                $endDate = Carbon::now()->endOfDay()->min($cicloEndDate);
+                $effectiveStartDate = $effectiveCicloStart;
+                $effectiveEndDate = Carbon::now()->addDays($offsetDays)->endOfDay()->min($effectiveCicloEnd);
             }
+
+            // ⚡ DES-APLAZAMIENTO: Regresamos las fechas al "espacio tiempo" original
+            $startDate = $effectiveStartDate->copy()->subDays($offsetDays);
+            $endDate = $effectiveEndDate->copy()->subDays($offsetDays);
+
+            // Fechas a mostrar en el PDF
+            $displayFechaInicio = $contractStartDate ? $contractStartDate->toDateString() : $effectiveStartDate->toDateString();
+            $displayFechaFin = ($pagoDocente && $pagoDocente->fecha_fin) ? Carbon::parse($pagoDocente->fecha_fin)->toDateString() : $effectiveEndDate->toDateString();
+
         } else {
             $endDate = Carbon::today()->endOfDay();
             $startDate = $endDate->copy()->subDays(30)->startOfDay();
+            $displayFechaInicio = $startDate->toDateString();
+            $displayFechaFin = $endDate->toDateString();
         }
 
         // Procesar sesiones (Lógica simplificada de reports para un solo docente)
@@ -1731,11 +2073,47 @@ class AsistenciaDocenteController extends Controller
 
             foreach ($horariosDelDia as $horario) {
                 if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) continue;
-                $sessionData = $this->processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $ciclo->fecha_inicio);
+                $sessionData = $this->processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $ciclo->fecha_inicio, $offsetDays);
                 if ($sessionData) $docenteSessions[] = $sessionData;
             }
             $currentDate->addDay();
         }
+
+        // ⚡ Agregar contador de días únicos (DÍA 01, DÍA 02, etc.) y limitar semana/día si es Reforzamiento
+        $esReforzamiento = false;
+        if (isset($ciclo) && $ciclo && stripos($ciclo->nombre, 'reforzamiento') !== false) {
+            $esReforzamiento = true;
+        } elseif (isset($cicloActivoParaRotacion) && $cicloActivoParaRotacion && stripos($cicloActivoParaRotacion->nombre, 'reforzamiento') !== false) {
+            $esReforzamiento = true;
+        }
+
+        // Asignar DÍA XX basado en fechas únicas (múltiples clases el mismo día comparten el mismo DÍA XX)
+        $fechaToDiaMap = [];
+        $diaCounter = 1;
+        foreach ($docenteSessions as $session) {
+            $fechaStr = Carbon::parse($session['fecha'])->toDateString();
+            if (!isset($fechaToDiaMap[$fechaStr])) {
+                $fechaToDiaMap[$fechaStr] = $diaCounter++;
+            }
+        }
+
+        foreach ($docenteSessions as &$session) {
+            $fechaStr = Carbon::parse($session['fecha'])->toDateString();
+            $diaNum = $fechaToDiaMap[$fechaStr];
+
+            if ($esReforzamiento) {
+                // --- SOLUCIÓN ADMINISTRATIVA ---
+                // Limitar a máximo 8 semanas y 40 días
+                if (isset($session['semana']) && $session['semana'] > 8) {
+                    $session['semana'] = 8;
+                }
+                $diaVisual = $diaNum > 40 ? 40 : $diaNum;
+                $session['dia_texto'] = 'DÍA ' . str_pad($diaVisual, 2, '0', STR_PAD_LEFT);
+            } else {
+                $session['dia_texto'] = 'DÍA ' . str_pad($diaNum, 2, '0', STR_PAD_LEFT);
+            }
+        }
+        unset($session); // Romper referencia
 
         $data = $this->structureDocenteDataForReports($docente, $docenteSessions);
 
@@ -1744,15 +2122,15 @@ class AsistenciaDocenteController extends Controller
         $qrData = "REPORTE OFICIAL CEPRE UNAMAD\nDocente: {$docente->nombre} {$docente->apellido_paterno}\nCiclo: {$ciclo->nombre}\nFecha: {$fecha_generacion}\nValidación: " . uniqid();
         $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->generate($qrData));
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reportes.asistencia-docente-pdf', compact(
-            'docente', 
-            'ciclo', 
-            'data', 
-            'fechaInicio', 
-            'fechaFin', 
-            'fecha_generacion',
-            'qrCode'
-        ));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reportes.asistencia-docente-pdf', [
+            'docente' => $docente,
+            'ciclo' => $ciclo,
+            'data' => $data,
+            'fechaInicio' => $displayFechaInicio,
+            'fechaFin' => $displayFechaFin,
+            'fecha_generacion' => $fecha_generacion,
+            'qrCode' => $qrCode
+        ]);
 
         $pdf->setPaper('a4', 'portrait');
         
@@ -1763,7 +2141,7 @@ class AsistenciaDocenteController extends Controller
     /**
      * NUEVO: Procesa una sesión individual para reportes
      */
-    private function processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $fechaInicioCiclo = null)
+    private function processSessionForReports($horario, $currentDate, $registrosBiometricosDelDia, $docente, $fechaInicioCiclo = null, $offsetDays = 0)
     {
         $horaInicioProgramada = Carbon::parse($horario->hora_inicio);
         $horaFinProgramada = Carbon::parse($horario->hora_fin);
@@ -1772,7 +2150,7 @@ class AsistenciaDocenteController extends Controller
 
         // ⚡ FUENTE ÚNICA DE VERDAD: el trait calcula matching biométrico, horas, tardanza y pago.
         // Aquí solo enriquecemos con campos de presentación específicos del reporte/planilla.
-        $base = $this->processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente);
+        $base = $this->processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente, true);
 
         $entradaCarbon = $base['entrada_carbon'];
         $salidaCarbon = $base['salida_carbon'];
@@ -1866,8 +2244,10 @@ class AsistenciaDocenteController extends Controller
         $horaEntradaDisplay = $entradaCarbon ? $entradaCarbon->format('g:i:s A') : '--:--:--';
         $horaSalidaDisplay = $salidaCarbon ? $salidaCarbon->format('g:i:s A') : '--:--:--';
 
+        $shiftedDate = $currentDate->copy()->addDays($offsetDays);
+
         return [
-            'fecha'            => $currentDate->toDateString(),
+            'fecha'            => $shiftedDate->toDateString(),
             'curso'            => $cursoNombre,
             'tema_desarrollado'=> $temaDesarrollado,
             'aula'             => $aulaNombre,
@@ -1883,9 +2263,9 @@ class AsistenciaDocenteController extends Controller
             'monto_descuento'  => $montoDescuento,
             'tarifa_por_hora'  => $pagoDocente->tarifa_por_hora ?? 0,
             'estado_sesion'    => $estadoTexto,
-            'mes'              => $currentDate->locale('es')->monthName,
-            'semana'           => floor($currentDate->diffInDays(Carbon::parse($fechaInicioCiclo), false) * -1 / 7) + 1,
-            'carbon_date'      => $currentDate->copy(),
+            'mes'              => $shiftedDate->locale('es')->monthName,
+            'semana'           => floor($shiftedDate->diffInDays(Carbon::parse($fechaInicioCiclo)->addDays($offsetDays), false) * -1 / 7) + 1,
+            'carbon_date'      => $shiftedDate->copy(),
             'tiene_registros'  => ($entradaCarbon && $salidaCarbon) ? 'SI' : 'NO',
             // ── Tardanza (del trait, fuente única de verdad) ──────────────────
             'es_tardanza'      => ($base['minutos_tardanza'] ?? 0) > 0,
@@ -1972,7 +2352,7 @@ class AsistenciaDocenteController extends Controller
             }
             // ── Tardanza: se cuenta sobre sesiones con asistencia (COMPLETADA / SIN TEMA / INCOMPLETA)
             if (!in_array($session['estado_sesion'] ?? '', ['FALTA', 'PROGRAMADA', 'EN CURSO'])) {
-                if (!empty($session['es_tardanza'])) {
+                if (!empty($session['es_tardanza']) || ($session['minutos_tardanza'] ?? 0) > 0) {
                     $contTardanza++;
                     $totalMinTardanza += (int) ($session['minutos_tardanza'] ?? 0);
                 }
@@ -2055,6 +2435,7 @@ class AsistenciaDocenteController extends Controller
             'docente_info'          => $docente,
             'months'                => $groupedData,
             'total_horas'           => $totalHoras,
+            'total_segundos'        => $totalSeconds,
             'total_duracion_texto'  => $totalDuracionTexto,
             'total_pagos'           => $totalPagos,
             'total_descuentos'      => $totalDescuentos,

@@ -63,7 +63,7 @@ trait ProcessesTeacherSessions
      * @param \App\Models\User $docente
      * @return array|null
      */
-    public function processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente)
+    public function processTeacherSessionLogic($horario, $currentDate, $registrosBiometricosDelDia, $docente, $isReport = false)
     {
         if (!$horario || !$horario->hora_inicio || !$horario->hora_fin) {
             return null;
@@ -211,15 +211,43 @@ trait ProcessesTeacherSessions
         $montoTotal = 0;
         $pagoDocente = null;
 
-        // Priorizar pago asignado al ciclo del horario para soportar m�ltiples ciclos activos
+        // Calcular offset de contrato para este docente en el ciclo actual (multiplo de 7 dias para preservar el dia de la semana)
+        $offsetDays = 0;
+        if ($horario->ciclo_id && $horario->ciclo) {
+            $pagoDocenteForOffset = PagoDocente::where('docente_id', $docente->id)
+                ->where('ciclo_id', $horario->ciclo_id)
+                ->first();
+            if ($pagoDocenteForOffset && $pagoDocenteForOffset->fecha_inicio) {
+                $diffDays = Carbon::parse($horario->ciclo->fecha_inicio)->diffInDays(Carbon::parse($pagoDocenteForOffset->fecha_inicio), false);
+                $offsetWeeks = (int) round($diffDays / 7);
+                $offsetDays = $offsetWeeks * 7;
+            }
+        }
+        $shiftedDate = $currentDate->copy()->addDays($offsetDays);
+
         if ($horario->ciclo_id) {
-            // Cacheado por docente+ciclo (la tarifa no depende de la fecha de la sesión)
-            $pagoCacheKey = $docente->id . '_' . $horario->ciclo_id;
+            // Cacheado por docente+ciclo+fecha desplazada
+            $pagoCacheKey = $docente->id . '_' . $horario->ciclo_id . '_' . $shiftedDate->toDateString();
             if (!array_key_exists($pagoCacheKey, self::$pagosCache)) {
-                self::$pagosCache[$pagoCacheKey] = PagoDocente::where('docente_id', $docente->id)
+                $pagoObj = PagoDocente::where('docente_id', $docente->id)
                     ->where('ciclo_id', $horario->ciclo_id)
+                    ->whereDate('fecha_inicio', '<=', $shiftedDate)
+                    ->where(function ($query) use ($shiftedDate) {
+                        $query->whereDate('fecha_fin', '>=', $shiftedDate)
+                              ->orWhereNull('fecha_fin');
+                    })
                     ->orderBy('fecha_inicio', 'desc')
                     ->first();
+
+                // Fallback: si la fecha excede la fecha_fin pero la clase pertenece al ciclo, se aplica la tarifa del ciclo
+                if (!$pagoObj) {
+                    $pagoObj = PagoDocente::where('docente_id', $docente->id)
+                        ->where('ciclo_id', $horario->ciclo_id)
+                        ->orderBy('fecha_inicio', 'desc')
+                        ->first();
+                }
+
+                self::$pagosCache[$pagoCacheKey] = $pagoObj;
             }
             $pagoDocente = self::$pagosCache[$pagoCacheKey];
         }
@@ -228,9 +256,9 @@ trait ProcessesTeacherSessions
         if (!$pagoDocente) {
             $pagoDocente = PagoDocente::where('docente_id', $docente->id)
                 ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
-                ->whereDate('fecha_inicio', '<=', $currentDate)
-                ->where(function ($query) use ($currentDate) {
-                    $query->whereDate('fecha_fin', '>=', $currentDate)
+                ->whereDate('fecha_inicio', '<=', $shiftedDate)
+                ->where(function ($query) use ($shiftedDate) {
+                    $query->whereDate('fecha_fin', '>=', $shiftedDate)
                           ->orWhereNull('fecha_fin');
                 })
                 ->orderBy('fecha_inicio', 'desc')
@@ -240,6 +268,42 @@ trait ProcessesTeacherSessions
         if ($pagoDocente) {
             $montoTotal = $horasDictadas * $pagoDocente->tarifa_por_hora;
         }
+
+        // Calcular duración programada neta (descontando recesos del ciclo)
+        $horarioInicioHoyProg = $currentDate->copy()->setTime($horaInicioProgramada->hour, $horaInicioProgramada->minute, $horaInicioProgramada->second);
+        $horarioFinHoyProg = $currentDate->copy()->setTime($horaFinProgramada->hour, $horaFinProgramada->minute, $horaFinProgramada->second);
+
+        $duracionProgramadaBruta = $horarioInicioHoyProg->diffInMinutes($horarioFinHoyProg, true);
+        $minutosRecesoMananaProg = 0;
+        $minutosRecesoTardeProg = 0;
+
+        $cicloDelHorarioProg = $horario->ciclo;
+        if ($cicloDelHorarioProg && $cicloDelHorarioProg->receso_manana_inicio && $cicloDelHorarioProg->receso_manana_fin) {
+            $recesoMananaInicioProg = $currentDate->copy()->setTimeFromTimeString($cicloDelHorarioProg->receso_manana_inicio);
+            $recesoMananaFinProg = $currentDate->copy()->setTimeFromTimeString($cicloDelHorarioProg->receso_manana_fin);
+            if ($horarioInicioHoyProg < $recesoMananaFinProg && $horarioFinHoyProg > $recesoMananaInicioProg) {
+                $superposicionInicioProg = $horarioInicioHoyProg->max($recesoMananaInicioProg);
+                $superposicionFinProg = $horarioFinHoyProg->min($recesoMananaFinProg);
+                if ($superposicionFinProg > $superposicionInicioProg) {
+                    $minutosRecesoMananaProg = $superposicionInicioProg->diffInMinutes($superposicionFinProg);
+                }
+            }
+        }
+
+        if ($cicloDelHorarioProg && $cicloDelHorarioProg->receso_tarde_inicio && $cicloDelHorarioProg->receso_tarde_fin) {
+            $recesoTardeInicioProg = $currentDate->copy()->setTimeFromTimeString($cicloDelHorarioProg->receso_tarde_inicio);
+            $recesoTardeFinProg = $currentDate->copy()->setTimeFromTimeString($cicloDelHorarioProg->receso_tarde_fin);
+            if ($horarioInicioHoyProg < $recesoTardeFinProg && $horarioFinHoyProg > $recesoTardeInicioProg) {
+                $superposicionInicioProg = $horarioInicioHoyProg->max($recesoTardeInicioProg);
+                $superposicionFinProg = $horarioFinHoyProg->min($recesoTardeFinProg);
+                if ($superposicionFinProg > $superposicionInicioProg) {
+                    $minutosRecesoTardeProg = $superposicionInicioProg->diffInMinutes($superposicionFinProg);
+                }
+            }
+        }
+
+        $duracionProgramadaNetaMinutos = max(0, $duracionProgramadaBruta - $minutosRecesoMananaProg - $minutosRecesoTardeProg);
+        $horasProgramadasNeta = $duracionProgramadaNetaMinutos / 60;
 
         return [
             // Datos básicos
@@ -258,7 +322,7 @@ trait ProcessesTeacherSessions
 
             // Cálculos de tiempo y pago
             'horas_dictadas' => $horasDictadas,
-            'horas_programadas' => $horaInicioProgramada->diffInMinutes($horaFinProgramada, true) / 60,
+            'horas_programadas' => $horasProgramadasNeta,
             'pago' => $montoTotal,
             'tarifa_por_hora' => $pagoDocente->tarifa_por_hora ?? 0,
             'minutos_tardanza' => $minutosTardanza,

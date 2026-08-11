@@ -331,9 +331,28 @@ class DashboardController extends Controller
                     $cicloDelHorario = $horario->ciclo;
                     $tarifaSesion = 25.00; // Valor por defecto
                     
+                    // Calcular offset de contrato para este docente en el ciclo actual
+                    $shiftedDate = $fechaSeleccionada;
+                    if ($cicloDelHorario) {
+                        $pagoDocenteForOffset = PagoDocente::where('docente_id', $user->id)
+                            ->where('ciclo_id', $cicloDelHorario->id)
+                            ->first();
+                        if ($pagoDocenteForOffset && $pagoDocenteForOffset->fecha_inicio) {
+                            $diffDays = Carbon::parse($cicloDelHorario->fecha_inicio)->diffInDays(Carbon::parse($pagoDocenteForOffset->fecha_inicio), false);
+                            $offsetWeeks = (int) round($diffDays / 7);
+                            $offsetDays = $offsetWeeks * 7;
+                            $shiftedDate = $fechaSeleccionada->copy()->addDays($offsetDays);
+                        }
+                    }
+
                     if ($cicloDelHorario) {
                         $pagoDocente = PagoDocente::where('docente_id', $user->id)
                             ->where('ciclo_id', $cicloDelHorario->id)
+                            ->whereDate('fecha_inicio', '<=', $shiftedDate)
+                            ->where(function ($q) use ($shiftedDate) {
+                                $q->whereDate('fecha_fin', '>=', $shiftedDate)
+                                  ->orWhereNull('fecha_fin');
+                            })
                             ->first();
                         
                         if ($pagoDocente) {
@@ -342,9 +361,9 @@ class DashboardController extends Controller
                             // Fallback: buscar por fechas si no hay registro específico por ciclo
                             $pagoDocenteFecha = PagoDocente::where('docente_id', $user->id)
                                 ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
-                                ->where('fecha_inicio', '<=', $fechaSeleccionada)
-                                ->where(function ($q) use ($fechaSeleccionada) {
-                                    $q->where('fecha_fin', '>=', $fechaSeleccionada)
+                                ->where('fecha_inicio', '<=', $shiftedDate)
+                                ->where(function ($q) use ($shiftedDate) {
+                                    $q->where('fecha_fin', '>=', $shiftedDate)
                                       ->orWhereNull('fecha_fin');
                                 })
                                 ->first();
@@ -728,14 +747,29 @@ class DashboardController extends Controller
     {
         $fechaReferencia = $fechaReferencia ? Carbon::parse($fechaReferencia) : Carbon::now();
 
-        if (!$cicloActivo) {
-            $cicloActivo = Ciclo::where('es_activo', true)->first();
+        // Calcular offset de contrato para este docente en el ciclo actual
+        $shiftedDate = $fechaReferencia;
+        if ($cicloActivo) {
+            $pagoDocenteForOffset = PagoDocente::where('docente_id', $docenteId)
+                ->where('ciclo_id', $cicloActivo->id)
+                ->first();
+            if ($pagoDocenteForOffset && $pagoDocenteForOffset->fecha_inicio) {
+                $diffDays = Carbon::parse($cicloActivo->fecha_inicio)->diffInDays(Carbon::parse($pagoDocenteForOffset->fecha_inicio), false);
+                $offsetWeeks = (int) round($diffDays / 7);
+                $offsetDays = $offsetWeeks * 7;
+                $shiftedDate = $fechaReferencia->copy()->addDays($offsetDays);
+            }
         }
 
         if ($cicloActivo) {
-            // Priorizar tarifa asociada explícitamente al ciclo
+            // Priorizar tarifa asociada explícitamente al ciclo que esté dentro del rango del contrato desplazado
             $pagoDocente = PagoDocente::where('docente_id', $docenteId)
                 ->where('ciclo_id', $cicloActivo->id)
+                ->whereDate('fecha_inicio', '<=', $shiftedDate)
+                ->where(function ($query) use ($shiftedDate) {
+                    $query->whereDate('fecha_fin', '>=', $shiftedDate)
+                          ->orWhereNull('fecha_fin');
+                })
                 ->orderBy('fecha_inicio', 'desc')
                 ->first();
 
@@ -743,9 +777,9 @@ class DashboardController extends Controller
             if (!$pagoDocente) {
                 $pagoDocente = PagoDocente::where('docente_id', $docenteId)
                     ->whereNull('ciclo_id') // Solo permitir tarifas generales (sin ciclo asignado)
-                    ->whereDate('fecha_inicio', '<=', $fechaReferencia)
-                    ->where(function ($query) use ($fechaReferencia) {
-                        $query->whereDate('fecha_fin', '>=', $fechaReferencia)
+                    ->whereDate('fecha_inicio', '<=', $shiftedDate)
+                    ->where(function ($query) use ($shiftedDate) {
+                        $query->whereDate('fecha_fin', '>=', $shiftedDate)
                               ->orWhereNull('fecha_fin');
                     })
                     ->orderBy('fecha_inicio', 'desc')
@@ -1226,12 +1260,12 @@ class DashboardController extends Controller
                 ->orderBy('fecha_registro')
                 ->get();
 
-            // Buscar entrada válida
+            // Buscar entrada válida (hasta 120 min después del inicio para permitir marcaciones con tardanza)
             $entrada = $registrosDiaSeleccionado->filter(function($r) use ($horarioInicioClase) {
                 $horaRegistro = Carbon::parse($r->fecha_registro);
                 return $horaRegistro->between(
                     $horarioInicioClase->copy()->subMinutes(15),
-                    $horarioInicioClase->copy()->addMinutes(30)
+                    $horarioInicioClase->copy()->addMinutes(120)
                 );
             })->first();
 
@@ -1271,6 +1305,14 @@ class DashboardController extends Controller
                 }
                 
                 // Si aún falta alguno, hacemos fallback a las horas programadas
+                if (!$horaEntrada) {
+                    $horaEntrada = $horarioInicioClase->copy();
+                }
+                if (!$horaSalida) {
+                    $horaSalida = $horarioFinClase->copy();
+                }
+            } elseif ($horaEntrada || $horaSalida) {
+                // Si existe al menos un marcaje biométrico (entrada o salida), completar la hora faltante con el horario programado
                 if (!$horaEntrada) {
                     $horaEntrada = $horarioInicioClase->copy();
                 }
